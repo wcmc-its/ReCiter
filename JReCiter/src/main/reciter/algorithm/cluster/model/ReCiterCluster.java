@@ -1,10 +1,13 @@
 package main.reciter.algorithm.cluster.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import main.reciter.model.article.ReCiterArticle;
 import main.reciter.model.author.ReCiterAuthor;
+import main.reciter.model.author.TargetAuthor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +33,22 @@ public class ReCiterCluster {
 	 * Logger.
 	 */
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterCluster.class);	
+
+	/**
+	 * Returns a list of pmids of articles in this cluster.
+	 */
+	public Set<Integer> getPmidSet() {
+		Set<Integer> pmidSet = new HashSet<Integer>();
+		for (ReCiterArticle reCiterArticle : articleCluster) {
+			boolean addedToSet = pmidSet.add(reCiterArticle.getArticleID());
+			if (debug) {
+				if (!addedToSet) {
+					slf4jLogger.info("Duplicate Pmid: " + reCiterArticle.getArticleID());
+				}
+			}
+		}
+		return pmidSet;
+	}
 
 	/**
 	 * Calculates the similarity of this cluster with another cluster.
@@ -98,10 +117,10 @@ public class ReCiterCluster {
 				// For each author in the currentArticle.
 				for (ReCiterAuthor currentAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
 					// Check if the names match.
-					//					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName()) 
-					//						&& !currentAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())
-					//						&& !author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
-					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName())) {
+					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName()) 
+							&& !currentAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())
+							&& !author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+						//					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName())) {
 						matchingCoauthorCount += 1;
 
 						if (debug) {

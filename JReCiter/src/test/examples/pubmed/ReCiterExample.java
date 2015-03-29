@@ -51,7 +51,7 @@ public class ReCiterExample {
 		
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
-		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
+		System.out.println("Total execution time: " + elapsedTime + " ms.");
 	}
 
 	/**
@@ -63,7 +63,9 @@ public class ReCiterExample {
 	public void runExample(ReCiterConfigProperty reCiterConfigProperty) {
 
 		String lastName = reCiterConfigProperty.getLastName();
+		String middleName = reCiterConfigProperty.getMiddleName();
 		String firstName = reCiterConfigProperty.getFirstName();
+		String affiliation = reCiterConfigProperty.getAuthorAffiliation();
 		String firstInitial = firstName.substring(0, 1);
 		String cwid = reCiterConfigProperty.getCwid();
 		
@@ -123,8 +125,8 @@ public class ReCiterExample {
 
 		// Run the Clustering algorithm.
 
-		// Define target author.
-		TargetAuthor targetAuthor = new TargetAuthor(new AuthorName("Helen", "H", "Fernandes"), new AuthorAffiliation(""));
+		// Define Singleton target author.
+		TargetAuthor.init(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation));
 
 		// Sort articles on completeness score.
 		Collections.sort(reCiterArticleList);
@@ -132,14 +134,12 @@ public class ReCiterExample {
 		// Cluster.
 		ReCiterClusterer reCiterClusterer = new ReCiterClusterer();
 		reCiterClusterer.setArticleList(reCiterArticleList);
-		reCiterClusterer.cluster(0.1, 0.1);
 
 		// Report results.
 		ArticleDao articleDao = new ArticleDao();
 		Set<Integer> pmidSet = articleDao.getPmidList(cwid);
 
 		Analysis analysis = new Analysis(pmidSet);
-		
-		slf4jLogger.info(pmidSet.toString());
+		reCiterClusterer.cluster(0.1, 0.1, analysis);	
 	}
 }
