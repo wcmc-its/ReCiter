@@ -69,3 +69,6 @@ local.properties
  
 # PDT-specific
 .buildpath
+
+# Do not include the data directory
+data/
