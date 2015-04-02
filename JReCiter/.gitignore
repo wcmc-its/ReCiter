@@ -72,3 +72,6 @@ local.properties
 
 # Do not include the data directory
 data/
+
+# Do not include reciter.log
+reciter.log
