@@ -59,7 +59,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		}
 
 		// Parse the xml files to return a list of PubmedArticles.
-		System.out.println(getDirectory() + cwid);
+		slf4jLogger.info(getDirectory() + cwid);
 		File[] xmlFiles = new File(getDirectory() + cwid).listFiles();
 		for (File xmlFile : xmlFiles) {
 			PubmedEFetchHandler pubmedEFetchHandler = new PubmedEFetchHandler();
@@ -107,7 +107,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
 			PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
 			int count = xmlHandler.getCount();
-
+			slf4jLogger.info("Number of publications: " + count);
 			/**
 			 * Perform retrieval and storage of xml.
 			 */
@@ -134,12 +134,12 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				while (result == 1) {
 					slf4jLogger.info("Query returned: <ERROR>Unable to obtain query #1</ERROR>. Retrying ...");
 					eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-					System.out.println(eSearchUrl);
+					slf4jLogger.info(eSearchUrl);
 					pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
 
 					// Use the webenv value to retrieve xml.
 					eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
-					System.out.println(eFetchUrl);
+					slf4jLogger.info(eFetchUrl);
 					result = saveXml(eFetchUrl, cwid, cwid + "_" + i);
 				}
 

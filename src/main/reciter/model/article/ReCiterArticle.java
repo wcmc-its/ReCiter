@@ -6,6 +6,8 @@ import main.reciter.lucene.DocumentVector;
 import main.reciter.lucene.DocumentVectorType;
 import main.reciter.lucene.docsimilarity.DocumentSimilarity;
 import main.reciter.lucene.docsimilarity.MaxCosineSimilarity;
+import main.reciter.model.article.ReCiterArticleKeywords.Keyword;
+import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.model.completeness.ArticleCompleteness;
 import main.reciter.model.completeness.ReCiterCompleteness;
 
@@ -112,6 +114,39 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		}
 	}
 
+	public String toCSV() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("\"");
+		sb.append(articleID);
+		sb.append("\",");
+		
+		sb.append("\"");
+		sb.append(articleTitle.getTitle());
+		sb.append("\",");
+		
+		sb.append("\"");
+		sb.append(journal.getJournalTitle());
+		sb.append("\",");
+		
+		sb.append("\"");
+		for (ReCiterAuthor author : articleCoAuthors.getCoAuthors()) {
+			sb.append(author.getAuthorName().getCSVFormat());
+			sb.append(": ");
+			sb.append(author.getAffiliation());
+			sb.append(", ");
+		}
+		sb.append("\"");
+		
+		sb.append("\"");
+		for (Keyword keyword : articleKeywords.getKeywords()) {
+			sb.append(keyword.getKeyword());
+			sb.append(", ");
+		}
+		sb.append("\"");
+		return sb.toString();
+	}
+	
 	@Override
 	public String toString() {
 		return "ReCiterArticle [articleID=" + articleID + ", articleTitle="

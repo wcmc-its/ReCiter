@@ -6,8 +6,12 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DocumentVectorGenerator {
+
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(DocumentVectorGenerator.class);	
 
 	/**
 	 * Creates a DocumentVector for a specific field of a ReCiterArticle.
@@ -49,8 +53,9 @@ public class DocumentVectorGenerator {
 				}
 			}
 			documentVector.setVector(documentVector.getDocumentVectorSimilarity().normalize(documentVector.getVector()));
+		} else {
+			slf4jLogger.info("VectorGenerator cannot read field type: " + documentVectorType);
 		}
-//		System.out.println(documentID + ": " + documentVector.getTermToFreqMap());
 		return documentVector;
 	}
 	

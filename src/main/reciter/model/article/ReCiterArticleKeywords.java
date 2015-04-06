@@ -48,4 +48,13 @@ public class ReCiterArticleKeywords {
 		}
 		return sb.toString();
 	}
+	
+	public String getCommaConcatForm() {
+		StringBuilder sb = new StringBuilder();
+		for (Keyword keyword : keywords) {
+			sb.append(keyword.getKeyword());
+			sb.append(",");
+		}
+		return sb.toString();
+	}
 }

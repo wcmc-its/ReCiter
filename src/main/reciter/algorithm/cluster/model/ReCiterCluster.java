@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import main.reciter.model.article.ReCiterArticle;
 import main.reciter.model.author.ReCiterAuthor;
@@ -18,6 +19,15 @@ public class ReCiterCluster {
 	 * Cluster ID.
 	 */
 	private final int clusterID;
+	
+	/**
+	 * Atomic integer counter
+	 */
+	private static AtomicInteger clusterIDCounter = new AtomicInteger(0);
+	
+	public static AtomicInteger getClusterIDCounter() {
+		return clusterIDCounter;
+	}
 
 	/**
 	 * List of articles in its cluster.
@@ -122,7 +132,7 @@ public class ReCiterCluster {
 							&& !author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
 						//					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName())) {
 						matchingCoauthorCount += 1;
-
+//						System.out.println("Matched on coauthor: " + currentAuthor.getAuthorName() + " -- " + author.getAuthorName());
 						if (debug) {
 							slf4jLogger.info("Matched on coauthor: " + currentAuthor.getAuthorName() + " -- " + author.getAuthorName());
 						}
@@ -150,7 +160,7 @@ public class ReCiterCluster {
 	}
 
 	public ReCiterCluster() {
-		clusterID = hashCode();
+		clusterID = clusterIDCounter.incrementAndGet();
 		articleCluster = new ArrayList<ReCiterArticle>();
 	}
 

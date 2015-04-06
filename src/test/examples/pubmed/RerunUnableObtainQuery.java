@@ -14,6 +14,6 @@ package test.examples.pubmed;
 public class RerunUnableObtainQuery {
 
 	public static void main(String[] args) {
-		
+		System.out.println("to be implemented...");
 	}
 }

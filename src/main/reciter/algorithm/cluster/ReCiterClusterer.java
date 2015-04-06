@@ -21,12 +21,17 @@ import org.slf4j.LoggerFactory;
  * @author jil3004
  *
  */
-public class ReCiterClusterer {
+public class ReCiterClusterer implements Clusterer {
 
 	/**
 	 * Debug boolean.
 	 */
 	private boolean debug = false;
+
+	/**
+	 * CSV boolean
+	 */
+	private boolean debugCSV = true;
 
 	/**
 	 * Logger.
@@ -78,17 +83,20 @@ public class ReCiterClusterer {
 	}
 
 	public void cluster(double similarityThreshold, double incrementer, Analysis analysis) {
-		
+
 		double overallHighestPrecision = -1;
 		double overallHighestRecall = -1;
 		double overallAvgPrecRecall = -1;
 		double bestSimThreshold = -1;
 		for (; similarityThreshold < 1.0; similarityThreshold += incrementer) {
-			
-			System.out.println("Similarity Threshold: " + similarityThreshold);
+			finalCluster.clear(); // forgot to clear this: now similarity threshold should work.
+			// reset counter.
+			ReCiterCluster.getClusterIDCounter().set(0);
+			slf4jLogger.info("Similarity Threshold: " + similarityThreshold);
 			this.similarityThreshold = similarityThreshold;
-			cluster();
 			
+			cluster();
+
 			double highestPrecision = -1;
 			double highestRecall = -1;
 			double highestAvgPrecRecall = -1;
@@ -115,7 +123,7 @@ public class ReCiterClusterer {
 					slf4jLogger.info("Recall: " + recall);
 				}
 			}
-			
+
 			if (highestPrecision > overallHighestPrecision) {
 				overallHighestPrecision = highestPrecision;
 			}
@@ -126,14 +134,15 @@ public class ReCiterClusterer {
 				overallAvgPrecRecall = highestAvgPrecRecall;
 				bestSimThreshold = similarityThreshold; // overall best similarity threshold is based on best highest average precision and recall.
 			}
-			System.out.println("Highest Precision: " + highestPrecision);
-			System.out.println("Highest Recall: " + highestRecall);
-			System.out.println("Highest (Precision + Recall) / 2: " + highestAvgPrecRecall);
+			slf4jLogger.info("Highest Precision: " + highestPrecision);
+			slf4jLogger.info("Highest Recall: " + highestRecall);
+			slf4jLogger.info("Highest (Precision + Recall) / 2: " + highestAvgPrecRecall);
+
 		}
-		System.out.println("Note: overall best similarity threshold is based on best highest average precision and recall.");
-		System.out.println("Overall Best Precision: " + overallHighestPrecision);
-		System.out.println("Overall Best Recall: " + overallHighestRecall);
-		System.out.println("Overall Best (Precision + Recall) / 2: " + overallAvgPrecRecall + " with similarity threshold=" + bestSimThreshold);
+		slf4jLogger.info("Note: overall best similarity threshold is based on best highest average precision and recall.");
+		slf4jLogger.info("Overall Best Precision: " + overallHighestPrecision);
+		slf4jLogger.info("Overall Best Recall: " + overallHighestRecall);
+		slf4jLogger.info("Overall Best (Precision + Recall) / 2: " + overallAvgPrecRecall + " with similarity threshold=" + bestSimThreshold);
 	}
 
 	/**
@@ -197,19 +206,22 @@ public class ReCiterClusterer {
 	 * @param targetAuthor
 	 */
 	public void cluster() {
+		
 		ReCiterCluster firstCluster = new ReCiterCluster();
 		ReCiterArticle first = articleList.get(0);
+		slf4jLogger.info("Number of articles to be clustered: " + articleList.size()); // delete
 		if (debug) {
 			slf4jLogger.info("Number of articles to be clustered: " + articleList.size());
 			slf4jLogger.info("First article: " + first);
 		}
 		firstCluster.add(first);
+		if (debugCSV) {
+			slf4jLogger.info(firstCluster.getClusterID() + ", " + first.toCSV());
+		}
 		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 		for (int i = 1; i < articleList.size(); i++) {
 			ReCiterArticle article = articleList.get(i);
-			if (debug) {
-				slf4jLogger.info("Assigning article id " + article.getArticleID());
-			}
+
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				if (debug) {
@@ -219,8 +231,14 @@ public class ReCiterClusterer {
 				ReCiterCluster newCluster = new ReCiterCluster();
 				newCluster.add(article);
 				finalCluster.put(newCluster.getClusterID(), newCluster);
+				if (debugCSV) {
+					slf4jLogger.info(newCluster.getClusterID() + ", " + article.toCSV());
+				}
 			} else {
 				finalCluster.get(selection).add(article);
+				if (debugCSV) {
+					slf4jLogger.info(selection + ", " + article.toCSV());
+				}
 			}
 		}
 	}
@@ -267,6 +285,7 @@ public class ReCiterClusterer {
 		// If groups have no matching co-authors, the group with the highest 
 		// matching (cosine) score is selected, provided that the score
 		// exceeds a given threshold.
+//		System.out.println("Using similarity threshold");
 		return getIdWithMostContentSimilarity(finalCluster.keySet(), currentArticle);
 	}
 
@@ -281,7 +300,9 @@ public class ReCiterClusterer {
 		int currentMaxId = -1;
 		for (int id : clusterIdList) {
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
+//			System.out.println("Similarity article " + currentArticle.getArticleID() + " to cluster: " + id + " score: " + sim);
 			if (selectingTarget) {
+//				System.out.println("Cosine similarity between target and cluster " + id + ": score=" + sim);
 				if (debug) {
 					slf4jLogger.info("Cosine similarity between target and cluster " + id + ": score=" + sim);
 				}
@@ -292,7 +313,9 @@ public class ReCiterClusterer {
 					//					System.out.println("Calculating cosine similarity in ReCiterClusterer.java " + id + ": " + sim);
 				}
 			} else if (sim > similarityThreshold && sim > currentMax) {
+				
 				if (debug) {
+					
 					slf4jLogger.info("Similarity article " + currentArticle.getArticleID() + " to cluster: " + id + " score: " + sim);
 					slf4jLogger.info(finalCluster.get(id).toString());
 				}
@@ -370,6 +393,12 @@ public class ReCiterClusterer {
 			sb.append("}\n");
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public void cluster(List<ReCiterArticle> reciterArticleList) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

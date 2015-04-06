@@ -29,6 +29,8 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 		File dir = new File(getDirectory() + directoryName);
 		if (!dir.exists()) {
 			dir.mkdir();
+		} else {
+			return 0;
 		}
 		try {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream()));

@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuthorName {
 
@@ -14,6 +16,8 @@ public class AuthorName {
 	private final String lastName;
 	private Set<AuthorName> nameVariants;
 
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(AuthorName.class);	
+	
 	public AuthorName(String firstName, String middleName, String lastName) {
 		this.firstName = StringUtils.capitalize(StringUtils.lowerCase(firstName));
 		this.middleName = StringUtils.capitalize(StringUtils.lowerCase(middleName));
@@ -22,24 +26,34 @@ public class AuthorName {
 		middleInitial = StringUtils.substring(this.middleName, 0, 1);
 	}
 
+	public String getCSVFormat() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(StringUtils.stripAccents(firstName));
+		sb.append(" ");
+		sb.append(StringUtils.stripAccents(middleName));
+		sb.append(" ");
+		sb.append(lastName);
+		return sb.toString();
+	}
+	
 	public String getLuceneIndexableFormat() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("first_name_");
-		sb.append(firstName);
+		sb.append(StringUtils.stripAccents(firstName));
 		sb.append(" middle_name_");
-		sb.append(middleName);
+		sb.append(StringUtils.stripAccents(middleName));
 		sb.append(" last_name_");
 		sb.append(lastName);
 		return sb.toString();
 	}
 
 	public static AuthorName deFormatLucene(String luceneFormat) {
-		int lastNameIdx = luceneFormat.indexOf(" last_name_");
 		int middleNameIdx = luceneFormat.indexOf(" middle_name_");
+		int lastNameIdx = luceneFormat.indexOf(" last_name_");
 
-		String firstName = luceneFormat.substring("first_name_".length(), lastNameIdx);		
-		String middleName = luceneFormat.substring(" last_name_".length() + lastNameIdx, middleNameIdx);
-		String lastName = luceneFormat.substring(" middle_name_".length() + middleNameIdx, luceneFormat.length() - 1);
+		String firstName = luceneFormat.substring("first_name_".length(), middleNameIdx);		
+		String middleName = luceneFormat.substring(" middle_name_".length() + middleNameIdx, lastNameIdx);
+		String lastName = luceneFormat.substring(" last_name_".length() + lastNameIdx, luceneFormat.length() - 1);
 
 		// Check if name is null indexed, assign to null.
 		if (firstName.equals("null")) {
@@ -60,8 +74,8 @@ public class AuthorName {
 		} else {
 			lastName = StringUtils.capitalize(lastName);
 		}
-		
-		return new AuthorName(firstName, middleName, lastName);
+
+		return new AuthorName(firstName, middleName, lastName); 
 	}
 
 	/**
@@ -80,7 +94,7 @@ public class AuthorName {
 			throw new IllegalArgumentException("Last name is null.");
 		}
 		if (StringUtils.length(getFirstInitial()) == 0) {
-			System.out.println("Only last name provided.");
+			slf4jLogger.info("Only last name provided to be searched.");
 			return getLastName();
 		} else {
 			return getLastName() + "%20" + getFirstInitial();

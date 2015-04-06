@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import main.database.dao.ArticleDao;
@@ -17,10 +16,8 @@ import main.reciter.lucene.DocumentTranslator;
 import main.reciter.model.article.ReCiterArticle;
 import main.reciter.model.author.AuthorAffiliation;
 import main.reciter.model.author.AuthorName;
-import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.model.author.TargetAuthor;
 import main.reciter.utils.Analysis;
-import main.reciter.utils.InputCsvParser;
 import main.reciter.utils.ReCiterConfigProperty;
 import main.xml.pubmed.PubmedXmlFetcher;
 import main.xml.pubmed.model.MedlineCitationArticleAuthor;
@@ -51,7 +48,7 @@ public class ReCiterExample {
 		
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
-		System.out.println("Total execution time: " + elapsedTime + " ms.");
+		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
 	}
 
 	/**
@@ -140,6 +137,6 @@ public class ReCiterExample {
 		Set<Integer> pmidSet = articleDao.getPmidList(cwid);
 
 		Analysis analysis = new Analysis(pmidSet);
-		reCiterClusterer.cluster(0.1, 0.1, analysis);	
+		reCiterClusterer.cluster(0.1, 0.1, analysis);
 	}
 }

@@ -7,17 +7,17 @@ import main.reciter.model.article.ReCiterArticle;
 public class MaxCosineSimilarity extends AbstractCosineSimilarity {
 
 	private DocumentVectorType maxSimilarityType;
-	
+
 	@Override
 	public double documentSimilarity(ReCiterArticle docA, ReCiterArticle docB) {
 		double max = -1;
 		for (DocumentVectorType type : DocumentVectorType.values()) {
-//			if (type != DocumentVectorEnum.PMID) {
-				if (type == DocumentVectorType.AFFILIATION) {
+			//			if (type != DocumentVectorEnum.PMID) {
+			if (type == DocumentVectorType.AFFILIATION) {
 				DocumentVector docV1 = docA.getDocumentVectors().get(type);
 				DocumentVector docV2 = docB.getDocumentVectors().get(type);
 				double sim = cosineSim(docV1, docV2);
-				
+//				System.out.println("Sim " + docA.getArticleID() + ", " + docB.getArticleID() + ": " + sim);
 				if (sim > max) {
 					maxSimilarityType = type;
 					max = sim;

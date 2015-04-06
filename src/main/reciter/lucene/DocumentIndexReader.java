@@ -9,6 +9,9 @@ import java.util.Map;
 
 import main.reciter.model.article.ReCiterArticle;
 import main.reciter.model.article.ReCiterArticleCoAuthors;
+import main.reciter.model.article.ReCiterArticleKeywords;
+import main.reciter.model.article.ReCiterArticleTitle;
+import main.reciter.model.article.ReCiterJournal;
 import main.reciter.model.author.AuthorName;
 import main.reciter.model.author.ReCiterAuthor;
 
@@ -36,7 +39,7 @@ public class DocumentIndexReader {
 	}
 	
 	public List<ReCiterArticle> readIndex(String cwid) {
-		slf4jLogger.info("Reading index ...");
+		slf4jLogger.info("Reading Lucene index for " + cwid);
 		List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
 		try {
 			
@@ -75,6 +78,52 @@ public class DocumentIndexReader {
 				// Create a new ReCiterDocument.
 				ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid)); // set PMID.
 
+				// Get title of current article.
+				Terms titleVector = null;
+				titleVector = indexReader.getTermVector(i, DocumentVectorType.ARTICLE_TITLE_UNTOKENIZED.name());
+				String title = null;
+				TermsEnum titleTermsEnum = null;
+				if (titleVector != null) {
+					titleTermsEnum = titleVector.iterator(titleTermsEnum);
+					BytesRef text = null;
+					while ((text = titleTermsEnum.next()) != null) {
+						title = text.utf8ToString();
+					}
+				}
+				reCiterArticle.setArticleTitle(new ReCiterArticleTitle(title));
+				
+				// Get journal title of current article.
+				Terms journalVector = null;
+				journalVector = indexReader.getTermVector(i, DocumentVectorType.JOURNAL_TITLE_UNTOKENIZED.name());
+				String journalTitle = null;
+				TermsEnum journalTitleTermsEnum = null;
+				if (journalVector != null) {
+					journalTitleTermsEnum = journalVector.iterator(journalTitleTermsEnum);
+					BytesRef text = null;
+					while ((text = journalTitleTermsEnum.next()) != null) {
+						journalTitle = text.utf8ToString();
+					}
+				}
+				reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
+				
+				// Get keywords of the current article.
+				Terms keywordVector = null;
+				keywordVector = indexReader.getTermVector(i, DocumentVectorType.KEYWORD_UNTOKENIZED.name());
+				String keyword = null;
+				TermsEnum keywordTermsEnum = null;
+				if (keywordVector != null) {
+					keywordTermsEnum = keywordVector.iterator(keywordTermsEnum);
+					BytesRef text = null;
+					while ((text = keywordTermsEnum.next()) != null) {
+						keyword = text.utf8ToString();
+					}
+				}
+				reCiterArticle.setArticleKeywords(new ReCiterArticleKeywords());
+				String[] keywordArray = keyword.split(",");
+				for (String mesh : keywordArray) {
+					reCiterArticle.getArticleKeywords().addKeyword(mesh);
+				}
+				
 				DocumentVector[] docVectorArray;
 				docVectorArray = docVectorGenerator.getDocumentVectors(indexReader, i, documentTerms);
 				DocumentVector docV0 = docVectorArray[0];

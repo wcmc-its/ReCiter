@@ -8,10 +8,10 @@ import main.reciter.model.article.ReCiterArticle;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.document.StringField;
 
 public class DocumentTranslator {
-	
+
 	public static List<Document> translateAll(List<ReCiterArticle> reCiterArticleList) {
 		List<Document> documentList = new ArrayList<Document>();
 		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
@@ -19,67 +19,93 @@ public class DocumentTranslator {
 		}
 		return documentList;
 	}
-	
+
 	/**
 	 * Converts a ReCiterArticle to a Lucene Document.
 	 * @param reCiterArticle a ReCiterArticle object.
 	 * @return a Lucene Document which contains Fields corresponding to the fields of the ReCiterArticle object.
 	 */
 	public static Document translate(ReCiterArticle reCiterArticle) {
-		
-		// Declare FieldType for a Field object.
-		FieldType fieldType = new FieldType();
-		fieldType.setIndexed(true);
-		fieldType.setStored(true);
-		fieldType.setStoreTermVectors(true);
-		fieldType.setTokenized(true);
-		fieldType.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-		
+
 		// Create a new Lucene Document.
 		Document document = new Document();
+
+		// Untokenized FieldType
+		FieldType untokenizedFieldType = new FieldType(StringField.TYPE_STORED);
+		untokenizedFieldType.setStoreTermVectors(true); // need to keep this b/c it stores the vector?
 		
+		// Tokenized FieldType.
+		FieldType tokenizedFieldType = new FieldType();
+		tokenizedFieldType.setIndexed(true);
+		tokenizedFieldType.setStored(true);
+		tokenizedFieldType.setStoreTermVectors(true);
+		tokenizedFieldType.setOmitNorms(false);
+
 		// Add PMID field.
-		document.add(new Field(DocumentVectorType.PMID.name(), Integer.toString(reCiterArticle.getArticleID()), fieldType));
-		
+		document.add(new Field(DocumentVectorType.PMID.name(), Integer.toString(reCiterArticle.getArticleID()), tokenizedFieldType));
+
+		// Add article title field.
+		if (reCiterArticle.getArticleTitle() != null) {
+			
+			// Untokenized. ie: title is not split by whitespace, but kept as an entire string.
+		    document.add(new Field(DocumentVectorType.ARTICLE_TITLE_UNTOKENIZED.name(), reCiterArticle.getArticleTitle().getTitle(), untokenizedFieldType));
+		    
+		    // Tokenized.
+		    document.add(new Field(DocumentVectorType.ARTICLE_TITLE.name(), reCiterArticle.getArticleTitle().getTitle(), tokenizedFieldType));
+		}
+
+		// Add journal title field.
+		if (reCiterArticle.getJournal() != null) {
+			
+			// Untokenized.
+			document.add(new Field(DocumentVectorType.JOURNAL_TITLE_UNTOKENIZED.name(), reCiterArticle.getJournal().getJournalTitle(), untokenizedFieldType));
+			
+			// Tokenized.
+			document.add(new Field(DocumentVectorType.JOURNAL_TITLE.name(), reCiterArticle.getJournal().getJournalTitle(), tokenizedFieldType));
+		}
+
+		// Add keywords field. (Tokenized) Stored as keywords separated by space.
+		if (reCiterArticle.getArticleKeywords() != null) {
+			
+			// Untokenized.
+			document.add(new Field(DocumentVectorType.KEYWORD_UNTOKENIZED.name(), reCiterArticle.getArticleKeywords().getCommaConcatForm(), untokenizedFieldType));
+			
+			// Tokenized.
+			document.add(new Field(DocumentVectorType.KEYWORD.name(), reCiterArticle.getArticleKeywords().getConcatForm(), tokenizedFieldType));
+		}
+
 		// Add Author field.
 		if (reCiterArticle.getArticleCoAuthors() != null) {
 			int numAuthors = reCiterArticle.getArticleCoAuthors().getNumberCoAuthors();
-			document.add(new Field(DocumentVectorType.AUTHOR_SIZE.name(), Integer.toString(numAuthors), fieldType));
-			
+			document.add(new Field(DocumentVectorType.AUTHOR_SIZE.name(), Integer.toString(numAuthors), tokenizedFieldType));
+
 			for (int i = 0; i < numAuthors; i++) {
-				// Field names are incremented by "_i":
+				// Author Field names are incremented by "_i" for each author in the article.
 				String indexableName = reCiterArticle.getArticleCoAuthors().getCoAuthors().get(i).getAuthorName().getLuceneIndexableFormat();
-				document.add(new Field(DocumentVectorType.AUTHOR.name() + "_" + i, indexableName, fieldType));
+				document.add(new Field(DocumentVectorType.AUTHOR.name() + "_" + i, indexableName, untokenizedFieldType));
 			}
-		}
-		
-		// Add article title field.
-		if (reCiterArticle.getArticleTitle() != null) {
-			Field field = new Field(DocumentVectorType.ARTICLE_TITLE.name(), reCiterArticle.getArticleTitle().getTitle(), fieldType);
-			document.add(field);
-		}
-		
-		// Add journal title field.
-		if (reCiterArticle.getJournal() != null) {
-			Field field = new Field(DocumentVectorType.JOURNAL_TITLE.name(), reCiterArticle.getJournal().getJournalTitle(), fieldType);
-			document.add(field);
-		}
-		
-		// Add keywords field.
-		if (reCiterArticle.getArticleKeywords() != null) {
-			Field field = new Field(DocumentVectorType.KEYWORD.name(), reCiterArticle.getArticleKeywords().getConcatForm(), fieldType);
-			document.add(field);
 		}
 		
 		// Add affiliations field.
 		if (reCiterArticle.getArticleCoAuthors() != null) {
 			String concat = reCiterArticle.getArticleCoAuthors().getAffiliationConcatForm();
 			if (concat.length() != 0) {
-				Field field = new Field(DocumentVectorType.AFFILIATION.name(), reCiterArticle.getArticleCoAuthors().getAffiliationConcatForm(), fieldType);
-				document.add(field);
+				document.add(new Field(DocumentVectorType.AFFILIATION.name(), concat, tokenizedFieldType));
 			}
 		}
-		
+
 		return document;
 	}
 }
+
+//fieldType.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+
+//ft.setTokenized(false);
+//ft.setStored(true);
+//ft.setIndexed(true);
+
+//FieldType ftNA = new FieldType(StringField.TYPE_STORED);
+//ftNA.setTokenized(true);
+//ftNA.setStored(true);
+//StringField stringField = new StringField(DocumentVectorType.ARTICLE_TITLE.name(), reCiterArticle.getArticleTitle().getTitle(), Field.Store.YES);
+//			document.add(stringField);

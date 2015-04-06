@@ -4,10 +4,15 @@ import java.util.Map.Entry;
 
 import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.utils.InputCsvParser;
-import main.xml.scopus.ScopusXmlFetcher;
+import main.xml.pubmed.PubmedXmlFetcher;
 
-public class RetrieveScopusPublication {
-	
+/**
+ * Retrieve all publications in "cwid_test.data.csv".
+ * @author jil3004
+ *
+ */
+public class RetrievePublication {
+
 	public static void main(String[] args) throws InterruptedException {
 		InputCsvParser parser = new InputCsvParser();
 		int i = 1;
@@ -18,8 +23,8 @@ public class RetrieveScopusPublication {
 			i++;
 			String firstName = author.getAuthorName().getFirstName();
 			String lastName = author.getAuthorName().getLastName();
-			ScopusXmlFetcher fetcher = new ScopusXmlFetcher();
-			fetcher.fetch(lastName, firstName, cwid);
+			PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
+			pubmedXmlFetcher.fetch(lastName, firstName, cwid);
 		}
 	}
 }
