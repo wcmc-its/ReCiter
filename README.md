@@ -15,7 +15,7 @@
 
 ## MySQL Setup
 1. To connect to the VIVO MySQL database.
-2. Change the following in *DbConnectionFactory.java*.
+2. Change the following in *main/database/DbConnectionFactory.java*.
 ```
 	private static final String URL = "jdbc:mysql://localhost/reciter?rewriteBatchedStatements=true";
 	private static final String USER = "root";
@@ -36,7 +36,7 @@ To the following:
 ## Running ReCiter
 1. To run ReCiter for a specific person.
 2. Edit *config.properties*.
-3. Run *ReCiterExample.java*.
+3. Run *src/test/examples/pubmed/ReCiterExample.java*.
 
 
 
