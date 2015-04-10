@@ -1,17 +1,15 @@
 # ReCiter
 
 ## Eclipse Setup
-1. Download a zip version of the ReCiter.
-2. Create a Java Project in Eclipse named "ReCiter."
-3. Unzip the downloaded ReCiter.
-4. Copy existing files into ReCiter workspace in Eclipse.
-5. Right Click "ReCiter" project in Eclipse.
-6. Select "Configure."
-7. Select "Convert to Maven Project."
-8. Right Click "ReCiter."
-9. Select "Build Path."
-10. Select "Add Library."
-11. Add "JUnit" library.
+1. Create a folder in your local development directory and name it "ReCiter"
+2. Download a zip version of ReCiter and unzip it to your local "ReCiter" folder
+3. If you have Maven installed, open a terminal window, navigate to the ReCiter folder location, and type mvn install; (if not, you can convert to Maven via Eclipse in Step 6, below).
+4. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
+5. If you did not do a Maven install from the command line in Step 3, right-click the "ReCiter" project in Eclipse, select "Configure", then select "Convert to Maven Project."
+6. Right-click "ReCiter"
+9. Select "Build Path"
+10. Select "Add Library"
+11. Add "JUnit" library
 
 ## MySQL Setup
 1. To connect to the VIVO MySQL database.
