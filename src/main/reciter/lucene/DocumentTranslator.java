@@ -92,6 +92,11 @@ public class DocumentTranslator {
 			if (concat.length() != 0) {
 				document.add(new Field(DocumentVectorType.AFFILIATION.name(), concat, tokenizedFieldType));
 			}
+			
+			String concatFormWithComma = reCiterArticle.getArticleCoAuthors().getAffiliationConcatFormWithComma();
+			if (concatFormWithComma.length() != 0) {
+				document.add(new Field(DocumentVectorType.AFFILIATION_UNTOKENIZED.name(), concatFormWithComma, untokenizedFieldType));
+			}
 		}
 
 		return document;

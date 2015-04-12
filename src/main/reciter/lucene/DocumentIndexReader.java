@@ -143,7 +143,7 @@ public class DocumentIndexReader {
 				// Add the DocumentVector (sparse vectors containing feature data) to this ReCiterDocument.
 				reCiterArticle.setDocumentVectors(map);
 
-				// Read the co-authors.
+				// Read the co-authors. Get the number of coauthors for this article.
 				Terms authorSizeTerms = null;
 				authorSizeTerms = indexReader.getTermVector(i, DocumentVectorType.AUTHOR_SIZE.name());
 				String authorSizeStr = null;
@@ -157,7 +157,7 @@ public class DocumentIndexReader {
 				}
 				int authorSize = Integer.parseInt(authorSizeStr);
 
-				// create new coauthors
+				// Fetch the coauthors (includes parsing the author names).
 				reCiterArticle.setArticleCoAuthors(new ReCiterArticleCoAuthors());
 				for (int j = 0; j < authorSize; j++) {
 					Terms authorNameTerms = null;
@@ -174,6 +174,20 @@ public class DocumentIndexReader {
 					}
 					reCiterArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(AuthorName.deFormatLucene(sb.toString()), null));
 				}
+				
+				// Fetch affiliation.
+				Terms affiliationTerms = null;
+				affiliationTerms = indexReader.getTermVector(i, DocumentVectorType.AFFILIATION_UNTOKENIZED.name());
+				String affiliation = null;
+				TermsEnum affiliationTermsEnum = null;
+				if (affiliationTerms != null) {
+					affiliationTermsEnum = affiliationTerms.iterator(affiliationTermsEnum);
+					BytesRef text = null;
+					while ((text = affiliationTermsEnum.next()) != null) {
+						affiliation = text.utf8ToString(); // affiliation.
+					}
+				}
+				reCiterArticle.setAffiliationConcatenated(affiliation);
 
 				// Add to list.
 				reCiterArticleList.add(reCiterArticle);

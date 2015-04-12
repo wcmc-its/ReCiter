@@ -10,7 +10,6 @@ import java.util.Set;
 
 import main.reciter.algorithm.cluster.model.ReCiterCluster;
 import main.reciter.model.article.ReCiterArticle;
-import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.model.author.TargetAuthor;
 import main.reciter.utils.Analysis;
 import main.reciter.utils.AnalysisObject;

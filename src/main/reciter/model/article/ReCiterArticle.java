@@ -22,6 +22,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private ArticleCompleteness articleCompleteness;
 	private Map<DocumentVectorType, DocumentVector> documentVectors;
 	private DocumentSimilarity documentSimmilarity;
+	private String affiliationConcatenated;
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -154,5 +155,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 				+ ", journal=" + journal + ", articleKeywords="
 				+ articleKeywords + ", completenessScore=" + completenessScore
 				+ "]";
+	}
+
+	public String getAffiliationConcatenated() {
+		return affiliationConcatenated;
+	}
+
+	public void setAffiliationConcatenated(String affiliationConcatenated) {
+		this.affiliationConcatenated = affiliationConcatenated;
 	}
 }

@@ -33,7 +33,7 @@ public class AnalysisCSVWriter {
 			String title = analysisObject.getReCiterArticle().getArticleTitle().getTitle();
 			String journal = analysisObject.getReCiterArticle().getJournal().getJournalTitle();
 			String authors = analysisObject.getReCiterArticle().getArticleCoAuthors().toAuthorCSV();
-//			String affiliation = analysisObject.getReCiterArticle().getArticleCoAuthors().getAffiliationConcatFormWithComma();
+			String affiliation = analysisObject.getReCiterArticle().getAffiliationConcatenated();
 			String keywords = analysisObject.getReCiterArticle().getArticleKeywords().getCommaConcatForm();
 			int clusterId = analysisObject.getClusterId();
 			int numArticles = analysisObject.getNumArticlesInCluster();
@@ -49,7 +49,7 @@ public class AnalysisCSVWriter {
 					title,
 					journal,
 					authors,
-					"",
+					affiliation,
 					keywords,
 					clusterId,
 					numArticles,
