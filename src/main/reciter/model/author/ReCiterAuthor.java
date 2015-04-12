@@ -17,7 +17,7 @@ public class ReCiterAuthor {
 	public AuthorName getAuthorName() {
 		return name;
 	}
-
+	
 	@Override
 	public String toString() {
 		return "ReCiterAuthor [name=" + name + ", affiliation=" + affiliation

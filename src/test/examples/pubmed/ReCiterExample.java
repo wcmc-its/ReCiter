@@ -14,10 +14,14 @@ import main.reciter.lucene.DocumentIndexReader;
 import main.reciter.lucene.DocumentIndexWriter;
 import main.reciter.lucene.DocumentTranslator;
 import main.reciter.model.article.ReCiterArticle;
+import main.reciter.model.article.ReCiterArticleCoAuthors;
 import main.reciter.model.author.AuthorAffiliation;
 import main.reciter.model.author.AuthorName;
+import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.model.author.TargetAuthor;
 import main.reciter.utils.Analysis;
+import main.reciter.utils.AnalysisCSVWriter;
+import main.reciter.utils.AnalysisObject;
 import main.reciter.utils.ReCiterConfigProperty;
 import main.xml.pubmed.PubmedXmlFetcher;
 import main.xml.pubmed.model.MedlineCitationArticleAuthor;
@@ -45,7 +49,7 @@ public class ReCiterExample {
 		// Run ReCiter.
 		ReCiterExample reCiterExample = new ReCiterExample();
 		reCiterExample.runExample(reCiterConfigProperty);
-		
+
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
@@ -65,13 +69,21 @@ public class ReCiterExample {
 		String affiliation = reCiterConfigProperty.getAuthorAffiliation();
 		String firstInitial = firstName.substring(0, 1);
 		String cwid = reCiterConfigProperty.getCwid();
-		
+
+		// Define Singleton target author.
+		TargetAuthor.init(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation));
+		ReCiterArticle targetAuthorArticle = new ReCiterArticle(-1);
+		targetAuthorArticle.setArticleCoAuthors(new ReCiterArticleCoAuthors());
+		targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation)));		
+
 		// Try reading from Lucene Index:
 		DocumentIndexReader documentIndexReader = new DocumentIndexReader();
 
 		// Lucene Index doesn't contain this cwid's files.
 		if (!documentIndexReader.isIndexed(cwid)) {
-
+			
+			slf4jLogger.debug("index...");
+			
 			// Retrieve the PubMed articles for this cwid if the articles have not been retrieved yet. 
 			PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 			pubmedXmlFetcher.setPerformRetrievePublication(reCiterConfigProperty.isPerformRetrievePublication());
@@ -108,6 +120,9 @@ public class ReCiterExample {
 			// Convert PubmedArticle to ReCiterArticle.
 			List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);
 
+			// Add TargetAuthor Article:
+			reCiterArticleList.add(targetAuthorArticle);
+
 			// Convert ReCiterArticle to Lucene Document
 			List<Document> luceneDocumentList = DocumentTranslator.translateAll(reCiterArticleList);
 
@@ -122,15 +137,31 @@ public class ReCiterExample {
 
 		// Run the Clustering algorithm.
 
-		// Define Singleton target author.
-		TargetAuthor.init(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation));
+		// Filter the targetAuthorArticle (find by article id = -1).
+		ReCiterArticle targetAuthorArticleIndexed = null;
+		List<ReCiterArticle> filteredArticleList = new ArrayList<ReCiterArticle>();
 
+		for (ReCiterArticle article : reCiterArticleList) {
+			if (article.getArticleID() == -1) {
+				targetAuthorArticleIndexed = article;
+			} else {
+				filteredArticleList.add(article);
+			}
+		}
+
+		// clear unfiltered list.
+		reCiterArticleList.clear();
+		reCiterArticleList = null;
+
+		// Set the indexed article for target author.
+		TargetAuthor.getInstance().setTargetAuthorArticleIndexed(targetAuthorArticleIndexed);
+		
 		// Sort articles on completeness score.
-		Collections.sort(reCiterArticleList);
+		Collections.sort(filteredArticleList);
 
 		// Cluster.
 		ReCiterClusterer reCiterClusterer = new ReCiterClusterer();
-		reCiterClusterer.setArticleList(reCiterArticleList);
+		reCiterClusterer.setArticleList(filteredArticleList);
 
 		// Report results.
 		ArticleDao articleDao = new ArticleDao();
@@ -138,5 +169,14 @@ public class ReCiterExample {
 
 		Analysis analysis = new Analysis(pmidSet);
 		reCiterClusterer.cluster(0.1, 0.1, analysis);
+		
+		// Write to CSV.
+		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
+		try {
+			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

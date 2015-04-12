@@ -28,40 +28,41 @@ public class DocumentIndexReader {
 
 	private IndexReader indexReader;
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(DocumentIndexReader.class);	
-	
+
 	/**
 	 * Check whether this cwid has been indexed before.
 	 * @param cwid cwid of the researcher.
 	 * @return <code>true</code> if the cwid has been indexed, false otherwise.
 	 */
 	public boolean isIndexed(String cwid) {
-		return new File(DocumentIndexWriter.DIR_PATH + cwid).isDirectory();
+		//		return new File(DocumentIndexWriter.DIR_PATH + cwid).isDirectory();
+		return false; // April 12 Update - Set to false so that Target Author can be indexed as well.
 	}
-	
+
 	public List<ReCiterArticle> readIndex(String cwid) {
 		slf4jLogger.info("Reading Lucene index for " + cwid);
 		List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
 		try {
-			
+
 			// Create directory if the directory cwid doesn't exist.
 			File newFile = new File(DocumentIndexWriter.DIR_PATH + cwid);
 			if (!newFile.exists()) {
 				slf4jLogger.info(DocumentIndexWriter.DIR_PATH + cwid + " directory doesn't exist.");
-//				newFile.mkdir();
+				//				newFile.mkdir();
 			}
-			
+
 			// Open the IndexReader.
 			setIndexReader(DirectoryReader.open(FSDirectory.open(newFile)));
-			
+
 			// Initialize all the document terms (for Sparse vector index).
 			DocumentTerm documentTerms = new DocumentTerm();
 			documentTerms.initAllTerms(indexReader);
-			
+
 			DocumentVectorGenerator docVectorGenerator = new DocumentVectorGenerator();
-			
+
 			// Read the indexed files into a ReCiterDocument.
 			for (int i = 0; i < indexReader.maxDoc(); i++) {
-				
+
 				// Get PMID of current article.
 				Terms idVector = null;
 				idVector = indexReader.getTermVector(i, DocumentVectorType.PMID.name());
@@ -74,7 +75,7 @@ public class DocumentIndexReader {
 						pmid = text.utf8ToString(); // got PMID!
 					}
 				}
-				
+
 				// Create a new ReCiterDocument.
 				ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid)); // set PMID.
 
@@ -91,7 +92,7 @@ public class DocumentIndexReader {
 					}
 				}
 				reCiterArticle.setArticleTitle(new ReCiterArticleTitle(title));
-				
+
 				// Get journal title of current article.
 				Terms journalVector = null;
 				journalVector = indexReader.getTermVector(i, DocumentVectorType.JOURNAL_TITLE_UNTOKENIZED.name());
@@ -105,7 +106,7 @@ public class DocumentIndexReader {
 					}
 				}
 				reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
-				
+
 				// Get keywords of the current article.
 				Terms keywordVector = null;
 				keywordVector = indexReader.getTermVector(i, DocumentVectorType.KEYWORD_UNTOKENIZED.name());
@@ -119,11 +120,13 @@ public class DocumentIndexReader {
 					}
 				}
 				reCiterArticle.setArticleKeywords(new ReCiterArticleKeywords());
-				String[] keywordArray = keyword.split(",");
-				for (String mesh : keywordArray) {
-					reCiterArticle.getArticleKeywords().addKeyword(mesh);
+
+				if (keyword != null) {
+					String[] keywordArray = keyword.split(",");
+					for (String mesh : keywordArray) {
+						reCiterArticle.getArticleKeywords().addKeyword(mesh);
+					}
 				}
-				
 				DocumentVector[] docVectorArray;
 				docVectorArray = docVectorGenerator.getDocumentVectors(indexReader, i, documentTerms);
 				DocumentVector docV0 = docVectorArray[0];
@@ -136,10 +139,10 @@ public class DocumentIndexReader {
 				map.put(DocumentVectorType.ARTICLE_TITLE, docV1);
 				map.put(DocumentVectorType.JOURNAL_TITLE, docV2);
 				map.put(DocumentVectorType.KEYWORD, docV3);
-				
+
 				// Add the DocumentVector (sparse vectors containing feature data) to this ReCiterDocument.
 				reCiterArticle.setDocumentVectors(map);
-				
+
 				// Read the co-authors.
 				Terms authorSizeTerms = null;
 				authorSizeTerms = indexReader.getTermVector(i, DocumentVectorType.AUTHOR_SIZE.name());
@@ -153,7 +156,7 @@ public class DocumentIndexReader {
 					}
 				}
 				int authorSize = Integer.parseInt(authorSizeStr);
-				
+
 				// create new coauthors
 				reCiterArticle.setArticleCoAuthors(new ReCiterArticleCoAuthors());
 				for (int j = 0; j < authorSize; j++) {
@@ -171,7 +174,7 @@ public class DocumentIndexReader {
 					}
 					reCiterArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(AuthorName.deFormatLucene(sb.toString()), null));
 				}
-				
+
 				// Add to list.
 				reCiterArticleList.add(reCiterArticle);
 			}

@@ -12,7 +12,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-public class InputCsvParser {
+public class AnalysisCSVParser {
 
 	public Map<String, ReCiterAuthor> parse(String fileName) {
 		Map<String, ReCiterAuthor> cwidToAuthor = new HashMap<String, ReCiterAuthor>();

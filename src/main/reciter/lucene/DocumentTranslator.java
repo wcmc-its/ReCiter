@@ -42,7 +42,7 @@ public class DocumentTranslator {
 		tokenizedFieldType.setOmitNorms(false);
 
 		// Add PMID field.
-		document.add(new Field(DocumentVectorType.PMID.name(), Integer.toString(reCiterArticle.getArticleID()), tokenizedFieldType));
+		document.add(new Field(DocumentVectorType.PMID.name(), Integer.toString(reCiterArticle.getArticleID()), untokenizedFieldType));
 
 		// Add article title field.
 		if (reCiterArticle.getArticleTitle() != null) {
@@ -108,4 +108,4 @@ public class DocumentTranslator {
 //ftNA.setTokenized(true);
 //ftNA.setStored(true);
 //StringField stringField = new StringField(DocumentVectorType.ARTICLE_TITLE.name(), reCiterArticle.getArticleTitle().getTitle(), Field.Store.YES);
-//			document.add(stringField);
+//document.add(stringField);
