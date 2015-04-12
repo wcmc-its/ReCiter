@@ -13,6 +13,7 @@ public class DocumentVectorGenerator {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(DocumentVectorGenerator.class);	
 
+	private static boolean debug = false;
 	/**
 	 * Creates a DocumentVector for a specific field of a ReCiterArticle.
 	 * 
@@ -54,7 +55,9 @@ public class DocumentVectorGenerator {
 			}
 			documentVector.setVector(documentVector.getDocumentVectorSimilarity().normalize(documentVector.getVector()));
 		} else {
-			slf4jLogger.info("VectorGenerator cannot read field type: " + documentVectorType);
+			if (debug) {
+				slf4jLogger.debug("VectorGenerator cannot read field type: " + documentVectorType);
+			}
 		}
 		return documentVector;
 	}

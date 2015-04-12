@@ -33,7 +33,7 @@ public class ReCiterClusterer implements Clusterer {
 	/**
 	 * CSV boolean
 	 */
-	private boolean debugCSV = true;
+	private boolean debugCSV = false;
 
 	/**
 	 * Logger.
@@ -182,18 +182,18 @@ public class ReCiterClusterer implements Clusterer {
 				overallAvgPrecRecall = highestAvgPrecRecall;
 				bestSimThreshold = similarityThreshold; // overall best similarity threshold is based on best highest average precision and recall.
 			}
-			slf4jLogger.info("Highest Precision: " + highestPrecision);
-			slf4jLogger.info("Highest Recall: " + highestRecall);
-			slf4jLogger.info("Highest (Precision + Recall) / 2: " + highestAvgPrecRecall);
+//			slf4jLogger.info("Highest Precision: " + highestPrecision);
+//			slf4jLogger.info("Highest Recall: " + highestRecall);
+//			slf4jLogger.info("Highest (Precision + Recall) / 2: " + highestAvgPrecRecall);
 
 			// Writing to CSV:
 
 
 //		}
-		slf4jLogger.info("Note: overall best similarity threshold is based on best highest average precision and recall.");
-		slf4jLogger.info("Overall Best Precision: " + overallHighestPrecision);
-		slf4jLogger.info("Overall Best Recall: " + overallHighestRecall);
-		slf4jLogger.info("Overall Best (Precision + Recall) / 2: " + overallAvgPrecRecall + " with similarity threshold=" + bestSimThreshold);
+//		slf4jLogger.info("Note: overall best similarity threshold is based on best highest average precision and recall.");
+		slf4jLogger.info("Precision = " + overallHighestPrecision);
+		slf4jLogger.info("Recall = " + overallHighestRecall);
+//		slf4jLogger.info("Overall Best (Precision + Recall) / 2: " + overallAvgPrecRecall + " with similarity threshold=" + bestSimThreshold);
 	}
 
 	/**

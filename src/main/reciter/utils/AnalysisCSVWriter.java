@@ -29,7 +29,7 @@ public class AnalysisCSVWriter {
 		for (AnalysisObject analysisObject : list) {
 			
 			double similarityThreshold = analysisObject.getSimilarityMeasure();
-			int articleId = analysisObject.getClusterId();
+			int articleId = analysisObject.getReCiterArticle().getArticleID();
 			String title = analysisObject.getReCiterArticle().getArticleTitle().getTitle();
 			String journal = analysisObject.getReCiterArticle().getJournal().getJournalTitle();
 			String authors = analysisObject.getReCiterArticle().getArticleCoAuthors().toAuthorCSV();
