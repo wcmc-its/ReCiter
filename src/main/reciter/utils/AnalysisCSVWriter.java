@@ -23,6 +23,7 @@ public class AnalysisCSVWriter {
 		printer.printRecord(
 				"Similarity Threshold", "Article ID", "Title", "Journal", "Authors", 
 				"Affiliations", "Keywords", "Cluster to which the article was assigned", 
+				"Number of articles in the selected cluster",
 				"Cluster ultimately selected in Phase 2 matching",
 				"Status of ReCiter's determination for this article with respect to reference standard");
 		for (AnalysisObject analysisObject : list) {
