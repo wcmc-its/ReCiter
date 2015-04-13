@@ -8,6 +8,9 @@ import java.util.Properties;
 public class ReCiterConfigProperty {
 
 	private String cwid;
+	private String authorKeywords;
+	private String coAuthors;
+	private double similarityThreshold;
 	private String firstName;
 	private String middleName;
 	private String lastName;
@@ -26,6 +29,9 @@ public class ReCiterConfigProperty {
 		prop.load(inputStream);
 
 		setCwid(prop.getProperty("cwid"));
+		setAuthorKeywords(prop.getProperty("authorKeywords"));
+		setCoAuthors(prop.getProperty("coAuthors"));
+		setSimilarityThreshold(Double.parseDouble(prop.getProperty("similarityThreshold")));
 		setFirstName(prop.getProperty("firstName"));
 		setMiddleName(prop.getProperty("middleName"));
 		setLastName(prop.getProperty("lastName"));
@@ -110,6 +116,30 @@ public class ReCiterConfigProperty {
 	}
 	public void setAuthorSimilarityWeight(double authorSimilarityWeight) {
 		this.authorSimilarityWeight = authorSimilarityWeight;
+	}
+
+	public double getSimilarityThreshold() {
+		return similarityThreshold;
+	}
+
+	public void setSimilarityThreshold(double similarityThreshold) {
+		this.similarityThreshold = similarityThreshold;
+	}
+
+	public String getCoAuthors() {
+		return coAuthors;
+	}
+
+	public void setCoAuthors(String coAuthors) {
+		this.coAuthors = coAuthors;
+	}
+
+	public String getAuthorKeywords() {
+		return authorKeywords;
+	}
+
+	public void setAuthorKeywords(String authorKeywords) {
+		this.authorKeywords = authorKeywords;
 	}
 
 

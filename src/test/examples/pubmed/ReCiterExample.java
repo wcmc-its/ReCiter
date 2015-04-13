@@ -15,6 +15,7 @@ import main.reciter.lucene.DocumentIndexWriter;
 import main.reciter.lucene.DocumentTranslator;
 import main.reciter.model.article.ReCiterArticle;
 import main.reciter.model.article.ReCiterArticleCoAuthors;
+import main.reciter.model.article.ReCiterArticleKeywords;
 import main.reciter.model.author.AuthorAffiliation;
 import main.reciter.model.author.AuthorName;
 import main.reciter.model.author.ReCiterAuthor;
@@ -70,20 +71,47 @@ public class ReCiterExample {
 		String firstInitial = firstName.substring(0, 1);
 		String cwid = reCiterConfigProperty.getCwid();
 
+		String authorKeywords = reCiterConfigProperty.getAuthorKeywords();
+		String coAuthors = reCiterConfigProperty.getCoAuthors();
+		double similarityThreshold = reCiterConfigProperty.getSimilarityThreshold();
+
+		String department = reCiterConfigProperty.getAuthorDepartment();
+
 		// Define Singleton target author.
 		TargetAuthor.init(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation));
 		ReCiterArticle targetAuthorArticle = new ReCiterArticle(-1);
 		targetAuthorArticle.setArticleCoAuthors(new ReCiterArticleCoAuthors());
-		targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation)));		
+		targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation + " " + department)));		
 
+		targetAuthorArticle.setArticleKeywords(new ReCiterArticleKeywords());
+		for (String keyword : authorKeywords.split(",")) {
+			targetAuthorArticle.getArticleKeywords().addKeyword(keyword);
+		}
+
+		for (String author : coAuthors.split(",")) {
+			String[] authorArray = author.split(" ");
+
+			if (authorArray.length == 2) {
+				String coAuthorFirstName = authorArray[0];
+				String coAuthorLastName = authorArray[1];
+				targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(coAuthorFirstName, "", coAuthorLastName), new AuthorAffiliation("")));
+			} else if (authorArray.length == 3) {
+				String coAuthorFirstName = authorArray[0];
+				String coAuthorMiddleName = authorArray[1];
+				String coAuthorLastName = authorArray[2];
+				targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(coAuthorFirstName, coAuthorMiddleName, coAuthorLastName), new AuthorAffiliation("")));
+			}
+		}
+		
+		
 		// Try reading from Lucene Index:
 		DocumentIndexReader documentIndexReader = new DocumentIndexReader();
 
 		// Lucene Index doesn't contain this cwid's files.
 		if (!documentIndexReader.isIndexed(cwid)) {
-			
+
 			slf4jLogger.debug("index...");
-			
+
 			// Retrieve the PubMed articles for this cwid if the articles have not been retrieved yet. 
 			PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 			pubmedXmlFetcher.setPerformRetrievePublication(reCiterConfigProperty.isPerformRetrievePublication());
@@ -155,7 +183,7 @@ public class ReCiterExample {
 
 		// Set the indexed article for target author.
 		TargetAuthor.getInstance().setTargetAuthorArticleIndexed(targetAuthorArticleIndexed);
-		
+
 		// Sort articles on completeness score.
 		Collections.sort(filteredArticleList);
 
@@ -168,8 +196,8 @@ public class ReCiterExample {
 		Set<Integer> pmidSet = articleDao.getPmidList(cwid);
 
 		Analysis analysis = new Analysis(pmidSet);
-		reCiterClusterer.cluster(0.1, 0.1, analysis);
-		
+		reCiterClusterer.cluster(similarityThreshold, 0.1, analysis);
+
 		// Write to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
 		try {
