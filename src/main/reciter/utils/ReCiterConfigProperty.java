@@ -22,6 +22,7 @@ public class ReCiterConfigProperty {
 	private double journalSimilarityWeight;
 	private double keywordSimilarityWeight;
 	private double authorSimilarityWeight;
+	private boolean useStemming;
 
 	public void loadProperty(String propertyFileName) throws IOException {
 		Properties prop = new Properties();
@@ -43,6 +44,7 @@ public class ReCiterConfigProperty {
 		setJournalSimilarityWeight(Double.parseDouble(prop.getProperty("journalSimilarityWeight")));
 		setKeywordSimilarityWeight(Double.parseDouble(prop.getProperty("keywordSimilarityWeight")));
 		setAuthorSimilarityWeight(Double.parseDouble(prop.getProperty("authorSimilarityWeight")));
+		setUseStemming(Boolean.parseBoolean("useStemming"));
 	}
 
 	public String getCwid() {
@@ -140,6 +142,14 @@ public class ReCiterConfigProperty {
 
 	public void setAuthorKeywords(String authorKeywords) {
 		this.authorKeywords = authorKeywords;
+	}
+
+	public boolean isUseStemming() {
+		return useStemming;
+	}
+
+	public void setUseStemming(boolean useStemming) {
+		this.useStemming = useStemming;
 	}
 
 

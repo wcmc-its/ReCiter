@@ -22,7 +22,7 @@ public class DocumentIndexWriter {
 	private Analyzer luceneAnalyzer;
 	private IndexWriterConfig luceneIndexWriterConfig;
 	private IndexWriter luceneIndexWriter;
-	private boolean useStopWords;
+	private static boolean useStopWords;
 	
 	protected static final String DIR_PATH = "data/lucene_index/";
 	
@@ -118,12 +118,12 @@ public class DocumentIndexWriter {
 		luceneIndexWriter.close();
 	}
 
-	public boolean isUseStopWords() {
+	public static boolean isUseStopWords() {
 		return useStopWords;
 	}
 
-	public void setUseStopWords(boolean useStopWords) {
-		this.useStopWords = useStopWords;
+	public static void setUseStopWords(boolean useStopWords) {
+		DocumentIndexWriter.useStopWords = useStopWords;
 	}
 
 	public CharArraySet getStopSet() {

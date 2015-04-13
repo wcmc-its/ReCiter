@@ -76,7 +76,9 @@ public class ReCiterExample {
 		double similarityThreshold = reCiterConfigProperty.getSimilarityThreshold();
 
 		String department = reCiterConfigProperty.getAuthorDepartment();
-
+		
+		DocumentIndexWriter.setUseStopWords(reCiterConfigProperty.isUseStemming());
+		
 		// Define Singleton target author.
 		TargetAuthor.init(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation));
 		ReCiterArticle targetAuthorArticle = new ReCiterArticle(-1);
