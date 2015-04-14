@@ -204,9 +204,11 @@ public class ReCiterExample {
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
 		try {
 			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList());
+			analysisCSVWriter.writePythonCSV(AnalysisObject.getAnalysisObjectList());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 	}
 }

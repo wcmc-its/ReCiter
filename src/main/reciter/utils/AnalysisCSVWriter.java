@@ -1,6 +1,5 @@
 package main.reciter.utils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
@@ -16,6 +15,55 @@ public class AnalysisCSVWriter {
 		format = CSVFormat.RFC4180.withHeader().withDelimiter(',');
 	}
 	
+	/**
+	 * Outputs the list of AnalysisObjects to a Python CSV format.
+	 * @param list
+	 * @throws IOException
+	 */
+	public void writePythonCSV(List<AnalysisObject> list) throws IOException {
+		PrintWriter writer = new PrintWriter("csv_python_output.csv", "UTF-8");
+		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
+		
+		printer.printRecord(
+				"Similarity Threshold", "Article ID", "Title", "Journal", "Authors", 
+				"Affiliations", "Keywords",
+				"Status of ReCiter's determination for this article with respect to reference standard");
+		for (AnalysisObject analysisObject : list) {
+			
+			double similarityThreshold = analysisObject.getSimilarityMeasure();
+			int articleId = analysisObject.getReCiterArticle().getArticleID();
+			String title = analysisObject.getReCiterArticle().getArticleTitle().getTitle();
+			String journal = analysisObject.getReCiterArticle().getJournal().getJournalTitle();
+			String authors = analysisObject.getReCiterArticle().getArticleCoAuthors().toAuthorCSV();
+			String affiliation = analysisObject.getReCiterArticle().getAffiliationConcatenated();
+			String keywords = analysisObject.getReCiterArticle().getArticleKeywords().getCommaConcatForm();
+			String status = analysisObject.getStatus();
+			
+			int trueArticle;
+			if ("True Positive".equals(status) || "False Negative".equals(status)) {
+				trueArticle = 1;
+			} else {
+				trueArticle = -1;
+			}
+			printer.printRecord(
+					similarityThreshold,
+					articleId,
+					title,
+					journal,
+					authors,
+					affiliation,
+					keywords,
+					trueArticle);
+		}
+		printer.close();
+		writer.close();
+	}
+	
+	/**
+	 * Outputs the list of AnalysisObjects to a CSV file.
+	 * @param list
+	 * @throws IOException
+	 */
 	public void write(List<AnalysisObject> list) throws IOException {
 		PrintWriter writer = new PrintWriter("csv_output.csv", "UTF-8");
 		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
@@ -57,24 +105,6 @@ public class AnalysisCSVWriter {
 					status);
 		}
 		printer.close();
-		writer.close();
-	}
-//	
-	public static void main(String[] args) throws FileNotFoundException, IOException {
-
-		CSVFormat format = CSVFormat.RFC4180.withHeader().withDelimiter(',');
-		
-		//CSV Write Example using CSVPrinter
-		PrintWriter writer = new PrintWriter("the-file-name.csv", "UTF-8");
-		
-		
-		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
-		printer.printRecord("ID","Name","Role","Salary");
-		printer.printRecord("1", "3", "3", "3");
-		
-		//close the printer
-		printer.close();
-		
 		writer.close();
 	}
 }
