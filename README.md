@@ -36,6 +36,21 @@ To the following:
 2. Edit *config.properties*.
 3. Run *src/test/examples/pubmed/ReCiterExample.java*.
 
+## Components of ReCiter
+The code for ReCiter consists of four main parts: database storage utilities, PubMed retriever and parser, Scopus retriever and parser, and ReCiter algorithm.
+
+## ReCiter constants
+ReCiter constants are as follows
+* cluster threshold similarity
+* target person to cluster
+* cluster threshold value
+* hierarchical agglomerative clustering (HAC) value
+* similarity vectors
+** affiliation
+** co-authors
+** journals
+** keywords
+
 
 
 
