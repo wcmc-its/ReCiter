@@ -36,7 +36,38 @@ To the following:
 2. Edit *config.properties*.
 3. Run *src/test/examples/pubmed/ReCiterExample.java*.
 
+## Components of ReCiter
+The code for ReCiter consists of four main parts: database storage utilities, PubMed retriever and parser, Scopus retriever and parser, and ReCiter algorithm.
 
+## ReCiter constants
+ReCiter constants are as follows
+* cluster threshold similarity
+* target person to cluster
+* cluster threshold value
+* hierarchical agglomerative clustering (HAC) value
+* similarity vectors
+  * affiliation
+  * co-authors
+  * journals
+  * keywords
+
+## ReCiter class descriptions and completeness
+| Class                    | Size in lines of code, as of 3-26-15 | Description                                                                                                                                                                                       | Completeness                 |
+|--------------------------|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------|
+| ArticleCompleteness      | 8                                    | Computes completeness with respect to ReCiterArticle article and ReCiterAuthor target.                                                                                                            | Completed                    |
+| DocumentVectorType       | 11                                   | package main.reciter.lucene;public enum DocumentVectorType { ARTICLE_TITLE, JOURNAL_TITLE, KEYWORD, AFFILIATION, PMID, AUTHOR, AUTHOR_SIZE,}                                                      | Completed.                   |
+| DocumentVectorSimilarity | 12                                   | public interface DocumentVectorSimilarity { SparseRealVector normalize(SparseRealVector sparseRealVector); double similarity(DocumentVector vectorA, DocumentVector vectorB); String getType(); } | Completed.                   |
+| AbstractCosineSimilarity | 16                                   | Abstract class that implements DocumentSimilarity; calculates cosine similarity between two DocumentVectors.                                                                                      | Completed. Requires testing. |
+| AuthorAffiliation        | 18                                   | Getter and setter for author affiliation                                                                                                                                                          | Completed.                   |
+| ReCiterJournal           | 20                                   | ReCiterArticle journal field                                                                                                                                                                      | Completed.                   |
+| Clusterer                | 21                                   | Clusterer interface. Provides a set of functions that must be implemented by any clustering class that implements this interface. Performs a clustering on the list of ReCiterArticles.           | Completed.                   |
+| ReCiterArticleTitle      | 21                                   | ReCiterArticle title field.                                                                                                                                                                       | Completed.                   |
+| ReCiterAuthor            | 26                                   | Defines ReCiterAuthor object consisting of AuthorName and AuthorAffiliation                                                                                                                       | Completed                    |
+| CosineSimilarity         | 30                                   | Calculates cosine similarity between two DocumentVectors.                                                                                                                                         | Completed. Requires testing. |
+| MaxCosineSimilarity      | 33                                   | To be updated                                                                                                                                                                                     | Completed. Requires testing. |
+| ReCiterCompleteness      | 36                                   | Implements ArticleCompleteness; calculates completeness given a ReCiterArticle and ReCiterAuthor                                                                                                  | Completed. Requires testing. |
+| ReCiterArticleCoAuthors  | 49                                   | Defines ReCiterArticleCoAuthors object, an ArrayList of ReCiterAuthor objects                                                                                                                     | Completed.                   |
+| ReCiterArticleKeywords   | 51                                   | Provides methods for handling ReCiter keywords                                                                                                                     | Completed.                   |                                                 
 
 
 
