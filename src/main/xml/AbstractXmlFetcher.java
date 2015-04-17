@@ -24,13 +24,10 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 	 * @param directoryName directory name.
 	 * @throws IOException
 	 */
-	public int saveXml(String url, String directoryName, String fileName) {
-		int result = 0;
+	public void saveXml(String url, String directoryName, String fileName) {
 		File dir = new File(getDirectory() + directoryName);
 		if (!dir.exists()) {
 			dir.mkdir();
-		} else {
-			return 0;
 		}
 		try {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
@@ -46,7 +43,6 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return result;
 	}
 
 	public String getDirectory() {
