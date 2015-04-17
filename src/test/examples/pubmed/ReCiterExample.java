@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class ReCiterExample {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(ReCiterExample.class);	
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(ReCiterExample.class);
 
 	public static void main(String[] args) throws IOException {
 		// Read Property file from config.properties.
