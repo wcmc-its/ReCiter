@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Retrieve all publications in "cwid_test.data.csv".
+ * Retrieve all publications for cwids in "cwid_test.data.csv".
  * @author jil3004
  *
  */
@@ -22,15 +22,15 @@ public class RetrievePublication {
 		
 		AnalysisCSVParser parser = new AnalysisCSVParser();
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-
+		int i = 1;
 		for (Entry<String, ReCiterAuthor> entry : parser.parse("cwid_test.data.csv").entrySet()) {
 			String cwid = entry.getKey();
 			ReCiterAuthor author = entry.getValue();
 			String firstName = author.getAuthorName().getFirstName();
 			String lastName = author.getAuthorName().getLastName();
 			
-			slf4jLogger.info("Retrieving publications for : " + cwid);
-			
+			slf4jLogger.info(i + ": Retrieving publications for : " + cwid);
+			i++;
 			pubmedXmlFetcher.fetch(lastName, firstName, cwid);
 		}
 	}
