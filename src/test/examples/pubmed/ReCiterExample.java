@@ -77,7 +77,7 @@ public class ReCiterExample {
 
 		String department = reCiterConfigProperty.getAuthorDepartment();
 		
-		DocumentIndexWriter.setUseStopWords(reCiterConfigProperty.isUseStemming());
+		DocumentIndexWriter.setUseStopWords(reCiterConfigProperty.isUseStemming()); // revise this logic.
 		
 		// Define Singleton target author.
 		TargetAuthor.init(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation));
@@ -120,32 +120,32 @@ public class ReCiterExample {
 			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
 
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
-			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
-			List<ScopusEntry> scopusEntryList = scopusXmlFetcher.getScopusEntryList(lastName, firstInitial, cwid);
-
-			// Map the pmid to a ScopusEntry.
-			Map<String, ScopusEntry> pmidToScopusEntry = new HashMap<String, ScopusEntry>();
-			for (ScopusEntry entry : scopusEntryList) {
-				pmidToScopusEntry.put(entry.getPubmedID(), entry);
-			}
-
-			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
-			// Scopus Affiliation. The fake author has pmid as last name and first name.
-			for (PubmedArticle pubmedArticle : pubmedArticleList) {
-				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-
-				if (pmidToScopusEntry.containsKey(pmid)) {
-					String scopusAffiliation = pmidToScopusEntry.get(pmid).affiliationConcatForm();
-					MedlineCitationArticleAuthor fakeAuthor = new MedlineCitationArticleAuthor();
-					fakeAuthor.setLastName(pmid);
-					fakeAuthor.setForeName(pmid);
-					fakeAuthor.setAffiliation(scopusAffiliation);
-					if (pubmedArticle.getMedlineCitation().getArticle().getAuthorList() == null) {
-						pubmedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<MedlineCitationArticleAuthor>());
-					}
-					pubmedArticle.getMedlineCitation().getArticle().getAuthorList().add(fakeAuthor);
-				}
-			}
+//			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+//			List<ScopusEntry> scopusEntryList = scopusXmlFetcher.getScopusEntryList(lastName, firstInitial, cwid);
+//
+//			// Map the pmid to a ScopusEntry.
+//			Map<String, ScopusEntry> pmidToScopusEntry = new HashMap<String, ScopusEntry>();
+//			for (ScopusEntry entry : scopusEntryList) {
+//				pmidToScopusEntry.put(entry.getPubmedID(), entry);
+//			}
+//
+//			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
+//			// Scopus Affiliation. The fake author has pmid as last name and first name.
+//			for (PubmedArticle pubmedArticle : pubmedArticleList) {
+//				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
+//
+//				if (pmidToScopusEntry.containsKey(pmid)) {
+//					String scopusAffiliation = pmidToScopusEntry.get(pmid).affiliationConcatForm();
+//					MedlineCitationArticleAuthor fakeAuthor = new MedlineCitationArticleAuthor();
+//					fakeAuthor.setLastName(pmid);
+//					fakeAuthor.setForeName(pmid);
+//					fakeAuthor.setAffiliation(scopusAffiliation);
+//					if (pubmedArticle.getMedlineCitation().getArticle().getAuthorList() == null) {
+//						pubmedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<MedlineCitationArticleAuthor>());
+//					}
+//					pubmedArticle.getMedlineCitation().getArticle().getAuthorList().add(fakeAuthor);
+//				}
+//			}
 
 			// Convert PubmedArticle to ReCiterArticle.
 			List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);
