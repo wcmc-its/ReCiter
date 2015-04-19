@@ -2,13 +2,10 @@ package main.xml.scopus;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import main.xml.AbstractXmlFetcher;
 import main.xml.pubmed.PubmedXmlFetcher;
@@ -28,11 +25,11 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	}
 	
 	/**
-	 * Get a list of Scopus affiliation information for this cwid.
-	 * @param lastName
-	 * @param firstInitial
-	 * @param cwid
-	 * @return
+	 * Read from disk the Scopus affiliation data for this cwid.
+	 * @param lastName Last Name of the person.
+	 * @param firstInitial First Initial of the person.
+	 * @param cwid CWID of the person.
+	 * @return A list of ScopusEntry objects.
 	 */
 	public List<ScopusEntry> getScopusEntryList(String lastName, String firstInitial, String cwid) {
 		List<ScopusEntry> scopusEntryList = new ArrayList<ScopusEntry>();
@@ -67,19 +64,23 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery();
 		// Get the PubmedArticles from the disk.
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
+		
+		// Fetch and Parse the PubMed articles if they do not exist in the directory "/data/xml".
 		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid); 
+		
+		// File name counter for storing the xml data.
 		int filenameCounter = 0;
 		List<String> pmidList = new ArrayList<String>();
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			pmidList.add(pubmedArticle.getMedlineCitation().getPmid().getPmidString());
-			// save the affiliations by every 100 pmid.
+			// Save the Scopus data every 100 PMIDs.
 			if (pmidList.size() == 100) {
 				saveXml(scopusXmlQuery.buildAffiliationQuery(pmidList), cwid, cwid + "_" + filenameCounter);
 				filenameCounter += 1;
 				pmidList.clear();
 			}
 		}
-		// save the remaining pmids.
+		// save the remaining PMIDs.
 		saveXml(scopusXmlQuery.buildAffiliationQuery(pmidList), cwid, cwid + "_" + filenameCounter);
 	}
 }
