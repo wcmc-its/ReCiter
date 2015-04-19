@@ -183,7 +183,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			}
 			
 			if (pubmedArticleList.size() != numPubMedArticles) {
-				slf4jLogger.warn("cwid: " + cwid + " did not retrieve all the publications.");
+				slf4jLogger.warn("cwid: " + cwid + " did not retrieve all the publications. Number of articles on disk=" + pubmedArticleList.size());
 			}
 		}
 	}
