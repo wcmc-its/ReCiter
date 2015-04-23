@@ -30,7 +30,7 @@ To the following:
 ```
 
 ## XML data setup.
-1. Download the xml file *xml.7z*.
+1. Download the xml file *xml.7z*. (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
 2. In Eclipse, create a folder named *data* with 2 inner folders *lucene_index*, *scopus*.
 3. Unzip *xml.7z* into *data* as well.
 
