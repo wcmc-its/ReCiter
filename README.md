@@ -35,9 +35,9 @@ To the following:
 3. Unzip *xml.7z* into *data*.
 
 ## Running ReCiter
-1. To run ReCiter for a specific person.
-2. Edit *config.properties*.
-3. Run *src/test/examples/pubmed/ReCiterExample.java*.
+To run ReCiter for a specific person:
+1. Edit *config.properties*.
+2. Run *src/test/examples/pubmed/ReCiterExample.java*.
 
 ## Components of ReCiter
 The code for ReCiter consists of four main parts: database storage utilities, PubMed retriever and parser, Scopus retriever and parser, and ReCiter algorithm.
