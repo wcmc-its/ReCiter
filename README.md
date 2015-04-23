@@ -1,5 +1,8 @@
 # ReCiter
 
+## ReCiter wiki
+The <a href="/wiki">wiki</a> includes descriptions of files used for computation, an overview of error analysis, a log of performance, and use cases, among other informational material on the project.
+
 ## Eclipse Setup
 1. Create a folder in your local development directory and name it "ReCiter"
 2. Download a zip version of ReCiter and unzip it to your local "ReCiter" folder
