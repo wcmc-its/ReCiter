@@ -55,7 +55,7 @@ ReCiter constants are as follows
   * keywords
 
 ## ReCiter class descriptions and completeness
-| Class | Size in lines of code, as of 4-23-15 | Description | Completeness |
+| Class | Lines of code | Description | Completeness |
 |--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | AbstractCosineSimilarity | 16 | Abstract class that implements DocumentSimilarity; calculates cosine similarity between two DocumentVectors. | Completed. Requires Testing. |
 | ArticleCompleteness | 8 | Computes completeness with respect to ReCiterArticle article and ReCiterAuthor target. | Completed. |
