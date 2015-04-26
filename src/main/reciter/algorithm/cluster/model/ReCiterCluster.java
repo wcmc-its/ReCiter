@@ -134,7 +134,7 @@ public class ReCiterCluster {
 						matchingCoauthorCount += 1;
 //						System.out.println("Matched on coauthor: " + currentAuthor.getAuthorName() + " -- " + author.getAuthorName());
 						if (debug) {
-							slf4jLogger.info("Matched on coauthor: " + currentAuthor.getAuthorName() + " -- " + author.getAuthorName());
+//							slf4jLogger.info("Matched on coauthor: " + currentAuthor.getAuthorName() + " -- " + author.getAuthorName());
 						}
 					}
 				}

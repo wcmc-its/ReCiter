@@ -19,6 +19,7 @@ public class CosineSimilarity implements DocumentVectorSimilarity {
 	@Override
 	public SparseRealVector normalize(SparseRealVector sparseRealVector) {
 		double sum = sparseRealVector.getL1Norm();
+		System.out.println("Sum of l1norm: " + sum);
 		sparseRealVector = (SparseRealVector) sparseRealVector.mapDivide(sum);
 		return sparseRealVector;
 	}
