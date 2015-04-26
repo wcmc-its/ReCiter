@@ -97,51 +97,53 @@ public class ReCiterClusterer implements Clusterer {
 
 		ReCiterCluster reCiterCluster = finalCluster.get(assignedClusterId);
 
-		Set<Integer> pmidSet = reCiterCluster.getPmidSet();
-		analysis.setTruePositiveList(pmidSet);
-		analysis.setSizeOfSelected(pmidSet.size());
-		double precision = analysis.getPrecision();
-		double recall = analysis.getRecall();
-//		double avgPrecRecall = (precision + recall) / 2;
+		if (reCiterCluster != null) {
+			Set<Integer> pmidSet = reCiterCluster.getPmidSet();
+			analysis.setTruePositiveList(pmidSet);
+			analysis.setSizeOfSelected(pmidSet.size());
+			double precision = analysis.getPrecision();
+			double recall = analysis.getRecall();
+			//		double avgPrecRecall = (precision + recall) / 2;
 
-		// Analysis:
-		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
-			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
-				AnalysisObject analysisObject = new AnalysisObject();
-				analysisObject.setSimilarityMeasure(similarityThreshold);
-				analysisObject.setReCiterArticle(reCiterArticle);
-				analysisObject.setClusterId(entry.getValue().getClusterID());
-				analysisObject.setNumArticlesInCluster(entry.getValue().getArticleCluster().size());
+			// Analysis:
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
+					AnalysisObject analysisObject = new AnalysisObject();
+					analysisObject.setSimilarityMeasure(similarityThreshold);
+					analysisObject.setReCiterArticle(reCiterArticle);
+					analysisObject.setClusterId(entry.getValue().getClusterID());
+					analysisObject.setNumArticlesInCluster(entry.getValue().getArticleCluster().size());
 
-				// If the cluster id is the same, then cluster is selected as the assigned matching cluster.
-				if (entry.getKey() == reCiterCluster.getClusterID()) {
-					analysisObject.setSelected(true);
-					// True Positive.
-					if (analysis.getGoldStandard().contains(reCiterArticle.getArticleID())) {
-						analysisObject.setStatus("True Positive");
+					// If the cluster id is the same, then cluster is selected as the assigned matching cluster.
+					if (entry.getKey() == reCiterCluster.getClusterID()) {
+						analysisObject.setSelected(true);
+						// True Positive.
+						if (analysis.getGoldStandard().contains(reCiterArticle.getArticleID())) {
+							analysisObject.setStatus("True Positive");
+						}
+						// False Positive.
+						else {
+							analysisObject.setStatus("False Positive");
+						}
+					} else {
+						analysisObject.setSelected(false);
+						// True Negative.
+						if (!analysis.getGoldStandard().contains(reCiterArticle.getArticleID())) {
+							analysisObject.setStatus("True Negative");
+						}
+						// False Negative.
+						else {
+							analysisObject.setStatus("False Negative");
+						}
 					}
-					// False Positive.
-					else {
-						analysisObject.setStatus("False Positive");
-					}
-				} else {
-					analysisObject.setSelected(false);
-					// True Negative.
-					if (!analysis.getGoldStandard().contains(reCiterArticle.getArticleID())) {
-						analysisObject.setStatus("True Negative");
-					}
-					// False Negative.
-					else {
-						analysisObject.setStatus("False Negative");
-					}
+
+					AnalysisObject.getAnalysisObjectList().add(analysisObject);	
 				}
-
-				AnalysisObject.getAnalysisObjectList().add(analysisObject);	
 			}
-		}
 
-		slf4jLogger.info("Precision = " + precision);
-		slf4jLogger.info("Recall = " + recall);
+			slf4jLogger.info("Precision = " + precision);
+			slf4jLogger.info("Recall = " + recall);
+		}
 	}
 
 	/**
@@ -224,7 +226,7 @@ public class ReCiterClusterer implements Clusterer {
 		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 		for (int i = 1; i < articleList.size(); i++) {
 			ReCiterArticle article = articleList.get(i);
-
+			slf4jLogger.info(i + ": Assigning article: " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				if (debug) {
@@ -316,7 +318,7 @@ public class ReCiterClusterer implements Clusterer {
 					//					System.out.println("Calculating cosine similarity in ReCiterClusterer.java " + id + ": " + sim);
 				}
 			} else if (sim > similarityThreshold && sim > currentMax) {
-
+				// not selecting target:
 				if (debug) {
 
 					slf4jLogger.info("Similarity article " + currentArticle.getArticleID() + " to cluster: " + id + " score: " + sim);
@@ -516,4 +518,4 @@ slf4jLogger.info("Precision = " + overallHighestPrecision);
 slf4jLogger.info("Recall = " + overallHighestRecall);
 //		slf4jLogger.info("Overall Best (Precision + Recall) / 2: " + overallAvgPrecRecall + " with similarity threshold=" + bestSimThreshold);
 }
-*/
+ */
