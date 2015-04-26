@@ -57,10 +57,11 @@ public class DocumentIndexReader {
 			// Initialize all the document terms (for Sparse vector index).
 			DocumentTerm documentTerms = new DocumentTerm();
 			documentTerms.initAllTerms(indexReader);
-
+			documentTerms.initIDFMap(indexReader, DocumentVectorType.AFFILIATION);
+			
 			DocumentVectorGenerator docVectorGenerator = new DocumentVectorGenerator();
 
-			// Read the indexed files into a ReCiterDocument.
+			// Read the indexed files into ReCiterDocuments.
 			for (int i = 0; i < indexReader.maxDoc(); i++) {
 
 				// Get PMID of current article.
