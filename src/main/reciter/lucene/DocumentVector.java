@@ -14,7 +14,7 @@ import org.apache.commons.math3.linear.SparseRealVector;
 
 public class DocumentVector {
 
-	private int pmid; // pmid of the ReCiterArticle.
+//	private int pmid; // pmid of the ReCiterArticle.
 	private Map<String, Integer> termToFreqMap; // term to frequency map.
 	private DocumentVectorType documentVectorType; // type of vector.
 	private SparseRealVector sparseRealVector; // sparse vector containing frequency of the term.
@@ -70,13 +70,13 @@ public class DocumentVector {
 		this.termToFreqMap = termToFreqMap;
 	}
 
-	public int getPmid() {
-		return pmid;
-	}
-
-	public void setPmid(int pmid) {
-		this.pmid = pmid;
-	}
+//	public int getPmid() {
+//		return pmid;
+//	}
+//
+//	public void setPmid(int pmid) {
+//		this.pmid = pmid;
+//	}
 
 	public List<ReCiterAuthor> getAuthorList() {
 		return authorList;
