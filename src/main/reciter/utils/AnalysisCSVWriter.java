@@ -64,8 +64,8 @@ public class AnalysisCSVWriter {
 	 * @param list
 	 * @throws IOException
 	 */
-	public void write(List<AnalysisObject> list) throws IOException {
-		PrintWriter writer = new PrintWriter("csv_output.csv", "UTF-8");
+	public void write(List<AnalysisObject> list, String cwid) throws IOException {
+		PrintWriter writer = new PrintWriter("data/csv_output/" + cwid + ".csv", "UTF-8");
 		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
 		
 		printer.printRecord(
