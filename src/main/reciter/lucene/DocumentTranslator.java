@@ -94,7 +94,7 @@ public class DocumentTranslator {
 			}
 			
 			String concatFormWithComma = reCiterArticle.getArticleCoAuthors().getAffiliationConcatFormWithComma();
-			if (concatFormWithComma.length() != 0) {
+			if (concatFormWithComma.length() != 0 && concatFormWithComma.length() < 32766) { // Temporary solution to fix: "Document contains at least one immense term in field="AFFILIATION_UNTOKENIZED"
 				document.add(new Field(DocumentVectorType.AFFILIATION_UNTOKENIZED.name(), concatFormWithComma, untokenizedFieldType));
 			}
 		}
