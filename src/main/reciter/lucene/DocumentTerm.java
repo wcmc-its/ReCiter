@@ -126,7 +126,12 @@ public class DocumentTerm {
 				BytesRef text = null;
 				while ((text = termsEnum.next()) != null) {
 					String term = text.utf8ToString();
-
+					
+					// Stop words usage here:
+					if (DocumentIndexWriter.stopWords.contains(term.toLowerCase())) {
+						continue;
+					}
+					
 					if (type == DocumentVectorType.ARTICLE_TITLE) {
 						allTitleTerms.put(term, pos++);
 					} else if (type == DocumentVectorType.JOURNAL_TITLE) {
@@ -153,6 +158,12 @@ public class DocumentTerm {
 			for (Map.Entry<String, Integer> s : allAffiliationTerms.entrySet()) {
 				s.setValue(pos++);
 			}
+			
+			// Delete:
+//			System.out.println("Size of affiliation: " + allAffiliationTerms.size());
+//			for (Map.Entry<String, Integer> s : allAffiliationTerms.entrySet()) {
+//				System.out.println(s.getKey() + " has " + s.getValue());
+//			}
 		} else if (type == DocumentVectorType.KEYWORD) {
 			for (Map.Entry<String, Integer> s : allKeywordTerms.entrySet()) {
 				s.setValue(pos++);
