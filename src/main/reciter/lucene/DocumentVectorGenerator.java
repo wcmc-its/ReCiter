@@ -34,6 +34,13 @@ public class DocumentVectorGenerator {
 			BytesRef text = null;
 			while ((text = termsEnum.next()) != null) {
 				String term = text.utf8ToString();
+				
+				// Stop words:
+				// Stop words usage here:
+				if (DocumentIndexWriter.stopWords.contains(term.toLowerCase())) {
+					continue;
+				}
+				
 				int freq = (int) termsEnum.totalTermFreq();
 				
 				documentVector.getTermToFreqMap().put(term, freq);
@@ -43,17 +50,25 @@ public class DocumentVectorGenerator {
 				} else if (documentVectorType == DocumentVectorType.JOURNAL_TITLE) {
 					documentVector.setEntry(documentTerms.getAllJournalTitleTerms().get(term), freq);
 				} else if (documentVectorType == DocumentVectorType.AFFILIATION) {
-//					double idfWeight = (double) maxDocs / documentTerms.getAffiliationIDFMap().get(term).size();
-//					idfWeight = Math.log10(idfWeight);
-//					documentVector.setEntry(documentTerms.getAllAffiliationTerms().get(term), freq * idfWeight);
-//					documentVector.setEntry(documentTerms.getAllAffiliationTerms().get(term), freq); (uncomment this)
+					double idfWeight = (double) maxDocs / documentTerms.getAffiliationIDFMap().get(term).size();
+					idfWeight = Math.log10(idfWeight);
+					documentVector.setEntry(documentTerms.getAllAffiliationTerms().get(term), freq * idfWeight);
+//					slf4jLogger.info("Term: " + term + " - " + freq * idfWeight);
+//					documentVector.setEntry(documentTerms.getAllAffiliationTerms().get(term), freq);
+//					slf4jLogger.info(documentID + " Term: " + term + ": " + freq);
+//					if (documentID == 181 || documentID == 477) {
+//						slf4jLogger.info("import: " + term + " " + freq);
+//					}
 //					documentVector.setEntry(documentTerms.getAllAffiliationTerms().get(term), 1); // (comment this)
-					documentVector.setEntry(documentTerms.getAllAffiliationTerms().get(term), freq);
+
 				} else if (documentVectorType == DocumentVectorType.KEYWORD) {
 					documentVector.setEntry(documentTerms.getAllKeywordTerms().get(term), freq);
 				}
 			}
-			documentVector.setVector(documentVector.getDocumentVectorSimilarity().normalize(documentVector.getVector()));
+//			System.out.println("Doc id: " + documentID);
+			// Does normalization matter in calculating the cosine similarity? 
+			// It doesn't seem like there's a difference.
+//			documentVector.setVector(documentVector.getDocumentVectorSimilarity().normalize(documentVector.getVector()));
 		} else {
 			if (debug) {
 				slf4jLogger.debug("VectorGenerator cannot read field type: " + documentVectorType);
