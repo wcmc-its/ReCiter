@@ -63,4 +63,22 @@ public class MedlineCitation {
 	public void setKeywordList(MedlineCitationKeywordList keywordList) {
 		this.keywordList = keywordList;
 	}
+	public MedlineCitationDate getDateCreated() {
+		return dateCreated;
+	}
+	public void setDateCreated(MedlineCitationDate dateCreated) {
+		this.dateCreated = dateCreated;
+	}
+	public MedlineCitationDate getDateCompleted() {
+		return dateCompleted;
+	}
+	public void setDateCompleted(MedlineCitationDate dateCompleted) {
+		this.dateCompleted = dateCompleted;
+	}
+	public MedlineCitationDate getDateRevised() {
+		return dateRevised;
+	}
+	public void setDateRevised(MedlineCitationDate dateRevised) {
+		this.dateRevised = dateRevised;
+	}
 }
