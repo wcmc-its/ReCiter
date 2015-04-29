@@ -13,7 +13,9 @@ import javax.xml.parsers.SAXParserFactory;
 import main.xml.pubmed.model.MedlineCitation;
 import main.xml.pubmed.model.MedlineCitationArticle;
 import main.xml.pubmed.model.MedlineCitationArticleAuthor;
+import main.xml.pubmed.model.MedlineCitationDate;
 import main.xml.pubmed.model.MedlineCitationJournal;
+import main.xml.pubmed.model.MedlineCitationJournalIssue;
 import main.xml.pubmed.model.MedlineCitationKeyword;
 import main.xml.pubmed.model.MedlineCitationKeywordList;
 import main.xml.pubmed.model.MedlineCitationMeshHeading;
@@ -41,6 +43,10 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bDateCreatedYear;
 	private boolean bDateCreatedMonth;
 	private boolean bDateCreatedDay;
+	private boolean bDateCompleted;
+	private boolean bDateCompletedYear;
+	private boolean bDateCompletedMonth;
+	private boolean bDateCompletedDay;
 	private boolean bArticle;
 	private boolean bJournal;
 	private boolean bISSN;
@@ -152,6 +158,16 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("Journal")) {
 			pubmedArticle.getMedlineCitation().getArticle().setJournal(new MedlineCitationJournal()); // add journal information.
 		}
+		if (qName.equalsIgnoreCase("JournalIssue")) {
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().setJournalIssue(new MedlineCitationJournalIssue());
+		}
+		if (qName.equalsIgnoreCase("PubDate")) {
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().setPubDate(new MedlineCitationDate());
+			bPubDate = true;
+		}
+		if (qName.equalsIgnoreCase("Year")) {
+			bPubDateYear = true;
+		}
 		if (qName.equalsIgnoreCase("Title")) {
 			bJournalTitle = true;
 		}
@@ -248,6 +264,12 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			String journalTitle = new String(ch, start, length);
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().setJournalTitle(journalTitle);
 			bJournalTitle = false;
+		}
+		if (bPubDate && bPubDateYear) {
+			String pubDateYear = new String(ch, start, length);
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
+			bPubDate = false;
+			bPubDateYear = false;
 		}
 		if (bKeywordList && bKeyword) {
 			MedlineCitationKeyword keyword = new MedlineCitationKeyword();
