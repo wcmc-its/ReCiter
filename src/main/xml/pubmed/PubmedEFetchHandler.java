@@ -54,6 +54,7 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bVolume;
 	private boolean bIssue;
 	private boolean bPubDate;
+	private boolean bMedlineDate;
 	private boolean bPubDateYear;
 	private boolean bPubDateMonth;
 	private boolean bJournalTitle;
@@ -165,8 +166,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().setPubDate(new MedlineCitationDate());
 			bPubDate = true;
 		}
-		if (qName.equalsIgnoreCase("Year")) {
+		if (bPubDate && qName.equalsIgnoreCase("Year")) {
 			bPubDateYear = true;
+		}
+		if (bPubDate && qName.equalsIgnoreCase("MedlineDate")) {
+			bMedlineDate = true;
 		}
 		if (qName.equalsIgnoreCase("Title")) {
 			bJournalTitle = true;
@@ -270,6 +274,13 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
 			bPubDate = false;
 			bPubDateYear = false;
+		}
+		if (bPubDate && bMedlineDate) {
+			String pubDateYear = new String(ch, start, length);
+			pubDateYear = pubDateYear.substring(0, 4); // PMID = 23849565 <MedlineDate>2013 May-Jun</MedlineDate>
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
+			bPubDate = false;
+			bMedlineDate = false;
 		}
 		if (bKeywordList && bKeyword) {
 			MedlineCitationKeyword keyword = new MedlineCitationKeyword();

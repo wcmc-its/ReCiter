@@ -11,5 +11,12 @@ public class MedlineCitationJournalIssue {
 	private String volume;
 	private String issue;
 	private MedlineCitationDate pubDate;
+	
+	public MedlineCitationDate getPubDate() {
+		return pubDate;
+	}
+	public void setPubDate(MedlineCitationDate pubDate) {
+		this.pubDate = pubDate;
+	}
 		
 }

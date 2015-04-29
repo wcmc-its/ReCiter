@@ -58,7 +58,7 @@ public class DocumentIndexReader {
 			DocumentTerm documentTerms = new DocumentTerm();
 			documentTerms.initAllTerms(indexReader);
 			documentTerms.initIDFMap(indexReader, DocumentVectorType.AFFILIATION);
-			
+
 			DocumentVectorGenerator docVectorGenerator = new DocumentVectorGenerator();
 
 			// Read the indexed files into ReCiterDocuments.
@@ -175,7 +175,7 @@ public class DocumentIndexReader {
 					}
 					reCiterArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(AuthorName.deFormatLucene(sb.toString()), null));
 				}
-				
+
 				// Fetch affiliation.
 				Terms affiliationTerms = null;
 				affiliationTerms = indexReader.getTermVector(i, DocumentVectorType.AFFILIATION_UNTOKENIZED.name());
@@ -190,6 +190,23 @@ public class DocumentIndexReader {
 				}
 				reCiterArticle.setAffiliationConcatenated(affiliation);
 
+				// Fetch Journal Issue PubDate year.
+				Terms journalIssuePubDateYearTerms = null;
+				journalIssuePubDateYearTerms = indexReader.getTermVector(i, DocumentVectorType.JOURNAL_ISSUE_PUBDATE_YEAR.name());
+				String journalIssuePubDateYearString = null;
+				TermsEnum journalIssuePubDateYearTermsEnum = null;
+				if (journalIssuePubDateYearTerms != null) {
+					journalIssuePubDateYearTermsEnum = journalIssuePubDateYearTerms.iterator(journalIssuePubDateYearTermsEnum);
+					BytesRef text = null;
+					while ((text = journalIssuePubDateYearTermsEnum.next()) != null) {
+						journalIssuePubDateYearString = text.utf8ToString();
+					}
+				}
+
+				// Skipping target author:
+				if (reCiterArticle.getArticleID() != -1) {
+					reCiterArticle.getJournal().setJournalIssuePubDateYear(Integer.parseInt(journalIssuePubDateYearString));
+				}
 				// Add to list.
 				reCiterArticleList.add(reCiterArticle);
 			}

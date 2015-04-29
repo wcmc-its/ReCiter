@@ -7,7 +7,8 @@ package main.reciter.model.article;
  */
 public class ReCiterJournal {
 	private final String journalTitle;
-
+	private int journalIssuePubDateYear;
+	
 	public ReCiterJournal(String journalTitle) {
 		this.journalTitle = journalTitle;
 	}
@@ -16,5 +17,11 @@ public class ReCiterJournal {
 	}
 	public String getJournalTitle() {
 		return journalTitle;
+	}
+	public int getJournalIssuePubDateYear() {
+		return journalIssuePubDateYear;
+	}
+	public void setJournalIssuePubDateYear(int journalIssuePubDateYear) {
+		this.journalIssuePubDateYear = journalIssuePubDateYear;
 	}
 }

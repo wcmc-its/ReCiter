@@ -3,7 +3,7 @@ package main.xml.pubmed.model;
 public class MedlineCitationJournal {
 
 	private MedlineCitationJournalISSN issn;
-	private MedlineCitationJournalIssue issue;
+	private MedlineCitationJournalIssue journalIssue;
 	private String title;
 	private String isoAbbreviation;
 	
@@ -12,5 +12,11 @@ public class MedlineCitationJournal {
 	}
 	public void setJournalTitle(String title) {
 		this.title = title;
+	}
+	public MedlineCitationJournalIssue getJournalIssue() {
+		return journalIssue;
+	}
+	public void setJournalIssue(MedlineCitationJournalIssue journalIssue) {
+		this.journalIssue = journalIssue;
 	}
 }

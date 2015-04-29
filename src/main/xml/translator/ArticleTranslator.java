@@ -92,11 +92,15 @@ public class ArticleTranslator {
 			}	
 		}
 		
+		// Translating Journal Issue PubDate Year.
+		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
+		
 		ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid));
 		reCiterArticle.setArticleTitle(new ReCiterArticleTitle(articleTitle));
 		reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
 		reCiterArticle.setArticleKeywords(articleKeywords);
+		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
 		return reCiterArticle;
 	}
 }

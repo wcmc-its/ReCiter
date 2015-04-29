@@ -23,6 +23,8 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private Map<DocumentVectorType, DocumentVector> documentVectors;
 	private DocumentSimilarity documentSimmilarity;
 	private String affiliationConcatenated;
+	private int dateCreated;
+	
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -164,4 +166,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setAffiliationConcatenated(String affiliationConcatenated) {
 		this.affiliationConcatenated = affiliationConcatenated;
 	}
+
+	public int getDateCreated() {
+		return dateCreated;
+	}
+
+	public void setDateCreated(int dateCreated) {
+		this.dateCreated = dateCreated;
+	}
+
 }
