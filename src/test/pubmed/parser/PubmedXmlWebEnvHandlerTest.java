@@ -33,7 +33,6 @@ public class PubmedXmlWebEnvHandlerTest {
 		System.out.println("The web env is: " + webEnvHandler.getWebEnv());
 		System.out.println("The article count is: " + webEnvHandler.getCount());
 		
-		System.exit(0);
 		PubmedEFetchHandler pubmedXmlHandler = new PubmedEFetchHandler();
 		String webEnv = webEnvHandler.getWebEnv();
 		InputSource webEnvStream = new InputSource(new URL(WEB_ENV + webEnv).openStream());
