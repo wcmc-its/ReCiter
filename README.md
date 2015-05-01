@@ -15,18 +15,12 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 11. Add "JUnit" library
 
 ## MySQL Setup
-1. To connect to the VIVO MySQL database.
-2. Change the following in *main/database/DbConnectionFactory.java*.
+1. To connect to your local development environment's database:
+2. Change the following in *database.properties*.
 ```
-	private static final String URL = "jdbc:mysql://localhost/reciter?rewriteBatchedStatements=true";
+	private static final String URL = "jdbc:mysql://localhost/reciter";
 	private static final String USER = "root";
 	private static final String PASSWORD = "";
-```
-To the following:
-```
-	private static final String URL = "jdbc:mysql://its-yrkmysqlt01.med.cornell.edu/reciter?rewriteBatchedStatements=true";
-	private static final String USER = "reciter_pubs";
-	private static final String PASSWORD = password;
 ```
 
 ## XML data setup.
