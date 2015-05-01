@@ -18,9 +18,9 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 1. To connect to your local development environment's database:
 2. Change the following in *database.properties*.
 ```
-	private static final String URL = "jdbc:mysql://localhost/reciter";
-	private static final String USER = "root";
-	private static final String PASSWORD = "";
+	url = "jdbc:mysql://localhost/reciter";
+	username = "root";
+	password = "";
 ```
 
 ## XML data setup.
