@@ -1,8 +1,12 @@
 package main.database;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * Creates a single connection to the database.
@@ -14,9 +18,19 @@ public class DbConnectionFactory {
 	
 	private static DbConnectionFactory instance = new DbConnectionFactory();
 	
-	private static final String URL = "jdbc:mysql://localhost/reciter?rewriteBatchedStatements=true";
-	private static final String USER = "root";
-	private static final String PASSWORD = "";
+	private static String URL;
+	private static String USER;
+	private static String PASSWORD;
+	
+	public void loadProperty() throws IOException {
+		Properties prop = new Properties();
+		InputStream inputStream = new FileInputStream("database.properties");
+		prop.load(inputStream);
+		
+		URL = prop.getProperty("url");
+		USER = prop.getProperty("username");
+		PASSWORD = prop.getProperty("password");
+	}
 	
 	private static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 
@@ -29,6 +43,12 @@ public class DbConnectionFactory {
 	}
 
 	private Connection createConnection() {
+		try {
+			loadProperty();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		Connection connection = null;
 		try {
 			connection = DriverManager.getConnection(URL, USER, PASSWORD);
