@@ -213,7 +213,6 @@ public class DocumentIndexReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		slf4jLogger.info("Finished reading index ...");
 		return reCiterArticleList;
 	}
 

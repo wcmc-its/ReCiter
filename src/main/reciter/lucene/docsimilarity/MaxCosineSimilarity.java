@@ -30,6 +30,7 @@ public class MaxCosineSimilarity extends AbstractCosineSimilarity {
 				}
 			}
 		}
+		
 		return max;
 	}
 

@@ -18,6 +18,7 @@ import main.reciter.model.author.TargetAuthor;
 import main.reciter.model.author.TargetAuthor.TypeScore;
 import main.reciter.utils.Analysis;
 import main.reciter.utils.AnalysisObject;
+import main.reciter.utils.YearDiscrepacyReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,10 +97,10 @@ public class ReCiterClusterer implements Clusterer {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter.
 
 		cluster();
-		
+
 		DocumentSimilarity affiliationSimilarity = new AffiliationCosineSimilarity();
 		DocumentSimilarity keywordSimilarity = new KeywordCosineSimilarity();
-		
+
 		ReCiterArticle targetAuthorArticle = TargetAuthor.getInstance().getTargetAuthorArticleIndexed();
 		// Compute the affiliation similarity and keyword similarity of target author to all the clusters.
 		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
@@ -109,11 +110,11 @@ public class ReCiterClusterer implements Clusterer {
 			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
 				double currentAffiliationSimScore = affiliationSimilarity.documentSimilarity(reCiterArticle, targetAuthorArticle);
 				double currentKeywordSimScore = keywordSimilarity.documentSimilarity(reCiterArticle, targetAuthorArticle);
-				
+
 				if (currentAffiliationSimScore > affiliationMax) {
 					affiliationMax = currentAffiliationSimScore;
 				}
-				
+
 				if (currentKeywordSimScore > keywordMax) {
 					keywordMax = currentKeywordSimScore;
 				}
@@ -121,7 +122,7 @@ public class ReCiterClusterer implements Clusterer {
 			TargetAuthor.getInstance().getMap().get(entry.getKey()).add(new TypeScore("affiliation", affiliationMax));
 			TargetAuthor.getInstance().getMap().get(entry.getKey()).add(new TypeScore("keyword", keywordMax));
 		}
-		
+
 		// Assign target author to a cluster in finalCluster.
 		int assignedClusterId = assignTargetToCluster(TargetAuthor.getInstance().getTargetAuthorArticleIndexed());
 
@@ -258,7 +259,7 @@ public class ReCiterClusterer implements Clusterer {
 		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 		for (int i = 1; i < articleList.size(); i++) {
 			ReCiterArticle article = articleList.get(i);
-//			slf4jLogger.info(i + ": Assigning article: " + article.getArticleID());
+			//			slf4jLogger.info(i + ": Assigning article: " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				if (debug) {
@@ -274,7 +275,7 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			} else {
 				finalCluster.get(selection).add(article);
-				slf4jLogger.info("PMID: " + article.getArticleID() + " selection: " + selection);
+//				slf4jLogger.info("PMID: " + article.getArticleID() + " selection: " + selection);
 				if (debugCSV) {
 					slf4jLogger.info(selection + ", " + article.toCSV());
 				}
@@ -292,8 +293,8 @@ public class ReCiterClusterer implements Clusterer {
 
 		// Get cluster ids with max number of coauthor matches.
 		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle));
-		slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + clusterIdSet);
-		
+//		slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + clusterIdSet);
+
 		// If groups have matching co-authors, the program selects the group that has the most matching names.
 		if (clusterIdSet.size() == 1) {
 			for (int id : clusterIdSet) {
@@ -337,7 +338,23 @@ public class ReCiterClusterer implements Clusterer {
 		int currentMaxId = -1;
 		for (int id : clusterIdList) {
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
-			//			System.out.println("Similarity article " + currentArticle.getArticleID() + " to cluster: " + id + " score: " + sim);
+
+			if (!selectingTarget) {
+				// Update the similarity score with year discrepancy.
+				int yearDiff = Integer.MAX_VALUE; // Compute difference in year between candidate article and closest year in article cluster.
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					int currentYearDiff = Math.abs(currentArticle.getJournal().getJournalIssuePubDateYear() - article.getJournal().getJournalIssuePubDateYear());
+					if (currentYearDiff < yearDiff) {
+						yearDiff = currentYearDiff;
+					}
+				}
+				if (yearDiff > 40) {
+					sim *= 0.001526;
+				} else {
+					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
+				}
+			}
+
 			if (selectingTarget) {
 				//				System.out.println("Cosine similarity between target and cluster " + id + ": score=" + sim);
 				if (debug) {
@@ -352,7 +369,7 @@ public class ReCiterClusterer implements Clusterer {
 			} else if (sim > similarityThreshold && sim > currentMax) {
 				// not selecting target:
 				if (debug) {
-					
+
 					slf4jLogger.info("Similarity article " + currentArticle.getArticleID() + " to cluster: " + id + " score: " + sim);
 					slf4jLogger.info(finalCluster.get(id).toString());
 				}

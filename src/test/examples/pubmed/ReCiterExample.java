@@ -24,6 +24,7 @@ import main.reciter.utils.Analysis;
 import main.reciter.utils.AnalysisCSVWriter;
 import main.reciter.utils.AnalysisObject;
 import main.reciter.utils.ReCiterConfigProperty;
+import main.reciter.utils.YearDiscrepacyReader;
 import main.xml.pubmed.PubmedXmlFetcher;
 import main.xml.pubmed.model.MedlineCitationArticleAuthor;
 import main.xml.pubmed.model.PubmedArticle;
@@ -64,6 +65,8 @@ public class ReCiterExample {
 	 */
 	public void runExample(ReCiterConfigProperty reCiterConfigProperty) {
 
+		YearDiscrepacyReader.init();
+		
 		String lastName = reCiterConfigProperty.getLastName();
 		String middleName = reCiterConfigProperty.getMiddleName();
 		String firstName = reCiterConfigProperty.getFirstName();

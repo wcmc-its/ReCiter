@@ -16,7 +16,6 @@ public class AffiliationCosineSimilarity extends AbstractCosineSimilarity {
 		if (sim > max) {
 			max = sim;
 		}
-		System.out.println(max);
 		return max;
 	}
 }
