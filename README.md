@@ -22,6 +22,11 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 	username = "root";
 	password = "";
 ```
+3. Paul will provide the latest .SQL that contains the necessary tables.
+4. Once the .SQL file is present on your local machine, please use MySQL workbench to import the .SQL file into your localhost databse.
+5. In MySQL workbench, select "Data Import/Restore" in the Navigator on the left side.
+6. In the "Import from Disk" tab, select "Import from Self-Contained File".
+7. Select "Start Import".
 
 ## XML data setup.
 1. Download the xml file *xml.7z*. (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
