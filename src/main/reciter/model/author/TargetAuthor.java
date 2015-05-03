@@ -1,5 +1,9 @@
 package main.reciter.model.author;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import main.reciter.model.article.ReCiterArticle;
 
 /**
@@ -11,9 +15,34 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	private static TargetAuthor instance;
 	private ReCiterArticle targetAuthorArticleIndexed;
+	private Map<Integer, List<TypeScore>> map;
+	
+	public static class TypeScore {
+		private String type;
+		private double score;
+		
+		public TypeScore() {}
+		public TypeScore(String type, double score) {
+			this.type = type;
+			this.score = score;
+		}
+		public String getType() {
+			return type;
+		}
+		public void setType(String type) {
+			this.type = type;
+		}
+		public double getScore() {
+			return score;
+		}
+		public void setScore(double score) {
+			this.score = score;
+		}
+	}
 	
 	private TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
+		map = new HashMap<Integer, List<TypeScore>>();
 	}
 	
 	public static TargetAuthor getInstance() {
@@ -30,5 +59,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setTargetAuthorArticleIndexed(ReCiterArticle targetAuthorArticleIndexed) {
 		this.targetAuthorArticleIndexed = targetAuthorArticleIndexed;
+	}
+
+	public Map<Integer, List<TypeScore>> getMap() {
+		return map;
+	}
+
+	public void setMap(Map<Integer, List<TypeScore>> map) {
+		this.map = map;
 	}
 }

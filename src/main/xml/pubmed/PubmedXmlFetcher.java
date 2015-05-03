@@ -67,7 +67,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				SAXParserFactory.newInstance()
 				.newSAXParser()
 				.parse(xmlFile.getPath(), pubmedEFetchHandler);
-			} catch (SAXException | IOException | ParserConfigurationException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -175,7 +175,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 					SAXParserFactory.newInstance()
 					.newSAXParser()
 					.parse(xmlFile.getPath(), pubmedEFetchHandler);
-				} catch (SAXException | IOException | ParserConfigurationException e) {
+				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}

@@ -127,7 +127,7 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			SAXParserFactory.newInstance()
 				.newSAXParser()
 				.parse(inputStream, pubmedXmlHandler);
-		} catch (SAXException | IOException | ParserConfigurationException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

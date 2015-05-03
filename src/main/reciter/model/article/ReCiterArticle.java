@@ -24,7 +24,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private DocumentSimilarity documentSimmilarity;
 	private String affiliationConcatenated;
 	private int dateCreated;
-	
+	private String info;
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -34,6 +34,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.articleID = articleID;
 		this.setArticleCompleteness(new ReCiterCompleteness());
 		setDocumentSimmilarity(new MaxCosineSimilarity()); // default similarity is maximum similarity.
+//		setDocumentSimmilarity(new HeuristicSimilarity());
 	}
 	
 	public double getCompletenessScore() {
@@ -173,6 +174,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setDateCreated(int dateCreated) {
 		this.dateCreated = dateCreated;
+	}
+
+	public String getInfo() {
+		return info;
+	}
+
+	public void setInfo(String info) {
+		this.info = info;
 	}
 
 }

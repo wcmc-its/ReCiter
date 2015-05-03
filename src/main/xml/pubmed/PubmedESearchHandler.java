@@ -46,7 +46,7 @@ public class PubmedESearchHandler extends DefaultHandler {
 			SAXParserFactory.newInstance()
 							.newSAXParser()
 							.parse(inputStream, webEnvHandler);
-		} catch (SAXException | IOException | ParserConfigurationException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

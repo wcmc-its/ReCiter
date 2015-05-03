@@ -44,7 +44,7 @@ public class CosineSimilarityTest {
     public static final String CONTENT = "Content";
     public static final int N = 2;//Total number of documents
 
-    private final Set<String> terms = new HashSet<>();
+    private final Set<String> terms = new HashSet<String>();
     private final RealVector v1;
     private final RealVector v2;
 
@@ -104,9 +104,9 @@ public class CosineSimilarityTest {
     Map<String, Double> getWieghts(IndexReader reader, int docId)
             throws IOException {
         Terms vector = reader.getTermVector(docId, CONTENT);
-        Map<String, Integer> docFrequencies = new HashMap<>();
-        Map<String, Integer> termFrequencies = new HashMap<>();
-        Map<String, Double> tf_Idf_Weights = new HashMap<>();
+        Map<String, Integer> docFrequencies = new HashMap<String, Integer>();
+        Map<String, Integer> termFrequencies = new HashMap<String, Integer>();
+        Map<String, Double> tf_Idf_Weights = new HashMap<String, Double>();
         TermsEnum termsEnum = null;
         DocsEnum docsEnum = null;
 

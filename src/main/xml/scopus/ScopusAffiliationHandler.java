@@ -35,14 +35,14 @@ public class ScopusAffiliationHandler extends DefaultHandler {
 		SAXParser saxParser = null;
 		try {
 			saxParser = SAXParserFactory.newInstance().newSAXParser();
-		} catch (ParserConfigurationException | SAXException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		ScopusAffiliationHandler handler = new ScopusAffiliationHandler();
 		try {
 			saxParser.parse(affiliationQuery, handler);
-		} catch (SAXException | IOException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

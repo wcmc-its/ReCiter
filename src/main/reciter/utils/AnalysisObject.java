@@ -15,6 +15,7 @@ public class AnalysisObject {
 	private int numArticlesInCluster; // Number of articles in the selected cluster
 	private String status; // Status of ReCiter's determination for this article with respect to reference standard
 	private boolean selected; // Cluster ultimately selected in Phase 2 matching
+	private String info;
 	
 	public double getSimilarityMeasure() {
 		return similarityMeasure;
@@ -53,7 +54,12 @@ public class AnalysisObject {
 	public void setReCiterArticle(ReCiterArticle reCiterArticle) {
 		this.reCiterArticle = reCiterArticle;
 	}
-
+	public String getInfo() {
+		return info;
+	}
+	public void setInfo(String info) {
+		this.info = info;
+	}
 	public static List<AnalysisObject> getAnalysisObjectList() {
 		return analysisObjectList;
 	}
@@ -61,4 +67,5 @@ public class AnalysisObject {
 	public static void setAnalysisObjectList(List<AnalysisObject> analysisObjectList) {
 		AnalysisObject.analysisObjectList = analysisObjectList;
 	}
+	
 }

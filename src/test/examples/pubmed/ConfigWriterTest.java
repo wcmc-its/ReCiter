@@ -6,6 +6,11 @@ import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.utils.AnalysisCSVParser;
 import main.reciter.utils.ConfigWriter;
 
+/**
+ * Writes the configuration properties for all cwids in "cwid_test.data.csv".
+ * @author jil3004
+ *
+ */
 public class ConfigWriterTest {
 
 	public static void main(String[] args) {

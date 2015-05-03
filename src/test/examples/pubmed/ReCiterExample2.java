@@ -35,9 +35,9 @@ import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ReCiterExample {
+public class ReCiterExample2 {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(ReCiterExample.class);
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(ReCiterExample2.class);
 
 	public static void main(String[] args) throws IOException {
 		// Read Property file from config.properties.
@@ -48,8 +48,8 @@ public class ReCiterExample {
 		long startTime = System.currentTimeMillis();
 
 		// Run ReCiter.
-		ReCiterExample reCiterExample = new ReCiterExample();
-		reCiterExample.runExample(reCiterConfigProperty);
+		ReCiterExample2 ReCiterExample2 = new ReCiterExample2();
+		ReCiterExample2.runExample(reCiterConfigProperty);
 
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
@@ -118,34 +118,6 @@ public class ReCiterExample {
 			PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 			pubmedXmlFetcher.setPerformRetrievePublication(reCiterConfigProperty.isPerformRetrievePublication());
 			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
-
-			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
-//			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
-//			List<ScopusEntry> scopusEntryList = scopusXmlFetcher.getScopusEntryList(lastName, firstInitial, cwid);
-//
-//			// Map the pmid to a ScopusEntry.
-//			Map<String, ScopusEntry> pmidToScopusEntry = new HashMap<String, ScopusEntry>();
-//			for (ScopusEntry entry : scopusEntryList) {
-//				pmidToScopusEntry.put(entry.getPubmedID(), entry);
-//			}
-//
-//			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
-//			// Scopus Affiliation. The fake author has pmid as last name and first name.
-//			for (PubmedArticle pubmedArticle : pubmedArticleList) {
-//				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-//
-//				if (pmidToScopusEntry.containsKey(pmid)) {
-//					String scopusAffiliation = pmidToScopusEntry.get(pmid).affiliationConcatForm();
-//					MedlineCitationArticleAuthor fakeAuthor = new MedlineCitationArticleAuthor();
-//					fakeAuthor.setLastName(pmid);
-//					fakeAuthor.setForeName(pmid);
-//					fakeAuthor.setAffiliation(scopusAffiliation);
-//					if (pubmedArticle.getMedlineCitation().getArticle().getAuthorList() == null) {
-//						pubmedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<MedlineCitationArticleAuthor>());
-//					}
-//					pubmedArticle.getMedlineCitation().getArticle().getAuthorList().add(fakeAuthor);
-//				}
-//			}
 
 			// Convert PubmedArticle to ReCiterArticle.
 			List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);

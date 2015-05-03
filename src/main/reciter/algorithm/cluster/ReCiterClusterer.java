@@ -1,5 +1,6 @@
 package main.reciter.algorithm.cluster;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,8 +10,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import main.reciter.algorithm.cluster.model.ReCiterCluster;
+import main.reciter.lucene.docsimilarity.AffiliationCosineSimilarity;
+import main.reciter.lucene.docsimilarity.DocumentSimilarity;
+import main.reciter.lucene.docsimilarity.KeywordCosineSimilarity;
 import main.reciter.model.article.ReCiterArticle;
 import main.reciter.model.author.TargetAuthor;
+import main.reciter.model.author.TargetAuthor.TypeScore;
 import main.reciter.utils.Analysis;
 import main.reciter.utils.AnalysisObject;
 
@@ -91,7 +96,32 @@ public class ReCiterClusterer implements Clusterer {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter.
 
 		cluster();
-
+		
+		DocumentSimilarity affiliationSimilarity = new AffiliationCosineSimilarity();
+		DocumentSimilarity keywordSimilarity = new KeywordCosineSimilarity();
+		
+		ReCiterArticle targetAuthorArticle = TargetAuthor.getInstance().getTargetAuthorArticleIndexed();
+		// Compute the affiliation similarity and keyword similarity of target author to all the clusters.
+		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+			TargetAuthor.getInstance().getMap().put(entry.getKey(), new ArrayList<TypeScore>());
+			double affiliationMax = -1;
+			double keywordMax = -1;
+			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
+				double currentAffiliationSimScore = affiliationSimilarity.documentSimilarity(reCiterArticle, targetAuthorArticle);
+				double currentKeywordSimScore = keywordSimilarity.documentSimilarity(reCiterArticle, targetAuthorArticle);
+				
+				if (currentAffiliationSimScore > affiliationMax) {
+					affiliationMax = currentAffiliationSimScore;
+				}
+				
+				if (currentKeywordSimScore > keywordMax) {
+					keywordMax = currentKeywordSimScore;
+				}
+			}
+			TargetAuthor.getInstance().getMap().get(entry.getKey()).add(new TypeScore("affiliation", affiliationMax));
+			TargetAuthor.getInstance().getMap().get(entry.getKey()).add(new TypeScore("keyword", keywordMax));
+		}
+		
 		// Assign target author to a cluster in finalCluster.
 		int assignedClusterId = assignTargetToCluster(TargetAuthor.getInstance().getTargetAuthorArticleIndexed());
 
@@ -143,6 +173,8 @@ public class ReCiterClusterer implements Clusterer {
 
 			slf4jLogger.info("Precision = " + precision);
 			slf4jLogger.info("Recall = " + recall);
+		} else {
+			slf4jLogger.info("No cluster match found.");
 		}
 	}
 
@@ -226,10 +258,11 @@ public class ReCiterClusterer implements Clusterer {
 		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 		for (int i = 1; i < articleList.size(); i++) {
 			ReCiterArticle article = articleList.get(i);
-			slf4jLogger.info(i + ": Assigning article: " + article.getArticleID());
+//			slf4jLogger.info(i + ": Assigning article: " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				if (debug) {
+					article.setInfo("Forming its own cluster");
 					slf4jLogger.info(article.getArticleID() + " - forming its own cluster.");
 				}
 				// create its own cluster.
@@ -241,6 +274,7 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			} else {
 				finalCluster.get(selection).add(article);
+				slf4jLogger.info("PMID: " + article.getArticleID() + " selection: " + selection);
 				if (debugCSV) {
 					slf4jLogger.info(selection + ", " + article.toCSV());
 				}
@@ -256,12 +290,10 @@ public class ReCiterClusterer implements Clusterer {
 	 */
 	public int selectCandidateCluster(ReCiterArticle currentArticle) {
 
-		if (debug) {
-			slf4jLogger.info("Selecting candidate clusters...");
-		}
 		// Get cluster ids with max number of coauthor matches.
 		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle));
-
+		slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + clusterIdSet);
+		
 		// If groups have matching co-authors, the program selects the group that has the most matching names.
 		if (clusterIdSet.size() == 1) {
 			for (int id : clusterIdSet) {
@@ -320,10 +352,11 @@ public class ReCiterClusterer implements Clusterer {
 			} else if (sim > similarityThreshold && sim > currentMax) {
 				// not selecting target:
 				if (debug) {
-
+					
 					slf4jLogger.info("Similarity article " + currentArticle.getArticleID() + " to cluster: " + id + " score: " + sim);
 					slf4jLogger.info(finalCluster.get(id).toString());
 				}
+				currentArticle.setInfo("Max Id: + " + currentMaxId + " sim: " + sim);
 				currentMaxId = id;
 				currentMax = sim;
 				// TODO: what happens if cosine similarity is tied?
