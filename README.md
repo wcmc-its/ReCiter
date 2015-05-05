@@ -7,22 +7,23 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 1. If it is not already installed, install Eclipse IDE for Java developers, available for download at http://eclipse.org/downloads/
 2. Create a folder in your local development directory and name it "ReCiter"
 3. Download a zip version of ReCiter and unzip it to your local "ReCiter" folder
-4. Determine whether the build automation tool Maven is installed on your computer by opening a terminal window and typing mvn --version
-5. If Maven is installed on your machine you will see information on your installed version, for example:
+4. Determine whether the build automation tool Maven is installed on your computer by opening a terminal window and typing:
+	mvn --version
+   If Maven is installed on your machine you will see information on your installed version, for example:
 	Apache Maven 3.0.5 (r01de14724cdef164cd33c7c8c2fe155faf9602da; 2013-02-19 14:51:28+0100)
 	Maven home: D:\apache-maven-3.0.5\bin\..
 	Java version: 1.6.0_25, vendor: Sun Microsystems Inc.
 	Java home: C:\Program Files\Java\jdk1.6.0_25\jre
 	Default locale: nl_NL, platform encoding: Cp1252
 	OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"
-6. If Maven is not installed on your machine, install it. Maven is available for download from https://maven.apache.org/
-7. Depending on your preference, ReCiter can be installed from the command line, or from within Eclipse. To install it from the command line, open a terminal window, navigate to the ReCiter folder location, and type mvn install.
-8. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
-9. If you did not do a Maven install from the command line in Step 6, right-click the "ReCiter" project in Eclipse, select "Configure", then select "Convert to Maven Project."
-10. Right-click "ReCiter"
-11. Select "Build Path"
-12. Select "Add Library"
-13. Add "JUnit" library
+5. If Maven is not installed on your machine, install it. Maven is available for download from https://maven.apache.org/
+6. Depending on your preference, ReCiter can be installed from the command line, or from within Eclipse. To install it from the command line, open a terminal window, navigate to the ReCiter folder location, and type mvn install.
+7. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
+8. If you did not do a Maven install from the command line in Step 6, right-click the "ReCiter" project in Eclipse, select "Configure", then select "Convert to Maven Project."
+9. Right-click "ReCiter"
+10. Select "Build Path"
+11. Select "Add Library"
+12. Add "JUnit" library
 
 ## MySQL Setup
 1. To connect to your local development environment's database:
@@ -32,11 +33,8 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 	username = "root";
 	password = "";
 ```
-3. Paul will provide the latest .SQL that contains the necessary tables.
-4. Once the .SQL file is present on your local machine, please use MySQL workbench to import the .SQL file into your localhost databse.
-5. In MySQL workbench, select "Data Import/Restore" in the Navigator on the left side.
-6. In the "Import from Disk" tab, select "Import from Self-Contained File".
-7. Select "Start Import".
+3. Download the .SQL file
+4. Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select "Data Import/Restore" in the left navigation bar; in the "Import from Disk" tab, select "Import from Self-Contained File"; and select "Start Import".
 
 ## XML data setup.
 1. Download the xml file *xml.7z*. (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
