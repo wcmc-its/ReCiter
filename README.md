@@ -9,13 +9,15 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 3. Use the Download ZIP button (on the right side of the project's home page on GitHub) to download the ReCiter project. Unzip it to the "ReCiter" folder that you created in the previous step.
 4. Determine whether the build automation tool Maven is installed on your computer by opening a terminal window and typing:<br>
 	mvn --version<br>
-   If Maven is installed on your machine you will see information on your installed version, for example:<br>
-	Apache Maven 3.0.5 (r01de14724cdef164cd33c7c8c2fe155faf9602da; 2013-02-19 14:51:28+0100)<br>
-	Maven home: D:\apache-maven-3.0.5\bin\..<br>
-	Java version: 1.6.0_25, vendor: Sun Microsystems Inc.<br>
-	Java home: C:\Program Files\Java\jdk1.6.0_25\jre<br>
-	Default locale: nl_NL, platform encoding: Cp1252<br>
-	OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"<br>
+   If Maven is installed on your machine you will see information on your installed version, for example:
+```
+	Apache Maven 3.0.5 (r01de14724cdef164cd33c7c8c2fe155faf9602da; 2013-02-19 14:51:28+0100)
+	Maven home: D:\apache-maven-3.0.5\bin\..
+	Java version: 1.6.0_25, vendor: Sun Microsystems Inc.
+	Java home: C:\Program Files\Java\jdk1.6.0_25\jre
+	Default locale: nl_NL, platform encoding: Cp1252
+	OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"
+```
 5. If Maven is not installed on your machine, install it. Maven is available for download from https://maven.apache.org/
 6. Depending on your preference, ReCiter can be installed from the command line, or from within Eclipse. To install it from the command line, open a terminal window, navigate to the ReCiter folder location, and type mvn install.
 7. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
