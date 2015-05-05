@@ -6,7 +6,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 ## Eclipse Setup for ReCiter
 1. If it is not already installed, install Eclipse IDE for Java developers, available for download at http://eclipse.org/downloads/
 2. Create a folder in your local development directory and name it "ReCiter".
-3. Use the Download ZIP button (on the right side of this page) to download the ReCiter project. Unzip it to the "ReCiter" folder that you created in the previous step.
+3. Use the Download ZIP button (on the right side of the project's home page on GitHub) to download the ReCiter project. Unzip it to the "ReCiter" folder that you created in the previous step.
 4. Determine whether the build automation tool Maven is installed on your computer by opening a terminal window and typing:<br>
 	mvn --version<br>
    If Maven is installed on your machine you will see information on your installed version, for example:<br>
