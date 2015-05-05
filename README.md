@@ -26,18 +26,19 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 12. Add "JUnit" library
 
 ## MySQL Setup
-1. To connect to your local development environment's database:
-2. Change the following in *database.properties*.
+1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
+2. To connect to your local development environment's database:
+3. Change the following in *database.properties*.
 ```
 	url = "jdbc:mysql://localhost/reciter";
 	username = "root";
 	password = "";
 ```
-3. Download the .SQL file
+3. Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
 4. Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select "Data Import/Restore" in the left navigation bar; in the "Import from Disk" tab, select "Import from Self-Contained File"; and select "Start Import".
 
 ## XML data setup
-1. Download the xml file *xml.7z*. (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
+1. Download the xml file *xml.7z*. (See the <a href="../../wiki">wiki</a> for information on how to obtain this file)
 2. In Eclipse, create a folder named *data* with four inner folders *lucene_index*, *scopus*, *csv_output*, and *properties*.
 3. Unzip *xml.7z* into *data*.
 
