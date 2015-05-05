@@ -18,7 +18,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 	Default locale: nl_NL, platform encoding: Cp1252
 	OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"
 ```
-5. If Maven is not installed on your machine, install it. Maven is available for download from https://maven.apache.org/
+-5. If Maven is not installed on your machine, install it. Maven is available for download from https://maven.apache.org/
 6. Depending on your preference, ReCiter can be installed from the command line, or from within Eclipse. To install it from the command line, open a terminal window, navigate to the ReCiter folder location, and type mvn install.
 7. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
 8. If you did not do a Maven install from the command line in Step 6, right-click the "ReCiter" project in Eclipse, select "Configure", then select "Convert to Maven Project."
