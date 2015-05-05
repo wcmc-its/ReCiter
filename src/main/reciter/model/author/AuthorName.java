@@ -17,7 +17,7 @@ public class AuthorName {
 	private Set<AuthorName> nameVariants;
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(AuthorName.class);	
-	
+
 	public AuthorName(String firstName, String middleName, String lastName) {
 		this.firstName = StringUtils.capitalize(StringUtils.lowerCase(firstName));
 		this.middleName = StringUtils.capitalize(StringUtils.lowerCase(middleName));
@@ -28,14 +28,20 @@ public class AuthorName {
 
 	public String getCSVFormat() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(StringUtils.stripAccents(firstName));
-		sb.append(" ");
-		sb.append(StringUtils.stripAccents(middleName));
-		sb.append(" ");
-		sb.append(lastName);
+		if (firstName != null) {
+			sb.append(firstName);
+			sb.append(" ");
+		}
+		if (middleName != null) {
+			sb.append(middleName);
+			sb.append(" ");
+		}
+		if (lastName != null) {
+			sb.append(lastName);
+		}
 		return sb.toString();
 	}
-	
+
 	public String getLuceneIndexableFormat() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("first_name_");
@@ -62,13 +68,13 @@ public class AuthorName {
 			// else capitalize first letter because Lucene doesn't keep case.
 			firstName = StringUtils.capitalize(firstName);
 		}
-		
+
 		if (middleName.equals("null")) {
 			middleName = null;
 		} else {
 			middleName = StringUtils.capitalize(middleName);
 		}
-		
+
 		if (lastName.equals("null")) {
 			lastName = null;
 		} else {
@@ -161,7 +167,7 @@ public class AuthorName {
 				StringUtils.equals(lastName, name.getLastName());
 	}
 
-	
+
 	public boolean isFullName() {
 		return (StringUtils.length(firstName) > 1 || StringUtils.length(middleName) > 1);
 	}

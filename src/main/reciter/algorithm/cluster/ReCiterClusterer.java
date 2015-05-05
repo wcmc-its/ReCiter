@@ -353,6 +353,7 @@ public class ReCiterClusterer implements Clusterer {
 				} else {
 					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
 				}
+				
 			}
 
 			if (selectingTarget) {
