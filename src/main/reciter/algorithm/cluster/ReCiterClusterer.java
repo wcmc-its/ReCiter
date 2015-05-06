@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import main.database.dao.IdentityDegree;
-import main.database.dao.IdentityDegreeDao;
 import main.reciter.algorithm.cluster.model.ReCiterCluster;
 import main.reciter.lucene.docsimilarity.AffiliationCosineSimilarity;
 import main.reciter.lucene.docsimilarity.DocumentSimilarity;
@@ -374,10 +372,10 @@ public class ReCiterClusterer implements Clusterer {
 				}
 				// Moderately penalize articles that were published slightly before (0 - 7 years) a person's terminal 
 				// degree, and strongly penalize articles that were published well before (>7 years) a person's terminal degree.
-				if (yearDiff > 7) {
-					sim *= 0.7;
+				if (yearDiff > 40) {
+					sim *= 0.001526;
 				} else {
-					sim = sim * 0.9;
+					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
 				}
 				if (sim > targetAuthorSimilarityThreshold && sim > currentMax) {
 					currentMaxId = id;

@@ -3,9 +3,7 @@ package test.examples.pubmed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import main.database.dao.ArticleDao;
@@ -28,10 +26,7 @@ import main.reciter.utils.AnalysisObject;
 import main.reciter.utils.ReCiterConfigProperty;
 import main.reciter.utils.YearDiscrepacyReader;
 import main.xml.pubmed.PubmedXmlFetcher;
-import main.xml.pubmed.model.MedlineCitationArticleAuthor;
 import main.xml.pubmed.model.PubmedArticle;
-import main.xml.scopus.ScopusXmlFetcher;
-import main.xml.scopus.model.ScopusEntry;
 import main.xml.translator.ArticleTranslator;
 
 import org.apache.lucene.document.Document;
