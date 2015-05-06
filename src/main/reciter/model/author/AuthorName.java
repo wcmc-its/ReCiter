@@ -3,17 +3,19 @@ package main.reciter.model.author;
 import java.util.HashSet;
 import java.util.Set;
 
+import net.sf.junidecode.Junidecode;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AuthorName {
 
-	private final String firstName;
-	private final String firstInitial;
-	private final String middleName;
-	private final String middleInitial;
-	private final String lastName;
+	private String firstName;
+	private String firstInitial;
+	private String middleName;
+	private String middleInitial;
+	private String lastName;
 	private Set<AuthorName> nameVariants;
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(AuthorName.class);	
@@ -24,6 +26,24 @@ public class AuthorName {
 		this.lastName = StringUtils.capitalize(StringUtils.lowerCase(lastName));
 		firstInitial = StringUtils.substring(this.firstName, 0, 1);
 		middleInitial = StringUtils.substring(this.middleName, 0, 1);
+		
+		if (firstName == null) {
+			this.firstName = "";
+		}
+		if (middleName == null) {
+			this.middleName = "";
+		}
+		if (lastName == null) {
+			this.lastName = "";
+		}
+		if (firstInitial == null) {
+			this.firstInitial = "";
+		}
+		if (middleInitial == null ) {
+			middleInitial = "";
+		}
+		
+		
 	}
 
 	public String getCSVFormat() {
@@ -108,8 +128,8 @@ public class AuthorName {
 	}
 
 	public boolean firstInitialLastNameMatch(AuthorName name) {
-		return StringUtils.equals(getFirstInitial(), name.getFirstInitial()) &&
-				StringUtils.equals(getLastName(), name.getLastName());
+		return StringUtils.equals(Junidecode.unidecode(getFirstInitial()), Junidecode.unidecode(name.getFirstInitial())) &&
+				StringUtils.equals(Junidecode.unidecode(getLastName()), Junidecode.unidecode(name.getLastName()));
 	}
 
 	public double nameSimilarityScore(AuthorName name) {
@@ -162,9 +182,10 @@ public class AuthorName {
 	}
 
 	public boolean isFullNameMatch(AuthorName name) {
-		return StringUtils.equals(firstName, name.getFirstName()) &&
-				StringUtils.equals(middleName, name.getMiddleName()) &&
-				StringUtils.equals(lastName, name.getLastName());
+		
+		return StringUtils.equals(Junidecode.unidecode(firstName), Junidecode.unidecode(name.getFirstName())) &&
+				StringUtils.equals(Junidecode.unidecode(middleName), Junidecode.unidecode(name.getMiddleName())) &&
+				StringUtils.equals(Junidecode.unidecode(lastName), Junidecode.unidecode(name.getLastName()));
 	}
 
 
