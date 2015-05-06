@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import main.database.dao.IdentityDegree;
+import main.database.dao.IdentityDegreeDao;
 import main.reciter.algorithm.cluster.model.ReCiterCluster;
 import main.reciter.lucene.docsimilarity.AffiliationCosineSimilarity;
 import main.reciter.lucene.docsimilarity.DocumentSimilarity;
@@ -357,15 +359,29 @@ public class ReCiterClusterer implements Clusterer {
 			}
 
 			if (selectingTarget) {
+				
 				//				System.out.println("Cosine similarity between target and cluster " + id + ": score=" + sim);
 				if (debug) {
 					slf4jLogger.info("Cosine similarity between target and cluster " + id + ": score=" + sim);
 				}
-
+				// Update the similarity score with year discrepancy.
+				int yearDiff = Integer.MAX_VALUE; // Compute difference in year between candidate article and closest year in article cluster.
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					int currentYearDiff = Math.abs(TargetAuthor.getInstance().getTerminalDegreeYear() - article.getJournal().getJournalIssuePubDateYear());
+					if (currentYearDiff < yearDiff) {
+						yearDiff = currentYearDiff;
+					}
+				}
+				// Moderately penalize articles that were published slightly before (0 - 7 years) a person's terminal 
+				// degree, and strongly penalize articles that were published well before (>7 years) a person's terminal degree.
+				if (yearDiff > 7) {
+					sim *= 0.7;
+				} else {
+					sim = sim * 0.9;
+				}
 				if (sim > targetAuthorSimilarityThreshold && sim > currentMax) {
 					currentMaxId = id;
 					currentMax = sim;
-					//					System.out.println("Calculating cosine similarity in ReCiterClusterer.java " + id + ": " + sim);
 				}
 			} else if (sim > similarityThreshold && sim > currentMax) {
 				// not selecting target:

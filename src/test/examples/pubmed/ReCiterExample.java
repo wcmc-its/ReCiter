@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import main.database.dao.ArticleDao;
+import main.database.dao.IdentityDegree;
+import main.database.dao.IdentityDegreeDao;
 import main.reciter.algorithm.cluster.ReCiterClusterer;
 import main.reciter.lucene.DocumentIndexReader;
 import main.reciter.lucene.DocumentIndexWriter;
@@ -186,6 +188,23 @@ public class ReCiterExample {
 		reCiterArticleList.clear();
 		reCiterArticleList = null;
 
+		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDao();
+		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(cwid);
+		// assign the highest terminal year to TargetAuthor.
+		if (identityDegree.getDoctoral() == 0) {
+			if (identityDegree.getMasters() == 0) {
+				if (identityDegree.getBachelor() == 0) {
+					TargetAuthor.getInstance().setTerminalDegreeYear(-1); // setting -1 to terminal year if no terminal degree present.
+				} else {
+					TargetAuthor.getInstance().setTerminalDegreeYear(identityDegree.getBachelor());
+				}
+			} else {
+				TargetAuthor.getInstance().setTerminalDegreeYear(identityDegree.getMasters());
+			}
+		} else {
+			TargetAuthor.getInstance().setTerminalDegreeYear(identityDegree.getDoctoral());
+		}
+		
 		// Set the indexed article for target author.
 		TargetAuthor.getInstance().setTargetAuthorArticleIndexed(targetAuthorArticleIndexed);
 

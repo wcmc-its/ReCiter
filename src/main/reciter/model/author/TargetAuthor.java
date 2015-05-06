@@ -16,6 +16,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private static TargetAuthor instance;
 	private ReCiterArticle targetAuthorArticleIndexed;
 	private Map<Integer, List<TypeScore>> map;
+	private int terminalDegreeYear;
 	
 	public static class TypeScore {
 		private String type;
@@ -67,5 +68,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setMap(Map<Integer, List<TypeScore>> map) {
 		this.map = map;
+	}
+
+	public int getTerminalDegreeYear() {
+		return terminalDegreeYear;
+	}
+
+	public void setTerminalDegreeYear(int terminalDegreeYear) {
+		this.terminalDegreeYear = terminalDegreeYear;
 	}
 }
