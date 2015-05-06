@@ -15,7 +15,7 @@ public class IdentityDegreeDao {
 		Connection con = DbConnectionFactory.getConnection();
 		PreparedStatement pst = null;
 		ResultSet rs = null;
-		String query = "SELECT bachelor, masters, doctoral WHERE cwid='" + cwid + "'";
+		String query = "SELECT bachelor, masters, doctoral FROM rc_identity_degree WHERE cwid='" + cwid + "'";
 		IdentityDegree identityDegree = new IdentityDegree();
 		identityDegree.setCwid(cwid);
 		try {
