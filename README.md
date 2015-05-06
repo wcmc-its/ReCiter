@@ -3,33 +3,44 @@
 ## ReCiter wiki
 The <a href="../../wiki">wiki</a> includes descriptions of files used for computation, an overview of error analysis, a log of performance, and use cases, among other informational material on the project.
 
-## Eclipse Setup
-1. Create a folder in your local development directory and name it "ReCiter"
-2. Download a zip version of ReCiter and unzip it to your local "ReCiter" folder
-3. If you have Maven installed, open a terminal window, navigate to the ReCiter folder location, and type mvn install; (if not, you can convert to Maven via Eclipse in Step 5, below).
-4. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
-5. If you did not do a Maven install from the command line in Step 3, right-click the "ReCiter" project in Eclipse, select "Configure", then select "Convert to Maven Project."
-6. Right-click "ReCiter"
-9. Select "Build Path"
-10. Select "Add Library"
-11. Add "JUnit" library
+## Eclipse Setup for ReCiter
+1. If it is not already installed, install Eclipse IDE for Java developers, available for download at http://eclipse.org/downloads/
+2. Create a folder in your local development directory and name it "ReCiter".
+3. Use the Download ZIP button (on the right side of the project's home page on GitHub) to download the ReCiter project. Unzip it to the "ReCiter" folder that you created in the previous step.
+4. Determine whether the build automation tool Maven is installed on your computer by opening a terminal window and typing:<br>
+	mvn --version<br>
+   If Maven is installed on your machine you will see information on your installed version, for example:
+```
+	Apache Maven 3.0.5 (r01de14724cdef164cd33c7c8c2fe155faf9602da; 2013-02-19 14:51:28+0100)
+	Maven home: D:\apache-maven-3.0.5\bin\..
+	Java version: 1.6.0_25, vendor: Sun Microsystems Inc.
+	Java home: C:\Program Files\Java\jdk1.6.0_25\jre
+	Default locale: nl_NL, platform encoding: Cp1252
+	OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"
+```
+5. If Maven is not installed on your machine, install it. Maven is available for download from https://maven.apache.org/
+6. Depending on your preference, ReCiter can be installed from the command line, or from within Eclipse. To install it from the command line, open a terminal window, navigate to the ReCiter folder location, and type mvn install.
+7. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
+8. If you did not do a Maven install from the command line in Step 6, right-click the "ReCiter" project in Eclipse, select "Configure", then select "Convert to Maven Project."
+9. Right-click "ReCiter"
+10. Select "Build Path"
+11. Select "Add Library"
+12. Add "JUnit" library
 
 ## MySQL Setup
-1. To connect to your local development environment's database:
-2. Change the following in *database.properties*.
+1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
+2. To connect to your local development environment's database:
+3. Change the following in *database.properties*.
 ```
 	url = "jdbc:mysql://localhost/reciter";
 	username = "root";
 	password = "";
 ```
-3. Paul will provide the latest .SQL that contains the necessary tables.
-4. Once the .SQL file is present on your local machine, please use MySQL workbench to import the .SQL file into your localhost databse.
-5. In MySQL workbench, select "Data Import/Restore" in the Navigator on the left side.
-6. In the "Import from Disk" tab, select "Import from Self-Contained File".
-7. Select "Start Import".
+4. Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
+5. Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select "Data Import/Restore" in the left navigation bar; in the "Import from Disk" tab, select "Import from Self-Contained File"; and select "Start Import".
 
-## XML data setup.
-1. Download the xml file *xml.7z*. (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
+## XML data setup
+1. Download the xml file *xml.7z*. (See the <a href="../../wiki">wiki</a> for information on how to obtain this file)
 2. In Eclipse, create a folder named *data* with four inner folders *lucene_index*, *scopus*, *csv_output*, and *properties*.
 3. Unzip *xml.7z* into *data*.
 
