@@ -87,5 +87,10 @@
 			<artifactId>biolemmatizer-uima</artifactId>
 			<version>1.2</version>
 		</dependency>
+		<dependency>
+			<groupId>com.moparisthebest</groupId>
+			<artifactId>junidecode</artifactId>
+			<version>0.1.1</version>
+		</dependency>
 	</dependencies>
 </project>

@@ -82,7 +82,11 @@ public class PythonCSVWriter {
 		ArticleDao articleDao = new ArticleDao();
 		Set<Integer> pmidSet = articleDao.getPmidList("hef9020");
 
-		printer.printRecord(termSet, "is_correct");
+		for (String term : termSet) {
+			printer.print(termMap.get(term) + ": " + term);
+		}
+		printer.print("is_correct");
+		printer.println();
 		
 		for (ReCiterArticle article : reCiterArticleList) {
 			int[] termExistArray = new int[termSet.size()];
