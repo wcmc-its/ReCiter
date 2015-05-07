@@ -50,7 +50,8 @@ To run ReCiter for a specific person:
 2. Run *src/test/examples/pubmed/ReCiterExample.java*.
 
 ## Examining ReCiter output
-ReCiter writes output to csv_output.csv, in the root folder.
+ReCiter writes output to csv_output.csv in `data/csv_output`.
+The precision and recall can be found in `reciter.log` after running `ReCiterExample.java`.
 
 ## Components of ReCiter
 The code for ReCiter consists of four main parts: database storage utilities, PubMed retriever and parser, Scopus retriever and parser, and ReCiter algorithm.
