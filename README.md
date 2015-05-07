@@ -26,7 +26,6 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 10. Select "Build Path"
 11. Select "Add Library"
 12. Add "JUnit" library
-13. Please create a lib folder in project workspace and add http://junidecode.sourceforge.net/#download jar (version 0.1.1) to lib folder.
 
 ## MySQL Setup
 1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
