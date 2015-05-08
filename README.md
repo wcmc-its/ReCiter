@@ -49,6 +49,12 @@ To run ReCiter for a specific person:
 1. Edit *config.properties*.
 2. Run *src/test/examples/pubmed/ReCiterExample.java*.
 
+## Running ReCiter for all cwids.
+To run ReCiter for all cwids:
+1. Generate all the configuration files for cwids by running */src/test/examples/pubmed/ConfigWriterTest.java*.
+2. Run *src/test/examples/pubmed/ReCiterExample.java*.
+3. The precision and recall values for each cwid are written to *reciter.log*.
+
 ## Examining ReCiter output
 ReCiter writes output to csv_output.csv in `data/csv_output`.
 The precision and recall can be found in `reciter.log` after running `ReCiterExample.java`.
