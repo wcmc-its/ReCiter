@@ -84,8 +84,9 @@ public class ReCiterExample {
 		ReCiterArticle targetAuthorArticle = new ReCiterArticle(-1);
 		targetAuthorArticle.setArticleCoAuthors(new ReCiterArticleCoAuthors());
 		targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation + " " + department)));		
-
+		TargetAuthor.getInstance().setCwid(cwid);
 		targetAuthorArticle.setArticleKeywords(new ReCiterArticleKeywords());
+		
 		for (String keyword : authorKeywords.split(",")) {
 			targetAuthorArticle.getArticleKeywords().addKeyword(keyword);
 		}

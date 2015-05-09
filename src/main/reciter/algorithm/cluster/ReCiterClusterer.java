@@ -275,7 +275,7 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			} else {
 				finalCluster.get(selection).add(article);
-//				slf4jLogger.info("PMID: " + article.getArticleID() + " selection: " + selection);
+				//				slf4jLogger.info("PMID: " + article.getArticleID() + " selection: " + selection);
 				if (debugCSV) {
 					slf4jLogger.info(selection + ", " + article.toCSV());
 				}
@@ -293,7 +293,7 @@ public class ReCiterClusterer implements Clusterer {
 
 		// Get cluster ids with max number of coauthor matches.
 		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle));
-//		slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + clusterIdSet);
+		//		slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + clusterIdSet);
 
 		// If groups have matching co-authors, the program selects the group that has the most matching names.
 		if (clusterIdSet.size() == 1) {
@@ -337,6 +337,18 @@ public class ReCiterClusterer implements Clusterer {
 		double currentMax = -1;
 		int currentMaxId = -1;
 		for (int id : clusterIdList) {
+			// Grab CWID from rc_identity table. Combine with "@med.cornell.edu" and match against candidate records. 
+			// When email is found in affiliation string, during phase two clustering, automatically assign the matching identity.
+			if (selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					if (article.getAffiliationConcatenated() != null) {
+						if (article.getAffiliationConcatenated().contains(TargetAuthor.getInstance().getCwid() + "@med.cornell.edu")) {
+							return id;
+						}
+					}
+				}
+			}
+
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
 
 			if (!selectingTarget) {
@@ -353,11 +365,11 @@ public class ReCiterClusterer implements Clusterer {
 				} else {
 					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
 				}
-				
+
 			}
 
 			if (selectingTarget) {
-				
+
 				//				System.out.println("Cosine similarity between target and cluster " + id + ": score=" + sim);
 				if (debug) {
 					slf4jLogger.info("Cosine similarity between target and cluster " + id + ": score=" + sim);

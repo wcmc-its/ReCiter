@@ -14,6 +14,8 @@ import main.reciter.model.article.ReCiterArticle;
 public class TargetAuthor extends ReCiterAuthor {
 
 	private static TargetAuthor instance;
+	
+	private String cwid;
 	private ReCiterArticle targetAuthorArticleIndexed;
 	private Map<Integer, List<TypeScore>> map;
 	private int terminalDegreeYear;
@@ -76,5 +78,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setTerminalDegreeYear(int terminalDegreeYear) {
 		this.terminalDegreeYear = terminalDegreeYear;
+	}
+
+	public String getCwid() {
+		return cwid;
+	}
+
+	public void setCwid(String cwid) {
+		this.cwid = cwid;
 	}
 }
