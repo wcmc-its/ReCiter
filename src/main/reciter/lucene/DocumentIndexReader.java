@@ -207,6 +207,25 @@ public class DocumentIndexReader {
 				if (reCiterArticle.getArticleID() != -1) {
 					reCiterArticle.getJournal().setJournalIssuePubDateYear(Integer.parseInt(journalIssuePubDateYearString));
 				}
+				
+				// Fetch Journal ISO Abbreviation.
+				Terms journalISOAbbrvTerms = null;
+				journalISOAbbrvTerms = indexReader.getTermVector(i, DocumentVectorType.JOURNAL_ISO_ABBRV.name());
+				String journalISOAbbrv = null;
+				TermsEnum journalISOAbbrvTermsEnum = null;
+				if (journalISOAbbrvTerms != null) {
+					journalISOAbbrvTermsEnum = journalISOAbbrvTerms.iterator(journalISOAbbrvTermsEnum);
+					BytesRef text = null;
+					while ((text = journalISOAbbrvTermsEnum.next()) != null) {
+						journalISOAbbrv = text.utf8ToString();
+					}
+				}
+
+				// Skipping target author:
+				if (reCiterArticle.getArticleID() != -1) {
+					reCiterArticle.getJournal().setIsoAbbreviation(journalISOAbbrv);
+				}
+				
 				// Add to list.
 				reCiterArticleList.add(reCiterArticle);
 			}

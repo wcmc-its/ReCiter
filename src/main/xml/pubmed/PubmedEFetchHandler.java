@@ -166,6 +166,9 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().setPubDate(new MedlineCitationDate());
 			bPubDate = true;
 		}
+		if (qName.equalsIgnoreCase("ISOAbbreviation")) {
+			bJournalISOAbbreviation = true;
+		}
 		if (bPubDate && qName.equalsIgnoreCase("Year")) {
 			bPubDateYear = true;
 		}
@@ -274,6 +277,10 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
 			bPubDate = false;
 			bPubDateYear = false;
+		}
+		if (bJournalISOAbbreviation) {
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().setIsoAbbreviation(new String(ch, start, length));
+			bJournalISOAbbreviation = false;
 		}
 		if (bPubDate && bMedlineDate) {
 			String pubDateYear = new String(ch, start, length);

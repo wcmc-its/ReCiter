@@ -19,4 +19,10 @@ public class MedlineCitationJournal {
 	public void setJournalIssue(MedlineCitationJournalIssue journalIssue) {
 		this.journalIssue = journalIssue;
 	}
+	public String getIsoAbbreviation() {
+		return isoAbbreviation;
+	}
+	public void setIsoAbbreviation(String isoAbbreviation) {
+		this.isoAbbreviation = isoAbbreviation;
+	}
 }

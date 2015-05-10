@@ -106,6 +106,13 @@ public class DocumentTranslator {
 					untokenizedFieldType));
 		}
 		
+		// Add Journal ISOAbbreviation.
+		if (reCiterArticle.getJournal() != null) {
+			document.add(new Field(DocumentVectorType.JOURNAL_ISO_ABBRV.name(),
+					reCiterArticle.getJournal().getIsoAbbreviation(),
+					untokenizedFieldType));
+		}
+		
 		return document;
 	}
 }

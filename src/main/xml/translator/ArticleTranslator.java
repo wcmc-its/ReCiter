@@ -101,6 +101,7 @@ public class ArticleTranslator {
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
 		reCiterArticle.setArticleKeywords(articleKeywords);
 		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
+		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlineCitation().getArticle().getJournal().getIsoAbbreviation());
 		return reCiterArticle;
 	}
 }

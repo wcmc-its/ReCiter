@@ -8,6 +8,7 @@ package main.reciter.model.article;
 public class ReCiterJournal {
 	private final String journalTitle;
 	private int journalIssuePubDateYear;
+	private String isoAbbreviation;
 	
 	public ReCiterJournal(String journalTitle) {
 		this.journalTitle = journalTitle;
@@ -23,5 +24,11 @@ public class ReCiterJournal {
 	}
 	public void setJournalIssuePubDateYear(int journalIssuePubDateYear) {
 		this.journalIssuePubDateYear = journalIssuePubDateYear;
+	}
+	public String getIsoAbbreviation() {
+		return isoAbbreviation;
+	}
+	public void setIsoAbbreviation(String isoAbbreviation) {
+		this.isoAbbreviation = isoAbbreviation;
 	}
 }
