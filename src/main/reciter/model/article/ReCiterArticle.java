@@ -25,6 +25,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private String affiliationConcatenated;
 	private int dateCreated;
 	private String info;
+	private boolean clusterStarter;
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -182,6 +183,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setInfo(String info) {
 		this.info = info;
+	}
+
+	public boolean isClusterStarter() {
+		return clusterStarter;
+	}
+
+	public void setClusterStarter(boolean clusterStarter) {
+		this.clusterStarter = clusterStarter;
 	}
 
 }
