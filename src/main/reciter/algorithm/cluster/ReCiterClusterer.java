@@ -24,6 +24,8 @@ import main.reciter.utils.YearDiscrepacyReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import test.examples.pubmed.ReCiterExampleTest;
+
 /**
  * 
  * @author jil3004
@@ -175,6 +177,9 @@ public class ReCiterClusterer implements Clusterer {
 
 			slf4jLogger.info("Precision = " + precision);
 			slf4jLogger.info("Recall = " + recall);
+			
+			ReCiterExampleTest.totalPrecision += precision;
+			ReCiterExampleTest.totalRecall += recall;
 		} else {
 			slf4jLogger.info("No cluster match found.");
 		}
