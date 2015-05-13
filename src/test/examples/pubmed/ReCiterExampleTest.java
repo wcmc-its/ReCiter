@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import main.database.dao.ArticleDao;
@@ -24,7 +23,6 @@ import main.reciter.model.author.AuthorName;
 import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.model.author.TargetAuthor;
 import main.reciter.utils.Analysis;
-import main.reciter.utils.AnalysisCSVParser;
 import main.reciter.utils.AnalysisCSVWriter;
 import main.reciter.utils.AnalysisObject;
 import main.reciter.utils.ReCiterConfigProperty;
@@ -78,9 +76,8 @@ public class ReCiterExampleTest {
 	 */
 	public static void runExample(ReCiterConfigProperty reCiterConfigProperty) {
 
-		reCiterConfigProperty.setPerformRetrievePublication(true);
 		YearDiscrepacyReader.init();
-		
+//		reCiterConfigProperty.setPerformRetrievePublication(true);
 		String lastName = reCiterConfigProperty.getLastName();
 		String middleName = reCiterConfigProperty.getMiddleName();
 		String firstName = reCiterConfigProperty.getFirstName();
