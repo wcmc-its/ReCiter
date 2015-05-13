@@ -51,11 +51,27 @@ To run ReCiter for a specific person.
 2. Run *src/test/examples/pubmed/ReCiterExample.java*.
 
 ## Running ReCiter for all cwids.
-To run ReCiter for all cwids.
+To run ReCiter for all cwids:
 
 1. Generate all the configuration files for cwids by running */src/test/examples/pubmed/ConfigWriterTest.java*.
 2. Run *src/test/examples/pubmed/ReCiterExample.java*.
 3. The precision and recall values for each cwid are written to *reciter.log*.
+
+## Running ReCiter for a collection of specific cwids.
+To run ReCiter for a collection of cwids, first obtain XML files for the target authors. Then:
+
+1. If desired, empty the contents of ReCiter/data/csv_output
+2. Verify that there is an empty folder lucene_index within ReCiter/data/ (If it is not there, create it.)
+3. Verify that there is an empty folder properties within ReCiter/data/ (If it is not there, create it.)
+4. Verify that there is an empty folder xml within ReCiter/data/ (If it is not there, create it.)
+5. Copy XML files for the target authors into ReCiter/data/test_xml/
+6. Run *src/test/examples/pubmed/ConfigWriterTest.java*, which outputs configurations for all target authors to the  ReCiter/data/properties folder
+7. In *src/test/examples/pubmed/ReCiterExampleTest.java*, line 80 reads as follows:
+```
+	reCiterConfigProperty.setPerformRetrievePublication(true);
+```
+Setting the value to false assumes that xml files for the 64 cwids are already retrieved. Therefore, this value should be set to false after they have been retrieved. Verify that this line is not commented out.
+8. Run *src/test/examples/pubmed/ReCiterExampleTest.java* to fetch an updated copy of the XML files
 
 ## Examining ReCiter output
 ReCiter writes output to csv_output.csv in `data/csv_output`.
