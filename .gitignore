@@ -75,3 +75,5 @@ data/
 
 # Do not include reciter.log
 reciter.log
+
+csv_python_output.csv
