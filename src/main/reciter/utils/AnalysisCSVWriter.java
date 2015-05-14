@@ -71,7 +71,7 @@ public class AnalysisCSVWriter {
 		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
 
 		printer.printRecord(
-				"Similarity Threshold", "Article ID", "Title", "Journal", "Authors", 
+				"Similarity Threshold", "Article ID", "Title", "Journal", "Publication Year", "Authors", 
 				"Affiliations", "Keywords", "Cluster to which the article was assigned", 
 				"Number of articles in the selected cluster",
 				"Cluster ultimately selected in Phase 2 matching",
@@ -85,6 +85,7 @@ public class AnalysisCSVWriter {
 			int articleId = analysisObject.getReCiterArticle().getArticleID();
 			String title = analysisObject.getReCiterArticle().getArticleTitle().getTitle();
 			String journal = analysisObject.getReCiterArticle().getJournal().getJournalTitle();
+			int publicationYear = analysisObject.getYearOfPublication();
 			String authors = analysisObject.getReCiterArticle().getArticleCoAuthors().toAuthorCSV();
 			String affiliation = analysisObject.getReCiterArticle().getAffiliationConcatenated();
 			String keywords = analysisObject.getReCiterArticle().getArticleKeywords().getCommaConcatForm();
@@ -107,6 +108,7 @@ public class AnalysisCSVWriter {
 					articleId,
 					title,
 					journal,
+					publicationYear,
 					authors,
 					affiliation,
 					keywords,

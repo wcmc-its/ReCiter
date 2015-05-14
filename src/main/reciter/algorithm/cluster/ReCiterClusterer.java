@@ -148,6 +148,11 @@ public class ReCiterClusterer implements Clusterer {
 					analysisObject.setClusterId(entry.getValue().getClusterID());
 					analysisObject.setNumArticlesInCluster(entry.getValue().getArticleCluster().size());
 
+					if (reCiterArticle.getJournal() != null) {
+						analysisObject.setYearOfPublication(reCiterArticle.getJournal().getJournalIssuePubDateYear());
+					} else {
+						analysisObject.setYearOfPublication(-1);
+					}
 					// If the cluster id is the same, then cluster is selected as the assigned matching cluster.
 					if (entry.getKey() == reCiterCluster.getClusterID()) {
 						analysisObject.setSelected(true);
@@ -177,7 +182,7 @@ public class ReCiterClusterer implements Clusterer {
 
 			slf4jLogger.info("Precision = " + precision);
 			slf4jLogger.info("Recall = " + recall);
-			
+
 			ReCiterExampleTest.totalPrecision += precision;
 			ReCiterExampleTest.totalRecall += recall;
 		} else {
@@ -265,7 +270,7 @@ public class ReCiterClusterer implements Clusterer {
 		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 		for (int i = 1; i < articleList.size(); i++) {
 			ReCiterArticle article = articleList.get(i);
-//			slf4jLogger.info(i + ": Assigning article: " + article.getArticleID());
+			//			slf4jLogger.info(i + ": Assigning article: " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				if (debug) {

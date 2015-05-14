@@ -16,6 +16,7 @@ public class AnalysisObject {
 	private String status; // Status of ReCiter's determination for this article with respect to reference standard
 	private boolean selected; // Cluster ultimately selected in Phase 2 matching
 	private String info;
+	private int yearOfPublication;
 	
 	public double getSimilarityMeasure() {
 		return similarityMeasure;
@@ -66,6 +67,12 @@ public class AnalysisObject {
 
 	public static void setAnalysisObjectList(List<AnalysisObject> analysisObjectList) {
 		AnalysisObject.analysisObjectList = analysisObjectList;
+	}
+	public int getYearOfPublication() {
+		return yearOfPublication;
+	}
+	public void setYearOfPublication(int yearOfPublication) {
+		this.yearOfPublication = yearOfPublication;
 	}
 	
 }
