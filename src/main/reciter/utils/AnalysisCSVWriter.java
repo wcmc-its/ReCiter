@@ -121,5 +121,6 @@ public class AnalysisCSVWriter {
 		}
 		printer.close();
 		writer.close();
+		AnalysisObject.getAnalysisObjectList().clear(); // clear the analysis object.
 	}
 }

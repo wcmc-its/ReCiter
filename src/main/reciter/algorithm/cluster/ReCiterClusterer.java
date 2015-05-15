@@ -185,6 +185,7 @@ public class ReCiterClusterer implements Clusterer {
 
 			ReCiterExampleTest.totalPrecision += precision;
 			ReCiterExampleTest.totalRecall += recall;
+			
 		} else {
 			slf4jLogger.info("No cluster match found.");
 		}
