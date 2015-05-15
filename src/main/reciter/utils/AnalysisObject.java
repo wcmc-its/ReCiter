@@ -8,6 +8,7 @@ import main.reciter.model.article.ReCiterArticle;
 public class AnalysisObject {
 
 	private static List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
+	private static List<AnalysisObject> allAnalysisObjectList = new ArrayList<AnalysisObject>();
 	
 	private double similarityMeasure;
 	private ReCiterArticle reCiterArticle;
@@ -73,6 +74,12 @@ public class AnalysisObject {
 	}
 	public void setYearOfPublication(int yearOfPublication) {
 		this.yearOfPublication = yearOfPublication;
+	}
+	public static List<AnalysisObject> getAllAnalysisObjectList() {
+		return allAnalysisObjectList;
+	}
+	public static void setAllAnalysisObjectList(List<AnalysisObject> allAnalysisObjectList) {
+		AnalysisObject.allAnalysisObjectList = allAnalysisObjectList;
 	}
 	
 }

@@ -41,12 +41,11 @@ public class ReCiterExampleTest {
 
 	public static double totalPrecision = 0;
 	public static double totalRecall = 0;
-
+	public static int numCwids = 0;
 	public static void main(String[] args) throws IOException {
 
 		// Keep track of exeuction time of ReCiter.
 		long startTime = System.currentTimeMillis();
-
 		Files.walk(Paths.get("data/test_xml")).forEach(filePath -> {
 		    if (Files.isRegularFile(filePath)) {
 		    	String cwid = filePath.getFileName().toString().replace(".xml", "");
@@ -57,12 +56,15 @@ public class ReCiterExampleTest {
 					e.printStackTrace();
 				}
 				runExample(reCiterConfigProperty);
+				numCwids++;
 		    }
 		});
 
-		slf4jLogger.info("Average Precision: " + totalPrecision / 64);
-		slf4jLogger.info("Average Recall: " + totalRecall / 64);
+		slf4jLogger.info("Average Precision: " + totalPrecision / numCwids);
+		slf4jLogger.info("Average Recall: " + totalRecall / numCwids);
 		
+		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
+		analysisCSVWriter.write(AnalysisObject.getAllAnalysisObjectList(), "all_target");
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");

@@ -177,6 +177,7 @@ public class ReCiterClusterer implements Clusterer {
 					}
 
 					AnalysisObject.getAnalysisObjectList().add(analysisObject);	
+					AnalysisObject.getAllAnalysisObjectList().add(analysisObject);
 				}
 			}
 
