@@ -4,11 +4,10 @@
 The <a href="../../wiki">wiki</a> includes descriptions of files used for computation, an overview of error analysis, a log of performance, and use cases, among other informational material on the project.
 
 ## Cloning ReCiter project in Eclipse
+0. Clone a copy of ReCiter in an empty directory.
 0. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for Eclipse.
 1. In Eclipse, go to `File` -> `Git` -> `Projects from Git`.
-2. Select `Clone URI`.
-3. Copy https://github.com/wcmc-its/ReCiter.git into `URI` field and enter `User` and `Password`.
-4. (To be updated).
+2. Select `Existing local repository` and select `Add`. Browse to the directory where the cloned project is and select `Import using the New Project wizard`.
 
 ## Eclipse Setup for ReCiter
 1. If it is not already installed, install Eclipse IDE for Java developers, available for download at http://eclipse.org/downloads/
