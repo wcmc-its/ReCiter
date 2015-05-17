@@ -353,26 +353,28 @@ public class ReCiterClusterer implements Clusterer {
 		double currentMax = -1;
 		int currentMaxId = -1;
 		for (int id : clusterIdList) {
+
+			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
+			
 			// Grab CWID from rc_identity table. Combine with "@med.cornell.edu" and match against candidate records. 
 			// When email is found in affiliation string, during phase two clustering, automatically assign the matching identity.
 			if (selectingTarget) {
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 					if (article.getAffiliationConcatenated() != null) {
 						if (article.getAffiliationConcatenated().contains(TargetAuthor.getInstance().getCwid() + "@med.cornell.edu")) {
+//							sim *= 1.3; // a matching email should dramatically increase the score of some results but not decrease the score of others
 							return id;
 						}
 					}
 				}
 			}
 
-			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
 			
 			// Increase similarity if the affiliation information "Weill Cornell Medical College" appears in affiliation.
 			if (!selectingTarget) {
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 					if (StringUtils.contains(StringUtils.lowerCase(article.getAffiliationConcatenated()), "weill cornell medical college") &&
 							StringUtils.contains(StringUtils.lowerCase(currentArticle.getAffiliationConcatenated()), "weill cornell medical college")) {
-						slf4jLogger.info("Found weill cornell.");
 						sim *= 3;
 					}
 				}
