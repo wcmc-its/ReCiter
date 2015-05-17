@@ -130,12 +130,10 @@ public class ReCiterCluster {
 					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName()) 
 							&& !currentAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())
 							&& !author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-						//					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName())) {
+						
 						matchingCoauthorCount += 1;
-//						slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + article.getArticleID() + " " + currentAuthor.getAuthorName());
-//						System.out.println("Matched on coauthor: " + currentAuthor.getAuthorName() + " -- " + author.getAuthorName());
 						if (debug) {
-//							slf4jLogger.info("Matched on coauthor: " + currentAuthor.getAuthorName() + " -- " + author.getAuthorName());
+							slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + article.getArticleID() + " " + currentAuthor.getAuthorName());
 						}
 					}
 				}

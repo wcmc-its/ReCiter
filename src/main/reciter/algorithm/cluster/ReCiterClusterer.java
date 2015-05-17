@@ -15,6 +15,7 @@ import main.reciter.lucene.docsimilarity.AffiliationCosineSimilarity;
 import main.reciter.lucene.docsimilarity.DocumentSimilarity;
 import main.reciter.lucene.docsimilarity.KeywordCosineSimilarity;
 import main.reciter.model.article.ReCiterArticle;
+import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.model.author.TargetAuthor;
 import main.reciter.model.author.TargetAuthor.TypeScore;
 import main.reciter.utils.Analysis;
@@ -186,7 +187,7 @@ public class ReCiterClusterer implements Clusterer {
 
 			ReCiterExampleTest.totalPrecision += precision;
 			ReCiterExampleTest.totalRecall += recall;
-			
+
 		} else {
 			slf4jLogger.info("No cluster match found.");
 		}
@@ -379,6 +380,53 @@ public class ReCiterClusterer implements Clusterer {
 					sim *= 0.001526;
 				} else {
 					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
+				}
+			}
+
+			// https://github.com/wcmc-its/ReCiter/issues/58
+			// middle initial is a valuable indication if a person has the identity of author for an article. 
+			// It is, sometimes, though not always, tracked in the rc_identity table. 
+			// And it is sometimes, though not always available in the article.
+			if (!selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					String targetAuthorMiddleInitial = TargetAuthor.getInstance().getAuthorName().getMiddleInitial();
+					String firstInitial = TargetAuthor.getInstance().getAuthorName().getFirstInitial();
+					String lastName = TargetAuthor.getInstance().getAuthorName().getLastName();
+
+					if (targetAuthorMiddleInitial != null) {
+						// For cases where middle initial is present in rc_identity.
+						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+							if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+								if (targetAuthorMiddleInitial.equalsIgnoreCase((author.getAuthorName().getMiddleInitial()))) {
+									for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+										if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+											if (targetAuthorMiddleInitial.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getMiddleInitial())) {
+												sim *= 1.3;
+											} else {
+												sim *= 0.3; // the likelihood that someone wrote an article should plummet when this is the case
+											}
+										}
+									}
+								}
+							}
+						}
+					} else {
+						// For cases where middle initial is not present in rc_identity.
+						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+							if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+								for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+									if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+										if (currentArticleAuthor.getAuthorName().getMiddleInitial() == null &&
+												author.getAuthorName().getMiddleInitial() != null) {
+											// it's rare but not completely improbable that an author would share their 
+											// middle initial on a paper but won't supply it on an official CV, or so I would argue
+											sim *= 0.7;
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 
