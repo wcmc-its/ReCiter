@@ -77,8 +77,7 @@ To run ReCiter for a collection of cwids, first obtain XML files for the target 
 	reCiterConfigProperty.setPerformRetrievePublication(true);
 ```
 Setting the value to false assumes that xml files for the 64 cwids are already retrieved. Therefore, this value should be set to false after they have been retrieved. Verify that this line is not commented out.
-8. Run *src/test/examples/pubmed/ReCiterExampleTest.java* to fetch an updated copy of the XML files
-9. Run *src/test/examples/pubmed/ReCiterExample.java*
+8. Run *src/test/examples/pubmed/ReCiterExampleTest.java* which will fetch an updated copy of the XML files and run the clustering for all the 64 cwids.
 
 ## Examining ReCiter output
 ReCiter writes output to csv_output.csv in `data/csv_output`.
