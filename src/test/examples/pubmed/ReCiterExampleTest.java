@@ -64,7 +64,7 @@ public class ReCiterExampleTest {
 				numCwids++;
 			}
 		});
-
+		slf4jLogger.info("Number of cwids: " + numCwids);
 		slf4jLogger.info("Average Precision: " + totalPrecision / numCwids);
 		slf4jLogger.info("Average Recall: " + totalRecall / numCwids);
 

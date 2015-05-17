@@ -71,7 +71,7 @@ public class AnalysisCSVWriter {
 		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
 
 		printer.printRecord(
-				"Similarity Threshold", "Article ID", "Title", "Journal", "Publication Year", "Authors", 
+				"Cwid", "Name", "Similarity Threshold", "Article ID", "Title", "Journal", "Publication Year", "Authors", 
 				"Affiliations", "Keywords", "Cluster to which the article was assigned", 
 				"Number of articles in the selected cluster",
 				"Cluster ultimately selected in Phase 2 matching",
@@ -104,6 +104,8 @@ public class AnalysisCSVWriter {
 			if (selected) booleanStatus = "Yes"; else booleanStatus = "No";
 
 			printer.printRecord(
+					TargetAuthor.getInstance().getCwid(),
+					TargetAuthor.getInstance().getAuthorName(),
 					similarityThreshold,
 					articleId,
 					title,

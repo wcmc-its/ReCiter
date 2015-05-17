@@ -22,6 +22,7 @@ import main.reciter.utils.Analysis;
 import main.reciter.utils.AnalysisObject;
 import main.reciter.utils.YearDiscrepacyReader;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -365,7 +366,18 @@ public class ReCiterClusterer implements Clusterer {
 			}
 
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
-
+			
+			// Increase similarity if the affiliation information "Weill Cornell Medical College" appears in affiliation.
+			if (!selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					if (StringUtils.contains(StringUtils.lowerCase(article.getAffiliationConcatenated()), "weill cornell medical college") &&
+							StringUtils.contains(StringUtils.lowerCase(currentArticle.getAffiliationConcatenated()), "weill cornell medical college")) {
+						slf4jLogger.info("Found weill cornell.");
+						sim *= 3;
+					}
+				}
+			}
+			
 			// Adjust cosine similarity score with year discrepancy.
 			if (!selectingTarget) {
 				// Update the similarity score with year discrepancy.

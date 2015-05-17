@@ -323,8 +323,7 @@ public class AuthorName {
 
 	@Override
 	public String toString() {
-		return "AuthorName [firstName=" + firstName + ", middleName="
-				+ middleName + ", lastName=" + lastName + "]";
+		return firstName + " " + middleName + " " + lastName;
 	}
 
 }
