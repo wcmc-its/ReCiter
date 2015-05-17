@@ -397,6 +397,11 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			}
 
+			// https://github.com/wcmc-its/ReCiter/issues/59
+			// Context: first name is a valuable indication if a person is author for an article. 
+			// It is always tracked in the rc_identity table. And it is sometimes, though not always available in the 
+			// article. First names tend to change especially in cases where it becomes Westernized.
+			
 			// https://github.com/wcmc-its/ReCiter/issues/58
 			// middle initial is a valuable indication if a person has the identity of author for an article. 
 			// It is, sometimes, though not always, tracked in the rc_identity table. 
@@ -404,9 +409,29 @@ public class ReCiterClusterer implements Clusterer {
 			if (!selectingTarget) {
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 					String targetAuthorMiddleInitial = TargetAuthor.getInstance().getAuthorName().getMiddleInitial();
-					String firstInitial = TargetAuthor.getInstance().getAuthorName().getFirstInitial();
-					String lastName = TargetAuthor.getInstance().getAuthorName().getLastName();
+					String firstName = TargetAuthor.getInstance().getAuthorName().getFirstName();
 
+					// First Name from rc_identity.
+					if (firstName != null) {
+						// For cases where first name is present in rc_identity.
+						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+							if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+								if (firstName.equalsIgnoreCase((author.getAuthorName().getFirstName()))) {
+									for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+										if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+											if (firstName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getFirstName())) {
+												sim *= 1.3; // (rc_idenity = YES, present in cluster = YES, match = YES.
+											} else {
+												sim *= 0.4; // (rc_idenity = YES, present in cluster = YES, match = NO.
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					// Middle initial from rc_identity.
 					if (targetAuthorMiddleInitial != null) {
 						// For cases where middle initial is present in rc_identity.
 						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
