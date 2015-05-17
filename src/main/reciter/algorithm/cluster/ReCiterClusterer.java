@@ -477,7 +477,7 @@ public class ReCiterClusterer implements Clusterer {
 							}
 							if (journalSimScore != -1.0) {
 								if (journalSimScore > 0.8) {
-									sim *= (1 + journalSimScore);
+									sim *= (1 + journalSimScore); // Journal similarity on a sliding scale.
 								}
 							}
 						}

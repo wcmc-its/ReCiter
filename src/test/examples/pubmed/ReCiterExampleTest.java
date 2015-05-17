@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import main.database.dao.ArticleDao;
@@ -28,7 +30,10 @@ import main.reciter.utils.AnalysisObject;
 import main.reciter.utils.ReCiterConfigProperty;
 import main.reciter.utils.YearDiscrepacyReader;
 import main.xml.pubmed.PubmedXmlFetcher;
+import main.xml.pubmed.model.MedlineCitationArticleAuthor;
 import main.xml.pubmed.model.PubmedArticle;
+import main.xml.scopus.ScopusXmlFetcher;
+import main.xml.scopus.model.ScopusEntry;
 import main.xml.translator.ArticleTranslator;
 
 import org.apache.lucene.document.Document;
@@ -47,9 +52,9 @@ public class ReCiterExampleTest {
 		// Keep track of exeuction time of ReCiter.
 		long startTime = System.currentTimeMillis();
 		Files.walk(Paths.get("data/test_xml")).forEach(filePath -> {
-		    if (Files.isRegularFile(filePath)) {
-		    	String cwid = filePath.getFileName().toString().replace(".xml", "");
-		    	ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
+			if (Files.isRegularFile(filePath)) {
+				String cwid = filePath.getFileName().toString().replace(".xml", "");
+				ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
 				try {
 					reCiterConfigProperty.loadProperty("data/properties/" + cwid + "/" + cwid + ".properties");
 				} catch (Exception e) {
@@ -57,12 +62,12 @@ public class ReCiterExampleTest {
 				}
 				runExample(reCiterConfigProperty);
 				numCwids++;
-		    }
+			}
 		});
 
 		slf4jLogger.info("Average Precision: " + totalPrecision / numCwids);
 		slf4jLogger.info("Average Recall: " + totalRecall / numCwids);
-		
+
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
 		analysisCSVWriter.write(AnalysisObject.getAllAnalysisObjectList(), "all_target");
 		long stopTime = System.currentTimeMillis();
@@ -79,7 +84,7 @@ public class ReCiterExampleTest {
 	public static void runExample(ReCiterConfigProperty reCiterConfigProperty) {
 
 		YearDiscrepacyReader.init();
-//		reCiterConfigProperty.setPerformRetrievePublication(true);
+		//		reCiterConfigProperty.setPerformRetrievePublication(true);
 		String lastName = reCiterConfigProperty.getLastName();
 		String middleName = reCiterConfigProperty.getMiddleName();
 		String firstName = reCiterConfigProperty.getFirstName();
@@ -137,32 +142,32 @@ public class ReCiterExampleTest {
 			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
 
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
-			//			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
-			//			List<ScopusEntry> scopusEntryList = scopusXmlFetcher.getScopusEntryList(lastName, firstInitial, cwid);
-			//
-			//			// Map the pmid to a ScopusEntry.
-			//			Map<String, ScopusEntry> pmidToScopusEntry = new HashMap<String, ScopusEntry>();
-			//			for (ScopusEntry entry : scopusEntryList) {
-			//				pmidToScopusEntry.put(entry.getPubmedID(), entry);
-			//			}
-			//
-			//			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
-			//			// Scopus Affiliation. The fake author has pmid as last name and first name.
-			//			for (PubmedArticle pubmedArticle : pubmedArticleList) {
-			//				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-			//
-			//				if (pmidToScopusEntry.containsKey(pmid)) {
-			//					String scopusAffiliation = pmidToScopusEntry.get(pmid).affiliationConcatForm();
-			//					MedlineCitationArticleAuthor fakeAuthor = new MedlineCitationArticleAuthor();
-			//					fakeAuthor.setLastName(pmid);
-			//					fakeAuthor.setForeName(pmid);
-			//					fakeAuthor.setAffiliation(scopusAffiliation);
-			//					if (pubmedArticle.getMedlineCitation().getArticle().getAuthorList() == null) {
-			//						pubmedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<MedlineCitationArticleAuthor>());
-			//					}
-			//					pubmedArticle.getMedlineCitation().getArticle().getAuthorList().add(fakeAuthor);
-			//				}
-			//			}
+			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+			List<ScopusEntry> scopusEntryList = scopusXmlFetcher.getScopusEntryList(lastName, firstInitial, cwid);
+
+			// Map the pmid to a ScopusEntry.
+			Map<String, ScopusEntry> pmidToScopusEntry = new HashMap<String, ScopusEntry>();
+			for (ScopusEntry entry : scopusEntryList) {
+				pmidToScopusEntry.put(entry.getPubmedID(), entry);
+			}
+
+			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
+			// Scopus Affiliation. The fake author has pmid as last name and first name.
+			for (PubmedArticle pubmedArticle : pubmedArticleList) {
+				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
+
+				if (pmidToScopusEntry.containsKey(pmid)) {
+					String scopusAffiliation = pmidToScopusEntry.get(pmid).affiliationConcatForm();
+					MedlineCitationArticleAuthor fakeAuthor = new MedlineCitationArticleAuthor();
+					fakeAuthor.setLastName(pmid);
+					fakeAuthor.setForeName(pmid);
+					fakeAuthor.setAffiliation(scopusAffiliation);
+					if (pubmedArticle.getMedlineCitation().getArticle().getAuthorList() == null) {
+						pubmedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<MedlineCitationArticleAuthor>());
+					}
+					pubmedArticle.getMedlineCitation().getArticle().getAuthorList().add(fakeAuthor);
+				}
+			}
 
 			// Convert PubmedArticle to ReCiterArticle.
 			List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);
