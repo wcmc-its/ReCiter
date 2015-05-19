@@ -113,6 +113,13 @@ public class DocumentTranslator {
 					untokenizedFieldType));
 		}
 		
+		// Add Scopus Affiliation.
+		if (reCiterArticle.getScopusAffiliation() != null) {
+			document.add(new Field(DocumentVectorType.SCOPUS_AFFILIATION_UNTOKENIZED.name(),
+					reCiterArticle.getScopusAffiliation(),
+					untokenizedFieldType));
+		}
+		
 		return document;
 	}
 }

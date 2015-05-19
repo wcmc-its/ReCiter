@@ -50,6 +50,8 @@ public class ArticleTranslator {
 		MedlineCitationKeywordList keywordList = pubmedArticle.getMedlineCitation().getKeywordList();
 		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
 		
+		ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid));
+		
 		// Translating Co-Authors.
 		ReCiterArticleCoAuthors reCiterCoAuthors = new ReCiterArticleCoAuthors();
 		for (MedlineCitationArticleAuthor author : coAuthors) {
@@ -74,6 +76,11 @@ public class ArticleTranslator {
 				AuthorAffiliation authorAffiliation = new AuthorAffiliation(affiliation);
 				ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, authorAffiliation);
 				reCiterCoAuthors.addCoAuthor(reCiterAuthor);
+				
+				// Translate Scopus Affiliation.
+				if (lastName.equals(pmid)) {
+					reCiterArticle.setScopusAffiliation(affiliation);
+				}
 			}
 		}
 		
@@ -95,7 +102,7 @@ public class ArticleTranslator {
 		// Translating Journal Issue PubDate Year.
 		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
 		
-		ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid));
+		
 		reCiterArticle.setArticleTitle(new ReCiterArticleTitle(articleTitle));
 		reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);

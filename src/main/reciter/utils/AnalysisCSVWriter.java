@@ -71,8 +71,8 @@ public class AnalysisCSVWriter {
 		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
 
 		printer.printRecord(
-				"Cwid", "Name", "Similarity Threshold", "Article ID", "Title", "Journal", "Publication Year", "Authors", 
-				"Affiliations", "Keywords", "Cluster to which the article was assigned", 
+				"Cwid", "Name", "PubMed Search Query", "Similarity Threshold", "Article ID", "Title", "Journal", "Publication Year", "Authors", 
+				"PubMed Affiliation", "Scopus Affiliation", "Keywords", "Cluster to which the article was assigned", 
 				"Number of articles in the selected cluster",
 				"Cluster ultimately selected in Phase 2 matching",
 				"Status of ReCiter's determination for this article with respect to reference standard",
@@ -93,7 +93,10 @@ public class AnalysisCSVWriter {
 			int numArticles = analysisObject.getNumArticlesInCluster();
 			boolean selected = analysisObject.isSelected();
 			String status = analysisObject.getStatus();
-
+			
+			// Get Scopus Affiliation information.
+			String scopusAffiliation = analysisObject.getReCiterArticle().getScopusAffiliation();
+			
 			double affiliationSim = 0;
 			double keywordSim = 0;
 			if (TargetAuthor.getInstance().getMap().get(clusterId) != null) {
@@ -106,6 +109,7 @@ public class AnalysisCSVWriter {
 			printer.printRecord(
 					TargetAuthor.getInstance().getCwid(),
 					TargetAuthor.getInstance().getAuthorName(),
+					TargetAuthor.getInstance().getAuthorName().getPubmedQueryFormat(), 
 					similarityThreshold,
 					articleId,
 					title,
@@ -113,6 +117,7 @@ public class AnalysisCSVWriter {
 					publicationYear,
 					authors,
 					affiliation,
+					scopusAffiliation,
 					keywords,
 					clusterId,
 					numArticles,

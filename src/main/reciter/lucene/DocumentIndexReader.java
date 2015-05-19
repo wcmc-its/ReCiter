@@ -207,7 +207,7 @@ public class DocumentIndexReader {
 				if (reCiterArticle.getArticleID() != -1) {
 					reCiterArticle.getJournal().setJournalIssuePubDateYear(Integer.parseInt(journalIssuePubDateYearString));
 				}
-				
+
 				// Fetch Journal ISO Abbreviation.
 				Terms journalISOAbbrvTerms = null;
 				journalISOAbbrvTerms = indexReader.getTermVector(i, DocumentVectorType.JOURNAL_ISO_ABBRV.name());
@@ -224,6 +224,22 @@ public class DocumentIndexReader {
 				// Skipping target author:
 				if (reCiterArticle.getArticleID() != -1) {
 					reCiterArticle.getJournal().setIsoAbbreviation(journalISOAbbrv);
+				}
+
+				if (reCiterArticle.getArticleID() != -1) {
+					// Fetch Scopus Affiliation.
+					Terms scopusAffiliationTerms = null;
+					scopusAffiliationTerms = indexReader.getTermVector(i, DocumentVectorType.SCOPUS_AFFILIATION_UNTOKENIZED.name());
+					String scopusAffiliation = null;
+					TermsEnum scopusAffiliationTermsEnum = null;
+					if (scopusAffiliationTerms != null) {
+						scopusAffiliationTermsEnum = scopusAffiliationTerms.iterator(scopusAffiliationTermsEnum);
+						BytesRef text = null;
+						while ((text = scopusAffiliationTermsEnum.next()) != null) {
+							scopusAffiliation = text.utf8ToString();
+						}
+					}
+					reCiterArticle.setScopusAffiliation(scopusAffiliation);
 				}
 				
 				// Add to list.
