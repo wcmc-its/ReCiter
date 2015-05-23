@@ -5,9 +5,12 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 
 ## Cloning ReCiter project in Eclipse
 0. Clone a copy of ReCiter in an empty directory.
-0. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for Eclipse.
-1. In Eclipse, go to `File` -> `Git` -> `Projects from Git`.
-2. Select `Existing local repository` and select `Add`. Browse to the directory where the cloned project is and select `Import using the New Project wizard`.
+1. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for Eclipse.
+2. Create a new Java Project in Eclipse.
+3. Uncheck "Use default location" and use the location of the cloned project on disk.
+4. Right Click Project and Select Maven.
+5. Select "Update Project" which will resolve jar issues.
+6. Add JUnit 4 library.
 
 ## Eclipse Setup for ReCiter
 1. If it is not already installed, install Eclipse IDE for Java developers, available for download at http://eclipse.org/downloads/
