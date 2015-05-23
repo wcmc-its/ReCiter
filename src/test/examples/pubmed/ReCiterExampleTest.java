@@ -51,11 +51,11 @@ public class ReCiterExampleTest {
 
 		// Keep track of exeuction time of ReCiter.
 		long startTime = System.currentTimeMillis();
-		Files.walk(Paths.get("data/test_xml")).forEach(filePath -> {
+		Files.walk(Paths.get("data/xml")).forEach(filePath -> {
 			if (Files.isRegularFile(filePath)) {
-				String cwid = filePath.getFileName().toString().replace(".xml", "");
+				String cwid = filePath.getFileName().toString().replace("_0.xml", "");
 				ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
-				try {
+				try {	
 					reCiterConfigProperty.loadProperty("data/properties/" + cwid + "/" + cwid + ".properties");
 				} catch (Exception e) {
 					e.printStackTrace();
