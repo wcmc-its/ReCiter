@@ -2,6 +2,11 @@ package main.database.dao;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents the table rc_identity.
+ * @author jil3004
+ *
+ */
 public class Identity {
 
 	private int identityPk;
