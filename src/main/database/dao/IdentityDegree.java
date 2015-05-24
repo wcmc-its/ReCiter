@@ -1,7 +1,7 @@
 package main.database.dao;
 
 /**
- * Table: rc_identity_degree
+ * Represents the table rc_identity_degree
  * 
  * @author jil3004
  *

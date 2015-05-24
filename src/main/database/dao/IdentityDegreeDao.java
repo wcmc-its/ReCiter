@@ -10,6 +10,11 @@ import main.database.DbUtil;
 
 public class IdentityDegreeDao {
 	
+	/**
+	 * Retrieves an IdentityDegree object to retrieve Identity Degree information from database.
+	 * @param cwid
+	 * @return
+	 */
 	public IdentityDegree getIdentityDegreeByCwid(String cwid) {
 		
 		Connection con = DbConnectionFactory.getConnection();

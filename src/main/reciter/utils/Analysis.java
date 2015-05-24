@@ -20,9 +20,7 @@ public class Analysis {
 	private Set<Integer> goldStandard;
 	private int sizeOfSelected;
 	private int truePos;
-//	private int trueNeg;
 	private int falsePos;
-//	private int falseNeg;
 
 	public Analysis(Set<Integer> goldStandard) {
 		this.goldStandard = goldStandard;
@@ -38,7 +36,7 @@ public class Analysis {
 	
 	public void setTruePositiveList(Set<Integer> pmidList) {
 		truePos = 0;
-		falsePos = 0;
+		setFalsePos(0);
 		truePositiveList = new ArrayList<Integer>();
 		
 		for (int pmid : pmidList) {
@@ -46,7 +44,7 @@ public class Analysis {
 				truePos++;
 				truePositiveList.add(pmid);
 			} else {
-				falsePos++;
+				setFalsePos(getFalsePos() + 1);
 			}
 		}
 	}
@@ -69,5 +67,13 @@ public class Analysis {
 			slf4jLogger.info("Recall: " + recall);
 		}
 		return recall;
+	}
+
+	public int getFalsePos() {
+		return falsePos;
+	}
+
+	public void setFalsePos(int falsePos) {
+		this.falsePos = falsePos;
 	}
 }

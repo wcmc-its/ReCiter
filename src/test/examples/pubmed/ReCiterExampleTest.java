@@ -49,7 +49,7 @@ public class ReCiterExampleTest {
 	public static int numCwids = 0;
 	public static void main(String[] args) throws IOException {
 
-		// Keep track of exeuction time of ReCiter.
+		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
 		Files.walk(Paths.get("data/test_xml")).forEach(filePath -> {
 			if (Files.isRegularFile(filePath)) {

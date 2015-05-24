@@ -9,7 +9,12 @@ import main.database.DbConnectionFactory;
 import main.database.DbUtil;
 
 public class IdentityDao {
-	
+
+	/**
+	 * Retrieves identity information for cwid. Identity information includes first name, last name, middle name, etc.
+	 * @param cwid
+	 * @return Identity object for cwid.
+	 */
 	public Identity getIdentityByCwid(String cwid) {
 		Connection con = DbConnectionFactory.getConnection();
 		PreparedStatement pst = null;
