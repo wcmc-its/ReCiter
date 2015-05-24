@@ -412,24 +412,24 @@ public class ReCiterClusterer implements Clusterer {
 					String firstName = TargetAuthor.getInstance().getAuthorName().getFirstName();
 
 					// First Name from rc_identity.
-//					if (firstName != null) {
-//						// For cases where first name is present in rc_identity.
-//						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
-//							if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-//								if (firstName.equalsIgnoreCase((author.getAuthorName().getFirstName()))) {
-//									for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
-//										if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-//											if (firstName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getFirstName())) {
-//												sim *= 1.3; // (rc_idenity = YES, present in cluster = YES, match = YES.
-//											} else {
-//												sim *= 0.4; // (rc_idenity = YES, present in cluster = YES, match = NO.
-//											}
-//										}
-//									}
-//								}
-//							}
-//						}
-//					}
+					if (firstName != null) {
+						// For cases where first name is present in rc_identity.
+						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+							if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+								if (firstName.equalsIgnoreCase((author.getAuthorName().getFirstName()))) {
+									for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+										if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+											if (firstName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getFirstName())) {
+												sim *= 1.3; // (rc_idenity = YES, present in cluster = YES, match = YES.
+											} else {
+												sim *= 0.4; // (rc_idenity = YES, present in cluster = YES, match = NO.
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 					
 					// Middle initial from rc_identity.
 					if (targetAuthorMiddleInitial != null) {
@@ -551,7 +551,7 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			} else if (sim > similarityThreshold && sim > currentMax) {
 				// not selecting target:
-				if (debug) {
+				if (currentArticle.getArticleID() == 19423537) {
 
 					slf4jLogger.info("Similarity article " + currentArticle.getArticleID() + " to cluster: " + id + " score: " + sim);
 					slf4jLogger.info(finalCluster.get(id).toString());

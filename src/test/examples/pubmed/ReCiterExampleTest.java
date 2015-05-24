@@ -150,12 +150,12 @@ public class ReCiterExampleTest {
 			for (ScopusEntry entry : scopusEntryList) {
 				pmidToScopusEntry.put(entry.getPubmedID(), entry);
 			}
-
+			
 			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
 			// Scopus Affiliation. The fake author has pmid as last name and first name.
 			for (PubmedArticle pubmedArticle : pubmedArticleList) {
 				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-
+				
 				if (pmidToScopusEntry.containsKey(pmid)) {
 					String scopusAffiliation = pmidToScopusEntry.get(pmid).affiliationConcatForm();
 					MedlineCitationArticleAuthor fakeAuthor = new MedlineCitationArticleAuthor();

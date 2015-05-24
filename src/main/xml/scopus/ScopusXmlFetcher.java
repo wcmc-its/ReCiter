@@ -54,6 +54,18 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	}
 	
 	/**
+	 * Fetch a single Scopus XML file based on the PMID.
+	 * @param lastName
+	 * @param firstInitial
+	 * @param cwid
+	 * @param pmid
+	 */
+	public void fetchSingleScopus(String cwid, String pmid) {
+		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery();
+		saveXml(scopusXmlQuery.buildSearchQuery(pmid), cwid, pmid);
+	}
+	
+	/**
 	 * Fetch the affiliations for this cwid. Note that the PubmedXmlFetcher must be run first.
 	 * @param cwid
 	 * @throws ParserConfigurationException

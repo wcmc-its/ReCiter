@@ -29,7 +29,7 @@ public class ScopusXmlQuery {
 		sb.append(SEARCH_URL_AFFIL_AUTHOR);
 		return sb.toString();
 	}
-	
+		
 	/**
 	 * Build an affiliation string from the list of pmids.
 	 * @param pmidList
@@ -50,6 +50,8 @@ public class ScopusXmlQuery {
 		sb.append(SEARCH_URL_END);
 		return sb.toString();
 	}
+	
+	
 	
 	/**
 	 * Returns the xml handler that searches the list of pmids.
