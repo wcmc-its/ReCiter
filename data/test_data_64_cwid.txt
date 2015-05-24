@@ -11,7 +11,6 @@ bid2004
 brs9035
 bsg2001
 clg9008
-cmedina
 cnathan
 dcm9006
 ecp2002
