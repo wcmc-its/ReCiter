@@ -82,6 +82,9 @@ To run ReCiter for a collection of cwids, first obtain XML files for the target 
 Setting the value to false assumes that xml files for the 64 cwids are already retrieved. Therefore, this value should be set to false after they have been retrieved. Verify that this line is not commented out.
 8. Run *src/test/examples/pubmed/ReCiterExampleTest.java* which will fetch an updated copy of the XML files and run the clustering for all the 64 cwids.
 
+Jie's comments to Michael about the above, from 5-16-15:
+Running ReCiterExampleTest.java will fetch the updated xml files for the 64 cwids provided that the retrieve boolean variable is set to true. You can set it to false the second time. Running ReCiterExampleTest.java will also run the clustering for the 64 cwids. Also make sure that all the config files are fetched from database by running ConfigWriterTest.java which will populate the information such as cwid, first name, last name, primary department, etc. that are used for Phase 2 matching.
+
 ## Examining ReCiter output
 ReCiter writes output to csv_output.csv in `data/csv_output`.
 The precision and recall can be found in `reciter.log` after running `ReCiterExample.java`.
