@@ -24,7 +24,7 @@ public class DbConnectionFactory {
 	
 	public void loadProperty() throws IOException {
 		Properties prop = new Properties();
-		InputStream inputStream = new FileInputStream("database.properties");
+		InputStream inputStream = new FileInputStream("configs/database.properties");
 		prop.load(inputStream);
 		
 		URL = prop.getProperty("url");
