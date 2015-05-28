@@ -356,6 +356,31 @@ public class ReCiterClusterer implements Clusterer {
 
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
 			
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
+			// Leverage data on board certifications to improve phase two matching.
+			if (selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
+				}
+			}
+			
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
+			// Leverage known co-investigators on grants to improve phase two matching.
+			if (selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					// TODO if TargetAuthor.getInstance()'s co-investigators matches the `article`'s authors. Increase `sim`.
+				}
+			}
+			
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
+			// If a candidate article is published in a journal and the cluster contains that journal, increase the score for a match.
+			if (!selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					// TODO If `article`'s journal title matches (by direct string matching or journal similarity) `currentArticle`'s
+					// journal title, increase `sim` score.
+				}
+			}
+			
 			// Grab CWID from rc_identity table. Combine with "@med.cornell.edu" and match against candidate records. 
 			// When email is found in affiliation string, during phase two clustering, automatically assign the matching identity.
 			if (selectingTarget) {
