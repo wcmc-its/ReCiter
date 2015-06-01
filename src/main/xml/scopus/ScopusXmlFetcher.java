@@ -2,19 +2,26 @@ package main.xml.scopus;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import main.xml.AbstractXmlFetcher;
-import main.xml.pubmed.PubmedXmlFetcher;
-import main.xml.pubmed.model.PubmedArticle;
-import main.xml.scopus.model.ScopusEntry;
+import main.xml.scopus.model.ScopusArticle;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+/**
+ * This class handles fetching the XML from Scopus and saving it to disk.
+ * @author jil3004
+ *
+ */
 public class ScopusXmlFetcher extends AbstractXmlFetcher {
+	
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
 	
 	public ScopusXmlFetcher() {
 		super("data/scopus/");
@@ -25,32 +32,15 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	}
 	
 	/**
-	 * Read from disk the Scopus affiliation data for this cwid.
-	 * @param lastName Last Name of the person.
-	 * @param firstInitial First Initial of the person.
-	 * @param cwid CWID of the person.
-	 * @return A list of ScopusEntry objects.
+	 * Fetch a single Scopus XML file based on the PMID and save XML file into disk.
+	 * @param lastName
+	 * @param firstInitial
+	 * @param cwid
+	 * @param pmid
 	 */
-	public List<ScopusEntry> getScopusEntryList(String lastName, String firstInitial, String cwid) {
-		List<ScopusEntry> scopusEntryList = new ArrayList<ScopusEntry>();
-		
-		// Make data/scopus directory if it doesn't exist.
-		if (!new File(getDirectory()).exists()) {
-			new File(getDirectory()).mkdir();
-		}
-		
-		File dir = new File(getDirectory() + cwid);
-		// The affiliations are retrieved when this directory exists. Fetch the affiliations if they do not exist.
-		if (!dir.exists()) {
-			fetch(lastName, firstInitial, cwid);
-		}
-		File[] xmlFiles = new File(getDirectory() + cwid).listFiles();
-		for (File xmlFile : xmlFiles) {
-			ScopusAffiliationHandler handler = 
-					ScopusAffiliationHandler.executeAffiliationQuery(xmlFile.getPath());
-			scopusEntryList.addAll(handler.getScopusEntryList());
-		}
-		return scopusEntryList;
+	public void fetchSingleScopus(String cwid, String pmid) {
+		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(pmid).build();
+		saveXml(scopusXmlQuery.getQueryUrl(), cwid, pmid);
 	}
 	
 	/**
@@ -60,39 +50,26 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 * @param cwid
 	 * @param pmid
 	 */
-	public void fetchSingleScopus(String cwid, String pmid) {
-		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery();
-		saveXml(scopusXmlQuery.buildSearchQuery(pmid), cwid, pmid);
-	}
-	
-	/**
-	 * Fetch the affiliations for this cwid. Note that the PubmedXmlFetcher must be run first.
-	 * @param cwid
-	 * @throws ParserConfigurationException
-	 * @throws SAXException
-	 * @throws IOException
-	 */
-	public void fetch(String lastName, String firstInitial, String cwid) {
-		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery();
-		// Get the PubmedArticles from the disk.
-		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-		
-		// Fetch and Parse the PubMed articles if they do not exist in the directory "/data/xml".
-		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid); 
-		
-		// File name counter for storing the xml data.
-		int filenameCounter = 0;
-		List<String> pmidList = new ArrayList<String>();
-		for (PubmedArticle pubmedArticle : pubmedArticleList) {
-			pmidList.add(pubmedArticle.getMedlineCitation().getPmid().getPmidString());
-			// Save the Scopus data every 100 PMIDs.
-			if (pmidList.size() == 100) {
-				saveXml(scopusXmlQuery.buildAffiliationQuery(pmidList), cwid, cwid + "_" + filenameCounter);
-				filenameCounter += 1;
-				pmidList.clear();
+	public ScopusArticle getScopusXml(String cwid, String pmid) {
+		File scopusXmlFile = new File("data/scopus/" + cwid + "/" + pmid + ".xml");
+		if (!scopusXmlFile.exists()) {
+			return null;
+		} else {
+			ScopusXmlHandler handler = new ScopusXmlHandler();
+			SAXParser saxParser;
+			try {
+				saxParser = SAXParserFactory.newInstance().newSAXParser();
+				saxParser.parse(scopusXmlFile, handler);
+			} catch (ParserConfigurationException | SAXException | IOException e) {
+				slf4jLogger.info(e.getMessage());
 			}
+			return handler.getScopusArticle();
 		}
-		// save the remaining PMIDs.
-		saveXml(scopusXmlQuery.buildAffiliationQuery(pmidList), cwid, cwid + "_" + filenameCounter);
+	}
+
+	@Override
+	public void fetch(String lastName, String firstName, String cwid) {
+		// TODO Auto-generated method stub
+		
 	}
 }

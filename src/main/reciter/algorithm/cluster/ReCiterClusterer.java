@@ -494,36 +494,6 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			}
 
-			// Adjust cosine similarity score with journal similarity.
-			//			if (!selectingTarget) {
-			//				JournalDao journalDao = new JournalDao();
-			//				double sumJournalSimilarityScore = -1;
-			//				int numJournalComparisions = 0;
-			//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-			//					if (article.getJournal() != null && currentArticle.getJournal() != null) {
-			//						double journalSimScore = journalDao.getJournalSimilarity(
-			//								article.getJournal().getIsoAbbreviation(),
-			//								currentArticle.getJournal().getIsoAbbreviation());
-			//						// Check similarity both ways.
-			//						if (journalSimScore == -1.0) {
-			//							journalSimScore = journalDao.getJournalSimilarity(
-			//									currentArticle.getJournal().getIsoAbbreviation(),
-			//									article.getJournal().getIsoAbbreviation());
-			//						}
-			//						if (journalSimScore != -1.0) {
-			//							sumJournalSimilarityScore += journalSimScore;
-			//							numJournalComparisions++;
-			//						}
-			//					}
-			//				}
-			//				if (numJournalComparisions != 0) {
-			//					double avgJournalSimScore = sumJournalSimilarityScore / numJournalComparisions;
-			//					if (avgJournalSimScore > 0.8) {
-			//						sim *= 1.5;
-			//					}
-			//				}
-			//			}
-
 			if (!selectingTarget) {
 				JournalDao journalDao = new JournalDao();
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {

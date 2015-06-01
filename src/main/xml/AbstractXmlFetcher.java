@@ -9,10 +9,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class AbstractXmlFetcher implements XmlFetcher {
 
 	private String directory; // location in workspace where XMLs are stored.
-
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
+	
 	public AbstractXmlFetcher(String directory) {
 		this.setDirectory(directory);
 	}
@@ -31,7 +35,8 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 		}
 		try {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
-			BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(getDirectory() + directoryName + "/" + fileName + ".xml"), "UTF-8"));
+			String outputFileName = getDirectory() + directoryName + "/" + fileName + ".xml";
+			BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileName), "UTF-8"));
 			String inputLine;
 			while ((inputLine = bufferedReader.readLine()) != null) {
 				bufferedWriter.write(inputLine);
@@ -40,8 +45,7 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 			bufferedReader.close();
 			bufferedWriter.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			slf4jLogger.warn(e.getMessage());
 		}
 	}
 

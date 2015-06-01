@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class Analysis {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
-	private boolean debug = false;
+	private boolean debug = true;
 	private List<Integer> truePositiveList;
 	private Set<Integer> goldStandard;
 	private int sizeOfSelected;

@@ -14,18 +14,17 @@ public class Author {
 	private final String surname; // <surname> tag.
 	private final String givenName; // <given-name> tag.
 	private final String initials; // <initials> tag.
-	private final Set<Integer> afidSet; // <afid> tag. Using a set because duplicates are not allowed.
+	private final Set<Integer> afids; // <afid> tag. Using a set because duplicates are not allowed.
 	
 	public Author(int seq, long authid, String authname, String surname,
-			String givenName, String initials, Set<Integer> afidSet) {
-		super();
+			String givenName, String initials, Set<Integer> afids) {
 		this.seq = seq;
 		this.authid = authid;
 		this.authname = authname;
 		this.surname = surname;
 		this.givenName = givenName;
 		this.initials = initials;
-		this.afidSet = afidSet;
+		this.afids = afids;
 	}
 
 	public int getSeq() {
@@ -53,7 +52,6 @@ public class Author {
 	}
 
 	public Set<Integer> getAfidSet() {
-		return afidSet;
+		return afids;
 	}
-	
 }

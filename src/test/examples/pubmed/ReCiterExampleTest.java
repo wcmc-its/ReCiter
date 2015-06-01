@@ -33,6 +33,9 @@ import main.xml.pubmed.PubmedXmlFetcher;
 import main.xml.pubmed.model.MedlineCitationArticleAuthor;
 import main.xml.pubmed.model.PubmedArticle;
 import main.xml.scopus.ScopusXmlFetcher;
+import main.xml.scopus.model.Affiliation;
+import main.xml.scopus.model.Author;
+import main.xml.scopus.model.ScopusArticle;
 import main.xml.scopus.model.ScopusEntry;
 import main.xml.translator.ArticleTranslator;
 
@@ -143,29 +146,30 @@ public class ReCiterExampleTest {
 
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
-			List<ScopusEntry> scopusEntryList = scopusXmlFetcher.getScopusEntryList(lastName, firstInitial, cwid);
 
-			// Map the pmid to a ScopusEntry.
-			Map<String, ScopusEntry> pmidToScopusEntry = new HashMap<String, ScopusEntry>();
-			for (ScopusEntry entry : scopusEntryList) {
-				pmidToScopusEntry.put(entry.getPubmedID(), entry);
-			}
-			
 			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
 			// Scopus Affiliation. The fake author has pmid as last name and first name.
 			for (PubmedArticle pubmedArticle : pubmedArticleList) {
 				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-				
-				if (pmidToScopusEntry.containsKey(pmid)) {
-					String scopusAffiliation = pmidToScopusEntry.get(pmid).affiliationConcatForm();
-					MedlineCitationArticleAuthor fakeAuthor = new MedlineCitationArticleAuthor();
-					fakeAuthor.setLastName(pmid);
-					fakeAuthor.setForeName(pmid);
-					fakeAuthor.setAffiliation(scopusAffiliation);
-					if (pubmedArticle.getMedlineCitation().getArticle().getAuthorList() == null) {
-						pubmedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<MedlineCitationArticleAuthor>());
+				ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, pmid);
+
+				if (scopusArticle != null) {
+					for (MedlineCitationArticleAuthor author : pubmedArticle.getMedlineCitation().getArticle().getAuthorList()) {
+						for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
+							if (scopusAuthor.getSurname().equals(author.getLastName())) {
+								StringBuilder scopusAffiliationStringBuilder = new StringBuilder();
+								for (Integer afid : scopusAuthor.getAfidSet()) {
+									Affiliation scopusAffiliation = scopusArticle.getAffiliationMap().get(afid);
+									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffiliationCity() + " ");
+									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffiliationCountry() + " ");
+									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffilname() + " ");
+									scopusAffiliationStringBuilder.append(scopusAffiliation.getNameVariant() + " ");
+								}
+								author.setAffiliation(author.getAffiliation() + scopusAffiliationStringBuilder.toString());
+								break;
+							}
+						}
 					}
-					pubmedArticle.getMedlineCitation().getArticle().getAuthorList().add(fakeAuthor);
 				}
 			}
 
