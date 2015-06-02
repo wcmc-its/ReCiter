@@ -26,9 +26,9 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 4. Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
 5. Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select "Data Import/Restore" in the left navigation bar; in the "Import from Disk" tab, select "Import from Self-Contained File"; and select "Start Import".
 
-## Running ReCiter
+## Running ReCiter for 63 cwids.
+In `Eclipse`, run `src/test/examples/pubmed/`'s `ReCiterExampleTest.java`.
 
-
-## Examining ReCiter output
-ReCiter writes output to csv_output.csv in `data/csv_output`.
-The precision and recall can be found in `reciter.log` after running `ReCiterExample.java`.
+## Examining ReCiter output.
+1. ReCiter outputs a csv file for each cwid in the folder `data/csv_output/`.
+2. The precision and recall can be found in `reciter.log` or inside `Eclipse` console.
