@@ -3,38 +3,16 @@
 ## ReCiter wiki
 The <a href="../../wiki">wiki</a> includes descriptions of files used for computation, an overview of error analysis, a log of performance, and use cases, among other informational material on the project.
 
-## Cloning ReCiter project in Eclipse
-0. Clone a copy of ReCiter in an empty directory.
-1. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for Eclipse.
-2. Create a new Java Project in Eclipse.
-3. Uncheck "Use default location" and use the location of the cloned project on disk.
-4. Right Click Project and Select Maven.
-5. Select "Update Project" which will resolve jar issues.
-6. Add JUnit 4 library.
-
-## Eclipse Setup for ReCiter
-1. If it is not already installed, install Eclipse IDE for Java developers, available for download at http://eclipse.org/downloads/
-2. Create a folder in your local development directory and name it "ReCiter".
-3. Use the Download ZIP button (on the right side of the project's home page on GitHub) to download the ReCiter project. Unzip it to the "ReCiter" folder that you created in the previous step.
-4. Determine whether the build automation tool Maven is installed on your computer by opening a terminal window and typing:<br>
-	mvn --version<br>
-   If Maven is installed on your machine you will see information on your installed version, for example:
-```
-	Apache Maven 3.0.5 (r01de14724cdef164cd33c7c8c2fe155faf9602da; 2013-02-19 14:51:28+0100)
-	Maven home: D:\apache-maven-3.0.5\bin\..
-	Java version: 1.6.0_25, vendor: Sun Microsystems Inc.
-	Java home: C:\Program Files\Java\jdk1.6.0_25\jre
-	Default locale: nl_NL, platform encoding: Cp1252
-	OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"
-```
-5. If Maven is not installed on your machine, install it. Maven is available for download from https://maven.apache.org/
-6. Depending on your preference, ReCiter can be installed from the command line, or from within Eclipse. To install it from the command line, open a terminal window, navigate to the ReCiter folder location, and type mvn install.
-7. Create a Java Project in Eclipse named "ReCiter." Indicate the path to the "ReCiter" folder as the root directory for the code base.
-8. If you did not do a Maven install from the command line in Step 6, right-click the "ReCiter" project in Eclipse, select "Configure", then select "Convert to Maven Project."
-9. Right-click "ReCiter"
-10. Select "Build Path"
-11. Select "Add Library"
-12. Add "JUnit" library
+## Setting up development environment
+1. Install `Java JDK 8` from http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
+2. Download `Eclipse Luna` from http://eclipse.org/downloads/.
+3. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for `Eclipse`.
+4. Install `Maven Integration for Eclipse` in Eclipse Marketplace.
+5. Do `git clone` a copy of ReCiter in an empty directory.
+6. Open `Eclipse`, go to `File` -> `New` -> `Java Project` -> Enter `Project name` -> Uncheck `Use default location` -> `Browse` to the location of the cloned ReCiter project -> `Finish`.
+7. Right click project -> If you have installed `Maven Integration for Eclipse` successfully in Step 4, you should be able to see `Maven` -> select `Update Project`.
+8. Right click Project -> `Build Path` -> `Add Libraries` -> JUnit -> Select `JUnit 4` -> `Finish`.
+9. Replace `data` folder with the unzipped `data.7z`.
 
 ## MySQL Setup
 1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
