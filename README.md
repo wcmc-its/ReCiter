@@ -10,9 +10,10 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 4. Install `Maven Integration for Eclipse` in Eclipse Marketplace (https://marketplace.eclipse.org/content/maven-integration-eclipse-luna).
 5. Do `git clone` a copy of ReCiter in an empty directory.
 6. Open `Eclipse`, go to `File` -> `New` -> `Java Project` -> Enter `Project name` -> Uncheck `Use default location` -> `Browse` to the location of the cloned ReCiter project -> `Finish`.
-7. Right click project -> If you have installed `Maven Integration for Eclipse` successfully in Step 4, you should be able to see `Maven` -> select `Update Project`.
-8. Right click Project -> `Build Path` -> `Add Libraries` -> JUnit -> Select `JUnit 4` -> `Finish`.
-9. Replace `data` folder with the unzipped `data.7z`.
+7. Right click project -> Configure -> Convert to Maven project
+8. Right click project -> If you have installed `Maven Integration for Eclipse` successfully in Step 4, you should be able to see `Maven` -> select `Update Project`.
+9. Right click Project -> `Build Path` -> `Add Libraries` -> JUnit -> Select `JUnit 4` -> `Finish`.
+10. Replace `data` folder with the unzipped `data.7z`.
 
 ## MySQL Setup
 1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
