@@ -7,7 +7,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 1. Install `Java JDK 8` from http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
 2. Download `Eclipse Luna` from http://eclipse.org/downloads/.
 3. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for `Eclipse`.
-4. Install `Maven Integration for Eclipse` in Eclipse Marketplace.
+4. Install `Maven Integration for Eclipse` in Eclipse Marketplace (https://marketplace.eclipse.org/content/maven-integration-eclipse-luna).
 5. Do `git clone` a copy of ReCiter in an empty directory.
 6. Open `Eclipse`, go to `File` -> `New` -> `Java Project` -> Enter `Project name` -> Uncheck `Use default location` -> `Browse` to the location of the cloned ReCiter project -> `Finish`.
 7. Right click project -> If you have installed `Maven Integration for Eclipse` successfully in Step 4, you should be able to see `Maven` -> select `Update Project`.
