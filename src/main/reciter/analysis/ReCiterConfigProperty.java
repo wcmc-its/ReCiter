@@ -1,4 +1,4 @@
-package main.reciter.utils;
+package main.reciter.analysis;
 
 import java.io.FileInputStream;
 import java.io.IOException;

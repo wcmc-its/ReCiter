@@ -11,6 +11,9 @@ import java.util.Set;
 
 import main.database.dao.JournalDao;
 import main.reciter.algorithm.cluster.model.ReCiterCluster;
+import main.reciter.analysis.Analysis;
+import main.reciter.analysis.AnalysisObject;
+import main.reciter.analysis.YearDiscrepacyReader;
 import main.reciter.lucene.docsimilarity.AffiliationCosineSimilarity;
 import main.reciter.lucene.docsimilarity.DocumentSimilarity;
 import main.reciter.lucene.docsimilarity.KeywordCosineSimilarity;
@@ -18,9 +21,6 @@ import main.reciter.model.article.ReCiterArticle;
 import main.reciter.model.author.ReCiterAuthor;
 import main.reciter.model.author.TargetAuthor;
 import main.reciter.model.author.TargetAuthor.TypeScore;
-import main.reciter.utils.Analysis;
-import main.reciter.utils.AnalysisObject;
-import main.reciter.utils.YearDiscrepacyReader;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
