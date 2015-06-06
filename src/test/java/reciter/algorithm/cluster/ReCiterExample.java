@@ -35,11 +35,11 @@ import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.analysis.Analysis;
-import reciter.analysis.AnalysisCSVWriter;
-import reciter.analysis.AnalysisObject;
-import reciter.analysis.ReCiterConfigProperty;
-import reciter.analysis.YearDiscrepacyReader;
+import reciter.erroranalysis.Analysis;
+import reciter.erroranalysis.AnalysisCSVWriter;
+import reciter.erroranalysis.AnalysisObject;
+import reciter.erroranalysis.ReCiterConfigProperty;
+import reciter.erroranalysis.YearDiscrepacyReader;
 
 public class ReCiterExample {
 

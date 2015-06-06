@@ -1,4 +1,4 @@
-package reciter.analysis;
+package reciter.erroranalysis;
 
 import java.util.HashSet;
 import java.util.Set;

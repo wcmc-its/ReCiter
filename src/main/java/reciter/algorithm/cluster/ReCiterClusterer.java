@@ -10,14 +10,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.analysis.Analysis;
-import reciter.analysis.AnalysisObject;
-import reciter.analysis.YearDiscrepacyReader;
+import reciter.erroranalysis.Analysis;
+import reciter.erroranalysis.AnalysisObject;
+import reciter.erroranalysis.YearDiscrepacyReader;
 import reciter.lucene.docsimilarity.AffiliationCosineSimilarity;
 import reciter.lucene.docsimilarity.DocumentSimilarity;
 import reciter.lucene.docsimilarity.KeywordCosineSimilarity;

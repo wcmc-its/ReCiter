@@ -1,4 +1,4 @@
-package reciter.analysis;
+package reciter.erroranalysis;
 
 import java.io.FileReader;
 import java.io.IOException;
