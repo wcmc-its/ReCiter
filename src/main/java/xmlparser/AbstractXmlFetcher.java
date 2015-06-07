@@ -14,13 +14,10 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractXmlFetcher implements XmlFetcher {
 
-	private String directory; // location in workspace where XMLs are stored.
-	private static final Logger slf4jLogger = LoggerFactory
-			.getLogger(AbstractXmlFetcher.class);
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
 
-	public AbstractXmlFetcher(String directory) {
-		this.setDirectory(directory);
-	}
+	private String directory; // location in workspace where XMLs are stored.
+	private boolean performRetrievePublication = false;
 
 	/**
 	 * Save the url (XML) content in the location specified by
@@ -59,12 +56,26 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 		}
 	}
 
+	public AbstractXmlFetcher() {}
+	
+	public AbstractXmlFetcher(String directory) {
+		this.setDirectory(directory);
+	}
+
 	public String getDirectory() {
 		return directory;
 	}
 
 	public void setDirectory(String directory) {
 		this.directory = directory;
+	}
+
+	public boolean isPerformRetrievePublication() {
+		return performRetrievePublication;
+	}
+
+	public void setPerformRetrievePublication(boolean performRetrievePublication) {
+		this.performRetrievePublication = performRetrievePublication;
 	}
 
 }

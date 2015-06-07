@@ -48,16 +48,18 @@ public class ReCiterExample {
 	public static double totalPrecision = 0;
 	public static double totalRecall = 0;
 	public static int numCwids = 0;
+	
 	public static void main(String[] args) throws IOException {
 
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
-		Files.walk(Paths.get("data/xml")).forEach(filePath -> {
+		
+		Files.walk(Paths.get("src/main/resources/data/xml")).forEach(filePath -> {
 			if (Files.isRegularFile(filePath)) {
 				String cwid = filePath.getFileName().toString().replace("_0.xml", "");
 				ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
 				try {	
-					reCiterConfigProperty.loadProperty("data/properties/" + cwid + "/" + cwid + ".properties");
+					reCiterConfigProperty.loadProperty("src/main/resources/data/properties/" + cwid + "/" + cwid + ".properties");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

@@ -19,7 +19,7 @@ public class YearDiscrepacyReader {
         //initialize the CSVParser object
         CSVParser parser;
 		try {
-			parser = new CSVParser(new FileReader("data/DiscrepanciesYears.tab"), format);
+			parser = new CSVParser(new FileReader("src/main/resources/data/DiscrepanciesYears.tab"), format);
 			for(CSVRecord record : parser){
 	            String year = record.get("year");
 	            String score = record.get("score");

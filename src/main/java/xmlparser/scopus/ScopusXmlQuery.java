@@ -25,7 +25,7 @@ public class ScopusXmlQuery {
 	}
 	
 	/**
-	 * Scopus XML Query builder for constructing a Scopus XML query.
+	 * Scopus XML Query builder class for constructing a Scopus XML query.
 	 * @author jil3004
 	 *
 	 */

@@ -19,31 +19,24 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 /**
- * Fetches XML articles from PubMed and writes to a file.
+ * Fetches XML articles from PubMed and writes to a file. One can specify the location
+ * where the fetched XML files will go, otherwise a default location will be used based
+ * on the configuration setting.
+ * 
  * @author jil3004
  *
  */
 public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);	
-	private boolean performRetrievePublication;
-
-	public PubmedXmlFetcher() {
-		super("data/xml/");
-	}
-
-	public PubmedXmlFetcher(String directory) {
-		super(directory);
-	}
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
+	private static final String DEFAULT_LOCATION = "src/main/java/resources/data/xml";
 
 	/**
-	 * Retrieves all the XML files from the directory {@code "data/xml/cwid."}
-	 * @param cwid cwid of the author.
-	 * @return a list of PubmedArticle from the disk.
 	 * 
-	 * @throws ParserConfigurationException
-	 * @throws SAXException
-	 * @throws IOException
+	 * @param lastName
+	 * @param firstInitial
+	 * @param cwid
+	 * @return
 	 */
 	public List<PubmedArticle> getPubmedArticle(String lastName, String firstInitial, String cwid) {
 		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
@@ -54,8 +47,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		//			fetch(lastName, firstInitial, cwid);
 		//		}
 
-		// 03/21/2015 (Jie): Read the config.properties file to determine whether to retrieve the publications or not.
-		if (performRetrievePublication) {
+		if (isPerformRetrievePublication()) {
 			fetch(lastName, firstInitial, cwid);
 		}
 
@@ -130,69 +122,75 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				// Save the xml file to directory data/xml/cwid
 				saveXml(eFetchUrl, cwid, cwid + "_" + i);
 
-				// Unsucessful query. ie: XML contains: <ERROR>Unable to obtain query #1</ERROR>. Retry with the same query.
-				//				while (result == 1) {
-				//					slf4jLogger.info("Query returned: <ERROR>Unable to obtain query #1</ERROR>. Retrying ...");
-				//					eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-				//					slf4jLogger.info(eSearchUrl);
-				//					pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
-				//
-				//					// Use the webenv value to retrieve xml.
-				//					eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
-				//					slf4jLogger.info(eFetchUrl);
-				//					result = saveXml(eFetchUrl, cwid, cwid + "_" + i);
-				//				}
-
 				// Update the retstart value.
 				currentRetStart += pubmedXmlQuery.getRetMax();
 				pubmedXmlQuery.setRetStart(currentRetStart);
 			}
-			
-			// Check the file for 'Unable to obtain query #1' error.
-			int n = 3;
-			String lineN = null;
-			try {
-				lineN = Files.lines(Paths.get(getDirectory() + cwid + "/" + cwid + "_0.xml"))
-				                    .skip(n)
-				                    .findFirst()
-				                    .get()
-				                    .trim();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if ("<ERROR>Unable to obtain query #1</ERROR>".equals(lineN)) {
-				slf4jLogger.warn("cwid: " + cwid + " received 'Unable to obtain query#1' error.");
-			}
-			
-			// Check number of articles match.
-			List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
-			// Parse the xml files to return a list of PubmedArticles.
-			File[] xmlFiles = new File(getDirectory() + cwid).listFiles();
-			for (File xmlFile : xmlFiles) {
-				PubmedEFetchHandler pubmedEFetchHandler = new PubmedEFetchHandler();
-				try {
-					SAXParserFactory.newInstance()
-					.newSAXParser()
-					.parse(xmlFile.getPath(), pubmedEFetchHandler);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				pubmedArticleList.addAll(pubmedEFetchHandler.getPubmedArticles());
-			}
-			
-			if (pubmedArticleList.size() != numPubMedArticles) {
-				slf4jLogger.warn("cwid: " + cwid + " did not retrieve all the publications. Number of articles on disk=" + pubmedArticleList.size());
-			}
 		}
 	}
 
-	public boolean isPerformRetrievePublication() {
-		return performRetrievePublication;
+	/**
+	 * 
+	 * @param filePath
+	 * @param expectedResult
+	 * @return
+	 */
+	public boolean isNumberOfArticleMatch(String filePath, int expectedResult) {
+		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
+		
+		// Parse the XML files in this location to return a list of PubmedArticles.
+		File[] xmlFiles = new File(filePath).listFiles();
+		for (File xmlFile : xmlFiles) {
+			PubmedEFetchHandler pubmedEFetchHandler = new PubmedEFetchHandler();
+			try {
+				SAXParserFactory.newInstance()
+				.newSAXParser()
+				.parse(xmlFile.getPath(), pubmedEFetchHandler);
+			} catch (Exception e) {
+				slf4jLogger.error(e.getMessage());
+			}
+			pubmedArticleList.addAll(pubmedEFetchHandler.getPubmedArticles());
+		}
+
+		return pubmedArticleList.size() == expectedResult;
 	}
 
-	public void setPerformRetrievePublication(boolean performRetrievePublication) {
-		this.performRetrievePublication = performRetrievePublication;
+	/**
+	 * <p>
+	 * Performs a check on a PubMed retrieved XML file for {@code <ERROR>Unable to obtain query #1</ERROR>} on
+	 * {@code line 3}. 
+	 * </p>
+	 * 
+	 * <p>
+	 * This function might be useful if you need to perform a check on the XML files for this error
+	 * message, and perform a re-retrieval if necessary.
+	 * </p>
+	 * 
+	 * @param filePath file location of the PubMed XML file.
+	 * @return true if XML file contains the {@code <ERROR>Unable to obtain query #1</ERROR>}, false otherwise.
+	 */
+	public boolean isUnableToObtainQueryError(String filePath) {
+		int lineNumber = 3;
+		String lineContent = null;
+		String unableToObtainQueryMessage = "<ERROR>Unable to obtain query #1</ERROR>";
+		try {
+			lineContent = Files.lines(Paths.get(filePath))
+					.skip(lineNumber)
+					.findFirst()
+					.get()
+					.trim();
+		} catch (IOException e) {
+			slf4jLogger.error(e.getMessage());
+		}
+		return unableToObtainQueryMessage.equals(lineContent);
 	}
+
+	public PubmedXmlFetcher() {
+		super(DEFAULT_LOCATION);
+	}
+
+	public PubmedXmlFetcher(String directory) {
+		super(directory);
+	}
+
 }

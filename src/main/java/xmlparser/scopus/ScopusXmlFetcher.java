@@ -22,15 +22,16 @@ import org.xml.sax.SAXException;
 public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
-	
+	private static final String DEFAULT_LOCATION = "src/main/java/resources/data/scopus";
+
 	public ScopusXmlFetcher() {
-		super("data/scopus/");
+		super(DEFAULT_LOCATION);
 	}
 	
 	public ScopusXmlFetcher(String directory) {
 		super(directory);
 	}
-	
+		
 	/**
 	 * Fetch a single Scopus XML file based on the PMID and save XML file into disk.
 	 * @param lastName

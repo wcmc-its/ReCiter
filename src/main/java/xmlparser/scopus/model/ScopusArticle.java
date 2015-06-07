@@ -1,6 +1,5 @@
 package xmlparser.scopus.model;
 
-import java.util.Set;
 import java.util.Map;
 
 /**

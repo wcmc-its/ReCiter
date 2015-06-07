@@ -59,12 +59,6 @@ public class ReCiterClusterer implements Clusterer {
 	public double targetAuthorSimilarityThreshold = 0.001; // target to cluster similarity threshold value.
 
 	/**
-	 * Hierarchical Agglomerative Clustering:
-	 * cluster to cluster similarity threshold value.
-	 */
-	double hacSimilarityThreshold = 0.7; // hierarchical agglomerative clustering threshold similarity.
-
-	/**
 	 * Constructor initializing the finalCluster map data structure.
 	 */
 	public ReCiterClusterer() {
