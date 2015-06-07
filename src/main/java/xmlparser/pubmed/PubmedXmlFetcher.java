@@ -9,14 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
-
-import xmlparser.AbstractXmlFetcher;
-import xmlparser.pubmed.model.PubmedArticle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+
+import xmlparser.AbstractXmlFetcher;
+import xmlparser.pubmed.model.PubmedArticle;
 
 /**
  * Fetches XML articles from PubMed and writes to a file. One can specify the location
@@ -29,41 +28,35 @@ import org.xml.sax.SAXException;
 public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
-	private static final String DEFAULT_LOCATION = "src/main/java/resources/data/xml";
+	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
+
+	private PubmedXmlParser pubmedXmlParser;
 
 	/**
-	 * 
+	 * Get all the pubmed articles from PubMed by last name and first initial for a cwid.
 	 * @param lastName
 	 * @param firstInitial
 	 * @param cwid
-	 * @return
+	 * @return A list of PubmedArticles.
 	 */
 	public List<PubmedArticle> getPubmedArticle(String lastName, String firstInitial, String cwid) {
 		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
 
-		// The articles are retrieved when this directory exists. Fetch the articles if they do not exist.
-		//		File dir = new File(getDirectory() + cwid);
-		//		if (!dir.exists()) {
-		//			fetch(lastName, firstInitial, cwid);
-		//		}
+		// Create default location if not exist.
+		File pubmedDir = new File(DEFAULT_LOCATION);
+		if (!pubmedDir.exists()) {
+			pubmedDir.mkdirs();
+		}
 
-		if (isPerformRetrievePublication()) {
+		// Create folder for cwid if not exist.
+		File cwidDir = new File(getDirectory() + cwid);
+		if (!cwidDir.exists()) {
 			fetch(lastName, firstInitial, cwid);
 		}
 
-		// Parse the xml files to return a list of PubmedArticles.
-		File[] xmlFiles = new File(getDirectory() + cwid).listFiles();
-		for (File xmlFile : xmlFiles) {
-			PubmedEFetchHandler pubmedEFetchHandler = new PubmedEFetchHandler();
-			try {
-				SAXParserFactory.newInstance()
-				.newSAXParser()
-				.parse(xmlFile.getPath(), pubmedEFetchHandler);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			pubmedArticleList.addAll(pubmedEFetchHandler.getPubmedArticles());
+		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {
+			pubmedXmlParser.setXmlInputSource(xmlFile);
+			pubmedArticleList.addAll(pubmedXmlParser.parse());
 		}
 		return pubmedArticleList;
 	}
@@ -137,21 +130,10 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	 */
 	public boolean isNumberOfArticleMatch(String filePath, int expectedResult) {
 		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
-		
-		// Parse the XML files in this location to return a list of PubmedArticles.
-		File[] xmlFiles = new File(filePath).listFiles();
-		for (File xmlFile : xmlFiles) {
-			PubmedEFetchHandler pubmedEFetchHandler = new PubmedEFetchHandler();
-			try {
-				SAXParserFactory.newInstance()
-				.newSAXParser()
-				.parse(xmlFile.getPath(), pubmedEFetchHandler);
-			} catch (Exception e) {
-				slf4jLogger.error(e.getMessage());
-			}
-			pubmedArticleList.addAll(pubmedEFetchHandler.getPubmedArticles());
+		for (File xmlFile : new File(filePath).listFiles()) {
+			pubmedXmlParser.setXmlInputSource(xmlFile);
+			pubmedArticleList.addAll(pubmedXmlParser.parse());
 		}
-
 		return pubmedArticleList.size() == expectedResult;
 	}
 
@@ -187,6 +169,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	public PubmedXmlFetcher() {
 		super(DEFAULT_LOCATION);
+		pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler());
 	}
 
 	public PubmedXmlFetcher(String directory) {

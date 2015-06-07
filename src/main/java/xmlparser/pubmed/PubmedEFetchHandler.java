@@ -104,35 +104,6 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	public List<PubmedArticle> getPubmedArticles() {
 		return pubmedArticles;
 	}
-
-	/**
-	 * Sends a query to the NCBI web site to retrieve a XML document of PubMed articles.
-	 * @param webEnv
-	 * @return
-	 * @throws MalformedURLException
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
-	 */
-	public static PubmedEFetchHandler executeEFetchQuery(String eFetchUrl) {
-		PubmedEFetchHandler pubmedXmlHandler = new PubmedEFetchHandler();
-		InputStream inputStream = null;
-		try {
-			inputStream = new URL(eFetchUrl).openStream();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			SAXParserFactory.newInstance()
-				.newSAXParser()
-				.parse(inputStream, pubmedXmlHandler);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return pubmedXmlHandler;
-	}
 	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {

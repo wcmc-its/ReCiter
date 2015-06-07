@@ -1,18 +1,17 @@
 package xmlparser.scopus;
 
 import java.io.File;
-import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import xmlparser.AbstractXmlFetcher;
-import xmlparser.scopus.model.ScopusArticle;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
+
+import xmlparser.AbstractXmlFetcher;
+import xmlparser.pubmed.PubmedXmlFetcher;
+import xmlparser.pubmed.model.PubmedArticle;
+import xmlparser.scopus.model.ScopusArticle;
 
 /**
  * This class handles fetching the XML from Scopus and saving it to disk.
@@ -22,16 +21,27 @@ import org.xml.sax.SAXException;
 public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
-	private static final String DEFAULT_LOCATION = "src/main/java/resources/data/scopus";
+	private static final String DEFAULT_LOCATION = "src/main/resources/data/scopus/";
 
-	public ScopusXmlFetcher() {
-		super(DEFAULT_LOCATION);
+	private ScopusXmlParser scopusXmlParser;
+		
+	public class ScopusXmlFetcherRunnable implements Runnable {
+
+		private final String cwid;
+		private final String pmid;
+		
+		public ScopusXmlFetcherRunnable(String cwid, String pmid) {
+			this.cwid = cwid;
+			this.pmid = pmid;
+		}
+		
+		@Override
+		public void run() {
+			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+			scopusXmlFetcher.fetchSingleScopus(cwid, pmid);
+		}
 	}
 	
-	public ScopusXmlFetcher(String directory) {
-		super(directory);
-	}
-		
 	/**
 	 * Fetch a single Scopus XML file based on the PMID and save XML file into disk.
 	 * @param lastName
@@ -52,25 +62,31 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 * @param pmid
 	 */
 	public ScopusArticle getScopusXml(String cwid, String pmid) {
-		File scopusXmlFile = new File("data/scopus/" + cwid + "/" + pmid + ".xml");
-		if (!scopusXmlFile.exists()) {
-			return null;
-		} else {
-			ScopusXmlHandler handler = new ScopusXmlHandler();
-			SAXParser saxParser;
-			try {
-				saxParser = SAXParserFactory.newInstance().newSAXParser();
-				saxParser.parse(scopusXmlFile, handler);
-			} catch (ParserConfigurationException | SAXException | IOException e) {
-				slf4jLogger.info(e.getMessage());
-			}
-			return handler.getScopusArticle();
-		}
+		File scopusXmlFile = new File(DEFAULT_LOCATION + cwid + "/" + pmid + ".xml");
+		return scopusXmlFile.exists() ? scopusXmlParser.parse() : null;
 	}
 
 	@Override
 	public void fetch(String lastName, String firstName, String cwid) {
-		// TODO Auto-generated method stub
-		
+		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
+		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstName.substring(0, 1), cwid);
+		for (PubmedArticle pubmedArticle : pubmedArticleList) {
+			String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
+			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);
+			executor.execute(scopusRunnable);
+		}
+		executor.shutdown();
+		while (!executor.isTerminated()) {}
+		slf4jLogger.info("Completed retrieving Scopus articles for " + cwid);
+	}
+	
+	public ScopusXmlFetcher() {
+		super(DEFAULT_LOCATION);
+		scopusXmlParser = new ScopusXmlParser(new ScopusXmlHandler());
+	}
+	
+	public ScopusXmlFetcher(String directory) {
+		super(directory);
 	}
 }
