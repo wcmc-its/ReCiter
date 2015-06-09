@@ -71,7 +71,7 @@ local.properties
 .buildpath
 
 # Do not include the data directory
-src/main/resources/data
+src/main/resources/data/*
 
 # Do not include reciter.log
 reciter.log

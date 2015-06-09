@@ -8,33 +8,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import database.dao.ArticleDao;
-import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleKeywords.Keyword;
-import reciter.model.author.ReCiterAuthor;
-import xmlparser.pubmed.PubmedXmlFetcher;
-import xmlparser.pubmed.model.PubmedArticle;
-import xmlparser.translator.ArticleTranslator;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
+import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleKeywords.Keyword;
+import reciter.model.author.ReCiterAuthor;
+import database.dao.ArticleDao;
+
 public class PythonCSVWriter {
 
-	public static void main(String[] args) throws IOException {
-
-		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-		pubmedXmlFetcher.setPerformRetrievePublication(false);
-		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle("fernandes", "helen", "hef9020");
-		// Convert PubmedArticle to ReCiterArticle.
-		List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);
-
-		initTermSet(reCiterArticleList);
-		System.out.println(termSet.size());
-		
-		write(reCiterArticleList);
-		
-	}
+//	public static void main(String[] args) throws IOException {
+//
+//		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
+//		pubmedXmlFetcher.setPerformRetrievePublication(false);
+//		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle("fernandes", "helen", "hef9020");
+//		// Convert PubmedArticle to ReCiterArticle.
+//		List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);
+//
+//		initTermSet(reCiterArticleList);
+//		System.out.println(termSet.size());
+//		
+//		write(reCiterArticleList);
+//		
+//	}
 
 	private static Set<String> termSet = new HashSet<String>();
 	private static Map<String, Integer> termMap = new HashMap<String, Integer>();

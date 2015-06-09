@@ -69,7 +69,7 @@ public class ReCiterExampleSingleCwid {
 	public void runExample(ReCiterConfigProperty reCiterConfigProperty) {
 
 		YearDiscrepacyReader.init();
-		
+
 		String lastName = reCiterConfigProperty.getLastName();
 		String middleName = reCiterConfigProperty.getMiddleName();
 		String firstName = reCiterConfigProperty.getFirstName();
@@ -92,7 +92,7 @@ public class ReCiterExampleSingleCwid {
 		targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation + " " + department)));		
 		TargetAuthor.getInstance().setCwid(cwid);
 		targetAuthorArticle.setArticleKeywords(new ReCiterArticleKeywords());
-		
+
 		for (String keyword : authorKeywords.split(",")) {
 			targetAuthorArticle.getArticleKeywords().addKeyword(keyword);
 		}
@@ -129,35 +129,13 @@ public class ReCiterExampleSingleCwid {
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 
-			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
-			// Scopus Affiliation. The fake author has pmid as last name and first name.
+			List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
+
 			for (PubmedArticle pubmedArticle : pubmedArticleList) {
 				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
 				ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, pmid);
-				
-				if (scopusArticle != null) {
-					for (MedlineCitationArticleAuthor author : pubmedArticle.getMedlineCitation().getArticle().getAuthorList()) {
-						for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
-							if (scopusAuthor.getSurname().equals(author.getLastName())) {
-								StringBuilder scopusAffiliationStringBuilder = new StringBuilder();
-								for (Integer afid : scopusAuthor.getAfidSet()) {
-									Affiliation scopusAffiliation = scopusArticle.getAffiliationMap().get(afid);
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffiliationCity() + " ");
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffiliationCountry() + " ");
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffilname() + " ");
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getNameVariant() + " ");
-								}
-								author.setAffiliation(author.getAffiliation() + scopusAffiliationStringBuilder.toString());
-								break;
-							}
-						}
-					}
-				}
+				reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle, scopusArticle));
 			}
-
-			// Convert PubmedArticle to ReCiterArticle.
-			List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);
-
 			// Add TargetAuthor Article:
 			reCiterArticleList.add(targetAuthorArticle);
 
@@ -207,7 +185,7 @@ public class ReCiterExampleSingleCwid {
 		} else {
 			TargetAuthor.getInstance().setTerminalDegreeYear(identityDegree.getDoctoral());
 		}
-		
+
 		// Set the indexed article for target author.
 		TargetAuthor.getInstance().setTargetAuthorArticleIndexed(targetAuthorArticleIndexed);
 
@@ -229,7 +207,7 @@ public class ReCiterExampleSingleCwid {
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
 		try {
 			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList(), cwid);
-//			analysisCSVWriter.writePythonCSV(AnalysisObject.getAnalysisObjectList());
+			//			analysisCSVWriter.writePythonCSV(AnalysisObject.getAnalysisObjectList());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

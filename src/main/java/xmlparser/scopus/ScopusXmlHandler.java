@@ -5,13 +5,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import xmlparser.scopus.model.Affiliation;
-import xmlparser.scopus.model.Author;
-import xmlparser.scopus.model.ScopusArticle;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import edu.northwestern.at.utils.StringUtils;
+import xmlparser.scopus.model.Affiliation;
+import xmlparser.scopus.model.Author;
+import xmlparser.scopus.model.ScopusArticle;
 
 /**
  * The {@code ScopusXmlHandler} class parses Scopus XML.
@@ -148,66 +149,76 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 		if (bAffiliation) {
 			if (bAfid) {
-				afid = Integer.parseInt(new String(ch, start, length));
+				String afidStr = new String(ch, start, length).trim();
+				if (afidStr.length() == 0) {
+					bAffiliation = false;
+					bAfid = false;
+				} else 
+					afid = Integer.parseInt(new String(ch, start, length).trim());
 				if (affiliations.containsKey(afid)) {
 					bAffiliation = false; // skip redundant affiliation tag.
 				}
 				bAfid = false;
 			}
-			if (bAffilname) {
-				affilname = new String(ch, start, length);
-				bAffilname = false;
-			}
-			if (bNameVariant) {
-				nameVariant = new String(ch, start, length);
-				bNameVariant = false;
-			}
-			if (bAffiliationCity) {
-				affiliationCity = new String(ch, start, length);
-				bAffiliationCity = false;
-			}
-			if (bAffiliationCountry) {
-				affiliationCountry = new String(ch, start, length);
-				bAffiliationCountry = false;
-			}
 		}
-		if (bPubmedId) {
-			pubmedId = Integer.parseInt(new String(ch, start, length));
-			bPubmedId = false;
+		if (bAffilname) {
+			affilname = new String(ch, start, length);
+			bAffilname = false;
 		}
+		if (bNameVariant) {
+			nameVariant = new String(ch, start, length);
+			bNameVariant = false;
+		}
+		if (bAffiliationCity) {
+			affiliationCity = new String(ch, start, length);
+			bAffiliationCity = false;
+		}
+		if (bAffiliationCountry) {
+			affiliationCountry = new String(ch, start, length);
+			bAffiliationCountry = false;
+		}
+	
+	if (bPubmedId) {
+		pubmedId = Integer.parseInt(new String(ch, start, length));
+		bPubmedId = false;
+	}
 
-		if (bAuthor) {
-			if (bAuthid) {
-				authid = Long.parseLong(new String(ch, start, length));
-				if (authors.containsKey(authid)) {
-					bAuthor = false;
-				}
-				bAuthid = false;
+	if (bAuthor) {
+		if (bAuthid) {
+			authid = Long.parseLong(new String(ch, start, length));
+			if (authors.containsKey(authid)) {
+				bAuthor = false;
 			}
-			if (bAuthname) {
-				authname = new String(ch, start, length);
-				bAuthname = false;
-			}
-			if (bSurname) {
-				surname = new String(ch, start, length);
-				bSurname = false;
-			}
-			if (bGivenName) {
-				givenName = new String(ch, start, length);
-				bGivenName = false;
-			}
-			if (bInitials) {
-				initials = new String(ch, start, length);
-				bInitials = false;
-			}
-			if (bAfids) {
-				afids.add(Integer.parseInt(new String(ch, start, length)));
+			bAuthid = false;
+		}
+		if (bAuthname) {
+			authname = new String(ch, start, length);
+			bAuthname = false;
+		}
+		if (bSurname) {
+			surname = new String(ch, start, length);
+			bSurname = false;
+		}
+		if (bGivenName) {
+			givenName = new String(ch, start, length);
+			bGivenName = false;
+		}
+		if (bInitials) {
+			initials = new String(ch, start, length);
+			bInitials = false;
+		}
+		if (bAfids) {
+			String bAfidStr = new String(ch, start, length).trim();
+			if (bAfidStr.length() == 0) {
 				bAfids = false;
-			}
+			} else 
+				afids.add(Integer.parseInt(new String(ch, start, length).trim()));
+			bAfids = false;
 		}
 	}
+}
 
-	public ScopusArticle getScopusArticle() {
-		return scopusArticle;
-	}
+public ScopusArticle getScopusArticle() {
+	return scopusArticle;
+}
 }

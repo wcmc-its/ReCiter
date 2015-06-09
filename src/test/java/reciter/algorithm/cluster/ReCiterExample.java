@@ -8,10 +8,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import database.dao.ArticleDao;
-import database.dao.IdentityDegree;
-import database.dao.IdentityDegreeDao;
-import reciter.algorithm.cluster.ReCiterClusterer;
+import org.apache.lucene.document.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import reciter.erroranalysis.Analysis;
+import reciter.erroranalysis.AnalysisCSVWriter;
+import reciter.erroranalysis.AnalysisObject;
+import reciter.erroranalysis.ReCiterConfigProperty;
+import reciter.erroranalysis.YearDiscrepacyReader;
 import reciter.lucene.DocumentIndexReader;
 import reciter.lucene.DocumentIndexWriter;
 import reciter.lucene.DocumentTranslator;
@@ -23,23 +28,13 @@ import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import xmlparser.pubmed.PubmedXmlFetcher;
-import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
 import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.ScopusXmlFetcher;
-import xmlparser.scopus.model.Affiliation;
-import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
-
-import org.apache.lucene.document.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import reciter.erroranalysis.Analysis;
-import reciter.erroranalysis.AnalysisCSVWriter;
-import reciter.erroranalysis.AnalysisObject;
-import reciter.erroranalysis.ReCiterConfigProperty;
-import reciter.erroranalysis.YearDiscrepacyReader;
+import database.dao.ArticleDao;
+import database.dao.IdentityDegree;
+import database.dao.IdentityDegreeDao;
 
 public class ReCiterExample {
 
@@ -54,11 +49,11 @@ public class ReCiterExample {
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
 		
-		Files.walk(Paths.get("src/main/resources/data/xml")).forEach(filePath -> {
+		Files.walk(Paths.get("src/main/resources/data/pubmed")).forEach(filePath -> {
 			if (Files.isRegularFile(filePath)) {
 				String cwid = filePath.getFileName().toString().replace("_0.xml", "");
 				ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
-				try {	
+				try {
 					reCiterConfigProperty.loadProperty("src/main/resources/data/properties/" + cwid + "/" + cwid + ".properties");
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -129,51 +124,26 @@ public class ReCiterExample {
 			}
 		}
 
-
 		// Try reading from Lucene Index:
 		DocumentIndexReader documentIndexReader = new DocumentIndexReader();
 
 		// Lucene Index doesn't contain this cwid's files.
 		if (!documentIndexReader.isIndexed(cwid)) {
 
-			slf4jLogger.debug("Indexing...");
-
 			// Retrieve the PubMed articles for this cwid if the articles have not been retrieved yet. 
 			PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-			pubmedXmlFetcher.setPerformRetrievePublication(reCiterConfigProperty.isPerformRetrievePublication());
 			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
 
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
-
-			// Need to integrate the Scopus information into PubmedArticle. Add a fake author which contains the
-			// Scopus Affiliation. The fake author has pmid as last name and first name.
+			List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
+			
 			for (PubmedArticle pubmedArticle : pubmedArticleList) {
 				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
 				ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, pmid);
-
-				if (scopusArticle != null) {
-					for (MedlineCitationArticleAuthor author : pubmedArticle.getMedlineCitation().getArticle().getAuthorList()) {
-						for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
-							if (scopusAuthor.getSurname().equals(author.getLastName())) {
-								StringBuilder scopusAffiliationStringBuilder = new StringBuilder();
-								for (Integer afid : scopusAuthor.getAfidSet()) {
-									Affiliation scopusAffiliation = scopusArticle.getAffiliationMap().get(afid);
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffiliationCity() + " ");
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffiliationCountry() + " ");
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getAffilname() + " ");
-									scopusAffiliationStringBuilder.append(scopusAffiliation.getNameVariant() + " ");
-								}
-								author.setAffiliation(author.getAffiliation() + scopusAffiliationStringBuilder.toString());
-								break;
-							}
-						}
-					}
-				}
+				
+				reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle, scopusArticle));
 			}
-
-			// Convert PubmedArticle to ReCiterArticle.
-			List<ReCiterArticle> reCiterArticleList = ArticleTranslator.translateAll(pubmedArticleList);
 
 			// Add TargetAuthor Article:
 			reCiterArticleList.add(targetAuthorArticle);

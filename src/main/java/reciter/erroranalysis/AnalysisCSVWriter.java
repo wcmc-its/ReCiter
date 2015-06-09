@@ -12,7 +12,7 @@ import reciter.model.author.TargetAuthor;
 public class AnalysisCSVWriter {
 
 	private final CSVFormat format;
-
+	private static final String CSV_OUTPUT = "src/main/resources/data/csv_output/";
 	public AnalysisCSVWriter() {
 		format = CSVFormat.RFC4180.withHeader().withDelimiter(',');
 	}
@@ -67,7 +67,7 @@ public class AnalysisCSVWriter {
 	 * @throws IOException
 	 */
 	public void write(List<AnalysisObject> list, String cwid) throws IOException {
-		PrintWriter writer = new PrintWriter("data/csv_output/" + cwid + ".csv", "UTF-8");
+		PrintWriter writer = new PrintWriter(CSV_OUTPUT + cwid + ".csv", "UTF-8");
 		CSVPrinter printer = new CSVPrinter(writer, format.withDelimiter(','));
 
 		printer.printRecord(

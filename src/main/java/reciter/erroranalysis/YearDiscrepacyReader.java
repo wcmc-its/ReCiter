@@ -12,14 +12,15 @@ import org.apache.commons.csv.CSVRecord;
 public class YearDiscrepacyReader {
 
 	private static Map<Integer, Double> yearDiscrepancyMap = new HashMap<Integer, Double>();
-
+	private static final String FILE_LOCATION = "src/main/resources/data/DiscrepanciesYears.tab";
+	
 	public static void init() {
 		CSVFormat format = CSVFormat.RFC4180.withHeader().withDelimiter(',');
         
         //initialize the CSVParser object
         CSVParser parser;
 		try {
-			parser = new CSVParser(new FileReader("src/main/resources/data/DiscrepanciesYears.tab"), format);
+			parser = new CSVParser(new FileReader(FILE_LOCATION), format);
 			for(CSVRecord record : parser){
 	            String year = record.get("year");
 	            String score = record.get("score");
@@ -36,10 +37,4 @@ public class YearDiscrepacyReader {
 	public static Map<Integer, Double> getYearDiscrepancyMap() {
 		return yearDiscrepancyMap;
 	}
-
-	public static void setYearDescrepancyMap(Map<Integer, Double> yearDiscrepancyMap) {
-		YearDiscrepacyReader.yearDiscrepancyMap = yearDiscrepancyMap;
-	}
-	
-	
 }

@@ -17,14 +17,14 @@ import java.util.Properties;
 public class DbConnectionFactory {
 	
 	private static DbConnectionFactory instance = new DbConnectionFactory();
-	
+	private static String DB_CONFIG = "src/main/resources/config/database.properties";
 	private static String URL;
 	private static String USER;
 	private static String PASSWORD;
 	
 	public void loadProperty() throws IOException {
 		Properties prop = new Properties();
-		InputStream inputStream = new FileInputStream("configs/database.properties");
+		InputStream inputStream = new FileInputStream(DB_CONFIG);
 		prop.load(inputStream);
 		
 		URL = prop.getProperty("url");

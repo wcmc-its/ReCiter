@@ -54,6 +54,10 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 		saveXml(scopusXmlQuery.getQueryUrl(), cwid, pmid);
 	}
 	
+	public ScopusArticle getScopusXml(File scopusXmlFile) {
+		return scopusXmlFile.exists() ? scopusXmlParser.parse(scopusXmlFile) : null;
+	}
+	
 	/**
 	 * Fetch a single Scopus XML file based on the PMID.
 	 * @param lastName
@@ -62,8 +66,7 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 * @param pmid
 	 */
 	public ScopusArticle getScopusXml(String cwid, String pmid) {
-		File scopusXmlFile = new File(DEFAULT_LOCATION + cwid + "/" + pmid + ".xml");
-		return scopusXmlFile.exists() ? scopusXmlParser.parse() : null;
+		return getScopusXml(new File(DEFAULT_LOCATION + cwid + "/" + pmid + ".xml"));
 	}
 
 	@Override
