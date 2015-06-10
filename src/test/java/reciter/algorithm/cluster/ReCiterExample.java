@@ -144,7 +144,8 @@ public class ReCiterExample {
 				
 				reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle, scopusArticle));
 			}
-
+			
+			slf4jLogger.info("finished getting Scopus Xml");
 			// Add TargetAuthor Article:
 			reCiterArticleList.add(targetAuthorArticle);
 

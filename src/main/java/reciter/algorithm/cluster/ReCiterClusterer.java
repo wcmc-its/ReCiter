@@ -191,6 +191,7 @@ public class ReCiterClusterer implements Clusterer {
 	 */
 	public void cluster() {
 
+		slf4jLogger.info("Number of articles to be clustered: " + articleList.size());
 		ReCiterCluster firstCluster = new ReCiterCluster();
 		ReCiterArticle first = articleList.get(0);
 
@@ -199,7 +200,9 @@ public class ReCiterClusterer implements Clusterer {
 
 		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 		for (int i = 1; i < articleList.size(); i++) {
+			
 			ReCiterArticle article = articleList.get(i);
+			slf4jLogger.info("Assigning " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				article.setClusterStarter(true);
@@ -256,6 +259,22 @@ public class ReCiterClusterer implements Clusterer {
 
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
 
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/60
+			// For individuals with no/few papers, use default departmental-journal similarity score.
+			if (selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					// TODO 
+					// String departmentName = TargetAuthor.getInstance().getDepartmentName();
+					// String journalIsoAbbr = article.getJournal().getIsoAbbreviation();
+					// sample SQL code:
+					// SELECT score FROM wcmc_matching_journals_department
+					// WHERE department_id = ...
+					// AND journal_id = ...
+					// Now: increase similarity score:
+					// sim *= (1 + score) from database table.
+				}
+			}
+			
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
 			// Leverage data on board certifications to improve phase two matching.
 			if (selectingTarget) {

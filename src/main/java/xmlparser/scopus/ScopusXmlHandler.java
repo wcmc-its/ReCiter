@@ -5,11 +5,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import edu.northwestern.at.utils.StringUtils;
+import reciter.algorithm.cluster.ReCiterExample;
 import xmlparser.scopus.model.Affiliation;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
@@ -21,6 +23,8 @@ import xmlparser.scopus.model.ScopusArticle;
  *
  */
 public class ScopusXmlHandler extends DefaultHandler {
+
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlHandler.class);
 
 	private ScopusArticle scopusArticle;
 
@@ -130,6 +134,10 @@ public class ScopusXmlHandler extends DefaultHandler {
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		// Only insert a new affiliation if {@code affiliationMap} does not contain an existing {@code afid}
 		if (qName.equalsIgnoreCase("affiliation") && bAffiliation) {
+			if (bAfid) {
+				bAfid = false;
+				bAffiliation = false;
+			}
 			affiliations.put(afid, new Affiliation(afid, affilname, nameVariant, affiliationCity, affiliationCountry));
 		}
 		if (qName.equalsIgnoreCase("author") && bAuthor) {
@@ -153,8 +161,15 @@ public class ScopusXmlHandler extends DefaultHandler {
 				if (afidStr.length() == 0) {
 					bAffiliation = false;
 					bAfid = false;
-				} else 
-					afid = Integer.parseInt(new String(ch, start, length).trim());
+				} else {
+					try {
+						afid = Integer.parseInt(afidStr);
+					} catch (NumberFormatException e) {
+						slf4jLogger.error(e.getMessage());
+						bAfid = false;
+						bAffiliation = false;
+					}
+				}
 				if (affiliations.containsKey(afid)) {
 					bAffiliation = false; // skip redundant affiliation tag.
 				}
@@ -177,48 +192,53 @@ public class ScopusXmlHandler extends DefaultHandler {
 			affiliationCountry = new String(ch, start, length);
 			bAffiliationCountry = false;
 		}
-	
-	if (bPubmedId) {
-		pubmedId = Integer.parseInt(new String(ch, start, length));
-		bPubmedId = false;
-	}
 
-	if (bAuthor) {
-		if (bAuthid) {
-			authid = Long.parseLong(new String(ch, start, length));
-			if (authors.containsKey(authid)) {
-				bAuthor = false;
+		if (bPubmedId) {
+			pubmedId = Integer.parseInt(new String(ch, start, length));
+			bPubmedId = false;
+		}
+
+		if (bAuthor) {
+			if (bAuthid) {
+				authid = Long.parseLong(new String(ch, start, length));
+				if (authors.containsKey(authid)) {
+					bAuthor = false;
+				}
+				bAuthid = false;
 			}
-			bAuthid = false;
-		}
-		if (bAuthname) {
-			authname = new String(ch, start, length);
-			bAuthname = false;
-		}
-		if (bSurname) {
-			surname = new String(ch, start, length);
-			bSurname = false;
-		}
-		if (bGivenName) {
-			givenName = new String(ch, start, length);
-			bGivenName = false;
-		}
-		if (bInitials) {
-			initials = new String(ch, start, length);
-			bInitials = false;
-		}
-		if (bAfids) {
-			String bAfidStr = new String(ch, start, length).trim();
-			if (bAfidStr.length() == 0) {
+			if (bAuthname) {
+				authname = new String(ch, start, length);
+				bAuthname = false;
+			}
+			if (bSurname) {
+				surname = new String(ch, start, length);
+				bSurname = false;
+			}
+			if (bGivenName) {
+				givenName = new String(ch, start, length);
+				bGivenName = false;
+			}
+			if (bInitials) {
+				initials = new String(ch, start, length);
+				bInitials = false;
+			}
+			if (bAfids) {
+				String bAfidStr = new String(ch, start, length).trim();
+				if (bAfidStr.length() == 0) {
+					bAfids = false;
+				} else {
+					try {
+					afids.add(Integer.parseInt(new String(ch, start, length).trim()));
+					} catch (NumberFormatException e) {
+						slf4jLogger.error(e.getMessage());
+					}
+				}
 				bAfids = false;
-			} else 
-				afids.add(Integer.parseInt(new String(ch, start, length).trim()));
-			bAfids = false;
+			}
 		}
 	}
-}
 
-public ScopusArticle getScopusArticle() {
-	return scopusArticle;
-}
+	public ScopusArticle getScopusArticle() {
+		return scopusArticle;
+	}
 }

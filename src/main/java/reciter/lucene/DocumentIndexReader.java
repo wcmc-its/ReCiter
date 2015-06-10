@@ -248,6 +248,7 @@ public class DocumentIndexReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		slf4jLogger.info("Finished Reading Lucene index for ajmarcus");
 		return reCiterArticleList;
 	}
 
