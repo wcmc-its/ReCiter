@@ -202,7 +202,7 @@ public class ReCiterClusterer implements Clusterer {
 		for (int i = 1; i < articleList.size(); i++) {
 			
 			ReCiterArticle article = articleList.get(i);
-			slf4jLogger.info("Assigning " + article.getArticleID());
+//			slf4jLogger.info("Assigning " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				article.setClusterStarter(true);
@@ -261,44 +261,44 @@ public class ReCiterClusterer implements Clusterer {
 
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/60
 			// For individuals with no/few papers, use default departmental-journal similarity score.
-			if (selectingTarget) {
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					// TODO 
-					// String departmentName = TargetAuthor.getInstance().getDepartmentName();
-					// String journalIsoAbbr = article.getJournal().getIsoAbbreviation();
-					// sample SQL code:
-					// SELECT score FROM wcmc_matching_journals_department
-					// WHERE department_id = ...
-					// AND journal_id = ...
-					// Now: increase similarity score:
-					// sim *= (1 + score) from database table.
-				}
-			}
-			
-			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
-			// Leverage data on board certifications to improve phase two matching.
-			if (selectingTarget) {
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
-				}
-			}
-
-			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
-			// Leverage known co-investigators on grants to improve phase two matching.
-			if (selectingTarget) {
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					// TODO if TargetAuthor.getInstance()'s co-investigators matches the `article`'s authors. Increase `sim`.
-				}
-			}
-
-			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
-			// If a candidate article is published in a journal and the cluster contains that journal, increase the score for a match.
-			if (!selectingTarget) {
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					// TODO If `article`'s journal title matches (by direct string matching or journal similarity) `currentArticle`'s
-					// journal title, increase `sim` score.
-				}
-			}
+//			if (selectingTarget) {
+//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+//					// TODO 
+//					// String departmentName = TargetAuthor.getInstance().getDepartmentName();
+//					// String journalIsoAbbr = article.getJournal().getIsoAbbreviation();
+//					// sample SQL code:
+//					// SELECT score FROM wcmc_matching_journals_department
+//					// WHERE department_id = ...
+//					// AND journal_id = ...
+//					// Now: increase similarity score:
+//					// sim *= (1 + score) from database table.
+//				}
+//			}
+//			
+//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
+//			// Leverage data on board certifications to improve phase two matching.
+//			if (selectingTarget) {
+//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+//					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
+//				}
+//			}
+//
+//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
+//			// Leverage known co-investigators on grants to improve phase two matching.
+//			if (selectingTarget) {
+//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+//					// TODO if TargetAuthor.getInstance()'s co-investigators matches the `article`'s authors. Increase `sim`.
+//				}
+//			}
+//
+//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
+//			// If a candidate article is published in a journal and the cluster contains that journal, increase the score for a match.
+//			if (!selectingTarget) {
+//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+//					// TODO If `article`'s journal title matches (by direct string matching or journal similarity) `currentArticle`'s
+//					// journal title, increase `sim` score.
+//				}
+//			}
 
 			// Grab CWID from rc_identity table. Combine with "@med.cornell.edu" and match against candidate records. 
 			// When email is found in affiliation string, during phase two clustering, automatically assign the matching identity.

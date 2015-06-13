@@ -87,13 +87,13 @@ public class ScopusXmlHandler extends DefaultHandler {
 				bAffiliationCountry = true;
 			}
 		}
-		// </affiliation>
+		// end </affiliation> tag.
 
 		// <pubmed-id>
 		if (qName.equalsIgnoreCase("pubmed-id")) {
 			bPubmedId = true;
 		}
-		// </pubmed-id>
+		// end </pubmed-id> tag.
 
 		// <author>
 		if (qName.equalsIgnoreCase("author")) {
@@ -121,35 +121,13 @@ public class ScopusXmlHandler extends DefaultHandler {
 				bAfids = true;
 			}
 		}
-		// </author>
+		// end </author> tag.
 
 		// <error>
 		if (qName.equalsIgnoreCase("error")) {
 			bError = true;
 		}
-		// </error>
-	}
-
-	@Override
-	public void endElement(String uri, String localName, String qName) throws SAXException {
-		// Only insert a new affiliation if {@code affiliationMap} does not contain an existing {@code afid}
-		if (qName.equalsIgnoreCase("affiliation") && bAffiliation) {
-			if (bAfid) {
-				bAfid = false;
-				bAffiliation = false;
-			}
-			affiliations.put(afid, new Affiliation(afid, affilname, nameVariant, affiliationCity, affiliationCountry));
-		}
-		if (qName.equalsIgnoreCase("author") && bAuthor) {
-			authors.put(authid, new Author(seq, authid, authname, surname, givenName, initials, afids));
-		}
-		if (qName.equalsIgnoreCase("entry")) {
-			if (bError) {
-				scopusArticle = null;
-			} else {
-				scopusArticle = new ScopusArticle(affiliations, pubmedId, authors);
-			}
-		}
+		// end </error> tag.
 	}
 
 	@Override
@@ -157,83 +135,119 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 		if (bAffiliation) {
 			if (bAfid) {
-				String afidStr = new String(ch, start, length).trim();
-				if (afidStr.length() == 0) {
-					bAffiliation = false;
-					bAfid = false;
-				} else {
-					try {
-						afid = Integer.parseInt(afidStr);
-					} catch (NumberFormatException e) {
-						slf4jLogger.error(e.getMessage());
-						bAfid = false;
-						bAffiliation = false;
-					}
-				}
-				if (affiliations.containsKey(afid)) {
-					bAffiliation = false; // skip redundant affiliation tag.
-				}
-				bAfid = false;
+				afid = Integer.parseInt(new String(ch, start, length));
 			}
-		}
-		if (bAffilname) {
-			affilname = new String(ch, start, length);
-			bAffilname = false;
-		}
-		if (bNameVariant) {
-			nameVariant = new String(ch, start, length);
-			bNameVariant = false;
-		}
-		if (bAffiliationCity) {
-			affiliationCity = new String(ch, start, length);
-			bAffiliationCity = false;
-		}
-		if (bAffiliationCountry) {
-			affiliationCountry = new String(ch, start, length);
-			bAffiliationCountry = false;
+			if (bAffilname) {
+				affilname = new String(ch, start, length);
+			}
+			if (bNameVariant) {
+				nameVariant = new String(ch, start, length);
+			}
+			if (bAffiliationCity) {
+				affiliationCity = new String(ch, start, length);
+			}
+			if (bAffiliationCountry) {
+				affiliationCountry = new String(ch, start, length);
+			}
 		}
 
 		if (bPubmedId) {
 			pubmedId = Integer.parseInt(new String(ch, start, length));
-			bPubmedId = false;
 		}
 
 		if (bAuthor) {
 			if (bAuthid) {
 				authid = Long.parseLong(new String(ch, start, length));
-				if (authors.containsKey(authid)) {
-					bAuthor = false;
-				}
-				bAuthid = false;
 			}
 			if (bAuthname) {
 				authname = new String(ch, start, length);
-				bAuthname = false;
 			}
 			if (bSurname) {
 				surname = new String(ch, start, length);
-				bSurname = false;
 			}
 			if (bGivenName) {
 				givenName = new String(ch, start, length);
-				bGivenName = false;
 			}
 			if (bInitials) {
 				initials = new String(ch, start, length);
-				bInitials = false;
 			}
 			if (bAfids) {
-				String bAfidStr = new String(ch, start, length).trim();
-				if (bAfidStr.length() == 0) {
-					bAfids = false;
-				} else {
-					try {
-					afids.add(Integer.parseInt(new String(ch, start, length).trim()));
-					} catch (NumberFormatException e) {
-						slf4jLogger.error(e.getMessage());
-					}
+				int afid = Integer.parseInt(new String(ch, start, length));
+				if (afid != 0) {
+					afids.add(afid);
 				}
+			}
+		}
+	}
+
+	@Override
+	public void endElement(String uri, String localName, String qName) throws SAXException {
+
+		if (qName.equalsIgnoreCase("affiliation") && bAffiliation) {
+			if (afid != 0) {
+				affiliations.put(afid, new Affiliation(afid, affilname, nameVariant, affiliationCity, affiliationCountry));
+			}
+			bAffiliation = false;
+		}
+
+		// <affiliation> child tags need to be checked for empty contents.
+		// Check for empty XML tags: ie: <afid />
+		if (bAffiliation) {
+			if (qName.equalsIgnoreCase("afid")) {
+				bAfid = false;
+			}
+			if (qName.equalsIgnoreCase("affilname")) {
+				bAffilname = false;
+			}
+			if (qName.equalsIgnoreCase("name-variant")) {
+				bNameVariant = false;
+			}
+			if (qName.equalsIgnoreCase("affiliation-city")) {
+				bAffiliationCity = false;
+			}
+			if (qName.equalsIgnoreCase("affiliation-country")) {
+				bAffiliationCountry = false;
+			}
+		}
+
+		if (qName.equalsIgnoreCase("pubmed-id")) {
+			bPubmedId = false;
+		}
+
+		if (qName.equalsIgnoreCase("author") && bAuthor) {
+			if (authid != 0) {
+				authors.put(authid, new Author(seq, authid, authname, surname, givenName, initials, afids));
+			}
+			bAuthor = false;
+		}
+
+		if (bAuthor) {
+			if (qName.equalsIgnoreCase("authid")) {
+				bAuthid = false;
+			}
+			if (qName.equalsIgnoreCase("authname")) {
+				bAuthname = false;
+			}
+			if (qName.equalsIgnoreCase("surname")) {
+				bSurname = false;
+			}
+			if (qName.equalsIgnoreCase("given-name")) {
+				bGivenName = false;
+			}
+			if (qName.equalsIgnoreCase("initials")) {
+				bInitials = false;
+			}
+			if (qName.equalsIgnoreCase("afid")) {
 				bAfids = false;
+			}
+		}
+
+		// Check for error entry. Return null.
+		if (qName.equalsIgnoreCase("entry")) {
+			if (bError) {
+				scopusArticle = null;
+			} else {
+				scopusArticle = new ScopusArticle(affiliations, pubmedId, authors);
 			}
 		}
 	}
