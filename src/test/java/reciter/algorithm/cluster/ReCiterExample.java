@@ -204,14 +204,13 @@ public class ReCiterExample {
 
 		// Cluster.
 		ReCiterClusterer reCiterClusterer = new ReCiterClusterer();
-		reCiterClusterer.setArticleList(filteredArticleList);
 
 		// Report results.
 		ArticleDao articleDao = new ArticleDao();
 		Set<Integer> pmidSet = articleDao.getPmidList(cwid);
 
 		Analysis analysis = new Analysis(pmidSet);
-		reCiterClusterer.cluster(similarityThreshold, 0.1, analysis);
+		reCiterClusterer.cluster(filteredArticleList, analysis);
 
 		// Write to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();

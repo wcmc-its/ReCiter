@@ -13,6 +13,8 @@ import reciter.model.article.ReCiterArticle;
  */
 public interface Clusterer {
 	
+	double getArticleToArticleSimilarityThresholdValue();
+	
 	/**
 	 * Performs a clustering on the list of ReCiterArticles.
 	 * @param reciterArticleList

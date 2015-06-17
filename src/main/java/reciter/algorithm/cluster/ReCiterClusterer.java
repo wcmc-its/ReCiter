@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,50 +27,23 @@ import reciter.model.author.TargetAuthor.TypeScore;
 import database.dao.JournalDao;
 
 public class ReCiterClusterer implements Clusterer {
-
+	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);	
-
-	/**
-	 * A map that contains the id to ReCiterCluster object.
-	 */
 	private Map<Integer, ReCiterCluster> finalCluster;
+	private boolean selectingTarget = false;
+	private double similarityThreshold = 0.3;
+	private double targetAuthorSimilarityThreshold = 0.001;
 
-	/**
-	 * List of articles to be clustered.
-	 */
-	private List<ReCiterArticle> articleList;
-
-	/**
-	 * Boolean containing the value of whether it's currently selecting the final target person.
-	 */
-	boolean selectingTarget = false;
-
-	/**
-	 * ReCiterArticle to ReCiterCluster similarity threshold value.
-	 */
-	public double similarityThreshold = 0.1;
-
-	/**
-	 * ReCiterArticle (target person) to ReCiterClusters in the 
-	 * finalCluster similarity threshold value.
-	 */
-	public double targetAuthorSimilarityThreshold = 0.001; // target to cluster similarity threshold value.
-
-	/**
-	 * Constructor initializing the finalCluster map data structure.
-	 */
 	public ReCiterClusterer() {
 		finalCluster = new HashMap<Integer, ReCiterCluster>();
 	}
 
-	public void cluster(double similarityThreshold, double incrementer, Analysis analysis) {
-
-		this.similarityThreshold = similarityThreshold;
+	public void cluster(List<ReCiterArticle> reciterArticleList, Analysis analysis) {
 
 		finalCluster.clear(); // forgot to clear this: now similarity threshold should work.
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter.
 
-		cluster();
+		cluster(reciterArticleList);
 
 		DocumentSimilarity affiliationSimilarity = new AffiliationCosineSimilarity();
 		DocumentSimilarity keywordSimilarity = new KeywordCosineSimilarity();
@@ -189,20 +160,21 @@ public class ReCiterClusterer implements Clusterer {
 	 * @param articleList
 	 * @param targetAuthor
 	 */
-	public void cluster() {
+	@Override
+	public void cluster(List<ReCiterArticle> reciterArticleList) {
 
-		slf4jLogger.info("Number of articles to be clustered: " + articleList.size());
+		slf4jLogger.info("Number of articles to be clustered: " + reciterArticleList.size());
 		ReCiterCluster firstCluster = new ReCiterCluster();
-		ReCiterArticle first = articleList.get(0);
+		ReCiterArticle first = reciterArticleList.get(0);
 
 		first.setClusterStarter(true); // first article is the cluster starter.
 		firstCluster.add(first);
 
 		finalCluster.put(firstCluster.getClusterID(), firstCluster);
-		for (int i = 1; i < articleList.size(); i++) {
+		for (int i = 1; i < reciterArticleList.size(); i++) {
 			
-			ReCiterArticle article = articleList.get(i);
-//			slf4jLogger.info("Assigning " + article.getArticleID());
+			ReCiterArticle article = reciterArticleList.get(i);
+			slf4jLogger.info("Assigning " + i + ": " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				article.setClusterStarter(true);
@@ -413,30 +385,30 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			}
 
-			if (!selectingTarget) {
-				JournalDao journalDao = new JournalDao();
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					// Use the cluster starter to compare journal similarity.
-					if (article.isClusterStarter()) {
-						if (article.getJournal() != null && currentArticle.getJournal() != null) {
-							double journalSimScore = journalDao.getJournalSimilarity(
-									article.getJournal().getIsoAbbreviation(),
-									currentArticle.getJournal().getIsoAbbreviation());
-							// Check similarity both ways.
-							if (journalSimScore == -1.0) {
-								journalSimScore = journalDao.getJournalSimilarity(
-										currentArticle.getJournal().getIsoAbbreviation(),
-										article.getJournal().getIsoAbbreviation());
-							}
-							if (journalSimScore != -1.0) {
-								if (journalSimScore > 0.8) {
-									sim *= (1 + journalSimScore); // Journal similarity on a sliding scale.
-								}
-							}
-						}
-					}
-				}
-			}
+//			if (!selectingTarget) {
+//				JournalDao journalDao = new JournalDao();
+//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+//					// Use the cluster starter to compare journal similarity.
+//					if (article.isClusterStarter()) {
+//						if (article.getJournal() != null && currentArticle.getJournal() != null) {
+//							double journalSimScore = journalDao.getJournalSimilarity(
+//									article.getJournal().getIsoAbbreviation(),
+//									currentArticle.getJournal().getIsoAbbreviation());
+//							// Check similarity both ways.
+//							if (journalSimScore == -1.0) {
+//								journalSimScore = journalDao.getJournalSimilarity(
+//										currentArticle.getJournal().getIsoAbbreviation(),
+//										article.getJournal().getIsoAbbreviation());
+//							}
+//							if (journalSimScore != -1.0) {
+//								if (journalSimScore > 0.8) {
+//									sim *= (1 + journalSimScore); // Journal similarity on a sliding scale.
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
 
 			if (selectingTarget) {
 
@@ -525,17 +497,11 @@ public class ReCiterClusterer implements Clusterer {
 		return sb.toString();
 	}
 
-	public List<ReCiterArticle> getArticleList() {
-		return articleList;
-	}
-
-	public void setArticleList(List<ReCiterArticle> articleList) {
-		this.articleList = articleList;
-	}
-
 	@Override
-	public void cluster(List<ReCiterArticle> reciterArticleList) {
+	public double getArticleToArticleSimilarityThresholdValue() {
 		// TODO Auto-generated method stub
-
+		return 0;
 	}
+
+	
 }

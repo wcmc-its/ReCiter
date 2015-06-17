@@ -8,14 +8,8 @@
       http://www.springframework.org/schema/context 
       http://www.springframework.org/schema/context/spring-context-3.2.xsd">
  
-    <context:property-placeholder location="classpath:foo.properties" />
-    <bean id="scopusXmlFetcher" class="xmlparser.scopus.ScopusXmlFetcher">
-        
-    </bean>
+    <context:property-placeholder location="classpath:config/reciter_algorithm.properties" />
     
-    <bean id="pubmedXmlFetcher" class="xmlparser.pubmed.PubmedXmlFetcher">
-        
-    </bean>
-    
+    <bean id="clusterer" class="reciter.algorithm.cluster.ReCiterClusterer"></bean>
     
 </beans>
