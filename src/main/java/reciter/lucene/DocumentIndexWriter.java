@@ -24,7 +24,7 @@ public class DocumentIndexWriter {
 	private IndexWriter luceneIndexWriter;
 	private static boolean useStopWords;
 
-	protected static final String DIR_PATH = "data/lucene_index/";
+	protected static final String DIR_PATH = "src/main/resources/data/lucene_index/";
 
 	public DocumentIndexWriter() {
 		setUseStopWords(false);
