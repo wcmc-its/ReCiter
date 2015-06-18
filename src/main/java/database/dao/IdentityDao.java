@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import database.DbConnectionFactory;
 import database.DbUtil;
+import database.model.Identity;
 
 public class IdentityDao {
 

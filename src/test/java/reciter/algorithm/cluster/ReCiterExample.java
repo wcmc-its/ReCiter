@@ -33,8 +33,8 @@ import xmlparser.scopus.ScopusXmlFetcher;
 import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
 import database.dao.ArticleDao;
-import database.dao.IdentityDegree;
 import database.dao.IdentityDegreeDao;
+import database.model.IdentityDegree;
 
 public class ReCiterExample {
 

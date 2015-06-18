@@ -1,4 +1,4 @@
-package database.dao;
+package database.model;
 
 /**
  * Represents the table rc_identity_degree

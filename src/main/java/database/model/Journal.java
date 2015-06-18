@@ -1,4 +1,4 @@
-package database.dao;
+package database.model;
 
 public class Journal {
 

@@ -24,7 +24,6 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.model.author.TargetAuthor.TypeScore;
-import database.dao.JournalDao;
 
 public class ReCiterClusterer implements Clusterer {
 	
@@ -174,7 +173,7 @@ public class ReCiterClusterer implements Clusterer {
 		for (int i = 1; i < reciterArticleList.size(); i++) {
 			
 			ReCiterArticle article = reciterArticleList.get(i);
-			slf4jLogger.info("Assigning " + i + ": " + article.getArticleID());
+//			slf4jLogger.info("Assigning " + i + ": " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
 				article.setClusterStarter(true);

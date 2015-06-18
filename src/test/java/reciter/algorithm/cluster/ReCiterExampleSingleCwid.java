@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import database.dao.ArticleDao;
-import database.dao.IdentityDegree;
 import database.dao.IdentityDegreeDao;
+import database.model.IdentityDegree;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.lucene.DocumentIndexReader;
 import reciter.lucene.DocumentIndexWriter;

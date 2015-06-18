@@ -6,8 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-import database.dao.Identity;
 import database.dao.IdentityDao;
+import database.model.Identity;
 
 /**
  * Writes each cwid's properties file. The property file is used to define the person's
