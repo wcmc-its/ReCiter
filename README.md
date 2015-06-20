@@ -29,6 +29,9 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 ## Running ReCiter for 63 cwids.
 In `Eclipse`, run `src/test/examples/pubmed/`'s `ReCiterExampleTest.java`.
 
+## Committing code from Eclipse to GitHub.
+1. Inside Eclipse, Right Click project -> Select `Team` -> Select `Commit` -> Select `Push to Upstream`.
+
 ## Examining ReCiter output.
 1. ReCiter outputs a csv file for each cwid in the folder `data/csv_output/`.
 2. The precision and recall can be found in `reciter.log` or inside `Eclipse` console.
