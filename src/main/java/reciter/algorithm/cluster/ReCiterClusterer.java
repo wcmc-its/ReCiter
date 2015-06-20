@@ -24,6 +24,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.model.author.TargetAuthor.TypeScore;
+import reciter.model.boardcertifications.ReadBoardCertifications;
 
 public class ReCiterClusterer implements Clusterer {
 	
@@ -248,11 +249,16 @@ public class ReCiterClusterer implements Clusterer {
 //			
 //			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
 //			// Leverage data on board certifications to improve phase two matching.
-//			if (selectingTarget) {
+			if (selectingTarget) {
+				String cwid = TargetAuthor.getInstance().getCwid();
+				ReadBoardCertifications efr=new ReadBoardCertifications();
+				List<String> boardCertificationList = efr.getBoardCertifications(cwid);
+				StringBuilder certificationData = new StringBuilder();
+				for(String data:boardCertificationList)certificationData.append(data).append(" ");
 //				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 //					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
 //				}
-//			}
+			}
 //
 //			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
 //			// Leverage known co-investigators on grants to improve phase two matching.
