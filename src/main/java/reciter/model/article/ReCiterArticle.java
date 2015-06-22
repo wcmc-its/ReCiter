@@ -25,7 +25,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private String affiliationConcatenated;
 	private int dateCreated;
 	private String info;
-	private boolean clusterStarter;
+	private boolean isClusterOriginator;
 	private String scopusAffiliation;
 	
 	/**
@@ -186,12 +186,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.info = info;
 	}
 
-	public boolean isClusterStarter() {
-		return clusterStarter;
+	public boolean isClusterOriginator() {
+		return isClusterOriginator;
 	}
 
-	public void setClusterStarter(boolean clusterStarter) {
-		this.clusterStarter = clusterStarter;
+	public void setClusterOriginator(boolean isClusterOriginator) {
+		this.isClusterOriginator = isClusterOriginator;
 	}
 
 	public String getScopusAffiliation() {

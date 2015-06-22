@@ -20,6 +20,8 @@ import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
+import reciter.utils.reader.YearDiscrepacyReader;
+import reciter.utils.writer.AnalysisCSVWriter;
 import xmlparser.pubmed.PubmedXmlFetcher;
 import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
 import xmlparser.pubmed.model.PubmedArticle;
@@ -34,10 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.erroranalysis.Analysis;
-import reciter.erroranalysis.AnalysisCSVWriter;
 import reciter.erroranalysis.AnalysisObject;
 import reciter.erroranalysis.ReCiterConfigProperty;
-import reciter.erroranalysis.YearDiscrepacyReader;
 
 public class ReCiterExampleSingleCwid {
 
@@ -200,17 +200,17 @@ public class ReCiterExampleSingleCwid {
 		Set<Integer> pmidSet = articleDao.getPmidList(cwid);
 
 		Analysis analysis = new Analysis(pmidSet);
-		reCiterClusterer.cluster(filteredArticleList, analysis);
+		reCiterClusterer.cluster(filteredArticleList);
 
 		// Write to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
-		try {
-			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList(), cwid);
-			//			analysisCSVWriter.writePythonCSV(AnalysisObject.getAnalysisObjectList());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList(), cwid);
+//			//			analysisCSVWriter.writePythonCSV(AnalysisObject.getAnalysisObjectList());
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 	}
 }

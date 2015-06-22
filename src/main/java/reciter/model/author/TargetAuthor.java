@@ -16,6 +16,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private static TargetAuthor instance;
 	
 	private String cwid;
+	private String department;
 	private ReCiterArticle targetAuthorArticleIndexed;
 	private Map<Integer, List<TypeScore>> map;
 	private int terminalDegreeYear;
@@ -86,5 +87,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setCwid(String cwid) {
 		this.cwid = cwid;
+	}
+
+	public String getDepartment() {
+		return department;
+	}
+
+	public void setDepartment(String department) {
+		this.department = department;
 	}
 }

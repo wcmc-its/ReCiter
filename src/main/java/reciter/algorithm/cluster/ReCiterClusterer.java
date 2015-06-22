@@ -18,144 +18,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.erroranalysis.Analysis;
-import reciter.erroranalysis.AnalysisObject;
-import reciter.erroranalysis.YearDiscrepacyReader;
-import reciter.lucene.docsimilarity.AffiliationCosineSimilarity;
-import reciter.lucene.docsimilarity.DocumentSimilarity;
-import reciter.lucene.docsimilarity.KeywordCosineSimilarity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
-import reciter.model.author.TargetAuthor.TypeScore;
 import reciter.model.boardcertifications.ReadBoardCertifications;
+import reciter.utils.reader.YearDiscrepacyReader;
 import database.DbConnectionFactory;
 import database.DbUtil;
+import database.dao.MatchingDepartmentsJournalsDao;
 
 public class ReCiterClusterer implements Clusterer {
-	
+
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);	
-	private Map<Integer, ReCiterCluster> finalCluster;
+	private List<ReCiterCluster> finalCluster;
 	private boolean selectingTarget = false;
 	private double similarityThreshold = 0.3;
 	private double targetAuthorSimilarityThreshold = 0.001;
 
 	public ReCiterClusterer() {
-		finalCluster = new HashMap<Integer, ReCiterCluster>();
+		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
+		finalCluster = new ArrayList<ReCiterCluster>();
 	}
 
-	public void cluster(List<ReCiterArticle> reciterArticleList, Analysis analysis) {
-
-		finalCluster.clear(); // forgot to clear this: now similarity threshold should work.
-		ReCiterCluster.getClusterIDCounter().set(0); // reset counter.
-
-		cluster(reciterArticleList);
-
-		DocumentSimilarity affiliationSimilarity = new AffiliationCosineSimilarity();
-		DocumentSimilarity keywordSimilarity = new KeywordCosineSimilarity();
-
-		ReCiterArticle targetAuthorArticle = TargetAuthor.getInstance().getTargetAuthorArticleIndexed();
-		// Compute the affiliation similarity and keyword similarity of target author to all the clusters.
-		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
-			TargetAuthor.getInstance().getMap().put(entry.getKey(), new ArrayList<TypeScore>());
-			double affiliationMax = -1;
-			double keywordMax = -1;
-			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
-				double currentAffiliationSimScore = affiliationSimilarity.documentSimilarity(reCiterArticle, targetAuthorArticle);
-				double currentKeywordSimScore = keywordSimilarity.documentSimilarity(reCiterArticle, targetAuthorArticle);
-
-				if (currentAffiliationSimScore > affiliationMax) {
-					affiliationMax = currentAffiliationSimScore;
-				}
-
-				if (currentKeywordSimScore > keywordMax) {
-					keywordMax = currentKeywordSimScore;
-				}
-			}
-			TargetAuthor.getInstance().getMap().get(entry.getKey()).add(new TypeScore("affiliation", affiliationMax));
-			TargetAuthor.getInstance().getMap().get(entry.getKey()).add(new TypeScore("keyword", keywordMax));
-		}
-
-		// Assign target author to a cluster in finalCluster.
-		int assignedClusterId = assignTargetToCluster(TargetAuthor.getInstance().getTargetAuthorArticleIndexed());
-
-		ReCiterCluster reCiterCluster = finalCluster.get(assignedClusterId);
-
-		if (reCiterCluster != null) {
-			Set<Integer> pmidSet = reCiterCluster.getPmidSet();
-			analysis.setTruePositiveList(pmidSet);
-			analysis.setSizeOfSelected(pmidSet.size());
-			double precision = analysis.getPrecision();
-			double recall = analysis.getRecall();
-			//		double avgPrecRecall = (precision + recall) / 2;
-
-			// Analysis:
-			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
-				for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
-					AnalysisObject analysisObject = new AnalysisObject();
-					analysisObject.setSimilarityMeasure(similarityThreshold);
-					analysisObject.setReCiterArticle(reCiterArticle);
-					analysisObject.setClusterId(entry.getValue().getClusterID());
-					analysisObject.setNumArticlesInCluster(entry.getValue().getArticleCluster().size());
-
-					if (reCiterArticle.getJournal() != null) {
-						analysisObject.setYearOfPublication(reCiterArticle.getJournal().getJournalIssuePubDateYear());
-					} else {
-						analysisObject.setYearOfPublication(-1);
-					}
-					// If the cluster id is the same, then cluster is selected as the assigned matching cluster.
-					if (entry.getKey() == reCiterCluster.getClusterID()) {
-						analysisObject.setSelected(true);
-						// True Positive.
-						if (analysis.getGoldStandard().contains(reCiterArticle.getArticleID())) {
-							analysisObject.setStatus("True Positive");
-						}
-						// False Positive.
-						else {
-							analysisObject.setStatus("False Positive");
-						}
-					} else {
-						analysisObject.setSelected(false);
-						// True Negative.
-						if (!analysis.getGoldStandard().contains(reCiterArticle.getArticleID())) {
-							analysisObject.setStatus("True Negative");
-						}
-						// False Negative.
-						else {
-							analysisObject.setStatus("False Negative");
-						}
-					}
-
-					AnalysisObject.getAnalysisObjectList().add(analysisObject);	
-					AnalysisObject.getAllAnalysisObjectList().add(analysisObject);
-				}
-			}
-
-			slf4jLogger.info("Precision = " + precision);
-			slf4jLogger.info("Recall = " + recall);
-
-			ReCiterExample.totalPrecision += precision;
-			ReCiterExample.totalRecall += recall;
-
-		} else {
-			slf4jLogger.info("No cluster match found.");
-		}
-	}
-
-	/**
-	 * Getter method to retrieve the finalCluster map data structure.
-	 * @return
-	 */
-	public Map<Integer, ReCiterCluster> getFinalCluster() {
+	public List<ReCiterCluster> getFinalCluster() {
 		return finalCluster;
 	}
 
-	/**
-	 * 
-	 * @param article
-	 * @param targetAuthor
-	 * @return
-	 */
 	public int assignTargetToCluster(ReCiterArticle article) {
 		selectingTarget = true;
 		return selectCandidateCluster(article);
@@ -170,24 +58,31 @@ public class ReCiterClusterer implements Clusterer {
 	public void cluster(List<ReCiterArticle> reciterArticleList) {
 
 		slf4jLogger.info("Number of articles to be clustered: " + reciterArticleList.size());
+
+		ReCiterArticle first = null;
+		if (reciterArticleList != null && reciterArticleList.size() > 0) {
+			first = reciterArticleList.get(0);
+		} else {
+			return;
+		}
+
+		first.setClusterOriginator(true); // first article is the cluster starter.
+
 		ReCiterCluster firstCluster = new ReCiterCluster();
-		ReCiterArticle first = reciterArticleList.get(0);
-
-		first.setClusterStarter(true); // first article is the cluster starter.
 		firstCluster.add(first);
+		finalCluster.add(firstCluster);
 
-		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 		for (int i = 1; i < reciterArticleList.size(); i++) {
-			
+
 			ReCiterArticle article = reciterArticleList.get(i);
-//			slf4jLogger.info("Assigning " + i + ": " + article.getArticleID());
+			//			slf4jLogger.info("Assigning " + i + ": " + article.getArticleID());
 			int selection = selectCandidateCluster(article);
 			if (selection == -1) {
-				article.setClusterStarter(true);
+				article.setClusterOriginator(true);
 				// create its own cluster.
 				ReCiterCluster newCluster = new ReCiterCluster();
 				newCluster.add(article);
-				finalCluster.put(newCluster.getClusterID(), newCluster);
+				finalCluster.add(newCluster);
 			} else {
 				finalCluster.get(selection).add(article);
 			}
@@ -221,7 +116,11 @@ public class ReCiterClusterer implements Clusterer {
 		// If groups have no matching co-authors, the group with the highest 
 		// matching (cosine) score is selected, provided that the score
 		// exceeds a given threshold.
-		return getIdWithMostContentSimilarity(finalCluster.keySet(), currentArticle);
+		Set<Integer> allClusterIdSet = new HashSet<Integer>();
+		for (ReCiterCluster c : finalCluster) {
+			allClusterIdSet.add(c.getClusterID());
+		}
+		return getIdWithMostContentSimilarity(allClusterIdSet, currentArticle);
 	}
 
 	/**
@@ -240,132 +139,37 @@ public class ReCiterClusterer implements Clusterer {
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/60
 			// For individuals with no/few papers, use default departmental-journal similarity score.
 			if (selectingTarget) {
-//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-//					// TODO 
-//					// String departmentName = TargetAuthor.getInstance().getDepartmentName();
-//					// String journalIsoAbbr = article.getJournal().getIsoAbbreviation();
-//					// sample SQL code:
-//					// SELECT score FROM wcmc_matching_journals_department
-//					// WHERE department_id = ...
-//					// AND journal_id = ...
-//					// Now: increase similarity score:
-//					// sim *= (1 + score) from database table.
-//				}
-				Connection con = DbConnectionFactory.getConnection();
-				PreparedStatement pst = null;
-				ResultSet rs = null;
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {	
-					String targetAuthorID = TargetAuthor.getInstance().getCwid();
-					String journalIsoAbbr = article.getJournal().getIsoAbbreviation();
-				    String primaryDeptName = null; int primaryDeptId=0, journalId=0, journalScore=0;
-					
-					// block of the code for getting department name from  rc_identity 
-					String deptNameQuery = "SELECT primary_department FROM rc_identity WHERE cwid ='" + targetAuthorID + "'";
-						
-					try {
-						pst = con.prepareStatement(deptNameQuery);
-						rs = pst.executeQuery();
-						while (rs.next()) {
-							try {
-								primaryDeptName = rs.getString(1);
-							} catch (NumberFormatException e) {
-								e.printStackTrace();
-							}
-						}
-					}  catch (SQLException e) {
-								e.printStackTrace();
-					}
-					pst = null;rs = null;
-					// block of the code for getting department ID from  wcmc_department_id
-					String deptIdQuery = "SELECT id FROM wcmc_department_id WHERE department ='" + primaryDeptName + "'";
-						
-					try {
-						pst = con.prepareStatement(deptIdQuery);
-						rs = pst.executeQuery();
-					
-						while (rs.next()) {
-							try {
-								String deptId = rs.getString(1);
-								primaryDeptId = Integer.parseInt(deptId);
-							} catch (NumberFormatException e) {
-								e.printStackTrace();
-							}
-						}
-					} catch (SQLException e) {
-						e.printStackTrace();
-					}
-					pst = null;rs = null;
-					// block of the code for getting journal ID from  wcmc_journals	based on Journal Abbervation
-					String  journalIdQuery = "SELECT id FROM wcmc_journals WHERE journal ='" + journalIsoAbbr + "'";
-						
-					try {
-						pst = con.prepareStatement(journalIdQuery);
-						rs = pst.executeQuery();
-						while (rs.next()) {
-							try {
-								String journalString = rs.getString(1);
-								journalId = Integer.parseInt(journalString);
-							} catch (NumberFormatException e) {
-								e.printStackTrace();
-							}
-						}
-					}  catch (SQLException e) {
-						e.printStackTrace();
-					}
-					pst = null;rs = null;
-					// block of the code for getting score from  wcmc_matching_journals_department
-					String scoreQuery = "SELECT score FROM wcmc_matching_journals_department WHERE department_id = '" + primaryDeptId + "'" +  "AND journal_id ='" + journalId + "'";
-					try {
-						pst = con.prepareStatement(journalIdQuery);
-						rs = pst.executeQuery();
-						while (rs.next()) {
-							try {
-								String journalString = rs.getString(1);
-								journalScore = Integer.parseInt(journalString);
-							} catch (NumberFormatException e) {
-								e.printStackTrace();
-							}
-						}
-					}  catch (SQLException e) {
-						e.printStackTrace(); 		
-					} 
-					// increase the score if the journal id and department id matches
-					if ( scoreQuery!= null  && journalScore > 0 ) { 
-					// Now: increase similarity score:
-						sim *= (1 + journalScore); // from database table.
-					}
-				}
-				try {} 
-				finally {
-					DbUtil.close(rs);
-					DbUtil.close(pst);
-					DbUtil.close(con);
+					MatchingDepartmentsJournalsDao matchingDepartmentsJournalsDao = 
+							new MatchingDepartmentsJournalsDao();
+					double score = matchingDepartmentsJournalsDao.getScoreByJournalAndDepartment(
+							article.getJournal().getIsoAbbreviation(), TargetAuthor.getInstance().getDepartment());
+					sim *= (1 + score);
 				}
 			}
-			
-//			
-//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
-//			// Leverage data on board certifications to improve phase two matching.
+		
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
+			// Leverage data on board certifications to improve phase two matching.
 			if (selectingTarget) {
 				String cwid = TargetAuthor.getInstance().getCwid();
 				ReadBoardCertifications efr=new ReadBoardCertifications();
 				List<String> boardCertificationList = efr.getBoardCertifications(cwid);
 				StringBuilder certificationData = new StringBuilder();
 				for(String data:boardCertificationList)certificationData.append(data).append(" ");
-//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-//					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
-//				}
+				//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+				//					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
+				//				}
 			}
-//
-//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
-//			// Leverage known co-investigators on grants to improve phase two matching.
+			//
+			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
+			//			// Leverage known co-investigators on grants to improve phase two matching.
 			if (selectingTarget) {
 				Connection con = DbConnectionFactory.getConnection();
 				PreparedStatement pst = null;
 				ResultSet rs = null;
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 					String dbAuthorGrantId = null, dbGrantCWID = null; 
-					
+
 					String targetAuthorCWID = TargetAuthor.getInstance().getCwid();
 					// block of the code for getting grant id from from  rc_identity_grant
 					String targetAuthorGrantIDQuery = "SELECT cwid, grantid FROM rc_identity_grant WHERE cwid ='" + targetAuthorCWID + "'";
@@ -377,91 +181,91 @@ public class ReCiterClusterer implements Clusterer {
 								dbGrantCWID = rs.getString(1);
 								dbAuthorGrantId = rs.getString(2);
 							} catch (NumberFormatException e) {
-							e.printStackTrace();
+								e.printStackTrace();
 							}
 						}
 					}  catch (SQLException e) {
 						e.printStackTrace();
 					} 
-					
+
 					if (  dbAuthorGrantId != null  && dbGrantCWID == targetAuthorCWID ) { 
-							// block of the code for getting first name and last name of authors from rc_identity
-						    String dbFirstName = null, dbLastName = null; 
-							String dbAuthorName = "SELECT first_name, last_name FROM rc_identity WHERE cwid ='" + targetAuthorCWID + "'";
-							try {
-								pst = con.prepareStatement(dbAuthorName);
-								rs = pst.executeQuery();
-								while (rs.next()) {
-									try {
-										dbFirstName = rs.getString(1);
-										dbLastName = rs.getString(2);
-									} catch (NumberFormatException e) {
-										e.printStackTrace();
-									}
-								}
-							}  catch (SQLException e) {
+						// block of the code for getting first name and last name of authors from rc_identity
+						String dbFirstName = null, dbLastName = null; 
+						String dbAuthorName = "SELECT first_name, last_name FROM rc_identity WHERE cwid ='" + targetAuthorCWID + "'";
+						try {
+							pst = con.prepareStatement(dbAuthorName);
+							rs = pst.executeQuery();
+							while (rs.next()) {
+								try {
+									dbFirstName = rs.getString(1);
+									dbLastName = rs.getString(2);
+								} catch (NumberFormatException e) {
 									e.printStackTrace();
-							} 
-					
-							// First Name from rc_identity.
-							if ( dbFirstName != null ) {
-								// For cases where first name is present in rc_identity.
-								for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
-									if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-										if (dbFirstName.equalsIgnoreCase((author.getAuthorName().getFirstName()))) {
-											for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
-												if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-													if (dbFirstName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getFirstName())) {
-														sim = sim + 1; // (rc_idenity = YES, present in cluster = YES, match = YES.
-													} else {
-														// sim = sim;     // (rc_idenity = YES, present in cluster = YES, match = NO.
-													}
+								}
+							}
+						}  catch (SQLException e) {
+							e.printStackTrace();
+						} 
+
+						// First Name from rc_identity.
+						if ( dbFirstName != null ) {
+							// For cases where first name is present in rc_identity.
+							for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+								if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+									if (dbFirstName.equalsIgnoreCase((author.getAuthorName().getFirstName()))) {
+										for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+											if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+												if (dbFirstName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getFirstName())) {
+													sim = sim + 1; // (rc_idenity = YES, present in cluster = YES, match = YES.
+												} else {
+													// sim = sim;     // (rc_idenity = YES, present in cluster = YES, match = NO.
 												}
 											}
 										}
 									}
 								}
 							}
-							// Last Name from rc_identity.
-							if ( dbLastName != null ) {
-								// For cases where first name is present in rc_identity.
-								for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
-									if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-										if (dbLastName.equalsIgnoreCase((author.getAuthorName().getLastName()))) {
-											for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
-												if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-													if (dbLastName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getLastName())) {
-														sim  = sim + 1; // (rc_idenity = YES, present in cluster = YES, match = YES.
-													} else {
-														// sim = sim;      // (rc_idenity = YES, present in cluster = YES, match = NO.
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-							
 						}
+						// Last Name from rc_identity.
+						if ( dbLastName != null ) {
+							// For cases where first name is present in rc_identity.
+							for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+								if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+									if (dbLastName.equalsIgnoreCase((author.getAuthorName().getLastName()))) {
+										for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+											if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+												if (dbLastName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getLastName())) {
+													sim  = sim + 1; // (rc_idenity = YES, present in cluster = YES, match = YES.
+												} else {
+													// sim = sim;      // (rc_idenity = YES, present in cluster = YES, match = NO.
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+
 					}
-					try {} finally {
-						DbUtil.close(rs);
-						DbUtil.close(pst);
-						DbUtil.close(con);
-					}
-//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-//					// TODO if TargetAuthor.getInstance()'s co-investigators matches the `article`'s authors. Increase `sim`.
-//				}
+				}
+				try {} finally {
+					DbUtil.close(rs);
+					DbUtil.close(pst);
+					DbUtil.close(con);
+				}
+				//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+				//					// TODO if TargetAuthor.getInstance()'s co-investigators matches the `article`'s authors. Increase `sim`.
+				//				}
 			}
-//
-//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
-//			// If a candidate article is published in a journal and the cluster contains that journal, increase the score for a match.
-//			if (!selectingTarget) {
-//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-//					// TODO If `article`'s journal title matches (by direct string matching or journal similarity) `currentArticle`'s
-//					// journal title, increase `sim` score.
-//				}
-//			}
+			//
+			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
+			//			// If a candidate article is published in a journal and the cluster contains that journal, increase the score for a match.
+			//			if (!selectingTarget) {
+			//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+			//					// TODO If `article`'s journal title matches (by direct string matching or journal similarity) `currentArticle`'s
+			//					// journal title, increase `sim` score.
+			//				}
+			//			}
 
 			// Grab CWID from rc_identity table. Combine with "@med.cornell.edu" and match against candidate records. 
 			// When email is found in affiliation string, during phase two clustering, automatically assign the matching identity.
@@ -576,30 +380,30 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			}
 
-//			if (!selectingTarget) {
-//				JournalDao journalDao = new JournalDao();
-//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-//					// Use the cluster starter to compare journal similarity.
-//					if (article.isClusterStarter()) {
-//						if (article.getJournal() != null && currentArticle.getJournal() != null) {
-//							double journalSimScore = journalDao.getJournalSimilarity(
-//									article.getJournal().getIsoAbbreviation(),
-//									currentArticle.getJournal().getIsoAbbreviation());
-//							// Check similarity both ways.
-//							if (journalSimScore == -1.0) {
-//								journalSimScore = journalDao.getJournalSimilarity(
-//										currentArticle.getJournal().getIsoAbbreviation(),
-//										article.getJournal().getIsoAbbreviation());
-//							}
-//							if (journalSimScore != -1.0) {
-//								if (journalSimScore > 0.8) {
-//									sim *= (1 + journalSimScore); // Journal similarity on a sliding scale.
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
+			//			if (!selectingTarget) {
+			//				JournalDao journalDao = new JournalDao();
+			//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+			//					// Use the cluster starter to compare journal similarity.
+			//					if (article.isClusterStarter()) {
+			//						if (article.getJournal() != null && currentArticle.getJournal() != null) {
+			//							double journalSimScore = journalDao.getJournalSimilarity(
+			//									article.getJournal().getIsoAbbreviation(),
+			//									currentArticle.getJournal().getIsoAbbreviation());
+			//							// Check similarity both ways.
+			//							if (journalSimScore == -1.0) {
+			//								journalSimScore = journalDao.getJournalSimilarity(
+			//										currentArticle.getJournal().getIsoAbbreviation(),
+			//										article.getJournal().getIsoAbbreviation());
+			//							}
+			//							if (journalSimScore != -1.0) {
+			//								if (journalSimScore > 0.8) {
+			//									sim *= (1 + journalSimScore); // Journal similarity on a sliding scale.
+			//								}
+			//							}
+			//						}
+			//					}
+			//				}
+			//			}
 
 			if (selectingTarget) {
 
@@ -641,11 +445,9 @@ public class ReCiterClusterer implements Clusterer {
 	// computes coauthor matches of this article with all current clusters.
 	private Map<Integer, Integer> computeCoauthorMatch(ReCiterArticle currentArticle) {
 		Map<Integer, Integer> coauthorsCount = new HashMap<Integer, Integer>(); // ClusterId to number of coauthors.
-		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
-			int clusterId = entry.getKey();
-			ReCiterCluster reCiterCluster = entry.getValue();
+		for (ReCiterCluster reCiterCluster : finalCluster) {
 			int matchingCoauthors = reCiterCluster.getMatchingCoauthorCount(currentArticle);
-			coauthorsCount.put(clusterId, matchingCoauthors);
+			coauthorsCount.put(reCiterCluster.getClusterID(), matchingCoauthors);
 		}
 		return coauthorsCount;
 	}
@@ -673,7 +475,7 @@ public class ReCiterClusterer implements Clusterer {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Number of clusters formed: " + getFinalCluster().size() + "\n");
 
-		for (ReCiterCluster r : getFinalCluster().values()) {
+		for (ReCiterCluster r : finalCluster) {
 			sb.append("{");
 			sb.append(r.getClusterID());
 			sb.append(" (size of cluster=");
@@ -694,5 +496,5 @@ public class ReCiterClusterer implements Clusterer {
 		return 0;
 	}
 
-	
+
 }

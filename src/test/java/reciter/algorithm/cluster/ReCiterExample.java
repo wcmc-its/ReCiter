@@ -13,10 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.erroranalysis.Analysis;
-import reciter.erroranalysis.AnalysisCSVWriter;
 import reciter.erroranalysis.AnalysisObject;
 import reciter.erroranalysis.ReCiterConfigProperty;
-import reciter.erroranalysis.YearDiscrepacyReader;
 import reciter.lucene.DocumentIndexReader;
 import reciter.lucene.DocumentIndexWriter;
 import reciter.lucene.DocumentTranslator;
@@ -27,6 +25,8 @@ import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
+import reciter.utils.reader.YearDiscrepacyReader;
+import reciter.utils.writer.AnalysisCSVWriter;
 import xmlparser.pubmed.PubmedXmlFetcher;
 import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.ScopusXmlFetcher;
@@ -67,7 +67,7 @@ public class ReCiterExample {
 		slf4jLogger.info("Average Recall: " + totalRecall / numCwids);
 
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
-		analysisCSVWriter.write(AnalysisObject.getAllAnalysisObjectList(), "all_target");
+//		analysisCSVWriter.write(AnalysisObject.getAllAnalysisObjectList(), "all_target");
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
@@ -210,16 +210,16 @@ public class ReCiterExample {
 		Set<Integer> pmidSet = articleDao.getPmidList(cwid);
 
 		Analysis analysis = new Analysis(pmidSet);
-		reCiterClusterer.cluster(filteredArticleList, analysis);
+		reCiterClusterer.cluster(filteredArticleList);
 
 		// Write to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
-		try {
-			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList(), cwid);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList(), cwid);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 	}
 }
