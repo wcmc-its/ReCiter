@@ -410,22 +410,22 @@ public class ReCiterClusterer implements Clusterer {
 				// Update the similarity score with year discrepancy.
 				int yearDiff = Integer.MAX_VALUE; // Compute difference in year between candidate article and closest year in article cluster.
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					int currentYearDiff = Math.abs(TargetAuthor.getInstance().getTerminalDegreeYear() - article.getJournal().getJournalIssuePubDateYear());
+					int currentYearDiff = article.getJournal().getJournalIssuePubDateYear() - TargetAuthor.getInstance().getTerminalDegreeYear();
 					if (currentYearDiff < yearDiff) {
 						yearDiff = currentYearDiff;
 					}
 				}
-				// Moderately penalize articles that were published slightly before (0 - 7 years) a person's terminal 
-				// degree, and strongly penalize articles that were published well before (>7 years) a person's terminal degree.
-				if (yearDiff > 40) {
-					sim *= 0.001526;
-				} else {
-					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
+				// 7 years before terminal degree >> 0.3
+				if (yearDiff < -7) {
+					sim *= 0.3;
+				
+				// 0 - 7 years before terminal degree >> 0.75
+				} else if (yearDiff <= 0 && yearDiff >= -7) {
+					sim *= 0.75;
 				}
-				if (sim > targetAuthorSimilarityThreshold && sim > currentMax) {
-					currentMaxId = id;
-					currentMax = sim;
-				}
+				
+				// after terminal degree >> 1.0 (don't change sim score).
+				
 			} else if (sim > similarityThreshold && sim > currentMax) {
 				currentArticle.setInfo("Max Id: + " + currentMaxId + " sim: " + sim);
 				currentMaxId = id;
