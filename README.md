@@ -11,7 +11,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 5. Do `git clone` a copy of ReCiter in an empty directory: Using the command line, navigate to the directory in which you wish to install ReCiter, then type git clone https://github.com/wcmc-its/JReCiter
 6. Open `Eclipse`, go to `File` -> `New` -> `Java Project` -> Enter `Project name` -> Uncheck `Use default location` -> `Browse` to the location of the cloned ReCiter project -> `Finish`.
 7. Right click project -> Configure -> Convert to Maven project
-8. Right click project -> If you have installed `Maven Integration for Eclipse` successfully in Step 4, you should be able to see `Maven` -> select `Update Project`.
+8. Right click project -> If you have installed `Maven Integration for Eclipse` successfully in Step 4, you should be able to see `Maven` -> select `Update Project`. Then click OK.
 9. Right click Project -> `Build Path` -> `Add Libraries` -> JUnit -> Select `JUnit 4` -> `Finish`.
 10. Replace `data` folder with the unzipped `data.7z`.
 
