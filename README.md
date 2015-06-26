@@ -13,7 +13,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 7. Unzip `data.7z` and place the resulting `data` folder in the project's `ReCiter` directory
 8. Right-click the project in Eclipse and select `refresh`
 9. Download `JDBC Driver for MySQL (Connector/J)` from https://www.mysql.com/products/connector/
-10. Right-click the project in Eclipse, select `properties`, `java build path`, `Add external Jars...` and navigate to the JDBC Driver's .jar file. Once you select this .jar file, it will show up under `referenced libraries`.
+10. Right-click the project in Eclipse, select `properties`, `java build path`, `Add external Jars...` and navigate to the JDBC Driver's .jar file (the file will be named similarly to `mysql-connector-java-5.1.35-bin.jar`). Once you select this .jar file, it will show up under `referenced libraries`.
 
 ## MySQL Setup
 1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
