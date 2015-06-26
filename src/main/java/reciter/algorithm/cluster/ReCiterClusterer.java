@@ -1,9 +1,5 @@
 package reciter.algorithm.cluster;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,9 +19,9 @@ import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.model.boardcertifications.ReadBoardCertifications;
 import reciter.utils.reader.YearDiscrepacyReader;
-import database.DbConnectionFactory;
-import database.DbUtil;
+import database.dao.IdentityDao;
 import database.dao.MatchingDepartmentsJournalsDao;
+import database.model.Identity;
 
 public class ReCiterClusterer implements Clusterer {
 
@@ -164,108 +160,41 @@ public class ReCiterClusterer implements Clusterer {
 			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
 			//			// Leverage known co-investigators on grants to improve phase two matching.
 			if (selectingTarget) {
-				Connection con = DbConnectionFactory.getConnection();
-				PreparedStatement pst = null;
-				ResultSet rs = null;
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					String dbAuthorGrantId = null, dbGrantCWID = null; 
-
-					String targetAuthorCWID = TargetAuthor.getInstance().getCwid();
-					// block of the code for getting grant id from from  rc_identity_grant
-					String targetAuthorGrantIDQuery = "SELECT cwid, grantid FROM rc_identity_grant WHERE cwid ='" + targetAuthorCWID + "'";
-					try {
-						pst = con.prepareStatement(targetAuthorGrantIDQuery);
-						rs = pst.executeQuery();
-						while (rs.next()) {
-							try {
-								dbGrantCWID = rs.getString(1);
-								dbAuthorGrantId = rs.getString(2);
-							} catch (NumberFormatException e) {
-								e.printStackTrace();
-							}
-						}
-					}  catch (SQLException e) {
-						e.printStackTrace();
-					} 
-
-					if (  dbAuthorGrantId != null  && dbGrantCWID == targetAuthorCWID ) { 
-						// block of the code for getting first name and last name of authors from rc_identity
-						String dbFirstName = null, dbLastName = null; 
-						String dbAuthorName = "SELECT first_name, last_name FROM rc_identity WHERE cwid ='" + targetAuthorCWID + "'";
-						try {
-							pst = con.prepareStatement(dbAuthorName);
-							rs = pst.executeQuery();
-							while (rs.next()) {
-								try {
-									dbFirstName = rs.getString(1);
-									dbLastName = rs.getString(2);
-								} catch (NumberFormatException e) {
-									e.printStackTrace();
-								}
-							}
-						}  catch (SQLException e) {
-							e.printStackTrace();
-						} 
-
-						// First Name from rc_identity.
-						if ( dbFirstName != null ) {
-							// For cases where first name is present in rc_identity.
-							for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
-								if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-									if (dbFirstName.equalsIgnoreCase((author.getAuthorName().getFirstName()))) {
-										for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
-											if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-												if (dbFirstName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getFirstName())) {
-													sim = sim + 1; // (rc_idenity = YES, present in cluster = YES, match = YES.
-												} else {
-													// sim = sim;     // (rc_idenity = YES, present in cluster = YES, match = NO.
-												}
-											}
-										}
+				IdentityDao identityDao = new IdentityDao(); 
+				List<Identity> identityList = identityDao.getAssosiatedGrantIdentityList(TargetAuthor.getInstance().getCwid());
+				
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {			
+					for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+						for(Identity identity: identityList){
+							for (ReCiterAuthor currentArticleCoAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+								if (currentArticleCoAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+									// First Name 
+									if (author.getAuthorName().getFirstName().equalsIgnoreCase(identity.getFirstName()) && currentArticleCoAuthor.getAuthorName().getFirstName().equalsIgnoreCase(identity.getFirstName())){
+										sim = sim + 1;
+									}
+									// Last Name
+									if (author.getAuthorName().getLastName().equalsIgnoreCase(identity.getLastName()) && currentArticleCoAuthor.getAuthorName().getLastName().equalsIgnoreCase(identity.getLastName()) ){
+										sim = sim + 1;
 									}
 								}
-							}
-						}
-						// Last Name from rc_identity.
-						if ( dbLastName != null ) {
-							// For cases where first name is present in rc_identity.
-							for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
-								if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-									if (dbLastName.equalsIgnoreCase((author.getAuthorName().getLastName()))) {
-										for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
-											if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-												if (dbLastName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getLastName())) {
-													sim  = sim + 1; // (rc_idenity = YES, present in cluster = YES, match = YES.
-												} else {
-													// sim = sim;      // (rc_idenity = YES, present in cluster = YES, match = NO.
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-
+							}									
+						}							
 					}
 				}
-				try {} finally {
-					DbUtil.close(rs);
-					DbUtil.close(pst);
-					DbUtil.close(con);
-				}
-				//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-				//					// TODO if TargetAuthor.getInstance()'s co-investigators matches the `article`'s authors. Increase `sim`.
-				//				}
 			}
+			
 			//
-			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
-			//			// If a candidate article is published in a journal and the cluster contains that journal, increase the score for a match.
-			//			if (!selectingTarget) {
-			//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-			//					// TODO If `article`'s journal title matches (by direct string matching or journal similarity) `currentArticle`'s
-			//					// journal title, increase `sim` score.
-			//				}
-			//			}
+//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
+//			// If a candidate article is published in a journal and the cluster contains that journal, increase the score for a match.
+			if (!selectingTarget) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					if(article.getJournal().getJournalTitle().equalsIgnoreCase(currentArticle.getJournal().getJournalTitle())){
+						sim = sim + 1;
+					}
+//					// TODO If `article`'s journal title matches (by direct string matching or journal similarity) `currentArticle`'s
+//					// journal tit//le, increase `sim` score.
+				}
+			}
 
 			// Grab CWID from rc_identity table. Combine with "@med.cornell.edu" and match against candidate records. 
 			// When email is found in affiliation string, during phase two clustering, automatically assign the matching identity.

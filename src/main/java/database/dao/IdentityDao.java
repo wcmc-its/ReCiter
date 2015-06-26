@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import database.DbConnectionFactory;
 import database.DbUtil;
@@ -18,6 +21,18 @@ public class IdentityDao {
 	 */
 	public Identity getIdentityByCwid(String cwid) {
 		Connection con = DbConnectionFactory.getConnection();
+		Identity identity = null;
+		try{
+			identity=getIdentityByCwid(con,cwid);
+		}catch(SQLException e){
+			e.printStackTrace();
+		}finally{
+			DbUtil.close(con);
+		}
+		return identity;
+	}
+	
+	private Identity getIdentityByCwid(Connection con, String cwid) throws SQLException {
 		PreparedStatement pst = null;
 		ResultSet rs = null;
 		String query = "SELECT first_name, last_name, middle_name, title, primary_department, primary_affiliation FROM rc_identity WHERE cwid='" + cwid + "'";
@@ -35,12 +50,41 @@ public class IdentityDao {
 				identity.setPrimaryAffiliation(rs.getString(6));
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			throw e;
 		} finally {
+			DbUtil.close(rs);
+			DbUtil.close(pst);			
+		}
+		return identity;
+	}
+	
+	public List<Identity> getAssosiatedGrantIdentityList(String cwid){
+		List<Identity> identityList = new ArrayList<Identity>();
+		List<String> cwids=new ArrayList<String>();
+		String targetAuthorGrantIDQuery = "SELECT distinct b.cwid FROM rc_identity_grant a left join rc_identity_grant b on b.grantid=a.grantid and a.cwid!=b.cwid where b.cwid is not null and a.cwid='" + cwid + "'";
+		Connection con = DbConnectionFactory.getConnection();
+		Statement pst = null;
+		ResultSet rs = null;
+		try {
+			pst = con.createStatement();
+			rs = pst.executeQuery(targetAuthorGrantIDQuery);
+			while (rs.next()) {
+				try {
+					cwids.add(rs.getString(1));
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				}
+			}
+			for(String grantCwid: cwids){
+				identityList.add(getIdentityByCwid(con,grantCwid));
+			}
+		}  catch (SQLException e) {
+			e.printStackTrace();
+		} finally{
 			DbUtil.close(rs);
 			DbUtil.close(pst);
 			DbUtil.close(con);
 		}
-		return identity;
+		return identityList;
 	}
 }

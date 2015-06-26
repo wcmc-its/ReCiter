@@ -38,7 +38,7 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 		}
 		try {
 			BufferedReader bufferedReader = new BufferedReader(
-					new InputStreamReader(new URL(url).openStream()));
+					new InputStreamReader(new URL(url).openStream(), "UTF-8")); // Github issue: https://github.com/wcmc-its/ReCiter/issues/87
 			String outputFileName = getDirectory() + directoryName + "/"
 					+ fileName + ".xml";
 			BufferedWriter bufferedWriter = new BufferedWriter(
@@ -46,7 +46,7 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 							new FileOutputStream(outputFileName), "UTF-8"));
 			String inputLine;
 			while ((inputLine = bufferedReader.readLine()) != null) {
-				bufferedWriter.write(inputLine);
+				bufferedWriter.write(removeSpecialStrings(inputLine)); // Github issue: https://github.com/wcmc-its/ReCiter/issues/87
 				bufferedWriter.newLine();
 			}
 			bufferedReader.close();
@@ -78,4 +78,22 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 		this.performRetrievePublication = performRetrievePublication;
 	}
 
+	/**
+	 * Github issue: https://github.com/wcmc-its/ReCiter/issues/87
+	 * 
+	 * @param lineString
+	 * @return
+	 * 
+	 */
+	public static String removeSpecialStrings( String lineString){
+		  if (lineString.contains("&quot")) {
+		      return lineString.replaceAll("&quot", ""); 
+		  } else if (lineString.contains("&amp;")) {
+			  return lineString.replaceAll("amp;", ""); 
+		  } else if (lineString.contains("?><")) {
+			 return lineString;
+		  } else {
+			  return lineString;
+		  }
+	}
 }
