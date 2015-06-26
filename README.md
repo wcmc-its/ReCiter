@@ -17,7 +17,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 
 ## MySQL Setup
 1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
-2. To connect to your local development environment's database, change `configs/database.properties` to your own local MySQL login information.
+2. To connect to your local development environment's database, change `/src/main/resources/config/database.properties` to your own local MySQL login information.
 ```
 	url = "jdbc:mysql://localhost/reciter";
 	username = "root";
