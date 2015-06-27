@@ -1,11 +1,14 @@
 package reciter.erroranalysis;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 public class ReCiterConfigProperty {
+
+	private static String DEFAULT_LOCATION = "src/main/resources/data/properties/";
 
 	private String cwid;
 	private String authorKeywords;
@@ -23,6 +26,18 @@ public class ReCiterConfigProperty {
 	private double keywordSimilarityWeight;
 	private double authorSimilarityWeight;
 	private boolean useStemming;
+
+	public static String getDefaultLocation() {
+		return DEFAULT_LOCATION;
+	}
+	
+	public static void createDefaultLocation() {
+		// Create default location if not exist.
+		File pubmedDir = new File(DEFAULT_LOCATION);
+		if (!pubmedDir.exists()) {
+			pubmedDir.mkdirs();
+		}
+	}
 
 	public void loadProperty(String propertyFileName) throws IOException {
 		Properties prop = new Properties();

@@ -32,6 +32,18 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	private PubmedXmlParser pubmedXmlParser;
 
+	public static String getDefaultLocation() {
+		return DEFAULT_LOCATION;
+	}
+	
+	public static void createPubMedLocation() {
+		// Create default location if not exist.
+		File pubmedDir = new File(DEFAULT_LOCATION);
+		if (!pubmedDir.exists()) {
+			pubmedDir.mkdirs();
+		}
+	}
+
 	/**
 	 * Get all the pubmed articles from PubMed by last name and first initial for a cwid.
 	 * @param lastName

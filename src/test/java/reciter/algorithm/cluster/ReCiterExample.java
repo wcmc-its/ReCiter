@@ -49,12 +49,15 @@ public class ReCiterExample {
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
 		
-		Files.walk(Paths.get("src/main/resources/data/pubmed")).forEach(filePath -> {
+		PubmedXmlFetcher.createPubMedLocation(); // create folder for PubMed data if not exist.
+		ReCiterConfigProperty.createDefaultLocation();
+		
+		Files.walk(Paths.get(PubmedXmlFetcher.getDefaultLocation())).forEach(filePath -> {
 			if (Files.isRegularFile(filePath)) {
 				String cwid = filePath.getFileName().toString().replace("_0.xml", "");
 				ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
 				try {
-					reCiterConfigProperty.loadProperty("src/main/resources/data/properties/" + cwid + "/" + cwid + ".properties");
+					reCiterConfigProperty.loadProperty(ReCiterConfigProperty.getDefaultLocation() + cwid + "/" + cwid + ".properties");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
