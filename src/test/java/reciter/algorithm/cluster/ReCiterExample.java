@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.erroranalysis.Analysis;
-import reciter.erroranalysis.AnalysisObject;
 import reciter.erroranalysis.ReCiterConfigProperty;
 import reciter.lucene.DocumentIndexReader;
 import reciter.lucene.DocumentIndexWriter;

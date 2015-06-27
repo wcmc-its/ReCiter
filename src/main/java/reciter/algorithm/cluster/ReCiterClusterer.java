@@ -26,17 +26,16 @@ import database.model.Identity;
 public class ReCiterClusterer implements Clusterer {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);	
-	private List<ReCiterCluster> finalCluster;
+	private Map<Integer, ReCiterCluster> finalCluster = new HashMap<Integer, ReCiterCluster>();
 	private boolean selectingTarget = false;
 	private double similarityThreshold = 0.3;
 	private double targetAuthorSimilarityThreshold = 0.001;
 
 	public ReCiterClusterer() {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
-		finalCluster = new ArrayList<ReCiterCluster>();
 	}
 
-	public List<ReCiterCluster> getFinalCluster() {
+	public Map<Integer, ReCiterCluster> getFinalCluster() {
 		return finalCluster;
 	}
 
@@ -66,7 +65,7 @@ public class ReCiterClusterer implements Clusterer {
 
 		ReCiterCluster firstCluster = new ReCiterCluster();
 		firstCluster.add(first);
-		finalCluster.add(firstCluster);
+		finalCluster.put(firstCluster.getClusterID(), firstCluster);
 
 		for (int i = 1; i < reciterArticleList.size(); i++) {
 
@@ -78,7 +77,7 @@ public class ReCiterClusterer implements Clusterer {
 				// create its own cluster.
 				ReCiterCluster newCluster = new ReCiterCluster();
 				newCluster.add(article);
-				finalCluster.add(newCluster);
+				finalCluster.put(newCluster.getClusterID(), newCluster);
 			} else {
 				finalCluster.get(selection).add(article);
 			}
@@ -113,7 +112,7 @@ public class ReCiterClusterer implements Clusterer {
 		// matching (cosine) score is selected, provided that the score
 		// exceeds a given threshold.
 		Set<Integer> allClusterIdSet = new HashSet<Integer>();
-		for (ReCiterCluster c : finalCluster) {
+		for (ReCiterCluster c : finalCluster.values()) {
 			allClusterIdSet.add(c.getClusterID());
 		}
 		return getIdWithMostContentSimilarity(allClusterIdSet, currentArticle);
@@ -374,7 +373,7 @@ public class ReCiterClusterer implements Clusterer {
 	// computes coauthor matches of this article with all current clusters.
 	private Map<Integer, Integer> computeCoauthorMatch(ReCiterArticle currentArticle) {
 		Map<Integer, Integer> coauthorsCount = new HashMap<Integer, Integer>(); // ClusterId to number of coauthors.
-		for (ReCiterCluster reCiterCluster : finalCluster) {
+		for (ReCiterCluster reCiterCluster : finalCluster.values()) {
 			int matchingCoauthors = reCiterCluster.getMatchingCoauthorCount(currentArticle);
 			coauthorsCount.put(reCiterCluster.getClusterID(), matchingCoauthors);
 		}
@@ -404,7 +403,7 @@ public class ReCiterClusterer implements Clusterer {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Number of clusters formed: " + getFinalCluster().size() + "\n");
 
-		for (ReCiterCluster r : finalCluster) {
+		for (ReCiterCluster r : finalCluster.values()) {
 			sb.append("{");
 			sb.append(r.getClusterID());
 			sb.append(" (size of cluster=");
