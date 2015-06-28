@@ -150,6 +150,24 @@ public class ReCiterClusterer implements Clusterer {
 				*/
 			}
 			
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/79
+			// Leverage departmental affiliation string matching for phase two matching.
+			if (selectingTarget) {
+				// Grab columns "primary_department" and "other_departments" from table "rc_identity".
+				/*
+				 * Please be sure to translate "and" into different ways it's represented. "Pathology and Laboratory Medicine" should become:
+					1. Pathology and Laboratory Medicine
+					2. Pathology/Laboratory Medicine
+					3. Pathology & Laboratory Medicine
+				 */
+				/*
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					// compare the above departments information with the article's affiliation information.
+					// increase the sim score if departments match.
+				}
+				 */
+			}
+			
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/60
 			// For individuals with no/few papers, use default departmental-journal similarity score.
 			if (selectingTarget) {
