@@ -131,6 +131,25 @@ public class ReCiterClusterer implements Clusterer {
 
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
 
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/78 (Phase 2 clustering)
+			// We have two sources for knowing whether someone lived or worked outside of the United States: 
+			// rc_identity_citizenship and rc_identity_education (foreign countries are in parentheses there).
+			if (selectingTarget) {
+				/*
+				IdentityCizenshipDao identityCitizenshipDao = new IdentityCitizenshipDao();
+				IdentityEducationDao identityEducationDao = new IdentityEducationDao();
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					for (ReCiterAuthor coauthor : article.getArticleCoAuthors().getCoAuthors()) {
+						// please skip the coauthor which is the targetAuthor by comparing the first name,
+						// middle name, and last name.
+						if (coauthor.getAffiliation().equals(citizenship) || coauthor.getAffiliation().equals(education)) {
+							// increase sim score.
+						}
+					}
+				}
+				*/
+			}
+			
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/60
 			// For individuals with no/few papers, use default departmental-journal similarity score.
 			if (selectingTarget) {
