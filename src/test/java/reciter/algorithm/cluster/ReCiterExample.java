@@ -147,6 +147,18 @@ public class ReCiterExample {
 				reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle, scopusArticle));
 			}
 			
+			// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.
+			for (ReCiterArticle article : reCiterArticleList) {
+				/*
+				For Phase One clustering, create a vector of topic keywords which includes individual words from:
+				1. journal title
+				2. MeSH major keywords (not the whole word itself - 
+					just individual words that are part of it; for matching entire MesH major terms, see issue #82)
+				3. article title
+				 */
+				// article.getArticleKeywords().addKeyword(keyword); // add the keyword retrieved from above.
+			}
+			
 			slf4jLogger.info("finished getting Scopus Xml");
 			// Add TargetAuthor Article:
 			reCiterArticleList.add(targetAuthorArticle);
