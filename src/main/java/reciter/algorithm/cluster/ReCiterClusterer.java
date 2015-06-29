@@ -1,6 +1,5 @@
 package reciter.algorithm.cluster;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -171,7 +170,7 @@ public class ReCiterClusterer implements Clusterer {
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/60
 			// For individuals with no/few papers, use default departmental-journal similarity score.
 			if (selectingTarget) {
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {	
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 					MatchingDepartmentsJournalsDao matchingDepartmentsJournalsDao = 
 							new MatchingDepartmentsJournalsDao();
 					double score = matchingDepartmentsJournalsDao.getScoreByJournalAndDepartment(
@@ -185,12 +184,11 @@ public class ReCiterClusterer implements Clusterer {
 			if (selectingTarget) {
 				String cwid = TargetAuthor.getInstance().getCwid();
 				ReadBoardCertifications efr=new ReadBoardCertifications();
-				List<String> boardCertificationList = efr.getBoardCertifications(cwid);
-				StringBuilder certificationData = new StringBuilder();
-				for(String data:boardCertificationList)certificationData.append(data).append(" ");
-				//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+				List<ReCiterArticle> articles = efr.getBoardCertifications(cwid,currentArticle);
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 				//					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
-				//				}
+					if(articles.contains(article))sim=sim+1;
+				}
 			}
 			//
 			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49

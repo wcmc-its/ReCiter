@@ -22,6 +22,12 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import reciter.lucene.DocumentIndexReader;
+import reciter.lucene.DocumentIndexWriter;
+import reciter.lucene.DocumentTranslator;
+import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleKeywords;
+
 /**
  * @author htadimeti
  */
@@ -149,12 +155,13 @@ public class ReadBoardCertifications {
 					List<String> list=null;
 					if(excelContent.containsKey(col1Value))list=excelContent.get(col1Value);
 					else list=new ArrayList<String>();
-					list.add(col2Value);
+					String[] keywords = col2Value.trim().split(" ");
+					for(String k : keywords)list.add(k);
 					excelContent.put(col1Value, list);
 				}
 			}
 		}
-		return excelContent;		
+		return excelContent;
 	}
 	
 	
@@ -175,6 +182,24 @@ public class ReadBoardCertifications {
 			e.printStackTrace();
 		}
 		return list;
+	}
+	
+	
+	/**
+	 * 
+	 * @param cwid
+	 * @param article
+	 */
+	public List<ReCiterArticle> getBoardCertifications(String cwid, ReCiterArticle article){
+		List<String> list=getBoardCertifications(cwid);
+		ReCiterArticleKeywords keyWords =  article.getArticleKeywords();
+		for(String keyWord: list){
+			keyWords.addKeyword(keyWord);
+		}
+		DocumentIndexWriter writer = new DocumentIndexWriter(cwid);
+		writer.index(DocumentTranslator.translate(article));
+		DocumentIndexReader reader = new DocumentIndexReader();
+		return reader.readIndex(cwid);
 	}
 	
 	public void fileSearch(File path,String fileName){
