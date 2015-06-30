@@ -13,7 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.erroranalysis.Analysis;
+import reciter.erroranalysis.AnalysisObject;
 import reciter.erroranalysis.ReCiterConfigProperty;
+import reciter.erroranalysis.StatusEnum;
 import reciter.lucene.DocumentIndexReader;
 import reciter.lucene.DocumentIndexWriter;
 import reciter.lucene.DocumentTranslator;
@@ -226,14 +228,37 @@ public class ReCiterExample {
 		Analysis analysis = new Analysis(pmidSet);
 		reCiterClusterer.cluster(filteredArticleList);
 
+		for (ReCiterArticle article : filteredArticleList) {
+			article.setAnalysisObject(new AnalysisObject());
+			article.getAnalysisObject().setStatus(StatusEnum.FALSE_NEGATIVE);
+			article.getAnalysisObject().setCwid(cwid);
+			article.getAnalysisObject().setTargetName(TargetAuthor.getInstance().getAuthorName().toString());
+			article.getAnalysisObject().setPubmedSearchQuery(AuthorName.getPubmedQueryFormat(TargetAuthor.getInstance().getAuthorName()));
+			article.getAnalysisObject().setPmid(String.valueOf(article.getArticleID()));
+			article.getAnalysisObject().setArticleTitle(article.getArticleTitle().getTitle());
+			article.getAnalysisObject().setFullJournalTitle(article.getJournal().getJournalTitle());
+			article.getAnalysisObject().setPublicationYear(String.valueOf(article.getJournal().getJournalIssuePubDateYear()));
+			article.getAnalysisObject().setScopusTargetAuthorAffiliation(article.getScopusAffiliation());
+			article.getAnalysisObject().setScopusCoAuthorAffiliation(article.getScopusAffiliation());
+			article.getAnalysisObject().setPubmedTargetAuthorAffiliation(article.getAffiliationConcatenated());
+			article.getAnalysisObject().setPubmedCoAuthorAffiliation(article.getAffiliationConcatenated());
+			article.getAnalysisObject().setArticleKeywords(article.getArticleKeywords().getCommaConcatForm());
+			article.getAnalysisObject().setClusterOriginator(article.isClusterOriginator());
+		}
+		
+		List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
+		
 		// Write to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
-//		try {
-//			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList(), cwid);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-
+		for (ReCiterArticle article : filteredArticleList) {
+			analysisObjectList.add(article.getAnalysisObject());
+		}
+		
+		try {
+			analysisCSVWriter.write(analysisObjectList, cwid + ".csv");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

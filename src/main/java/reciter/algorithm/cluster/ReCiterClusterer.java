@@ -31,6 +31,7 @@ public class ReCiterClusterer implements Clusterer {
 	private double similarityThreshold = 0.3;
 	private double targetAuthorSimilarityThreshold = 0.001;
 
+	
 	public ReCiterClusterer() {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
 	}
