@@ -39,10 +39,10 @@ For example, open a terminal and run these commands:
 cd /usr/local/mysql/support-files
 ./mysql.server start
 
-# For a single cwid:
+### For a single cwid:
 In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExampleSingleCwid.java`.
 
-# For the 63 cwids in the reference standard:
+### For the 63 cwids in the reference standard:
 In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`.
 
 ## Committing code from Eclipse to GitHub.
