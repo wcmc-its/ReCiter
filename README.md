@@ -33,10 +33,16 @@ Example 2:
 4. Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
 5. Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select "Start Import`.
 
-## Running ReCiter for a single cwid.
+## Running ReCiter
+Verify that your local SQL server is running. If it isn't, start it.
+For example, open a terminal and run these commands:
+cd /usr/local/mysql/support-files
+./mysql.server start
+
+# For a single cwid:
 In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExampleSingleCwid.java`.
 
-## Running ReCiter for 63 cwids.
+# For the 63 cwids in the reference standard:
 In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`.
 
 ## Committing code from Eclipse to GitHub.
