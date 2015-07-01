@@ -73,6 +73,9 @@ https://github.com/wcmc-its/ReCiter/issues/87 <br>
 1. Go to Eclipse --> Right Click on ReCiter --> Properties --> Resources  <br>
 2.  Under Text file encoding -->  Change from Inherited from container ( Cp1252 ) to Other UTF-8 from selection list option <br>
 
+## Troubleshooting
 
-
-
+If you encounter errors while running ReCiter:
+1. Verify that your Internet connection is operational
+2. Open a MYSQL prompt and type the following command, replacing PASSWORD with the root password for your local MYSQL instance: grant all privileges on *.* to 'root'@'localhost' identified by 'PASSWORD' with grant option;
+3. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)
