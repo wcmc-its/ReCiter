@@ -20,15 +20,15 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 2. To connect to your local development environment's database, change `/src/main/resources/config/database.properties` to your own local MySQL login information.
 Example 1:
 ```
-	url = "jdbc:mysql://localhost/reciter";
-	username = "root";
-	password = "";
+	url=jdbc:mysql://localhost/reciter
+	username=root
+	password=
 ```
 Example 2:
 ```
-	url = "jdbc:mysql://localhost/reciter";
-	username = "reciter_pubs";
-	password = "your_password_goes_here";
+	url=jdbc:mysql://localhost/reciter
+	username=root
+	password=your_password_goes_here
 ```
 Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
 Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select "Start Import`. To import the .SQL file using the command line, follow these steps:
