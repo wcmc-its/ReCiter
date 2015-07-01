@@ -47,10 +47,6 @@ When prompted, enter your password for your local mysql server.
 Wait for the process to complete (it may take a few minutes).
 
 ## Running ReCiter
-Verify that your local SQL server is running. If it isn't, start it.
-For example, open a terminal and run these commands:
-cd /usr/local/mysql/support-files
-./mysql.server start
 
 ### For a single cwid:
 In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExampleSingleCwid.java`.
@@ -77,5 +73,6 @@ https://github.com/wcmc-its/ReCiter/issues/87 <br>
 
 If you encounter errors while running ReCiter:<br>
 1. Verify that your Internet connection is operational <br>
-2. Open a MYSQL prompt and type the following command, replacing PASSWORD with the root password for your local MYSQL instance: grant all privileges on *.* to 'root'@'localhost' identified by 'PASSWORD' with grant option;<br>
-3. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)<br>
+2. Verify that your local SQL server is running. If it isn't, start it. For example, open a terminal and run these commands: cd /usr/local/mysql/support-files ./mysql.server start<br>
+3. Open a MYSQL prompt and type the following command, replacing PASSWORD with the root password for your local MYSQL instance: grant all privileges on *.* to 'root'@'localhost' identified by 'PASSWORD' with grant option;<br>
+4. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)<br>
