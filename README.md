@@ -64,3 +64,14 @@ In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`
 ## Examining ReCiter output.
 1. ReCiter outputs a csv file for each cwid in the folder `data/csv_output/`.
 2. The precision and recall can be found in `reciter.log` or inside `Eclipse` console.
+
+## Special Note for Eclipse UTF-8 Encoding Configuration
+For Eclipse IDE development setup, use default encoding format as UTF-8 to avoid the special characters encoding from PubMed XMl files.
+This note address the issue rised in GitHub for issue Manage special characters in PubMed data #87 
+https://github.com/wcmc-its/ReCiter/issues/87
+1. Go to Eclipse --> Right Click on ReCiter --> Properties --> Resources 
+2.  Under Text file encoding -->  Chenage from Inherited from container ( Cp1252 ) to Other UTF-8 from selection list option
+
+
+
+
