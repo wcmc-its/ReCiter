@@ -68,10 +68,10 @@ In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`
 ## Special Note for Eclipse UTF-8 Encoding Configuration
 
 For Eclipse IDE development setup, use default encoding format as UTF-8 to avoid the special characters encoding from PubMed XMl files.  <br></br>
-This note address the issue rised in GitHub for issue Manage special characters in PubMed data #87  <br></br>
-https://github.com/wcmc-its/ReCiter/issues/87 <br></br>
-1. Go to Eclipse --> Right Click on ReCiter --> Properties --> Resources  <br></br>
-2.  Under Text file encoding -->  Chenage from Inherited from container ( Cp1252 ) to Other UTF-8 from selection list option <br></br>
+This note address the issue raised in GitHub for issue Manage special characters in PubMed data #87  <br>
+https://github.com/wcmc-its/ReCiter/issues/87 <br>
+1. Go to Eclipse --> Right Click on ReCiter --> Properties --> Resources  <br>
+2.  Under Text file encoding -->  Chenage from Inherited from container ( Cp1252 ) to Other UTF-8 from selection list option <br>
 
 
 
