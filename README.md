@@ -67,7 +67,7 @@ In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`
 
 ## Special Note for Eclipse UTF-8 Encoding Configuration
 
-For Eclipse IDE development setup, use default encoding format as UTF-8 to avoid the special characters encoding from PubMed XMl files.  <br></br>
+For Eclipse IDE development setup, use default encoding format as UTF-8 to avoid the special characters encoding from PubMed XML files.  <br>
 This note address the issue raised in GitHub for issue Manage special characters in PubMed data #87  <br>
 https://github.com/wcmc-its/ReCiter/issues/87 <br>
 1. Go to Eclipse --> Right Click on ReCiter --> Properties --> Resources  <br>
