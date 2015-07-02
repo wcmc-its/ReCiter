@@ -18,7 +18,7 @@ import database.model.Identity;
  */
 public class ConfigWriter {
 
-	private final static String DIR = "data/properties";
+	private final static String DIR = "src/main/resources/data/properties";
 
 	public void writeConfig(String cwid) {
 		IdentityDao identityDao = new IdentityDao();
