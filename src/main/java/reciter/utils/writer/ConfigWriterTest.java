@@ -19,7 +19,7 @@ public class ConfigWriterTest {
 	public static void writeConfigAll() {
 		ConfigWriter configWriter = new ConfigWriter();
 		AnalysisCSVParser parser = new AnalysisCSVParser();
-		Map<String, ReCiterAuthor> map = parser.parse("data/cwid_test.data.csv");
+		Map<String, ReCiterAuthor> map = parser.parse("src/main/resources/data/cwid_test.data.csv");
 		for (String cwid : map.keySet()) {
 			configWriter.writeConfig(cwid);
 		}
