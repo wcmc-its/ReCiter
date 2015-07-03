@@ -78,10 +78,19 @@ If you encounter errors while running ReCiter:<br>
 4. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)<br>
 5. Double-check that you have entered the correct password for 'root' in config.properties
 
-If you encounter this specific error:
+If when running ReCiter you encounter output that looks like this:
  INFO [main] (ReCiterExample.java:67) - Number of cwids: 0
  INFO [main] (ReCiterExample.java:68) - Average Precision: NaN
  INFO [main] (ReCiterExample.java:69) - Average Recall: NaN
  INFO [main] (ReCiterExample.java:75) - Total execution time: 92 ms.
  
 Then, double-check that you have a folder for the CWID or CWIDs that you're running in resources/data/pubmed
+
+If you encounter this error:
+ INFO [main] (ReCiterExample.java:162) - finished getting Scopus Xml
+ INFO [main] (DocumentIndexReader.java:43) - Reading Lucene index for aas2004
+ INFO [main] (DocumentIndexReader.java:251) - Finished Reading Lucene index for aas2004
+com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+
+Then, verify that your local SQL server is running (see point 2 above).
