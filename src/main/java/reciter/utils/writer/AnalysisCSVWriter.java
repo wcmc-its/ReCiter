@@ -36,6 +36,7 @@ public class AnalysisCSVWriter {
 		
 		// Print each row of data.
 		for (AnalysisObject analysisObject : list) {
+			System.out.println(analysisObject.getPmid());
 			printer.print(analysisObject.getStatus().name());
 			printer.print(analysisObject.getCwid());
 			printer.print(analysisObject.getTargetName());

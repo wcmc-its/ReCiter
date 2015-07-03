@@ -2,6 +2,7 @@ package reciter.model.article;
 
 import java.util.Map;
 
+import reciter.erroranalysis.AnalysisObject;
 import reciter.lucene.DocumentVector;
 import reciter.lucene.DocumentVectorType;
 import reciter.lucene.docsimilarity.DocumentSimilarity;
@@ -27,6 +28,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private String info;
 	private boolean isClusterOriginator;
 	private String scopusAffiliation;
+	private AnalysisObject analysisObject;
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -200,6 +202,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setScopusAffiliation(String scopusAffiliation) {
 		this.scopusAffiliation = scopusAffiliation;
+	}
+
+	public AnalysisObject getAnalysisObject() {
+		return analysisObject;
+	}
+
+	public void setAnalysisObject(AnalysisObject analysisObject) {
+		this.analysisObject = analysisObject;
 	}
 
 }

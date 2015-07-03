@@ -126,6 +126,10 @@ public class AuthorName {
 			return getLastName() + "%20" + getFirstInitial();
 		}
 	}
+	
+	public static String getPubmedQueryFormat(AuthorName authorName) {
+		return authorName.getPubmedQueryFormat();
+	}
 
 	public boolean firstInitialLastNameMatch(AuthorName name) {
 		return StringUtils.equals(Junidecode.unidecode(getFirstInitial()), Junidecode.unidecode(name.getFirstInitial())) &&

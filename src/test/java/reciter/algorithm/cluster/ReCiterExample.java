@@ -12,8 +12,11 @@ import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.erroranalysis.Analysis;
+import reciter.erroranalysis.AnalysisObject;
 import reciter.erroranalysis.ReCiterConfigProperty;
+import reciter.erroranalysis.StatusEnum;
 import reciter.lucene.DocumentIndexReader;
 import reciter.lucene.DocumentIndexWriter;
 import reciter.lucene.DocumentTranslator;
@@ -223,17 +226,83 @@ public class ReCiterExample {
 		ArticleDao articleDao = new ArticleDao();
 		Set<Integer> pmidSet = articleDao.getPmidList(cwid);
 
-		Analysis analysis = new Analysis(pmidSet);
 		reCiterClusterer.cluster(filteredArticleList);
-
+		int assignedClusterId = reCiterClusterer.assignTargetToCluster(TargetAuthor.getInstance().getTargetAuthorArticleIndexed());
+		
+		// Assigning StatusEnum to each article.
+		for (ReCiterCluster reCiterCluster : reCiterClusterer.getFinalCluster().values()) {
+			for (ReCiterArticle article : reCiterCluster.getArticleCluster()) {
+				article.setAnalysisObject(new AnalysisObject());
+				if (reCiterCluster.getClusterID() == reCiterClusterer.getSelectedReCiterClusterId()) {
+					if (pmidSet.contains(article.getArticleID())) {
+						article.getAnalysisObject().setStatus(StatusEnum.TRUE_POSITIVE);
+					} else {
+						article.getAnalysisObject().setStatus(StatusEnum.FALSE_POSITIVE);
+					}
+				} else {
+					if (pmidSet.contains(article.getArticleID())) {
+						article.getAnalysisObject().setStatus(StatusEnum.FALSE_NEGATIVE);
+					} else {
+						article.getAnalysisObject().setStatus(StatusEnum.TRUE_NEGATIVE);
+					}
+				}
+			}
+		}
+		
+		for (ReCiterArticle article : filteredArticleList) {
+			// Information Retrieval.
+			article.getAnalysisObject().setCwid(cwid);
+			article.getAnalysisObject().setTargetName(TargetAuthor.getInstance().getAuthorName().toString());
+			article.getAnalysisObject().setPubmedSearchQuery(AuthorName.getPubmedQueryFormat(TargetAuthor.getInstance().getAuthorName()));
+			
+			// Pre-Processing.
+			article.getAnalysisObject().setPmid(String.valueOf(article.getArticleID()));
+			article.getAnalysisObject().setArticleTitle(article.getArticleTitle().getTitle());
+			article.getAnalysisObject().setFullJournalTitle(article.getJournal().getJournalTitle());
+			article.getAnalysisObject().setPublicationYear(String.valueOf(article.getJournal().getJournalIssuePubDateYear()));
+			article.getAnalysisObject().setScopusTargetAuthorAffiliation(article.getScopusAffiliation());
+			article.getAnalysisObject().setScopusCoAuthorAffiliation(article.getScopusAffiliation());
+			article.getAnalysisObject().setPubmedTargetAuthorAffiliation(article.getAffiliationConcatenated());
+			article.getAnalysisObject().setPubmedCoAuthorAffiliation(article.getAffiliationConcatenated());
+			article.getAnalysisObject().setArticleKeywords(article.getArticleKeywords().getCommaConcatForm());
+			
+			// Phase one clustering: clustering results and scores.
+//			article.getAnalysisObject().setNameMatchingScore(0);
+			article.getAnalysisObject().setClusterOriginator(article.isClusterOriginator());
+//			article.getAnalysisObject().setJournalSimilarityPhaseOne(0);
+			
+			// Phase two matching: matching scores.
+//			article.getAnalysisObject().setCoauthorAffiliationScore(0);
+//			article.getAnalysisObject().setTargetAuthorAffiliationScore(0);
+//			article.getAnalysisObject().setKnownCoinvestigatorScore(0);
+//			article.getAnalysisObject().setFundingStatementScore(0);
+			article.getAnalysisObject().setTerminalDegreeScore(0);
+			article.getAnalysisObject().setDefaultDepartmentJournalSimilarityScore(0);
+			article.getAnalysisObject().setKeywordMatchingScore(0);
+			
+			// Phase two matching: scoring results.
+			article.getAnalysisObject().setPhaseTwoSimilarityThreshold(0);
+			article.getAnalysisObject().setClusterArticleAssignedTo(reCiterClusterer.getSelectedReCiterClusterId());
+			article.getAnalysisObject().setCountArticlesInAssignedCluster(reCiterClusterer.getFinalCluster().get(assignedClusterId).getArticleCluster().size());
+//			article.getAnalysisObject().setClusterSelectedInPhaseTwoMatching(true);
+			article.getAnalysisObject().setAffiliationSimilarity(0);
+			article.getAnalysisObject().setKeywordSimilarity(0);
+			article.getAnalysisObject().setJournalSimilarityPhaseTwo(0);
+		}
+		
+		List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
+		
 		// Write to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
-//		try {
-//			analysisCSVWriter.write(AnalysisObject.getAnalysisObjectList(), cwid);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-
+		for (ReCiterArticle article : filteredArticleList) {
+			analysisObjectList.add(article.getAnalysisObject());
+		}
+		
+		try {
+			analysisCSVWriter.write(analysisObjectList, cwid + ".csv");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

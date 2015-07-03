@@ -27,9 +27,12 @@ public class ReCiterClusterer implements Clusterer {
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);	
 	private Map<Integer, ReCiterCluster> finalCluster = new HashMap<Integer, ReCiterCluster>();
 	private boolean selectingTarget = false;
+	private int selectedReCiterClusterId = -1;
+	
 	private double similarityThreshold = 0.3;
-	private double targetAuthorSimilarityThreshold = 0.001;
+//	private double targetAuthorSimilarityThreshold = 0.001;
 
+	
 	public ReCiterClusterer() {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
 	}
@@ -40,7 +43,8 @@ public class ReCiterClusterer implements Clusterer {
 
 	public int assignTargetToCluster(ReCiterArticle article) {
 		selectingTarget = true;
-		return selectCandidateCluster(article);
+		selectedReCiterClusterId = selectCandidateCluster(article);
+		return selectedReCiterClusterId;
 	}
 
 	/**
@@ -457,6 +461,14 @@ public class ReCiterClusterer implements Clusterer {
 	public double getArticleToArticleSimilarityThresholdValue() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	public int getSelectedReCiterClusterId() {
+		return selectedReCiterClusterId;
+	}
+
+	public void setSelectedReCiterClusterId(int selectedReCiterClusterId) {
+		this.selectedReCiterClusterId = selectedReCiterClusterId;
 	}
 
 
