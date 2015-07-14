@@ -217,7 +217,8 @@ public class ReadBoardCertifications {
 	    };
 	    String[] children = path.list(filter);
 	    if(children!=null && children.length>0){
-	    	excelFileName=path.getAbsolutePath()+children[0];
+	    	excelFileName=path.getAbsolutePath();
+	    	excelFileName=excelFileName+(excelFileName.endsWith(File.separator)?"":File.separator)+children[0];
 	    }else{
 	    	File[] folders = path.listFiles(fileFilter);
 	    	for(int i=0;folders!=null && i<folders.length;i++)fileSearch(folders[i],fileName);
