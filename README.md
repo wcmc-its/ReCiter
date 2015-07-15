@@ -32,19 +32,18 @@ Example 2:
 ```
 Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
 Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select "Start Import`. To import the .SQL file using the command line, follow these steps:
-Open a terminal window or command line
-Navigate to the `bin` directory in `/usr/local/mysql`:
+1. Open a terminal window or command line
+2. Navigate to the `bin` directory in `/usr/local/mysql`:
 `cd /usr/local/mysql/bin`
 `mysql -u root -p`
-When prompted, enter your password for your local mysql server
-Once at the MYSQL prompt, create the reciter database:
+3. When prompted, enter your password for your local mysql server
+4. Once at the MYSQL prompt, create the reciter database:
 `CREATE DATABASE IF NOT EXISTS reciter;`
 `exit`
-
-From the command line, use this command to import the reciter database from the SQL file:
+5. From the command line, use this command to import the reciter database from the SQL file:
 `mysql -u root -p reciter < "ReCiterDB.sql"`
-When prompted, enter your password for your local mysql server.
-Wait for the process to complete (it may take a few minutes).
+6. When prompted, enter your password for your local mysql server.
+7. Wait for the process to complete (it may take a few minutes).
 
 ## Running ReCiter
 
