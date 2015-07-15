@@ -31,7 +31,7 @@ Example 2:
 	password=your_password_goes_here
 ```
 Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
-Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select "Start Import`. To import the .SQL file using the command line, follow these steps:
+Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select `Start Import`. To import the .SQL file using the command line, follow these steps:
 1. Open a terminal window or command line
 2. Navigate to the `bin` directory in `/usr/local/mysql`:
 `cd /usr/local/mysql/bin`
