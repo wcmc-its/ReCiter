@@ -251,10 +251,18 @@ public class ReCiterExample {
 			}
 		}
 
-		analysis.setTruePositiveList(selectedArticleIdSet);
-		analysis.setSizeOfSelected(selectedArticleIdSet.size());
-		slf4jLogger.debug("Precision=" + analysis.getPrecision());
-		slf4jLogger.debug("Recall=" + analysis.getRecall());
+		if (reCiterClusterer.getSelectedReCiterClusterId() != -1) {
+			analysis.setTruePositiveList(selectedArticleIdSet);
+			analysis.setSizeOfSelected(selectedArticleIdSet.size());
+			slf4jLogger.debug("Precision=" + analysis.getPrecision());
+			totalPrecision += analysis.getPrecision();
+			slf4jLogger.debug("Recall=" + analysis.getRecall());
+			totalRecall += analysis.getRecall();
+		} else {
+			slf4jLogger.info("No cluster selected in phase 2 matching.");
+			slf4jLogger.debug("Precision=" + 0);
+			slf4jLogger.debug("Recall=" + 0);
+		}
 
 		for (ReCiterArticle article : filteredArticleList) {
 			// Information Retrieval.
@@ -292,7 +300,7 @@ public class ReCiterExample {
 			article.getAnalysisObject().setClusterArticleAssignedTo(reCiterClusterer.getSelectedReCiterClusterId());
 
 			if(assignedClusterId>=0)article.getAnalysisObject().setCountArticlesInAssignedCluster(reCiterClusterer.getFinalCluster().get(assignedClusterId).getArticleCluster().size());
-//			article.getAnalysisObject().setClusterSelectedInPhaseTwoMatching(true);
+			//			article.getAnalysisObject().setClusterSelectedInPhaseTwoMatching(true);
 			article.getAnalysisObject().setAffiliationSimilarity(0);
 			article.getAnalysisObject().setKeywordSimilarity(0);
 			article.getAnalysisObject().setJournalSimilarityPhaseTwo(0);
@@ -312,5 +320,8 @@ public class ReCiterExample {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		slf4jLogger.info("Average Precision = " + totalPrecision / numCwids);
+		slf4jLogger.info("Average Recall = " + totalRecall / numCwids);
 	}
 }
