@@ -86,13 +86,15 @@ public class ArticleTranslator {
 							Set<Integer> afidSet = scopusAuthor.getAfidSet();
 							StringBuilder scopusAffiliation = new StringBuilder();
 							for (int afid : afidSet) {
-								scopusAffiliation.append(affiliations.get(afid).getAffilname());
-								scopusAffiliation.append(" ");
-								scopusAffiliation.append(affiliations.get(afid).getNameVariant());
-								scopusAffiliation.append(" ");
-								scopusAffiliation.append(affiliations.get(afid).getAffiliationCity());
-								scopusAffiliation.append(" ");
-								scopusAffiliation.append(affiliations.get(afid).getAffiliationCountry());
+								if (affiliations.get(afid) != null) {
+									scopusAffiliation.append(affiliations.get(afid).getAffilname());
+									scopusAffiliation.append(" ");
+									scopusAffiliation.append(affiliations.get(afid).getNameVariant());
+									scopusAffiliation.append(" ");
+									scopusAffiliation.append(affiliations.get(afid).getAffiliationCity());
+									scopusAffiliation.append(" ");
+									scopusAffiliation.append(affiliations.get(afid).getAffiliationCountry());
+								}
 							}
 							authorAffiliation.setAffiliation(authorAffiliation.getAffiliation() + " " + scopusAffiliation.toString());
 						}

@@ -290,10 +290,9 @@ public class ReCiterExample {
 			// Phase two matching: scoring results.
 			article.getAnalysisObject().setPhaseTwoSimilarityThreshold(0);
 			article.getAnalysisObject().setClusterArticleAssignedTo(reCiterClusterer.getSelectedReCiterClusterId());
-			if (reCiterClusterer.getSelectedReCiterClusterId() != -1) {
-				article.getAnalysisObject().setCountArticlesInAssignedCluster(reCiterClusterer.getFinalCluster().get(assignedClusterId).getArticleCluster().size());
-			}
-			//			article.getAnalysisObject().setClusterSelectedInPhaseTwoMatching(true);
+
+			if(assignedClusterId>=0)article.getAnalysisObject().setCountArticlesInAssignedCluster(reCiterClusterer.getFinalCluster().get(assignedClusterId).getArticleCluster().size());
+//			article.getAnalysisObject().setClusterSelectedInPhaseTwoMatching(true);
 			article.getAnalysisObject().setAffiliationSimilarity(0);
 			article.getAnalysisObject().setKeywordSimilarity(0);
 			article.getAnalysisObject().setJournalSimilarityPhaseTwo(0);
