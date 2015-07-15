@@ -40,12 +40,12 @@ public class ReadBoardCertifications {
 	private static final String XLS="XLS";
 	private static final String XLSX="XLSX";
 	//private static final String CSV="CSV"; // TODO - will enable once the functionality implementation starts 
-	
+
 	public ReadBoardCertifications(){
-		//this.excelFileName="src/main/resources/docs/BoardCertificationsWCMC.xls";
-		fileSearch(new File(ReadBoardCertifications.class.getProtectionDomain().getCodeSource().getLocation().getFile()), "BoardCertificationsWCMC.xls");
+		this.excelFileName="src/main/resources/docs/BoardCertificationsWCMC.xls";
+		//		fileSearch(new File(ReadBoardCertifications.class.getProtectionDomain().getCodeSource().getLocation().getFile()), "BoardCertificationsWCMC.xls");
 	}
-	
+
 	private String getBoardCertificationFilePath(){
 		//ReadBoardCertifications.class.getProtectionDomain().getCodeSource().getLocation()
 		return null;
@@ -74,7 +74,7 @@ public class ReadBoardCertifications {
 		try {
 			inputStream = new FileInputStream(excelFileName);
 			if(! inputStream.markSupported()) {
-                inputStream = new PushbackInputStream(inputStream, 8);
+				inputStream = new PushbackInputStream(inputStream, 8);
 			}
 			isExcel=POIFSFileSystem.hasPOIFSHeader(inputStream) || POIXMLDocument.hasOOXMLHeader(inputStream);
 			if(isExcel)excelType=POIFSFileSystem.hasPOIFSHeader(inputStream)?XLS:XLSX;
@@ -108,7 +108,7 @@ public class ReadBoardCertifications {
 	public void setExcelType(String excelType) {
 		this.excelType = excelType;
 	}
-	
+
 	private String preProcessBoardCertifications(String certification){
 		if(certification!=null && !certification.trim().equals("")){
 			certification=certification.trim();
@@ -116,8 +116,8 @@ public class ReadBoardCertifications {
 		}
 		return certification;
 	}
-	
-	
+
+
 	/**
 	 * 
 	 * @param sheetNum - Sheet Number to read - 0 for first sheet, 1 for second sheet , etc.,
@@ -133,7 +133,7 @@ public class ReadBoardCertifications {
 		isExcel();
 		if(this.excelType==ReadBoardCertifications.XLS)this.workbook=new HSSFWorkbook(new FileInputStream(excelFileName));
 		else if(this.excelType==ReadBoardCertifications.XLSX)this.workbook=new XSSFWorkbook(this.excelFileName);
-		
+
 		if(this.workbook!=null){
 			Sheet sheet = workbook.getSheetAt(sheetNum);
 			Iterator<Row> rowIterator = sheet.iterator();
@@ -148,7 +148,7 @@ public class ReadBoardCertifications {
 				if (i == 1) continue;
 				String col1Value=row.getCell(columnNumber1)!=null?row.getCell(columnNumber1).getStringCellValue():"";
 				String col2Value=row.getCell(columnNumber2)!=null?row.getCell(columnNumber2).getStringCellValue():"";
-				
+
 				if(!col1Value.trim().equals("") && !col2Value.trim().equals("")){
 					if(searchKey!=null && !searchKey.toLowerCase().trim().equals(col1Value.toLowerCase().trim()))continue;
 					col2Value=preProcessBoardCertifications(col2Value);
@@ -163,8 +163,8 @@ public class ReadBoardCertifications {
 		}
 		return excelContent;
 	}
-	
-	
+
+
 	/**
 	 * 
 	 * @param cwid
@@ -183,8 +183,8 @@ public class ReadBoardCertifications {
 		}
 		return list;
 	}
-	
-	
+
+
 	/**
 	 * 
 	 * @param cwid
@@ -193,15 +193,17 @@ public class ReadBoardCertifications {
 	public List<ReCiterArticle> getBoardCertifications(String cwid, ReCiterArticle article){
 		List<String> list=getBoardCertifications(cwid);
 		ReCiterArticleKeywords keyWords =  article.getArticleKeywords();
-		for(String keyWord: list){
-			keyWords.addKeyword(keyWord);
+		if (article.getArticleID() != -1) {
+			for(String keyWord: list){
+				keyWords.addKeyword(keyWord);
+			}
 		}
 		DocumentIndexWriter writer = new DocumentIndexWriter(cwid);
 		writer.index(DocumentTranslator.translate(article));
 		DocumentIndexReader reader = new DocumentIndexReader();
 		return reader.readIndex(cwid);
 	}
-	
+
 	public void fileSearch(File path,String fileName){
 		if(excelFileName!=null)return;
 		FileFilter fileFilter = new FileFilter() {			
@@ -211,16 +213,16 @@ public class ReadBoardCertifications {
 			}
 		};
 		FilenameFilter filter = new FilenameFilter() {
-	         public boolean accept (File dir, String name) {
-	            return name.equalsIgnoreCase(fileName);
-	        }
-	    };
-	    String[] children = path.list(filter);
-	    if(children!=null && children.length>0){
-	    	excelFileName=path.getAbsolutePath()+children[0];
-	    }else{
-	    	File[] folders = path.listFiles(fileFilter);
-	    	for(int i=0;folders!=null && i<folders.length;i++)fileSearch(folders[i],fileName);
-	    }
+			public boolean accept (File dir, String name) {
+				return name.equalsIgnoreCase(fileName);
+			}
+		};
+		String[] children = path.list(filter);
+		if(children!=null && children.length>0){
+			excelFileName=path.getAbsolutePath()+children[0];
+		}else{
+			File[] folders = path.listFiles(fileFilter);
+			for(int i=0;folders!=null && i<folders.length;i++)fileSearch(folders[i],fileName);
+		}
 	}
 }

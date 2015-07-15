@@ -1,5 +1,7 @@
 package xmlparser.scopus.model;
 
+import java.util.Optional;
+
 /**
  * A class model for a Scopus article affiliation XML tag.
  * @author jil3004
@@ -7,11 +9,11 @@ package xmlparser.scopus.model;
  */
 public class Affiliation {
 
-	private final int afid; // <afid> XML tag.
-	private final String affilname; // <affilname> XML tag.
-	private final String nameVariant; // <name-variant> XML tag.
-	private final String affiliationCity; // <affiliation-city> XML tag.
-	private final String affiliationCountry; // <affiliation-country> XML tag.
+	private int afid; // <afid> XML tag.
+	private String affilname; // <affilname> XML tag.
+	private String nameVariant; // <name-variant> XML tag.
+	private String affiliationCity; // <affiliation-city> XML tag.
+	private String affiliationCountry; // <affiliation-country> XML tag.
 	
 	public Affiliation(int afid, String affilname, String nameVariant,
 			String affiliationCity, String affiliationCountry) {

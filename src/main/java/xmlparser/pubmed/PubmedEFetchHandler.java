@@ -100,11 +100,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 
 	private List<PubmedArticle> pubmedArticles;
 	private PubmedArticle pubmedArticle;
-	
+
 	public List<PubmedArticle> getPubmedArticles() {
 		return pubmedArticles;
 	}
-	
+
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		if (qName.equalsIgnoreCase("PubmedArticleSet")) {
@@ -201,7 +201,7 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			bKeywordList = false;
 		}
 	}
-	
+
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
 		if (bMedlineCitation && bPMID) {
@@ -255,7 +255,9 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		}
 		if (bPubDate && bMedlineDate) {
 			String pubDateYear = new String(ch, start, length);
-			pubDateYear = pubDateYear.substring(0, 4); // PMID = 23849565 <MedlineDate>2013 May-Jun</MedlineDate>
+			if (pubDateYear.length() > 4) {
+				pubDateYear = pubDateYear.substring(0, 4); // PMID = 23849565 <MedlineDate>2013 May-Jun</MedlineDate>
+			}
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
 			bPubDate = false;
 			bMedlineDate = false;

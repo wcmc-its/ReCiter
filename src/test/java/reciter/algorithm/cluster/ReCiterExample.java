@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,15 +46,12 @@ public class ReCiterExample {
 	public static double totalPrecision = 0;
 	public static double totalRecall = 0;
 	public static int numCwids = 0;
-	
+
 	public static void main(String[] args) throws IOException {
 
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
-		
-		PubmedXmlFetcher.createPubMedLocation(); // create folder for PubMed data if not exist.
-		ReCiterConfigProperty.createDefaultLocation();
-		
+
 		Files.walk(Paths.get(PubmedXmlFetcher.getDefaultLocation())).forEach(filePath -> {
 			if (Files.isRegularFile(filePath)) {
 				String cwid = filePath.getFileName().toString().replace("_0.xml", "");
@@ -67,12 +65,11 @@ public class ReCiterExample {
 				numCwids++;
 			}
 		});
+
 		slf4jLogger.info("Number of cwids: " + numCwids);
 		slf4jLogger.info("Average Precision: " + totalPrecision / numCwids);
 		slf4jLogger.info("Average Recall: " + totalRecall / numCwids);
 
-		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
-//		analysisCSVWriter.write(AnalysisObject.getAllAnalysisObjectList(), "all_target");
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
@@ -142,14 +139,14 @@ public class ReCiterExample {
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 			List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
-			
+
 			for (PubmedArticle pubmedArticle : pubmedArticleList) {
 				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
 				ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, pmid);
-				
+
 				reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle, scopusArticle));
 			}
-			
+
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.
 			for (ReCiterArticle article : reCiterArticleList) {
 				/*
@@ -161,7 +158,7 @@ public class ReCiterExample {
 				 */
 				// article.getArticleKeywords().addKeyword(keyword); // add the keyword retrieved from above.
 			}
-			
+
 			slf4jLogger.info("finished getting Scopus Xml");
 			// Add TargetAuthor Article:
 			reCiterArticleList.add(targetAuthorArticle);
@@ -228,14 +225,19 @@ public class ReCiterExample {
 
 		reCiterClusterer.cluster(filteredArticleList);
 		int assignedClusterId = reCiterClusterer.assignTargetToCluster(TargetAuthor.getInstance().getTargetAuthorArticleIndexed());
-		
+
+		Analysis analysis = new Analysis(pmidSet);
+
 		// Assigning StatusEnum to each article.
+		Set<Integer> selectedArticleIdSet = new HashSet<Integer>();
+
 		for (ReCiterCluster reCiterCluster : reCiterClusterer.getFinalCluster().values()) {
 			for (ReCiterArticle article : reCiterCluster.getArticleCluster()) {
 				article.setAnalysisObject(new AnalysisObject());
 				if (reCiterCluster.getClusterID() == reCiterClusterer.getSelectedReCiterClusterId()) {
 					if (pmidSet.contains(article.getArticleID())) {
 						article.getAnalysisObject().setStatus(StatusEnum.TRUE_POSITIVE);
+						selectedArticleIdSet.add(article.getArticleID());
 					} else {
 						article.getAnalysisObject().setStatus(StatusEnum.FALSE_POSITIVE);
 					}
@@ -248,13 +250,18 @@ public class ReCiterExample {
 				}
 			}
 		}
-		
+
+		analysis.setTruePositiveList(selectedArticleIdSet);
+		analysis.setSizeOfSelected(selectedArticleIdSet.size());
+		slf4jLogger.debug("Precision=" + analysis.getPrecision());
+		slf4jLogger.debug("Recall=" + analysis.getRecall());
+
 		for (ReCiterArticle article : filteredArticleList) {
 			// Information Retrieval.
 			article.getAnalysisObject().setCwid(cwid);
 			article.getAnalysisObject().setTargetName(TargetAuthor.getInstance().getAuthorName().toString());
 			article.getAnalysisObject().setPubmedSearchQuery(AuthorName.getPubmedQueryFormat(TargetAuthor.getInstance().getAuthorName()));
-			
+
 			// Pre-Processing.
 			article.getAnalysisObject().setPmid(String.valueOf(article.getArticleID()));
 			article.getAnalysisObject().setArticleTitle(article.getArticleTitle().getTitle());
@@ -265,39 +272,41 @@ public class ReCiterExample {
 			article.getAnalysisObject().setPubmedTargetAuthorAffiliation(article.getAffiliationConcatenated());
 			article.getAnalysisObject().setPubmedCoAuthorAffiliation(article.getAffiliationConcatenated());
 			article.getAnalysisObject().setArticleKeywords(article.getArticleKeywords().getCommaConcatForm());
-			
+
 			// Phase one clustering: clustering results and scores.
-//			article.getAnalysisObject().setNameMatchingScore(0);
+			//			article.getAnalysisObject().setNameMatchingScore(0);
 			article.getAnalysisObject().setClusterOriginator(article.isClusterOriginator());
-//			article.getAnalysisObject().setJournalSimilarityPhaseOne(0);
-			
+			//			article.getAnalysisObject().setJournalSimilarityPhaseOne(0);
+
 			// Phase two matching: matching scores.
-//			article.getAnalysisObject().setCoauthorAffiliationScore(0);
-//			article.getAnalysisObject().setTargetAuthorAffiliationScore(0);
-//			article.getAnalysisObject().setKnownCoinvestigatorScore(0);
-//			article.getAnalysisObject().setFundingStatementScore(0);
+			//			article.getAnalysisObject().setCoauthorAffiliationScore(0);
+			//			article.getAnalysisObject().setTargetAuthorAffiliationScore(0);
+			//			article.getAnalysisObject().setKnownCoinvestigatorScore(0);
+			//			article.getAnalysisObject().setFundingStatementScore(0);
 			article.getAnalysisObject().setTerminalDegreeScore(0);
 			article.getAnalysisObject().setDefaultDepartmentJournalSimilarityScore(0);
 			article.getAnalysisObject().setKeywordMatchingScore(0);
-			
+
 			// Phase two matching: scoring results.
 			article.getAnalysisObject().setPhaseTwoSimilarityThreshold(0);
 			article.getAnalysisObject().setClusterArticleAssignedTo(reCiterClusterer.getSelectedReCiterClusterId());
-			article.getAnalysisObject().setCountArticlesInAssignedCluster(reCiterClusterer.getFinalCluster().get(assignedClusterId).getArticleCluster().size());
-//			article.getAnalysisObject().setClusterSelectedInPhaseTwoMatching(true);
+			if (reCiterClusterer.getSelectedReCiterClusterId() != -1) {
+				article.getAnalysisObject().setCountArticlesInAssignedCluster(reCiterClusterer.getFinalCluster().get(assignedClusterId).getArticleCluster().size());
+			}
+			//			article.getAnalysisObject().setClusterSelectedInPhaseTwoMatching(true);
 			article.getAnalysisObject().setAffiliationSimilarity(0);
 			article.getAnalysisObject().setKeywordSimilarity(0);
 			article.getAnalysisObject().setJournalSimilarityPhaseTwo(0);
 		}
-		
+
 		List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
-		
+
 		// Write to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
 		for (ReCiterArticle article : filteredArticleList) {
 			analysisObjectList.add(article.getAnalysisObject());
 		}
-		
+
 		try {
 			analysisCSVWriter.write(analysisObjectList, cwid + ".csv");
 		} catch (IOException e) {

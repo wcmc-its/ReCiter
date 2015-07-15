@@ -97,7 +97,7 @@
 			<artifactId>spring-beans</artifactId>
 			<version>4.1.6.RELEASE</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
@@ -128,10 +128,19 @@
 			<artifactId>commons-codec</artifactId>
 			<version>1.9</version>
 		</dependency>
-		<!-- <dependency>
-			<groupId>activation</groupId>
-			<artifactId>activation</artifactId>
-			<version>1.0.2</version>
-		</dependency> -->
+
+		<dependency>
+			<groupId>edu.stanford.nlp</groupId>
+			<artifactId>stanford-corenlp</artifactId>
+			<version>3.5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.stanford.nlp</groupId>
+			<artifactId>stanford-corenlp</artifactId>
+			<version>3.5.2</version>
+			<classifier>models</classifier>
+		</dependency>
+		<!-- <dependency> <groupId>activation</groupId> <artifactId>activation</artifactId> 
+			<version>1.0.2</version> </dependency> -->
 	</dependencies>
 </project>

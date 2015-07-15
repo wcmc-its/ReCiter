@@ -36,8 +36,8 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		return DEFAULT_LOCATION;
 	}
 	
-	public static void createPubMedLocation() {
-		// Create default location if not exist.
+	// Create default location if not exist.
+	public void createPubMedLocation() {
 		File pubmedDir = new File(DEFAULT_LOCATION);
 		if (!pubmedDir.exists()) {
 			pubmedDir.mkdirs();
@@ -55,10 +55,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
 
 		// Create default location if not exist.
-		File pubmedDir = new File(DEFAULT_LOCATION);
-		if (!pubmedDir.exists()) {
-			pubmedDir.mkdirs();
-		}
+		createPubMedLocation();
 
 		// Create folder for cwid if not exist.
 		File cwidDir = new File(getDirectory() + cwid);
