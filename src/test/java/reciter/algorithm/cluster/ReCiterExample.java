@@ -157,6 +157,7 @@ public class ReCiterExample {
 				3. article title
 				 */
 				// article.getArticleKeywords().addKeyword(keyword); // add the keyword retrieved from above.
+				applyVertorOfKeywords(article);
 			}
 
 			slf4jLogger.info("finished getting Scopus Xml");
@@ -324,4 +325,45 @@ public class ReCiterExample {
 		slf4jLogger.info("Average Precision = " + totalPrecision / numCwids);
 		slf4jLogger.info("Average Recall = " + totalRecall / numCwids);
 	}
+	
+	
+	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.	
+	public static void applyVertorOfKeywords(ReCiterArticle article) {		
+		//ArrayList<String> vectorOfKeywords = new ArrayList<String>();
+		// Get Article Tile and Split for Keywords 
+		//ReCiterArticle article = new ReCiterArticle(-1);
+		String [] articleKeywordList  = article.getArticleTitle().getTitle().split(" ");
+		for (String articleKeyword : articleKeywordList ) {
+			article.getArticleKeywords().addKeyword(articleKeyword);
+		}
+		
+		// Get Journal Tile and Split for Keywords 
+		String [] journalKeywordList = article.getJournal().getJournalTitle().split(" ");
+		for (String journalKeyword : journalKeywordList ) {
+			article.getArticleKeywords().addKeyword(journalKeyword);
+		}
+		
+		// TO DO, Not clear for getting the MeshKeywords 
+		
+		/*MedlineCitationMeshHeadingDescriptorName meshName = new MedlineCitationMeshHeadingDescriptorName();   
+		String [] meshKeywordList = meshName.getDescriptorNameString().split(" "); 
+		for (String meshKeyword : meshKeywordList ) {
+			article.getArticleKeywords().addKeyword(meshKeyword);
+		}*/
+	}
+	
+	    // Add primary and/or other department name(s) to list of topic keywords #46 
+		// https://github.com/wcmc-its/ReCiter/issues/46
+	/*public ArrayList<String> getListOfTopicKeywords() {			
+		ArrayList<String> topicOfKeywords = new ArrayList<String>();
+		// Get Article Tile and Split for Keywords 
+		MatchingDepartmentsJournalsDao translatedDepartmentList = new MatchingDepartmentsJournalsDao();
+		List<String> departmentList = translatedDepartmentList.getDepartmentalAffiliationStringList();
+		for (String departmentKeyword : departmentList ) {
+			//article.getArticleKeywords().addKeyword(articleKeyword);
+			if (departmentKeyword!=null && (departmentKeyword.equals("and") || departmentKeyword.equals("or") || departmentKeyword.equals("of") || departmentKeyword.equals("for") || departmentKeyword.equals(" ") || departmentKeyword.equals("null"))) { continue;  }
+			topicOfKeywords.add(departmentKeyword);
+		}
+		return topicOfKeywords; 
+	}*/
 }

@@ -18,7 +18,10 @@ import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.model.boardcertifications.ReadBoardCertifications;
 import reciter.utils.reader.YearDiscrepacyReader;
+import xmlparser.pubmed.model.MedlineCitationMeshHeadingDescriptorName;
+import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
+import database.dao.IdentityEducationDao;
 import database.dao.MatchingDepartmentsJournalsDao;
 import database.model.Identity;
 
@@ -130,6 +133,7 @@ public class ReCiterClusterer implements Clusterer {
 	private int getIdWithMostContentSimilarity(Set<Integer> clusterIdList, ReCiterArticle currentArticle) {
 		double currentMax = -1;
 		int currentMaxId = -1;
+		String cwid = TargetAuthor.getInstance().getCwid();
 		for (int id : clusterIdList) {
 
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
@@ -137,20 +141,26 @@ public class ReCiterClusterer implements Clusterer {
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/78 (Phase 2 clustering)
 			// We have two sources for knowing whether someone lived or worked outside of the United States: 
 			// rc_identity_citizenship and rc_identity_education (foreign countries are in parentheses there).
-			if (selectingTarget) {
-				/*
-				IdentityCizenshipDao identityCitizenshipDao = new IdentityCitizenshipDao();
+			if (selectingTarget) {				
+				IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDao();
 				IdentityEducationDao identityEducationDao = new IdentityEducationDao();
+				List<String> citizenship = identityCitizenshipDao.getIdentityCitizenshipCountry(cwid);
+				List<String> education = identityEducationDao.getIdentityCitizenshipEducation(cwid);
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 					for (ReCiterAuthor coauthor : article.getArticleCoAuthors().getCoAuthors()) {
 						// please skip the coauthor which is the targetAuthor by comparing the first name,
 						// middle name, and last name.
-						if (coauthor.getAffiliation().equals(citizenship) || coauthor.getAffiliation().equals(education)) {
-							// increase sim score.
+						// if (coauthor.getAffiliation().equals(citizenship) || coauthor.getAffiliation().equals(education)) {
+						if(coauthor.getAffiliation()!=null){
+							String coAuthorAffiliation = coauthor.getAffiliation().getAffiliation();
+							if(citizenship.contains(coAuthorAffiliation) || education.contains(coAuthorAffiliation)){						
+								// increase sim score.
+								sim = sim + 1; 
+							}
 						}
 					}
 				}
-				*/
+				
 			}
 			
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/79
@@ -169,6 +179,36 @@ public class ReCiterClusterer implements Clusterer {
 					// increase the sim score if departments match.
 				}
 				 */
+				MatchingDepartmentsJournalsDao departmentJournalsDao = new MatchingDepartmentsJournalsDao();
+				List<String> departmentList = departmentJournalsDao.getTranslatedDepartmentList();
+			    for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+			    	for ( String matchDepartment: departmentList)
+						if (StringUtils.contains(StringUtils.lowerCase(article.getAffiliationConcatenated()), matchDepartment)) {
+							sim = sim + 1;
+						}
+			    }
+			}
+			
+			/* Improve score in cases where MeSH major terms match between cluster and target article #82 */ 
+			/* https://github.com/wcmc-its/ReCiter/issues/82 */ 
+			
+			if (!selectingTarget) {
+				MedlineCitationMeshHeadingDescriptorName meshName = new MedlineCitationMeshHeadingDescriptorName();
+				String meshTermValue = meshName.getDescriptorNameString();
+				//System.out.println(meshTermValue);
+				if(meshTermValue!=null){
+					String[] meshTerms = meshTermValue.split(" "); 
+					String getTargetAuthorTitle = TargetAuthor.getInstance().getTargetAuthorArticleIndexed().getArticleTitle().getTitle();
+					/* Not clear about calculation of the MeshTerms Score  */ 
+					for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {	
+						for (String meshTerm : meshTerms) { 
+							if (meshTerm==null || meshTerm.equals("and") || meshTerm.equals("or") || meshTerm.equals("of") || meshTerm.equals("for") || meshTerm.equals(" ")) { continue;  }
+							if (article.getArticleTitle().getTitle().contains(meshTerm) && getTargetAuthorTitle.contains(meshTerm)){ 
+								sim = sim + 1;
+							}
+						}
+					}
+				}
 			}
 			
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/60
@@ -186,7 +226,6 @@ public class ReCiterClusterer implements Clusterer {
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
 			// Leverage data on board certifications to improve phase two matching.
 			if (selectingTarget && currentArticle!=null && currentArticle.getArticleTitle().getTitle()!=null) {
-				String cwid = TargetAuthor.getInstance().getCwid();
 				ReadBoardCertifications efr=new ReadBoardCertifications();
 				List<ReCiterArticle> articles = efr.getBoardCertifications(cwid,currentArticle);
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
