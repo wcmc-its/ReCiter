@@ -28,10 +28,8 @@ public class ReCiterClusterer implements Clusterer {
 	private Map<Integer, ReCiterCluster> finalCluster = new HashMap<Integer, ReCiterCluster>();
 	private boolean selectingTarget = false;
 	private int selectedReCiterClusterId = -1;
-	
 	private double similarityThreshold = 0.3;
-//	private double targetAuthorSimilarityThreshold = 0.001;
-
+	
 	
 	public ReCiterClusterer() {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
@@ -121,6 +119,22 @@ public class ReCiterClusterer implements Clusterer {
 		return getIdWithMostContentSimilarity(allClusterIdSet, currentArticle);
 	}
 
+	
+	
+	/**
+	 * Computes the similarity between an article and a cluster of articles.
+	 * @param cluster Cluster of articles.
+	 * @param article Article being compared.
+	 * @return Similarity score between an article and a cluster of articles.
+	 */
+	private double computeClusterToArticleSimilarity(List<ReCiterArticle> cluster, ReCiterArticle article) {
+		
+		for (ReCiterArticle reCiterArticle : cluster) {
+			
+		}
+		return 0;
+	}
+	
 	/**
 	 * 
 	 * @param clusterIdList
@@ -215,7 +229,7 @@ public class ReCiterClusterer implements Clusterer {
 										sim = sim + 1;
 									}
 								}
-							}									
+							}						
 						}							
 					}
 				}

@@ -321,7 +321,5 @@ public class ReCiterExample {
 			e.printStackTrace();
 		}
 		
-		slf4jLogger.info("Average Precision = " + totalPrecision / numCwids);
-		slf4jLogger.info("Average Recall = " + totalRecall / numCwids);
 	}
 }
