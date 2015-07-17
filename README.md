@@ -78,6 +78,7 @@ If you encounter errors while running ReCiter:<br>
 	```
 	cd /usr/local/mysql/support-files
 	```
+	<br>
 	```
 	./mysql.server start
 	```
