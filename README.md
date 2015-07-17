@@ -77,7 +77,7 @@ If you encounter errors while running ReCiter:<br>
 2. Verify that your local SQL server is running. If it isn't, start it. For example, open a terminal and run these commands:
 	```
 	cd /usr/local/mysql/support-files
-	./mysql.server start<br>
+	./mysql.server start
 	```
 3. Open a MYSQL prompt and type the following command, replacing PASSWORD with the root password for your local MYSQL instance: grant all privileges on *.* to 'root'@'localhost' identified by 'PASSWORD' with grant option;<br>
 4. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)<br>
