@@ -77,6 +77,8 @@ If you encounter errors while running ReCiter:<br>
 2. Verify that your local SQL server is running. If it isn't, start it. For example, open a terminal and run these commands:<br>
 	```
 	cd /usr/local/mysql/support-files
+	```
+	```
 	./mysql.server start
 	```
 <br>
