@@ -18,33 +18,34 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 ## MySQL Setup
 1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
 2. To connect to your local development environment's database, change `/src/main/resources/config/database.properties` to your own local MySQL login information.
-Example 1:
-```
+
+	Example 1:
+	```
 	url=jdbc:mysql://localhost/reciter
 	username=root
 	password=
-```
-Example 2:
-```
+	```
+	Example 2:
+	```
 	url=jdbc:mysql://localhost/reciter
 	username=root
 	password=your_password_goes_here
-```
-Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter)
-Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select "Start Import`. To import the .SQL file using the command line, follow these steps:
-Open a terminal window or command line
-Navigate to the `bin` directory in `/usr/local/mysql`:
-`cd /usr/local/mysql/bin`
-`mysql -u root -p`
-When prompted, enter your password for your local mysql server
-Once at the MYSQL prompt, create the reciter database:
-`CREATE DATABASE IF NOT EXISTS reciter;`
-`exit`
+	```
+3. Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter).
+4. Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select `Start Import`. To import the .SQL file using the command line, follow these steps:
 
-From the command line, use this command to import the reciter database from the SQL file:
-`mysql -u root -p reciter < "ReCiterDB.sql"`
-When prompted, enter your password for your local mysql server.
-Wait for the process to complete (it may take a few minutes).
+1. Open a terminal window or command line
+2. Navigate to the `bin` directory in `/usr/local/mysql`:
+	`cd /usr/local/mysql/bin`
+	`mysql -u root -p`
+3. When prompted, enter your password for your local mysql server
+4. Once at the MYSQL prompt, create the reciter database:
+	`CREATE DATABASE IF NOT EXISTS reciter;`
+	`exit`
+5. From the command line, use this command to import the reciter database from the SQL file:
+	`mysql -u root -p reciter < "ReCiterDB.sql"`
+6. When prompted, enter your password for your local mysql server.
+7. Wait for the process to complete (it may take a few minutes).
 
 ## Running ReCiter
 
@@ -72,25 +73,54 @@ https://github.com/wcmc-its/ReCiter/issues/87 <br>
 ## Troubleshooting
 
 If you encounter errors while running ReCiter:<br>
-1. Verify that your Internet connection is operational <br>
-2. Verify that your local SQL server is running. If it isn't, start it. For example, open a terminal and run these commands: cd /usr/local/mysql/support-files ./mysql.server start<br>
+1. Verify that your Internet connection is operational<br>
+2. Verify that your local SQL server is running. If it isn't, start it. For example, open a terminal and run these commands:<br>
+	```
+	cd /usr/local/mysql/support-files
+	```
+	<br>
+	```
+	./mysql.server start
+	```
+<br>
 3. Open a MYSQL prompt and type the following command, replacing PASSWORD with the root password for your local MYSQL instance: grant all privileges on *.* to 'root'@'localhost' identified by 'PASSWORD' with grant option;<br>
 4. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)<br>
-5. Double-check that you have entered the correct password for 'root' in config.properties
+5. Double-check that you have entered the correct password for 'root' in config.properties<br>
+
+### Missing data for a CWID
 
 If when running ReCiter you encounter output that looks like this:
+```
  INFO [main] (ReCiterExample.java:67) - Number of cwids: 0
  INFO [main] (ReCiterExample.java:68) - Average Precision: NaN
  INFO [main] (ReCiterExample.java:69) - Average Recall: NaN
  INFO [main] (ReCiterExample.java:75) - Total execution time: 92 ms.
- 
+ ```
 Then, double-check that you have a folder for the CWID or CWIDs that you're running in resources/data/pubmed
 
+### Local SQL server not running
+
 If you encounter this error:
+```
  INFO [main] (ReCiterExample.java:162) - finished getting Scopus Xml
  INFO [main] (DocumentIndexReader.java:43) - Reading Lucene index for aas2004
  INFO [main] (DocumentIndexReader.java:251) - Finished Reading Lucene index for aas2004
 com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
 The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
-
+```
 Then, verify that your local SQL server is running (see point 2 above).
+
+### .DS_Store files interfere with ReCiter
+
+If you encounter this error:
+```
+src/main/resources/data/properties/.DS_Store/.DS_Store.properties
+java.io.FileNotFoundException: src/main/resources/data/properties/.DS_Store/.DS_Store.properties (Not a directory)
+```
+Then, follow these steps:
+
+1. Delete any .DS_Store files in your ReCiter installation directory and its subfolders
+2. Install and run DeathToDSStore, available for download at https://www.aorensoftware.com/blog/2011/12/24/death-to-ds_store/
+3. Verify that there are no longer any .DS_Store files in your ReCiter installation directory and its subfolders
+4. In Eclipse, right-click the project and click refresh
+5. Try running again

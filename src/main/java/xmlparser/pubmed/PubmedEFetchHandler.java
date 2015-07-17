@@ -99,8 +99,12 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bArticleId;
 
 	private List<PubmedArticle> pubmedArticles;
+	private List<String> meshHeading;
 	private PubmedArticle pubmedArticle;
 
+	public List<String> getMeshHeading() {
+		return meshHeading;
+	}
 	public List<PubmedArticle> getPubmedArticles() {
 		return pubmedArticles;
 	}
