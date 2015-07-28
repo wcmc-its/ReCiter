@@ -2,17 +2,17 @@ package reciter.model.author;
 
 public class AuthorAffiliation {
 	
-	private String affiliation;
+	private String affiliationName;
 
-	public AuthorAffiliation(String affiliation) {
-		this.affiliation = affiliation;
+	public AuthorAffiliation(String affiliationName) {
+		this.affiliationName = affiliationName;
 	}
 	
-	public String getAffiliation() {
-		return affiliation;
+	public String getAffiliationName() {
+		return affiliationName;
 	}
 
-	public void setAffiliation(String affiliation) {
-		this.affiliation = affiliation;
+	public void setAffiliationName(String affiliationName) {
+		this.affiliationName = affiliationName;
 	}
 }

@@ -1,71 +1,99 @@
 package reciter.model.article;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-import reciter.erroranalysis.AnalysisObject;
-import reciter.lucene.DocumentVector;
-import reciter.lucene.DocumentVectorType;
-import reciter.lucene.docsimilarity.DocumentSimilarity;
-import reciter.lucene.docsimilarity.MaxCosineSimilarity;
-import reciter.model.article.ReCiterArticleKeywords.Keyword;
-import reciter.model.author.ReCiterAuthor;
 import reciter.model.completeness.ArticleCompleteness;
 import reciter.model.completeness.ReCiterCompleteness;
+import xmlparser.scopus.model.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
-	private final int articleID;
-	private ReCiterArticleTitle articleTitle;
-	private ReCiterArticleCoAuthors articleCoAuthors;
+	/**
+	 * Article id: (usually PMID).
+	 */
+	private final int articleId;
+	
+	/**
+	 * Article title.
+	 */
+	private String articleTitle;
+	
+	/**
+	 * Co-authors of this article.
+	 */
+	private ReCiterArticleAuthors articleCoAuthors;
+	
+	/**
+	 * Journal that this article belongs to.
+	 */
 	private ReCiterJournal journal;
+	
+	/**
+	 * Keywords associated with this article.
+	 */
 	private ReCiterArticleKeywords articleKeywords;
+	
+	/**
+	 * How "complete" this article is. (Please refer to the ReCiter paper).
+	 */
 	private double completenessScore;
+	
+	/**
+	 * Complete score strategy.
+	 */
 	private ArticleCompleteness articleCompleteness;
-	private Map<DocumentVectorType, DocumentVector> documentVectors;
-	private DocumentSimilarity documentSimmilarity;
-	private String affiliationConcatenated;
-	private int dateCreated;
-	private String info;
-	private boolean isClusterOriginator;
-	private String scopusAffiliation;
-	private AnalysisObject analysisObject;
+	
+	/**
+	 * Scopus Article.
+	 */
+	private ScopusArticle scopusArticle;
+	
+	/**
+	 * MeSH Terms.
+	 */
+	private List<String> meshList;
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID
 	 */
-	public ReCiterArticle(int articleID) {
-		this.articleID = articleID;
+	public ReCiterArticle(int articleId) {
+		this.articleId = articleId;
 		this.setArticleCompleteness(new ReCiterCompleteness());
-		setDocumentSimmilarity(new MaxCosineSimilarity()); // default similarity is maximum similarity.
-//		setDocumentSimmilarity(new HeuristicSimilarity());
+		setMeshList(new ArrayList<String>());
 	}
 	
-	public double getCompletenessScore() {
-		return completenessScore;
+	@Override
+	public int compareTo(ReCiterArticle otherArticle) {
+		double x = this.getCompletenessScore();
+		double y = otherArticle.getCompletenessScore();
+		if (x > y) {
+			return -1;
+		} else if (x < y) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
-
-	public void setCompletenessScore(double completenessScore) {
-		this.completenessScore = completenessScore;
+	
+	public int getArticleId() {
+		return articleId;
 	}
-
-	public int getArticleID() {
-		return articleID;
-	}
-
-	public ReCiterArticleTitle getArticleTitle() {
+	
+	public String getArticleTitle() {
 		return articleTitle;
 	}
 
-	public void setArticleTitle(ReCiterArticleTitle articleTitle) {
+	public void setArticleTitle(String articleTitle) {
 		this.articleTitle = articleTitle;
 	}
 
-	public ReCiterArticleCoAuthors getArticleCoAuthors() {
+	public ReCiterArticleAuthors getArticleCoAuthors() {
 		return articleCoAuthors;
 	}
 
-	public void setArticleCoAuthors(ReCiterArticleCoAuthors articleCoAuthors) {
+	public void setArticleCoAuthors(ReCiterArticleAuthors articleCoAuthors) {
 		this.articleCoAuthors = articleCoAuthors;
 	}
 
@@ -85,6 +113,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.articleKeywords = articleKeywords;
 	}
 
+	public double getCompletenessScore() {
+		return completenessScore;
+	}
+
+	public void setCompletenessScore(double completenessScore) {
+		this.completenessScore = completenessScore;
+	}
+
 	public ArticleCompleteness getArticleCompleteness() {
 		return articleCompleteness;
 	}
@@ -93,123 +129,19 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.articleCompleteness = articleCompleteness;
 	}
 
-	public Map<DocumentVectorType, DocumentVector> getDocumentVectors() {
-		return documentVectors;
+	public ScopusArticle getScopusArticle() {
+		return scopusArticle;
 	}
 
-	public void setDocumentVectors(Map<DocumentVectorType, DocumentVector> documentVectors) {
-		this.documentVectors = documentVectors;
+	public void setScopusArticle(ScopusArticle scopusArticle) {
+		this.scopusArticle = scopusArticle;
 	}
 
-	public DocumentSimilarity getDocumentSimmilarity() {
-		return documentSimmilarity;
+	public List<String> getMeshList() {
+		return meshList;
 	}
 
-	public void setDocumentSimmilarity(DocumentSimilarity documentSimmilarity) {
-		this.documentSimmilarity = documentSimmilarity;
+	public void setMeshList(List<String> meshList) {
+		this.meshList = meshList;
 	}
-
-	@Override
-	public int compareTo(ReCiterArticle otherArticle) {
-		double x = this.getCompletenessScore();
-		double y = otherArticle.getCompletenessScore();
-		if (x > y) {
-			return -1;
-		} else if (x < y) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-
-	public String toCSV() {
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append("\"");
-		sb.append(articleID);
-		sb.append("\",");
-		
-		sb.append("\"");
-		sb.append(articleTitle.getTitle());
-		sb.append("\",");
-		
-		sb.append("\"");
-		sb.append(journal.getJournalTitle());
-		sb.append("\",");
-		
-		sb.append("\"");
-		for (ReCiterAuthor author : articleCoAuthors.getCoAuthors()) {
-			sb.append(author.getAuthorName().getCSVFormat());
-			sb.append(": ");
-			sb.append(author.getAffiliation());
-			sb.append(", ");
-		}
-		sb.append("\"");
-		
-		sb.append("\"");
-		for (Keyword keyword : articleKeywords.getKeywords()) {
-			sb.append(keyword.getKeyword());
-			sb.append(", ");
-		}
-		sb.append("\"");
-		return sb.toString();
-	}
-	
-	@Override
-	public String toString() {
-		return "ReCiterArticle [articleID=" + articleID + ", articleTitle="
-				+ articleTitle + ", articleCoAuthors=" + articleCoAuthors
-				+ ", journal=" + journal + ", articleKeywords="
-				+ articleKeywords + ", completenessScore=" + completenessScore
-				+ "]";
-	}
-
-	public String getAffiliationConcatenated() {
-		return affiliationConcatenated;
-	}
-
-	public void setAffiliationConcatenated(String affiliationConcatenated) {
-		this.affiliationConcatenated = affiliationConcatenated;
-	}
-
-	public int getDateCreated() {
-		return dateCreated;
-	}
-
-	public void setDateCreated(int dateCreated) {
-		this.dateCreated = dateCreated;
-	}
-
-	public String getInfo() {
-		return info;
-	}
-
-	public void setInfo(String info) {
-		this.info = info;
-	}
-
-	public boolean isClusterOriginator() {
-		return isClusterOriginator;
-	}
-
-	public void setClusterOriginator(boolean isClusterOriginator) {
-		this.isClusterOriginator = isClusterOriginator;
-	}
-
-	public String getScopusAffiliation() {
-		return scopusAffiliation;
-	}
-
-	public void setScopusAffiliation(String scopusAffiliation) {
-		this.scopusAffiliation = scopusAffiliation;
-	}
-
-	public AnalysisObject getAnalysisObject() {
-		return analysisObject;
-	}
-
-	public void setAnalysisObject(AnalysisObject analysisObject) {
-		this.analysisObject = analysisObject;
-	}
-
 }

@@ -193,7 +193,7 @@ public class ReadBoardCertifications {
 	public List<ReCiterArticle> getBoardCertifications(String cwid, ReCiterArticle article){
 		List<String> list=getBoardCertifications(cwid);
 		ReCiterArticleKeywords keyWords =  article.getArticleKeywords();
-		if (article.getArticleID() != -1) {
+		if (article.getArticleId() != -1) {
 			for(String keyWord: list){
 				keyWords.addKeyword(keyWord);
 			}

@@ -26,7 +26,7 @@ public class AnalysisTranslator {
 		analysisObject.setCwid(cwid);
 		analysisObject.setTargetName(targetName);
 		analysisObject.setPubmedSearchQuery(pubmedSearchQuery);
-		analysisObject.setPmid(String.valueOf(article.getArticleID()));
+		analysisObject.setPmid(String.valueOf(article.getArticleId()));
 		analysisObject.setArticleTitle(article.getArticleTitle().getTitle());
 		analysisObject.setFullJournalTitle(article.getJournal().getJournalTitle());
 		analysisObject.setPublicationYear("-1");

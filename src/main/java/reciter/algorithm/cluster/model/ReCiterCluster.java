@@ -16,18 +16,14 @@ import reciter.model.author.TargetAuthor;
 public class ReCiterCluster {
 
 	/**
-	 * Cluster ID.
+	 * Cluster Id.
 	 */
-	private final int clusterID;
+	private final int clusterId;
 	
 	/**
 	 * Atomic integer counter
 	 */
 	private static AtomicInteger clusterIDCounter = new AtomicInteger(0);
-	
-	public static AtomicInteger getClusterIDCounter() {
-		return clusterIDCounter;
-	}
 
 	/**
 	 * List of articles in its cluster.
@@ -35,10 +31,10 @@ public class ReCiterCluster {
 	private List<ReCiterArticle> articleCluster;
 
 	/**
-	 * Debug boolean.
+	 * Cluster originator.
 	 */
-	private boolean debug = false;
-
+	private int clusterOriginator;
+	
 	/**
 	 * Logger.
 	 */
@@ -50,12 +46,7 @@ public class ReCiterCluster {
 	public Set<Integer> getPmidSet() {
 		Set<Integer> pmidSet = new HashSet<Integer>();
 		for (ReCiterArticle reCiterArticle : articleCluster) {
-			boolean addedToSet = pmidSet.add(reCiterArticle.getArticleID());
-			if (debug) {
-				if (!addedToSet) {
-					slf4jLogger.info("Duplicate Pmid: " + reCiterArticle.getArticleID());
-				}
-			}
+			pmidSet.add(reCiterArticle.getArticleId());
 		}
 		return pmidSet;
 	}
@@ -101,7 +92,7 @@ public class ReCiterCluster {
 	 */
 	public boolean containsNameVariant(ReCiterAuthor targetAuthor) {
 		for (ReCiterArticle article : articleCluster) {
-			for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
 				if (targetAuthor.getAuthorName().isNameVariant(author.getAuthorName())) {
 					return true;
 				}
@@ -123,18 +114,16 @@ public class ReCiterCluster {
 		// For each article in this cluster.
 		for (ReCiterArticle article : articleCluster) {
 			// For each author in this article.
-			for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
 				// For each author in the currentArticle.
-				for (ReCiterAuthor currentAuthor : currentArticle.getArticleCoAuthors().getCoAuthors()) {
+				for (ReCiterAuthor currentAuthor : currentArticle.getArticleCoAuthors().getAuthors()) {
 					// Check if the names match.
 					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName()) 
 							&& !currentAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())
 							&& !author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
 						
 						matchingCoauthorCount += 1;
-						if (debug) {
-							slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + article.getArticleID() + " " + currentAuthor.getAuthorName());
-						}
+						
 					}
 				}
 			}
@@ -159,26 +148,23 @@ public class ReCiterCluster {
 	}
 
 	public ReCiterCluster() {
-		clusterID = clusterIDCounter.incrementAndGet();
+		clusterId = clusterIDCounter.incrementAndGet();
 		articleCluster = new ArrayList<ReCiterArticle>();
 	}
 
 	public int getClusterID() {
-		return clusterID;
+		return clusterId;
+	}
+	
+	public static AtomicInteger getClusterIDCounter() {
+		return clusterIDCounter;
 	}
 
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("{");
-		sb.append(getClusterID());
-		sb.append(" (size of cluster=");
-		sb.append(getArticleCluster().size());
-		sb.append("): ");
-		for (ReCiterArticle a : getArticleCluster()) {
-			sb.append(a.getArticleID());
-			sb.append(", ");
-		}
-		sb.append("}\n");
-		return sb.toString();
+	public int getClusterOriginator() {
+		return clusterOriginator;
+	}
+
+	public void setClusterOriginator(int clusterOriginator) {
+		this.clusterOriginator = clusterOriginator;
 	}
 }

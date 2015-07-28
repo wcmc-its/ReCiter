@@ -11,6 +11,7 @@ public class ScopusXmlQuery {
 	private final String httpAccept;
 	private final String queryUrl;
 
+	
 	private static final String SCOPUS_URL_PREFIX = "http://api.elsevier.com/content/search/index:SCOPUS?query=";
 	private static final String API_KEY = "e0fa610418a4859d24f2457e021aea60";
 	
@@ -85,6 +86,38 @@ public class ScopusXmlQuery {
 			queryUrl = sb.toString();
 			return new ScopusXmlQuery(this);
 		}
+	}
+
+	public String getQuery() {
+		return query;
+	}
+
+	public int getCount() {
+		return count;
+	}
+
+	public String getField() {
+		return field;
+	}
+
+	public int getStart() {
+		return start;
+	}
+
+	public String getView() {
+		return view;
+	}
+
+	public String getHttpAccept() {
+		return httpAccept;
+	}
+
+	public static String getScopusUrlPrefix() {
+		return SCOPUS_URL_PREFIX;
+	}
+
+	public static String getApiKey() {
+		return API_KEY;
 	}
 
 	public String getQueryUrl() {

@@ -36,6 +36,7 @@ public class PubmedXmlParser implements Parser {
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			saxParser.parse(xmlFile, xmlHandler);
 		} catch (ParserConfigurationException | SAXException | IOException e) {
+			e.printStackTrace();
 			slf4jLogger.error(e.getMessage());
 		}
 		return xmlHandler.getPubmedArticles();

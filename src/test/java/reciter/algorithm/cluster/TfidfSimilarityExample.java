@@ -3,9 +3,9 @@ package reciter.algorithm.cluster;
 import java.util.ArrayList;
 import java.util.List;
 
-import reciter.tfidf.Document;
-import reciter.tfidf.Term;
-import reciter.tfidf.TfIdf;
+import reciter.algorithm.tfidf.Document;
+import reciter.algorithm.tfidf.Term;
+import reciter.algorithm.tfidf.TfIdf;
 
 
 public class TfidfSimilarityExample {
@@ -33,35 +33,35 @@ public class TfidfSimilarityExample {
 		TfIdf tfidf = new TfIdf(documents);
 		tfidf.computeTfIdf();
 
-		for (Document document : tfidf.getDocuments()) {
-			for (Term term : document.getTerms().values()) {
-				System.out.println(term.getTerm() + " docId=" + document.getId() + ": score=" + term.getTfidfScore());
-			}
-		}
+//		for (Document document : tfidf.getDocuments()) {
+//			for (Term term : document.getTerms().values()) {
+//				System.out.println(term.getTerm() + " docId=" + document.getId() + ": score=" + term.getTfidfScore());
+//			}
+//		}
 		
 		double[] d1 = tfidf.createVector(doc1);
 		double[] d2 = tfidf.createVector(doc2);
 		double[] d3 = tfidf.createVector(doc3);
 		double[] d4 = tfidf.createVector(doc4);
 		
-		for (double d : d1) {
-			System.out.print(d + ", ");
-		}
-		System.out.println();
-		for (double d : d2) {
-			System.out.print(d + ", ");
-		}
-		System.out.println();
-		for (double d : d3) {
-			System.out.print(d + ", ");
-		}
-		System.out.println();
-		for (double d : d4) {
-			System.out.print(d + ", ");
-		}
-		System.out.println();
+//		for (double d : d1) {
+//			System.out.print(d + ", ");
+//		}
+//		System.out.println();
+//		for (double d : d2) {
+//			System.out.print(d + ", ");
+//		}
+//		System.out.println();
+//		for (double d : d3) {
+//			System.out.print(d + ", ");
+//		}
+//		System.out.println();
+//		for (double d : d4) {
+//			System.out.print(d + ", ");
+//		}
+//		System.out.println();
 		System.out.println(tfidf.cosineSimilarity(d1, d2));
 		System.out.println(tfidf.cosineSimilarity(d1, d3));
-		System.out.println(tfidf.cosineSimilarity(d1, d4));		
+		System.out.println(tfidf.cosineSimilarity(d1, d4));
 	}
 }

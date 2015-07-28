@@ -9,9 +9,9 @@ public class ReCiterCompleteness implements ArticleCompleteness {
 	public double computeCompleteness(ReCiterArticle article, ReCiterAuthor target) {
 		double articleCompleteness = 0;
 		int numAuthorFullNames = 0;
-		int totalNumberOfAuthors = article.getArticleCoAuthors().getNumberCoAuthors();
+		int totalNumberOfAuthors = article.getArticleCoAuthors().getNumberOfAuthors();
 		
-		if (article.getArticleTitle().exist()) {
+		if (article.getArticleTitle() != null && article.getArticleTitle().length() != 0) {
 			articleCompleteness += 1;
 		}
 		if (article.getJournal().exist()) {
@@ -21,7 +21,7 @@ public class ReCiterCompleteness implements ArticleCompleteness {
 			articleCompleteness += 1;
 		}
 		if (article.getArticleCoAuthors().exist()) {
-			for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
 				articleCompleteness += author.getAuthorName().nameSimilarityScore(target.getAuthorName());
 				if (author.getAuthorName().isFullName()) { numAuthorFullNames += 1; }
 			}

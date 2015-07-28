@@ -1,15 +1,10 @@
 package xmlparser.translator;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
 
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleCoAuthors;
+import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleKeywords;
-import reciter.model.article.ReCiterArticleTitle;
 import reciter.model.article.ReCiterJournal;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
@@ -19,8 +14,6 @@ import xmlparser.pubmed.model.MedlineCitationKeyword;
 import xmlparser.pubmed.model.MedlineCitationKeywordList;
 import xmlparser.pubmed.model.MedlineCitationMeshHeading;
 import xmlparser.pubmed.model.PubmedArticle;
-import xmlparser.scopus.model.Affiliation;
-import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 
 /**
@@ -36,80 +29,60 @@ public class ArticleTranslator {
 	 * @return
 	 */
 	public static ReCiterArticle translate(PubmedArticle pubmedArticle, ScopusArticle scopusArticle) {
-		String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-		String articleTitle = pubmedArticle.getMedlineCitation().getArticle().getArticleTitle();
-		String journalTitle = pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalTitle();
-		List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlineCitation().getArticle().getAuthorList();
-		MedlineCitationKeywordList keywordList = pubmedArticle.getMedlineCitation().getKeywordList();
-		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
 
+		// PMID
+		String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
 		ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid));
 
-		Map<Long, Author> authors = null;
-		Map<Integer, Affiliation> affiliations = null;
-		if (scopusArticle != null) {
-			authors = scopusArticle.getAuthors();
-			affiliations = scopusArticle.getAffiliationMap();
-		}
+		// Article title
+		String articleTitle = pubmedArticle.getMedlineCitation().getArticle().getArticleTitle();
 
-		// Translating Co-Authors.
-		ReCiterArticleCoAuthors reCiterCoAuthors = new ReCiterArticleCoAuthors();
+		// Journal Title
+		String journalTitle = pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalTitle();
+
+		// Translating Journal Issue PubDate Year.
+		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
+
+		// Co-authors
+		List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlineCitation().getArticle().getAuthorList();
+
+		// Translating Co-Authors
+		ReCiterArticleAuthors reCiterCoAuthors = new ReCiterArticleAuthors();
 		for (MedlineCitationArticleAuthor author : coAuthors) {
 			String lastName = author.getLastName();
 			String foreName = author.getForeName();
+			String initials = author.getInitials();
 			String firstName = null;
 			String middleName = null;
 
 			// PubMed sometimes concatenates the first name and middle initial into <ForeName> xml tag.
 			// This extracts the first name and middle initial.
 
+			// Sometimes forename doesn't exit in XML (ie: 8661541). So initials are used instead.
+			// Forename take precedence. If foreName doesn't exist, use initials. If initials doesn't exist, use null.
 			// TODO: Deal with collective names in XML.
-			if (lastName != null && foreName != null) {
-				String[] foreNameArray = foreName.split("\\s+");
-				if (foreNameArray.length == 2) {
-					firstName = foreNameArray[0];
-					middleName = foreNameArray[1];
-				} else {
-					firstName = foreName;
+			if (lastName != null) {
+				if (foreName != null) {
+					String[] foreNameArray = foreName.split("\\s+");
+					if (foreNameArray.length == 2) {
+						firstName = foreNameArray[0];
+						middleName = foreNameArray[1];
+					} else {
+						firstName = foreName;
+					}
+				} else if (initials != null) {
+					firstName = initials;
 				}
 				String affiliation = author.getAffiliation();
-
 				AuthorName authorName = new AuthorName(firstName, middleName, lastName);
 				AuthorAffiliation authorAffiliation = new AuthorAffiliation(affiliation);
 
-				if (authors != null && affiliations != null) {
-					// Add Scopus data to PubMed data.
-					for (Author scopusAuthor : authors.values()) {
-						if (StringUtils.equalsIgnoreCase(scopusAuthor.getSurname(), lastName) &&
-								StringUtils.endsWithIgnoreCase(scopusAuthor.getGivenName().substring(0, 1), firstName.substring(0, 1))) {
-
-							Set<Integer> afidSet = scopusAuthor.getAfidSet();
-							StringBuilder scopusAffiliation = new StringBuilder();
-							for (int afid : afidSet) {
-								if (affiliations.get(afid) != null) {
-									scopusAffiliation.append(affiliations.get(afid).getAffilname());
-									scopusAffiliation.append(" ");
-									scopusAffiliation.append(affiliations.get(afid).getNameVariant());
-									scopusAffiliation.append(" ");
-									scopusAffiliation.append(affiliations.get(afid).getAffiliationCity());
-									scopusAffiliation.append(" ");
-									scopusAffiliation.append(affiliations.get(afid).getAffiliationCountry());
-								}
-							}
-							authorAffiliation.setAffiliation(authorAffiliation.getAffiliation() + " " + scopusAffiliation.toString());
-						}
-					}
-				}
-
 				ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, authorAffiliation);
-				reCiterCoAuthors.addCoAuthor(reCiterAuthor);
-
-				// Translate Scopus Affiliation.
-				if (lastName.equals(pmid)) {
-					reCiterArticle.setScopusAffiliation(affiliation);
-				}
+				reCiterCoAuthors.addAuthor(reCiterAuthor);
 			}
 		}
+
+		MedlineCitationKeywordList keywordList = pubmedArticle.getMedlineCitation().getKeywordList();
 
 		// Translating Keywords.
 		ReCiterArticleKeywords articleKeywords = new ReCiterArticleKeywords();
@@ -119,6 +92,7 @@ public class ArticleTranslator {
 			}
 		}
 
+		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
 		if (meshList != null) {
 			// Translating Mesh
 			for (MedlineCitationMeshHeading mesh : meshList) {
@@ -126,11 +100,7 @@ public class ArticleTranslator {
 			}	
 		}
 
-		// Translating Journal Issue PubDate Year.
-		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
-
-
-		reCiterArticle.setArticleTitle(new ReCiterArticleTitle(articleTitle));
+		reCiterArticle.setArticleTitle(articleTitle);
 		reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
 		reCiterArticle.setArticleKeywords(articleKeywords);
