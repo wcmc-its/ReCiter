@@ -139,7 +139,7 @@ public class AuthorName {
 	}
 
 	
-	private boolean isFullName() {
+	public boolean isFullName() {
 		return (StringUtils.length(firstName) > 1 || StringUtils.length(middleName) > 1);
 	}
 

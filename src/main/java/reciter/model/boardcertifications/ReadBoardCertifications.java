@@ -22,9 +22,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import reciter.lucene.DocumentIndexReader;
-import reciter.lucene.DocumentIndexWriter;
-import reciter.lucene.DocumentTranslator;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleKeywords;
 
@@ -198,10 +195,11 @@ public class ReadBoardCertifications {
 				keyWords.addKeyword(keyWord);
 			}
 		}
-		DocumentIndexWriter writer = new DocumentIndexWriter(cwid);
-		writer.index(DocumentTranslator.translate(article));
-		DocumentIndexReader reader = new DocumentIndexReader();
-		return reader.readIndex(cwid);
+//		DocumentIndexWriter writer = new DocumentIndexWriter(cwid);
+//		writer.index(DocumentTranslator.translate(article));
+//		DocumentIndexReader reader = new DocumentIndexReader();
+//		return reader.readIndex(cwid);
+		return null;
 	}
 
 	public void fileSearch(File path,String fileName){

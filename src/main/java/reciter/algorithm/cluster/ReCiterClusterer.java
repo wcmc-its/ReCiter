@@ -19,9 +19,9 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.tfidf.Document;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorEducation;
+import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
-import reciter.model.boardcertifications.ReadBoardCertifications;
 import reciter.service.TargetAuthorService;
 import reciter.service.impl.TargetAuthorServiceImpl;
 import reciter.utils.reader.YearDiscrepacyReader;
@@ -60,7 +60,7 @@ public class ReCiterClusterer implements Clusterer {
 
 	public int assignTargetToCluster(ReCiterArticle article) {
 		selectingTarget = true;
-		selectedReCiterClusterId = selectCandidateCluster(article);
+		selectedReCiterClusterId = selectCandidateCluster(article, targetAuthor);
 		return selectedReCiterClusterId;
 	}
 
@@ -105,7 +105,7 @@ public class ReCiterClusterer implements Clusterer {
 
 		for (int i = 1; i < reciterArticleList.size(); i++) {
 			ReCiterArticle article = reciterArticleList.get(i);
-			int selection = selectCandidateCluster(article);
+			int selection = selectCandidateCluster(article, targetAuthor);
 			if (selection == -1) {
 				// create its own cluster.
 				ReCiterCluster newCluster = new ReCiterCluster();
@@ -124,10 +124,10 @@ public class ReCiterClusterer implements Clusterer {
 	 * @param targetAuthor
 	 * @return
 	 */
-	public int selectCandidateCluster(ReCiterArticle currentArticle) {
+	public int selectCandidateCluster(ReCiterArticle currentArticle, TargetAuthor targetAuthor) {
 
 		// Get cluster ids with max number of coauthor matches.
-		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle));
+		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle, targetAuthor));
 		//		slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + clusterIdSet);
 
 		// If groups have matching co-authors, the program selects the group that has the most matching names.
@@ -378,80 +378,141 @@ public class ReCiterClusterer implements Clusterer {
 	}
 	
 	/**
-	 * 
+	 * https://github.com/wcmc-its/ReCiter/issues/59.
 	 */
+	public boolean calculateFirstNameMatch(ReCiterArticle reCiterArticle, ReCiterArticle articleInCluster) {
+		
+		return false;
+	}
 	
-	// https://github.com/wcmc-its/ReCiter/issues/59
-				// Context: first name is a valuable indication if a person is author for an article. 
-				// It is always tracked in the rc_identity table. And it is sometimes, though not always available in the 
-				// article. First names tend to change especially in cases where it becomes Westernized.
-
-				// https://github.com/wcmc-its/ReCiter/issues/58
-				// middle initial is a valuable indication if a person has the identity of author for an article. 
-				// It is, sometimes, though not always, tracked in the rc_identity table. 
-				// And it is sometimes, though not always available in the article.
-				if (!selectingTarget) {
-					for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-						String targetAuthorMiddleInitial = TargetAuthor.getInstance().getAuthorName().getMiddleInitial();
-						String firstName = TargetAuthor.getInstance().getAuthorName().getFirstName();
-
-						// First Name from rc_identity.
-						if (firstName != null) {
-							// For cases where first name is present in rc_identity.
-							for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
-								if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-									if (firstName.equalsIgnoreCase((author.getAuthorName().getFirstName()))) {
-										for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getAuthors()) {
-											if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-												if (firstName.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getFirstName())) {
-													sim *= 1.3; // (rc_idenity = YES, present in cluster = YES, match = YES.
-												} else {
-													sim *= 0.4; // (rc_idenity = YES, present in cluster = YES, match = NO.
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-
-						// Middle initial from rc_identity.
-						if (targetAuthorMiddleInitial != null) {
-							// For cases where middle initial is present in rc_identity.
-							for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
-								if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-									if (targetAuthorMiddleInitial.equalsIgnoreCase((author.getAuthorName().getMiddleInitial()))) {
-										for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getAuthors()) {
-											if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-												if (targetAuthorMiddleInitial.equalsIgnoreCase(currentArticleAuthor.getAuthorName().getMiddleInitial())) {
-													sim *= 1.3;
-												} else {
-													sim *= 0.3; // the likelihood that someone wrote an article should plummet when this is the case
-												}
-											}
-										}
-									}
-								}
-							}
-						} else {
-							// For cases where middle initial is not present in rc_identity.
-							for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
-								if (author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-									for (ReCiterAuthor currentArticleAuthor : currentArticle.getArticleCoAuthors().getAuthors()) {
-										if (currentArticleAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-											if (currentArticleAuthor.getAuthorName().getMiddleInitial() == null &&
-													author.getAuthorName().getMiddleInitial() != null) {
-												// it's rare but not completely improbable that an author would share their 
-												// middle initial on a paper but won't supply it on an official CV, or so I would argue
-												sim *= 0.7;
-											}
-										}
-									}
-								}
-							}
-						}
+	private double getYearDiscrepancyScore(int diffYear) {
+		return YearDiscrepacyReader.getYearDiscrepancyMap().get(diffYear);
+	}
+	
+	/**
+	 * Year-based clustering and matching.
+	 * Phase I. 
+	 * https://github.com/wcmc-its/ReCiter/issues/40.
+	 */
+	public double calculateYearDiscrepancyScore(ReCiterArticle reCiterArticle, ReCiterArticle articleInCluster) {
+		
+		if (reCiterArticle.getJournal() != null && articleInCluster.getJournal() != null) {
+			int year = reCiterArticle.getJournal().getJournalIssuePubDateYear();
+			int otherYear = articleInCluster.getJournal().getJournalIssuePubDateYear();
+			int diffYear = Math.abs(year - otherYear);
+			return getYearDiscrepancyScore(diffYear);
+		}
+		
+		return 0;
+	}
+	
+	/**
+	 * Year-based clustering and matching.
+	 * Phase II.
+	 * @param reCiterArticle
+	 * @param targetAuthor
+	 * @return
+	 */
+	public double calculateYearDiscrepancyScore(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		
+		if (reCiterArticle.getJournal() != null) {
+			int year = reCiterArticle.getJournal().getJournalIssuePubDateYear();
+			int authorTerminalDegreeYear = targetAuthor.getEducation().getDegreeYear(); // Note: author might have multiple educations.
+			int diffYear = Math.abs(year - authorTerminalDegreeYear);
+			return getYearDiscrepancyScore(diffYear);
+		}		
+		return 0;
+	}
+	
+	/**
+	 * Use email as a conclusive indication of author identity when present.
+	 * 
+	 * https://github.com/wcmc-its/ReCiter/issues/57
+	 */
+	public boolean isEmailMatch(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		
+		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+			if (author.getAffiliation() != null) {
+				String affiliation = author.getAffiliation().getAffiliationName();
+				String emailCase1 = targetAuthor.getCwid() + "@med.cornell.edu";
+				String emailCase2 = targetAuthor.getCwid() + "@mail.med.cornell.edu";
+				String emailCase3 = targetAuthor.getCwid() + "@weill.cornell.edu";
+				String emailCase4 = targetAuthor.getCwid() + "@nyp.org";
+				if (affiliation.contains(emailCase1) ||
+					affiliation.contains(emailCase2) ||
+					affiliation.contains(emailCase3) ||
+					affiliation.contains(emailCase4)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Check if the ReCiterArticle's affiliation information contains the phrase "weill cornell" using case-insensitive
+	 * string matching.
+	 * 
+	 * @param reCiterArticle
+	 * @return
+	 */
+	public boolean containsWeillCornell(ReCiterArticle reCiterArticle) {
+		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+			if (author.getAffiliation() != null) {
+				String affiliation = author.getAffiliation().getAffiliationName();
+				if (StringUtils.containsIgnoreCase(affiliation, "weill cornell")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	private List<Identity> getGrantCoAuthors(TargetAuthor targetAuthor) {
+		IdentityDao identityDao = new IdentityDaoImpl();
+		return identityDao.getAssosiatedGrantIdentityList(targetAuthor.getCwid());
+	}
+	
+	private List<AuthorName> getAuthorNames(List<Identity> identityList) {
+		List<AuthorName> authorNames = new ArrayList<AuthorName>();
+		for (Identity identity : identityList) {
+			AuthorName authorName = 
+					new AuthorName(identity.getFirstName(), identity.getMiddleName(), identity.getLastName());
+			authorNames.add(authorName);
+		}
+		return authorNames;
+	}
+	
+	private List<AuthorName> getGrantCoAuthorsOf(TargetAuthor targetAuthor) {
+		return getAuthorNames(getGrantCoAuthors(targetAuthor));
+	}
+	
+	/**
+	 * Leverage known co-investigators on grants to improve phase two matching.
+	 * 
+	 * If an article includes a name that matches that of a person who has previously served as a 
+	 * co-author with the target author on a grant, this should increase the likelihood that the articles in the 
+	 * given pile were in fact written by the target author.
+	 * 
+	 * https://github.com/wcmc-its/ReCiter/issues/49
+	 */
+	public boolean containsGrantCoAuthor(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	
+		List<AuthorName> authorNames = getGrantCoAuthorsOf(targetAuthor);
+		
+		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+			// do not match target author's name
+			if (!author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
+				for (AuthorName authorName : authorNames) {
+					if (authorName.isFullNameMatch(author.getAuthorName())) {
+						return true;
 					}
 				}
+			}
+		}
+		return false;
+	}
+	
 	
 	/**
 	 * 
@@ -467,175 +528,6 @@ public class ReCiterClusterer implements Clusterer {
 
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
 
-			// Github issue: https://github.com/wcmc-its/ReCiter/issues/78 (Phase 2 clustering)
-			// We have two sources for knowing whether someone lived or worked outside of the United States: 
-			// rc_identity_citizenship and rc_identity_education (foreign countries are in parentheses there).
-			if (selectingTarget) {				
-				IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDao();
-				IdentityEducationDaoImpl identityEducationDao = new IdentityEducationDaoImpl();
-				List<String> citizenship = identityCitizenshipDao.getIdentityCitizenshipCountry(cwid);
-				List<String> education = identityEducationDao.getIdentityCitizenshipEducation(cwid);
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					for (ReCiterAuthor coauthor : article.getArticleCoAuthors().getAuthors()) {
-						// please skip the coauthor which is the targetAuthor by comparing the first name,
-						// middle name, and last name.
-						// if (coauthor.getAffiliation().equals(citizenship) || coauthor.getAffiliation().equals(education)) {
-						if(coauthor.getAffiliation()!=null){
-							String coAuthorAffiliation = coauthor.getAffiliation().getAffiliationName();
-							if(citizenship.contains(coAuthorAffiliation) || education.contains(coAuthorAffiliation)){						
-								// increase sim score.
-								sim = sim + 1; 
-							}
-						}
-					}
-				}
-
-			}
-
-			/* Improve score in cases where MeSH major terms match between cluster and target article #82 */ 
-			/* https://github.com/wcmc-its/ReCiter/issues/l */ 
-
-			if (!selectingTarget) {
-				MedlineCitationMeshHeadingDescriptorName meshName = new MedlineCitationMeshHeadingDescriptorName();
-				String meshTermValue = meshName.getDescriptorNameString();
-				//System.out.println(meshTermValue);
-				if(meshTermValue!=null){
-					String[] meshTerms = meshTermValue.split(" "); 
-					String getTargetAuthorTitle = targetAuthor.getTargetAuthorArticleIndexed().getArticleTitle().getTitle();
-					/* Not clear about calculation of the MeshTerms Score  */ 
-					for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {	
-						for (String meshTerm : meshTerms) { 
-							if (meshTerm==null || meshTerm.equals("and") || meshTerm.equals("or") || meshTerm.equals("of") || meshTerm.equals("for") || meshTerm.equals(" ")) { continue;  }
-							if (article.getArticleTitle().getTitle().contains(meshTerm) && getTargetAuthorTitle.contains(meshTerm)){ 
-								sim = sim + 1;
-							}
-						}
-					}
-				}
-			}
-
-
-			//
-			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
-			//			// Leverage known co-investigators on grants to improve phase two matching.
-			if (selectingTarget) {
-				IdentityDao identityDao = new IdentityDaoImpl(); 
-				List<Identity> identityList = identityDao.getAssosiatedGrantIdentityList(TargetAuthor.getInstance().getCwid());
-
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {			
-					for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
-						for(Identity identity: identityList){
-							for (ReCiterAuthor currentArticleCoAuthor : currentArticle.getArticleCoAuthors().getAuthors()) {
-								if (currentArticleCoAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
-									// First Name 
-									if (author.getAuthorName().getFirstName().equalsIgnoreCase(identity.getFirstName()) && currentArticleCoAuthor.getAuthorName().getFirstName().equalsIgnoreCase(identity.getFirstName())){
-										sim = sim + 1;
-									}
-									// Last Name
-									if (author.getAuthorName().getLastName().equalsIgnoreCase(identity.getLastName()) && currentArticleCoAuthor.getAuthorName().getLastName().equalsIgnoreCase(identity.getLastName()) ){
-										sim = sim + 1;
-									}
-								}
-							}						
-						}							
-					}
-				}
-			}
-
-			// Grab CWID from rc_identity table. Combine with "@med.cornell.edu" and match against candidate records. 
-			// When email is found in affiliation string, during phase two clustering, automatically assign the matching identity.
-			if (selectingTarget) {
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					if (article.getAffiliationConcatenated() != null) {
-						if (article.getAffiliationConcatenated().contains(TargetAuthor.getInstance().getCwid() + "@med.cornell.edu")) {
-							//							sim *= 1.3; // a matching email should dramatically increase the score of some results but not decrease the score of others
-							return id;
-						}
-					}
-				}
-			}
-
-
-			// Increase similarity if the affiliation information "Weill Cornell Medical College" appears in affiliation.
-			if (!selectingTarget) {
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					if (StringUtils.contains(StringUtils.lowerCase(article.getAffiliationConcatenated()), "weill cornell") &&
-							StringUtils.contains(StringUtils.lowerCase(currentArticle.getAffiliationConcatenated()), "weill cornell")) {
-						sim *= 3;
-					}
-				}
-			}
-
-			// Adjust cosine similarity score with year discrepancy.
-			if (!selectingTarget) {
-				// Update the similarity score with year discrepancy.
-				int yearDiff = Integer.MAX_VALUE; // Compute difference in year between candidate article and closest year in article cluster.
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					int currentYearDiff = Math.abs(currentArticle.getJournal().getJournalIssuePubDateYear() - article.getJournal().getJournalIssuePubDateYear());
-					if (currentYearDiff < yearDiff) {
-						yearDiff = currentYearDiff;
-					}
-				}
-				if (yearDiff > 40) {
-					sim *= 0.001526;
-				} else {
-					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
-				}
-			}
-
-			
-
-			//			if (!selectingTarget) {
-			//				JournalDao journalDao = new JournalDao();
-			//				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-			//					// Use the cluster starter to compare journal similarity.
-			//					if (article.isClusterStarter()) {
-			//						if (article.getJournal() != null && currentArticle.getJournal() != null) {
-			//							double journalSimScore = journalDao.getJournalSimilarity(
-			//									article.getJournal().getIsoAbbreviation(),
-			//									currentArticle.getJournal().getIsoAbbreviation());
-			//							// Check similarity both ways.
-			//							if (journalSimScore == -1.0) {
-			//								journalSimScore = journalDao.getJournalSimilarity(
-			//										currentArticle.getJournal().getIsoAbbreviation(),
-			//										article.getJournal().getIsoAbbreviation());
-			//							}
-			//							if (journalSimScore != -1.0) {
-			//								if (journalSimScore > 0.8) {
-			//									sim *= (1 + journalSimScore); // Journal similarity on a sliding scale.
-			//								}
-			//							}
-			//						}
-			//					}
-			//				}
-			//			}
-
-			if (selectingTarget) {
-
-				// Update the similarity score with year discrepancy.
-				int yearDiff = Integer.MAX_VALUE; // Compute difference in year between candidate article and closest year in article cluster.
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
-					int currentYearDiff = article.getJournal().getJournalIssuePubDateYear() - TargetAuthor.getInstance().getTerminalDegreeYear();
-					if (currentYearDiff < yearDiff) {
-						yearDiff = currentYearDiff;
-					}
-				}
-				// 7 years before terminal degree >> 0.3
-				if (yearDiff < -7) {
-					sim *= 0.3;
-
-					// 0 - 7 years before terminal degree >> 0.75
-				} else if (yearDiff <= 0 && yearDiff >= -7) {
-					sim *= 0.75;
-				}
-
-				// after terminal degree >> 1.0 (don't change sim score).
-
-			} else if (sim > similarityThreshold && sim > currentMax) {
-				currentMaxId = id;
-				currentMax = sim;
-				// TODO: what happens if cosine similarity is tied?
-			}
 		}
 		return currentMaxId; // found a cluster.
 	}
@@ -647,10 +539,10 @@ public class ReCiterClusterer implements Clusterer {
 	 * @return
 	 */
 	// computes coauthor matches of this article with all current clusters.
-	private Map<Integer, Integer> computeCoauthorMatch(ReCiterArticle currentArticle) {
+	private Map<Integer, Integer> computeCoauthorMatch(ReCiterArticle currentArticle, TargetAuthor targetAuthor) {
 		Map<Integer, Integer> coauthorsCount = new HashMap<Integer, Integer>(); // ClusterId to number of coauthors.
 		for (ReCiterCluster reCiterCluster : finalCluster.values()) {
-			int matchingCoauthors = reCiterCluster.getMatchingCoauthorCount(currentArticle);
+			int matchingCoauthors = reCiterCluster.getMatchingCoauthorCount(currentArticle, targetAuthor);
 			coauthorsCount.put(reCiterCluster.getClusterID(), matchingCoauthors);
 		}
 		return coauthorsCount;

@@ -75,7 +75,8 @@ public class ReCiterCluster {
 	public double contentSimilarity(ReCiterArticle currentArticle) {
 		double similarityScore = -1;
 		for (ReCiterArticle article : articleCluster) {
-			double sim = article.getDocumentSimmilarity().documentSimilarity(article, currentArticle);
+//			double sim = article.getDocumentSimmilarity().documentSimilarity(article, currentArticle);
+			double sim = 0;
 			if (sim > similarityScore) {
 				similarityScore = sim;
 			}
@@ -109,7 +110,7 @@ public class ReCiterCluster {
 	 * 
 	 * TODO revise the if statement logic.
 	 */
-	public int getMatchingCoauthorCount(ReCiterArticle currentArticle) {
+	public int getMatchingCoauthorCount(ReCiterArticle currentArticle, TargetAuthor targetAuthor) {
 		int matchingCoauthorCount = 0;
 		// For each article in this cluster.
 		for (ReCiterArticle article : articleCluster) {
@@ -119,8 +120,8 @@ public class ReCiterCluster {
 				for (ReCiterAuthor currentAuthor : currentArticle.getArticleCoAuthors().getAuthors()) {
 					// Check if the names match.
 					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName()) 
-							&& !currentAuthor.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())
-							&& !author.getAuthorName().firstInitialLastNameMatch(TargetAuthor.getInstance().getAuthorName())) {
+							&& !currentAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())
+							&& !author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
 						
 						matchingCoauthorCount += 1;
 						

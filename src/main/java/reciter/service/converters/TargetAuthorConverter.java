@@ -17,7 +17,7 @@ public class TargetAuthorConverter {
 		
 		targetAuthor.setCwid(identity.getCwid());
 		targetAuthor.setDepartment(identity.getPrimaryDepartment());
-		targetAuthor.setEducation();
+//		targetAuthor.setEducation();
 		return targetAuthor;
 	}
 
