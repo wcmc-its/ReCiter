@@ -1,6 +1,7 @@
 package reciter.algorithm.cluster;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -9,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +76,27 @@ public class ReCiterExample {
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
+		
+		/* Output the ReCiter performance summary as .csv file #75 */ 
+		CSVFormat format;
+		String CSV_OUTPUT = "src/main/resources/data/csv_output/";
+		format = CSVFormat.RFC4180.withHeader().withDelimiter(',');
+		PrintWriter writer = new PrintWriter(CSV_OUTPUT + ".csv", "UTF-8");
+		CSVPrinter printer = new CSVPrinter(writer, format);
+		
+		String header = "Count 		CWID	Precision	Recall		Average of precision and recall";
+		
+		printer.print(numCwids);
+		printer.print(totalPrecision);
+		printer.print(totalRecall);
+			
+		printer.print(header);
+		
+		String summary = "Overall precision"  + totalPrecision +  "\n" + "Overall recall" + totalRecall + "\n" + "Overall average" + (totalRecall/numCwids); 
+
+		printer.print(summary);
+		printer.close();
+		writer.close();
 	}
 
 	/**

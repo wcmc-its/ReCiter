@@ -29,7 +29,22 @@ public class Identity {
 	private int harvesterFlag;
 	private LocalDateTime createDate;
 	private LocalDateTime updateDate;
+	private String email;
+	private String emailOther;
 	
+	
+	public String getEmailOther() {
+		return emailOther;
+	}
+	public void setEmailOther(String emailOther) {
+		this.emailOther = emailOther;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
 	public int getIdentityPk() {
 		return identityPk;
 	}

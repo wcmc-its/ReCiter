@@ -35,7 +35,7 @@ public class IdentityDao {
 	private Identity getIdentityByCwid(Connection con, String cwid) throws SQLException {
 		PreparedStatement pst = null;
 		ResultSet rs = null;
-		String query = "SELECT first_name, last_name, middle_name, title, primary_department, primary_affiliation FROM rc_identity WHERE cwid='" + cwid + "'";
+		String query = "SELECT first_name, last_name, middle_name, title, primary_department, primary_affiliation,email FROM rc_identity WHERE cwid='" + cwid + "'";
 		Identity identity = new Identity();
 		identity.setCwid(cwid);
 		try {
@@ -48,6 +48,7 @@ public class IdentityDao {
 				identity.setTitle(rs.getString(4));
 				identity.setPrimaryDepartment(rs.getString(5));
 				identity.setPrimaryAffiliation(rs.getString(6));
+				identity.setEmail(rs.getString(7));
 			}
 		} catch (SQLException e) {
 			throw e;

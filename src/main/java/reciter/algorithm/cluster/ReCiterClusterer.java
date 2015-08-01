@@ -18,7 +18,11 @@ import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.model.boardcertifications.ReadBoardCertifications;
 import reciter.utils.reader.YearDiscrepacyReader;
+import xmlparser.pubmed.PubmedXmlFetcher;
 import xmlparser.pubmed.model.MedlineCitationMeshHeadingDescriptorName;
+import xmlparser.pubmed.model.PubmedArticle;
+import xmlparser.scopus.ScopusXmlFetcher;
+import xmlparser.scopus.model.ScopusArticle;
 import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
 import database.dao.IdentityEducationDao;
@@ -177,6 +181,55 @@ public class ReCiterClusterer implements Clusterer {
 				
 			}
 			
+			/* Use citizenship and educational background to improve precision #97 */  
+			if (selectingTarget) {
+				IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDao();
+				IdentityEducationDao identityEducationDao = new IdentityEducationDao();
+				
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					for (ReCiterAuthor coauthor : article.getArticleCoAuthors().getCoAuthors()) {
+							
+						/* skip the coauthor which is the targetAuthor by comparing the first name, middle name, and last name. */
+						if (coauthor.getAuthorName().getFirstName().equals(TargetAuthor.getInstance().getAuthorName().getFirstName()) || 
+							coauthor.getAuthorName().getLastName().equals(TargetAuthor.getInstance().getAuthorName().getLastName()) || 
+							coauthor.getAuthorName().getMiddleName().equals(TargetAuthor.getInstance().getAuthorName().getMiddleName())) {
+							continue; 
+						}						
+						// if (coauthor.getAffiliation().equals(identityCitizenshipDao.getIdentityCitizenshipCountry(cwid))) {
+						if (identityCitizenshipDao.getIdentityCitizenshipCountry(cwid).equals(identityEducationDao.getIdentityCitizenshipEducation(cwid))) {
+							// increase sim score.
+							sim = sim + 1; 
+						}
+					}
+				}
+			}
+			
+			/* Look up email separately in Scopus and PubMed at a formative state to find name variants #73 */ 
+			
+			if (selectingTarget) {
+				String firstName = TargetAuthor.getInstance().getAuthorName().getFirstName();
+				String lastName = TargetAuthor.getInstance().getAuthorName().getLastName();
+				IdentityDao dao = new IdentityDao();
+				Identity identity = dao.getIdentityByCwid(cwid);
+				String emailId = identity!=null && identity.getEmail()!=null?identity.getEmail():"";
+				String emailOther = identity!=null && identity.getEmailOther()!=null?identity.getEmailOther():"";
+				
+				PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
+				List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstName, cwid);
+
+				// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
+				ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+				
+				for (PubmedArticle pubmedArticle : pubmedArticleList) {
+					String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
+					ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, pmid);
+					
+					if (lastName!= null && firstName != null ) { 
+					   // TBD 
+					}				
+				}
+			}
+			
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/79
 			// Leverage departmental affiliation string matching for phase two matching.
 			if (selectingTarget) {
@@ -241,12 +294,13 @@ public class ReCiterClusterer implements Clusterer {
 			// Leverage data on board certifications to improve phase two matching.
 			if (selectingTarget){// && currentArticle!=null && currentArticle.getArticleTitle().getTitle()!=null) {
 				ReadBoardCertifications efr=new ReadBoardCertifications();
+				
 				sim= sim+efr.getBoardCertifications(cwid,finalCluster.get(id).getArticleCluster());
 				//slf4jLogger.info("Board Certifications Sim Score for CWID("+cwid+" => " + sim);
-				//for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 				//					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
 					//if(articles.contains(article))sim=sim+1;
-				//}
+				}
 			}
 			//
 			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
@@ -274,6 +328,8 @@ public class ReCiterClusterer implements Clusterer {
 					}
 				}
 			}
+			
+			
 			
 			//
 //			// Github issue: https://github.com/wcmc-its/ReCiter/issues/83
