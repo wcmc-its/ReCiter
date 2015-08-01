@@ -95,15 +95,14 @@ public class MatchingDepartmentsJournalsDao {
 	public List<String> getTranslatedDepartmentList() {
 		List<String> translatedList = new ArrayList<String>();
 		for ( String deptStr:  getDepartmentalAffiliationStringList()) {
-			if ( deptStr.contains(" and ")) {
+			if(deptStr!=null)
+			if (deptStr.contains(" and ")) {
 				translatedList.add(deptStr);
 				translatedList.add(deptStr.replaceAll(" and ", " / "));
 				translatedList.add(deptStr.replaceAll(" and ", "/"));
 				translatedList.add(deptStr.replaceAll(" and ", " & "));
-			} else {
-				if ( deptStr != null ) {
-						translatedList.add(deptStr);
-				}
+			} else {				
+				translatedList.add(deptStr);				
 			}
 		}
 		//Set<String> uniqueVectorKeywords = new HashSet<String>(translatedList);

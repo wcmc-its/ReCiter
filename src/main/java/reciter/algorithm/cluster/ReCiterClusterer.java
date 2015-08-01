@@ -239,13 +239,14 @@ public class ReCiterClusterer implements Clusterer {
 		
 			// Github issue: https://github.com/wcmc-its/ReCiter/issues/45
 			// Leverage data on board certifications to improve phase two matching.
-			if (selectingTarget && currentArticle!=null && currentArticle.getArticleTitle().getTitle()!=null) {
+			if (selectingTarget){// && currentArticle!=null && currentArticle.getArticleTitle().getTitle()!=null) {
 				ReadBoardCertifications efr=new ReadBoardCertifications();
-				List<ReCiterArticle> articles = efr.getBoardCertifications(cwid,currentArticle);
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+				sim= sim+efr.getBoardCertifications(cwid,finalCluster.get(id).getArticleCluster());
+				//slf4jLogger.info("Board Certifications Sim Score for CWID("+cwid+" => " + sim);
+				//for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 				//					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
-					if(articles.contains(article))sim=sim+1;
-				}
+					//if(articles.contains(article))sim=sim+1;
+				//}
 			}
 			//
 			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
