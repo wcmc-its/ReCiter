@@ -2,12 +2,22 @@ package reciter.algorithm.cluster;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.erroranalysis.Analysis;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.AuthorAffiliation;
+import reciter.model.author.AuthorEducation;
+import reciter.model.author.AuthorName;
+import reciter.model.author.TargetAuthor;
+import database.dao.IdentityDao;
+import database.dao.impl.IdentityDaoImpl;
+import database.model.Identity;
 
 public class ReCiterExample {
 
@@ -45,18 +55,13 @@ public class ReCiterExample {
 		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(lastName, firstInitial, cwid);
 		
 		// Perform clustering.
-		Clusterer clusterer = new ReCiterClusterer();
-		clusterer.cluster(reCiterArticleList);
+		ReCiterClusterer clusterer = new ReCiterClusterer(cwid);
+		Analysis analysis = clusterer.cluster(reCiterArticleList);
 		
-		// make the target author the cluster originator.
-		
-		// Iterate through the similarity once and assign the most similar one. (inner layer).
-		
-		// Iterate through second time to compare against others.
-		
-		// Multiple times.
+		System.out.println(clusterer.getClusterInfo());
+		System.out.println(analysis.getPrecision());
+		System.out.println(analysis.getRecall());
 	}
-
 
 	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.	
 	public static void applyVertorOfKeywords(ReCiterArticle article) {		

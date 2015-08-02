@@ -2,6 +2,7 @@ package reciter.algorithm.cluster;
 
 import java.util.List;
 
+import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 
 /**
@@ -17,5 +18,7 @@ public interface Clusterer {
 	 * Performs a clustering on the list of ReCiterArticles.
 	 * @param reciterArticleList
 	 */
-	void cluster(List<ReCiterArticle> reciterArticleList);
+	Analysis cluster(List<ReCiterArticle> reciterArticleList);
+	
+	
 }

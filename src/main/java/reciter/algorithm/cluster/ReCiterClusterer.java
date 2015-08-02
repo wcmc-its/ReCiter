@@ -17,21 +17,18 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.tfidf.Document;
+import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
-import reciter.service.TargetAuthorService;
-import reciter.service.impl.TargetAuthorServiceImpl;
 import reciter.utils.reader.YearDiscrepacyReader;
-import xmlparser.pubmed.model.MedlineCitationMeshHeadingDescriptorName;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 import database.dao.IdentityDao;
-import database.dao.impl.IdentityCitizenshipDao;
 import database.dao.impl.IdentityDaoImpl;
-import database.dao.impl.IdentityEducationDaoImpl;
 import database.dao.impl.MatchingDepartmentsJournalsDao;
 import database.model.Identity;
 
@@ -43,15 +40,16 @@ public class ReCiterClusterer implements Clusterer {
 	private int selectedReCiterClusterId = -1;
 	private double similarityThreshold = 0.3;
 	private TargetAuthor targetAuthor;
-
+	
 	public ReCiterClusterer() {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
 	}
 
 	public ReCiterClusterer(String cwid) {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
-		TargetAuthorService targetAuthorService= new TargetAuthorServiceImpl();
-		setTargetAuthor(targetAuthorService.getTargetAuthor(cwid));
+//		TargetAuthorService targetAuthorService= new TargetAuthorServiceImpl();
+//		setTargetAuthor(targetAuthorService.getTargetAuthor(cwid));
+		targetAuthor = getTargetAuthor(cwid);
 	}
 
 	public Map<Integer, ReCiterCluster> getFinalCluster() {
@@ -64,11 +62,42 @@ public class ReCiterClusterer implements Clusterer {
 		return selectedReCiterClusterId;
 	}
 
+	private TargetAuthor getAuthorFromIdentity(Identity identity) {
+
+		TargetAuthor targetAuthor = new TargetAuthor(
+				new AuthorName(identity.getFirstName(), identity.getMiddleName(), identity.getLastName()),
+				new AuthorAffiliation(identity.getPrimaryAffiliation()));
+
+		targetAuthor.setCwid(identity.getCwid());
+		targetAuthor.setDepartment(identity.getPrimaryDepartment());
+		targetAuthor.setOtherDeparment(identity.getOtherDepartment());
+
+		targetAuthor.setEducation(new AuthorEducation());
+		return targetAuthor;
+	}
+
+	private TargetAuthor getTargetAuthor(String cwid) {
+		IdentityDao identityDao = new IdentityDaoImpl();
+		Identity identity = identityDao.getIdentityByCwid(cwid);
+
+		return getAuthorFromIdentity(identity);
+	}
+
+
 	public double similarity(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 
 		return 0;
 	}
 
+	public int getSimilarCluster() {
+		int clusterId = -1;
+		for (Entry<Integer, ReCiterCluster> reCiterCluster : finalCluster.entrySet()) {
+			
+		}
+		return clusterId;
+	}
+	
+	
 	public void cluster(List<ReCiterArticle> reCiterArticleList, TargetAuthor targetAuthor) {
 
 		double maxSimilarityScore = -1;
@@ -81,13 +110,14 @@ public class ReCiterClusterer implements Clusterer {
 			}
 		}
 	}
+	
 	/**
 	 * 
 	 * @param articleList
 	 * @param targetAuthor
 	 */
 	@Override
-	public void cluster(List<ReCiterArticle> reciterArticleList) {
+	public Analysis cluster(List<ReCiterArticle> reciterArticleList) {
 
 		slf4jLogger.info("Number of articles to be clustered: " + reciterArticleList.size());
 
@@ -95,7 +125,7 @@ public class ReCiterClusterer implements Clusterer {
 		if (reciterArticleList != null && reciterArticleList.size() > 0) {
 			first = reciterArticleList.get(0);
 		} else {
-			return;
+			return null;
 		}
 
 		ReCiterCluster firstCluster = new ReCiterCluster();
@@ -116,8 +146,20 @@ public class ReCiterClusterer implements Clusterer {
 				finalCluster.get(selection).add(article);
 			}
 		}
+		
+		int selection = 5;
+		// Analysis to get Precision and Recall.
+		return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
 	}
 
+	public int computeClusterSelectionForTarget() {
+		
+		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+			
+		}
+		return 0;
+	}
+	
 	/**
 	 * Select the candidate cluster.
 	 * @param currentArticle
@@ -128,7 +170,6 @@ public class ReCiterClusterer implements Clusterer {
 
 		// Get cluster ids with max number of coauthor matches.
 		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle, targetAuthor));
-		//		slf4jLogger.info("PMID: " + currentArticle.getArticleID() + " " + clusterIdSet);
 
 		// If groups have matching co-authors, the program selects the group that has the most matching names.
 		if (clusterIdSet.size() == 1) {
@@ -324,7 +365,7 @@ public class ReCiterClusterer implements Clusterer {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * 
 	 * 
@@ -336,7 +377,7 @@ public class ReCiterClusterer implements Clusterer {
 		MatchingDepartmentsJournalsDao matchingDepartmentsJournalsDao = new MatchingDepartmentsJournalsDao();
 		return matchingDepartmentsJournalsDao.getScoreByJournalAndDepartment(journalIsoAbbr, targetAuthorDeptName);
 	}
-	
+
 	/**
 	 * Gets the pre-calculated value of article journal to target author's department for Phase II matching.
 	 * 
@@ -344,7 +385,7 @@ public class ReCiterClusterer implements Clusterer {
 	 * @return
 	 */
 	public double getDepartmentJournalSimilarityScore(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		
+
 		if (reCiterArticle.getJournal() != null) {
 			String journalIsoAbbr = reCiterArticle.getJournal().getIsoAbbreviation();
 			String targetAuthorDeptName = targetAuthor.getDepartment();
@@ -352,7 +393,7 @@ public class ReCiterClusterer implements Clusterer {
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * Leverage data on board certifications to improve Phase II matching.
 	 * 
@@ -361,7 +402,7 @@ public class ReCiterClusterer implements Clusterer {
 	public double getBoardCertificationScore() {
 		return 0;
 	}
-	
+
 	/**
 	 * (Phase I clustering).
 	 * If a candidate article is published in a journal and another article contains that journal, return true. False
@@ -370,42 +411,42 @@ public class ReCiterClusterer implements Clusterer {
 	 * Github issue: https://github.com/wcmc-its/ReCiter/issues/83
 	 */
 	public boolean isJournalMatch(ReCiterArticle article, ReCiterArticle articleInCluster) {
-		
+
 		if (article.getJournal() != null && articleInCluster.getJournal() != null) {
 			return article.getJournal().getJournalTitle().equalsIgnoreCase(articleInCluster.getJournal().getJournalTitle());
 		}
 		return false;
 	}
-	
+
 	/**
 	 * https://github.com/wcmc-its/ReCiter/issues/59.
 	 */
 	public boolean calculateFirstNameMatch(ReCiterArticle reCiterArticle, ReCiterArticle articleInCluster) {
-		
+
 		return false;
 	}
-	
+
 	private double getYearDiscrepancyScore(int diffYear) {
 		return YearDiscrepacyReader.getYearDiscrepancyMap().get(diffYear);
 	}
-	
+
 	/**
 	 * Year-based clustering and matching.
 	 * Phase I. 
 	 * https://github.com/wcmc-its/ReCiter/issues/40.
 	 */
 	public double calculateYearDiscrepancyScore(ReCiterArticle reCiterArticle, ReCiterArticle articleInCluster) {
-		
+
 		if (reCiterArticle.getJournal() != null && articleInCluster.getJournal() != null) {
 			int year = reCiterArticle.getJournal().getJournalIssuePubDateYear();
 			int otherYear = articleInCluster.getJournal().getJournalIssuePubDateYear();
 			int diffYear = Math.abs(year - otherYear);
 			return getYearDiscrepancyScore(diffYear);
 		}
-		
+
 		return 0;
 	}
-	
+
 	/**
 	 * Year-based clustering and matching.
 	 * Phase II.
@@ -414,7 +455,7 @@ public class ReCiterClusterer implements Clusterer {
 	 * @return
 	 */
 	public double calculateYearDiscrepancyScore(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		
+
 		if (reCiterArticle.getJournal() != null) {
 			int year = reCiterArticle.getJournal().getJournalIssuePubDateYear();
 			int authorTerminalDegreeYear = targetAuthor.getEducation().getDegreeYear(); // Note: author might have multiple educations.
@@ -423,14 +464,14 @@ public class ReCiterClusterer implements Clusterer {
 		}		
 		return 0;
 	}
-	
+
 	/**
 	 * Use email as a conclusive indication of author identity when present.
 	 * 
 	 * https://github.com/wcmc-its/ReCiter/issues/57
 	 */
 	public boolean isEmailMatch(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		
+
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
@@ -439,16 +480,16 @@ public class ReCiterClusterer implements Clusterer {
 				String emailCase3 = targetAuthor.getCwid() + "@weill.cornell.edu";
 				String emailCase4 = targetAuthor.getCwid() + "@nyp.org";
 				if (affiliation.contains(emailCase1) ||
-					affiliation.contains(emailCase2) ||
-					affiliation.contains(emailCase3) ||
-					affiliation.contains(emailCase4)) {
+						affiliation.contains(emailCase2) ||
+						affiliation.contains(emailCase3) ||
+						affiliation.contains(emailCase4)) {
 					return true;
 				}
 			}
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Check if the ReCiterArticle's affiliation information contains the phrase "weill cornell" using case-insensitive
 	 * string matching.
@@ -467,12 +508,12 @@ public class ReCiterClusterer implements Clusterer {
 		}
 		return false;
 	}
-	
+
 	private List<Identity> getGrantCoAuthors(TargetAuthor targetAuthor) {
 		IdentityDao identityDao = new IdentityDaoImpl();
 		return identityDao.getAssosiatedGrantIdentityList(targetAuthor.getCwid());
 	}
-	
+
 	private List<AuthorName> getAuthorNames(List<Identity> identityList) {
 		List<AuthorName> authorNames = new ArrayList<AuthorName>();
 		for (Identity identity : identityList) {
@@ -482,11 +523,11 @@ public class ReCiterClusterer implements Clusterer {
 		}
 		return authorNames;
 	}
-	
+
 	private List<AuthorName> getGrantCoAuthorsOf(TargetAuthor targetAuthor) {
 		return getAuthorNames(getGrantCoAuthors(targetAuthor));
 	}
-	
+
 	/**
 	 * Leverage known co-investigators on grants to improve phase two matching.
 	 * 
@@ -497,9 +538,9 @@ public class ReCiterClusterer implements Clusterer {
 	 * https://github.com/wcmc-its/ReCiter/issues/49
 	 */
 	public boolean containsGrantCoAuthor(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-	
+
 		List<AuthorName> authorNames = getGrantCoAuthorsOf(targetAuthor);
-		
+
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			// do not match target author's name
 			if (!author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
@@ -512,8 +553,7 @@ public class ReCiterClusterer implements Clusterer {
 		}
 		return false;
 	}
-	
-	
+
 	/**
 	 * 
 	 * @param clusterIdList
@@ -525,9 +565,8 @@ public class ReCiterClusterer implements Clusterer {
 		int currentMaxId = -1;
 		String cwid = targetAuthor.getCwid();
 		for (int id : clusterIdList) {
-
 			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
-
+			
 		}
 		return currentMaxId; // found a cluster.
 	}
@@ -602,5 +641,16 @@ public class ReCiterClusterer implements Clusterer {
 		this.targetAuthor = targetAuthor;
 	}
 
-
+	public String getClusterInfo() {
+		StringBuilder sb = new StringBuilder();
+		
+		for (Entry<Integer, ReCiterCluster> cluster : finalCluster.entrySet()) {
+			sb.append("Cluster id: " + cluster.getKey() + "= ");
+			for (ReCiterArticle reCiterArticle : cluster.getValue().getArticleCluster()) {
+				sb.append(reCiterArticle.getArticleId() + ", ");
+			}
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
 }

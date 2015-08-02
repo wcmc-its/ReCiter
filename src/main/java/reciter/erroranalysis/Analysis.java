@@ -2,10 +2,13 @@ package reciter.erroranalysis;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.model.article.ReCiterArticle;
+import database.dao.GoldStandardPmidsDao;
+import database.dao.impl.GoldStandardPmidsDaoImpl;
 
 /**
  * Class that performs analysis such as calculating precision and recall.
@@ -14,54 +17,63 @@ import org.slf4j.LoggerFactory;
  */
 public class Analysis {
 
-	private List<Integer> truePositiveList;
-	private Set<Integer> goldStandard;
-	private int sizeOfSelected;
 	private int truePos;
-	private int falsePos;
-
-	public Analysis(Set<Integer> goldStandard) {
-		this.goldStandard = goldStandard;
-	}
-
-	public Set<Integer> getGoldStandard() {
-		return goldStandard;
-	}
+	private int goldStandardSize;
+	private int selectedClusterSize;
 	
-	public void setSizeOfSelected(int sizeOfSelected) {
-		this.sizeOfSelected = sizeOfSelected;
-	}
+	public Analysis() {}
 	
-	public void setTruePositiveList(Set<Integer> pmidList) {
-		truePos = 0;
-		setFalsePos(0);
-		truePositiveList = new ArrayList<Integer>();
+	public static Analysis performAnalysis(Map<Integer, ReCiterCluster> finalCluster, int selection, String cwid) {
+		Analysis analysis = new Analysis();
+		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
+		List<String> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
 		
-		for (int pmid : pmidList) {
-			if (goldStandard.contains(pmid)) {
-				truePos++;
-				truePositiveList.add(pmid);
-			} else {
-				setFalsePos(getFalsePos() + 1);
+		analysis.setGoldStandardSize(goldStandardPmids.size());
+		analysis.setSelectedClusterSize(finalCluster.get(selection).getArticleCluster().size());
+		int numTruePos = 0;
+
+		// get number of true positives.
+		for (ReCiterArticle reCiterArticle : finalCluster.get(selection).getArticleCluster()) {
+			int pmid = reCiterArticle.getArticleId();
+			if (goldStandardPmids.contains(Integer.toString(pmid))) {
+				numTruePos++;
 			}
 		}
+		analysis.setTruePos(numTruePos);
+		return analysis;
 	}
 
 	public double getPrecision() {
-		double precision = (double) truePos / sizeOfSelected;
+		double precision = (double) truePos / selectedClusterSize;
 		return precision;
 	}
 
 	public double getRecall() {
-		double recall = (double) truePos / goldStandard.size();
+		double recall = (double) truePos / goldStandardSize;
 		return recall;
 	}
 
-	public int getFalsePos() {
-		return falsePos;
+	public int getTruePos() {
+		return truePos;
 	}
 
-	public void setFalsePos(int falsePos) {
-		this.falsePos = falsePos;
+	public void setTruePos(int truePos) {
+		this.truePos = truePos;
+	}
+
+	public int getGoldStandardSize() {
+		return goldStandardSize;
+	}
+
+	public void setGoldStandardSize(int goldStandardSize) {
+		this.goldStandardSize = goldStandardSize;
+	}
+
+	public int getSelectedClusterSize() {
+		return selectedClusterSize;
+	}
+
+	public void setSelectedClusterSize(int selectedClusterSize) {
+		this.selectedClusterSize = selectedClusterSize;
 	}
 }
