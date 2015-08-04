@@ -40,15 +40,15 @@ public class ReCiterClusterer implements Clusterer {
 	private int selectedReCiterClusterId = -1;
 	private double similarityThreshold = 0.3;
 	private TargetAuthor targetAuthor;
-	
+
 	public ReCiterClusterer() {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
 	}
 
 	public ReCiterClusterer(String cwid) {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
-//		TargetAuthorService targetAuthorService= new TargetAuthorServiceImpl();
-//		setTargetAuthor(targetAuthorService.getTargetAuthor(cwid));
+		//		TargetAuthorService targetAuthorService= new TargetAuthorServiceImpl();
+		//		setTargetAuthor(targetAuthorService.getTargetAuthor(cwid));
 		targetAuthor = getTargetAuthor(cwid);
 	}
 
@@ -92,12 +92,12 @@ public class ReCiterClusterer implements Clusterer {
 	public int getSimilarCluster() {
 		int clusterId = -1;
 		for (Entry<Integer, ReCiterCluster> reCiterCluster : finalCluster.entrySet()) {
-			
+
 		}
 		return clusterId;
 	}
-	
-	
+
+
 	public void cluster(List<ReCiterArticle> reCiterArticleList, TargetAuthor targetAuthor) {
 
 		double maxSimilarityScore = -1;
@@ -110,7 +110,7 @@ public class ReCiterClusterer implements Clusterer {
 			}
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param articleList
@@ -146,20 +146,74 @@ public class ReCiterClusterer implements Clusterer {
 				finalCluster.get(selection).add(article);
 			}
 		}
-		
-		int selection = 5;
+
+		// Phase 2 matching.
+		Set<Integer> clusterIds = getKeysWithMaxVal(computeClusterSelectionForTarget());
+
+		int selection = -1;
+		for (int id : clusterIds) {
+			selection = id;
+			break;
+		}
 		// Analysis to get Precision and Recall.
 		return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
 	}
 
-	public int computeClusterSelectionForTarget() {
-		
+	// Put the scores inside a map.
+
+	/**
+	 * Compute the most similar cluster to target.
+	 * @return
+	 */
+	public Map<Integer, Integer> computeClusterSelectionForTarget() {
+
+		Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
 		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
-			
+			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
+
+				// Email Match.
+				boolean isEmailMatch = isEmailMatch(reCiterArticle, targetAuthor);
+				if (isEmailMatch) {
+					if (clusterIds.containsKey(entry.getKey())) {
+						int currentCount = clusterIds.get(entry.getKey());
+						clusterIds.put(entry.getKey(), ++currentCount);
+					} else {
+						clusterIds.put(entry.getKey(), 1);
+					}
+				}
+
+				// rc_coauthor_affiliations score.
+
+				// Department Match.
+				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+					boolean isDepartmentMatch = departmentMatch(reCiterAuthor, targetAuthor);
+					if (isDepartmentMatch) {
+						if (clusterIds.containsKey(entry.getKey())) {
+							int currentCount = clusterIds.get(entry.getKey());
+							clusterIds.put(entry.getKey(), ++currentCount);
+						} else {
+							clusterIds.put(entry.getKey(), 1);
+						}
+						//						System.out.println(reCiterAuthor.getAffiliation().getAffiliationName() + " - " + reCiterArticle.getArticleId());
+					}
+				}
+
+				// containsGrantCoAuthor.
+				boolean containsGrantCoAuthor = containsGrantCoAuthor(reCiterArticle, targetAuthor);
+				if (containsGrantCoAuthor) {
+					System.out.println("containsGrantCoAuthor: " + reCiterArticle.getArticleId());
+					if (clusterIds.containsKey(entry.getKey())) {
+						int currentCount = clusterIds.get(entry.getKey());
+						clusterIds.put(entry.getKey(), ++currentCount);
+					} else {
+						clusterIds.put(entry.getKey(), 1);
+					}
+				}
+			}
 		}
-		return 0;
+		return clusterIds;
 	}
-	
+
 	/**
 	 * Select the candidate cluster.
 	 * @param currentArticle
@@ -276,7 +330,7 @@ public class ReCiterClusterer implements Clusterer {
 	 * Create a map of list of documents for each ReCiterArticle.
 	 * @param reCiterArticleList
 	 * @param targetAuthor
-	 * @return
+	 * @return                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 	 */
 	public Map<Integer, List<Document>> createDocuments(List<ReCiterArticle> reCiterArticleList, TargetAuthor targetAuthor) {
 		Map<Integer, List<Document>> map = new HashMap<Integer, List<Document>>();
@@ -303,6 +357,7 @@ public class ReCiterClusterer implements Clusterer {
 		}
 		return map;
 	}
+
 
 	/**
 	 * Use citizenship and educational background to improve recall.
@@ -354,7 +409,7 @@ public class ReCiterClusterer implements Clusterer {
 	 */
 	public boolean departmentMatch(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
-		if (reCiterAuthor.getAffiliation() != null) {
+		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
 			String extractedDept = extractDepartment(affiliation);
 			String targetAuthorDept = targetAuthor.getDepartment();
@@ -418,11 +473,51 @@ public class ReCiterClusterer implements Clusterer {
 		return false;
 	}
 
+	/** http://rosettacode.org/wiki/Levenshtein_distance#Java */
+	public static int distance(String a, String b) {
+		a = a.toLowerCase();
+		b = b.toLowerCase();
+		// i == 0
+		int [] costs = new int [b.length() + 1];
+		for (int j = 0; j < costs.length; j++)
+			costs[j] = j;
+		for (int i = 1; i <= a.length(); i++) {
+			// j == 0; nw = lev(i - 1, j)
+			costs[0] = i;
+			int nw = i - 1;
+			for (int j = 1; j <= b.length(); j++) {
+				int cj = Math.min(1 + Math.min(costs[j], costs[j - 1]), a.charAt(i - 1) == b.charAt(j - 1) ? nw : nw + 1);
+				nw = costs[j];
+				costs[j] = cj;
+			}
+		}
+		return costs[b.length()];
+	}
+
 	/**
 	 * https://github.com/wcmc-its/ReCiter/issues/59.
 	 */
 	public boolean calculateFirstNameMatch(ReCiterArticle reCiterArticle, ReCiterArticle articleInCluster) {
+		for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+			for (ReCiterAuthor clusterAuthor : articleInCluster.getArticleCoAuthors().getAuthors()) {
+				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
+						clusterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
 
+					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstName())) {
+						return true;
+					} else {
+						if (reCiterAuthor.getAuthorName().getFirstInitial().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstInitial())) {
+							// calculate the probability of how common the name is.
+							// calculate the levenshtein distance.
+							int levenshteinDist = distance(reCiterAuthor.getAuthorName().getFirstName(), clusterAuthor.getAuthorName().getFirstName());
+							if (levenshteinDist <= 3) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
 		return false;
 	}
 
@@ -473,12 +568,13 @@ public class ReCiterClusterer implements Clusterer {
 	public boolean isEmailMatch(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if (author.getAffiliation() != null) {
+			if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
 				String emailCase1 = targetAuthor.getCwid() + "@med.cornell.edu";
 				String emailCase2 = targetAuthor.getCwid() + "@mail.med.cornell.edu";
 				String emailCase3 = targetAuthor.getCwid() + "@weill.cornell.edu";
 				String emailCase4 = targetAuthor.getCwid() + "@nyp.org";
+
 				if (affiliation.contains(emailCase1) ||
 						affiliation.contains(emailCase2) ||
 						affiliation.contains(emailCase3) ||
@@ -563,21 +659,24 @@ public class ReCiterClusterer implements Clusterer {
 	private int getIdWithMostContentSimilarity(Set<Integer> clusterIdList, ReCiterArticle currentArticle) {
 		double currentMax = -1;
 		int currentMaxId = -1;
-		String cwid = targetAuthor.getCwid();
 		for (int id : clusterIdList) {
-			double sim = finalCluster.get(id).contentSimilarity(currentArticle); // cosine similarity score.
-			
+			ReCiterCluster reCiterCluster = finalCluster.get(id);
+			for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
+				boolean isFirstNameMatch = calculateFirstNameMatch(currentArticle, reCiterArticle);
+				if (isFirstNameMatch) {
+					return id;
+				}
+			}
 		}
 		return currentMaxId; // found a cluster.
 	}
 
 	/**
-	 * 
+	 * computes coauthor matches of this article with all current clusters.
 	 * @param currentArticle
 	 * @param targetAuthor
 	 * @return
 	 */
-	// computes coauthor matches of this article with all current clusters.
 	private Map<Integer, Integer> computeCoauthorMatch(ReCiterArticle currentArticle, TargetAuthor targetAuthor) {
 		Map<Integer, Integer> coauthorsCount = new HashMap<Integer, Integer>(); // ClusterId to number of coauthors.
 		for (ReCiterCluster reCiterCluster : finalCluster.values()) {
@@ -643,7 +742,7 @@ public class ReCiterClusterer implements Clusterer {
 
 	public String getClusterInfo() {
 		StringBuilder sb = new StringBuilder();
-		
+
 		for (Entry<Integer, ReCiterCluster> cluster : finalCluster.entrySet()) {
 			sb.append("Cluster id: " + cluster.getKey() + "= ");
 			for (ReCiterArticle reCiterArticle : cluster.getValue().getArticleCluster()) {

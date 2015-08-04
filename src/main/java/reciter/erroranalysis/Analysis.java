@@ -28,6 +28,8 @@ public class Analysis {
 		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
 		List<String> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
 		
+		System.out.println("Analysis.java: " + goldStandardPmids);
+		
 		analysis.setGoldStandardSize(goldStandardPmids.size());
 		analysis.setSelectedClusterSize(finalCluster.get(selection).getArticleCluster().size());
 		int numTruePos = 0;
