@@ -65,7 +65,8 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {
 			pubmedXmlParser.setXmlInputSource(xmlFile);
-			pubmedArticleList.addAll(pubmedXmlParser.parse());
+			List<PubmedArticle> list =pubmedXmlParser.parse();
+			if(list!=null)pubmedArticleList.addAll(list);
 		}
 		return pubmedArticleList;
 	}

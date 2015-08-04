@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import reciter.lucene.DocumentVector;
 import reciter.lucene.DocumentVectorType;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.tfidf.Document;
 import reciter.tfidf.TfIdf;
 import database.dao.BoardCertificationDataDao;
@@ -222,24 +223,41 @@ public class ReadBoardCertifications {
 	 * @param article
 	 */
 	public double getBoardCertifications(String cwid, List<ReCiterArticle> articles){
-		String str=getBoardCertifications(cwid);		
-		Document doc = new Document(str);
-		List<Document> documents = new ArrayList<Document>();
-		TfIdf idf = new TfIdf(documents);
-		double[] vectorValues = idf.createVector(doc);
-		//double docNorm = idf.norm(vectorValues);
-		SparseRealVector docVector = new OpenMapRealVector(vectorValues);
 		double sim=0;
-		documents.add(doc);
-		for(ReCiterArticle article: articles){
-			Map<DocumentVectorType, DocumentVector> vectors = article.getDocumentVectors();
-			if(vectors!=null){
-				for(Map.Entry<DocumentVectorType, DocumentVector> entry:vectors.entrySet()){
-					DocumentVector vector = entry.getValue();
-					DocumentVectorType vtype=entry.getKey();				
-					double[] articleVectors = vector.getVector().toArray();
-					sim=sim+idf.cosineSimilarity(vectorValues, articleVectors);
+		String str=getBoardCertifications(cwid);
+		if(str!=null && !str.trim().equals("")){
+			Document doc = new Document(str);
+			List<Document> documents = new ArrayList<Document>();		
+			//SparseRealVector docVector = new OpenMapRealVector(vectorValues);
+			
+			int docSize=1;
+			doc.setId(docSize);
+			++docSize;
+			documents.add(doc);
+			for(ReCiterArticle article: articles){
+				StringBuilder sb = new StringBuilder();
+				for(Keyword k: article.getArticleKeywords().getKeywords()){
+					sb.append(k.getKeyword()).append(" ");
 				}
+				Document articleDoc = new Document(sb.toString().trim().replace('/', ' ').replace("and", " ").replace("the", " ").replace("medicine", " ").replace("-", " ").replace("with", " ").replace("in", " ").replace("med", " ").replace("adult", " ").replace("general", " ").replaceAll("\\s+", " ").trim());
+				doc.setId(docSize);
+				documents.add(articleDoc);
+				/*Map<DocumentVectorType, DocumentVector> vectors = article.getDocumentVectors();
+				if(vectors!=null){
+					for(Map.Entry<DocumentVectorType, DocumentVector> entry:vectors.entrySet()){
+						DocumentVector vector = entry.getValue();
+						DocumentVectorType vtype=entry.getKey();				
+						double[] articleVectors = vector.getVector().toArray();
+						sim=sim+idf.cosineSimilarity(vectorValues, articleVectors);
+					}
+				}*/
+			}
+			TfIdf tfidf = new TfIdf(documents);
+			tfidf.computeTfIdf();
+			double[] vectorValues = tfidf.createVector(doc);
+			for(int i=1; i<documents.size();i++){			
+				double[] articleVector=tfidf.createVector(documents.get(i));
+				sim = sim + tfidf.cosineSimilarity(vectorValues, articleVector);
 			}
 		}
 		slf4jLogger.info("Board Certifications For CWID("+cwid+") => "+str + " => SIM: "+sim);

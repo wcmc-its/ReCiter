@@ -297,10 +297,10 @@ public class ReCiterClusterer implements Clusterer {
 				
 				sim= sim+efr.getBoardCertifications(cwid,finalCluster.get(id).getArticleCluster());
 				//slf4jLogger.info("Board Certifications Sim Score for CWID("+cwid+" => " + sim);
-				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+				//for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 				//					// TODO if TargetAuthor.getInstance()'s board certification matches the `article` object. Increase `sim`.
 					//if(articles.contains(article))sim=sim+1;
-				}
+				//}
 			}
 			//
 			//			// Github issue: https://github.com/wcmc-its/ReCiter/issues/49
