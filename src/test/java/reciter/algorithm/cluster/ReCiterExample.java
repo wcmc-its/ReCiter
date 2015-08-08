@@ -1,20 +1,19 @@
 package reciter.algorithm.cluster;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.erroranalysis.Analysis;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.AuthorAffiliation;
-import reciter.model.author.AuthorEducation;
-import reciter.model.author.AuthorName;
-import reciter.model.author.TargetAuthor;
 import database.dao.IdentityDao;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
@@ -36,11 +35,31 @@ public class ReCiterExample {
 		slf4jLogger.info("Average Precision: " + totalPrecision / numCwids);
 		slf4jLogger.info("Average Recall: " + totalRecall / numCwids);
 
-		runExample("Darwich", "A", "aad2004");
+//		runExample("Aledo", "A", "aaledo");
+		
+		List<String> cwids = getListOfCwids();
+		IdentityDao identityDao = new IdentityDaoImpl();
+		
+		for (String cwid : cwids) {
+			Identity identity = identityDao.getIdentityByCwid(cwid);
+			String firstInitial = identity.getFirstInitial();
+			String lastName = identity.getLastName();
+			runExample(lastName, firstInitial, cwid);
+		}
 		
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
+	}
+
+	public static List<String> getListOfCwids() {
+		List<String> cwids = new ArrayList<String>();
+		try (Stream<String> stream = Files.lines(Paths.get("src/main/resources/data/test_data_cwid_list.txt"),Charset.defaultCharset())) {
+			stream.forEach(e -> cwids.add(e));
+		} catch (IOException ex) {
+			// do something with exception
+		} 
+		return cwids;
 	}
 
 	/**
@@ -50,14 +69,14 @@ public class ReCiterExample {
 	 * @param cwid
 	 */
 	public static void runExample(String lastName, String firstInitial, String cwid) {
-		
+
 		// Fetch the articles for this person.
 		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(lastName, firstInitial, cwid);
-		
+
 		// Perform clustering.
 		ReCiterClusterer clusterer = new ReCiterClusterer(cwid);
 		Analysis analysis = clusterer.cluster(reCiterArticleList);
-		
+
 		System.out.println(clusterer.getClusterInfo());
 		System.out.println(analysis.getPrecision());
 		System.out.println(analysis.getRecall());

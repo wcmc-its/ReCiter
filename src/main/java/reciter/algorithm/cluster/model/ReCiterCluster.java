@@ -118,12 +118,30 @@ public class ReCiterCluster {
 			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
 				// For each author in the currentArticle.
 				for (ReCiterAuthor currentAuthor : currentArticle.getArticleCoAuthors().getAuthors()) {
+					
+					if (currentArticle.getArticleId() == 19805687) {
+						slf4jLogger.debug("19805687: " + currentAuthor.getAuthorName().getFirstName() + " " + currentAuthor.getAuthorName().getLastName());
+					}
+					if (currentArticle.getArticleId() == 24441288) {
+						slf4jLogger.debug("24441288: " + currentAuthor.getAuthorName().getFirstName() + " " + currentAuthor.getAuthorName().getLastName());
+					}
+					
 					// Check if the names match.
-					if (currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName()) 
+					if ((currentAuthor.getAuthorName().isFullNameMatch(author.getAuthorName()) 
 							&& !currentAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())
-							&& !author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
+							&& !author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()))) {
 						
 						matchingCoauthorCount += 1;
+						
+					} else if (currentAuthor.getAffiliation() != null && currentAuthor.getAffiliation().getAffiliationName() != null
+							&& author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
+						
+						if (currentAuthor.getAuthorName().firstInitialLastNameMatch(author.getAuthorName()) 
+							) {
+							
+//							slf4jLogger.debug(currentAuthor.getAuthorName() + " " + author.getAuthorName());
+								matchingCoauthorCount += 1;
+							}
 						
 					}
 				}

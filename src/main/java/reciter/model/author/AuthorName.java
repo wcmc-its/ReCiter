@@ -230,4 +230,10 @@ public class AuthorName {
 	public void setNameVariants() {
 		this.nameVariants = variants("coauthor", 1);
 	}
+
+	@Override
+	public String toString() {
+		return "AuthorName [firstName=" + firstName + ", middleName="
+				+ middleName + ", lastName=" + lastName + "]";
+	}
 }

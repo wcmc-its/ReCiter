@@ -92,7 +92,7 @@ public class ReCiterClusterer implements Clusterer {
 	public int getSimilarCluster() {
 		int clusterId = -1;
 		for (Entry<Integer, ReCiterCluster> reCiterCluster : finalCluster.entrySet()) {
-
+			
 		}
 		return clusterId;
 	}
@@ -148,13 +148,17 @@ public class ReCiterClusterer implements Clusterer {
 		}
 
 		// Phase 2 matching.
-		Set<Integer> clusterIds = getKeysWithMaxVal(computeClusterSelectionForTarget());
+		Map<Integer, Integer> map = computeClusterSelectionForTarget();
+		slf4jLogger.debug(map.toString());
+		Set<Integer> clusterIds = getKeysWithMaxVal(map);
 
 		int selection = -1;
 		for (int id : clusterIds) {
 			selection = id;
 			break;
 		}
+		
+		System.out.println("ReCiterClusterer.java: " + selection);
 		// Analysis to get Precision and Recall.
 		return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
 	}
@@ -201,7 +205,7 @@ public class ReCiterClusterer implements Clusterer {
 				// containsGrantCoAuthor.
 				boolean containsGrantCoAuthor = containsGrantCoAuthor(reCiterArticle, targetAuthor);
 				if (containsGrantCoAuthor) {
-					System.out.println("containsGrantCoAuthor: " + reCiterArticle.getArticleId());
+//					System.out.println("containsGrantCoAuthor: " + reCiterArticle.getArticleId());
 					if (clusterIds.containsKey(entry.getKey())) {
 						int currentCount = clusterIds.get(entry.getKey());
 						clusterIds.put(entry.getKey(), ++currentCount);
@@ -662,7 +666,19 @@ public class ReCiterClusterer implements Clusterer {
 		for (int id : clusterIdList) {
 			ReCiterCluster reCiterCluster = finalCluster.get(id);
 			for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
+				
+				/**
+				 * First Name match.
+				 */
 				boolean isFirstNameMatch = calculateFirstNameMatch(currentArticle, reCiterArticle);
+				if (isFirstNameMatch) {
+					return id;
+				}
+				
+				/**
+				 * Journal Match.
+				 */
+				boolean isJournalNameMatch = isJournalMatch(currentArticle, reCiterArticle);
 				if (isFirstNameMatch) {
 					return id;
 				}
@@ -682,6 +698,9 @@ public class ReCiterClusterer implements Clusterer {
 		for (ReCiterCluster reCiterCluster : finalCluster.values()) {
 			int matchingCoauthors = reCiterCluster.getMatchingCoauthorCount(currentArticle, targetAuthor);
 			coauthorsCount.put(reCiterCluster.getClusterID(), matchingCoauthors);
+		}
+		if (currentArticle.getArticleId() == 19805687) {
+			slf4jLogger.debug("count=" + coauthorsCount);
 		}
 		return coauthorsCount;
 	}

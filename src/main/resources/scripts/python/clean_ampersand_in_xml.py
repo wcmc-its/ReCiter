@@ -3,7 +3,7 @@
 
 import os
 replacement = " &amp; "
-path = "../../data/pubmed/aad2004/"
+path = "../../data/pubmed/aaledo/"
 for dname, dirs, files in os.walk(path):
     for fname in files:
         fpath = os.path.join(dname, fname)
