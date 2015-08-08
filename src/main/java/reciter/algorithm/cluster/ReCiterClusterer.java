@@ -160,7 +160,11 @@ public class ReCiterClusterer implements Clusterer {
 
 		System.out.println("ReCiterClusterer.java: " + selection);
 		// Analysis to get Precision and Recall.
-		return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
+		if (selection != -1) {
+			return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
+		} else {
+			return null;
+		}
 	}
 
 	// Put the scores inside a map.

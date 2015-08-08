@@ -30,11 +30,11 @@ public class ReCiterExample {
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
 
-//		runExample("Aledo", "A", "aaledo");
-		
+		//		runExample("Aledo", "A", "aaledo");
+
 		List<String> cwids = getListOfCwids();
 		IdentityDao identityDao = new IdentityDaoImpl();
-		
+
 		for (String cwid : cwids) {
 			slf4jLogger.info("cwid=" + cwid);
 			Identity identity = identityDao.getIdentityByCwid(cwid);
@@ -42,7 +42,7 @@ public class ReCiterExample {
 			String lastName = identity.getLastName();
 			runExample(lastName, firstInitial, cwid);
 		}
-		
+
 		slf4jLogger.info("Number of cwids: " + cwids.size());
 		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
 		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
@@ -77,11 +77,16 @@ public class ReCiterExample {
 		ReCiterClusterer clusterer = new ReCiterClusterer(cwid);
 		Analysis analysis = clusterer.cluster(reCiterArticleList);
 
-		System.out.println(clusterer.getClusterInfo());
-		System.out.println("Precision=" + analysis.getPrecision());
-		totalPrecision += analysis.getPrecision();
-		System.out.println("Recall=" + analysis.getRecall());
-		totalRecall = analysis.getRecall();
+		if (analysis != null) {
+			System.out.println(clusterer.getClusterInfo());
+			System.out.println("Precision=" + analysis.getPrecision());
+			totalPrecision += analysis.getPrecision();
+			System.out.println("Recall=" + analysis.getRecall());
+			totalRecall = analysis.getRecall();
+		} else {
+			System.out.println("Precision=null");
+			System.out.println("Recall=null");
+		}
 	}
 
 	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.	
