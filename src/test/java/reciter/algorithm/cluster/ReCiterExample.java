@@ -24,16 +24,11 @@ public class ReCiterExample {
 
 	public static double totalPrecision = 0;
 	public static double totalRecall = 0;
-	public static int numCwids = 0;
 
 	public static void main(String[] args) throws IOException {
 
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
-
-		slf4jLogger.info("Number of cwids: " + numCwids);
-		slf4jLogger.info("Average Precision: " + totalPrecision / numCwids);
-		slf4jLogger.info("Average Recall: " + totalRecall / numCwids);
 
 //		runExample("Aledo", "A", "aaledo");
 		
@@ -41,12 +36,17 @@ public class ReCiterExample {
 		IdentityDao identityDao = new IdentityDaoImpl();
 		
 		for (String cwid : cwids) {
+			slf4jLogger.info("cwid=" + cwid);
 			Identity identity = identityDao.getIdentityByCwid(cwid);
 			String firstInitial = identity.getFirstInitial();
 			String lastName = identity.getLastName();
 			runExample(lastName, firstInitial, cwid);
 		}
 		
+		slf4jLogger.info("Number of cwids: " + cwids.size());
+		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
+		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
+
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
@@ -79,7 +79,9 @@ public class ReCiterExample {
 
 		System.out.println(clusterer.getClusterInfo());
 		System.out.println(analysis.getPrecision());
+		totalPrecision += analysis.getPrecision();
 		System.out.println(analysis.getRecall());
+		totalRecall = analysis.getRecall();
 	}
 
 	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.	
