@@ -78,9 +78,9 @@ public class ReCiterExample {
 		Analysis analysis = clusterer.cluster(reCiterArticleList);
 
 		System.out.println(clusterer.getClusterInfo());
-		System.out.println(analysis.getPrecision());
+		System.out.println("Precision=" + analysis.getPrecision());
 		totalPrecision += analysis.getPrecision();
-		System.out.println(analysis.getRecall());
+		System.out.println("Recall=" + analysis.getRecall());
 		totalRecall = analysis.getRecall();
 	}
 
