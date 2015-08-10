@@ -11,12 +11,12 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.erroranalysis.Analysis;
-import reciter.model.ReCiterArticleFetcher;
-import reciter.model.article.ReCiterArticle;
 import database.dao.IdentityDao;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
+import reciter.erroranalysis.Analysis;
+import reciter.model.ReCiterArticleFetcher;
+import reciter.model.article.ReCiterArticle;
 
 public class ReCiterExample {
 
@@ -30,7 +30,7 @@ public class ReCiterExample {
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
 
-		//		runExample("Aledo", "A", "aaledo");
+//		runExample("Kacker", "A", "ask9001");
 
 		List<String> cwids = getListOfCwids();
 		IdentityDao identityDao = new IdentityDaoImpl();
@@ -78,15 +78,17 @@ public class ReCiterExample {
 		Analysis analysis = clusterer.cluster(reCiterArticleList);
 
 		if (analysis != null) {
-			System.out.println(clusterer.getClusterInfo());
-			System.out.println("Precision=" + analysis.getPrecision());
+			slf4jLogger.info(clusterer.getClusterInfo());
+			slf4jLogger.info("Precision=" + analysis.getPrecision());
 			totalPrecision += analysis.getPrecision();
-			System.out.println("Recall=" + analysis.getRecall());
-			totalRecall = analysis.getRecall();
+			slf4jLogger.info("Recall=" + analysis.getRecall());
+			totalRecall += analysis.getRecall();
+			slf4jLogger.info("False Positive List: " + analysis.getFalsePositiveList());
 		} else {
-			System.out.println("Precision=null");
-			System.out.println("Recall=null");
+			slf4jLogger.info("Precision=null");
+			slf4jLogger.info("Recall=null");
 		}
+		slf4jLogger.info("\n");
 	}
 
 	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.	

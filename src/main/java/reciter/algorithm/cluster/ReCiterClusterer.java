@@ -15,9 +15,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.dao.IdentityDao;
+import database.dao.impl.IdentityDaoImpl;
+import database.dao.impl.MatchingDepartmentsJournalsDao;
+import database.model.Identity;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.tfidf.Document;
 import reciter.erroranalysis.Analysis;
+import reciter.erroranalysis.AnalysisReCiterCluster;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorEducation;
@@ -27,10 +32,6 @@ import reciter.model.author.TargetAuthor;
 import reciter.utils.reader.YearDiscrepacyReader;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
-import database.dao.IdentityDao;
-import database.dao.impl.IdentityDaoImpl;
-import database.dao.impl.MatchingDepartmentsJournalsDao;
-import database.model.Identity;
 
 public class ReCiterClusterer implements Clusterer {
 
@@ -150,21 +151,33 @@ public class ReCiterClusterer implements Clusterer {
 		// Phase 2 matching.
 		Map<Integer, Integer> map = computeClusterSelectionForTarget();
 		slf4jLogger.debug(map.toString());
-		Set<Integer> clusterIds = getKeysWithMaxVal(map);
+		
+//		Set<Integer> clusterIds = getKeysWithMaxVal(map);
+//
+//		int selection = -1;
+//		for (int id : clusterIds) {
+//			selection = id;
+//			break;
+//		}
 
-		int selection = -1;
-		for (int id : clusterIds) {
-			selection = id;
-			break;
+		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
+		Map<String, Integer> authorCount = analyisReCiterCluster.getTargetAuthorNameCounts(reciterArticleList, targetAuthor);
+		for (Entry<String, Integer> entry : authorCount.entrySet()) {
+			slf4jLogger.info(entry.getKey() + ": " + entry.getValue());
 		}
-
-		System.out.println("ReCiterClusterer.java: " + selection);
+		slf4jLogger.info("Number of different author names: " + authorCount.size());
+		
+//		slf4jLogger.info("Phase 2 selection: " + selection);
 		// Analysis to get Precision and Recall.
-		if (selection != -1) {
-			return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
+		if (map.size() > 0) {
+//			return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
+			return Analysis.performAnalysis(finalCluster, map.keySet(), targetAuthor.getCwid());
 		} else {
 			return null;
 		}
+		
+		// Analysis of Author Names.
+		
 	}
 
 	// Put the scores inside a map.
@@ -231,19 +244,19 @@ public class ReCiterClusterer implements Clusterer {
 	public int selectCandidateCluster(ReCiterArticle currentArticle, TargetAuthor targetAuthor) {
 
 		// Get cluster ids with max number of coauthor matches.
-		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle, targetAuthor));
-
-		// If groups have matching co-authors, the program selects the group that has the most matching names.
-		if (clusterIdSet.size() == 1) {
-			for (int id : clusterIdSet) {
-				return id;
-			}
-		}
-
-		// If two or more of these have the same number of coauthors, the one with the highest matching score is selected.
-		if (clusterIdSet.size() > 1) {
-			return getIdWithMostContentSimilarity(clusterIdSet, currentArticle);
-		}
+//		Set<Integer> clusterIdSet = getKeysWithMaxVal(computeCoauthorMatch(currentArticle, targetAuthor));
+//
+//		// If groups have matching co-authors, the program selects the group that has the most matching names.
+//		if (clusterIdSet.size() == 1) {
+//			for (int id : clusterIdSet) {
+//				return id;
+//			}
+//		}
+//
+//		// If two or more of these have the same number of coauthors, the one with the highest matching score is selected.
+//		if (clusterIdSet.size() > 1) {
+//			return getIdWithMostContentSimilarity(clusterIdSet, currentArticle);
+//		}
 
 		// If groups have no matching co-authors, the group with the highest 
 		// matching (cosine) score is selected, provided that the score
@@ -505,24 +518,28 @@ public class ReCiterClusterer implements Clusterer {
 	/**
 	 * https://github.com/wcmc-its/ReCiter/issues/59.
 	 */
-	public boolean calculateFirstNameMatch(ReCiterArticle reCiterArticle, ReCiterArticle articleInCluster) {
+	public boolean calculateNameMatch(ReCiterArticle reCiterArticle, ReCiterArticle articleInCluster) {
 		for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			for (ReCiterAuthor clusterAuthor : articleInCluster.getArticleCoAuthors().getAuthors()) {
 				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
 						clusterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
 
-					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstName())) {
+					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstName())
+							&&
+						reCiterAuthor.getAuthorName().getMiddleInitial().equalsIgnoreCase(clusterAuthor.getAuthorName().getMiddleInitial())) {
+//						slf4jLogger.info(reCiterAuthor.getAuthorName().getFirstName() + " | " + clusterAuthor.getAuthorName().getFirstName());
 						return true;
-					} else {
-						if (reCiterAuthor.getAuthorName().getFirstInitial().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstInitial())) {
-							// calculate the probability of how common the name is.
-							// calculate the levenshtein distance.
-							int levenshteinDist = distance(reCiterAuthor.getAuthorName().getFirstName(), clusterAuthor.getAuthorName().getFirstName());
-							if (levenshteinDist <= 3) {
-								return true;
-							}
-						}
-					}
+					} 
+//					else {
+//						if (reCiterAuthor.getAuthorName().getFirstInitial().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstInitial())) {
+//							// calculate the probability of how common the name is.
+//							// calculate the levenshtein distance.
+//							int levenshteinDist = distance(reCiterAuthor.getAuthorName().getFirstName(), clusterAuthor.getAuthorName().getFirstName());
+//							if (levenshteinDist <= 1) {
+//								return true;
+//							}
+//						}
+//					}
 				}
 			}
 		}
@@ -674,7 +691,7 @@ public class ReCiterClusterer implements Clusterer {
 				/**
 				 * First Name match.
 				 */
-				boolean isFirstNameMatch = calculateFirstNameMatch(currentArticle, reCiterArticle);
+				boolean isFirstNameMatch = calculateNameMatch(currentArticle, reCiterArticle);
 				if (isFirstNameMatch) {
 					return id;
 				}
@@ -682,10 +699,10 @@ public class ReCiterClusterer implements Clusterer {
 				/**
 				 * Journal Match.
 				 */
-				boolean isJournalNameMatch = isJournalMatch(currentArticle, reCiterArticle);
-				if (isFirstNameMatch) {
-					return id;
-				}
+//				boolean isJournalNameMatch = isJournalMatch(currentArticle, reCiterArticle);
+//				if (isJournalNameMatch) {
+//					return id;
+//				}
 			}
 		}
 		return currentMaxId; // found a cluster.
@@ -770,7 +787,7 @@ public class ReCiterClusterer implements Clusterer {
 		StringBuilder sb = new StringBuilder();
 
 		for (Entry<Integer, ReCiterCluster> cluster : finalCluster.entrySet()) {
-			sb.append("Cluster id: " + cluster.getKey() + "= ");
+			sb.append("\nCluster id: " + cluster.getKey() + "= ");
 			for (ReCiterArticle reCiterArticle : cluster.getValue().getArticleCluster()) {
 				sb.append(reCiterArticle.getArticleId() + ", ");
 			}
