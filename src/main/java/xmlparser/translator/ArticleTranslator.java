@@ -2,6 +2,8 @@ package xmlparser.translator;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleKeywords;
@@ -14,6 +16,7 @@ import xmlparser.pubmed.model.MedlineCitationKeyword;
 import xmlparser.pubmed.model.MedlineCitationKeywordList;
 import xmlparser.pubmed.model.MedlineCitationMeshHeading;
 import xmlparser.pubmed.model.PubmedArticle;
+import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 
 /**
@@ -58,7 +61,7 @@ public class ArticleTranslator {
 			// PubMed sometimes concatenates the first name and middle initial into <ForeName> xml tag.
 			// This extracts the first name and middle initial.
 
-			// Sometimes forename doesn't exit in XML (ie: 8661541). So initials are used instead.
+			// Sometimes forename doesn't exist in XML (ie: 8661541). So initials are used instead.
 			// Forename take precedence. If foreName doesn't exist, use initials. If initials doesn't exist, use null.
 			// TODO: Deal with collective names in XML.
 			if (lastName != null) {
@@ -107,6 +110,37 @@ public class ArticleTranslator {
 		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
 		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlineCitation().getArticle().getJournal().getIsoAbbreviation());
 
+		if (scopusArticle != null) {
+			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
+				String scopusAuthorFirstName = scopusAuthor.getGivenName();
+				String scopusAuthorLastName = scopusAuthor.getSurname();
+				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+					String reCiterAuthorLastName = reCiterAuthor.getAuthorName().getLastName();
+					if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, reCiterAuthorLastName)) {
+						String reCiterAuthorFirstName = reCiterAuthor.getAuthorName().getFirstName();
+						String reCiterAuthorFirstInitial = reCiterAuthor.getAuthorName().getFirstInitial();
+						if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
+							if (scopusAuthorFirstName.substring(0, 1).equals(reCiterAuthorFirstInitial)) {
+								if (scopusAuthorFirstName.length() > reCiterAuthorFirstName.length()) {
+//									System.out.println("[" + scopusAuthorFirstName + "], [" + reCiterAuthorFirstName + "]");
+
+									if (reCiterAuthorFirstName.length() == 1) {
+
+										int indexOfWhiteSpace = scopusAuthorFirstName.indexOf(" ");
+										scopusAuthorFirstName = scopusAuthorFirstName.replaceAll("[\\.]", "");
+										if (indexOfWhiteSpace == -1) {
+											reCiterAuthor.getAuthorName().setFirstName(scopusAuthorFirstName);
+										} else {
+											reCiterAuthor.getAuthorName().setFirstName(scopusAuthorFirstName.substring(0, indexOfWhiteSpace));
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		return reCiterArticle;
 	}
 }

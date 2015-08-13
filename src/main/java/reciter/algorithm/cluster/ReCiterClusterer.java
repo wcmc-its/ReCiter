@@ -83,8 +83,7 @@ public class ReCiterClusterer implements Clusterer {
 
 		return getAuthorFromIdentity(identity);
 	}
-
-
+	
 	public double similarity(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 
 		return 0;
@@ -791,7 +790,6 @@ public class ReCiterClusterer implements Clusterer {
 			for (ReCiterArticle reCiterArticle : cluster.getValue().getArticleCluster()) {
 				sb.append(reCiterArticle.getArticleId() + ", ");
 			}
-			sb.append("\n");
 		}
 		return sb.toString();
 	}

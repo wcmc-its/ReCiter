@@ -6,9 +6,11 @@ import java.util.Map;
  * A class model for representing a Scopus XML article.
  * 
  * <p>
- * A map consisting of afid to affiliation objects. A map is used instead of a list because it allows faster
- * retrieval based on afid. And sometimes, a Scopus article contains duplicate affiliation information inside
- * XML, so using a map will allow us to store only distinct affiliation based on afid.
+ * A ScopusArticle consists of a map of afids to affiliations.
+ * 
+ * Note:
+ * Sometimes scopus articles contains duplicate affiliation information.
+ * However, this problem is resolved by using a map to store only distinct affiliation based on afid.
  * </p>
  * 
  * @author jil3004

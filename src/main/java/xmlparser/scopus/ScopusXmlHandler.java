@@ -11,7 +11,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import reciter.algorithm.cluster.ReCiterExample;
 import xmlparser.scopus.model.Affiliation;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;

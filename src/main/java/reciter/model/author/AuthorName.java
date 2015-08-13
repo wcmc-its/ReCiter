@@ -40,11 +40,6 @@ public class AuthorName {
 	private Set<AuthorName> nameVariants;
 
 	/**
-	 * Logger.
-	 */
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(AuthorName.class);	
-
-	/**
 	 * Constructs an author provided a first name, middle name, and last name.
 	 * 
 	 * @param firstName First name.
@@ -209,6 +204,9 @@ public class AuthorName {
 
 	public String getFirstName() {
 		return firstName;
+	}
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
 	}
 	public String getFirstInitial() {
 		return firstInitial;

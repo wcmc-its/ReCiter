@@ -18,13 +18,12 @@ public class ReCiterArticleFetcher {
 		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
 
 		// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
-		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
 
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
+			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, pmid);
-
 			reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle, scopusArticle));
 		}
 		return reCiterArticleList;
