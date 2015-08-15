@@ -1,5 +1,6 @@
 package reciter.model.article;
 
+import java.util.List;
 import java.util.Map;
 
 import reciter.erroranalysis.AnalysisObject;
@@ -11,6 +12,7 @@ import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.completeness.ArticleCompleteness;
 import reciter.model.completeness.ReCiterCompleteness;
+import database.model.IdentityDirectory;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
@@ -29,7 +31,19 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private boolean isClusterOriginator;
 	private String scopusAffiliation;
 	private AnalysisObject analysisObject;
+	private List<IdentityDirectory> aliasesList;
 	
+	
+	
+	public List<IdentityDirectory> getAliasesList() {
+		return aliasesList;
+	}
+
+	public void setAliasesList(
+			List<IdentityDirectory> identityDirectoryList) {
+		this.aliasesList = identityDirectoryList;
+	}
+
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID

@@ -9,12 +9,20 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
+import database.dao.WCMCYearDescrepanciesDao;
+
 public class YearDiscrepacyReader {
 
 	private static Map<Integer, Double> yearDiscrepancyMap = new HashMap<Integer, Double>();
 	private static final String FILE_LOCATION = "src/main/resources/data/DiscrepanciesYears.tab";
 	
+	// Read DiscrepanciesYears.tab data from the database #98 
 	public static void init() {
+		WCMCYearDescrepanciesDao wydDao = new WCMCYearDescrepanciesDao();
+		yearDiscrepancyMap = wydDao.getWCMCYearDescrepancies();
+	}
+	
+	public static void init_copy() {
 		CSVFormat format = CSVFormat.RFC4180.withHeader().withDelimiter(',');
         
         //initialize the CSVParser object

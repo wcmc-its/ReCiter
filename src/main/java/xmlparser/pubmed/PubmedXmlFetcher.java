@@ -83,53 +83,95 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	 * @throws ParserConfigurationException
 	 */
 	public void fetch(String lastName, String firstName, String cwid) {
-
+		int numPubMedArticles = 0;
 		File dir = new File(getDirectory() + cwid);
-		int numPubMedArticles = -1;
+		
 		// Fetch only if directory doesn't exist.
-		if (!dir.exists()) {
-			String firstInitial = firstName.substring(0, 1);
-
-			// Get the count (number of publications for this query).
-			PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
-			lastName = lastName.replaceAll(" ", "%20");
-			pubmedXmlQuery.setTerm(lastName + "%20" + firstInitial + "[au]");
-
-			// set retmax = 1 so that query can be executed fast.
-			pubmedXmlQuery.setRetMax(1);
-
-			String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-			PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
-			numPubMedArticles = xmlHandler.getCount();
-
-			slf4jLogger.info("Number of articles need to be retrieved for : " + cwid + " is "+ numPubMedArticles);
-
-			// Retrieve the publications 10,000 records at one time and store to disk.
-			int retMax = 10000;
-			pubmedXmlQuery.setRetMax(retMax);
-			int currentRetStart = 0;
-
-			// Number of partitions that we need to finish retrieving all XML.
-			int numSteps = (int) Math.ceil((double)numPubMedArticles / retMax); 
-
-			// Use the retstart value to iteratively fetch all XMLs.
-			for (int i = 0; i < numSteps; i++) {
-				// Get webenv value.
-				pubmedXmlQuery.setRetStart(currentRetStart);
-				eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-				pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
-
-				// Use the webenv value to retrieve xml.
-				String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
-
-				// Save the xml file to directory data/xml/cwid
-				saveXml(eFetchUrl, cwid, cwid + "_" + i);
-
-				// Update the retstart value.
-				currentRetStart += pubmedXmlQuery.getRetMax();
-				pubmedXmlQuery.setRetStart(currentRetStart);
+		if (!dir.exists()) {			
+			//  For each of an author’s aliases, modify initial query based on lexical rules #100 
+			List<String> queries = new ArrayList<String>();
+			// Circumstance 3. The author’s name has a suffix.
+			
+			
+			// Circumstance 4. The author’s last name contains a space or hyphen
+			String firstInitial = "%20" + firstName.substring(0, 1)+ "[au]";
+			
+			queries.add(lastName.replaceAll(" ", "%20") + firstInitial); 
+			if(lastName.trim().indexOf(" ")!=-1){
+				String[] lastNameTerms = lastName.split(" ");
+				String term = lastName.replaceAll(" ", "-") + firstInitial;
+				if(!queries.contains(term))queries.add(term);
+				
+				term = lastNameTerms[0]+","+firstInitial; //FirstTermFromLastName, FirstInitial[au]
+				if(!queries.contains(term))queries.add(term);
+				term=lastNameTerms[0]+"-"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName-LastTermFromLastName, FirstInitial[au]
+				if(!queries.contains(term))queries.add(term);
+				term=lastNameTerms[0]+"%20"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName LastTermFromLastName, FirstInitial[au]
 			}
+			
+			if(lastName.trim().indexOf("-")!=-1){
+				String[] lastNameTerms = lastName.split("-");
+				String term = lastNameTerms[0]+","+firstInitial; //FirstTermFromLastName, FirstInitial[au]
+				if(!queries.contains(term))queries.add(term);
+				term=lastNameTerms[0]+"-"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName-LastTermFromLastName, FirstInitial[au]
+				if(!queries.contains(term))queries.add(term);
+			}
+			
+			// Circumstance 5. The author’s first name consists of a single letter
+			
+			// 
+			
+			for(String query: queries){			
+				// Get the count (number of publications for this query).
+				PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
+				pubmedXmlQuery.setTerm(query);
+				numPubMedArticles = numPubMedArticles + fetch(pubmedXmlQuery, cwid, numPubMedArticles);
+			}
+			slf4jLogger.info("Number of articles retrieved for : " + cwid + " is "+ numPubMedArticles);
 		}
+	}
+	
+	/**
+	 * Fetch all the publications for the pubmedXmlQuery in PubMed and store it on disk 
+	 * @param pubmedXmlQuery
+	 * @param cwid
+	 * @return numPubMedArticles
+	 */
+	private int fetch(PubmedXmlQuery pubmedXmlQuery,String cwid, int startPos){
+		int numPubMedArticles = -1;
+		// set retmax = 1 so that query can be executed fast.
+		pubmedXmlQuery.setRetMax(1);
+
+		String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+		PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
+		numPubMedArticles = xmlHandler.getCount();		
+
+		// Retrieve the publications 10,000 records at one time and store to disk.
+		int retMax = 10000;
+		pubmedXmlQuery.setRetMax(retMax);
+		int currentRetStart = 0;
+
+		// Number of partitions that we need to finish retrieving all XML.
+		int numSteps = (int) Math.ceil((double)numPubMedArticles / retMax); 
+
+		// Use the retstart value to iteratively fetch all XMLs.
+		for (int i = startPos; i < (startPos+numSteps); i++) {
+			// Get webenv value.
+			pubmedXmlQuery.setRetStart(currentRetStart);
+			eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+			pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
+
+			// Use the webenv value to retrieve xml.
+			String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
+
+			// Save the xml file to directory data/xml/cwid
+			saveXml(eFetchUrl, cwid, cwid + "_" + i);
+
+			// Update the retstart value.
+			currentRetStart += pubmedXmlQuery.getRetMax();
+			pubmedXmlQuery.setRetStart(currentRetStart);
+		}
+		return numSteps;
 	}
 
 	/**

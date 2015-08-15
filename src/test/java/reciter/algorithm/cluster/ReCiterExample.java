@@ -39,8 +39,12 @@ import xmlparser.scopus.ScopusXmlFetcher;
 import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
 import database.dao.ArticleDao;
+import database.dao.GoldStandardPmidDao;
 import database.dao.IdentityDegreeDao;
+import database.dao.IdentityDirectoryDao;
+import database.model.GoldStandardPmid;
 import database.model.IdentityDegree;
+import database.model.IdentityDirectory;
 
 public class ReCiterExample {
 
@@ -130,7 +134,9 @@ public class ReCiterExample {
 		targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation + " " + department)));		
 		TargetAuthor.getInstance().setCwid(cwid);
 		targetAuthorArticle.setArticleKeywords(new ReCiterArticleKeywords());
-
+		IdentityDirectoryDao dao = new IdentityDirectoryDao();	
+		List<IdentityDirectory> identityDurectoryList = dao.getIdentityDirectoriesByCwid(cwid.toLowerCase());
+		targetAuthorArticle.setAliasesList(identityDurectoryList);
 		for (String keyword : authorKeywords.split(",")) {
 			targetAuthorArticle.getArticleKeywords().addKeyword(keyword);
 		}
@@ -163,7 +169,15 @@ public class ReCiterExample {
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 			List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
-
+			//  Use target author's known publications to populate first cluster #22
+			GoldStandardPmidDao gspDao = new GoldStandardPmidDao();
+			List<GoldStandardPmid> gspList = gspDao.getGoldStandardPmidsByCwid(cwid);
+			for(GoldStandardPmid gsp: gspList){
+				ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, gsp.getPmid());
+				
+				// TODO - needs to get the ReCiterArticle from pmid
+			}
+			// 
 			for (PubmedArticle pubmedArticle : pubmedArticleList) {
 				String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
 				ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid, pmid);

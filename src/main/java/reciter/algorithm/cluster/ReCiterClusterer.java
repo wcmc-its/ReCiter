@@ -1,5 +1,6 @@
 package reciter.algorithm.cluster;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,10 +24,12 @@ import xmlparser.pubmed.model.MedlineCitationMeshHeadingDescriptorName;
 import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.ScopusXmlFetcher;
 import xmlparser.scopus.model.ScopusArticle;
+import database.dao.CoauthorAffiliationsDao;
 import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
 import database.dao.IdentityEducationDao;
 import database.dao.MatchingDepartmentsJournalsDao;
+import database.model.CoauthorAffiliations;
 import database.model.Identity;
 
 public class ReCiterClusterer implements Clusterer {
@@ -179,6 +182,26 @@ public class ReCiterClusterer implements Clusterer {
 					}
 				}
 				
+			}
+			
+			//  Assign Phase Two score to reflect the extent to which candidate articles have authors with affiliations that occur frequently with WCMC authors #74 
+			if(selectingTarget){
+				double score = 0;
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					List<ReCiterAuthor> coAuthors = article.getArticleCoAuthors().getCoAuthors();
+					CoauthorAffiliationsDao dao = new CoauthorAffiliationsDao();
+					List<String> coAuthorAffiliations = new ArrayList<String>();
+					for(ReCiterAuthor coAuthor: coAuthors){	
+						if(coAuthor!=null && coAuthor.getAffiliation()!=null && coAuthor.getAffiliation().getAffiliation()!=null)
+						coAuthorAffiliations.add(coAuthor.getAffiliation().getAffiliation());
+					}
+					if(coAuthorAffiliations.size()>0){
+						List<CoauthorAffiliations> coAuthorAffiliationList = dao.getCoathorAffiliationsByAffiliationLabel(coAuthorAffiliations);
+						for(CoauthorAffiliations coaf: coAuthorAffiliationList){
+							score=score+coaf.getScore();
+						}
+					}
+				}
 			}
 			
 			/* Use citizenship and educational background to improve precision #97 */  
