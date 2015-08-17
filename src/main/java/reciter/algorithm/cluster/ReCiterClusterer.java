@@ -37,9 +37,9 @@ public class ReCiterClusterer implements Clusterer {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);	
 	private Map<Integer, ReCiterCluster> finalCluster = new HashMap<Integer, ReCiterCluster>();
-	private boolean selectingTarget = false;
+//	private boolean selectingTarget = false;
 	private int selectedReCiterClusterId = -1;
-	private double similarityThreshold = 0.3;
+//	private double similarityThreshold = 0.3;
 	private TargetAuthor targetAuthor;
 
 	public ReCiterClusterer() {
@@ -57,11 +57,11 @@ public class ReCiterClusterer implements Clusterer {
 		return finalCluster;
 	}
 
-	public int assignTargetToCluster(ReCiterArticle article) {
-		selectingTarget = true;
-		selectedReCiterClusterId = selectCandidateCluster(article, targetAuthor);
-		return selectedReCiterClusterId;
-	}
+//	public int assignTargetToCluster(ReCiterArticle article) {
+//		selectingTarget = true;
+//		selectedReCiterClusterId = selectCandidateCluster(article, targetAuthor);
+//		return selectedReCiterClusterId;
+//	}
 
 	private TargetAuthor getAuthorFromIdentity(Identity identity) {
 
@@ -177,6 +177,8 @@ public class ReCiterClusterer implements Clusterer {
 		
 		// Analysis of Author Names.
 		
+		
+		
 	}
 
 	// Put the scores inside a map.
@@ -214,7 +216,6 @@ public class ReCiterClusterer implements Clusterer {
 						} else {
 							clusterIds.put(entry.getKey(), 1);
 						}
-						//						System.out.println(reCiterAuthor.getAffiliation().getAffiliationName() + " - " + reCiterArticle.getArticleId());
 					}
 				}
 
