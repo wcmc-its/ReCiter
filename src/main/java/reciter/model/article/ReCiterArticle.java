@@ -144,4 +144,26 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setMeshList(List<String> meshList) {
 		this.meshList = meshList;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + articleId;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ReCiterArticle other = (ReCiterArticle) obj;
+		if (articleId != other.articleId)
+			return false;
+		return true;
+	}
 }
