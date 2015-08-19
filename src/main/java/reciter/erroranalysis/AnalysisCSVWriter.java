@@ -21,7 +21,7 @@ public class AnalysisCSVWriter {
 	 * @param list
 	 * @throws IOException
 	 */
-	public void write(List<AnalysisObject> list, String fileName) throws IOException {
+	public void write(List<AnalysisObject> list, String fileName, double precision, double recall) throws IOException {
 		PrintWriter writer = new PrintWriter(CSV_OUTPUT + fileName + ".csv", "UTF-8");
 		CSVPrinter printer = new CSVPrinter(writer, format);
 		
@@ -66,6 +66,18 @@ public class AnalysisCSVWriter {
 			printer.print(analysisObject.getJournalSimilarityPhaseTwo());
 			printer.println();
 		}
+		
+		printer.println();
+		if (precision == -1 || recall == -1) {
+			printer.print("Precision=N/A");
+			printer.println();
+			printer.print("Recall=N/A");
+		} else {
+			printer.print("Precision=" + precision);
+			printer.println();
+			printer.print("Recall=" + recall);
+		}
+		
 		printer.close();
 		writer.close();
 	}

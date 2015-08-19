@@ -70,6 +70,12 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		return pubmedArticleList;
 	}
 
+	public static String getPubMedSearchQuery(String lastName, String firstName) {
+		lastName = lastName.replaceAll(" ", "%20");
+		String firstInitial = firstName.substring(0, 1);
+		return lastName + "%20" + firstInitial + "[au]";
+	}
+	
 	/**
 	 * Fetch all the publications for this query "lastname firstInitial[au]" in PubMed and store it on disk.
 	 * @param lastName last name of the author.
@@ -87,12 +93,10 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		int numPubMedArticles = -1;
 		// Fetch only if directory doesn't exist.
 		if (!dir.exists()) {
-			String firstInitial = firstName.substring(0, 1);
 
 			// Get the count (number of publications for this query).
 			PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
-			lastName = lastName.replaceAll(" ", "%20");
-			pubmedXmlQuery.setTerm(lastName + "%20" + firstInitial + "[au]");
+			pubmedXmlQuery.setTerm(getPubMedSearchQuery(lastName, firstName));
 
 			// set retmax = 1 so that query can be executed fast.
 			pubmedXmlQuery.setRetMax(1);

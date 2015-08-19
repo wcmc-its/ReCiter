@@ -38,7 +38,7 @@ public class ReCiterClusterer implements Clusterer {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);	
 	private Map<Integer, ReCiterCluster> finalCluster = new HashMap<Integer, ReCiterCluster>();
-	//	private boolean selectingTarget = false;
+	private Set<Integer> selectedClusterIdSet = new HashSet<Integer>();
 	private int selectedReCiterClusterId = -1;
 	//	private double similarityThreshold = 0.3;
 	private TargetAuthor targetAuthor;
@@ -81,35 +81,7 @@ public class ReCiterClusterer implements Clusterer {
 	private TargetAuthor getTargetAuthor(String cwid) {
 		IdentityDao identityDao = new IdentityDaoImpl();
 		Identity identity = identityDao.getIdentityByCwid(cwid);
-
 		return getAuthorFromIdentity(identity);
-	}
-
-	public double similarity(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-
-		return 0;
-	}
-
-	public int getSimilarCluster() {
-		int clusterId = -1;
-		for (Entry<Integer, ReCiterCluster> reCiterCluster : finalCluster.entrySet()) {
-
-		}
-		return clusterId;
-	}
-
-
-	public void cluster(List<ReCiterArticle> reCiterArticleList, TargetAuthor targetAuthor) {
-
-		double maxSimilarityScore = -1;
-		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
-			// compute similarity between reCiterArticle and targetAuthor.
-
-			double similarityScore = similarity(reCiterArticle, targetAuthor);
-			if (similarityScore > maxSimilarityScore) {
-				maxSimilarityScore = similarityScore;
-			}
-		}
 	}
 
 	/**
@@ -162,7 +134,8 @@ public class ReCiterClusterer implements Clusterer {
 
 		// Perform coauthor:
 		reAssignArticlesByCoauthorMatch(map);
-
+		setSelectedClusterIdSet(map.keySet());
+		
 		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
 		Map<String, Integer> authorCount = analyisReCiterCluster.getTargetAuthorNameCounts(reciterArticleList, targetAuthor);
 		for (Entry<String, Integer> entry : authorCount.entrySet()) {
@@ -170,12 +143,10 @@ public class ReCiterClusterer implements Clusterer {
 		}
 		slf4jLogger.info("Number of different author names: " + authorCount.size());
 
-
-		//		slf4jLogger.info("Phase 2 selection: " + selection);
 		// Analysis to get Precision and Recall.
 		if (map.size() > 0) {
 			//			return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
-			return Analysis.performAnalysis(finalCluster, map.keySet(), targetAuthor.getCwid());
+			return Analysis.performAnalysis(this);
 		} else {
 			return null;
 		}
@@ -233,7 +204,7 @@ public class ReCiterClusterer implements Clusterer {
 							if (containsMutualCoauthors) {
 								if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
 									clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
-									// TODO remove from old cluster.
+									// remove from old cluster.
 									iterator.remove();
 								} else {
 									List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
@@ -866,5 +837,13 @@ public class ReCiterClusterer implements Clusterer {
 			}
 		}
 		return sb.toString();
+	}
+
+	public Set<Integer> getSelectedClusterIdSet() {
+		return selectedClusterIdSet;
+	}
+
+	public void setSelectedClusterIdSet(Set<Integer> selectedClusterIdSet) {
+		this.selectedClusterIdSet = selectedClusterIdSet;
 	}
 }

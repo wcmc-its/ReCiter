@@ -141,6 +141,7 @@ public class ArticleTranslator {
 				}
 			}
 		}
+		reCiterArticle.setScopusArticle(scopusArticle);
 		return reCiterArticle;
 	}
 }
