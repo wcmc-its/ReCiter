@@ -124,18 +124,10 @@ public class ReCiterClusterer implements Clusterer {
 		Map<Integer, Integer> map = computeClusterSelectionForTarget();
 		slf4jLogger.debug(map.toString());
 
-		//		Set<Integer> clusterIds = getKeysWithMaxVal(map);
-		//
-		//		int selection = -1;
-		//		for (int id : clusterIds) {
-		//			selection = id;
-		//			break;
-		//		}
-
 		// Perform coauthor:
 		reAssignArticlesByCoauthorMatch(map);
 		setSelectedClusterIdSet(map.keySet());
-		
+
 		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
 		Map<String, Integer> authorCount = analyisReCiterCluster.getTargetAuthorNameCounts(reciterArticleList, targetAuthor);
 		for (Entry<String, Integer> entry : authorCount.entrySet()) {
@@ -144,17 +136,7 @@ public class ReCiterClusterer implements Clusterer {
 		slf4jLogger.info("Number of different author names: " + authorCount.size());
 
 		// Analysis to get Precision and Recall.
-		if (map.size() > 0) {
-			//			return Analysis.performAnalysis(finalCluster, selection, targetAuthor.getCwid());
-			return Analysis.performAnalysis(this);
-		} else {
-			return null;
-		}
-
-		// Analysis of Author Names.
-
-
-
+		return Analysis.performAnalysis(this);
 	}
 
 	/**
@@ -187,19 +169,19 @@ public class ReCiterClusterer implements Clusterer {
 
 	public void reAssignArticlesByCoauthorMatch(Map<Integer, Integer> selectedClusterIds) {
 		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
-		
+
 		for (int clusterId : selectedClusterIds.keySet()) {
 			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
 				// Do not iterate through the selected cluster ids's articles.
 				if (!selectedClusterIds.keySet().contains(entry.getKey())) {
 					for (ReCiterArticle reCiterArticle : finalCluster.get(clusterId).getArticleCluster()) {
-						
+
 						// Iterate through the remaining final cluster that are not selected in selectedClusterIds.
-						
+
 						Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
 						while (iterator.hasNext()) {
 							ReCiterArticle otherReCiterArticle = iterator.next();
-							
+
 							boolean containsMutualCoauthors = containsMutualCoauthors(reCiterArticle, otherReCiterArticle);
 							if (containsMutualCoauthors) {
 								if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
@@ -217,7 +199,7 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			}
 		}
-		
+
 		// Add to new cluster.
 		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
 			for (ReCiterArticle article : entry.getValue()) {

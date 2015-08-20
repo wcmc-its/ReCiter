@@ -144,7 +144,6 @@ public class Analysis {
 						entry.getValue().getArticleCluster().size(), 
 						isArticleSelected);
 				analysis.getAnalysisObjectList().add(analysisObject);
-
 			}
 		}
 
@@ -154,13 +153,15 @@ public class Analysis {
 	}
 
 	public double getPrecision() {
-		double precision = (double) truePos / selectedClusterSize;
-		return precision;
+		if (selectedClusterSize == 0) 
+			return 0;
+		return (double) truePos / selectedClusterSize;
 	}
 
 	public double getRecall() {
-		double recall = (double) truePos / goldStandardSize;
-		return recall;
+		if (goldStandardSize == 0)
+			return 0;
+		return (double) truePos / goldStandardSize;
 	}
 
 	public int getTruePos() {
