@@ -182,17 +182,18 @@ public class ReCiterClusterer implements Clusterer {
 						while (iterator.hasNext()) {
 							ReCiterArticle otherReCiterArticle = iterator.next();
 
+							// contains matching co-authors.
 							boolean containsMutualCoauthors = containsMutualCoauthors(reCiterArticle, otherReCiterArticle);
 							if (containsMutualCoauthors) {
 								if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
 									clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
-									// remove from old cluster.
-									iterator.remove();
 								} else {
 									List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
 									articleList.add(otherReCiterArticle);
 									clusterIdToReCiterArticleList.put(clusterId, articleList);
 								}
+								// remove from old cluster.
+								iterator.remove();
 							}
 						}
 					}
