@@ -125,8 +125,11 @@ java.io.FileNotFoundException: src/main/resources/data/properties/.DS_Store/.DS_
 ```
 Then, follow these steps:
 
-1. Delete any .DS_Store files in your ReCiter installation directory and its subfolders
+1. Delete any .DS_Store files in your ReCiter installation directory and its subfolders (to delete recursively, go to parent folder and use this command:
+```
+find . -name '*.DS_Store' -type f -delete
+```
 2. Install and run DeathToDSStore, available for download at https://www.aorensoftware.com/blog/2011/12/24/death-to-ds_store/
-3. Verify that there are no longer any .DS_Store files in your ReCiter installation directory and its subfolders
+3. (Optional step) Verify that there are no longer any .DS_Store files in your ReCiter installation directory and its subfolders
 4. In Eclipse, right-click the project and click refresh
 5. Try running again
