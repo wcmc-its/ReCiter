@@ -130,7 +130,7 @@ Then, follow these steps:
 find . -name '*.DS_Store' -type f -delete
 ```
 <br>
-2. Install and run DeathToDSStore, available for download at https://www.aorensoftware.com/blog/2011/12/24/death-to-ds_store/
+2. Install and run DeathToDSStore, available for download at https://www.aorensoftware.com/blog/2011/12/24/death-to-ds_store/<br>
 3. (Optional step) Verify that there are no longer any .DS_Store files in your ReCiter installation directory and its subfolders
 4. In Eclipse, right-click the project and click refresh
 5. Try running again
