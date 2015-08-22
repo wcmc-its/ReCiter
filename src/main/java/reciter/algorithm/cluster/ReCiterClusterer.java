@@ -349,6 +349,15 @@ public class ReCiterClusterer implements Clusterer {
 		return numberMatchingJournals;
 	}
 
+	public int computeYearDiscrepancy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		if (reCiterArticle.getJournal() != null) {
+			int currentYearDiff = Math.abs(reCiterArticle.getJournal().getJournalIssuePubDateYear() - 
+					targetAuthor.getEducation().getDegreeYear());
+			return currentYearDiff;
+		}
+		return -1;
+	}
+
 	public double computeYearDiscrepancy(List<ReCiterArticle> cluster, ReCiterArticle article) {
 		int yearDiff = Integer.MAX_VALUE; // Compute difference in year between candidate article and closest year in article cluster.
 		for (ReCiterArticle reCiterArticle : cluster) {
@@ -422,10 +431,6 @@ public class ReCiterClusterer implements Clusterer {
 			// Compute Similarity.
 
 		}
-		return 0;
-	}
-
-	public double computeClusterToTargetSimilarity(List<ReCiterArticle> cluster, ReCiterArticle article) {
 		return 0;
 	}
 
