@@ -70,10 +70,10 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	}
 
 	@Override
-	public void fetch(String lastName, String firstName, String cwid) {
+	public void fetch(String lastName, String firstName, String middleName, String cwid) {
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstName.substring(0, 1), cwid);
+		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstName.substring(0, 1), middleName, cwid);
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
 			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);

@@ -8,7 +8,9 @@ import java.util.Set;
 
 import database.dao.ArticleDao;
 import database.dao.IdentityDegreeDao;
+import database.dao.IdentityDirectoryDao;
 import database.model.IdentityDegree;
+import database.model.IdentityDirectory;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.lucene.DocumentIndexReader;
 import reciter.lucene.DocumentIndexWriter;
@@ -92,7 +94,9 @@ public class ReCiterExampleSingleCwid {
 		targetAuthorArticle.getArticleCoAuthors().addCoAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName, lastName), new AuthorAffiliation(affiliation + " " + department)));		
 		TargetAuthor.getInstance().setCwid(cwid);
 		targetAuthorArticle.setArticleKeywords(new ReCiterArticleKeywords());
-
+		IdentityDirectoryDao dao = new IdentityDirectoryDao();	
+		List<IdentityDirectory> identityDurectoryList = dao.getIdentityDirectoriesByCwid(cwid.toLowerCase());
+		targetAuthorArticle.setAliasesList(identityDurectoryList);
 		for (String keyword : authorKeywords.split(",")) {
 			targetAuthorArticle.getArticleKeywords().addKeyword(keyword);
 		}
@@ -124,7 +128,13 @@ public class ReCiterExampleSingleCwid {
 			// Retrieve the PubMed articles for this cwid if the articles have not been retrieved yet. 
 			PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 			pubmedXmlFetcher.setPerformRetrievePublication(reCiterConfigProperty.isPerformRetrievePublication());
-			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
+			if(identityDurectoryList!=null && identityDurectoryList.size()>0){
+				for(IdentityDirectory dir:identityDurectoryList){
+					if(cwid.equals(dir.getCwid()))
+					pubmedXmlFetcher.preparePubMedQueries(dir.getSurname(), dir.getGivenName(), dir.getMiddleName());
+				}
+			}
+			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial,middleName, cwid);
 
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();

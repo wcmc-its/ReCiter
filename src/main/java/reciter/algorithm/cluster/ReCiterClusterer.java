@@ -31,6 +31,7 @@ import database.dao.IdentityEducationDao;
 import database.dao.MatchingDepartmentsJournalsDao;
 import database.model.CoauthorAffiliations;
 import database.model.Identity;
+import database.model.IdentityDirectory;
 
 public class ReCiterClusterer implements Clusterer {
 
@@ -238,7 +239,14 @@ public class ReCiterClusterer implements Clusterer {
 				String emailOther = identity!=null && identity.getEmailOther()!=null?identity.getEmailOther():"";
 				
 				PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-				List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstName, cwid);
+				if(currentArticle.getAliasesList()!=null && currentArticle.getAliasesList().size()>0){
+					List<IdentityDirectory> aliases = currentArticle.getAliasesList();
+					for(IdentityDirectory dir:aliases){
+						if(cwid.equals(dir.getCwid()))
+						pubmedXmlFetcher.preparePubMedQueries(dir.getSurname(), dir.getGivenName(), dir.getMiddleName());
+					}
+				}
+				List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstName,TargetAuthor.getInstance().getAuthorName().getMiddleName(), cwid);
 
 				// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 				ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
@@ -407,6 +415,48 @@ public class ReCiterClusterer implements Clusterer {
 					sim = sim * YearDiscrepacyReader.getYearDiscrepancyMap().get(yearDiff);
 				}
 			}
+			
+			//// https://github.com/wcmc-its/ReCiter/issues/48
+			//In phase two matching ReCiter determines which, if any, clusters are to be assigned to the target author.
+			//The goal of this improvement is to leverage an author’s aliases to improve this selection process.
+			//Match cluster originator against first, middle, and last name to the target author’s aliases.
+			//Based on match between the target’s aliases and the names in the candidate cluster, apply scores as in the above table.
+			if (!selectingTarget) {
+				if(currentArticle.getAliasesList()!=null && currentArticle.getAliasesList().size()>0){
+					List<IdentityDirectory> aliases = currentArticle.getAliasesList();
+					List<String> firstNameList = new ArrayList<String>();
+					List<String> lastNameList = new ArrayList<String>();
+					List<String> middleNameList = new ArrayList<String>();
+					for(IdentityDirectory dir:aliases){
+						if(dir.getGivenName()!=null)firstNameList.add(dir.getGivenName().toLowerCase());
+						if(dir.getMiddleName()!=null)middleNameList.add(dir.getMiddleName().toLowerCase());
+						if(dir.getSurname()!=null)lastNameList.add(dir.getSurname().toLowerCase());
+					}
+					String fName = TargetAuthor.getInstance().getAuthorName().getFirstName();
+					String mName = TargetAuthor.getInstance().getAuthorName().getMiddleName();
+					String lName = TargetAuthor.getInstance().getAuthorName().getLastName();
+					//if(fName!=null && firstNameList.contains(fName.toLowerCase()))sim=sim+1;
+					//if(lName!=null && lastNameList.contains(lName.toLowerCase()))sim=sim+1;
+					//if(mName!=null	&& middleNameList.contains(mName.toLowerCase()))sim=sim+1;
+					
+					for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+							if(fName!=null && author.getAuthorName().getFirstName().equalsIgnoreCase(fName))sim=sim+1;
+							else sim=sim+0.2;
+							if(lName!=null && author.getAuthorName().getLastName().equalsIgnoreCase(lName))sim=sim+1;							
+							if(mName!=null && author.getAuthorName().getMiddleName()!=null && author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+1;
+							if(author.getAuthorName().getMiddleName()==null)sim=sim+0.5;
+							if(mName!=null && author.getAuthorName().getMiddleName()!=null && !author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+0.3;
+							
+							if(author.getAuthorName().getFirstName()!=null && firstNameList.contains(author.getAuthorName().getFirstName().toLowerCase()))sim=sim+1;
+							else sim=sim+0.2;
+							if(author.getAuthorName().getLastName()!=null && lastNameList.contains(author.getAuthorName().getLastName().toLowerCase()))sim=sim+1;							
+							if(author.getAuthorName().getMiddleName()!=null && middleNameList.contains(author.getAuthorName().getMiddleName().toLowerCase()))sim=sim+1;
+							if(author.getAuthorName().getMiddleName()!=null && !middleNameList.contains(author.getAuthorName().getMiddleName().toLowerCase()))sim=sim+0.3;
+						}
+					}
+				}
+			}
 
 			// https://github.com/wcmc-its/ReCiter/issues/59
 			// Context: first name is a valuable indication if a person is author for an article. 
@@ -418,6 +468,35 @@ public class ReCiterClusterer implements Clusterer {
 			// It is, sometimes, though not always, tracked in the rc_identity table. 
 			// And it is sometimes, though not always available in the article.
 			if (!selectingTarget) {
+				if(currentArticle.getAliasesList()!=null && currentArticle.getAliasesList().size()>0){
+					List<IdentityDirectory> aliases = currentArticle.getAliasesList();
+					List<String> firstNameList = new ArrayList<String>();
+					List<String> lastNameList = new ArrayList<String>();
+					List<String> middleNameList = new ArrayList<String>();
+					for(IdentityDirectory dir:aliases){
+						if(dir.getGivenName()!=null)firstNameList.add(dir.getGivenName().toLowerCase());
+						if(dir.getMiddleName()!=null)middleNameList.add(dir.getMiddleName().toLowerCase());
+						if(dir.getSurname()!=null)lastNameList.add(dir.getSurname().toLowerCase());
+					}
+					String fName = TargetAuthor.getInstance().getAuthorName().getFirstName();
+					String mName = TargetAuthor.getInstance().getAuthorName().getMiddleName();
+					String lName = TargetAuthor.getInstance().getAuthorName().getLastName();
+					//if(fName!=null && firstNameList.contains(fName.toLowerCase()))sim=sim+1;
+					//if(lName!=null && lastNameList.contains(lName.toLowerCase()))sim=sim+1;
+					//if(mName!=null	&& middleNameList.contains(mName.toLowerCase()))sim=sim+1;
+					
+					for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+						for (ReCiterAuthor author : article.getArticleCoAuthors().getCoAuthors()) {
+							if(fName!=null && author.getAuthorName().getFirstName().equalsIgnoreCase(fName))sim=sim+1;
+							else sim=sim+0.2;
+							if(lName!=null && author.getAuthorName().getLastName().equalsIgnoreCase(lName))sim=sim+1;							
+							if(mName!=null && author.getAuthorName().getMiddleName()!=null && author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+1;
+							if(mName==null || author.getAuthorName().getMiddleName()==null)sim=sim+0.5;
+							if(mName!=null && author.getAuthorName().getMiddleName()!=null && !author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+0.3;
+							
+						}
+					}
+				}
 				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
 					String targetAuthorMiddleInitial = TargetAuthor.getInstance().getAuthorName().getMiddleInitial();
 					String firstName = TargetAuthor.getInstance().getAuthorName().getFirstName();

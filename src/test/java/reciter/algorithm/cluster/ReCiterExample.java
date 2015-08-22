@@ -164,7 +164,13 @@ public class ReCiterExample {
 
 			// Retrieve the PubMed articles for this cwid if the articles have not been retrieved yet. 
 			PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
+			if(identityDurectoryList!=null && identityDurectoryList.size()>0){
+				for(IdentityDirectory dir:identityDurectoryList){
+					if(cwid.equals(dir.getCwid()))
+					pubmedXmlFetcher.preparePubMedQueries(dir.getSurname(), dir.getGivenName(), dir.getMiddleName());
+				}
+			}
+			List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial,middleName, cwid);
 
 			// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();

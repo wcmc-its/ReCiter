@@ -18,7 +18,7 @@ public class GoldStandardPmidDao {
 		Statement pst = null;
 		ResultSet rs = null;
 		try{
-			String query = "select id,cwid,pmid,rejected from  rc_gold_standard_pmids where cwid='"+cwid+"' where rejected='0'";
+			String query = "select id,cwid,pmid,rejected from  rc_gold_standard_pmids where cwid='"+cwid+"' and rejected='0'";
 			pst=con.createStatement();
 			rs=pst.executeQuery(query);
 			while(rs.next()){
