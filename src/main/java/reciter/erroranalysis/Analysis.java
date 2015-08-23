@@ -121,6 +121,8 @@ public class Analysis {
 				if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(Integer.toString(pmid))) {
 					statusEnum = StatusEnum.TRUE_POSITIVE;
 				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(Integer.toString(pmid))) {
+					slf4jLogger.info("year diff: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
+							reCiterArticle, reCiterClusterer.getTargetAuthor()));
 					statusEnum = StatusEnum.FALSE_POSITIVE;
 				} else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(Integer.toString(pmid))) {
 					statusEnum = StatusEnum.FALSE_NEGATIVE;
