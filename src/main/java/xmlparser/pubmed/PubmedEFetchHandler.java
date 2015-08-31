@@ -101,7 +101,9 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private List<PubmedArticle> pubmedArticles;
 	private List<String> meshHeading;
 	private PubmedArticle pubmedArticle;
-
+	
+	private StringBuilder chars = new StringBuilder();
+	
 	public List<String> getMeshHeading() {
 		return meshHeading;
 	}
@@ -111,6 +113,9 @@ public class PubmedEFetchHandler extends DefaultHandler {
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+		
+		chars.setLength(0);
+		
 		if (qName.equalsIgnoreCase("PubmedArticleSet")) {
 			pubmedArticles = new ArrayList<PubmedArticle>(); // create a new list of PubmedArticle.
 		}
@@ -124,32 +129,44 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("PMID")) {
 			bPMID = true;
 		}
+		
 		if (qName.equalsIgnoreCase("Article")) {
 			pubmedArticle.getMedlineCitation().setArticle(new MedlineCitationArticle()); // set the PubmedArticle's MedlineCitation's MedlineCitationArticle.
 			bArticle = true;
 		}
+		
 		if (qName.equalsIgnoreCase("ArticleTitle")) {
 			bArticleTitle = true;
 		}
+		
 		if (qName.equalsIgnoreCase("Journal")) {
 			pubmedArticle.getMedlineCitation().getArticle().setJournal(new MedlineCitationJournal()); // add journal information.
 		}
+		
 		if (qName.equalsIgnoreCase("JournalIssue")) {
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().setJournalIssue(new MedlineCitationJournalIssue());
 		}
+		
+		// PubMed XML has either <Year>, <Month>, <Day> tags or <MedlineDate> tag.	
 		if (qName.equalsIgnoreCase("PubDate")) {
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().setPubDate(new MedlineCitationDate());
 			bPubDate = true;
 		}
-		if (qName.equalsIgnoreCase("ISOAbbreviation")) {
-			bJournalISOAbbreviation = true;
-		}
+		
+		// <Year> tag.
 		if (bPubDate && qName.equalsIgnoreCase("Year")) {
 			bPubDateYear = true;
 		}
+		
+		// <MedlineDate> tag.
 		if (bPubDate && qName.equalsIgnoreCase("MedlineDate")) {
 			bMedlineDate = true;
 		}
+		
+		if (qName.equalsIgnoreCase("ISOAbbreviation")) {
+			bJournalISOAbbreviation = true;
+		}
+		
 		if (qName.equalsIgnoreCase("Title")) {
 			bJournalTitle = true;
 		}
@@ -193,72 +210,82 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			bDescriptorName = true;
 		}
 	}
+	
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-		if (qName.equalsIgnoreCase("PubmedArticle")) {
-			pubmedArticles.add(pubmedArticle); // add the PubmedArticle to the pubmedArticleList.
-		}
-		if (qName.equalsIgnoreCase("Article")) {
-			bArticle = false;
-		}
-		if (qName.equalsIgnoreCase("KeywordList")) {
-			bKeywordList = false;
-		}
-	}
-
-	@Override
-	public void characters(char[] ch, int start, int length) throws SAXException {
+		
+		// PMID
 		if (bMedlineCitation && bPMID) {
-			String pmid = new String(ch, start, length);
-			pubmedArticle.getMedlineCitation().setPmid(new MedlineCitationPMID(pmid)); // set the pmid number of the MedlineCitation.
+			String pmid = chars.toString();
+			pubmedArticle.getMedlineCitation().setPmid(new MedlineCitationPMID(pmid));
 			bPMID = false;
 			bMedlineCitation = false;
 		}
+		
+		// Article title.
 		if (bArticle && bArticleTitle) {
-			pubmedArticle.getMedlineCitation().getArticle().setArticleTitle(new String(ch, start, length)); // set the title of the Article.
+			String articleTitle = chars.toString();
+			pubmedArticle.getMedlineCitation().getArticle().setArticleTitle(articleTitle); // set the title of the Article.
 			bArticleTitle = false;
 		}
+		
+		// Author last name.
 		if (bAuthorLastName) {
-			String authorLastName = new String(ch, start, length);
+			String authorLastName = chars.toString();
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setLastName(authorLastName);
 			bAuthorLastName = false;
 		}
+		
+		// Author fore name.
 		if (bAuthorForeName) {
-			String authorForeName = new String(ch, start, length);
+			String authorForeName = chars.toString();
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setForeName(authorForeName);
 			bAuthorForeName = false;
 		}
+		
+		// Author middle initials.
 		if (bAuthorInitials) {
-			String authorInitials = new String(ch, start, length);
+			String authorInitials = chars.toString();
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setInitials(authorInitials);
 			bAuthorInitials = false;
 		}
+		
+		// Author affiliations.
 		if (bAffiliation) {
-			String affiliation = new String(ch, start, length);
+			String affiliation = chars.toString();
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setAffiliation(affiliation);
 			bAffiliation = false;
 		}
+		
+		// Journal title
 		if (bJournalTitle) {
-			String journalTitle = new String(ch, start, length);
+			String journalTitle = chars.toString();
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().setJournalTitle(journalTitle);
 			bJournalTitle = false;
 		}
+		
+		// Journal ISO abbreviation.
+		if (bJournalISOAbbreviation) {
+			String isoAbbr = chars.toString();
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().setIsoAbbreviation(isoAbbr);
+			bJournalISOAbbreviation = false;
+		}
+		
+		// Journal Year.
 		if (bPubDate && bPubDateYear) {
-			String pubDateYear = new String(ch, start, length);
+			String pubDateYear = chars.toString();
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
 			bPubDate = false;
 			bPubDateYear = false;
 		}
-		if (bJournalISOAbbreviation) {
-			pubmedArticle.getMedlineCitation().getArticle().getJournal().setIsoAbbreviation(new String(ch, start, length));
-			bJournalISOAbbreviation = false;
-		}
+		
+		// Journal MedlineDate.
 		if (bPubDate && bMedlineDate) {
-			String pubDateYear = new String(ch, start, length);
+			String pubDateYear = chars.toString();
 			if (pubDateYear.length() > 4) {
 				pubDateYear = pubDateYear.substring(0, 4); // PMID = 23849565 <MedlineDate>2013 May-Jun</MedlineDate>
 			}
@@ -266,17 +293,88 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			bPubDate = false;
 			bMedlineDate = false;
 		}
+		
+		// Keyword.
 		if (bKeywordList && bKeyword) {
 			MedlineCitationKeyword keyword = new MedlineCitationKeyword();
-			keyword.setKeyword(new String(ch, start, length));
+			keyword.setKeyword(chars.toString());
 			pubmedArticle.getMedlineCitation().getKeywordList().getKeywordList().add(keyword);
 			bKeyword = false;
 		}
+		
+		// MeSH descriptor name.
 		if (bDescriptorName) {
-			String descriptorName = new String(ch, start, length);
+			String descriptorName = chars.toString();
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getMeshHeadingList().size() - 1;
 			pubmedArticle.getMedlineCitation().getMeshHeadingList().get(lastInsertedIndex).getDescriptorName().setDescriptorName(descriptorName); // set descriptor name for MeSH.
 			bDescriptorName = false;
+		}
+		
+		// End of PubmedArticle tag. Add the PubmedArticle to the pubmedArticleList.
+		if (qName.equalsIgnoreCase("PubmedArticle")) {
+			pubmedArticles.add(pubmedArticle);
+		}
+		
+		// End of Article tag.
+		if (qName.equalsIgnoreCase("Article")) {
+			bArticle = false;
+		}
+		
+		// End of keyword list.
+		if (qName.equalsIgnoreCase("KeywordList")) {
+			bKeywordList = false;
+		}
+	}
+
+	@Override
+	public void characters(char[] ch, int start, int length) throws SAXException {
+	    
+		if (bMedlineCitation && bPMID) {
+			chars.append(ch, start, length);		
+		}
+		
+		if (bArticle && bArticleTitle) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bAuthorLastName) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bAuthorForeName) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bAuthorInitials) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bAffiliation) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bJournalTitle) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bJournalISOAbbreviation) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bPubDate && bPubDateYear) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bPubDate && bMedlineDate) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bKeywordList && bKeyword) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bDescriptorName) {
+			chars.append(ch, start, length);
 		}
 	}	
 }

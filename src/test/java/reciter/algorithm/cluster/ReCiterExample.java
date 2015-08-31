@@ -31,7 +31,7 @@ public class ReCiterExample {
 		// Keep track of execution time of ReCiter .
 		long startTime = System.currentTimeMillis();
 
-//		runExample("Lelli", "G", "gjl9003");
+//		runExample("Fernandes", "H", "hef9020");
 
 		List<String> cwids = getListOfCwids();
 		IdentityDao identityDao = new IdentityDaoImpl();

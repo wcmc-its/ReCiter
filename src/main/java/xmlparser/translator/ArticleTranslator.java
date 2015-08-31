@@ -35,6 +35,9 @@ public class ArticleTranslator {
 
 		// PMID
 		String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
+		if (pmid.equals("19")) {
+			System.out.println("true");
+		}
 		ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid));
 
 		// Article title
