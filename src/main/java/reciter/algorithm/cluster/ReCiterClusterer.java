@@ -229,14 +229,23 @@ public class ReCiterClusterer implements Clusterer {
 			}
 			
 			/* Look up email separately in Scopus and PubMed at a formative state to find name variants #73 */ 
-			
+			/* Look up known e-mail addresses in ReCiter database in phase two matching #101 */
 			if (selectingTarget) {
 				String firstName = TargetAuthor.getInstance().getAuthorName().getFirstName();
 				String lastName = TargetAuthor.getInstance().getAuthorName().getLastName();
 				IdentityDao dao = new IdentityDao();
 				Identity identity = dao.getIdentityByCwid(cwid);
+				// #101 fix Start
 				String emailId = identity!=null && identity.getEmail()!=null?identity.getEmail():"";
 				String emailOther = identity!=null && identity.getEmailOther()!=null?identity.getEmailOther():"";
+				
+				for (ReCiterArticle article : finalCluster.get(id).getArticleCluster()) {
+					for (ReCiterAuthor coauthor : article.getArticleCoAuthors().getCoAuthors()) {
+						//coauthor.getAuthorName().ge
+					}
+				}
+				// #101 fix end
+				
 				
 				PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 				if(currentArticle.getAliasesList()!=null && currentArticle.getAliasesList().size()>0){

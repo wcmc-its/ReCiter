@@ -1,17 +1,20 @@
 package reciter.utils.stemmer;
 
+
 public class Stemmer {
 	private char[] b;
 	   private int i,     /* offset into b */
 	               i_end, /* offset to end of stemmed word */
 	               j, k;
-	   private static final int INC = 50;/* unit of size whereby b is increased */
+	   private static int INC = 50;/* unit of size whereby b is increased */
 	   private String stemString;
 	   public Stemmer(String stemString)
-	   {  b = new char[INC];
-	      i = 0;
-	      i_end = 0;
-	      this.stemString=stemString;
+	   {  
+		   this.stemString=stemString;
+		   INC=stemString.length();
+		   b = new char[INC];
+	       i = 0;
+	       i_end = 0;
 	   }
 	   
 	   public void applyStemming(){
@@ -330,5 +333,5 @@ public class Stemmer {
 	   {  k = i - 1;
 	      if (k > 1) { step1(); step2(); step3(); step4(); step5(); step6(); }
 	      i_end = k+1; i = 0;
-	   }	   
+	   }
 }
