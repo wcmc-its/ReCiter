@@ -9,13 +9,14 @@ import java.util.List;
 
 import database.DbConnectionFactory;
 import database.DbUtil;
+import database.dao.MatchingDepartmentsJournalsDao;
 
-public class MatchingDepartmentsJournalsDao {
+public class MatchingDepartmentsJournalsDaoImpl implements MatchingDepartmentsJournalsDao{
 
-	public static void main(String[] args) {
-		MatchingDepartmentsJournalsDao m = new MatchingDepartmentsJournalsDao();
+	/*public static void main(String[] args) {
+		MatchingDepartmentsJournalsDaoImpl m = new MatchingDepartmentsJournalsDaoImpl();
 		System.out.println(m.getScoreByJournalAndDepartment("Dan Med J", "Biochemistry"));
-	}
+	}*/
 	
 	public double getScoreByJournalAndDepartment(String journal, String department) {
 		Connection con = DbConnectionFactory.getConnection();

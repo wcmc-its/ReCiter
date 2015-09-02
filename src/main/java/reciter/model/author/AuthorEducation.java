@@ -7,7 +7,7 @@ public class AuthorEducation {
 	private String degreeField;
 	private String instLoc;
 	private String instAbbr;
-	private AuthorDegree authorDegree;
+	//private AuthorDegree authorDegree;
 	
 	public String getInstitution() {
 		return institution;
@@ -39,12 +39,12 @@ public class AuthorEducation {
 	public void setInstAbbr(String instAbbr) {
 		this.instAbbr = instAbbr;
 	}
-	public AuthorDegree getAuthorDegree() {
+	/*public AuthorDegree getAuthorDegree() {
 		return authorDegree;
 	}
 	public void setAuthorDegree(AuthorDegree authorDegree) {
 		this.authorDegree = authorDegree;
-	}
+	}*/
 	
 	
 }

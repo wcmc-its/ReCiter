@@ -8,12 +8,15 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.math3.linear.OpenMapRealVector;
+import org.apache.commons.math3.linear.SparseRealVector;
 import org.apache.poi.POIXMLDocument;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -21,15 +24,24 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+//import reciter.lucene.DocumentVector;
+//import reciter.lucene.DocumentVectorType;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleKeywords;
+import reciter.model.article.ReCiterArticleKeywords.Keyword;
+//import reciter.tfidf.Document;
+//import reciter.tfidf.TfIdf;
+import database.dao.BoardCertificationDataDao;
+import database.dao.impl.BoardCertificationDataDaoImpl;
 
 /**
  * @author htadimeti
  */
 
 public class ReadBoardCertifications {
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReadBoardCertifications.class);
 	private String excelFileName;
 	private Workbook workbook;
 	private boolean isExcel;
@@ -167,18 +179,42 @@ public class ReadBoardCertifications {
 	 * @param cwid
 	 * @return
 	 */
-	public List<String> getBoardCertifications(String cwid){
-		List<String> list=null;		
+	public String getBoardCertifications(String cwid){
+		List<String> list=null;	
+		StringBuilder sb = new StringBuilder();
 		try {
-			Map<String, List<String>> map=getMapFromExcelSheet(0, -1, 1, 0,cwid);
+			BoardCertificationDataDao dao = new BoardCertificationDataDaoImpl();
+			Map<String, List<String>> map=dao.getBoardCertificationsByCwid(cwid);//getMapFromExcelSheet(0, -1, 1, 0,cwid);
+			System.out.println(map);
 			if(map.containsKey(cwid)){
 				list=map.get(cwid);
+				List<String> keys = new ArrayList<String>();
+				for(String certification: list){
+					if(certification!=null && !certification.trim().equals("")){
+						certification=certification.trim();
+						certification=certification.replace('/', ' ').replace("and", " ").replace("the", " ").replace("medicine", " ").replace("-", " ").replace("with", " ").replace("in", " ").replace("med", " ").replace("adult", " ").replace("general", " ").replaceAll("\\s+", " ").trim();
+						if(!certification.equals("")){
+							String[] s = certification.split(" ");
+							for(int i=0;s!=null && i<s.length;i++){
+								if(!keys.contains(s[i])){
+									keys.add(s[i]);
+									sb.append(s[i]).append(" ");
+								}
+							}
+						}
+					}
+					//sb.append(preProcessBoardCertifications(str)).append(" ");
+				}
 			}
-		} catch (IOException e) {
+			dao=null;
+		}catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		return list;
+		} /*catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		return sb.toString().trim();
 	}
 
 
@@ -187,21 +223,42 @@ public class ReadBoardCertifications {
 	 * @param cwid
 	 * @param article
 	 */
-	public List<ReCiterArticle> getBoardCertifications(String cwid, ReCiterArticle article){
-		List<String> list=getBoardCertifications(cwid);
-		ReCiterArticleKeywords keyWords =  article.getArticleKeywords();
-		if (article.getArticleId() != -1) {
-			for(String keyWord: list){
-				keyWords.addKeyword(keyWord);
-			}
-		}
-//		DocumentIndexWriter writer = new DocumentIndexWriter(cwid);
-//		writer.index(DocumentTranslator.translate(article));
-//		DocumentIndexReader reader = new DocumentIndexReader();
-//		return reader.readIndex(cwid);
-		return null;
-	}
 
+	public double getBoardCertifications(String cwid, List<ReCiterArticle> articles){
+		double sim=0;
+		String str=getBoardCertifications(cwid);
+		/*if(str!=null && !str.trim().equals("")){
+			Document doc = new Document(str);
+			List<Document> documents = new ArrayList<Document>();		
+			//SparseRealVector docVector = new OpenMapRealVector(vectorValues);
+			
+			int docSize=1;
+			doc.setId(docSize);
+			++docSize;
+			documents.add(doc);
+			for(ReCiterArticle article: articles){
+				StringBuilder sb = new StringBuilder();
+				for(Keyword k: article.getArticleKeywords().getKeywords()){
+					sb.append(k.getKeyword()).append(" ");
+				}
+				Document articleDoc = new Document(sb.toString().trim().replace('/', ' ').replace("and", " ").replace("the", " ").replace("medicine", " ").replace("-", " ").replace("with", " ").replace("in", " ").replace("med", " ").replace("adult", " ").replace("general", " ").replaceAll("\\s+", " ").trim());
+				doc.setId(docSize);
+				documents.add(articleDoc);
+			}
+			TfIdf tfidf = new TfIdf(documents);
+			tfidf.computeTfIdf();
+			double[] vectorValues = tfidf.createVector(doc);
+			for(int i=1; i<documents.size();i++){			
+				double[] articleVector=tfidf.createVector(documents.get(i));
+				sim = sim + tfidf.cosineSimilarity(vectorValues, articleVector);
+
+			}
+		}*/
+		slf4jLogger.info("Board Certifications For CWID("+cwid+") => "+str + " => SIM: "+sim);
+		return sim;
+	}
+	
+	
 	public void fileSearch(File path,String fileName){
 		if(excelFileName!=null)return;
 		FileFilter fileFilter = new FileFilter() {			
