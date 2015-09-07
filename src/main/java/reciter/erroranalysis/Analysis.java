@@ -1,10 +1,11 @@
 package reciter.erroranalysis;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +24,21 @@ import reciter.model.article.ReCiterArticle;
 public class Analysis {
 
 	private int truePos;
+	private int trueNeg;
+	private int falseNeg;
+	private int falsePos;
 	private int goldStandardSize;
 	private int selectedClusterSize;
+	private List<Integer> truePositiveList = new ArrayList<Integer>();
+	private List<Integer> trueNegativeList = new ArrayList<Integer>();
 	private List<Integer> falsePositiveList = new ArrayList<Integer>();
+	private List<Integer> falseNegativeList = new ArrayList<Integer>();
+	
+	private Map<String, Integer> truePositiveJournalCount = new HashMap<String, Integer>();
+	private Map<String, Integer> trueNegativeJournalCount = new HashMap<String, Integer>();
+	private Map<String, Integer> falsePositiveJournalCount = new HashMap<String, Integer>();
+	private Map<String, Integer> falseNegativeJournalCount = new HashMap<String, Integer>();
+	
 	private List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
@@ -102,32 +115,73 @@ public class Analysis {
 		}
 
 		analysis.setSelectedClusterSize(articleList.size());
-		int numTruePos = 0;
-
-		// get number of true positives.
-		for (ReCiterArticle reCiterArticle : articleList) {
-			int pmid = reCiterArticle.getArticleId();
-			if (goldStandardPmids.contains(Integer.toString(pmid))) {
-				numTruePos++;
-			} else {
-				analysis.falsePositiveList.add(pmid);
-			}
-		}
+//		int numTruePos = 0;
+//		// get number of true positives.
+//		for (ReCiterArticle reCiterArticle : articleList) {
+//			int pmid = reCiterArticle.getArticleId();
+//			if (goldStandardPmids.contains(Integer.toString(pmid))) {
+//				numTruePos++;
+//			} else {
+//				analysis.falsePositiveList.add(pmid);
+//			}
+//		}
 
 		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
 			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
 				int pmid = reCiterArticle.getArticleId();
 				StatusEnum statusEnum;
 				if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(Integer.toString(pmid))) {
+					analysis.getTruePositiveList().add(pmid);
+					
+					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
+						if (!analysis.getTruePositiveJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
+							analysis.getTruePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
+						} else {
+							int count = analysis.getTruePositiveJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
+							analysis.getTruePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
+						}
+					}
 					statusEnum = StatusEnum.TRUE_POSITIVE;
 				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(Integer.toString(pmid))) {
 					slf4jLogger.info("year diff: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
 							reCiterArticle, reCiterClusterer.getTargetAuthor()));
+					analysis.getFalsePositiveList().add(pmid);
 					statusEnum = StatusEnum.FALSE_POSITIVE;
+					
+					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
+						if (!analysis.getFalsePositiveJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
+							analysis.getFalsePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
+						} else {
+							int count = analysis.getFalsePositiveJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
+							analysis.getFalsePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
+						}
+					}
+					
 				} else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(Integer.toString(pmid))) {
+					analysis.getFalseNegativeList().add(pmid);
 					statusEnum = StatusEnum.FALSE_NEGATIVE;
+					
+					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
+						if (!analysis.getFalseNegativeJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
+							analysis.getFalseNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
+						} else {
+							int count = analysis.getFalseNegativeJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
+							analysis.getFalseNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
+						}
+					}
+					
 				} else {
+					analysis.getTrueNegativeList().add(pmid);
 					statusEnum = StatusEnum.TRUE_NEGATIVE;
+					
+					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
+						if (!analysis.getTrueNegativeJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
+							analysis.getTrueNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
+						} else {
+							int count = analysis.getTrueNegativeJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
+							analysis.getTrueNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
+						}
+					}
 				}
 
 				boolean isClusterOriginator = false;
@@ -149,8 +203,10 @@ public class Analysis {
 			}
 		}
 
-
-		analysis.setTruePos(numTruePos);
+		analysis.setTruePos(analysis.getTruePositiveList().size());
+		analysis.setTrueNeg(analysis.getTrueNegativeList().size());
+		analysis.setFalseNeg(analysis.getFalseNegativeList().size());
+		analysis.setFalsePos(analysis.getFalsePositiveList().size());
 		return analysis;
 	}
 
@@ -204,5 +260,85 @@ public class Analysis {
 
 	public void setAnalysisObjectList(List<AnalysisObject> analysisObjectList) {
 		this.analysisObjectList = analysisObjectList;
+	}
+
+	public List<Integer> getFalseNegativeList() {
+		return falseNegativeList;
+	}
+
+	public void setFalseNegativeList(List<Integer> falseNegativeList) {
+		this.falseNegativeList = falseNegativeList;
+	}
+
+	public int getFalseNeg() {
+		return falseNeg;
+	}
+
+	public void setFalseNeg(int falseNeg) {
+		this.falseNeg = falseNeg;
+	}
+
+	public int getTrueNeg() {
+		return trueNeg;
+	}
+
+	public void setTrueNeg(int trueNeg) {
+		this.trueNeg = trueNeg;
+	}
+
+	public int getFalsePos() {
+		return falsePos;
+	}
+
+	public void setFalsePos(int falsePos) {
+		this.falsePos = falsePos;
+	}
+
+	public List<Integer> getTruePositiveList() {
+		return truePositiveList;
+	}
+
+	public void setTruePositiveList(List<Integer> truePositiveList) {
+		this.truePositiveList = truePositiveList;
+	}
+
+	public List<Integer> getTrueNegativeList() {
+		return trueNegativeList;
+	}
+
+	public void setTrueNegativeList(List<Integer> trueNegativeList) {
+		this.trueNegativeList = trueNegativeList;
+	}
+
+	public Map<String, Integer> getTruePositiveJournalCount() {
+		return truePositiveJournalCount;
+	}
+
+	public void setTruePositiveJournalCount(Map<String, Integer> truePositiveJournalCount) {
+		this.truePositiveJournalCount = truePositiveJournalCount;
+	}
+
+	public Map<String, Integer> getTrueNegativeJournalCount() {
+		return trueNegativeJournalCount;
+	}
+
+	public void setTrueNegativeJournalCount(Map<String, Integer> trueNegativeJournalCount) {
+		this.trueNegativeJournalCount = trueNegativeJournalCount;
+	}
+
+	public Map<String, Integer> getFalsePositiveJournalCount() {
+		return falsePositiveJournalCount;
+	}
+
+	public void setFalsePositiveJournalCount(Map<String, Integer> falsePositiveJournalCount) {
+		this.falsePositiveJournalCount = falsePositiveJournalCount;
+	}
+
+	public Map<String, Integer> getFalseNegativeJournalCount() {
+		return falseNegativeJournalCount;
+	}
+
+	public void setFalseNegativeJournalCount(Map<String, Integer> falseNegativeJournalCount) {
+		this.falseNegativeJournalCount = falseNegativeJournalCount;
 	}
 }

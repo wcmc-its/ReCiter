@@ -257,6 +257,17 @@ public class ReCiterClusterer implements Clusterer {
 						clusterIds.put(entry.getKey(), 1);
 					}
 				}
+				
+				// contains weill cornell.
+				boolean containsWeillCornell = containsWeillCornell(reCiterArticle);
+				if (containsWeillCornell) {
+					if (clusterIds.containsKey(entry.getKey())) {
+						int currentCount = clusterIds.get(entry.getKey());
+						clusterIds.put(entry.getKey(), ++currentCount);
+					} else {
+						clusterIds.put(entry.getKey(), 1);
+					}
+				}
 			}
 		}
 		return clusterIds;
@@ -644,7 +655,8 @@ public class ReCiterClusterer implements Clusterer {
 	}
 
 	/**
-	 * Check if the ReCiterArticle's affiliation information contains the phrase "weill cornell" using case-insensitive
+	 * Check if the ReCiterArticle's affiliation information contains the phrase 
+	 * "weill cornell", "weill-cornell" using case-insensitive
 	 * string matching.
 	 * 
 	 * @param reCiterArticle
@@ -654,7 +666,8 @@ public class ReCiterClusterer implements Clusterer {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
-				if (StringUtils.containsIgnoreCase(affiliation, "weill cornell")) {
+				if (StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
+					StringUtils.containsIgnoreCase(affiliation, "weill-cornell")) {
 					return true;
 				}
 			}
