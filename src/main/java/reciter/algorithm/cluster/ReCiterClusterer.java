@@ -124,8 +124,13 @@ public class ReCiterClusterer implements Clusterer {
 		Map<Integer, Integer> map = computeClusterSelectionForTarget();
 		slf4jLogger.debug(map.toString());
 
-		// Perform coauthor:
+		// Perform coauthor reassignment.
 		reAssignArticlesByCoauthorMatch(map);
+		
+		// Perform journal reassignment.
+		reAssignArticlesByJournalMatch(map);
+		
+		// Set selected cluster.
 		setSelectedClusterIdSet(map.keySet());
 
 		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
@@ -165,8 +170,11 @@ public class ReCiterClusterer implements Clusterer {
 		return false;
 	}
 
-	// Put the scores inside a map.
 
+	/**
+	 * Reassign articles not selected by matching co-authors.
+	 * @param selectedClusterIds
+	 */
 	public void reAssignArticlesByCoauthorMatch(Map<Integer, Integer> selectedClusterIds) {
 		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
 
@@ -194,6 +202,64 @@ public class ReCiterClusterer implements Clusterer {
 								}
 								// remove from old cluster.
 								iterator.remove();
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Add to new cluster.
+		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+			for (ReCiterArticle article : entry.getValue()) {
+				finalCluster.get(entry.getKey()).add(article);
+			}
+		}
+	}
+
+	/**
+	 * Reassign articles not selected by matching journals.
+	 * @param selectedClusterIds
+	 */
+	public void reAssignArticlesByJournalMatch(Map<Integer, Integer> selectedClusterIds) {
+		
+		// Map of integer (cluster to be added to) and reciterarticles.
+		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+
+		for (int clusterId : selectedClusterIds.keySet()) {
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				// Do not iterate through the selected cluster ids's articles.
+				if (!selectedClusterIds.keySet().contains(entry.getKey())) {
+					for (ReCiterArticle reCiterArticle : finalCluster.get(clusterId).getArticleCluster()) {
+
+						// Iterate through the remaining final cluster that are not selected in selectedClusterIds.
+						Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
+						while (iterator.hasNext()) {
+							ReCiterArticle otherReCiterArticle = iterator.next();
+
+							boolean isJournalMatch = isJournalMatch(reCiterArticle, otherReCiterArticle);
+
+							if (isJournalMatch) {
+								// contains matching journals.
+								for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+									boolean isFirstNameMatch = reCiterAuthor.getAuthorName().getFirstInitial().
+											equalsIgnoreCase(targetAuthor.getAuthorName().getFirstInitial());
+									
+									if (isFirstNameMatch) {
+										if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
+											clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
+										} else {
+											List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+											articleList.add(otherReCiterArticle);
+											clusterIdToReCiterArticleList.put(clusterId, articleList);
+										}
+
+										// remove from old cluster.
+										iterator.remove();
+										break; // break loop iterating over authors.
+									}
+								}
 							}
 						}
 					}
@@ -257,7 +323,7 @@ public class ReCiterClusterer implements Clusterer {
 						clusterIds.put(entry.getKey(), 1);
 					}
 				}
-				
+
 				// contains weill cornell.
 				boolean containsWeillCornell = containsWeillCornell(reCiterArticle);
 				if (containsWeillCornell) {
@@ -268,6 +334,7 @@ public class ReCiterClusterer implements Clusterer {
 						clusterIds.put(entry.getKey(), 1);
 					}
 				}
+
 			}
 		}
 		return clusterIds;
@@ -667,7 +734,7 @@ public class ReCiterClusterer implements Clusterer {
 			if (author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
 				if (StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
-					StringUtils.containsIgnoreCase(affiliation, "weill-cornell")) {
+						StringUtils.containsIgnoreCase(affiliation, "weill-cornell")) {
 					return true;
 				}
 			}

@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -28,10 +29,12 @@ public class ReCiterExample {
 
 	public static void main(String[] args) throws IOException {
 
+//		runExample("Rifkind", "A", "arifkind");
+//		runExample("Slotwiner", "A", "als7001");
+//		runExample("Geng", "F", "fug2001");
 		// Keep track of execution time of ReCiter .
-		long startTime = System.currentTimeMillis();
 
-//		runExample("Fernandes", "H", "hef9020");
+		long startTime = System.currentTimeMillis();
 
 		List<String> cwids = getListOfCwids();
 		IdentityDao identityDao = new IdentityDaoImpl();
@@ -83,9 +86,28 @@ public class ReCiterExample {
 		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
 		totalRecall += analysis.getRecall();
+		slf4jLogger.info("True Positive List: " + analysis.getTruePositiveList());
+		slf4jLogger.info("True Negative List: " + analysis.getTrueNegativeList());
 		slf4jLogger.info("False Positive List: " + analysis.getFalsePositiveList());
-		slf4jLogger.info("\n");
+		slf4jLogger.info("False Negative List: " + analysis.getFalseNegativeList());
+		
+		slf4jLogger.info("# of True Positives: " + analysis.getTruePos());
+		slf4jLogger.info("# of True Negatives: " + analysis.getTrueNeg());
+		slf4jLogger.info("# of False Positives: " + analysis.getFalsePos());
+		slf4jLogger.info("# of False Negatives: " + analysis.getFalseNeg());
+		slf4jLogger.info("# of Selected cluster size: " + analysis.getSelectedClusterSize());
+		slf4jLogger.info("# of Gold standard size: " + analysis.getGoldStandardSize());
 
+		slf4jLogger.info("True Positive Journal Count: " + analysis.getTruePositiveJournalCount());
+		slf4jLogger.info("True Negative Journal Count: " + analysis.getTrueNegativeJournalCount());
+		slf4jLogger.info("False Positive Journal Count: " + analysis.getFalsePositiveJournalCount());
+		slf4jLogger.info("False Negative Journal Count: " + analysis.getFalseNegativeJournalCount());
+		
+		Set<String> s1 = analysis.getTruePositiveJournalCount().keySet();
+		s1.retainAll(analysis.getFalseNegativeJournalCount().keySet());
+		
+		slf4jLogger.info("Intersection between True Positive and False Negative Journal Count: " + s1);
+		slf4jLogger.info("\n");
 		// Write analysis to CSV.
 		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
 		try {
