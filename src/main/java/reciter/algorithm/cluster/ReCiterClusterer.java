@@ -241,7 +241,7 @@ public class ReCiterClusterer implements Clusterer {
 
 							if (isJournalMatch) {
 								// contains matching journals.
-								for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+								for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 									boolean isFirstNameMatch = reCiterAuthor.getAuthorName().getFirstName().
 											equalsIgnoreCase(targetAuthor.getAuthorName().getFirstName());
