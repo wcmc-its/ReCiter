@@ -241,12 +241,6 @@ public class ReCiterClusterer implements Clusterer {
 
 							if (isJournalMatch) {
 								// contains matching journals.
-								/**
-								 * 09-09-2015 23:14:05 INFO  ReCiterExample:50 - Number of cwids: 63
-09-09-2015 23:14:05 INFO  ReCiterExample:51 - Average Precision: 0.8622447081005025
-09-09-2015 23:14:05 INFO  ReCiterExample:52 - Average Recall: 0.8902296712232317
-09-09-2015 23:14:05 INFO  ReCiterExample:56 - Total execution time: 734096 ms.
-								 */
 								for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 									boolean isFirstNameMatch = reCiterAuthor.getAuthorName().getFirstName().

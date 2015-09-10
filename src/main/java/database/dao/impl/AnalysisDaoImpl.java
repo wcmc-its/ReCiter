@@ -32,7 +32,7 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				+ "department_of_affiliation_score, keyword_matching_score, phase_two_similarity_threshold, "
 				+ "cluster_article_assigned_to, count_articles_in_assigned_cluster, cluster_selected_in_phase_two_matching, "
 				+ "phase_two_affiliation_similarity, phase_two_keyword_similarity, phase_two_journal_similarity)"
-				+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+				+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try {
 			pst = con.prepareStatement(query);
 			for (Analysis analysis : analysisList) {
