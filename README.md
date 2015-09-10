@@ -65,7 +65,7 @@ In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`
 1. Inside Eclipse, Right Click project -> Select `Team` -> Select `Commit` -> Select `Push to Upstream`.
 
 ## Examining ReCiter output.
-1. ReCiter outputs a csv file for each cwid in the folder `data/csv_output/`.
+1. ReCiter outputs a csv file for each cwid in the folder `ReCiter/src/main/resources/data/csv_output/`.
 2. The precision and recall can be found in `reciter.log` or inside `Eclipse` console.
 
 ## Special Note for Eclipse UTF-8 Encoding Configuration
