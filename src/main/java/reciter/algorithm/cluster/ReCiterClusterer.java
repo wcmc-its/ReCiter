@@ -30,11 +30,15 @@ import reciter.model.boardcertifications.ReadBoardCertifications;
 import reciter.utils.reader.YearDiscrepacyReader;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
+import database.dao.CoauthorAffiliationsDao;
 import database.dao.IdentityDao;
 import database.dao.MatchingDepartmentsJournalsDao;
+import database.dao.impl.CoauthorAffiliationsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.dao.impl.MatchingDepartmentsJournalsDaoImpl;
+import database.model.CoauthorAffiliations;
 import database.model.Identity;
+import database.model.IdentityDirectory;
 
 public class ReCiterClusterer implements Clusterer {
 
@@ -512,6 +516,71 @@ public class ReCiterClusterer implements Clusterer {
 	public double getBoardCertificationScore(String cwid, List<ReCiterArticle> articles) {
 		ReadBoardCertifications efr=new ReadBoardCertifications(cwid);		
 		return efr.getBoardCertifications(articles);
+	}
+	
+	
+	/**
+	 * Leverage data on name variants to improve phase II matching
+	 * 
+	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/48).
+	 */
+	public double getNameVariantScore(TargetAuthor targetAuthor, ReCiterArticle article){
+		double sim=0;
+		List<IdentityDirectory> aliases = targetAuthor.getAliasList();
+		if(aliases!=null){
+			List<String> firstNameList = new ArrayList<String>();
+			List<String> lastNameList = new ArrayList<String>();
+			List<String> middleNameList = new ArrayList<String>();
+			
+			for(IdentityDirectory dir:aliases){
+				if(dir.getGivenName()!=null)firstNameList.add(dir.getGivenName().toLowerCase());
+				if(dir.getMiddleName()!=null)middleNameList.add(dir.getMiddleName().toLowerCase());
+				if(dir.getSurname()!=null)lastNameList.add(dir.getSurname().toLowerCase());
+			}
+			
+			String fName = targetAuthor.getAuthorName().getFirstName();
+			String mName = targetAuthor.getAuthorName().getMiddleName();
+			String lName = targetAuthor.getAuthorName().getLastName();
+			
+			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
+				if(fName!=null && author.getAuthorName().getFirstName().equalsIgnoreCase(fName))sim=sim+1;
+				else sim=sim+0.2;
+				if(lName!=null && author.getAuthorName().getLastName().equalsIgnoreCase(lName))sim=sim+1;							
+				if(mName!=null && author.getAuthorName().getMiddleName()!=null && author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+1;
+				if(author.getAuthorName().getMiddleName()==null)sim=sim+0.5;
+				if(mName!=null && author.getAuthorName().getMiddleName()!=null && !author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+0.3;
+				
+				if(author.getAuthorName().getFirstName()!=null && firstNameList.contains(author.getAuthorName().getFirstName().toLowerCase()))sim=sim+1;
+				else sim=sim+0.2;
+				if(author.getAuthorName().getLastName()!=null && lastNameList.contains(author.getAuthorName().getLastName().toLowerCase()))sim=sim+1;							
+				if(author.getAuthorName().getMiddleName()!=null && middleNameList.contains(author.getAuthorName().getMiddleName().toLowerCase()))sim=sim+1;
+				if(author.getAuthorName().getMiddleName()!=null && !middleNameList.contains(author.getAuthorName().getMiddleName().toLowerCase()))sim=sim+0.3;
+			}
+		}
+		return sim;
+	}
+	
+	/**
+	 * Assign Phase Two score to reflect the extent to which candidate articles have authors with affiliations that occur frequently with WCMC authors
+	 * 
+	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/74).
+	 */
+	public double getKnownPublicationsScore(ReCiterArticle article){
+		double score = 0;
+		List<ReCiterAuthor> coAuthors = article.getArticleCoAuthors().getAuthors();
+		CoauthorAffiliationsDao dao = new CoauthorAffiliationsDaoImpl();
+		List<String> coAuthorAffiliations = new ArrayList<String>();
+		for(ReCiterAuthor coAuthor: coAuthors){	
+			if(coAuthor!=null && coAuthor.getAffiliation()!=null && coAuthor.getAffiliation().getAffiliationName()!=null)
+			coAuthorAffiliations.add(coAuthor.getAffiliation().getAffiliationName());
+		}
+		if(coAuthorAffiliations.size()>0){
+			List<CoauthorAffiliations> coAuthorAffiliationList = dao.getCoathorAffiliationsByAffiliationLabel(coAuthorAffiliations);
+			for(CoauthorAffiliations coaf: coAuthorAffiliationList){
+				score=score+coaf.getScore();
+			}
+		}
+		return score;
 	}
 
 	/**

@@ -1,5 +1,9 @@
 package reciter.model.author;
 
+import java.util.List;
+
+import database.model.IdentityDirectory;
+
 /**
  * @author jil3004
  *
@@ -10,7 +14,22 @@ public class TargetAuthor extends ReCiterAuthor {
 	private String department;
 	private String otherDeparment;
 	private AuthorEducation education;
+	private List<IdentityDirectory> aliasList;
 	
+	/**
+	 * @return the aliasList
+	 */
+	public List<IdentityDirectory> getAliasList() {
+		return aliasList;
+	}
+
+	/**
+	 * @param aliasList the aliasList to set
+	 */
+	public void setAliasList(List<IdentityDirectory> aliasList) {
+		this.aliasList = aliasList;
+	}
+
 	public TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
 	}
