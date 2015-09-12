@@ -9,13 +9,14 @@ import java.util.List;
 
 import database.DbConnectionFactory;
 import database.DbUtil;
+import database.dao.IdentityCitizenshipDao;
 
 /**
  * DAO class for table rc_identity_citizenship.
  * @author jil3004
  *
  */
-public class IdentityCitizenshipDao {
+public class IdentityCitizenshipDaoImpl implements IdentityCitizenshipDao{
 
 	// TODO: @Balu and @Hanumantha: Please create functions to get rows from the database table "rc_identity_citizenship".
 	/* Function to get the identity citizen country from database table  

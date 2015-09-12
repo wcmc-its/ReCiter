@@ -31,10 +31,14 @@ import reciter.utils.reader.YearDiscrepacyReader;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 import database.dao.CoauthorAffiliationsDao;
+import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
+import database.dao.IdentityEducationDao;
 import database.dao.MatchingDepartmentsJournalsDao;
 import database.dao.impl.CoauthorAffiliationsDaoImpl;
+import database.dao.impl.IdentityCitizenshipDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
+import database.dao.impl.IdentityEducationDaoImpl;
 import database.dao.impl.MatchingDepartmentsJournalsDaoImpl;
 import database.model.CoauthorAffiliations;
 import database.model.Identity;
@@ -581,6 +585,25 @@ public class ReCiterClusterer implements Clusterer {
 			}
 		}
 		return score;
+	}
+	
+	/**
+	 * Use citizenship and educational background to improve precision
+	 * 
+	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/97).
+	 */
+	public double getCitizenShipEducationalBackgroundScore(String cwid){
+		IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDaoImpl();
+		IdentityEducationDao identityEducationDao = new IdentityEducationDaoImpl();
+		List<String> citizenShipList = identityCitizenshipDao.getIdentityCitizenshipCountry(cwid);
+		List<String> educationList = identityEducationDao.getIdentityCitizenshipEducation(cwid);
+		double sim=0;
+		for(int i=0;citizenShipList!=null && i<citizenShipList.size();i++){
+			for(int j=0;j<educationList.size();j++){
+				if(educationList.get(j).indexOf(citizenShipList.get(i))!=-1)sim=sim+1;
+			}
+		}
+		return sim;
 	}
 
 	/**
