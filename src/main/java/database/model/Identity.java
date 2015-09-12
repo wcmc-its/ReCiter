@@ -17,6 +17,7 @@ public class Identity {
 	private String firstName;
 	private String firstInitial;
 	private String middleName;
+	private String middleInitial;
 	private String fullPublishedName;
 	private String prefix;
 	private String suffix;
@@ -33,6 +34,18 @@ public class Identity {
 	private String emailOther;
 	
 	
+	/**
+	 * @return the middleInitial
+	 */
+	public String getMiddleInitial() {
+		return middleInitial;
+	}
+	/**
+	 * @param middleInitial the middleInitial to set
+	 */
+	public void setMiddleInitial(String middleInitial) {
+		this.middleInitial = middleInitial;
+	}
 	public String getEmailOther() {
 		return emailOther;
 	}

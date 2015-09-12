@@ -7,9 +7,10 @@ import java.sql.SQLException;
 
 import database.DbConnectionFactory;
 import database.DbUtil;
+import database.dao.IdentityDegreeDao;
 import database.model.IdentityDegree;
 
-public class IdentityDegreeDao {
+public class IdentityDegreeDaoImpl implements IdentityDegreeDao{
 	
 	/**
 	 * Retrieves an IdentityDegree object to retrieve Identity Degree information from database.
