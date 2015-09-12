@@ -46,8 +46,10 @@ public class AnalysisConverter {
 		analysis.setPhaseTwoSimilarityThreshold(analysisObject.getPhaseTwoSimilarityThreshold());
 		analysis.setClusterArticleAssignedTo(analysisObject.getClusterArticleAssignedTo());
 		analysis.setCountArticlesInAssignedClsuter(analysisObject.getCountArticlesInAssignedCluster());
-//		analysis.setClusterSelectedInPhaseTwoMatching(analysisObject.());
-//		analysis.setPhaseTwoAffiliationSimilarity(analysisObject);
+//		analysis.setClusterSelectedInPhaseTwoMatching(analysisObject);
+		analysis.setPhaseTwoAffiliationSimilarity(analysisObject.getAffiliationSimilarity());
+		analysis.setPhaseTwoKeywordSimilarity(analysisObject.getKeywordSimilarity());
+		analysis.setPhaseTwoJournalSimilarity(analysisObject.getJournalSimilarityPhaseTwo());
 		return analysis;
 	}
 }
