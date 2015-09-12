@@ -31,6 +31,7 @@ import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.utils.reader.YearDiscrepacyReader;
+import xmlparser.scopus.model.Affiliation;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 
@@ -124,12 +125,15 @@ public class ReCiterClusterer implements Clusterer {
 		Map<Integer, Integer> map = computeClusterSelectionForTarget();
 		slf4jLogger.debug(map.toString());
 
+		// Perform Scopus affiliation reassignment.
+		reAssignArticlesByScopusAffiliation(map);
+
 		// Perform coauthor reassignment.
 		reAssignArticlesByCoauthorMatch(map);
-		
+
 		// Perform journal reassignment.
 		reAssignArticlesByJournalMatch(map);
-		
+
 		// Set selected cluster.
 		setSelectedClusterIdSet(map.keySet());
 
@@ -217,12 +221,67 @@ public class ReCiterClusterer implements Clusterer {
 		}
 	}
 
+	public void reAssignArticlesByScopusAffiliation(Map<Integer, Integer> selectedClusterIds) {
+
+		// Map of integer (cluster to be added to) and reciterarticles.
+		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+
+		for (int clusterId : selectedClusterIds.keySet()) {
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				// Do not iterate through the selected cluster ids's articles.
+				if (!selectedClusterIds.keySet().contains(entry.getKey())) {
+					for (ReCiterArticle reCiterArticle : finalCluster.get(clusterId).getArticleCluster()) {
+
+						// Iterate through the remaining final cluster that are not selected in selectedClusterIds.
+						Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
+						while (iterator.hasNext()) {
+							ReCiterArticle otherReCiterArticle = iterator.next();
+
+							// check Scopus affiliation.
+							boolean containsWeillCornellFromScopus = 
+									containsWeillCornellFromScopus(otherReCiterArticle.getScopusArticle(), targetAuthor);
+							
+							if (containsWeillCornellFromScopus) {
+								for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+									boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
+											reCiterAuthor.getAuthorName().getFirstInitial(), targetAuthor.getAuthorName().getFirstInitial());
+
+									if (isFirstNameMatch) {
+										if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
+											clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
+										} else {
+											List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+											articleList.add(otherReCiterArticle);
+											clusterIdToReCiterArticleList.put(clusterId, articleList);
+										}
+
+										// remove from old cluster.
+										iterator.remove();
+										break; // break loop iterating over authors.
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Add to new cluster.
+		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+			for (ReCiterArticle article : entry.getValue()) {
+				finalCluster.get(entry.getKey()).add(article);
+			}
+		}
+	}
+
 	/**
 	 * Reassign articles not selected by matching journals.
 	 * @param selectedClusterIds
 	 */
 	public void reAssignArticlesByJournalMatch(Map<Integer, Integer> selectedClusterIds) {
-		
+
 		// Map of integer (cluster to be added to) and reciterarticles.
 		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
 
@@ -243,9 +302,9 @@ public class ReCiterClusterer implements Clusterer {
 								// contains matching journals.
 								for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
 
-									boolean isFirstNameMatch = reCiterAuthor.getAuthorName().getFirstName().
-											equalsIgnoreCase(targetAuthor.getAuthorName().getFirstName());
-									
+									boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
+											reCiterAuthor.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
+
 									if (isFirstNameMatch) {
 										if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
 											clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
@@ -324,7 +383,7 @@ public class ReCiterClusterer implements Clusterer {
 					}
 				}
 
-				// contains weill cornell.
+				// contains weill cornell. TODO: make sure target author's name matches the one iterated thru.
 				boolean containsWeillCornell = containsWeillCornell(reCiterArticle);
 				if (containsWeillCornell) {
 					if (clusterIds.containsKey(entry.getKey())) {
@@ -334,7 +393,6 @@ public class ReCiterClusterer implements Clusterer {
 						clusterIds.put(entry.getKey(), 1);
 					}
 				}
-
 			}
 		}
 		return clusterIds;
@@ -721,9 +779,19 @@ public class ReCiterClusterer implements Clusterer {
 		return false;
 	}
 
+	private boolean containsWeillCornell(String affiliation) {
+		if (StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
+				StringUtils.containsIgnoreCase(affiliation, "weill-cornell") || 
+				StringUtils.containsIgnoreCase(affiliation, "weill medical") || 
+				StringUtils.containsIgnoreCase(affiliation, "cornell medical center")) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	/**
 	 * Check if the ReCiterArticle's affiliation information contains the phrase 
-	 * "weill cornell", "weill-cornell" using case-insensitive
+	 * "weill cornell", "weill-cornell", "weill medical" using case-insensitive
 	 * string matching.
 	 * 
 	 * @param reCiterArticle
@@ -733,9 +801,35 @@ public class ReCiterClusterer implements Clusterer {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
-				if (StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
-						StringUtils.containsIgnoreCase(affiliation, "weill-cornell")) {
+				if (containsWeillCornell(affiliation)) {
 					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check affiliation exists in Scopus Article.
+	 * @param scopusArticle
+	 * @param targetAuthor
+	 * @return
+	 */
+	public boolean containsWeillCornellFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
+		if (scopusArticle != null) {
+			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
+				if (StringUtils.equalsIgnoreCase(scopusAuthor.getSurname(), targetAuthor.getAuthorName().getLastName())) {
+					Set<Integer> afidSet = scopusAuthor.getAfidSet();
+					for (int afid : afidSet) {
+						Affiliation scopusAffialition = scopusArticle.getAffiliationMap().get(afid);
+						if (scopusAffialition != null) {
+							String affilName = scopusAffialition.getAffilname();
+							if (containsWeillCornell(affilName)) {
+								slf4jLogger.info(scopusArticle.getPubmedId() + ": " + affilName);
+								return true;
+							}
+						}
+					}
 				}
 			}
 		}

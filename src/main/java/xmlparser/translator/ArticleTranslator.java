@@ -110,6 +110,14 @@ public class ArticleTranslator {
 		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
 		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlineCitation().getArticle().getJournal().getIsoAbbreviation());
 
+		// Update PubMed's authors' first name from Scopus Article. Logic is as follows:
+		// 1. First compare last name if match:
+		// 2. Check scopus's first name has length > 1, so no initials (b/c PubMed already contains this info.)
+		// 3. Check first initial is same.
+		// 4. Check that scopus author's first name is more "complete" than Pubmed'a author name.
+		// 5. Only update if PubMed's author name is length = 1.
+		// 6. remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
+		
 		if (scopusArticle != null) {
 			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
 				String scopusAuthorFirstName = scopusAuthor.getGivenName();
