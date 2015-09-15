@@ -114,7 +114,7 @@ If you encounter this error:
 com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
 The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
 ```
-Then, verify that your local SQL server is running (see point 2 above).
+Then, verify that your local SQL server is running (see point 2 under "Troubleshooting" above).
 
 ### .DS_Store files interfere with ReCiter
 
