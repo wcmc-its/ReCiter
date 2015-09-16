@@ -19,6 +19,22 @@ import database.model.Analysis;
 public class AnalysisDaoImpl implements AnalysisDao {
 
 	@Override
+	public void emptyTable() {
+		Connection con = DbConnectionFactory.getConnection();
+		PreparedStatement pst = null;
+		String query = "DELETE FROM rc_analysis";
+		try {
+			pst = con.prepareStatement(query);
+			pst.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DbUtil.close(pst);
+			DbUtil.close(con);
+		}
+	}
+	
+	@Override
 	public void insertAnalysisList(List<Analysis> analysisList) {
 
 		Connection con = DbConnectionFactory.getConnection();

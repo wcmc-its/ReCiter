@@ -16,20 +16,27 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.dao.CountryDao;
 import database.dao.IdentityDao;
+import database.dao.IdentityDegreeDao;
+import database.dao.impl.CountryDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
+import database.dao.impl.IdentityDegreeDaoImpl;
 import database.dao.impl.MatchingDepartmentsJournalsDao;
 import database.model.Identity;
+import database.model.IdentityDegree;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.tfidf.Document;
 import reciter.erroranalysis.Analysis;
 import reciter.erroranalysis.AnalysisReCiterCluster;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorAffiliation;
+import reciter.model.author.AuthorDegree;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
+import reciter.service.converters.IdentityDegreeConverter;
 import reciter.utils.reader.YearDiscrepacyReader;
 import xmlparser.scopus.model.Affiliation;
 import xmlparser.scopus.model.Author;
@@ -76,12 +83,18 @@ public class ReCiterClusterer implements Clusterer {
 		targetAuthor.setOtherDeparment(identity.getOtherDepartment());
 
 		targetAuthor.setEducation(new AuthorEducation());
+
+		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDaoImpl();
+		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identity.getCwid());
+		AuthorDegree authorDegree = IdentityDegreeConverter.convert(identityDegree);
+		targetAuthor.setDegree(authorDegree);
 		return targetAuthor;
 	}
 
 	private TargetAuthor getTargetAuthor(String cwid) {
 		IdentityDao identityDao = new IdentityDaoImpl();
 		Identity identity = identityDao.getIdentityByCwid(cwid);
+
 		return getAuthorFromIdentity(identity);
 	}
 
@@ -125,6 +138,9 @@ public class ReCiterClusterer implements Clusterer {
 		Map<Integer, Integer> map = computeClusterSelectionForTarget();
 		slf4jLogger.debug(map.toString());
 
+		// Perform PubMed affiliation reassignment.
+		reAssignArticlesByPubmedAffiliation(map);
+		
 		// Perform Scopus affiliation reassignment.
 		reAssignArticlesByScopusAffiliation(map);
 
@@ -221,6 +237,20 @@ public class ReCiterClusterer implements Clusterer {
 		}
 	}
 
+	/**
+	 * 				// contains weill cornell. TODO: make sure target author's name matches the one iterated thru.
+				boolean containsWeillCornell = containsWeillCornell(reCiterArticle);
+				if (containsWeillCornell) {
+					slf4jLogger.info("Weill Cornell Match=" + reCiterArticle.getArticleId() + " cluster id=" + entry.getKey());
+					if (clusterIds.containsKey(entry.getKey())) {
+						int currentCount = clusterIds.get(entry.getKey());
+						clusterIds.put(entry.getKey(), ++currentCount);
+					} else {
+						clusterIds.put(entry.getKey(), 1);
+					}
+				}
+	 * @param selectedClusterIds
+	 */
 	public void reAssignArticlesByScopusAffiliation(Map<Integer, Integer> selectedClusterIds) {
 
 		// Map of integer (cluster to be added to) and reciterarticles.
@@ -240,7 +270,7 @@ public class ReCiterClusterer implements Clusterer {
 							// check Scopus affiliation.
 							boolean containsWeillCornellFromScopus = 
 									containsWeillCornellFromScopus(otherReCiterArticle.getScopusArticle(), targetAuthor);
-							
+
 							if (containsWeillCornellFromScopus) {
 								for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
 
@@ -275,7 +305,59 @@ public class ReCiterClusterer implements Clusterer {
 			}
 		}
 	}
+	public void reAssignArticlesByPubmedAffiliation(Map<Integer, Integer> selectedClusterIds) {
 
+		// Map of integer (cluster to be added to) and reciterarticles.
+		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+
+		for (int clusterId : selectedClusterIds.keySet()) {
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				// Do not iterate through the selected cluster ids's articles.
+				if (!selectedClusterIds.keySet().contains(entry.getKey())) {
+					for (ReCiterArticle reCiterArticle : finalCluster.get(clusterId).getArticleCluster()) {
+
+						// Iterate through the remaining final cluster that are not selected in selectedClusterIds.
+						Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
+						while (iterator.hasNext()) {
+							ReCiterArticle otherReCiterArticle = iterator.next();
+
+							// contains weill cornell. TODO: make sure target author's name matches the one iterated thru.
+							boolean containsWeillCornell = containsWeillCornell(otherReCiterArticle);
+
+							if (containsWeillCornell) {
+								for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+									boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
+											reCiterAuthor.getAuthorName().getFirstInitial(), targetAuthor.getAuthorName().getFirstInitial());
+
+									if (isFirstNameMatch) {
+										if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
+											clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
+										} else {
+											List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+											articleList.add(otherReCiterArticle);
+											clusterIdToReCiterArticleList.put(clusterId, articleList);
+										}
+
+										// remove from old cluster.
+										iterator.remove();
+										break; // break loop iterating over authors.
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Add to new cluster.
+		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+			for (ReCiterArticle article : entry.getValue()) {
+				finalCluster.get(entry.getKey()).add(article);
+			}
+		}
+	}
 	/**
 	 * Reassign articles not selected by matching journals.
 	 * @param selectedClusterIds
@@ -347,6 +429,7 @@ public class ReCiterClusterer implements Clusterer {
 				// Email Match.
 				boolean isEmailMatch = isEmailMatch(reCiterArticle, targetAuthor);
 				if (isEmailMatch) {
+					slf4jLogger.info("Email Match=" + reCiterArticle.getArticleId() + " cluster id=" + entry.getKey());
 					if (clusterIds.containsKey(entry.getKey())) {
 						int currentCount = clusterIds.get(entry.getKey());
 						clusterIds.put(entry.getKey(), ++currentCount);
@@ -357,11 +440,15 @@ public class ReCiterClusterer implements Clusterer {
 
 				// rc_coauthor_affiliations score.
 
+				//				int yearDiff = computeYearDiscrepancy(reCiterArticle, targetAuthor);
+
+				//				if (yearDiff >= 1) {
 				// Department Match.
 				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 					boolean isDepartmentMatch = departmentMatch(reCiterAuthor, targetAuthor);
 					boolean isFirstMatch = reCiterAuthor.getAuthorName().getFirstInitial().equalsIgnoreCase(targetAuthor.getAuthorName().getFirstInitial());
 					if (isDepartmentMatch && isFirstMatch) {
+						slf4jLogger.info("Department Match=" + reCiterArticle.getArticleId() + " cluster id=" + entry.getKey());
 						if (clusterIds.containsKey(entry.getKey())) {
 							int currentCount = clusterIds.get(entry.getKey());
 							clusterIds.put(entry.getKey(), ++currentCount);
@@ -374,6 +461,7 @@ public class ReCiterClusterer implements Clusterer {
 				// containsGrantCoAuthor.
 				boolean containsGrantCoAuthor = containsGrantCoAuthor(reCiterArticle, targetAuthor);
 				if (containsGrantCoAuthor) {
+					slf4jLogger.info("Contains Grant CoaAuthor=" + reCiterArticle.getArticleId() + " cluster id=" + entry.getKey());
 					//					System.out.println("containsGrantCoAuthor: " + reCiterArticle.getArticleId());
 					if (clusterIds.containsKey(entry.getKey())) {
 						int currentCount = clusterIds.get(entry.getKey());
@@ -382,18 +470,8 @@ public class ReCiterClusterer implements Clusterer {
 						clusterIds.put(entry.getKey(), 1);
 					}
 				}
-
-				// contains weill cornell. TODO: make sure target author's name matches the one iterated thru.
-				boolean containsWeillCornell = containsWeillCornell(reCiterArticle);
-				if (containsWeillCornell) {
-					if (clusterIds.containsKey(entry.getKey())) {
-						int currentCount = clusterIds.get(entry.getKey());
-						clusterIds.put(entry.getKey(), ++currentCount);
-					} else {
-						clusterIds.put(entry.getKey(), 1);
-					}
-				}
 			}
+			//			}
 		}
 		return clusterIds;
 	}
@@ -485,10 +563,39 @@ public class ReCiterClusterer implements Clusterer {
 		return numberMatchingJournals;
 	}
 
+	/**
+	 * <p>
+	 * Earliest years:
+	 * Identify year of pub
+	 * Get year of bachelor degree from rc_identity_degree
+	 * Get year of doctoral degree from rc_identity_degree
+	 * If discrepancy between pub and doctoral degree < -5, mark as false 
+	 * </p>
+	 * 
+	 * <p>
+	 * Example: 
+	 * pubyear = 1990, doctoral degree = 1994, difference is -4, -5 < -4, therefore do nothing
+	 * </p>
+	 * 
+	 * <p>
+	 * Example:
+	 * pubyear = 1998, doctoral degree = 1994, difference is 4, -5 < 4, therefore do nothing.
+	 * </p>
+	 * 
+	 * <p>
+	 * If discrepancy between pub and bachelor degree < 1, mark as false
+	 * Example:
+	 * pubyear = 1998, bachelor degree = 1998, difference is 0, 1 < 0 is not true, therefore mark as false
+	 * </p>
+	 * 
+	 * @param reCiterArticle
+	 * @param targetAuthor
+	 * @return
+	 */
 	public int computeYearDiscrepancy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		if (reCiterArticle.getJournal() != null) {
-			int currentYearDiff = Math.abs(reCiterArticle.getJournal().getJournalIssuePubDateYear() - 
-					targetAuthor.getEducation().getDegreeYear());
+			int currentYearDiff = reCiterArticle.getJournal().getJournalIssuePubDateYear() - 
+					targetAuthor.getDegree().getBachelor();
 			return currentYearDiff;
 		}
 		return -1;
@@ -570,6 +677,17 @@ public class ReCiterClusterer implements Clusterer {
 		return 0;
 	}
 
+	private String extractCountry(String affiliation) {
+		CountryDao countryDao = new CountryDaoImpl();
+		Set<String> countries = countryDao.getCountryNames();
+		for (String country : countries) {
+			if (StringUtils.containsIgnoreCase(affiliation, country)) {
+				return country;
+			}
+		}
+		return "";
+	}
+	
 	/**
 	 * Extract Department information from string of the form "Department of *,".
 	 * 
@@ -600,6 +718,7 @@ public class ReCiterClusterer implements Clusterer {
 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
+//			slf4jLogger.info("Country=" + extractCountry(affiliation));
 			String extractedDept = extractDepartment(affiliation);
 			String targetAuthorDept = targetAuthor.getDepartment();
 			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
@@ -781,9 +900,10 @@ public class ReCiterClusterer implements Clusterer {
 
 	private boolean containsWeillCornell(String affiliation) {
 		if (StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
-				StringUtils.containsIgnoreCase(affiliation, "weill-cornell") || 
-				StringUtils.containsIgnoreCase(affiliation, "weill medical") || 
-				StringUtils.containsIgnoreCase(affiliation, "cornell medical center")) {
+			StringUtils.containsIgnoreCase(affiliation, "weill-cornell") || 
+			StringUtils.containsIgnoreCase(affiliation, "weill medical") || 
+			StringUtils.containsIgnoreCase(affiliation, "cornell medical center") || 
+			StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center")) {
 			return true;
 		} else {
 			return false;

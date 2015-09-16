@@ -10,6 +10,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private String department;
 	private String otherDeparment;
 	private AuthorEducation education;
+	private AuthorDegree degree;
 	
 	public TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
@@ -45,6 +46,14 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setOtherDeparment(String otherDeparment) {
 		this.otherDeparment = otherDeparment;
+	}
+
+	public AuthorDegree getDegree() {
+		return degree;
+	}
+
+	public void setDegree(AuthorDegree degree) {
+		this.degree = degree;
 	}
 
 }

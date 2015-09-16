@@ -12,13 +12,13 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import database.dao.IdentityDao;
-import database.dao.impl.IdentityDaoImpl;
-import database.model.Identity;
+import database.dao.AnalysisDao;
+import database.dao.impl.AnalysisDaoImpl;
 import reciter.erroranalysis.Analysis;
 import reciter.erroranalysis.AnalysisCSVWriter;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
+import reciter.service.converters.AnalysisConverter;
 
 public class ReCiterExample {
 
@@ -28,32 +28,35 @@ public class ReCiterExample {
 	public static double totalRecall = 0;
 
 	public static void main(String[] args) throws IOException {
-
+		runExample("Mittal", "V", "vim2010");
+//		runExample("Marcus", "A", "ajmarcus");
+//				runExample("Sauve", "A", "aas2004");
+		
 //		runExample("Rifkind", "A", "arifkind");
 //		runExample("Slotwiner", "A", "als7001");
 //		runExample("Geng", "F", "fug2001");
 		// Keep track of execution time of ReCiter .
 
-		long startTime = System.currentTimeMillis();
-
-		List<String> cwids = getListOfCwids();
-		IdentityDao identityDao = new IdentityDaoImpl();
-
-		for (String cwid : cwids) {
-			slf4jLogger.info("cwid=" + cwid);
-			Identity identity = identityDao.getIdentityByCwid(cwid);
-			String firstInitial = identity.getFirstInitial();
-			String lastName = identity.getLastName();
-			runExample(lastName, firstInitial, cwid);
-		}
-
-		slf4jLogger.info("Number of cwids: " + cwids.size());
-		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
-		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
-
-		long stopTime = System.currentTimeMillis();
-		long elapsedTime = stopTime - startTime;
-		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
+//		long startTime = System.currentTimeMillis();
+//
+//		List<String> cwids = getListOfCwids();
+//		IdentityDao identityDao = new IdentityDaoImpl();
+//
+//		for (String cwid : cwids) {
+//			slf4jLogger.info("cwid=" + cwid);
+//			Identity identity = identityDao.getIdentityByCwid(cwid);
+//			String firstInitial = identity.getFirstInitial();
+//			String lastName = identity.getLastName();
+//			runExample(lastName, firstInitial, cwid);
+//		}
+//
+//		slf4jLogger.info("Number of cwids: " + cwids.size());
+//		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
+//		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
+//
+//		long stopTime = System.currentTimeMillis();
+//		long elapsedTime = stopTime - startTime;
+//		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
 	}
 
 	public static List<String> getListOfCwids() {
@@ -117,6 +120,11 @@ public class ReCiterExample {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		// write to database.
+		AnalysisDao analysisDao = new AnalysisDaoImpl();
+		analysisDao.emptyTable();
+		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
 	}
 
 	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.	
