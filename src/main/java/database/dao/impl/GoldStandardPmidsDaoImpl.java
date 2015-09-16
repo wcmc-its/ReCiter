@@ -26,7 +26,7 @@ public class GoldStandardPmidsDaoImpl implements GoldStandardPmidsDao {
 		Connection con = DbConnectionFactory.getConnection();
 		PreparedStatement pst = null;
 		ResultSet rs = null;
-		String query = "SELECT pmid from rc_gold_standard_pmids WHERE cwid = '" + cwid + "'";
+		String query = "SELECT pmid from rc_gold_standard_pmids WHERE cwid = '" + cwid + "' and rejected='0'";
 		try {
 			pst = con.prepareStatement(query);
 			rs = pst.executeQuery();
