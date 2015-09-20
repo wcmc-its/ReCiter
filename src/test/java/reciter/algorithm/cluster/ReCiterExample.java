@@ -12,13 +12,12 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import database.dao.AnalysisDao;
-import database.dao.impl.AnalysisDaoImpl;
+import database.dao.IdentityDao;
+import database.dao.impl.IdentityDaoImpl;
+import database.model.Identity;
 import reciter.erroranalysis.Analysis;
-import reciter.erroranalysis.AnalysisCSVWriter;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
-import reciter.service.converters.AnalysisConverter;
 
 public class ReCiterExample {
 
@@ -28,7 +27,7 @@ public class ReCiterExample {
 	public static double totalRecall = 0;
 
 	public static void main(String[] args) throws IOException {
-		runExample("Mittal", "V", "vim2010");
+//		runExample("Mittal", "V", "vim2010");
 //		runExample("Marcus", "A", "ajmarcus");
 //				runExample("Sauve", "A", "aas2004");
 		
@@ -37,26 +36,26 @@ public class ReCiterExample {
 //		runExample("Geng", "F", "fug2001");
 		// Keep track of execution time of ReCiter .
 
-//		long startTime = System.currentTimeMillis();
-//
-//		List<String> cwids = getListOfCwids();
-//		IdentityDao identityDao = new IdentityDaoImpl();
-//
-//		for (String cwid : cwids) {
-//			slf4jLogger.info("cwid=" + cwid);
-//			Identity identity = identityDao.getIdentityByCwid(cwid);
-//			String firstInitial = identity.getFirstInitial();
-//			String lastName = identity.getLastName();
-//			runExample(lastName, firstInitial, cwid);
-//		}
-//
-//		slf4jLogger.info("Number of cwids: " + cwids.size());
-//		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
-//		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
-//
-//		long stopTime = System.currentTimeMillis();
-//		long elapsedTime = stopTime - startTime;
-//		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
+		long startTime = System.currentTimeMillis();
+
+		List<String> cwids = getListOfCwids();
+		IdentityDao identityDao = new IdentityDaoImpl();
+
+		for (String cwid : cwids) {
+			slf4jLogger.info("cwid=" + cwid);
+			Identity identity = identityDao.getIdentityByCwid(cwid);
+			String firstInitial = identity.getFirstInitial();
+			String lastName = identity.getLastName();
+			runExample(lastName, firstInitial, cwid);
+		}
+
+		slf4jLogger.info("Number of cwids: " + cwids.size());
+		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
+		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
+
+		long stopTime = System.currentTimeMillis();
+		long elapsedTime = stopTime - startTime;
+		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
 	}
 
 	public static List<String> getListOfCwids() {
@@ -93,38 +92,38 @@ public class ReCiterExample {
 		slf4jLogger.info("True Negative List: " + analysis.getTrueNegativeList());
 		slf4jLogger.info("False Positive List: " + analysis.getFalsePositiveList());
 		slf4jLogger.info("False Negative List: " + analysis.getFalseNegativeList());
-		
-		slf4jLogger.info("# of True Positives: " + analysis.getTruePos());
-		slf4jLogger.info("# of True Negatives: " + analysis.getTrueNeg());
-		slf4jLogger.info("# of False Positives: " + analysis.getFalsePos());
-		slf4jLogger.info("# of False Negatives: " + analysis.getFalseNeg());
-		slf4jLogger.info("# of Selected cluster size: " + analysis.getSelectedClusterSize());
-		slf4jLogger.info("# of Gold standard size: " + analysis.getGoldStandardSize());
-
-		slf4jLogger.info("True Positive Journal Count: " + analysis.getTruePositiveJournalCount());
-		slf4jLogger.info("True Negative Journal Count: " + analysis.getTrueNegativeJournalCount());
-		slf4jLogger.info("False Positive Journal Count: " + analysis.getFalsePositiveJournalCount());
-		slf4jLogger.info("False Negative Journal Count: " + analysis.getFalseNegativeJournalCount());
+//		
+//		slf4jLogger.info("# of True Positives: " + analysis.getTruePos());
+//		slf4jLogger.info("# of True Negatives: " + analysis.getTrueNeg());
+//		slf4jLogger.info("# of False Positives: " + analysis.getFalsePos());
+//		slf4jLogger.info("# of False Negatives: " + analysis.getFalseNeg());
+//		slf4jLogger.info("# of Selected cluster size: " + analysis.getSelectedClusterSize());
+//		slf4jLogger.info("# of Gold standard size: " + analysis.getGoldStandardSize());
+//
+//		slf4jLogger.info("True Positive Journal Count: " + analysis.getTruePositiveJournalCount());
+//		slf4jLogger.info("True Negative Journal Count: " + analysis.getTrueNegativeJournalCount());
+//		slf4jLogger.info("False Positive Journal Count: " + analysis.getFalsePositiveJournalCount());
+//		slf4jLogger.info("False Negative Journal Count: " + analysis.getFalseNegativeJournalCount());
 		
 		Set<String> s1 = analysis.getTruePositiveJournalCount().keySet();
 		s1.retainAll(analysis.getFalseNegativeJournalCount().keySet());
 		
-		slf4jLogger.info("Intersection between True Positive and False Negative Journal Count: " + s1);
+//		slf4jLogger.info("Intersection between True Positive and False Negative Journal Count: " + s1);
 		slf4jLogger.info("\n");
 		// Write analysis to CSV.
-		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
-		try {
-			analysisCSVWriter.write(
-					analysis.getAnalysisObjectList(), cwid, analysis.getPrecision(), analysis.getRecall());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		// write to database.
-		AnalysisDao analysisDao = new AnalysisDaoImpl();
-		analysisDao.emptyTable();
-		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
+//		AnalysisCSVWriter analysisCSVWriter = new AnalysisCSVWriter();
+//		try {
+//			analysisCSVWriter.write(
+//					analysis.getAnalysisObjectList(), cwid, analysis.getPrecision(), analysis.getRecall());
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		
+//		// write to database.
+//		AnalysisDao analysisDao = new AnalysisDaoImpl();
+//		analysisDao.emptyTable();
+//		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
 	}
 
 	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.	

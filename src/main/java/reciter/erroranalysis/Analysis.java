@@ -141,15 +141,15 @@ public class Analysis {
 							analysis.getTruePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
 						}
 					}
-					slf4jLogger.info("year diff [True Positive]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-							reCiterArticle, reCiterClusterer.getTargetAuthor()));
+//					slf4jLogger.info("year diff [True Positive]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
+//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
 					statusEnum = StatusEnum.TRUE_POSITIVE;
 				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(Integer.toString(pmid))) {
 					
 					analysis.getFalsePositiveList().add(pmid);
 					statusEnum = StatusEnum.FALSE_POSITIVE;
-					slf4jLogger.info("year diff [False Positive]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-							reCiterArticle, reCiterClusterer.getTargetAuthor()));
+//					slf4jLogger.info("year diff [False Positive]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
+//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
 					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
 						if (!analysis.getFalsePositiveJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
 							analysis.getFalsePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
@@ -162,8 +162,8 @@ public class Analysis {
 				} else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(Integer.toString(pmid))) {
 					analysis.getFalseNegativeList().add(pmid);
 					statusEnum = StatusEnum.FALSE_NEGATIVE;
-					slf4jLogger.info("year diff [False Negative]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-							reCiterArticle, reCiterClusterer.getTargetAuthor()));
+//					slf4jLogger.info("year diff [False Negative]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
+//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
 					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
 						if (!analysis.getFalseNegativeJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
 							analysis.getFalseNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
@@ -176,8 +176,8 @@ public class Analysis {
 				} else {
 					analysis.getTrueNegativeList().add(pmid);
 					statusEnum = StatusEnum.TRUE_NEGATIVE;
-					slf4jLogger.info("year diff [True Negative]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-							reCiterArticle, reCiterClusterer.getTargetAuthor()));
+//					slf4jLogger.info("year diff [True Negative]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
+//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
 					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
 						if (!analysis.getTrueNegativeJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
 							analysis.getTrueNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);

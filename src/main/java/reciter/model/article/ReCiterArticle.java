@@ -55,6 +55,11 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private List<String> meshList;
 	
 	/**
+	 * Text containing how it's clustered.
+	 */
+	private String clusterInfo;
+	
+	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID
 	 */
@@ -165,5 +170,17 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		if (articleId != other.articleId)
 			return false;
 		return true;
+	}
+
+	public String getClusterInfo() {
+		return clusterInfo;
+	}
+
+	public void setClusterInfo(String clusterInfo) {
+		this.clusterInfo = clusterInfo;
+	}
+	
+	public void appendClusterInfo(String clusterInfo) {
+		this.clusterInfo += " | " + clusterInfo;
 	}
 }
