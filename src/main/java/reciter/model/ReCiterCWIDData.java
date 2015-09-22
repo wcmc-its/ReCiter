@@ -192,11 +192,15 @@ public class ReCiterCWIDData {
 		}
 		
 		// Apply stemming on Title / Journal / Mesh Major and other keywords
+		List<String> akeywords = new ArrayList<String>();
 		ReCiterArticleKeywords articleKeywords = article.getArticleKeywords();
 		for(Keyword keyword: articleKeywords.getKeywords()){
 			String origKeyword = keyword.getKeyword();
 			String stemKeyword = stemWord(origKeyword);
-			if(!origKeyword.equalsIgnoreCase(stemKeyword) && !articleKeywords.isKeywordExist(stemKeyword))articleKeywords.addKeyword(stemKeyword);
+			if(!origKeyword.equalsIgnoreCase(stemKeyword) && !articleKeywords.isKeywordExist(stemKeyword) && !akeywords.contains(stemKeyword))akeywords.add(stemKeyword);
+		}
+		for(String keyword: akeywords){
+			articleKeywords.addKeyword(keyword);
 		}
 	}
 
