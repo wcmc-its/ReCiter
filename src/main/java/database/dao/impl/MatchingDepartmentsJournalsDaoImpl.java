@@ -62,14 +62,14 @@ public class MatchingDepartmentsJournalsDaoImpl implements MatchingDepartmentsJo
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				primaryDepartment = rs.getString(1);
-				if ( primaryDepartment != null ) {
+				if ( primaryDepartment != null && !primaryDepartment.trim().equals("") && !departmentList.contains(primaryDepartment)) {
 					departmentList.add(primaryDepartment); 
 				}
 				otherDepartment = rs.getString(2);
-				if ( otherDepartment != null && !otherDepartment.trim().equals("")) {
+				if ( otherDepartment != null && !otherDepartment.trim().equals("") && !departmentList.contains(otherDepartment)) {
 					departmentList.add(otherDepartment); 
 				}
-				departmentList.add(otherDepartment);
+				//departmentList.add(otherDepartment);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

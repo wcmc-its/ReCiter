@@ -33,15 +33,20 @@ import xmlparser.scopus.model.ScopusArticle;
 import database.dao.CoauthorAffiliationsDao;
 import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
+import database.dao.IdentityDegreeDao;
+import database.dao.IdentityDirectoryDao;
 import database.dao.IdentityEducationDao;
 import database.dao.MatchingDepartmentsJournalsDao;
 import database.dao.impl.CoauthorAffiliationsDaoImpl;
 import database.dao.impl.IdentityCitizenshipDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
+import database.dao.impl.IdentityDegreeDaoImpl;
+import database.dao.impl.IdentityDirectoryDaoImpl;
 import database.dao.impl.IdentityEducationDaoImpl;
 import database.dao.impl.MatchingDepartmentsJournalsDaoImpl;
 import database.model.CoauthorAffiliations;
 import database.model.Identity;
+import database.model.IdentityDegree;
 import database.model.IdentityDirectory;
 
 public class ReCiterClusterer implements Clusterer {
@@ -83,8 +88,30 @@ public class ReCiterClusterer implements Clusterer {
 		targetAuthor.setCwid(identity.getCwid());
 		targetAuthor.setDepartment(identity.getPrimaryDepartment());
 		targetAuthor.setOtherDeparment(identity.getOtherDepartment());
-
-		targetAuthor.setEducation(new AuthorEducation());
+		//Update ReCiter code so that aliases can be included as input #93 
+		IdentityDirectoryDao dao = new IdentityDirectoryDaoImpl();
+		List<IdentityDirectory> identityDirectoryList = dao.getIdentityDirectoriesByCwid(identity.getCwid());
+		targetAuthor.setAliasList(identityDirectoryList);
+		// assign the highest terminal year to TargetAuthor.
+		AuthorEducation authorEducation = new AuthorEducation();
+		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDaoImpl();
+		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identity.getCwid());
+		if (identityDegree.getDoctoral() == 0) {
+			if (identityDegree.getMasters() == 0) {
+				if (identityDegree.getBachelor() == 0) {
+					authorEducation.setDegreeYear(-1); // setting -1 to terminal year if no terminal degree present.
+				} else {
+					authorEducation.setDegreeYear(identityDegree.getBachelor());
+				}
+			} else {
+				authorEducation.setDegreeYear(identityDegree.getMasters());
+			}
+		} else {
+			authorEducation.setDegreeYear(identityDegree.getDoctoral());
+		}
+		
+		// Set the indexed article for target author.
+		targetAuthor.setEducation(authorEducation);
 		return targetAuthor;
 	}
 
@@ -517,9 +544,11 @@ public class ReCiterClusterer implements Clusterer {
 	 * 
 	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/45).
 	 */
+	
 	public double getBoardCertificationScore(String cwid, List<ReCiterArticle> articles) {
-		ReadBoardCertifications efr=new ReadBoardCertifications(cwid);		
-		return efr.getBoardCertifications(articles);
+		ReadBoardCertifications efr=new ReadBoardCertifications(cwid);
+		Map<String, List<String>> map = efr.getBoardCertificationsMap();
+		return efr.getBoardCertifications(cwid,map,articles);
 	}
 	
 	
