@@ -2,6 +2,7 @@ package xmlparser.pubmed;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -208,57 +209,67 @@ public class PubmedEFetchHandler extends DefaultHandler {
 
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
+		//  Normalize Unicode characters to Roman equivalents #16 & #87
+		String data = new String(ch, start, length);
+		try {
+			byte sByte[] = data.getBytes("UTF-8");
+			data = new String(sByte,"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		if (bMedlineCitation && bPMID) {
-			String pmid = new String(ch, start, length);
+			String pmid = data;
 			pubmedArticle.getMedlineCitation().setPmid(new MedlineCitationPMID(pmid)); // set the pmid number of the MedlineCitation.
 			bPMID = false;
 			bMedlineCitation = false;
 		}
 		if (bArticle && bArticleTitle) {
-			pubmedArticle.getMedlineCitation().getArticle().setArticleTitle(new String(ch, start, length)); // set the title of the Article.
+			pubmedArticle.getMedlineCitation().getArticle().setArticleTitle(data); // set the title of the Article.
 			bArticleTitle = false;
 		}
 		if (bAuthorLastName) {
-			String authorLastName = new String(ch, start, length);
+			String authorLastName = data;
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setLastName(authorLastName);
 			bAuthorLastName = false;
 		}
 		if (bAuthorForeName) {
-			String authorForeName = new String(ch, start, length);
+			String authorForeName = data;
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setForeName(authorForeName);
 			bAuthorForeName = false;
 		}
 		if (bAuthorInitials) {
-			String authorInitials = new String(ch, start, length);
+			String authorInitials = data;
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setInitials(authorInitials);
 			bAuthorInitials = false;
 		}
 		if (bAffiliation) {
-			String affiliation = new String(ch, start, length);
+			String affiliation = data;
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setAffiliation(affiliation);
 			bAffiliation = false;
 		}
 		if (bJournalTitle) {
-			String journalTitle = new String(ch, start, length);
+			String journalTitle = data;
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().setJournalTitle(journalTitle);
 			bJournalTitle = false;
 		}
 		if (bPubDate && bPubDateYear) {
-			String pubDateYear = new String(ch, start, length);
+			String pubDateYear = data;
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
 			bPubDate = false;
 			bPubDateYear = false;
 		}
 		if (bJournalISOAbbreviation) {
-			pubmedArticle.getMedlineCitation().getArticle().getJournal().setIsoAbbreviation(new String(ch, start, length));
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().setIsoAbbreviation(data);
 			bJournalISOAbbreviation = false;
 		}
 		if (bPubDate && bMedlineDate) {
-			String pubDateYear = new String(ch, start, length);
+			String pubDateYear = data;
 			if (pubDateYear.length() > 4) {
 				pubDateYear = pubDateYear.substring(0, 4); // PMID = 23849565 <MedlineDate>2013 May-Jun</MedlineDate>
 			}
@@ -268,12 +279,12 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		}
 		if (bKeywordList && bKeyword) {
 			MedlineCitationKeyword keyword = new MedlineCitationKeyword();
-			keyword.setKeyword(new String(ch, start, length));
+			keyword.setKeyword(data);
 			pubmedArticle.getMedlineCitation().getKeywordList().getKeywordList().add(keyword);
 			bKeyword = false;
 		}
 		if (bDescriptorName) {
-			String descriptorName = new String(ch, start, length);
+			String descriptorName = data;
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getMeshHeadingList().size() - 1;
 			pubmedArticle.getMedlineCitation().getMeshHeadingList().get(lastInsertedIndex).getDescriptorName().setDescriptorName(descriptorName); // set descriptor name for MeSH.
 			bDescriptorName = false;

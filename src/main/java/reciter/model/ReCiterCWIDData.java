@@ -5,25 +5,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import database.dao.GoldStandardPmidsDao;
-import database.dao.IdentityDegreeDao;
-import database.dao.IdentityDirectoryDao;
-import database.dao.MatchingDepartmentsJournalsDao;
-import database.dao.impl.GoldStandardPmidsDaoImpl;
-import database.dao.impl.IdentityDegreeDaoImpl;
-import database.dao.impl.IdentityDirectoryDaoImpl;
-import database.dao.impl.MatchingDepartmentsJournalsDaoImpl;
-import database.model.IdentityDegree;
-import database.model.IdentityDirectory;
 import reciter.erroranalysis.ReCiterConfigProperty;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleKeywords;
 import reciter.model.article.ReCiterArticleKeywords.Keyword;
-import reciter.model.author.AuthorAffiliation;
-import reciter.model.author.AuthorEducation;
-import reciter.model.author.AuthorName;
-import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.utils.reader.YearDiscrepacyReader;
 import reciter.utils.stemmer.PorterStemmer;
@@ -33,6 +18,11 @@ import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.ScopusXmlFetcher;
 import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
+import database.dao.GoldStandardPmidsDao;
+import database.dao.IdentityDirectoryDao;
+import database.dao.impl.GoldStandardPmidsDaoImpl;
+import database.dao.impl.IdentityDirectoryDaoImpl;
+import database.model.IdentityDirectory;
 
 /**
  * 
@@ -72,11 +62,12 @@ public class ReCiterCWIDData {
 		coAuthors = reCiterConfigProperty.getCoAuthors();
 		similarityThreshold = reCiterConfigProperty.getSimilarityThreshold();
 		department = reCiterConfigProperty.getAuthorDepartment();
-		targetAuthor = new TargetAuthor(new AuthorName(firstName,middleName, lastName), new AuthorAffiliation(affiliation));
-		ReCiterArticle targetAuthorArticle = new ReCiterArticle(-1);
+		//targetAuthor = new TargetAuthor(new AuthorName(firstName,middleName, lastName), new AuthorAffiliation(affiliation));
+		//targetAuthor.setCwid(cwid);
+		/*ReCiterArticle targetAuthorArticle = new ReCiterArticle(-1);
 		targetAuthorArticle.setArticleCoAuthors(new ReCiterArticleAuthors());
 		targetAuthorArticle.getArticleCoAuthors().addAuthor(new ReCiterAuthor(new AuthorName(firstName, middleName,lastName), new AuthorAffiliation(affiliation + " "+ department)));
-		targetAuthor.setCwid(cwid);
+		
 		targetAuthorArticle.setArticleKeywords(new ReCiterArticleKeywords());
 		
 		// Add primary and/or other department name(s) to list of topic keywords #46  
@@ -111,14 +102,14 @@ public class ReCiterCWIDData {
 								coAuthorMiddleName, coAuthorLastName),
 								new AuthorAffiliation("")));
 			}
-		}
+		}*/
 		
 		IdentityDirectoryDao dao = new IdentityDirectoryDaoImpl();
 		List<IdentityDirectory> identityDirectoryList = dao.getIdentityDirectoriesByCwid(cwid);
-		targetAuthor.setAliasList(identityDirectoryList);
+		//targetAuthor.setAliasList(identityDirectoryList);
 		
 		
-		//  For each of an author’s aliases, modify initial query based on lexical rules #100 
+		//  For each of an author’s aliases, modify initial query based on lexical rules #100, scenario 2
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 		if (identityDirectoryList != null && identityDirectoryList.size() > 0) {
 			for (IdentityDirectory dir : identityDirectoryList) {
@@ -178,7 +169,7 @@ public class ReCiterCWIDData {
 	}
 	
 	
-	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84.
+	// Github issue: https://github.com/wcmc-its/ReCiter/issues/84. #17
 	private void applyVertorOfKeywords(ReCiterArticle article) {
 		List<String> articleKeywordList = Arrays.asList(article.getArticleTitle().split(" "));
 		for (String articleKeyword : articleKeywordList) {

@@ -458,7 +458,7 @@ public class ReCiterClusterer implements Clusterer {
 	 * (https://github.com/wcmc-its/ReCiter/issues/78).
 	 */
 	public double computeArticleAffiliationToAuthurEducation(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-
+		IdentityEducationDao identityEducationDao = new IdentityEducationDaoImpl();
 		ScopusArticle scopusArticle = reCiterArticle.getScopusArticle();
 		if (scopusArticle != null) {
 			// Get scopus affiliation.
