@@ -24,6 +24,9 @@ import database.dao.impl.BoardCertificationDataDaoImpl;
 public class ReadBoardCertifications {
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReadBoardCertifications.class);
 	private String cwid;
+	
+	
+
 	public ReadBoardCertifications(String cwid){
 		this.cwid=cwid;		
 	}
@@ -35,46 +38,48 @@ public class ReadBoardCertifications {
 		}
 		return certification;
 	}*/
+	
+	public Map<String, List<String>>  getBoardCertificationsMap(){
+		Map<String, List<String>> map=null;
+		BoardCertificationDataDao dao = new BoardCertificationDataDaoImpl();
+		try {
+			map=dao.getBoardCertificationsByCwid(cwid);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			dao=null;
+		}		
+		return map;
+	}
 
 	/**
 	 * 
 	 * @param cwid
 	 * @return
 	 */
-	public String getBoardCertifications(){
+	public String getBoardCertifications(Map<String, List<String>> map){
 		List<String> list=null;	
 		StringBuilder sb = new StringBuilder();
-		try {
-			BoardCertificationDataDao dao = new BoardCertificationDataDaoImpl();
-			Map<String, List<String>> map=dao.getBoardCertificationsByCwid(cwid);
-			//slf4jLogger.info(map.toString());
-			if(map.containsKey(cwid)){
-				list=map.get(cwid);
-				List<String> keys = new ArrayList<String>();
-				for(String certification: list){
-					if(certification!=null && !certification.trim().equals("")){
-						certification=certification.trim();
-						certification=certification.replace('/', ' ').replace("and", " ").replace("the", " ").replace("medicine", " ").replace("-", " ").replace("with", " ").replace("in", " ").replace("med", " ").replace("adult", " ").replace("general", " ").replaceAll("\\s+", " ").trim();
-						if(!certification.equals("")){
-							String[] s = certification.split(" ");
-							for(int i=0;s!=null && i<s.length;i++){
-								if(!keys.contains(s[i])){
-									keys.add(s[i]);
-									sb.append(s[i]).append(" ");
-								}
+		if(map.containsKey(cwid)){
+			list=map.get(cwid);
+			List<String> keys = new ArrayList<String>();
+			for(String certification: list){
+				if(certification!=null && !certification.trim().equals("")){
+					certification=certification.trim();
+					certification=certification.replace('/', ' ').replace("and", " ").replace("the", " ").replace("medicine", " ").replace("-", " ").replace("with", " ").replace("in", " ").replace("med", " ").replace("adult", " ").replace("general", " ").replaceAll("\\s+", " ").trim();
+					if(!certification.equals("")){
+						String[] s = certification.split(" ");
+						for(int i=0;s!=null && i<s.length;i++){
+							if(!keys.contains(s[i])){
+								keys.add(s[i]);
+								sb.append(s[i]).append(" ");
 							}
 						}
 					}
 				}
 			}
-			dao=null;
-		}catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} /*catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+		}
 		return sb.toString().trim();
 	}
 
@@ -85,9 +90,9 @@ public class ReadBoardCertifications {
 	 * @param article
 	 */
 
-	public double getBoardCertifications(List<ReCiterArticle> articles){
+	public double getBoardCertifications(String cwid, Map<String, List<String>> map,List<ReCiterArticle> articles){
 		double sim=0;
-		String str=getBoardCertifications();
+		String str=getBoardCertifications(map);
 		if(str!=null && !str.trim().equals("")){
 			Document doc = new Document(str);
 			List<Document> documents = new ArrayList<Document>();		
