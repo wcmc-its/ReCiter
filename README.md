@@ -134,3 +134,17 @@ find . -name '*.DS_Store' -type f -delete
 3. (Optional step) Verify that there are no longer any .DS_Store files in your ReCiter installation directory and its subfolders<br>
 4. In Eclipse, right-click the project and click refresh<br>
 5. Try running again
+
+### ReCiterExample.java not getting input data from the correct location
+
+If you encounter this error:
+```
+Exception in thread "main" java.nio.file.NoSuchFileException: src/main/resources/data/pubmed
+```
+Then, follow these steps:
+
+1. Navigate to /ReCiter/src/main/resources/data
+2. Rename the folder "pubmed" to "pubmed1"
+3. Rename the folder "xml" to "pubmed"
+4. In Eclipse, right-click the project and click refresh<br>
+5. Try running again
