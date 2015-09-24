@@ -99,7 +99,7 @@ If you encounter errors while running ReCiter:<br>
 4. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)<br>
 5. Double-check that you have entered the correct password for 'root' in config.properties<br>
 
-### Known Eclipse bug
+### Known Eclipse bug 67414
 
 If when compiling ReCiter you encounter this message:
 
