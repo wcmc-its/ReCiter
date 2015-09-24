@@ -99,6 +99,15 @@ If you encounter errors while running ReCiter:<br>
 4. In config.properties, make sure that the username and password are not enclosed in quotation marks; likewise, ensure that lines do not end with a semicolon (neither the quotation marks nor the semicolon are needed in the configuration file, and they may cause errors if present)<br>
 5. Double-check that you have entered the correct password for 'root' in config.properties<br>
 
+### Known Eclipse bug
+
+If when compiling ReCiter you encounter this message:
+
+```
+The type java.lang.Object cannot be resolved. It is indirectly referenced from required .class files
+```
+Follow the instructions here to resolve the issue: http://dev-answers.blogspot.de/2009/06/eclipse-build-errors-javalangobject.html
+
 ### Missing data for a CWID
 
 If when running ReCiter you encounter output that looks like this:
