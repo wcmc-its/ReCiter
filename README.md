@@ -108,6 +108,16 @@ The type java.lang.Object cannot be resolved. It is indirectly referenced from r
 ```
 To resolve this issue, follow the instructions at http://bit.ly/1PyyBNO or at http://dev-answers.blogspot.de/2009/06/eclipse-build-errors-javalangobject.html
 
+### Permissions error in Eclipse
+
+If when attempting to run ReCiter you encounter an error like this:
+
+```
+An error occurred while creating the Java project. Reason: Parent of resource: / ... / ReCiter/target is marked as read-only
+```
+
+Go to the folder mentioned in the error messages, click on `get info`, select the lock to unlock privileges, and change the privileges to `read and write`.
+
 ### Missing data for a CWID
 
 If when running ReCiter you encounter output that looks like this:
