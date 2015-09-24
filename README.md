@@ -5,7 +5,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 
 ## Setting up development environment
 1. Install `Java JDK 8` from http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
-2. Download `Eclipse Luna` from http://eclipse.org/downloads/.
+2. Download the latest version of Eclipse from http://eclipse.org/downloads/. As of 9-24-15, the latest version was `Eclipse Mars`.
 3. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for `Eclipse`.
 4. Install `Maven Integration for Eclipse` in Eclipse Marketplace (https://marketplace.eclipse.org/content/maven-integration-eclipse-luna). (As of 9-24-15, `Maven Integration for Eclipse` was the most recent version available for Eclipse Mars.) 
 5. Use the `git clone` command to clone a copy of ReCiter in an empty directory: Using the command line, navigate to the directory in which you wish to install ReCiter, then type `git clone https://github.com/wcmc-its/ReCiter.git`.
