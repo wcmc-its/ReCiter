@@ -106,7 +106,7 @@ If when compiling ReCiter you encounter this message:
 ```
 The type java.lang.Object cannot be resolved. It is indirectly referenced from required .class files
 ```
-Follow the instructions here to resolve the issue: http://dev-answers.blogspot.de/2009/06/eclipse-build-errors-javalangobject.html
+To resolve this issue, follow the instructions at http://bit.ly/1PyyBNO or at http://dev-answers.blogspot.de/2009/06/eclipse-build-errors-javalangobject.html
 
 ### Missing data for a CWID
 
