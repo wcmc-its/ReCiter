@@ -17,7 +17,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 
 ## MySQL Setup
 1. If you do not have MySQL installed, download it from https://www.mysql.com and install. (Any current version of MySQL will work) 
-2. To connect to your local development environment's database, change `/src/main/resources/config/database.properties` to your own local MySQL login information.
+2. To connect to your local development environment's database, change `/src/main/resources/config/database.properties` to your own local MySQL login information (see Examples 1 to 3, below). To connect to the WCMC ReCiter database, see example 4, below.
 
 	Example 1:
 	```
@@ -36,6 +36,12 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 	url=jdbc\:mysql\://localhost/reciter
 	username=root
 	password=your_password_goes_here
+	```
+	Example 4:
+	```
+	url=jdbc:mysql://its-y ... 01.med.cornell.edu/reciter (full database path is excluded)
+	username=reciter_pubs
+	password= (password is excluded)
 	```
 3. Download the ReCiter database .SQL file (See the <a href="../../wiki">wiki</a> for information on how to obtain this file and additional files that may optionally be used with ReCiter).
 4. Use your preferred database management tool to import the .SQL file to your localhost database. If using MySQL workbench, select `Data Import/Restore` in the left navigation bar; in the `Import from Disk` tab, select `Import from Self-Contained File` and select `Start Import`. To import the .SQL file using the command line, follow these steps:
