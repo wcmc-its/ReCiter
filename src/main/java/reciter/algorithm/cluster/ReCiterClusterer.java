@@ -17,9 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import database.dao.CountryDao;
+import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
 import database.dao.IdentityDegreeDao;
 import database.dao.impl.CountryDaoImpl;
+import database.dao.impl.IdentityCitizenshipDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.dao.impl.IdentityDegreeDaoImpl;
 import database.dao.impl.MatchingDepartmentsJournalsDao;
@@ -27,6 +29,7 @@ import database.model.Identity;
 import database.model.IdentityDegree;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.tfidf.Document;
+import reciter.algorithm.tfidf.TfIdf;
 import reciter.erroranalysis.Analysis;
 import reciter.erroranalysis.AnalysisReCiterCluster;
 import reciter.model.article.ReCiterArticle;
@@ -48,7 +51,7 @@ public class ReCiterClusterer implements Clusterer {
 	private Map<Integer, ReCiterCluster> finalCluster = new HashMap<Integer, ReCiterCluster>();
 	private Set<Integer> selectedClusterIdSet = new HashSet<Integer>();
 	private int selectedReCiterClusterId = -1;
-	//	private double similarityThreshold = 0.3;
+	private double similarityThresholdForPubMedAffiliation = 0.75;
 	private TargetAuthor targetAuthor;
 
 	public ReCiterClusterer() {
@@ -78,6 +81,11 @@ public class ReCiterClusterer implements Clusterer {
 
 		targetAuthor.setEducation(new AuthorEducation());
 
+		IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDaoImpl();
+		String countryOfCitizenship = identityCitizenshipDao.getIdentityCitizenshipCountry(identity.getCwid());
+		if (countryOfCitizenship != null) {
+			targetAuthor.setCitizenship(countryOfCitizenship);
+		}
 		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDaoImpl();
 		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identity.getCwid());
 		AuthorDegree authorDegree = IdentityDegreeConverter.convert(identityDegree);
@@ -144,6 +152,12 @@ public class ReCiterClusterer implements Clusterer {
 		// Perform journal reassignment.
 		reAssignArticlesByJournalMatch(map);
 
+		// Perform citizenship reassignment.
+		reAssignArticlesByCitizenshipMatch(map);
+
+		// Perform pubmed cosine similarity.
+		reAssignArticlesByPubmedAffiliationCosineSimilarity(map);
+		
 		// Perform year discrepancy removals.
 		removeArticlesBasedOnYearDiscrepancy(map);
 
@@ -269,7 +283,7 @@ public class ReCiterClusterer implements Clusterer {
 
 						int yearDiscrepancyBachelors = 
 								computeYearDiscrepancyBachelors(otherReCiterArticle, targetAuthor);
-						
+
 						if (yearDiscrepancyDoctoral < -5 || yearDiscrepancyBachelors < 1) {
 							if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
 								clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
@@ -350,6 +364,50 @@ public class ReCiterClusterer implements Clusterer {
 			}
 		}
 	}
+
+	public void reAssignArticlesByPubmedAffiliationCosineSimilarity(Map<Integer, Integer> selectedClusterIds) {
+		// Map of integer (cluster to be added to) and reciterarticles.
+		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+
+		for (int clusterId : selectedClusterIds.keySet()) {
+
+			for (ReCiterArticle reCiterArticle : finalCluster.get(clusterId).getArticleCluster()) {
+				for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+					// Do not iterate through the selected cluster ids's articles.
+					if (!selectedClusterIds.keySet().contains(entry.getKey())) {
+						// Iterate through the remaining final cluster that are not selected in selectedClusterIds.
+						Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
+						while (iterator.hasNext()) {
+							ReCiterArticle otherReCiterArticle = iterator.next();
+
+							double sim = computeCosineSimilarity(reCiterArticle, otherReCiterArticle);
+							if (sim > similarityThresholdForPubMedAffiliation) {
+								if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
+									clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
+								} else {
+									List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+									articleList.add(otherReCiterArticle);
+									clusterIdToReCiterArticleList.put(clusterId, articleList);
+								}
+
+								// remove from old cluster.
+								iterator.remove();
+								break; // break loop iterating over authors.
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Add to new cluster.
+		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+			for (ReCiterArticle article : entry.getValue()) {
+				finalCluster.get(entry.getKey()).add(article);
+			}
+		}
+	}
+
 	public void reAssignArticlesByPubmedAffiliation(Map<Integer, Integer> selectedClusterIds) {
 
 		// Map of integer (cluster to be added to) and reciterarticles.
@@ -459,6 +517,76 @@ public class ReCiterClusterer implements Clusterer {
 	}
 
 	/**
+	 * Reassign articles not selected by matching journals.
+	 * @param selectedClusterIds
+	 */
+	public void reAssignArticlesByCitizenshipMatch(Map<Integer, Integer> selectedClusterIds) {
+
+		// Map of integer (cluster to be added to) and reciterarticles.
+		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+
+		for (int clusterId : selectedClusterIds.keySet()) {
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				// Do not iterate through the selected cluster ids's articles.
+				if (!selectedClusterIds.keySet().contains(entry.getKey())) {
+					// Iterate through the remaining final cluster that are not selected in selectedClusterIds.
+					Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
+					while (iterator.hasNext()) {
+						ReCiterArticle otherReCiterArticle = iterator.next();
+
+						boolean containsCitizenshipFromScopus = containsCitizenshipFromScopus(otherReCiterArticle.getScopusArticle(), targetAuthor);
+						boolean isCitizenshipMatchFromPubmed = false;
+						for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+							if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
+								String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
+								boolean isCitizenshipMatch = containsCitizenship(affiliation, targetAuthor);
+
+								boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
+										reCiterAuthor.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
+
+								if (isCitizenshipMatch && isFirstNameMatch) {
+									//									slf4jLogger.info("citizenship match=" + affiliation + " " + otherReCiterArticle.getArticleId());
+									//									if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
+									//										clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
+									//									} else {
+									//										List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+									//										articleList.add(otherReCiterArticle);
+									//										clusterIdToReCiterArticleList.put(clusterId, articleList);
+									//									}
+
+									isCitizenshipMatchFromPubmed = true;
+									// remove from old cluster.
+									//									iterator.remove();
+									break; // break loop iterating over authors.
+								}
+							}
+						}
+
+						if (containsCitizenshipFromScopus || isCitizenshipMatchFromPubmed) {
+							if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
+								clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
+							} else {
+								List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+								articleList.add(otherReCiterArticle);
+								clusterIdToReCiterArticleList.put(clusterId, articleList);
+							}
+							iterator.remove();
+						}
+					}
+				}
+			}
+		}
+
+		// Add to new cluster.
+		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+			for (ReCiterArticle article : entry.getValue()) {
+				finalCluster.get(entry.getKey()).add(article);
+			}
+		}
+	}
+
+	/**
 	 * Compute the most similar cluster to target.
 	 * @return
 	 */
@@ -511,7 +639,6 @@ public class ReCiterClusterer implements Clusterer {
 					reCiterArticle.appendClusterInfo("contains grant coauthor");
 				}
 			}
-			//			}
 		}
 		return clusterIds;
 	}
@@ -665,6 +792,46 @@ public class ReCiterClusterer implements Clusterer {
 		}
 	}
 
+	public double computeCosineSimilarity(ReCiterArticle a, ReCiterArticle b) {
+		double maxSimilarity = -1;
+		for (ReCiterAuthor author : a.getArticleCoAuthors().getAuthors()) {
+			if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
+				for (ReCiterAuthor authorB : b.getArticleCoAuthors().getAuthors()) {
+					if (authorB.getAffiliation() != null && authorB.getAffiliation().getAffiliationName() != null) {
+						double sim = computeCosineSimilarity(
+								author.getAffiliation().getAffiliationName(), 
+								authorB.getAffiliation().getAffiliationName());
+						if (sim > maxSimilarity) {
+							maxSimilarity = sim;
+						}
+					}
+				}
+			}
+		}
+		return maxSimilarity;
+	}
+
+	/**
+	 * Computes the cosine similarity distance between two strings.
+	 * @param s1
+	 * @param s2
+	 * @return
+	 */
+	public double computeCosineSimilarity(String s1, String s2) {
+		Document doc1 = new Document(s1);
+		doc1.setId(1);
+		Document doc2 = new Document(s2);
+		doc2.setId(2);
+		List<Document> documents = new ArrayList<Document>();
+		documents.add(doc1);
+		documents.add(doc2);
+		TfIdf tfidf = new TfIdf(documents);
+		tfidf.computeTfIdf();
+		double[] d1 = tfidf.createVector(doc1);
+		double[] d2 = tfidf.createVector(doc2);
+		return tfidf.cosineSimilarity(d1, d2);
+	}
+
 	//	public boolean computeStringMatchingByKeyword(List<ReCiterArticle> cluster, ReCiterArticle article, String keyword) {
 	//		for (ReCiterArticle reCiterArticle : cluster) {
 	//			if (StringUtils.contains(StringUtils.lowerCase(article.getAffiliationConcatenated()), keyword) &&
@@ -712,19 +879,36 @@ public class ReCiterClusterer implements Clusterer {
 	 * Use citizenship and educational background to improve recall.
 	 * (https://github.com/wcmc-its/ReCiter/issues/78).
 	 */
-	public double computeArticleAffiliationToAuthurEducation(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public boolean containsCitizenship(String affiliation, TargetAuthor targetAuthor) {
 
-		ScopusArticle scopusArticle = reCiterArticle.getScopusArticle();
-		if (scopusArticle != null) {
-			// Get scopus affiliation.
-			String scopusAffiliation = "";
-			AuthorEducation targetAuthorEducation = targetAuthor.getEducation();
-
-			// Compute Similarity.
-
+		if (targetAuthor.getCitizenship() != null) {
+			return StringUtils.containsIgnoreCase(affiliation, targetAuthor.getCitizenship());
 		}
-		return 0;
+
+		return false;
 	}
+
+	public boolean containsCitizenshipFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
+
+		if (scopusArticle != null) {
+			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {
+				boolean isNameMatch = entry.getValue().getSurname().equals(targetAuthor.getAuthorName().getLastName());
+				if (isNameMatch) {
+//					slf4jLogger.info("name= " + targetAuthor.getAuthorName().getLastName());
+					if (scopusArticle.getAffiliationMap() != null && scopusArticle.getAffiliationMap().get(entry.getKey()) != null &&
+							scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry() != null) {
+						String scopusCountry = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry();
+						if (StringUtils.containsIgnoreCase(scopusCountry, targetAuthor.getCitizenship())) {
+//							slf4jLogger.info("scopusCountry = " + scopusCountry + " author = " + targetAuthor.getCwid());
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
 
 	private String extractCountry(String affiliation) {
 		CountryDao countryDao = new CountryDaoImpl();
@@ -738,13 +922,13 @@ public class ReCiterClusterer implements Clusterer {
 	}
 
 	/**
-	 * Extract Department information from string of the form "Department of *,".
+	 * Extract Department information from string of the form "Department of *," or "Department of *.".
 	 * 
 	 * @param department Department string
 	 * @return Department name.
 	 */
 	private String extractDepartment(String department) {
-		final Pattern pattern = Pattern.compile("Department of (.+?),");
+		final Pattern pattern = Pattern.compile("Department of (.+?)[\\.,]");
 		final Matcher matcher = pattern.matcher(department);
 		if (matcher.find()) {
 			return matcher.group(1);
@@ -1164,7 +1348,7 @@ public class ReCiterClusterer implements Clusterer {
 		for (Entry<Integer, ReCiterCluster> cluster : finalCluster.entrySet()) {
 			sb.append("\nCluster id: " + cluster.getKey() + "= ");
 			for (ReCiterArticle reCiterArticle : cluster.getValue().getArticleCluster()) {
-				sb.append(reCiterArticle.getArticleId() + "[" + reCiterArticle.getClusterInfo() + "], ");
+				sb.append(reCiterArticle.getArticleId() + ", ");
 			}
 		}
 		return sb.toString();

@@ -102,7 +102,7 @@ public class Analysis {
 		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
 		List<String> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
 
-		slf4jLogger.info("Gold Standard: " + goldStandardPmids);
+		slf4jLogger.info("Gold Standard [" + goldStandardPmids.size() + "]: " + goldStandardPmids);
 
 		analysis.setGoldStandardSize(goldStandardPmids.size());
 

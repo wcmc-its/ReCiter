@@ -19,7 +19,7 @@ public class Document {
 	}
 	
 	protected String[] tokenize(String s) {
-		return s.replaceAll("[^A-Za-z0-9\\s+]", "").split("\\s+");
+		return s.replaceAll("[^A-Za-z0-9\\s+]", " ").split("\\s+");
 	}
 	
 	private void updateTermFrequency(String[] tokens) {
