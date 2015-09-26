@@ -141,7 +141,7 @@ public class ReCiterClusterer implements Clusterer {
 		slf4jLogger.debug(map.toString());
 
 		// Perform PubMed affiliation reassignment.
-		reAssignArticlesByPubmedAffiliation(map);
+//		reAssignArticlesByPubmedAffiliation(map);
 
 		// Perform Scopus affiliation reassignment.
 		reAssignArticlesByScopusAffiliation(map);
@@ -637,6 +637,17 @@ public class ReCiterClusterer implements Clusterer {
 						clusterIds.put(entry.getKey(), 1);
 					}
 					reCiterArticle.appendClusterInfo("contains grant coauthor");
+				}
+				
+				// contains weill cornell. TODO: make sure target author's name matches the one iterated thru.
+				boolean containsWeillCornell = containsWeillCornell(reCiterArticle);
+				if (containsWeillCornell) {
+					if (clusterIds.containsKey(entry.getKey())) {
+						int currentCount = clusterIds.get(entry.getKey());
+						clusterIds.put(entry.getKey(), ++currentCount);
+					} else {
+						clusterIds.put(entry.getKey(), 1);
+					}
 				}
 			}
 		}
