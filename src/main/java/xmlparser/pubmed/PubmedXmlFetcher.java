@@ -59,20 +59,22 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		// Create folder for cwid if not exist.
 		File cwidDir = new File(getDirectory() + cwid);
 		if (!cwidDir.exists()) {
-			fetch(lastName, firstInitial, null, cwid);
+			fetch(lastName, firstInitial, middleName, cwid);
 		}
-
+		if(pubmedXmlParser==null)pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler()); // to make sure, the paubmedXmlParser object should not be null
+		
 		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {
 			pubmedXmlParser.setXmlInputSource(xmlFile);
 			List<PubmedArticle> list =pubmedXmlParser.parse();
 			if(list!=null)pubmedArticleList.addAll(list);
 		}
 		return pubmedArticleList;
-	}
+	}	
 	
+	//  For each of an author’s aliases, modify initial query based on lexical rules #100 
 	public void preparePubMedQueries(String lastName, String firstName, String middleName){
 		String firstInitial = "%20" + firstName.substring(0, 1)+ "[au]";
-		String middleInitial = "%20" +   (middleName!=null?middleName.substring(0, 1):"")+ "[au]";
+		String middleInitial = "%20" +   (middleName!=null && !middleName.trim().equals("")?middleName.substring(0, 1):"")+ "[au]";
 		//  For each of an author’s aliases, modify initial query based on lexical rules #100 
 		
 		// Circumstance 3. The author’s name has a suffix.
@@ -137,7 +139,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	 */
 	public void fetch(String lastName, String firstName, String middleName, String cwid) {
 		int numPubMedArticles = 0;
-		File dir = new File(getDirectory() + cwid);		
+		File dir = new File(getDirectory() + cwid);
 		// Fetch only if directory doesn't exist.
 		if (!dir.exists()) {
 			preparePubMedQueries(lastName,firstName,middleName);
