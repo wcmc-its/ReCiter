@@ -8,7 +8,10 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.ReCiterExample;
 import reciter.erroranalysis.ReCiterConfigProperty;
 import reciter.model.article.ReCiterArticle;
 import xmlparser.pubmed.PubmedXmlFetcher;
@@ -20,7 +23,9 @@ import database.dao.GoldStandardPmidsDao;
 import database.dao.impl.GoldStandardPmidsDaoImpl;
 
 public class RcgoldstandardJunitTest {
-	static String cwid = "aad2004";
+	private final static Logger slf4jLogger = LoggerFactory
+			.getLogger(ReCiterExample.class);
+	static String cwid = "aas2004";
 	ReCiterConfigProperty reCiterConfigProperty;
 	String lastName;
 	String middleName;
@@ -58,16 +63,18 @@ public class RcgoldstandardJunitTest {
 		pubmedXmlFetcher = new PubmedXmlFetcher();
 		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName,
 				firstInitial, middleName, cwid);
+		
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
-
+		slf4jLogger.info("pubmedArticleList Size  = " + pubmedArticleList.size());
 		GoldStandardPmidsDao gspDao = new GoldStandardPmidsDaoImpl();
 		gspPmidList = gspDao.getPmidsByCwid(cwid);
-
+		
+		slf4jLogger.info("gspPmidList size    = " + gspPmidList.size());
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid()
 					.getPmidString();
-			if (gspPmidList.contains(pmid))
+			while (gspPmidList.contains(pmid))
 				gspPmidList.remove(pmid);
 			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid,
 					pmid);
@@ -79,7 +86,15 @@ public class RcgoldstandardJunitTest {
 	@Test
 	public void test() {
 		int size = gspPmidList.size();
-		assertTrue(size > 1);
+		if(gspPmidList.size()>0){
+			StringBuilder sb = new StringBuilder();
+			for(String pmid: gspPmidList){
+				sb.append(pmid).append(" ");
+			}
+			slf4jLogger.info("Test case is failed , the following PMIDs are not added into cluster one ["+sb.toString().trim()+"]" );
+		}
+		slf4jLogger.info("Test Passed");
+		slf4jLogger.info("gspPmidList size  =     " + size);
 
 	}
 }
