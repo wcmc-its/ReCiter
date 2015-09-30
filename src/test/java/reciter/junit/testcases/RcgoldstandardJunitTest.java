@@ -1,10 +1,10 @@
 package reciter.junit.testcases;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +21,15 @@ import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
 import database.dao.GoldStandardPmidsDao;
 import database.dao.impl.GoldStandardPmidsDaoImpl;
+
+/* 	for  given cwid retrieved pubmedarticle list using GoldStandardPmidsDao.
+ 	checking the article pmid with authors known publications.
+ 	so if known publications list size is zero that means all the 
+ 	publications are added to the reciterArticleList.
+ 	and test case is passed, if known publications 
+ 	list size is greater than zero it means 
+ 	all known articles are not added to cluster
+ 	it that case the test fails */
 
 public class RcgoldstandardJunitTest {
 	private final static Logger slf4jLogger = LoggerFactory
@@ -63,13 +72,14 @@ public class RcgoldstandardJunitTest {
 		pubmedXmlFetcher = new PubmedXmlFetcher();
 		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName,
 				firstInitial, middleName, cwid);
-		
+
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
-		slf4jLogger.info("pubmedArticleList Size  = " + pubmedArticleList.size());
+		slf4jLogger.info("pubmedArticleList Size  = "
+				+ pubmedArticleList.size());
 		GoldStandardPmidsDao gspDao = new GoldStandardPmidsDaoImpl();
 		gspPmidList = gspDao.getPmidsByCwid(cwid);
-		
+
 		slf4jLogger.info("gspPmidList size    = " + gspPmidList.size());
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid()
@@ -86,14 +96,17 @@ public class RcgoldstandardJunitTest {
 	@Test
 	public void test() {
 		int size = gspPmidList.size();
-		if(gspPmidList.size()>0){
+		if (gspPmidList.size() > 0) {
 			StringBuilder sb = new StringBuilder();
-			for(String pmid: gspPmidList){
+			for (String pmid : gspPmidList) {
 				sb.append(pmid).append(" ");
 			}
-			slf4jLogger.info("Test case is failed , the following PMIDs are not added into cluster one ["+sb.toString().trim()+"]" );
+			slf4jLogger
+					.info("Test case is failed , the following PMIDs are not added into cluster one ["
+							+ sb.toString().trim() + "]");
 		}
 		slf4jLogger.info("Test Passed");
+		
 		slf4jLogger.info("gspPmidList size  =     " + size);
 
 	}

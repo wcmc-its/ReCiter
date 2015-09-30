@@ -1,12 +1,14 @@
 package reciter.junit.testcases;
 
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,20 +18,16 @@ import reciter.erroranalysis.ReCiterConfigProperty;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleKeywords;
 import reciter.model.article.ReCiterArticleKeywords.Keyword;
-import reciter.utils.stemmer.PorterStemmer;
-import reciter.utils.stemmer.SnowballStemmer;
 import xmlparser.pubmed.PubmedXmlFetcher;
 import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.ScopusXmlFetcher;
 import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
-import database.dao.GoldStandardPmidsDao;
-import database.dao.impl.GoldStandardPmidsDaoImpl;
 
-public class StemmerImplementationJuitTest {
+public class SpecialCharactersJunitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
-	static String cwid = "aas2004";
+	static String cwid = "rdgranst";
 	 ReCiterConfigProperty reCiterConfigProperty;
 	 String lastName;
 	 String middleName;
@@ -44,13 +42,11 @@ public class StemmerImplementationJuitTest {
 	 List<PubmedArticle> pubmedArticleList;
 	List<ReCiterArticle> reCiterArticleList;
 	List<String> gspPmidList;
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
+	
 
 	@Before
 	public void setUp() throws Exception {
+
 		String path = (new File("").getAbsolutePath())+File.separator+ReCiterConfigProperty
 				.getDefaultLocation();
 		ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
@@ -80,58 +76,51 @@ public class StemmerImplementationJuitTest {
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
 
-		GoldStandardPmidsDao gspDao = new GoldStandardPmidsDaoImpl();
-		gspPmidList = gspDao.getPmidsByCwid(cwid);
 
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid()
 					.getPmidString();
 			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid,
 					pmid);
-			reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle,
-					scopusArticle));
+			ReCiterArticle article = ArticleTranslator.translate(pubmedArticle,
+					scopusArticle);
+			reCiterArticleList.add(article);
 		}
+	
 	}
 
 	@Test
 	public void test() {
-		for (ReCiterArticle article : reCiterArticleList) {
-			{
-				List<String> articleKeywordList = Arrays.asList(article
-						.getArticleTitle().split(" "));
-				List<String> journalKeywordList = Arrays.asList(article.getJournal().getJournalTitle().split(" "));
-				for (String articleKeyword : articleKeywordList) {
-					
-				String stemmedArticlekeyword = stemWord(articleKeyword);
-				slf4jLogger.info("Article Title before stemming =   " + articleKeyword);
-				slf4jLogger.info("After stemming =     " + stemmedArticlekeyword);
+		 boolean success=  false;
+		 String origKeyword = null;
+		 for (ReCiterArticle article : reCiterArticleList)
+		 {
+			 ReCiterArticleKeywords keywords = article.getArticleKeywords();
+			 for(Keyword keyword: keywords.getKeywords()){
+				 origKeyword = keyword.getKeyword();
+				 if(origKeyword!= null)
+					success = validate(origKeyword);
 				}
-				slf4jLogger.info("-- Finished stemming for article Title List --");
-				for (String journalKeyword : journalKeywordList) {
-					String stemmedJournalKeyword = stemWord(journalKeyword);
-					slf4jLogger.info("Journal keyword before stemming =   " + journalKeyword);
-					slf4jLogger.info("After stemming =     " + stemmedJournalKeyword);
-				}
-				slf4jLogger.info("-- Finished stemming for journal Keyword List --");
-				ReCiterArticleKeywords articleKeywords = article.getArticleKeywords();
-				for(Keyword keyword: articleKeywords.getKeywords()){
-					String origKeyword = keyword.getKeyword();
-					String stemmedKeyword = stemWord(origKeyword);
-					slf4jLogger.info("Article keyword before stemming =   " + origKeyword);
-					slf4jLogger.info("After stemming =     " + stemmedKeyword);
-				}
-				slf4jLogger.info("-- Finished stemming for articleKeywordList --");
-			}
-			
-
-		}
-
+			 
+			 if(success)slf4jLogger.info("Article is encoded to utf 8 characters , Test Passed");
+			 else slf4jLogger.info(" Test Failed     because of Keyword "+origKeyword);
+		 }
+		 
+		 
+		 
 	}
-	private String stemWord(String word){
-		SnowballStemmer stemmer = new PorterStemmer();
-		stemmer.setCurrent(word);
-		stemmer.stem();
-		return stemmer.getCurrent();
+	
+	private boolean validate(String s)
+	{
+		CharsetDecoder cs = Charset.forName("UTF-8").newDecoder();
+		try {
+	        cs.decode(ByteBuffer.wrap(s.getBytes()));
+	    }
+	    catch(CharacterCodingException e){
+	    	return false;
+	    } 
+		return true;
+		
 	}
 
 }
