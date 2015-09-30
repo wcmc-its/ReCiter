@@ -173,3 +173,14 @@ Then, follow these steps:
 3. Rename the folder "xml" to "pubmed"
 4. In Eclipse, right-click the project and click refresh<br>
 5. Try running again
+
+### Permissions error in Eclipse
+
+If when attempting to run ReCiter using a Mac you encounter an error like this:
+```
+An error occurred while creating the Java project. Reason: Parent of resource: / ... / ReCiter/target is marked as read-only
+```
+1. Go to the folder mentioned in the error messages
+2. Click on `get info`
+3. Select the lock to unlock privileges
+4. Change the privileges to `read and write`.
