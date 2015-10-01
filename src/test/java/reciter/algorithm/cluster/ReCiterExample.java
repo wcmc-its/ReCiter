@@ -30,13 +30,14 @@ public class ReCiterExample {
 	public static double totalRecall = 0;
 
 	public static void main(String[] args) throws IOException {
-		runExample("Kholmanskikh", "S", "stk2005");
+		runExample("Falk", "A", "avf2003");
+		// runTestCwids(); // run for 63 cwids.
 	}
 
 	/**
 	 * Run reciter for cwids in file test_data_cwid_list.txt.
 	 */
-	public void runTestCwids() {
+	public static void runTestCwids() {
 		long startTime = System.currentTimeMillis();
 
 		List<String> cwids = getListOfCwids();
