@@ -12,12 +12,15 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.dao.AnalysisDao;
 import database.dao.IdentityDao;
+import database.dao.impl.AnalysisDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 import reciter.erroranalysis.Analysis;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
+import reciter.service.converters.AnalysisConverter;
 
 public class ReCiterExample {
 
@@ -34,28 +37,31 @@ public class ReCiterExample {
 //		runExample("Rifkind", "A", "arifkind");
 //		runExample("Slotwiner", "A", "als7001");
 //		runExample("Geng", "F", "fug2001");
+//		runExample("Fernandes", "H", "hef9020");
+//		runExample("Bracken", "W", "wcb2001");
 		// Keep track of execution time of ReCiter .
-
-		long startTime = System.currentTimeMillis();
-
-		List<String> cwids = getListOfCwids();
-		IdentityDao identityDao = new IdentityDaoImpl();
-
-		for (String cwid : cwids) {
-			slf4jLogger.info("cwid=" + cwid);
-			Identity identity = identityDao.getIdentityByCwid(cwid);
-			String firstInitial = identity.getFirstInitial();
-			String lastName = identity.getLastName();
-			runExample(lastName, firstInitial, cwid);
-		}
-
-		slf4jLogger.info("Number of cwids: " + cwids.size());
-		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
-		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
-
-		long stopTime = System.currentTimeMillis();
-		long elapsedTime = stopTime - startTime;
-		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
+		
+		runExample("Kholmanskikh", "S", "stk2005");
+//		long startTime = System.currentTimeMillis();
+//
+//		List<String> cwids = getListOfCwids();
+//		IdentityDao identityDao = new IdentityDaoImpl();
+//
+//		for (String cwid : cwids) {
+//			slf4jLogger.info("cwid=" + cwid);
+//			Identity identity = identityDao.getIdentityByCwid(cwid);
+//			String firstInitial = identity.getFirstInitial();
+//			String lastName = identity.getLastName();
+//			runExample(lastName, firstInitial, cwid);
+//		}
+//
+//		slf4jLogger.info("Number of cwids: " + cwids.size());
+//		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
+//		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
+//
+//		long stopTime = System.currentTimeMillis();
+//		long elapsedTime = stopTime - startTime;
+//		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
 	}
 
 	public static List<String> getListOfCwids() {
@@ -88,10 +94,10 @@ public class ReCiterExample {
 		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
 		totalRecall += analysis.getRecall();
-		slf4jLogger.info("True Positive List: " + analysis.getTruePositiveList());
-		slf4jLogger.info("True Negative List: " + analysis.getTrueNegativeList());
-		slf4jLogger.info("False Positive List: " + analysis.getFalsePositiveList());
-		slf4jLogger.info("False Negative List: " + analysis.getFalseNegativeList());
+		slf4jLogger.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
+		slf4jLogger.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
+		slf4jLogger.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
+		slf4jLogger.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
 //		
 //		slf4jLogger.info("# of True Positives: " + analysis.getTruePos());
 //		slf4jLogger.info("# of True Negatives: " + analysis.getTrueNeg());

@@ -17,6 +17,10 @@ public class ReCiterArticleFetcher {
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial, cwid);
 
+		// Retrieve all the scopus xml files if not exists.
+		ScopusXmlFetcher scopusFetcher = new ScopusXmlFetcher();
+		scopusFetcher.fetch(lastName, firstInitial, cwid);
+
 		// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.
 		List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
 

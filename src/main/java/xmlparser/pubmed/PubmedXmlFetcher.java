@@ -60,7 +60,10 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		// Create folder for cwid if not exist.
 		File cwidDir = new File(getDirectory() + cwid);
 		if (!cwidDir.exists()) {
+			slf4jLogger.info("Fetching PubMed articles for " + cwid);
 			fetch(lastName, firstInitial, cwid);
+		} else {
+			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
 		}
 
 		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {
@@ -105,6 +108,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
 			numPubMedArticles = xmlHandler.getCount();
 
+			slf4jLogger.info("PubMed Seach Query: " + eSearchUrl);
 			slf4jLogger.info("Number of articles need to be retrieved for : " + cwid + " is "+ numPubMedArticles);
 
 			// Retrieve the publications 10,000 records at one time and store to disk.
@@ -120,11 +124,13 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				// Get webenv value.
 				pubmedXmlQuery.setRetStart(currentRetStart);
 				eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+				
 				pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
 
 				// Use the webenv value to retrieve xml.
 				String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
-
+				slf4jLogger.info("PubMed EFetch Url = " + eFetchUrl);
+				
 				// Save the xml file to directory data/xml/cwid
 				saveXml(eFetchUrl, cwid, cwid + "_" + i);
 

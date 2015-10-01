@@ -138,10 +138,10 @@ public class ReCiterClusterer implements Clusterer {
 
 		// Phase 2 matching.
 		Map<Integer, Integer> map = computeClusterSelectionForTarget();
-		slf4jLogger.debug(map.toString());
+		slf4jLogger.info(map.toString());
 
 		// Perform PubMed affiliation reassignment.
-//		reAssignArticlesByPubmedAffiliation(map);
+		//		reAssignArticlesByPubmedAffiliation(map);
 
 		// Perform Scopus affiliation reassignment.
 		reAssignArticlesByScopusAffiliation(map);
@@ -157,7 +157,13 @@ public class ReCiterClusterer implements Clusterer {
 
 		// Perform pubmed cosine similarity.
 		reAssignArticlesByPubmedAffiliationCosineSimilarity(map);
-		
+
+		// Remove if middle name doesn't match.
+		// done in cosine similarity.
+
+		// Remove if department does not match.
+//		removeArticlesBasedOnDepartments(map);
+
 		// Perform year discrepancy removals.
 		removeArticlesBasedOnYearDiscrepancy(map);
 
@@ -191,7 +197,7 @@ public class ReCiterClusterer implements Clusterer {
 						!authorB.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
 
 					if (authorA.getAuthorName().isFullNameMatch(authorB.getAuthorName())) {
-						slf4jLogger.info(authorA.getAuthorName().toString());
+//						slf4jLogger.info(authorA.getAuthorName().toString());
 						return true;
 					}
 				}
@@ -306,11 +312,71 @@ public class ReCiterClusterer implements Clusterer {
 		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
 			for (ReCiterArticle article : entry.getValue()) {
 				reCiterCluster.add(article);	
-				slf4jLogger.info("Removed article id=" + article.getArticleId());
+//				slf4jLogger.info("Removed article id=" + article.getArticleId());
 			}
 		}
 		finalCluster.put(reCiterCluster.getClusterID(), reCiterCluster);
 	}
+
+//	public void removeArticlesBasedOnDepartments(Map<Integer, Integer> selectedClusterIds) {
+//		// Map of integer (cluster to be added to) and reciterarticles.
+//		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+//
+//		for (int clusterId : selectedClusterIds.keySet()) {
+//			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+//				// IMPORTANT: Here we actually iterate through the selected cluster ids's articles.
+//				if (selectedClusterIds.keySet().contains(entry.getKey())) {
+//
+//					// Iterate through the articles selected in selectedClusterIds.
+//					Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
+//					while (iterator.hasNext()) {
+//						ReCiterArticle otherReCiterArticle = iterator.next();
+//
+//						boolean isRemoved = false;
+//						for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
+//
+//							boolean isMiddleNameMatch = StringUtils.equalsIgnoreCase(
+//									reCiterAuthor.getAuthorName().getMiddleInitial(), targetAuthor.getAuthorName().getMiddleInitial());
+//
+//							boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
+//									reCiterAuthor.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
+//
+//							if (isMiddleNameMatch && isFirstNameMatch) {
+//								boolean isDepartmentMatch = departmentMatch(reCiterAuthor, targetAuthor);
+//								if (!isDepartmentMatch) {
+//									isRemoved = true;
+//									break;
+//								}
+//							}
+//						}
+//
+//						if (isRemoved) {
+//							if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
+//								clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
+//							} else {
+//								List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+//								articleList.add(otherReCiterArticle);
+//								clusterIdToReCiterArticleList.put(clusterId, articleList);
+//							}
+//							// remove from old cluster.
+//							iterator.remove();
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		// Create a new cluster to store the deleted articles.
+//		ReCiterCluster reCiterCluster = new ReCiterCluster();
+//		// Add to new cluster.
+//		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+//			for (ReCiterArticle article : entry.getValue()) {
+//				reCiterCluster.add(article);	
+//				slf4jLogger.info("Removed article id=" + article.getArticleId());
+//			}
+//		}
+//		finalCluster.put(reCiterCluster.getClusterID(), reCiterCluster);
+//	}
 
 	public void reAssignArticlesByScopusAffiliation(Map<Integer, Integer> selectedClusterIds) {
 
@@ -381,7 +447,14 @@ public class ReCiterClusterer implements Clusterer {
 							ReCiterArticle otherReCiterArticle = iterator.next();
 
 							double sim = computeCosineSimilarity(reCiterArticle, otherReCiterArticle);
-							if (sim > similarityThresholdForPubMedAffiliation) {
+							boolean isMiddleNameMatch = false;
+							for (ReCiterAuthor reCiterAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+								isMiddleNameMatch = StringUtils.equalsIgnoreCase(
+										reCiterAuthor.getAuthorName().getMiddleInitial(), targetAuthor.getAuthorName().getMiddleInitial());
+							}
+
+							if (sim > similarityThresholdForPubMedAffiliation && isMiddleNameMatch) {
 								if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
 									clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
 								} else {
@@ -638,7 +711,7 @@ public class ReCiterClusterer implements Clusterer {
 					}
 					reCiterArticle.appendClusterInfo("contains grant coauthor");
 				}
-				
+
 				// contains weill cornell. TODO: make sure target author's name matches the one iterated thru.
 				boolean containsWeillCornell = containsWeillCornell(reCiterArticle);
 				if (containsWeillCornell) {
@@ -651,6 +724,32 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			}
 		}
+
+		// If no cluster ids are selected, select the cluster with the first name and middle name matches.
+		if (clusterIds.size() == 0) {
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
+					for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+						boolean isMiddleNameMatch = StringUtils.equalsIgnoreCase(
+								reCiterAuthor.getAuthorName().getMiddleInitial(), targetAuthor.getAuthorName().getMiddleInitial());
+
+						boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
+								reCiterAuthor.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
+
+						if (isMiddleNameMatch && isFirstNameMatch) {
+							if (clusterIds.containsKey(entry.getKey())) {
+								int currentCount = clusterIds.get(entry.getKey());
+								clusterIds.put(entry.getKey(), ++currentCount);
+							} else {
+								clusterIds.put(entry.getKey(), 1);
+							}
+						}
+					}
+				}
+			}
+		}
+
 		return clusterIds;
 	}
 
@@ -783,6 +882,7 @@ public class ReCiterClusterer implements Clusterer {
 		if (reCiterArticle.getJournal() != null) {
 			int currentYearDiff = reCiterArticle.getJournal().getJournalIssuePubDateYear() - 
 					targetAuthor.getDegree().getBachelor();
+			//			slf4jLogger.info(currentYearDiff + "");
 			return currentYearDiff;
 		}
 		return 10; // so that it doesn't register as false.
@@ -905,12 +1005,12 @@ public class ReCiterClusterer implements Clusterer {
 			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {
 				boolean isNameMatch = entry.getValue().getSurname().equals(targetAuthor.getAuthorName().getLastName());
 				if (isNameMatch) {
-//					slf4jLogger.info("name= " + targetAuthor.getAuthorName().getLastName());
+					//					slf4jLogger.info("name= " + targetAuthor.getAuthorName().getLastName());
 					if (scopusArticle.getAffiliationMap() != null && scopusArticle.getAffiliationMap().get(entry.getKey()) != null &&
 							scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry() != null) {
 						String scopusCountry = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry();
 						if (StringUtils.containsIgnoreCase(scopusCountry, targetAuthor.getCitizenship())) {
-//							slf4jLogger.info("scopusCountry = " + scopusCountry + " author = " + targetAuthor.getCwid());
+							//							slf4jLogger.info("scopusCountry = " + scopusCountry + " author = " + targetAuthor.getCwid());
 							return true;
 						}
 					}

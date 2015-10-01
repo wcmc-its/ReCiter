@@ -19,29 +19,31 @@ import xmlparser.scopus.model.ScopusArticle;
  *
  */
 public class ScopusXmlFetcher extends AbstractXmlFetcher {
-	
+
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
 	private static final String DEFAULT_LOCATION = "src/main/resources/data/scopus/";
 
 	private ScopusXmlParser scopusXmlParser;
-		
+
 	public class ScopusXmlFetcherRunnable implements Runnable {
 
 		private final String cwid;
 		private final String pmid;
-		
+
 		public ScopusXmlFetcherRunnable(String cwid, String pmid) {
 			this.cwid = cwid;
 			this.pmid = pmid;
 		}
-		
+
 		@Override
 		public void run() {
 			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
-			scopusXmlFetcher.fetchSingleScopus(cwid, pmid);
+			if (!scopusFileExist(cwid, pmid)) {
+				scopusXmlFetcher.fetchSingleScopus(cwid, pmid);
+			}
 		}
 	}
-	
+
 	/**
 	 * Fetch a single Scopus XML file based on the PMID and save XML file into disk.
 	 * @param lastName
@@ -53,11 +55,22 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(pmid).build();
 		saveXml(scopusXmlQuery.getQueryUrl(), cwid, pmid);
 	}
-	
+
+	/**
+	 * Check if a Scopus XML file exists.
+	 * @param cwid
+	 * @param pmid
+	 * @return
+	 */
+	public boolean scopusFileExist(String cwid, String pmid) {
+		File file = new File(DEFAULT_LOCATION + cwid + "/" + pmid + ".xml");
+		return file.exists();
+	}
+
 	public ScopusArticle getScopusXml(File scopusXmlFile) {
 		return scopusXmlFile.exists() ? scopusXmlParser.parse(scopusXmlFile) : null;
 	}
-	
+
 	/**
 	 * Fetch a single Scopus XML file based on the PMID.
 	 * @param lastName
@@ -83,12 +96,12 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 		while (!executor.isTerminated()) {}
 		slf4jLogger.info("Completed retrieving Scopus articles for " + cwid);
 	}
-	
+
 	public ScopusXmlFetcher() {
 		super(DEFAULT_LOCATION);
 		scopusXmlParser = new ScopusXmlParser(new ScopusXmlHandler());
 	}
-	
+
 	public ScopusXmlFetcher(String directory) {
 		super(directory);
 	}

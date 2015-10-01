@@ -86,14 +86,19 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 	 * 
 	 */
 	public static String removeSpecialStrings( String lineString){
-		  if (lineString.contains("&quot")) {
-		      return lineString.replaceAll("&quot", ""); 
-		  } else if (lineString.contains("&amp;")) {
-			  return lineString.replaceAll("amp;", ""); 
-		  } else if (lineString.contains("?><")) {
-			 return lineString;
-		  } else {
-			  return lineString;
-		  }
+		if (lineString.contains(" & ")) {
+			return lineString.replaceAll(" & ", " &amp; ");
+		} else {
+			return lineString;
+		}
+//		  if (lineString.contains("&quot")) {
+//		      return lineString.replaceAll("&quot", ""); 
+//		  } else if (lineString.contains("&amp;")) {
+//			  return lineString.replaceAll("amp;", ""); 
+//		  } else if (lineString.contains("?><")) {
+//			 return lineString;
+//		  } else {
+//			  return lineString;
+//		  }
 	}
 }
