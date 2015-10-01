@@ -71,7 +71,9 @@ local.properties
 .buildpath
 
 # Do not include the data directory
-src/main/resources/data/*
+src/main/resources/data/csv_output/*
+src/main/resources/data/pubmed/*
+src/main/resources/data/scopus/*
 
 # Do not include reciter.log
 reciter.log
