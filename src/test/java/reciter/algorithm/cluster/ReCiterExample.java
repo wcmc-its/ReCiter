@@ -30,40 +30,35 @@ public class ReCiterExample {
 	public static double totalRecall = 0;
 
 	public static void main(String[] args) throws IOException {
-//		runExample("Mittal", "V", "vim2010");
-//		runExample("Marcus", "A", "ajmarcus");
-//				runExample("Sauve", "A", "aas2004");
-		
-//		runExample("Rifkind", "A", "arifkind");
-//		runExample("Slotwiner", "A", "als7001");
-//		runExample("Geng", "F", "fug2001");
-//		runExample("Fernandes", "H", "hef9020");
-//		runExample("Bracken", "W", "wcb2001");
-		// Keep track of execution time of ReCiter .
-		
 		runExample("Kholmanskikh", "S", "stk2005");
-//		long startTime = System.currentTimeMillis();
-//
-//		List<String> cwids = getListOfCwids();
-//		IdentityDao identityDao = new IdentityDaoImpl();
-//
-//		for (String cwid : cwids) {
-//			slf4jLogger.info("cwid=" + cwid);
-//			Identity identity = identityDao.getIdentityByCwid(cwid);
-//			String firstInitial = identity.getFirstInitial();
-//			String lastName = identity.getLastName();
-//			runExample(lastName, firstInitial, cwid);
-//		}
-//
-//		slf4jLogger.info("Number of cwids: " + cwids.size());
-//		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
-//		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
-//
-//		long stopTime = System.currentTimeMillis();
-//		long elapsedTime = stopTime - startTime;
-//		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
 	}
 
+	/**
+	 * Run reciter for cwids in file test_data_cwid_list.txt.
+	 */
+	public void runTestCwids() {
+		long startTime = System.currentTimeMillis();
+
+		List<String> cwids = getListOfCwids();
+		IdentityDao identityDao = new IdentityDaoImpl();
+
+		for (String cwid : cwids) {
+			slf4jLogger.info("cwid=" + cwid);
+			Identity identity = identityDao.getIdentityByCwid(cwid);
+			String firstInitial = identity.getFirstInitial();
+			String lastName = identity.getLastName();
+			runExample(lastName, firstInitial, cwid);
+		}
+
+		slf4jLogger.info("Number of cwids: " + cwids.size());
+		slf4jLogger.info("Average Precision: " + totalPrecision / cwids.size());
+		slf4jLogger.info("Average Recall: " + totalRecall / cwids.size());
+
+		long stopTime = System.currentTimeMillis();
+		long elapsedTime = stopTime - startTime;
+		slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
+	}
+	
 	public static List<String> getListOfCwids() {
 		List<String> cwids = new ArrayList<String>();
 		try (Stream<String> stream = Files.lines(Paths.get("src/main/resources/data/test_data_cwid_list.txt"),Charset.defaultCharset())) {
