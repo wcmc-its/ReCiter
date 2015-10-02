@@ -174,3 +174,14 @@ An error occurred while creating the Java project. Reason: Parent of resource: /
 2. Click on `get info`
 3. Select the lock to unlock privileges
 4. Change the privileges to `read and write`.
+5. Try running again
+
+### Problem with MySQL setup in database.properties
+
+If when attempting to run ReCiter you encounter an error like this:
+```
+java.sql.SQLException: Access denied for user 'root'@'localhost' (using password: NO)
+```
+1. Open the database properties file at /src/main/resources/config/database.properties
+2. Follow the instructions under "MySQL Setup" above to connect ReCiter to the ReCiter database 
+3. Try running again
