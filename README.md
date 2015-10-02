@@ -61,6 +61,8 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 
 ## Running ReCiter
 
+If you are running an instance of ReCiter that will be connecting to the ReCiter database, it is necessary to verify that there is a row for the target author in the rc_identity table. If not, it's necessary to add a row for the person. When connecting to the database ReCiter won't run for a target author without a row in rc_identity.
+
 ### For a single cwid:
 In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExampleSingleCwid.java`.
 
