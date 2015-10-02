@@ -63,11 +63,17 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 
 If you are running an instance of ReCiter that will be connecting to the ReCiter database, it is necessary to verify that there is a row for the target author in the rc_identity table. If not, it's necessary to add a row for the person. When connecting to the database ReCiter won't run for a target author without a row in rc_identity.
 
-### For a single cwid:
-In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExampleSingleCwid.java`.
+### For a single cwid (note that if you are connecting to the ReCiter database, there must be a row for the target author in the rc_identity table):
+1. In `Eclipse`, edit `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`.
+2. Go to the line after `public static void main(String[] args) throws IOException {`
+3. Edit the line that looks like this, replacing the last name, first initial, and cwid with that of your target author `runExample("Falk", "A", "avf2003");`
+4. Right-click the class in the left navigation pane, select `Run As`, then `Java Application`
 
 ### For the 63 cwids in the reference standard:
-In `Eclipse`, run `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`.
+1. In `Eclipse`, edit `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`.
+2. If needed, add two forward-slashes to comment out the line that runs ReCiter for a single CWID
+3. Ensure that the following line is not commented out: `runTestCwids();`
+4. Right-click the class in the left navigation pane, select `Run As`, then `Java Application`
 
 ## Committing code from Eclipse to GitHub.
 1. Inside Eclipse, Right Click project -> Select `Team` -> Select `Commit` -> Select `Push to Upstream`.
