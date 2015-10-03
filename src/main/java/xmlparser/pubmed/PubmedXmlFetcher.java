@@ -29,7 +29,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
 	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
-
+	private List<String> queries = new ArrayList<String>();
 	private PubmedXmlParser pubmedXmlParser;
 
 	public static String getDefaultLocation() {
@@ -51,7 +51,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	 * @param cwid
 	 * @return A list of PubmedArticles.
 	 */
-	public List<PubmedArticle> getPubmedArticle(String lastName, String firstInitial, String cwid) {
+	public List<PubmedArticle> getPubmedArticle(String lastName, String firstInitial, String middleName, String cwid) {
 		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
 
 		// Create default location if not exist.
@@ -60,14 +60,11 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		// Create folder for cwid if not exist.
 		File cwidDir = new File(getDirectory() + cwid);
 		if (!cwidDir.exists()) {
-<<<<<<< HEAD
 			slf4jLogger.info("Fetching PubMed articles for " + cwid);
-			fetch(lastName, firstInitial, cwid);
+			fetch(lastName, firstInitial, middleName, cwid);
 		} else {
 			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
-=======
-			fetch(lastName, firstInitial, middleName, cwid);
->>>>>>> refs/heads/master
+			
 		}
 		if(pubmedXmlParser==null)pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler()); // to make sure, the paubmedXmlParser object should not be null
 		
@@ -76,17 +73,15 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			pubmedArticleList.addAll(pubmedXmlParser.parse());
 		}
 		return pubmedArticleList;
-<<<<<<< HEAD
-=======
 	}	
 	
-	//  For each of an author’s aliases, modify initial query based on lexical rules #100 
+	//  For each of an author�셲 aliases, modify initial query based on lexical rules #100 
 	public void preparePubMedQueries(String lastName, String firstName, String middleName){
 		String firstInitial = "%20" + firstName.substring(0, 1)+ "[au]";
 		String middleInitial = "%20" +   (middleName!=null && !middleName.trim().equals("")?middleName.substring(0, 1):"")+ "[au]";
-		//  For each of an author’s aliases, modify initial query based on lexical rules #100 
+		//  For each of an author�셲 aliases, modify initial query based on lexical rules #100 
 		
-		// Circumstance 3. The author’s name has a suffix.
+		// Circumstance 3. The author�셲 name has a suffix.
 		if(firstName.contains("JR") || firstName.contains("II") || firstName.contains("III")|| firstName.contains("IV")){
 			String a = firstName.replace("JR", "");
 			a = firstName.replace("II", "");
@@ -98,7 +93,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			if(!queries.contains(term))queries.add(term);
 		}
 		
-		// Circumstance 4. The author’s last name contains a space or hyphen
+		// Circumstance 4. The author�셲 last name contains a space or hyphen
 		
 		queries.add(lastName.replaceAll(" ", "%20") + firstInitial); 
 		if(lastName.trim().indexOf(" ")!=-1){
@@ -121,7 +116,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			if(!queries.contains(term))queries.add(term);
 		}
 		
-		// Circumstance 5. The author’s first name consists of a single letter
+		// Circumstance 5. The author�셲 first name consists of a single letter
 		if(firstName.length()==1){
 			String term = lastName +firstInitial;//LastName FirstInitial[au] 
 			if(!queries.contains(term))queries.add(term);
@@ -132,8 +127,6 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			term=lastName+"%20"+firstName.substring(0, 1)+(middleName!=null?middleName.substring(0, 1):"")+ "[au]";//LastName FirstInitialMiddleInitial[au]
 			if(!queries.contains(term))queries.add(term);
 		}
-		// 
->>>>>>> refs/heads/master
 	}
 
 	public static String getPubMedSearchQuery(String lastName, String firstName) {
@@ -153,16 +146,9 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	 * @throws SAXException
 	 * @throws ParserConfigurationException
 	 */
-<<<<<<< HEAD
-	public void fetch(String lastName, String firstName, String cwid) {
-
-		File dir = new File(getDirectory() + cwid);
-		int numPubMedArticles = -1;
-=======
 	public void fetch(String lastName, String firstName, String middleName, String cwid) {
 		int numPubMedArticles = 0;
 		File dir = new File(getDirectory() + cwid);
->>>>>>> refs/heads/master
 		// Fetch only if directory doesn't exist.
 		if (!dir.exists()) {
 
