@@ -60,17 +60,80 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		// Create folder for cwid if not exist.
 		File cwidDir = new File(getDirectory() + cwid);
 		if (!cwidDir.exists()) {
+<<<<<<< HEAD
 			slf4jLogger.info("Fetching PubMed articles for " + cwid);
 			fetch(lastName, firstInitial, cwid);
 		} else {
 			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
+=======
+			fetch(lastName, firstInitial, middleName, cwid);
+>>>>>>> refs/heads/master
 		}
-
+		if(pubmedXmlParser==null)pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler()); // to make sure, the paubmedXmlParser object should not be null
+		
 		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {
 			pubmedXmlParser.setXmlInputSource(xmlFile);
 			pubmedArticleList.addAll(pubmedXmlParser.parse());
 		}
 		return pubmedArticleList;
+<<<<<<< HEAD
+=======
+	}	
+	
+	//  For each of an author’s aliases, modify initial query based on lexical rules #100 
+	public void preparePubMedQueries(String lastName, String firstName, String middleName){
+		String firstInitial = "%20" + firstName.substring(0, 1)+ "[au]";
+		String middleInitial = "%20" +   (middleName!=null && !middleName.trim().equals("")?middleName.substring(0, 1):"")+ "[au]";
+		//  For each of an author’s aliases, modify initial query based on lexical rules #100 
+		
+		// Circumstance 3. The author’s name has a suffix.
+		if(firstName.contains("JR") || firstName.contains("II") || firstName.contains("III")|| firstName.contains("IV")){
+			String a = firstName.replace("JR", "");
+			a = firstName.replace("II", "");
+			a = firstName.replace("III", "");
+			a = firstName.replace("IV", "");
+			String term = lastName + "%20" +a+"[au]";
+			if(!queries.contains(term))queries.add(term);
+			term=lastName+"%20"+firstName+"[au]";
+			if(!queries.contains(term))queries.add(term);
+		}
+		
+		// Circumstance 4. The author’s last name contains a space or hyphen
+		
+		queries.add(lastName.replaceAll(" ", "%20") + firstInitial); 
+		if(lastName.trim().indexOf(" ")!=-1){
+			String[] lastNameTerms = lastName.split(" ");
+			String term = lastName.replaceAll(" ", "-") + firstInitial;
+			if(!queries.contains(term))queries.add(term);
+			
+			term = lastNameTerms[0]+","+firstInitial; //FirstTermFromLastName, FirstInitial[au]
+			if(!queries.contains(term))queries.add(term);
+			term=lastNameTerms[0]+"-"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName-LastTermFromLastName, FirstInitial[au]
+			if(!queries.contains(term))queries.add(term);
+			term=lastNameTerms[0]+"%20"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName LastTermFromLastName, FirstInitial[au]
+		}
+		
+		if(lastName.trim().indexOf("-")!=-1){
+			String[] lastNameTerms = lastName.split("-");
+			String term = lastNameTerms[0]+","+firstInitial; //FirstTermFromLastName, FirstInitial[au]
+			if(!queries.contains(term))queries.add(term);
+			term=lastNameTerms[0]+"-"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName-LastTermFromLastName, FirstInitial[au]
+			if(!queries.contains(term))queries.add(term);
+		}
+		
+		// Circumstance 5. The author’s first name consists of a single letter
+		if(firstName.length()==1){
+			String term = lastName +firstInitial;//LastName FirstInitial[au] 
+			if(!queries.contains(term))queries.add(term);
+			term=lastName+middleInitial;//LastName MiddleInitial[au] 
+			if(!queries.contains(term))queries.add(term);
+			term=lastName+"%20"+(middleName!=null?middleName.substring(0, 1):"")+firstName.substring(0, 1)+ "[au]";//LastName MiddleInitialFirstInitial[au]
+			if(!queries.contains(term))queries.add(term);
+			term=lastName+"%20"+firstName.substring(0, 1)+(middleName!=null?middleName.substring(0, 1):"")+ "[au]";//LastName FirstInitialMiddleInitial[au]
+			if(!queries.contains(term))queries.add(term);
+		}
+		// 
+>>>>>>> refs/heads/master
 	}
 
 	public static String getPubMedSearchQuery(String lastName, String firstName) {
@@ -90,10 +153,16 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	 * @throws SAXException
 	 * @throws ParserConfigurationException
 	 */
+<<<<<<< HEAD
 	public void fetch(String lastName, String firstName, String cwid) {
 
 		File dir = new File(getDirectory() + cwid);
 		int numPubMedArticles = -1;
+=======
+	public void fetch(String lastName, String firstName, String middleName, String cwid) {
+		int numPubMedArticles = 0;
+		File dir = new File(getDirectory() + cwid);
+>>>>>>> refs/heads/master
 		// Fetch only if directory doesn't exist.
 		if (!dir.exists()) {
 
