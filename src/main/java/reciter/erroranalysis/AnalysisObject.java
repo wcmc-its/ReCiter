@@ -33,7 +33,21 @@ public class AnalysisObject {
 	private double affiliationSimilarity;
 	private double keywordSimilarity;
 	private double journalSimilarityPhaseTwo;
+	private double boardCertificationsPhaseTwoScore;
 	
+	/**
+	 * @return the boardCertificationsPhaseTwoScore
+	 */
+	public double getBoardCertificationsPhaseTwoScore() {
+		return boardCertificationsPhaseTwoScore;
+	}
+	/**
+	 * @param boardCertificationsPhaseTwoScore the boardCertificationsPhaseTwoScore to set
+	 */
+	public void setBoardCertificationsPhaseTwoScore(
+			double boardCertificationsPhaseTwoScore) {
+		this.boardCertificationsPhaseTwoScore = boardCertificationsPhaseTwoScore;
+	}
 	public StatusEnum getStatus() {
 		return status;
 	}

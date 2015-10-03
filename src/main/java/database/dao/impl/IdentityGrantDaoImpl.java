@@ -9,9 +9,10 @@ import java.util.List;
 
 import database.DbConnectionFactory;
 import database.DbUtil;
+import database.dao.IdentityGrantDao;
 import database.model.IdentityGrant;
 
-public class IdentityGrantDao {
+public class IdentityGrantDaoImpl implements IdentityGrantDao{
 
 	/**
 	 * Returns a list of IdentityGrant objects by query the cwid in table rc_identity_grant.

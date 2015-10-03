@@ -21,6 +21,8 @@ import reciter.algorithm.tfidf.Document;
 import reciter.erroranalysis.Analysis;
 import reciter.erroranalysis.AnalysisReCiterCluster;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleKeywords;
+import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.AuthorName;
@@ -163,8 +165,9 @@ public class ReCiterClusterer implements Clusterer {
 
 		// Perform coauthor:
 		reAssignArticlesByCoauthorMatch(map);
+		getBoardCertificationScore(map); // TODO - needs to write into CSV
 		setSelectedClusterIdSet(map.keySet());
-
+		
 		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
 		Map<String, Integer> authorCount = analyisReCiterCluster.getTargetAuthorNameCounts(reciterArticleList, targetAuthor);
 		for (Entry<String, Integer> entry : authorCount.entrySet()) {
@@ -251,7 +254,6 @@ public class ReCiterClusterer implements Clusterer {
 	 * @return
 	 */
 	public Map<Integer, Integer> computeClusterSelectionForTarget() {
-
 		Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
 		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
 			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
@@ -283,7 +285,7 @@ public class ReCiterClusterer implements Clusterer {
 					}
 				}
 
-				// containsGrantCoAuthor.
+				// containsGrantCoAuthor. 
 				boolean containsGrantCoAuthor = containsGrantCoAuthor(reCiterArticle, targetAuthor);
 				if (containsGrantCoAuthor) {
 					//					System.out.println("containsGrantCoAuthor: " + reCiterArticle.getArticleId());
@@ -296,6 +298,7 @@ public class ReCiterClusterer implements Clusterer {
 				}
 			}
 		}
+		
 		return clusterIds;
 	}
 
@@ -365,6 +368,22 @@ public class ReCiterClusterer implements Clusterer {
 		intersection.retainAll(article.getMeshList());
 
 		return intersection.size() / article.getMeshList().size();
+	}
+	
+	/**
+	 *  Match on vector of keywords taken from the article title, journal title, and keywords from MeSH major #84 
+	 * @param article
+	 * @return the number of matching keywords
+	 */
+	public int matchOnVectoKeywords(ReCiterArticle article){
+		int score=0;
+		ReCiterArticleKeywords keywords = article.getArticleKeywords();		
+		for(Keyword keyword : keywords.getKeywords()){
+			if(article.getArticleTitle().indexOf(keyword.getKeyword())!=-1)++score;
+			if(article.getJournal().getJournalTitle().indexOf(keyword.getKeyword())!=-1)++score;
+			if(article.getMeshList().contains(keyword.getKeyword()))++score;
+		}
+		return score;
 	}
 
 	/**
@@ -544,6 +563,21 @@ public class ReCiterClusterer implements Clusterer {
 	 * 
 	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/45).
 	 */
+	
+	public double getBoardCertificationScore(Map<Integer, Integer> selectedClusterIds){
+		double sim=0;
+		List<ReCiterArticle> articles=new ArrayList<ReCiterArticle>();
+		for (int clusterId : selectedClusterIds.keySet()) {
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				// Do not iterate through the selected cluster ids's articles.
+				if (!selectedClusterIds.keySet().contains(entry.getKey())) {
+					articles.addAll(finalCluster.get(clusterId).getArticleCluster());
+				}
+			}
+		}
+		if(articles.size()>0)sim=getBoardCertificationScore(targetAuthor.getCwid(),articles);
+		return sim;
+	}
 	
 	public double getBoardCertificationScore(String cwid, List<ReCiterArticle> articles) {
 		ReadBoardCertifications efr=new ReadBoardCertifications(cwid);
