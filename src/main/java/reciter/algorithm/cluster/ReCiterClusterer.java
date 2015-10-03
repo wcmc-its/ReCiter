@@ -1243,15 +1243,13 @@ public class ReCiterClusterer implements Clusterer {
 	}
 
 	private boolean containsWeillCornell(String affiliation) {
-		if (StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
+		return 	StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
 				StringUtils.containsIgnoreCase(affiliation, "weill-cornell") || 
 				StringUtils.containsIgnoreCase(affiliation, "weill medical") || 
 				StringUtils.containsIgnoreCase(affiliation, "cornell medical center") || 
-				StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center")) {
-			return true;
-		} else {
-			return false;
-		}
+				StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center") ||
+				StringUtils.containsIgnoreCase(affiliation, "Sloan-Kettering") ||
+				StringUtils.containsIgnoreCase(affiliation, "Sloan Kettering");
 	}
 	/**
 	 * Check if the ReCiterArticle's affiliation information contains the phrase 
