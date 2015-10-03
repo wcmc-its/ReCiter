@@ -119,8 +119,8 @@ public class ReCiterClusterer implements Clusterer {
 		targetAuthor.setAliasList(identityDirectoryList);
 		// assign the highest terminal year to TargetAuthor.
 		AuthorEducation authorEducation = new AuthorEducation();
-		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDaoImpl();
-		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identity.getCwid());
+//		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDaoImpl();
+//		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identity.getCwid());
 		if (identityDegree.getDoctoral() == 0) {
 			if (identityDegree.getMasters() == 0) {
 				if (identityDegree.getBachelor() == 0) {
@@ -1074,7 +1074,8 @@ public class ReCiterClusterer implements Clusterer {
 			AuthorEducation targetAuthorEducation = targetAuthor.getEducation();
 
 			// Compute Similarity.
-
+		}
+		return 0;
 	}
 
 	public boolean containsCitizenshipFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
@@ -1279,14 +1280,14 @@ public class ReCiterClusterer implements Clusterer {
 	public double getCitizenShipEducationalBackgroundScore(String cwid){
 		IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDaoImpl();
 		IdentityEducationDao identityEducationDao = new IdentityEducationDaoImpl();
-		List<String> citizenShipList = identityCitizenshipDao.getIdentityCitizenshipCountry(cwid);
+		String citizenShipList = identityCitizenshipDao.getIdentityCitizenshipCountry(cwid);
 		List<String> educationList = identityEducationDao.getIdentityCitizenshipEducation(cwid);
 		double sim=0;
-		for(int i=0;citizenShipList!=null && i<citizenShipList.size();i++){
-			for(int j=0;j<educationList.size();j++){
-				if(educationList.get(j).indexOf(citizenShipList.get(i))!=-1)sim=sim+1;
-			}
-		}
+//		for(int i=0;citizenShipList!=null && i<citizenShipList.size();i++){
+//			for(int j=0;j<educationList.size();j++){
+//				if(educationList.get(j).indexOf(citizenShipList.get(i))!=-1)sim=sim+1;
+//			}
+//		}
 		return sim;
 	}
 
