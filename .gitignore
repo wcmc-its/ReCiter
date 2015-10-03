@@ -77,4 +77,4 @@ src/main/resources/data/scopus/*
 
 # Do not include reciter.log
 reciter.log
-*.log
+logs/*
