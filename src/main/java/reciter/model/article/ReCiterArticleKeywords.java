@@ -40,6 +40,15 @@ public class ReCiterArticleKeywords {
 		keywords.add(new Keyword(keyword));
 	}
 	
+	public boolean isKeywordExist(String keywordStr){
+		if(exist()){
+			for(Keyword k: keywords){
+				if(k.getKeyword().equalsIgnoreCase(keywordStr))return true;
+			}
+		}
+		return false;
+	}
+	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (Keyword keyword : keywords) {

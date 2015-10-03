@@ -96,13 +96,15 @@ public class ArticleTranslator {
 		}
 
 		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
+		
 		if (meshList != null) {
 			// Translating Mesh
 			for (MedlineCitationMeshHeading mesh : meshList) {
-				articleKeywords.addKeyword(mesh.getDescriptorName().getDescriptorNameString());
+				String meshTerm = mesh.getDescriptorName().getDescriptorNameString();				
+				articleKeywords.addKeyword(meshTerm);
+				reCiterArticle.setMeshTerm(meshTerm);
 			}	
 		}
-
 		reCiterArticle.setArticleTitle(articleTitle);
 		reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);

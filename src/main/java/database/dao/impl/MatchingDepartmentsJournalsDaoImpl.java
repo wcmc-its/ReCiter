@@ -9,13 +9,14 @@ import java.util.List;
 
 import database.DbConnectionFactory;
 import database.DbUtil;
+import database.dao.MatchingDepartmentsJournalsDao;
 
-public class MatchingDepartmentsJournalsDao {
+public class MatchingDepartmentsJournalsDaoImpl implements MatchingDepartmentsJournalsDao{
 
-	public static void main(String[] args) {
-		MatchingDepartmentsJournalsDao m = new MatchingDepartmentsJournalsDao();
+	/*public static void main(String[] args) {
+		MatchingDepartmentsJournalsDaoImpl m = new MatchingDepartmentsJournalsDaoImpl();
 		System.out.println(m.getScoreByJournalAndDepartment("Dan Med J", "Biochemistry"));
-	}
+	}*/
 	
 	public double getScoreByJournalAndDepartment(String journal, String department) {
 		Connection con = DbConnectionFactory.getConnection();
@@ -61,14 +62,14 @@ public class MatchingDepartmentsJournalsDao {
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				primaryDepartment = rs.getString(1);
-				if ( primaryDepartment != null ) {
+				if ( primaryDepartment != null && !primaryDepartment.trim().equals("") && !departmentList.contains(primaryDepartment)) {
 					departmentList.add(primaryDepartment); 
 				}
 				otherDepartment = rs.getString(2);
-				if ( otherDepartment != null && !otherDepartment.trim().equals("")) {
+				if ( otherDepartment != null && !otherDepartment.trim().equals("") && !departmentList.contains(otherDepartment)) {
 					departmentList.add(otherDepartment); 
 				}
-				departmentList.add(otherDepartment);
+				//departmentList.add(otherDepartment);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

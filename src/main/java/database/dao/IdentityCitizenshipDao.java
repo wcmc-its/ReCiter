@@ -12,4 +12,5 @@ public interface IdentityCitizenshipDao {
 	 * @return country 
 	 */
 	String getIdentityCitizenshipCountry(String cwid);
+
 }

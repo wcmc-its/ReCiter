@@ -16,29 +16,49 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.dao.CoauthorAffiliationsDao;
 import database.dao.CountryDao;
 import database.dao.IdentityCitizenshipDao;
+import database.dao.IdentityCitizenshipDao;
+import database.dao.IdentityDao;
 import database.dao.IdentityDao;
 import database.dao.IdentityDegreeDao;
+import database.dao.IdentityDegreeDao;
+import database.dao.IdentityDirectoryDao;
+import database.dao.IdentityEducationDao;
+import database.dao.MatchingDepartmentsJournalsDao;
+import database.dao.impl.CoauthorAffiliationsDaoImpl;
 import database.dao.impl.CountryDaoImpl;
 import database.dao.impl.IdentityCitizenshipDaoImpl;
+import database.dao.impl.IdentityCitizenshipDaoImpl;
+import database.dao.impl.IdentityDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.dao.impl.IdentityDegreeDaoImpl;
-import database.dao.impl.MatchingDepartmentsJournalsDao;
+import database.dao.impl.IdentityDegreeDaoImpl;
+import database.dao.impl.IdentityDirectoryDaoImpl;
+import database.dao.impl.IdentityEducationDaoImpl;
+import database.dao.impl.MatchingDepartmentsJournalsDaoImpl;
+import database.model.CoauthorAffiliations;
+import database.model.Identity;
 import database.model.Identity;
 import database.model.IdentityDegree;
+import database.model.IdentityDegree;
+import database.model.IdentityDirectory;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.tfidf.Document;
 import reciter.algorithm.tfidf.TfIdf;
 import reciter.erroranalysis.Analysis;
 import reciter.erroranalysis.AnalysisReCiterCluster;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleKeywords;
+import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorDegree;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
+import reciter.model.boardcertifications.ReadBoardCertifications;
 import reciter.service.converters.IdentityDegreeConverter;
 import reciter.utils.reader.YearDiscrepacyReader;
 import xmlparser.scopus.model.Affiliation;
@@ -79,6 +99,7 @@ public class ReCiterClusterer implements Clusterer {
 		targetAuthor.setDepartment(identity.getPrimaryDepartment());
 		targetAuthor.setOtherDeparment(identity.getOtherDepartment());
 
+
 		targetAuthor.setEducation(new AuthorEducation());
 
 		IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDaoImpl();
@@ -90,6 +111,33 @@ public class ReCiterClusterer implements Clusterer {
 		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identity.getCwid());
 		AuthorDegree authorDegree = IdentityDegreeConverter.convert(identityDegree);
 		targetAuthor.setDegree(authorDegree);
+
+		// Merge from gemini
+		//Update ReCiter code so that aliases can be included as input #93 
+		IdentityDirectoryDao dao = new IdentityDirectoryDaoImpl();
+		List<IdentityDirectory> identityDirectoryList = dao.getIdentityDirectoriesByCwid(identity.getCwid());
+		targetAuthor.setAliasList(identityDirectoryList);
+		// assign the highest terminal year to TargetAuthor.
+		AuthorEducation authorEducation = new AuthorEducation();
+		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDaoImpl();
+		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identity.getCwid());
+		if (identityDegree.getDoctoral() == 0) {
+			if (identityDegree.getMasters() == 0) {
+				if (identityDegree.getBachelor() == 0) {
+					authorEducation.setDegreeYear(-1); // setting -1 to terminal year if no terminal degree present.
+				} else {
+					authorEducation.setDegreeYear(identityDegree.getBachelor());
+				}
+			} else {
+				authorEducation.setDegreeYear(identityDegree.getMasters());
+			}
+		} else {
+			authorEducation.setDegreeYear(identityDegree.getDoctoral());
+		}
+		
+		// Set the indexed article for target author.
+		targetAuthor.setEducation(authorEducation);
+		// End merge from gemini
 		return targetAuthor;
 	}
 
@@ -167,9 +215,12 @@ public class ReCiterClusterer implements Clusterer {
 		// Perform year discrepancy removals.
 		removeArticlesBasedOnYearDiscrepancy(map);
 
+		getBoardCertificationScore(map); // TODO - needs to write into CSV (gemini)
+	
+
 		// Set selected cluster.
 		setSelectedClusterIdSet(map.keySet());
-
+		
 		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
 		Map<String, Integer> authorCount = analyisReCiterCluster.getTargetAuthorNameCounts(reciterArticleList, targetAuthor);
 		for (Entry<String, Integer> entry : authorCount.entrySet()) {
@@ -664,7 +715,6 @@ public class ReCiterClusterer implements Clusterer {
 	 * @return
 	 */
 	public Map<Integer, Integer> computeClusterSelectionForTarget() {
-
 		Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
 		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
 			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
@@ -698,7 +748,7 @@ public class ReCiterClusterer implements Clusterer {
 					reCiterArticle.appendClusterInfo("Department matched.");
 				}
 
-				// containsGrantCoAuthor.
+				// containsGrantCoAuthor. 
 				boolean containsGrantCoAuthor = containsGrantCoAuthor(reCiterArticle, targetAuthor);
 				if (containsGrantCoAuthor) {
 					//					slf4jLogger.info("Contains Grant CoaAuthor=" + reCiterArticle.getArticleId() + " cluster id=" + entry.getKey());
@@ -819,6 +869,22 @@ public class ReCiterClusterer implements Clusterer {
 		intersection.retainAll(article.getMeshList());
 
 		return intersection.size() / article.getMeshList().size();
+	}
+	
+	/**
+	 *  Match on vector of keywords taken from the article title, journal title, and keywords from MeSH major #84 
+	 * @param article
+	 * @return the number of matching keywords
+	 */
+	public int matchOnVectoKeywords(ReCiterArticle article){
+		int score=0;
+		ReCiterArticleKeywords keywords = article.getArticleKeywords();		
+		for(Keyword keyword : keywords.getKeywords()){
+			if(article.getArticleTitle().indexOf(keyword.getKeyword())!=-1)++score;
+			if(article.getJournal().getJournalTitle().indexOf(keyword.getKeyword())!=-1)++score;
+			if(article.getMeshList().contains(keyword.getKeyword()))++score;
+		}
+		return score;
 	}
 
 	/**
@@ -995,8 +1061,20 @@ public class ReCiterClusterer implements Clusterer {
 		if (targetAuthor.getCitizenship() != null) {
 			return StringUtils.containsIgnoreCase(affiliation, targetAuthor.getCitizenship());
 		}
-
 		return false;
+	}	
+
+	// Gemini merge.
+	public double computeArticleAffiliationToAuthurEducation(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		IdentityEducationDao identityEducationDao = new IdentityEducationDaoImpl();
+		ScopusArticle scopusArticle = reCiterArticle.getScopusArticle();
+		if (scopusArticle != null) {
+			// Get scopus affiliation.
+			String scopusAffiliation = "";
+			AuthorEducation targetAuthorEducation = targetAuthor.getEducation();
+
+			// Compute Similarity.
+
 	}
 
 	public boolean containsCitizenshipFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
@@ -1081,7 +1159,7 @@ public class ReCiterClusterer implements Clusterer {
 	 * @return
 	 */
 	private double getDepartmentJournalSimilarityScore(String journalIsoAbbr, String targetAuthorDeptName) {
-		MatchingDepartmentsJournalsDao matchingDepartmentsJournalsDao = new MatchingDepartmentsJournalsDao();
+		MatchingDepartmentsJournalsDao matchingDepartmentsJournalsDao = new MatchingDepartmentsJournalsDaoImpl();
 		return matchingDepartmentsJournalsDao.getScoreByJournalAndDepartment(journalIsoAbbr, targetAuthorDeptName);
 	}
 
@@ -1106,8 +1184,110 @@ public class ReCiterClusterer implements Clusterer {
 	 * 
 	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/45).
 	 */
-	public double getBoardCertificationScore() {
-		return 0;
+	
+	public double getBoardCertificationScore(Map<Integer, Integer> selectedClusterIds){
+		double sim=0;
+		List<ReCiterArticle> articles=new ArrayList<ReCiterArticle>();
+		for (int clusterId : selectedClusterIds.keySet()) {
+			for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+				// Do not iterate through the selected cluster ids's articles.
+				if (!selectedClusterIds.keySet().contains(entry.getKey())) {
+					articles.addAll(finalCluster.get(clusterId).getArticleCluster());
+				}
+			}
+		}
+		if(articles.size()>0)sim=getBoardCertificationScore(targetAuthor.getCwid(),articles);
+		return sim;
+	}
+	
+	public double getBoardCertificationScore(String cwid, List<ReCiterArticle> articles) {
+		ReadBoardCertifications efr=new ReadBoardCertifications(cwid);
+		Map<String, List<String>> map = efr.getBoardCertificationsMap();
+		return efr.getBoardCertifications(cwid,map,articles);
+	}
+	
+	
+	/**
+	 * Leverage data on name variants to improve phase II matching
+	 * 
+	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/48).
+	 */
+	public double getNameVariantScore(TargetAuthor targetAuthor, ReCiterArticle article){
+		double sim=0;
+		List<IdentityDirectory> aliases = targetAuthor.getAliasList();
+		if(aliases!=null){
+			List<String> firstNameList = new ArrayList<String>();
+			List<String> lastNameList = new ArrayList<String>();
+			List<String> middleNameList = new ArrayList<String>();
+			
+			for(IdentityDirectory dir:aliases){
+				if(dir.getGivenName()!=null)firstNameList.add(dir.getGivenName().toLowerCase());
+				if(dir.getMiddleName()!=null)middleNameList.add(dir.getMiddleName().toLowerCase());
+				if(dir.getSurname()!=null)lastNameList.add(dir.getSurname().toLowerCase());
+			}
+			
+			String fName = targetAuthor.getAuthorName().getFirstName();
+			String mName = targetAuthor.getAuthorName().getMiddleName();
+			String lName = targetAuthor.getAuthorName().getLastName();
+			
+			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
+				if(fName!=null && author.getAuthorName().getFirstName().equalsIgnoreCase(fName))sim=sim+1;
+				else sim=sim+0.2;
+				if(lName!=null && author.getAuthorName().getLastName().equalsIgnoreCase(lName))sim=sim+1;							
+				if(mName!=null && author.getAuthorName().getMiddleName()!=null && author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+1;
+				if(author.getAuthorName().getMiddleName()==null)sim=sim+0.5;
+				if(mName!=null && author.getAuthorName().getMiddleName()!=null && !author.getAuthorName().getMiddleName().equalsIgnoreCase(mName))sim=sim+0.3;
+				
+				if(author.getAuthorName().getFirstName()!=null && firstNameList.contains(author.getAuthorName().getFirstName().toLowerCase()))sim=sim+1;
+				else sim=sim+0.2;
+				if(author.getAuthorName().getLastName()!=null && lastNameList.contains(author.getAuthorName().getLastName().toLowerCase()))sim=sim+1;							
+				if(author.getAuthorName().getMiddleName()!=null && middleNameList.contains(author.getAuthorName().getMiddleName().toLowerCase()))sim=sim+1;
+				if(author.getAuthorName().getMiddleName()!=null && !middleNameList.contains(author.getAuthorName().getMiddleName().toLowerCase()))sim=sim+0.3;
+			}
+		}
+		return sim;
+	}
+	
+	/**
+	 * Assign Phase Two score to reflect the extent to which candidate articles have authors with affiliations that occur frequently with WCMC authors
+	 * 
+	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/74).
+	 */
+	public double getKnownPublicationsScore(ReCiterArticle article){
+		double score = 0;
+		List<ReCiterAuthor> coAuthors = article.getArticleCoAuthors().getAuthors();
+		CoauthorAffiliationsDao dao = new CoauthorAffiliationsDaoImpl();
+		List<String> coAuthorAffiliations = new ArrayList<String>();
+		for(ReCiterAuthor coAuthor: coAuthors){	
+			if(coAuthor!=null && coAuthor.getAffiliation()!=null && coAuthor.getAffiliation().getAffiliationName()!=null)
+			coAuthorAffiliations.add(coAuthor.getAffiliation().getAffiliationName());
+		}
+		if(coAuthorAffiliations.size()>0){
+			List<CoauthorAffiliations> coAuthorAffiliationList = dao.getCoathorAffiliationsByAffiliationLabel(coAuthorAffiliations);
+			for(CoauthorAffiliations coaf: coAuthorAffiliationList){
+				score=score+coaf.getScore();
+			}
+		}
+		return score;
+	}
+	
+	/**
+	 * Use citizenship and educational background to improve precision
+	 * 
+	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/97).
+	 */
+	public double getCitizenShipEducationalBackgroundScore(String cwid){
+		IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDaoImpl();
+		IdentityEducationDao identityEducationDao = new IdentityEducationDaoImpl();
+		List<String> citizenShipList = identityCitizenshipDao.getIdentityCitizenshipCountry(cwid);
+		List<String> educationList = identityEducationDao.getIdentityCitizenshipEducation(cwid);
+		double sim=0;
+		for(int i=0;citizenShipList!=null && i<citizenShipList.size();i++){
+			for(int j=0;j<educationList.size();j++){
+				if(educationList.get(j).indexOf(citizenShipList.get(i))!=-1)sim=sim+1;
+			}
+		}
+		return sim;
 	}
 
 	/**

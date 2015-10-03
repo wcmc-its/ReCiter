@@ -149,6 +149,10 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setMeshList(List<String> meshList) {
 		this.meshList = meshList;
 	}
+	public void setMeshTerm(String meshTerm) {
+		if(this.meshList==null)this.meshList=new ArrayList<String>();
+		this.meshList.add(meshTerm);
+	}
 
 	@Override
 	public int hashCode() {

@@ -2,6 +2,7 @@ package xmlparser.pubmed;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -213,25 +214,64 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
+<<<<<<< HEAD
 		
 		// PMID
+=======
+		if (qName.equalsIgnoreCase("PubmedArticle")) {
+			pubmedArticles.add(pubmedArticle); // add the PubmedArticle to the pubmedArticleList.
+		}
+		if (qName.equalsIgnoreCase("Article")) {
+			bArticle = false;
+		}
+		if (qName.equalsIgnoreCase("KeywordList")) {
+			bKeywordList = false;
+		}
+	}
+
+	@Override
+	public void characters(char[] ch, int start, int length) throws SAXException {
+		//  Normalize Unicode characters to Roman equivalents #16 & #87
+		String data = new String(ch, start, length);
+		try {
+			byte sByte[] = data.getBytes("UTF-8");
+			data = new String(sByte,"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 		if (bMedlineCitation && bPMID) {
+<<<<<<< HEAD
 			String pmid = chars.toString();
 			pubmedArticle.getMedlineCitation().setPmid(new MedlineCitationPMID(pmid));
+=======
+			String pmid = data;
+			pubmedArticle.getMedlineCitation().setPmid(new MedlineCitationPMID(pmid)); // set the pmid number of the MedlineCitation.
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			bPMID = false;
 			bMedlineCitation = false;
 		}
 		
 		// Article title.
 		if (bArticle && bArticleTitle) {
+<<<<<<< HEAD
 			String articleTitle = chars.toString();
 			pubmedArticle.getMedlineCitation().getArticle().setArticleTitle(articleTitle); // set the title of the Article.
+=======
+			pubmedArticle.getMedlineCitation().getArticle().setArticleTitle(data); // set the title of the Article.
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			bArticleTitle = false;
 		}
 		
 		// Author last name.
 		if (bAuthorLastName) {
+<<<<<<< HEAD
 			String authorLastName = chars.toString();
+=======
+			String authorLastName = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setLastName(authorLastName);
 			bAuthorLastName = false;
@@ -239,7 +279,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		
 		// Author fore name.
 		if (bAuthorForeName) {
+<<<<<<< HEAD
 			String authorForeName = chars.toString();
+=======
+			String authorForeName = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setForeName(authorForeName);
 			bAuthorForeName = false;
@@ -247,7 +291,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		
 		// Author middle initials.
 		if (bAuthorInitials) {
+<<<<<<< HEAD
 			String authorInitials = chars.toString();
+=======
+			String authorInitials = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setInitials(authorInitials);
 			bAuthorInitials = false;
@@ -255,7 +303,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		
 		// Author affiliations.
 		if (bAffiliation) {
+<<<<<<< HEAD
 			String affiliation = chars.toString();
+=======
+			String affiliation = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getAuthorList().size() - 1;
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().get(lastInsertedIndex).setAffiliation(affiliation);
 			bAffiliation = false;
@@ -263,7 +315,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		
 		// Journal title
 		if (bJournalTitle) {
+<<<<<<< HEAD
 			String journalTitle = chars.toString();
+=======
+			String journalTitle = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().setJournalTitle(journalTitle);
 			bJournalTitle = false;
 		}
@@ -277,15 +333,30 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		
 		// Journal Year.
 		if (bPubDate && bPubDateYear) {
+<<<<<<< HEAD
 			String pubDateYear = chars.toString();
+=======
+			String pubDateYear = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().setYear(pubDateYear);
 			bPubDate = false;
 			bPubDateYear = false;
 		}
+<<<<<<< HEAD
 		
 		// Journal MedlineDate.
+=======
+		if (bJournalISOAbbreviation) {
+			pubmedArticle.getMedlineCitation().getArticle().getJournal().setIsoAbbreviation(data);
+			bJournalISOAbbreviation = false;
+		}
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 		if (bPubDate && bMedlineDate) {
+<<<<<<< HEAD
 			String pubDateYear = chars.toString();
+=======
+			String pubDateYear = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			if (pubDateYear.length() > 4) {
 				pubDateYear = pubDateYear.substring(0, 4); // PMID = 23849565 <MedlineDate>2013 May-Jun</MedlineDate>
 			}
@@ -297,14 +368,22 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		// Keyword.
 		if (bKeywordList && bKeyword) {
 			MedlineCitationKeyword keyword = new MedlineCitationKeyword();
+<<<<<<< HEAD
 			keyword.setKeyword(chars.toString());
+=======
+			keyword.setKeyword(data);
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			pubmedArticle.getMedlineCitation().getKeywordList().getKeywordList().add(keyword);
 			bKeyword = false;
 		}
 		
 		// MeSH descriptor name.
 		if (bDescriptorName) {
+<<<<<<< HEAD
 			String descriptorName = chars.toString();
+=======
+			String descriptorName = data;
+>>>>>>> refs/heads/ReCiterAlgorithmGeminiMerge
 			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getMeshHeadingList().size() - 1;
 			pubmedArticle.getMedlineCitation().getMeshHeadingList().get(lastInsertedIndex).getDescriptorName().setDescriptorName(descriptorName); // set descriptor name for MeSH.
 			bDescriptorName = false;

@@ -17,6 +17,7 @@ public class Identity {
 	private String firstName;
 	private String firstInitial;
 	private String middleName;
+	private String middleInitial;
 	private String fullPublishedName;
 	private String prefix;
 	private String suffix;
@@ -29,7 +30,34 @@ public class Identity {
 	private int harvesterFlag;
 	private LocalDateTime createDate;
 	private LocalDateTime updateDate;
+	private String email;
+	private String emailOther;
 	
+	
+	/**
+	 * @return the middleInitial
+	 */
+	public String getMiddleInitial() {
+		return middleInitial;
+	}
+	/**
+	 * @param middleInitial the middleInitial to set
+	 */
+	public void setMiddleInitial(String middleInitial) {
+		this.middleInitial = middleInitial;
+	}
+	public String getEmailOther() {
+		return emailOther;
+	}
+	public void setEmailOther(String emailOther) {
+		this.emailOther = emailOther;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
 	public int getIdentityPk() {
 		return identityPk;
 	}

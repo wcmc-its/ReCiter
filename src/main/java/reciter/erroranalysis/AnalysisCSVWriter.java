@@ -64,6 +64,7 @@ public class AnalysisCSVWriter {
 			printer.print(analysisObject.getAffiliationSimilarity());
 			printer.print(analysisObject.getKeywordSimilarity());
 			printer.print(analysisObject.getJournalSimilarityPhaseTwo());
+			printer.print(analysisObject.getBoardCertificationsPhaseTwoScore());
 			printer.println();
 		}
 		

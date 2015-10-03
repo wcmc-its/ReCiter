@@ -10,7 +10,8 @@ import database.DbUtil;
 import database.dao.IdentityDegreeDao;
 import database.model.IdentityDegree;
 
-public class IdentityDegreeDaoImpl implements IdentityDegreeDao {
+
+public class IdentityDegreeDaoImpl implements IdentityDegreeDao{
 	
 	/**
 	 * Retrieves an IdentityDegree object to retrieve Identity Degree information from database.
