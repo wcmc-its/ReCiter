@@ -34,7 +34,7 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 	public void saveXml(String url, String directoryName, String fileName) {
 		File dir = new File(getDirectory() + directoryName);
 		if (!dir.exists()) {
-			dir.mkdir();
+			dir.mkdirs();
 		}
 		try {
 			BufferedReader bufferedReader = new BufferedReader(
