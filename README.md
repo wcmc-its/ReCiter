@@ -194,3 +194,14 @@ java.sql.SQLException: Access denied for user 'root'@'localhost' (using password
 1. Open the database properties file at /src/main/resources/config/database.properties
 2. Follow the instructions under "MySQL Setup" above to connect ReCiter to the ReCiter database 
 3. Try running again
+4. 
+
+### Value for max_allowed_packet is too small
+
+If when attempting to run ReCiter you encounter an error like this:
+```
+java.sql.BatchUpdateException: Packet for query is too large (19926700 > 1048576). You can change this value on the server by setting the max_allowed_packet' variable.
+```
+1. Execute this query on your MYSQL server:
+2. `SET GLOBAL max_allowed_packet=1073741824;`
+3. Try running again. (Note that the value for max_allowed_packet will reset when your MYSQL server restarts.)
