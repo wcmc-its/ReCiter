@@ -9,5 +9,5 @@ public interface IdentityDegreeDao {
 	 * @param cwid
 	 * @return
 	 */
-	public IdentityDegree getIdentityDegreeByCwid(String cwid);
+	IdentityDegree getIdentityDegreeByCwid(String cwid);
 }

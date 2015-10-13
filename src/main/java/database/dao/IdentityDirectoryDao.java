@@ -15,5 +15,5 @@ public interface IdentityDirectoryDao {
 	 * @param cwid
 	 * @return
 	 */
-	public List<IdentityDirectory> getIdentityDirectoriesByCwid(String cwid);
+	List<IdentityDirectory> getIdentityDirectoriesByCwid(String cwid);
 }

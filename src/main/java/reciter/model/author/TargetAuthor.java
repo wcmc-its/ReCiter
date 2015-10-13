@@ -17,6 +17,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private AuthorDegree degree;
 	private String citizenship;
 	private List<IdentityDirectory> aliasList;
+	private List<String> boardCertifications;
 	
 	/**
 	 * @return the aliasList
@@ -84,4 +85,11 @@ public class TargetAuthor extends ReCiterAuthor {
 		this.citizenship = citizenship;
 	}
 
+	public List<String> getBoardCertifications() {
+		return boardCertifications;
+	}
+
+	public void setBoardCertifications(List<String> boardCertifications) {
+		this.boardCertifications = boardCertifications;
+	}
 }

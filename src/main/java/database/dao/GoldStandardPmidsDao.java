@@ -11,6 +11,6 @@ import database.model.GoldStandardPmid;
  */
 public interface GoldStandardPmidsDao {
 
-	public List<String> getPmidsByCwid(String cwid);
-	public List<GoldStandardPmid> getGoldStandardPmidsByCwid(String cwid);
+	List<String> getPmidsByCwid(String cwid);
+	List<GoldStandardPmid> getGoldStandardPmidsByCwid(String cwid);
 }

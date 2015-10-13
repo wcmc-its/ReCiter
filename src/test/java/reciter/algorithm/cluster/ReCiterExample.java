@@ -27,8 +27,8 @@ public class ReCiterExample {
 	public static double totalRecall = 0;
 
 	public static void main(String[] args) throws IOException {
-		runExample("Falk", "A", "", "avf2003");
-		// runTestCwids(); // run for 63 cwids.
+//		runExample("Falk", "A", "", "avf2003");
+		 runTestCwids(); // run for 63 cwids.
 	}
 
 	/**

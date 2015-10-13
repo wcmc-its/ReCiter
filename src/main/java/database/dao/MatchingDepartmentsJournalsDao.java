@@ -7,7 +7,7 @@ import java.util.List;
  *
  */
 public interface MatchingDepartmentsJournalsDao {	
-	public double getScoreByJournalAndDepartment(String journal, String department);	
-	public List<String> getDepartmentalAffiliationStringList();	
-	public List<String> getTranslatedDepartmentList();
+	double getScoreByJournalAndDepartment(String journal, String department);	
+	List<String> getDepartmentalAffiliationStringList();	
+	List<String> getTranslatedDepartmentList();
 }

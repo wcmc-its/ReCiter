@@ -1,6 +1,5 @@
 package reciter.model.boardcertifications;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,14 +7,14 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.dao.BoardCertificationDao;
+import database.dao.impl.BoardCertificationDaoImpl;
 //import reciter.lucene.DocumentVector;
 //import reciter.lucene.DocumentVectorType;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.tfidf.Document;
 import reciter.tfidf.TfIdf;
-import database.dao.BoardCertificationDataDao;
-import database.dao.impl.BoardCertificationDataDaoImpl;
 
 /**
  * @author htadimeti
@@ -24,8 +23,8 @@ import database.dao.impl.BoardCertificationDataDaoImpl;
 public class ReadBoardCertifications {
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReadBoardCertifications.class);
 	private String cwid;
-	
-	
+
+
 
 	public ReadBoardCertifications(String cwid){
 		this.cwid=cwid;		
@@ -38,19 +37,12 @@ public class ReadBoardCertifications {
 		}
 		return certification;
 	}*/
-	
-	public Map<String, List<String>>  getBoardCertificationsMap(){
-		Map<String, List<String>> map=null;
-		BoardCertificationDataDao dao = new BoardCertificationDataDaoImpl();
-		try {
-			map=dao.getBoardCertificationsByCwid(cwid);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}finally{
-			dao=null;
-		}		
-		return map;
+
+	public List<String> getBoardCertificationsMap(){
+		List<String> boardCertifications = new ArrayList<String>();
+		BoardCertificationDao dao = new BoardCertificationDaoImpl();
+		boardCertifications = dao.getBoardCertificationsByCwid(cwid);
+		return boardCertifications;
 	}
 
 	/**
@@ -97,7 +89,7 @@ public class ReadBoardCertifications {
 			Document doc = new Document(str);
 			List<Document> documents = new ArrayList<Document>();		
 			//SparseRealVector docVector = new OpenMapRealVector(vectorValues);
-			
+
 			int docSize=1;
 			doc.setId(docSize);
 			++docSize;

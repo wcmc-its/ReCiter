@@ -15,12 +15,12 @@ public interface CoauthorAffiliationsDao {
 	 * @param affiliation
 	 * @return
 	 */
-	public CoauthorAffiliations getCoathorAffiliationsByAffiliationLabel(String affiliation);
+	CoauthorAffiliations getCoathorAffiliationsByAffiliationLabel(String affiliation);
 	
 	/**
 	 * 
 	 * @param affiliations
 	 * @return
 	 */
-	public List<CoauthorAffiliations> getCoathorAffiliationsByAffiliationLabel(List<String> affiliations);
+	List<CoauthorAffiliations> getCoathorAffiliationsByAffiliationLabel(List<String> affiliations);
 }

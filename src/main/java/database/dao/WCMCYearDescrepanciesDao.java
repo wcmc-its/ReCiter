@@ -8,5 +8,5 @@ import java.util.Map;
  *
  */
 public interface WCMCYearDescrepanciesDao {
-	public Map<Integer,Double> getWCMCYearDescrepancies();
+	Map<Integer,Double> getWCMCYearDescrepancies();
 }
