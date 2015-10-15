@@ -1,5 +1,5 @@
 package reciter.algorithm.evidence.coauthor;
 
-public class AbstractStrategy {
+public class CoauthorStrategyContext {
 
 }

@@ -2,7 +2,7 @@ package reciter.algorithm.evidence.email.strategy;
 
 import java.util.List;
 
-import reciter.algorithm.evidence.email.AbstractStrategy;
+import reciter.algorithm.evidence.AbstractStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;

@@ -2,7 +2,9 @@ package reciter.algorithm.evidence.boardcertification;
 
 import java.util.List;
 
+import reciter.algorithm.evidence.Strategy;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.TargetAuthor;
 
 public class BoardCertificationStrategyContext {
 	private final Strategy strategy;
@@ -11,7 +13,7 @@ public class BoardCertificationStrategyContext {
 		this.strategy = strategy;
 	}
 
-	public double executeStrategy(List<String> boardCertifications, ReCiterArticle article) {
-		return strategy.executeStrategy(boardCertifications, article);
+	double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+		return strategy.executeStrategy(reCiterArticles, targetAuthor);
 	}
 }

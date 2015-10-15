@@ -1,4 +1,4 @@
-package reciter.algorithm.evidence.email;
+package reciter.algorithm.evidence;
 
 import java.util.List;
 
