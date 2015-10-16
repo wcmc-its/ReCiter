@@ -1,4 +1,4 @@
-package reciter.algorithm.evidence.boardcertification;
+package reciter.algorithm.evidence.scopus;
 
 import java.util.List;
 
@@ -7,13 +7,13 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
-public class BoardCertificationStrategyContext implements StrategyContext {
+public class ScopusStrategyContext implements StrategyContext {
 	private final Strategy strategy;
 	
-	public BoardCertificationStrategyContext(Strategy strategy) {
+	public ScopusStrategyContext(Strategy strategy) {
 		this.strategy = strategy;
 	}
-
+	
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
 		return strategy.executeStrategy(reCiterArticles, targetAuthor);

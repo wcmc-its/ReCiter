@@ -1,4 +1,4 @@
-package reciter.algorithm.evidence.email;
+package reciter.algorithm.evidence.pubmed;
 
 import java.util.List;
 
@@ -7,20 +7,23 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
-public class EmailStrategyContext implements StrategyContext {
+public class PubMedStrategyContext implements StrategyContext {
 	private final Strategy strategy;
-	
-	public EmailStrategyContext(Strategy strategy) {
+
+	public PubMedStrategyContext(Strategy strategy) {
 		this.strategy = strategy;
 	}
-	
+
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticle, targetAuthor);
+		// TODO Auto-generated method stub
+		return 0;
 	}
-	
+
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticles, targetAuthor);
+		// TODO Auto-generated method stub
+		return 0;
 	}
+
 }
