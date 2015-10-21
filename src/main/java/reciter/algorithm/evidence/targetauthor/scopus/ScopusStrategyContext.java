@@ -1,16 +1,16 @@
-package reciter.algorithm.evidence.scopus;
+package reciter.algorithm.evidence.targetauthor.scopus;
 
 import java.util.List;
 
-import reciter.algorithm.evidence.Strategy;
-import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategy;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
-public class ScopusStrategyContext implements StrategyContext {
-	private final Strategy strategy;
+public class ScopusStrategyContext implements TargetAuthorStrategyContext {
+	private final TargetAuthorStrategy strategy;
 	
-	public ScopusStrategyContext(Strategy strategy) {
+	public ScopusStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
 	}
 	

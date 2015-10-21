@@ -1,15 +1,15 @@
-package reciter.algorithm.evidence.department.strategy;
+package reciter.algorithm.evidence.targetauthor.department.strategy;
 
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import reciter.algorithm.evidence.AbstractStrategy;
+import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 
-public class StringMatchStrategy extends AbstractStrategy {
+public class StringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
