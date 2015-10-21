@@ -29,19 +29,18 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 public class StemmerImplementationJuitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
-	static String cwid = "aas2004";
-	 ReCiterConfigProperty reCiterConfigProperty;
-	 String lastName;
-	 String middleName;
-	 String firstName;
-	 String affiliation;
-	 String firstInitial;
-	 String authorKeywords;
-	 String coAuthors;
-	 double similarityThreshold;
-	 String department;
-	 PubmedXmlFetcher pubmedXmlFetcher;
-	 List<PubmedArticle> pubmedArticleList;
+	ReCiterConfigProperty reCiterConfigProperty;
+	String lastName;
+	String middleName;
+	String firstName;
+	String affiliation;
+	String firstInitial;
+	String authorKeywords;
+	String coAuthors;
+	double similarityThreshold;
+	String department;
+	PubmedXmlFetcher pubmedXmlFetcher;
+	List<PubmedArticle> pubmedArticleList;
 	List<ReCiterArticle> reCiterArticleList;
 	List<String> gspPmidList;
 
@@ -51,16 +50,12 @@ public class StemmerImplementationJuitTest {
 
 	@Before
 	public void setUp() throws Exception {
-		String path = (new File("").getAbsolutePath())+File.separator+ReCiterConfigProperty
-				.getDefaultLocation();
+		String path = (new File("").getAbsolutePath()) + File.separator
+				+ ReCiterConfigProperty.getDefaultLocation();
 		ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
 		try {
-			reCiterConfigProperty
-					.loadProperty(path
-							+ cwid
-							+ "/"
-							+ cwid
-							+ ".properties");
+			reCiterConfigProperty.loadProperty(path + TestController.cwid_junit + "/" + TestController.cwid_junit
+					+ ".properties");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -69,24 +64,23 @@ public class StemmerImplementationJuitTest {
 		firstName = reCiterConfigProperty.getFirstName();
 		affiliation = reCiterConfigProperty.getAuthorAffiliation();
 		firstInitial = firstName.substring(0, 1);
-		cwid = reCiterConfigProperty.getCwid();
 		authorKeywords = reCiterConfigProperty.getAuthorKeywords();
 		coAuthors = reCiterConfigProperty.getCoAuthors();
 		similarityThreshold = reCiterConfigProperty.getSimilarityThreshold();
 		department = reCiterConfigProperty.getAuthorDepartment();
 		pubmedXmlFetcher = new PubmedXmlFetcher();
 		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName,
-				firstInitial, middleName, cwid);
+				firstInitial, middleName, TestController.cwid_junit);
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
 
 		GoldStandardPmidsDao gspDao = new GoldStandardPmidsDaoImpl();
-		gspPmidList = gspDao.getPmidsByCwid(cwid);
+		gspPmidList = gspDao.getPmidsByCwid(TestController.cwid_junit);
 
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid()
 					.getPmidString();
-			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid,
+			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(TestController.cwid_junit,
 					pmid);
 			reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle,
 					scopusArticle));
@@ -97,37 +91,59 @@ public class StemmerImplementationJuitTest {
 	public void test() {
 		for (ReCiterArticle article : reCiterArticleList) {
 			{
-				List<String> articleKeywordList = Arrays.asList(article
-						.getArticleTitle().split(" "));
-				List<String> journalKeywordList = Arrays.asList(article.getJournal().getJournalTitle().split(" "));
-				for (String articleKeyword : articleKeywordList) {
-					
-				String stemmedArticlekeyword = stemWord(articleKeyword);
-				slf4jLogger.info("Article Title before stemming =   " + articleKeyword);
-				slf4jLogger.info("After stemming =     " + stemmedArticlekeyword);
+				for (int i = 0; i < 3; i++) {
+					List<String> articleKeywordList = Arrays.asList(article
+							.getArticleTitle().split(" "));
+					List<String> journalKeywordList = Arrays.asList(article
+							.getJournal().getJournalTitle().split(" "));
+					for (String articleKeyword : articleKeywordList) {
+
+						String stemmedArticlekeyword = stemWord(articleKeyword);
+						if (!articleKeyword.equals(stemmedArticlekeyword)) {
+							slf4jLogger
+									.info("Article Title before stemming =   "
+											+ articleKeyword);
+							slf4jLogger.info("After stemming =     "
+									+ stemmedArticlekeyword);
+						}
+					}
+					slf4jLogger
+							.info("-- Finished stemming for article Title List --");
+					for (String journalKeyword : journalKeywordList) {
+						String stemmedJournalKeyword = stemWord(journalKeyword);
+						if (!journalKeyword.equals(stemmedJournalKeyword)) {
+							slf4jLogger
+									.info("Journal keyword before stemming =   "
+											+ journalKeyword);
+							slf4jLogger.info("After stemming =     "
+									+ stemmedJournalKeyword);
+						}
+					}
+					slf4jLogger
+							.info("-- Finished stemming for journal Keyword List --");
+					ReCiterArticleKeywords articleKeywords = article
+							.getArticleKeywords();
+					for (Keyword keyword : articleKeywords.getKeywords()) {
+						String origKeyword = keyword.getKeyword();
+						String stemmedKeyword = stemWord(origKeyword);
+						if (!origKeyword.equals(stemmedKeyword)) {
+							slf4jLogger
+									.info("Article keyword before stemming =   "
+											+ origKeyword);
+							slf4jLogger.info("After stemming =     "
+									+ stemmedKeyword);
+						}
+					}
+					slf4jLogger
+							.info("-- Finished stemming for articleKeywordList --");
 				}
-				slf4jLogger.info("-- Finished stemming for article Title List --");
-				for (String journalKeyword : journalKeywordList) {
-					String stemmedJournalKeyword = stemWord(journalKeyword);
-					slf4jLogger.info("Journal keyword before stemming =   " + journalKeyword);
-					slf4jLogger.info("After stemming =     " + stemmedJournalKeyword);
-				}
-				slf4jLogger.info("-- Finished stemming for journal Keyword List --");
-				ReCiterArticleKeywords articleKeywords = article.getArticleKeywords();
-				for(Keyword keyword: articleKeywords.getKeywords()){
-					String origKeyword = keyword.getKeyword();
-					String stemmedKeyword = stemWord(origKeyword);
-					slf4jLogger.info("Article keyword before stemming =   " + origKeyword);
-					slf4jLogger.info("After stemming =     " + stemmedKeyword);
-				}
-				slf4jLogger.info("-- Finished stemming for articleKeywordList --");
 			}
-			
 
 		}
 
 	}
-	private String stemWord(String word){
+
+	private String stemWord(String word) {
 		SnowballStemmer stemmer = new PorterStemmer();
 		stemmer.setCurrent(word);
 		stemmer.stem();

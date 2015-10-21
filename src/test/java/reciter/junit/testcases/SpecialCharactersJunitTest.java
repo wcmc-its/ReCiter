@@ -27,36 +27,30 @@ import xmlparser.translator.ArticleTranslator;
 public class SpecialCharactersJunitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
-	static String cwid = "rdgranst";
-	 ReCiterConfigProperty reCiterConfigProperty;
-	 String lastName;
-	 String middleName;
-	 String firstName;
-	 String affiliation;
-	 String firstInitial;
-	 String authorKeywords;
-	 String coAuthors;
-	 double similarityThreshold;
-	 String department;
-	 PubmedXmlFetcher pubmedXmlFetcher;
-	 List<PubmedArticle> pubmedArticleList;
+	ReCiterConfigProperty reCiterConfigProperty;
+	String lastName;
+	String middleName;
+	String firstName;
+	String affiliation;
+	String firstInitial;
+	String authorKeywords;
+	String coAuthors;
+	double similarityThreshold;
+	String department;
+	PubmedXmlFetcher pubmedXmlFetcher;
+	List<PubmedArticle> pubmedArticleList;
 	List<ReCiterArticle> reCiterArticleList;
 	List<String> gspPmidList;
-	
 
 	@Before
 	public void setUp() throws Exception {
 
-		String path = (new File("").getAbsolutePath())+File.separator+ReCiterConfigProperty
-				.getDefaultLocation();
+		String path = (new File("").getAbsolutePath()) + File.separator
+				+ ReCiterConfigProperty.getDefaultLocation();
 		ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
 		try {
-			reCiterConfigProperty
-					.loadProperty(path
-							+ cwid
-							+ "/"
-							+ cwid
-							+ ".properties");
+			reCiterConfigProperty.loadProperty(path + TestController.cwid_junit
+					+ "/" + TestController.cwid_junit + ".properties");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -65,62 +59,66 @@ public class SpecialCharactersJunitTest {
 		firstName = reCiterConfigProperty.getFirstName();
 		affiliation = reCiterConfigProperty.getAuthorAffiliation();
 		firstInitial = firstName.substring(0, 1);
-		cwid = reCiterConfigProperty.getCwid();
 		authorKeywords = reCiterConfigProperty.getAuthorKeywords();
 		coAuthors = reCiterConfigProperty.getCoAuthors();
 		similarityThreshold = reCiterConfigProperty.getSimilarityThreshold();
 		department = reCiterConfigProperty.getAuthorDepartment();
 		pubmedXmlFetcher = new PubmedXmlFetcher();
 		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName,
-				firstInitial, middleName, cwid);
+				firstInitial, middleName, TestController.cwid_junit);
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
-
 
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid()
 					.getPmidString();
-			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid,
-					pmid);
+			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(
+					TestController.cwid_junit, pmid);
 			ReCiterArticle article = ArticleTranslator.translate(pubmedArticle,
 					scopusArticle);
 			reCiterArticleList.add(article);
 		}
-	
+
 	}
 
 	@Test
 	public void test() {
-		 boolean success=  false;
-		 String origKeyword = null;
-		 for (ReCiterArticle article : reCiterArticleList)
-		 {
-			 ReCiterArticleKeywords keywords = article.getArticleKeywords();
-			 for(Keyword keyword: keywords.getKeywords()){
-				 origKeyword = keyword.getKeyword();
-				 if(origKeyword!= null)
+		boolean success = false;
+		boolean fullTest = true;
+		String origKeyword = null;
+		for (ReCiterArticle article : reCiterArticleList) {
+			ReCiterArticleKeywords keywords = article.getArticleKeywords();
+			for (Keyword keyword : keywords.getKeywords()) {
+				origKeyword = keyword.getKeyword();
+				if (origKeyword != null || !origKeyword.equalsIgnoreCase(null))
 					success = validate(origKeyword);
+
+				if (!success) {
+					slf4jLogger.info(" Test Failed     because of Keyword "
+							+ origKeyword);
+					fullTest = false;
 				}
-			 
-			 if(success)slf4jLogger.info("Article is encoded to utf 8 characters , Test Passed");
-			 else slf4jLogger.info(" Test Failed     because of Keyword "+origKeyword);
-		 }
-		 
-		 
-		 
+			}
+
+		}
+
+		if (fullTest)
+			slf4jLogger
+					.info("Article is encoded to utf 8 characters , Test Passed");
+		else
+			slf4jLogger.info(" Test Failed ");
+
 	}
-	
-	private boolean validate(String s)
-	{
+
+	private boolean validate(String s) {
 		CharsetDecoder cs = Charset.forName("UTF-8").newDecoder();
 		try {
-	        cs.decode(ByteBuffer.wrap(s.getBytes()));
-	    }
-	    catch(CharacterCodingException e){
-	    	return false;
-	    } 
+			cs.decode(ByteBuffer.wrap(s.getBytes()));
+		} catch (CharacterCodingException e) {
+			return false;
+		}
 		return true;
-		
+
 	}
 
 }
