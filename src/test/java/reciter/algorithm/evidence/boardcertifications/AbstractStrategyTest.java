@@ -46,7 +46,7 @@ public class AbstractStrategyTest {
 	}
 
 	/**
-	 * Test method for {@link reciter.algorithm.evidence.boardcertification.AbstractStrategy#preprocess(java.util.List)}.
+	 * Test method for {@link reciter.algorithm.evidence.AbstractTargetAuthorStrategy.AbstractStrategy#preprocess(java.util.List)}.
 	 */
 	@Test
 	public final void testPreprocess() {

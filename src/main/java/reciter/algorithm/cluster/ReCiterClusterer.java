@@ -32,10 +32,11 @@ import database.model.CoauthorAffiliations;
 import database.model.Identity;
 import database.model.IdentityDirectory;
 import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.algorithm.evidence.boardcertification.BoardCertificationStrategyContext;
-import reciter.algorithm.evidence.boardcertification.strategy.CosineSimilarityStrategy;
-import reciter.algorithm.evidence.email.EmailStrategyContext;
-import reciter.algorithm.evidence.email.strategy.StringMatchStrategy;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
+import reciter.algorithm.evidence.targetauthor.boardcertification.BoardCertificationStrategyContext;
+import reciter.algorithm.evidence.targetauthor.boardcertification.strategy.CosineSimilarityStrategy;
+import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
+import reciter.algorithm.evidence.targetauthor.email.strategy.StringMatchStrategy;
 import reciter.algorithm.tfidf.Document;
 import reciter.algorithm.tfidf.TfIdf;
 import reciter.erroranalysis.Analysis;
@@ -64,15 +65,16 @@ public class ReCiterClusterer extends AbstractClusterer {
 	private double similarityThresholdForPubMedAffiliation = 0.75;
 	private TargetAuthor targetAuthor;
 	
-	private BoardCertificationStrategyContext boardCertificationStrategyContext;
-	private EmailStrategyContext emailStrategyContext;
+	private TargetAuthorStrategyContext boardCertificationStrategyContext;
+	private TargetAuthorStrategyContext emailStrategyContext;
+	private TargetAuthorStrategyContext scopusStrategyContext;
 	
 	public ReCiterClusterer(String cwid) {
 		ReCiterCluster.getClusterIDCounter().set(0); // reset counter on cluster id.
 		TargetAuthorService targetAuthorService= new TargetAuthorServiceImpl();
 		targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		boardCertificationStrategyContext = new BoardCertificationStrategyContext(new CosineSimilarityStrategy());
-		emailStrategyContext = new EmailStrategyContext(new StringMatchStrategy());
+//		boardCertificationStrategyContext = new BoardCertificationStrategyContext(new CosineSimilarityStrategy());
+//		emailStrategyContext = new EmailStrategyContext(new StringMatchStrategy());
 	}
 
 	public Map<Integer, ReCiterCluster> getFinalCluster() {

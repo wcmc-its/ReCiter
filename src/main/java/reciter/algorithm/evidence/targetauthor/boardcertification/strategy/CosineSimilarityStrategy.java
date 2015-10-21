@@ -1,13 +1,13 @@
-package reciter.algorithm.evidence.boardcertification.strategy;
+package reciter.algorithm.evidence.targetauthor.boardcertification.strategy;
 
 import java.util.List;
 
-import reciter.algorithm.evidence.AbstractStrategy;
+import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
 
-public class CosineSimilarityStrategy extends AbstractStrategy {
+public class CosineSimilarityStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {

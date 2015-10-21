@@ -1,16 +1,16 @@
-package reciter.algorithm.evidence.boardcertification;
+package reciter.algorithm.evidence.targetauthor.boardcertification;
 
 import java.util.List;
 
-import reciter.algorithm.evidence.Strategy;
-import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategy;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
-public class BoardCertificationStrategyContext implements StrategyContext {
-	private final Strategy strategy;
+public class BoardCertificationStrategyContext implements TargetAuthorStrategyContext {
+	private final TargetAuthorStrategy strategy;
 	
-	public BoardCertificationStrategyContext(Strategy strategy) {
+	public BoardCertificationStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
 	}
 

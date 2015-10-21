@@ -1,18 +1,18 @@
-package reciter.algorithm.evidence.scopus.strategy;
+package reciter.algorithm.evidence.targetauthor.scopus.strategy;
 
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import reciter.algorithm.evidence.AbstractStrategy;
+import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 import xmlparser.scopus.model.Affiliation;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 
-public class StringMatchingAffiliation extends AbstractStrategy {
+public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
