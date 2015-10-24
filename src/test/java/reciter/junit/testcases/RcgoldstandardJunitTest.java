@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -34,7 +32,6 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 public class RcgoldstandardJunitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
-	static String cwid = "aas2004";
 	ReCiterConfigProperty reCiterConfigProperty;
 	String lastName;
 	String middleName;
@@ -55,7 +52,7 @@ public class RcgoldstandardJunitTest {
 				+ ReCiterConfigProperty.getDefaultLocation();
 		ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
 		try {
-			reCiterConfigProperty.loadProperty(path + cwid + "/" + cwid
+			reCiterConfigProperty.loadProperty(path + TestController.cwid_junit + "/" + TestController.cwid_junit
 					+ ".properties");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -65,28 +62,27 @@ public class RcgoldstandardJunitTest {
 		firstName = reCiterConfigProperty.getFirstName();
 		affiliation = reCiterConfigProperty.getAuthorAffiliation();
 		firstInitial = firstName.substring(0, 1);
-		cwid = reCiterConfigProperty.getCwid();
 		authorKeywords = reCiterConfigProperty.getAuthorKeywords();
 		coAuthors = reCiterConfigProperty.getCoAuthors();
 		department = reCiterConfigProperty.getAuthorDepartment();
 		pubmedXmlFetcher = new PubmedXmlFetcher();
 		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName,
-				firstInitial, middleName, cwid);
+				firstInitial, middleName, TestController.cwid_junit);
 
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
-		slf4jLogger.info("pubmedArticleList Size  = "
-				+ pubmedArticleList.size());
+//		slf4jLogger.info("pubmedArticleList Size  = "
+//				+ pubmedArticleList.size());
 		GoldStandardPmidsDao gspDao = new GoldStandardPmidsDaoImpl();
-		gspPmidList = gspDao.getPmidsByCwid(cwid);
+		gspPmidList = gspDao.getPmidsByCwid(TestController.cwid_junit);
 
-		slf4jLogger.info("gspPmidList size    = " + gspPmidList.size());
+//		slf4jLogger.info("gspPmidList size    = " + gspPmidList.size());
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid()
 					.getPmidString();
 			while (gspPmidList.contains(pmid))
 				gspPmidList.remove(pmid);
-			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(cwid,
+			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(TestController.cwid_junit,
 					pmid);
 			reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle,
 					scopusArticle));
@@ -107,7 +103,7 @@ public class RcgoldstandardJunitTest {
 		}
 		slf4jLogger.info("Test Passed");
 		
-		slf4jLogger.info("gspPmidList size  =     " + size);
+		//slf4jLogger.info("gspPmidList size  =     " + size);
 
 	}
 }
