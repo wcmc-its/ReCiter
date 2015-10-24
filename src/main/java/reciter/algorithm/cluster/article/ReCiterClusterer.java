@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
+import reciter.algorithm.cluster.clusteringstrategy.article.NameMatchingClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.model.article.ReCiterArticle;
@@ -38,6 +39,8 @@ public class ReCiterClusterer extends AbstractClusterer {
 		finalCluster = new HashMap<Integer, ReCiterCluster>();
 		selectedClusterIds = new HashSet<Integer>();
 		targetAuthor = new TargetAuthorServiceImpl().getTargetAuthor(cwid);
+		
+		clusteringStrategy = new NameMatchingClusteringStrategy(targetAuthor);
 	}
 
 	/**
