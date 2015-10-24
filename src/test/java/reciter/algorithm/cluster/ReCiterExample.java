@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import database.dao.IdentityDao;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
+import reciter.algorithm.cluster.article.ReCiterClusterer;
 import reciter.erroranalysis.Analysis;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
@@ -81,9 +82,11 @@ public class ReCiterExample {
 
 		// Perform clustering.
 		ReCiterClusterer clusterer = new ReCiterClusterer(cwid);
-		Analysis analysis = clusterer.cluster(reCiterArticleList);
+		clusterer.cluster(reCiterArticleList);
+		
+		Analysis analysis = Analysis.performAnalysis(clusterer);
 
-		slf4jLogger.info(clusterer.getClusterInfo());
+		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());

@@ -18,6 +18,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private String citizenship;
 	private List<IdentityDirectory> aliasList;
 	private List<String> boardCertifications;
+	private List<AuthorName> grantCoauthors;
 	
 	/**
 	 * @return the aliasList
@@ -91,5 +92,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setBoardCertifications(List<String> boardCertifications) {
 		this.boardCertifications = boardCertifications;
+	}
+
+	public List<AuthorName> getGrantCoauthors() {
+		return grantCoauthors;
+	}
+
+	public void setGrantCoauthors(List<AuthorName> grantCoauthors) {
+		this.grantCoauthors = grantCoauthors;
 	}
 }

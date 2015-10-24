@@ -1,11 +1,8 @@
-package reciter.algorithm.cluster;
+package reciter.algorithm.cluster.article;
 
 import java.util.List;
 
-import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 /**
  * Clusterer interface. Provides a set of functions that must be implemented
@@ -20,7 +17,7 @@ public interface Clusterer {
 	 * Performs a clustering on the list of ReCiterArticles.
 	 * @param reciterArticleList
 	 */
-	Analysis cluster(List<ReCiterArticle> reCiterArticleList);
+	void cluster(List<ReCiterArticle> reCiterArticleList);
 	
 	/**
 	 * Computes the similarity between a {@code ReCiterCluster} and a {@code TargetAuthor}.
@@ -32,5 +29,5 @@ public interface Clusterer {
 	 * {@code TargetAuthor}
 	 * 
 	 */
-	double computeClusterTargetSimilarity(ReCiterCluster reCiterCluster, TargetAuthor targetAuthor);
+//	double computeClusterTargetSimilarity(ReCiterCluster reCiterCluster, TargetAuthor targetAuthor);
 }

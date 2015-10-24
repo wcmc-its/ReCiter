@@ -13,10 +13,26 @@ public class StringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		boolean isDepartmentMatch = false;
+		if (targetAuthor == null) {
+			throw new IllegalArgumentException("Target author is null.");
+		}
 		
-			
-		return 0;
+		if (reCiterArticle == null) {
+			throw new IllegalArgumentException("ReCiter article is null.");
+		}
+		
+		double departmentMatchScore = 0;
+		if (reCiterArticle.getArticleCoAuthors() != null &&
+			reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
+			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+				boolean isDepartmentMatch = departmentMatch(author, targetAuthor);
+				if (isDepartmentMatch) {
+					departmentMatchScore = 1;
+				}
+			}
+		}
+		
+		return departmentMatchScore;
 	}
 
 	@Override
@@ -35,11 +51,10 @@ public class StringMatchStrategy extends AbstractTargetAuthorStrategy {
 	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/79)
 	 * @return True if the department of the ReCiterAuthor and TargetAuthor match.
 	 */
-	public boolean departmentMatch(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
+	private boolean departmentMatch(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
-			//			slf4jLogger.info("Country=" + extractCountry(affiliation));
 			String extractedDept = extractDepartment(affiliation);
 			String targetAuthorDept = targetAuthor.getDepartment();
 			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();

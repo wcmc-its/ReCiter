@@ -1,4 +1,4 @@
-package reciter.algorithm.cluster;
+package reciter.algorithm.cluster.article;
 
 public abstract class AbstractClusterer implements Clusterer {
 	

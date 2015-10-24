@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import database.dao.GoldStandardPmidsDao;
 import database.dao.impl.GoldStandardPmidsDaoImpl;
-import reciter.algorithm.cluster.ReCiterClusterer;
+import reciter.algorithm.cluster.article.ReCiterClusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.model.article.ReCiterArticle;
 
@@ -95,7 +95,7 @@ public class Analysis {
 	public static Analysis performAnalysis(ReCiterClusterer reCiterClusterer) {
 
 		Map<Integer, ReCiterCluster> finalCluster = reCiterClusterer.getFinalCluster();
-		Set<Integer> selection = reCiterClusterer.getSelectedClusterIdSet();
+		Set<Integer> selection = reCiterClusterer.getSelectedClusterIds();
 		String cwid = reCiterClusterer.getTargetAuthor().getCwid();
 
 		Analysis analysis = new Analysis();
