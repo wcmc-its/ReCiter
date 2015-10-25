@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import database.dao.IdentityDao;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
-import reciter.algorithm.cluster.article.ReCiterClusterer;
+import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.erroranalysis.Analysis;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
