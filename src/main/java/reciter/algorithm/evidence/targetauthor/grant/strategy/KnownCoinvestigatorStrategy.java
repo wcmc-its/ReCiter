@@ -8,7 +8,7 @@ import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 
-public class CoauthorStrategy extends AbstractTargetAuthorStrategy {
+public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {

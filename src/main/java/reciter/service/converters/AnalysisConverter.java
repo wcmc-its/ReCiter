@@ -40,14 +40,14 @@ public class AnalysisConverter {
 		analysis.setFundingStatementScore(analysisObject.getFundingStatementScore());
 		analysis.setTerminalDegreeScore(analysisObject.getTerminalDegreeScore());
 		analysis.setDefaultDepartmentJournalSimilarityScore(analysisObject.getDefaultDepartmentJournalSimilarityScore());
-		analysis.setDepartmentOfAffiliationScore(analysisObject.getDepartmentOfAffiliationScore());
-		analysis.setDepartmentOfAffiliationScore(analysisObject.getDepartmentOfAffiliationScore());
+		analysis.setDepartmentOfAffiliationScore(analysisObject.getDepartmentStrategyScore());
+		analysis.setDepartmentOfAffiliationScore(analysisObject.getDepartmentStrategyScore());
 		analysis.setKeywordMatchingScore(analysisObject.getKeywordMatchingScore());
 		analysis.setPhaseTwoSimilarityThreshold(analysisObject.getPhaseTwoSimilarityThreshold());
 		analysis.setClusterArticleAssignedTo(analysisObject.getClusterArticleAssignedTo());
 		analysis.setCountArticlesInAssignedClsuter(analysisObject.getCountArticlesInAssignedCluster());
 //		analysis.setClusterSelectedInPhaseTwoMatching(analysisObject);
-		analysis.setPhaseTwoAffiliationSimilarity(analysisObject.getAffiliationSimilarity());
+		analysis.setPhaseTwoAffiliationSimilarity(analysisObject.getAffiliationScore());
 		analysis.setPhaseTwoKeywordSimilarity(analysisObject.getKeywordSimilarity());
 		analysis.setPhaseTwoJournalSimilarity(analysisObject.getJournalSimilarityPhaseTwo());
 		return analysis;

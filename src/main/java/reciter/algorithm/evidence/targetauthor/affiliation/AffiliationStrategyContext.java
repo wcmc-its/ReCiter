@@ -1,4 +1,4 @@
-package reciter.algorithm.evidence.targetauthor.department;
+package reciter.algorithm.evidence.targetauthor.affiliation;
 
 import java.util.List;
 
@@ -7,21 +7,20 @@ import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
-public class DepartmentStrategyContext implements TargetAuthorStrategyContext {
-
+public class AffiliationStrategyContext implements TargetAuthorStrategyContext {
 	private final TargetAuthorStrategy strategy;
 	
-	public DepartmentStrategyContext(TargetAuthorStrategy strategy) {
+	public AffiliationStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
-	}
-	
-	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticle, targetAuthor);
 	}
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
 		return strategy.executeStrategy(reCiterArticles, targetAuthor);
+	}
+
+	@Override
+	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		return strategy.executeStrategy(reCiterArticle, targetAuthor);
 	}
 }

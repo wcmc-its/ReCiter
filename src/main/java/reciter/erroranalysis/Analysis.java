@@ -12,8 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import database.dao.GoldStandardPmidsDao;
 import database.dao.impl.GoldStandardPmidsDaoImpl;
-import reciter.algorithm.cluster.ReCiterClusterer;
+import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.model.article.ReCiterArticle;
 
 /**
@@ -92,10 +93,22 @@ public class Analysis {
 	 * @param cwid
 	 * @return
 	 */
-	public static Analysis performAnalysis(ReCiterClusterer reCiterClusterer) {
-
+	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector) {
+		
+//		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
+//	    Map<String, Integer> authorCount = 
+//	    		analyisReCiterCluster.getTargetAuthorNameCounts(
+//	    				reCiterClusterer.getReCiterArticles(), 
+//	    				reCiterClusterer.getTargetAuthor());
+//	    
+//	    for (Entry<String, Integer> entry : authorCount.entrySet()) {
+//	      slf4jLogger.info(entry.getKey() + ": " + entry.getValue());
+//	    }
+//	    slf4jLogger.info("Number of different author names: " + authorCount.size());
+	    
+	    
 		Map<Integer, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
-		Set<Integer> selection = reCiterClusterer.getSelectedClusterIds();
+		Set<Integer> selection = clusterSelector.getSelectedClusterIds();
 		String cwid = reCiterClusterer.getTargetAuthor().getCwid();
 
 		Analysis analysis = new Analysis();

@@ -9,7 +9,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 
-public class StringMatchStrategy extends AbstractTargetAuthorStrategy {
+public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {

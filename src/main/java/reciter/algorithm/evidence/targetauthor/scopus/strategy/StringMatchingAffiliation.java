@@ -44,14 +44,4 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 		}
 		return sum;
 	}
-	
-	private boolean containsWeillCornell(String affiliation) {
-		return 	StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
-				StringUtils.containsIgnoreCase(affiliation, "weill-cornell") || 
-				StringUtils.containsIgnoreCase(affiliation, "weill medical") || 
-				StringUtils.containsIgnoreCase(affiliation, "cornell medical center") || 
-				StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center") ||
-				StringUtils.containsIgnoreCase(affiliation, "Sloan-Kettering") ||
-				StringUtils.containsIgnoreCase(affiliation, "Sloan Kettering");
-	}
 }

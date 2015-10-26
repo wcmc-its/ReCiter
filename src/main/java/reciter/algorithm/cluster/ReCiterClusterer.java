@@ -18,10 +18,14 @@ public class ReCiterClusterer extends AbstractClusterer {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);
 	
+	private List<ReCiterArticle> reCiterArticles;
+	private TargetAuthor targetAuthor;
 	private Map<Integer, ReCiterCluster> clusters;
 	private ClusteringStrategy clusteringStrategy;
 	
-	public ReCiterClusterer(TargetAuthor targetAuthor) {
+	public ReCiterClusterer(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticles) {
+		this.reCiterArticles = reCiterArticles;
+		this.targetAuthor = targetAuthor;
 		clusters = new HashMap<Integer, ReCiterCluster>();
 		clusteringStrategy = new NameMatchingClusteringStrategy(targetAuthor);
 	}
@@ -33,9 +37,9 @@ public class ReCiterClusterer extends AbstractClusterer {
 	 * Cluster articles together based on the ClusteringStrategy selected.
 	 */
 	@Override
-	public Map<Integer, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles) {
+	public void cluster() {
 		slf4jLogger.info("Number of articles to be clustered:" + reCiterArticles.size());
-		return clusteringStrategy.cluster(reCiterArticles);
+		clusters = clusteringStrategy.cluster(reCiterArticles);
 	}
 	
 	@Override
@@ -53,5 +57,21 @@ public class ReCiterClusterer extends AbstractClusterer {
 
 	public Map<Integer, ReCiterCluster> getClusters() {
 		return clusters;
+	}
+
+	public List<ReCiterArticle> getReCiterArticles() {
+		return reCiterArticles;
+	}
+
+	public void setReCiterArticles(List<ReCiterArticle> reCiterArticles) {
+		this.reCiterArticles = reCiterArticles;
+	}
+
+	public TargetAuthor getTargetAuthor() {
+		return targetAuthor;
+	}
+
+	public void setTargetAuthor(TargetAuthor targetAuthor) {
+		this.targetAuthor = targetAuthor;
 	}
 }

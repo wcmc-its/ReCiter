@@ -118,22 +118,23 @@ public class AnalysisTranslator {
 		analysisObject.setNameMatchingScore(0);
 
 		analysisObject.setClusterOriginator(isClusterOriginator);
-		analysisObject.setJournalSimilarityPhaseOne(0);
-		analysisObject.setCoauthorAffiliationScore(0);
-		analysisObject.setTargetAuthorAffiliationScore(0);
-		analysisObject.setKnownCoinvestigatorScore(0);
-		analysisObject.setFundingStatementScore(0);
-		analysisObject.setTerminalDegreeScore(0);
-		analysisObject.setDefaultDepartmentJournalSimilarityScore(0);
-		analysisObject.setDepartmentOfAffiliationScore(0);
-		analysisObject.setKeywordMatchingScore(0);
-		analysisObject.setPhaseTwoSimilarityThreshold(0);
 		analysisObject.setClusterArticleAssignedTo(clusterId);
 		analysisObject.setCountArticlesInAssignedCluster(countOfArticleInCluster);
 		analysisObject.setClusterSelectedInPhaseTwoMatching(isClusterSelected);
-		analysisObject.setAffiliationSimilarity(0);
-		analysisObject.setKeywordSimilarity(0);
-		analysisObject.setJournalSimilarityPhaseTwo(0);
+		
+//		analysisObject.setJournalSimilarityPhaseOne(0);
+//		analysisObject.setCoauthorAffiliationScore(0);
+//		analysisObject.setTargetAuthorAffiliationScore(0);
+//		analysisObject.setKnownCoinvestigatorScore(0);
+//		analysisObject.setFundingStatementScore(0);
+//		analysisObject.setTerminalDegreeScore(0);
+//		analysisObject.setDefaultDepartmentJournalSimilarityScore(0);
+//		analysisObject.setDepartmentOfAffiliationScore(0);
+//		analysisObject.setKeywordMatchingScore(0);
+//		analysisObject.setPhaseTwoSimilarityThreshold(0);
+//		analysisObject.setAffiliationSimilarity(0);
+//		analysisObject.setKeywordSimilarity(0);
+//		analysisObject.setJournalSimilarityPhaseTwo(0);
 
 		return analysisObject;
 	}

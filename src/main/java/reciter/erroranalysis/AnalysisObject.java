@@ -2,6 +2,7 @@ package reciter.erroranalysis;
 
 public class AnalysisObject {
 
+	// Information regarding the article and target author.
 	private StatusEnum status;
 	private String cwid;
 	private String targetName;
@@ -15,25 +16,37 @@ public class AnalysisObject {
 	private String pubmedTargetAuthorAffiliation;
 	private String pubmedCoAuthorAffiliation;
 	private String articleKeywords;
-	private double nameMatchingScore;
+	
 	private boolean isClusterOriginator;
+	
+	private int clusterArticleAssignedTo;
+	private int countArticlesInAssignedCluster;
+	
+	private boolean isClusterSelectedInPhaseTwoMatching;
+	
 	private double journalSimilarityPhaseOne;
+	
+	// Scores.
+	private double nameMatchingScore;
 	private double coauthorAffiliationScore;
 	private double targetAuthorAffiliationScore;
 	private double knownCoinvestigatorScore;
-	private double fundingStatementScore;
 	private double terminalDegreeScore;
-	private double defaultDepartmentJournalSimilarityScore;
-	private double departmentOfAffiliationScore;
+	
 	private double keywordMatchingScore;
 	private double phaseTwoSimilarityThreshold;
-	private int clusterArticleAssignedTo;
-	private int countArticlesInAssignedCluster;
-	private boolean isClusterSelectedInPhaseTwoMatching;
-	private double affiliationSimilarity;
+	private double affiliationScore;
 	private double keywordSimilarity;
 	private double journalSimilarityPhaseTwo;
 	private double boardCertificationsPhaseTwoScore;
+	
+	private double departmentStrategyScore;
+	
+	// new column:
+	private double emailStrategyScore;
+	
+	private double defaultDepartmentJournalSimilarityScore;
+	private double fundingStatementScore;
 	
 	/**
 	 * @return the boardCertificationsPhaseTwoScore
@@ -183,11 +196,11 @@ public class AnalysisObject {
 			double defaultDepartmentJournalSimilarityScore) {
 		this.defaultDepartmentJournalSimilarityScore = defaultDepartmentJournalSimilarityScore;
 	}
-	public double getDepartmentOfAffiliationScore() {
-		return departmentOfAffiliationScore;
+	public double getDepartmentStrategyScore() {
+		return departmentStrategyScore;
 	}
-	public void setDepartmentOfAffiliationScore(double departmentOfAffiliationScore) {
-		this.departmentOfAffiliationScore = departmentOfAffiliationScore;
+	public void setDepartmentStrategyScore(double departmentStrategyScore) {
+		this.departmentStrategyScore = departmentStrategyScore;
 	}
 	public double getKeywordMatchingScore() {
 		return keywordMatchingScore;
@@ -220,11 +233,11 @@ public class AnalysisObject {
 			boolean isClusterSelectedInPhaseTwoMatching) {
 		this.isClusterSelectedInPhaseTwoMatching = isClusterSelectedInPhaseTwoMatching;
 	}
-	public double getAffiliationSimilarity() {
-		return affiliationSimilarity;
+	public double getAffiliationScore() {
+		return affiliationScore;
 	}
-	public void setAffiliationSimilarity(double affiliationSimilarity) {
-		this.affiliationSimilarity = affiliationSimilarity;
+	public void setAffiliationScore(double affiliationScore) {
+		this.affiliationScore = affiliationScore;
 	}
 	public double getKeywordSimilarity() {
 		return keywordSimilarity;
@@ -238,4 +251,12 @@ public class AnalysisObject {
 	public void setJournalSimilarityPhaseTwo(double journalSimilarityPhaseTwo) {
 		this.journalSimilarityPhaseTwo = journalSimilarityPhaseTwo;
 	}
+	public double getEmailStrategyScore() {
+		return emailStrategyScore;
+	}
+	public void setEmailStrategyScore(double emailStrategyScore) {
+		this.emailStrategyScore = emailStrategyScore;
+	}
+
+	
 }

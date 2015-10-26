@@ -5,6 +5,7 @@ import java.util.Map;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.TargetAuthor;
 
 /**
  * Clusterer interface. Provides a set of functions that must be implemented
@@ -15,12 +16,11 @@ import reciter.model.article.ReCiterArticle;
  */
 public interface Clusterer {
 	
-	/**
-	 * Performs a clustering on the list of ReCiterArticles and return the
-	 * clustering result.
-	 * 
-	 * @param reciterArticles ReCiter articles to be clustered.
-	 */
-	Map<Integer, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles);
-
+	void cluster();
+	
+	TargetAuthor getTargetAuthor();
+	
+	List<ReCiterArticle> getReCiterArticles();
+	
+	Map<Integer, ReCiterCluster> getClusters();
 }
