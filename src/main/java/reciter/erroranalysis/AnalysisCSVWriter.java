@@ -10,9 +10,10 @@ import org.apache.commons.csv.CSVPrinter;
 public class AnalysisCSVWriter {
 
 	private final CSVFormat format;
-	private static final String CSV_OUTPUT = "src/main/resources/data/csv_output/";
+	private final String csvOutputFile;
 	
-	public AnalysisCSVWriter() {
+	public AnalysisCSVWriter(String csvOutputFile) {
+		this.csvOutputFile = csvOutputFile;
 		format = CSVFormat.RFC4180.withHeader().withDelimiter(',');
 	}
 
@@ -22,7 +23,7 @@ public class AnalysisCSVWriter {
 	 * @throws IOException
 	 */
 	public void write(List<AnalysisObject> list, String fileName, double precision, double recall) throws IOException {
-		PrintWriter writer = new PrintWriter(CSV_OUTPUT + fileName + ".csv", "UTF-8");
+		PrintWriter writer = new PrintWriter(csvOutputFile + fileName + ".csv", "UTF-8");
 		CSVPrinter printer = new CSVPrinter(writer, format);
 		
 		// Print Header.
@@ -55,13 +56,13 @@ public class AnalysisCSVWriter {
 			printer.print(analysisObject.getFundingStatementScore());
 			printer.print(analysisObject.getTerminalDegreeScore());
 			printer.print(analysisObject.getDefaultDepartmentJournalSimilarityScore());
-			printer.print(analysisObject.getDepartmentOfAffiliationScore());
+			printer.print(analysisObject.getDepartmentStrategyScore());
 			printer.print(analysisObject.getKeywordMatchingScore());
 			printer.print(analysisObject.getPhaseTwoSimilarityThreshold());
 			printer.print(analysisObject.getClusterArticleAssignedTo());
 			printer.print(analysisObject.getCountArticlesInAssignedCluster());
 			printer.print(analysisObject.isClusterSelectedInPhaseTwoMatching());
-			printer.print(analysisObject.getAffiliationSimilarity());
+			printer.print(analysisObject.getAffiliationScore());
 			printer.print(analysisObject.getKeywordSimilarity());
 			printer.print(analysisObject.getJournalSimilarityPhaseTwo());
 			printer.print(analysisObject.getBoardCertificationsPhaseTwoScore());
