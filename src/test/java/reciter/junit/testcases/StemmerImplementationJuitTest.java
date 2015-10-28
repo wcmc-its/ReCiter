@@ -1,6 +1,5 @@
 package reciter.junit.testcases;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.ReCiterExample;
-import reciter.erroranalysis.ReCiterConfigProperty;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleKeywords;
 import reciter.model.article.ReCiterArticleKeywords.Keyword;
@@ -25,20 +23,13 @@ import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
 import database.dao.GoldStandardPmidsDao;
 import database.dao.impl.GoldStandardPmidsDaoImpl;
+import database.dao.impl.IdentityDaoImpl;
+import database.model.Identity;
 
 public class StemmerImplementationJuitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
-	ReCiterConfigProperty reCiterConfigProperty;
-	String lastName;
-	String middleName;
-	String firstName;
-	String affiliation;
-	String firstInitial;
-	String authorKeywords;
-	String coAuthors;
-	double similarityThreshold;
-	String department;
+	Identity identity = null;
 	PubmedXmlFetcher pubmedXmlFetcher;
 	List<PubmedArticle> pubmedArticleList;
 	List<ReCiterArticle> reCiterArticleList;
@@ -50,27 +41,11 @@ public class StemmerImplementationJuitTest {
 
 	@Before
 	public void setUp() throws Exception {
-		String path = (new File("").getAbsolutePath()) + File.separator
-				+ ReCiterConfigProperty.getDefaultLocation();
-		ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
-		try {
-			reCiterConfigProperty.loadProperty(path + TestController.cwid_junit + "/" + TestController.cwid_junit
-					+ ".properties");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		lastName = reCiterConfigProperty.getLastName();
-		middleName = reCiterConfigProperty.getMiddleName();
-		firstName = reCiterConfigProperty.getFirstName();
-		affiliation = reCiterConfigProperty.getAuthorAffiliation();
-		firstInitial = firstName.substring(0, 1);
-		authorKeywords = reCiterConfigProperty.getAuthorKeywords();
-		coAuthors = reCiterConfigProperty.getCoAuthors();
-		similarityThreshold = reCiterConfigProperty.getSimilarityThreshold();
-		department = reCiterConfigProperty.getAuthorDepartment();
+		IdentityDaoImpl dao = new IdentityDaoImpl();
+		identity = dao.getIdentityByCwid(TestController.cwid_junit);
 		pubmedXmlFetcher = new PubmedXmlFetcher();
-		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName,
-				firstInitial, middleName, TestController.cwid_junit);
+		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(identity.getLastName(),
+				identity.getFirstInitial(), identity.getMiddleName(), TestController.cwid_junit);
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
 
@@ -91,7 +66,7 @@ public class StemmerImplementationJuitTest {
 	public void test() {
 		for (ReCiterArticle article : reCiterArticleList) {
 			{
-				for (int i = 0; i < 3; i++) {
+				for (int i = 0; i < 1; i++) {
 					List<String> articleKeywordList = Arrays.asList(article
 							.getArticleTitle().split(" "));
 					List<String> journalKeywordList = Arrays.asList(article

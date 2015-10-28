@@ -1,6 +1,6 @@
 package reciter.junit.testcases;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Before;
@@ -9,59 +9,57 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.ReCiterExample;
-import reciter.erroranalysis.ReCiterConfigProperty;
 import reciter.model.article.ReCiterArticle;
 import xmlparser.pubmed.PubmedXmlFetcher;
 import xmlparser.pubmed.model.PubmedArticle;
+import xmlparser.scopus.ScopusXmlFetcher;
+import xmlparser.scopus.model.ScopusArticle;
+import xmlparser.translator.ArticleTranslator;
+import database.dao.GoldStandardPmidsDao;
+import database.dao.impl.GoldStandardPmidsDaoImpl;
+import database.dao.impl.IdentityDaoImpl;
+import database.model.Identity;
 
 public class IssueHundread {
 
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
-	static String cwid = "dml2005";
-	ReCiterConfigProperty reCiterConfigProperty;
-	String lastName;
-	String middleName;
-	String firstName;
-	String affiliation;
-	String firstInitial;
-	String authorKeywords;
-	String coAuthors;
-	String department;
+	
 	PubmedXmlFetcher pubmedXmlFetcher;
 	List<PubmedArticle> pubmedArticleList;
 	List<ReCiterArticle> reCiterArticleList;
 	List<String> gspPmidList;
+	Identity identity = null;
 
 	@Before
 	public void setUp() throws Exception {
 
-		String path = (new File("").getAbsolutePath()) + File.separator
-				+ ReCiterConfigProperty.getDefaultLocation();
-		ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
-		try {
-			reCiterConfigProperty.loadProperty(path + cwid + "/" + cwid
-					+ ".properties");
-		} catch (Exception e) {
-			e.printStackTrace();
+		IdentityDaoImpl dao = new IdentityDaoImpl();
+		identity = dao.getIdentityByCwid(TestController.cwid_junit);
+		pubmedXmlFetcher = new PubmedXmlFetcher();
+		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(identity.getLastName(),
+				identity.getFirstInitial(), identity.getMiddleName(), TestController.cwid_junit);
+		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+		reCiterArticleList = new ArrayList<ReCiterArticle>();
+		GoldStandardPmidsDao gspDao = new GoldStandardPmidsDaoImpl();
+		gspPmidList = gspDao.getPmidsByCwid(TestController.cwid_junit);
+		for (PubmedArticle pubmedArticle : pubmedArticleList) {
+			String pmid = pubmedArticle.getMedlineCitation().getPmid()
+					.getPmidString();
+			while (gspPmidList.contains(pmid))
+				gspPmidList.remove(pmid);
+			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(
+					TestController.cwid_junit, pmid);
+			reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle,
+					scopusArticle));
 		}
-		lastName = reCiterConfigProperty.getLastName();
-		middleName = reCiterConfigProperty.getMiddleName();
-		firstName = reCiterConfigProperty.getFirstName();
-		affiliation = reCiterConfigProperty.getAuthorAffiliation();
-		firstInitial = firstName.substring(0, 1);
-		cwid = reCiterConfigProperty.getCwid();
-		authorKeywords = reCiterConfigProperty.getAuthorKeywords();
-		coAuthors = reCiterConfigProperty.getCoAuthors();
-		department = reCiterConfigProperty.getAuthorDepartment();
 
 	}
 
 	@Test
 	public void test() {
-
-		if (firstName.contains("II") || firstName.contains("III")
-				|| firstName.contains("IV"))
+		if (identity.getSuffix().contains("II") || identity.getSuffix().contains("III")
+				|| identity.getSuffix().contains("IV"))
 			slf4jLogger.info("Test Failed, Circumstance 3");
 
 		else
