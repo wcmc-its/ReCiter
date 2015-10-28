@@ -1,10 +1,5 @@
 package reciter.junit.testcases;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +15,6 @@ import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.ScopusXmlFetcher;
 import xmlparser.scopus.model.ScopusArticle;
 import xmlparser.translator.ArticleTranslator;
-import database.DbConnectionFactory;
-import database.DbUtil;
 import database.dao.GoldStandardPmidsDao;
 import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
