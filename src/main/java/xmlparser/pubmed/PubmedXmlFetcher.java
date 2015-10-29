@@ -83,6 +83,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		
 		// Circumstance 3. The author�셲 name has a suffix.
 		if(firstName.contains("JR") || firstName.contains("II") || firstName.contains("III")|| firstName.contains("IV")){
+			
 			String a = firstName.replace("JR", "");
 			a = firstName.replace("II", "");
 			a = firstName.replace("III", "");
@@ -91,6 +92,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			if(!queries.contains(term))queries.add(term);
 			term=lastName+"%20"+firstName+"[au]";
 			if(!queries.contains(term))queries.add(term);
+			slf4jLogger.info(" Querry Modified to meet issue100 circumstance 3");
 		}
 		
 		// Circumstance 4. The author�셲 last name contains a space or hyphen
@@ -106,6 +108,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			term=lastNameTerms[0]+"-"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName-LastTermFromLastName, FirstInitial[au]
 			if(!queries.contains(term))queries.add(term);
 			term=lastNameTerms[0]+"%20"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName LastTermFromLastName, FirstInitial[au]
+			slf4jLogger.info(" Querry Modified to meet issue100 circumstance 4");
 		}
 		
 		if(lastName.trim().indexOf("-")!=-1){
@@ -126,6 +129,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			if(!queries.contains(term))queries.add(term);
 			term=lastName+"%20"+firstName.substring(0, 1)+(middleName!=null?middleName.substring(0, 1):"")+ "[au]";//LastName FirstInitialMiddleInitial[au]
 			if(!queries.contains(term))queries.add(term);
+			slf4jLogger.info(" Querry Modified to meet issue100 circumstance 5");
 		}
 	}
 

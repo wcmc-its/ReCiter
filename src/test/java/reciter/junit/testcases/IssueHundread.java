@@ -58,28 +58,7 @@ public class IssueHundread {
 
 	@Test
 	public void test() {
-		if (identity.getSuffix().contains("II") || identity.getSuffix().contains("III")
-				|| identity.getSuffix().contains("IV"))
-			slf4jLogger.info("Test Failed, Circumstance 3");
-
-		else
-			slf4jLogger.info("Test Passed , Circumstance 3");
-
-		// TODO need to validate Circumstance 4,5
-
-		// if (firstName.contains("II") || firstName.contains("III")
-		// || firstName.contains("IV"))
-		// slf4jLogger.info("Test Failed, Circumstance 4");
-		//
-		// else
-		// slf4jLogger.info("Test Passed , Circumstance 4");
-		//
-		// if (firstName.contains("II") || firstName.contains("III")
-		// || firstName.contains("IV"))
-		// slf4jLogger.info("Test Failed,Circumstance 5");
-		//
-		// else
-		// slf4jLogger.info("Test Passed , Circumstance 5");
+		// Added Logs in PubmedXmlFetcher for the specific circumstance
+		
 	}
-
 }
