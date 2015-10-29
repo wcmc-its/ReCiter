@@ -1,35 +1,8 @@
 package reciter.junit.testcases;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import reciter.erroranalysis.ReCiterConfigProperty;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleAuthors;
-import reciter.model.article.ReCiterArticleKeywords;
-import reciter.model.author.AuthorAffiliation;
-import reciter.model.author.AuthorEducation;
-import reciter.model.author.AuthorName;
-import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
-import reciter.utils.reader.YearDiscrepacyReader;
-import reciter.utils.stemmer.PorterStemmer;
-import reciter.utils.stemmer.SnowballStemmer;
-import xmlparser.pubmed.PubmedXmlFetcher;
-import xmlparser.pubmed.model.PubmedArticle;
-import xmlparser.scopus.ScopusXmlFetcher;
-import xmlparser.scopus.model.ScopusArticle;
-import xmlparser.translator.ArticleTranslator;
-import database.dao.GoldStandardPmidsDao;
-import database.dao.IdentityDegreeDao;
-import database.dao.IdentityDirectoryDao;
-import database.dao.impl.GoldStandardPmidsDaoImpl;
-import database.dao.impl.IdentityDegreeDaoImpl;
-import database.dao.impl.IdentityDirectoryDaoImpl;
-import database.model.IdentityDegree;
-import database.model.IdentityDirectory;
 
 public class ReCiterTestData {
 	private String cwid;
@@ -39,7 +12,7 @@ public class ReCiterTestData {
 	
 	public List<ReCiterArticle> prepareTestData(){
 		//String xmlFileName = PubmedXmlFetcher.getDefaultLocation()+this.cwid+"/"+this.cwid+"_0.xml";
-		ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
+		/*ReCiterConfigProperty reCiterConfigProperty = new ReCiterConfigProperty();
 		try {
 			reCiterConfigProperty
 					.loadProperty(ReCiterConfigProperty
@@ -201,6 +174,7 @@ public class ReCiterTestData {
 			// Sort articles on completeness score.
 			Collections.sort(filteredArticleList);
 			
-			return filteredArticleList;
+			return filteredArticleList;*/
+		return null;
 	}
 }
