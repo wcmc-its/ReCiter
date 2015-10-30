@@ -48,7 +48,7 @@ public class ReCiterEngine implements Engine {
 
 		// Perform Phase 2 clusters selection.
 		AnalysisObject analysisObject = new AnalysisObject();
-		ClusterSelector clusterSelector = new ReCiterClusterSelector(analysisObject);
+		ClusterSelector clusterSelector = new ReCiterClusterSelector(analysisObject, targetAuthor);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
 		
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
