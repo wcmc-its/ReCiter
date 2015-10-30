@@ -20,6 +20,8 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
+// Issue #22
+
 /* 	for  given cwid retrieved pubmedarticle list using GoldStandardPmidsDao.
  checking the article pmid with authors known publications.
  so if known publications list size is zero that means all the 

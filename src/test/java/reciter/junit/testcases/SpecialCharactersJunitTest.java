@@ -24,6 +24,8 @@ import xmlparser.translator.ArticleTranslator;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
+//Issue #16, # 87 
+
 public class SpecialCharactersJunitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);

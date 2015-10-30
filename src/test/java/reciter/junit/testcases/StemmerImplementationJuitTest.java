@@ -26,6 +26,8 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
+// Issue # 17
+
 public class StemmerImplementationJuitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
