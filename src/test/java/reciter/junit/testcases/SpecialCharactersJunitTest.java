@@ -66,7 +66,7 @@ public class SpecialCharactersJunitTest {
 			ReCiterArticleKeywords keywords = article.getArticleKeywords();
 			for (Keyword keyword : keywords.getKeywords()) {
 				origKeyword = keyword.getKeyword();
-				if (origKeyword != null || !origKeyword.equalsIgnoreCase(null))
+				if (origKeyword != null || ! origKeyword .equalsIgnoreCase(null))
 					success = validate(origKeyword);
 
 				if (!success) {
