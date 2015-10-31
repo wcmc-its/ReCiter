@@ -1,4 +1,4 @@
-package reciter.junit.testcases;
+package reciter.testcases;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -20,6 +20,9 @@ public class TestController {
 	
 	//CWID for which the tests are to be Done 
 	
-	public static String cwid_junit = "aas2004";
+	public static String cwid_junit = "dml2005";
+	
+	// Enable Logger for Detailed output
+	public static boolean logger = true;
 	
 }
