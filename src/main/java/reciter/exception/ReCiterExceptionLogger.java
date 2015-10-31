@@ -19,7 +19,7 @@ public class ReCiterExceptionLogger {
 			logFile.setFormatter(new ReCiterExceptionLogFormatter());
 			logger.addHandler(logFile);
 			if(exceptionMessage.getMessage()!=null)logger.info(exceptionMessage.getMessage());
-			logger.log(exceptionMessage.getPriority()==ReCiterPriority.HIGH_RISK?Level.SEVERE:Level.ALL, exceptionMessage.getErrorMessage());
+			logger.log(exceptionMessage.getPriority()==ReCiterPriority.HIGH_RISK?Level.SEVERE:Level.INFO, exceptionMessage.getErrorMessage());
 			logFile.close();			
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
