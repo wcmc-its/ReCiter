@@ -17,6 +17,8 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
+// Issue #100
+
 public class Aliases {
 
 	PubmedXmlFetcher pubmedXmlFetcher;

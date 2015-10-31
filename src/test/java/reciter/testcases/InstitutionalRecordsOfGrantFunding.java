@@ -20,6 +20,8 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
+// issue # 89
+
 public class InstitutionalRecordsOfGrantFunding {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
@@ -60,7 +62,7 @@ public class InstitutionalRecordsOfGrantFunding {
 		boolean Test = true;
 		if (Test)
 			slf4jLogger
-					.info("Article is encoded to utf 8 characters , Test Passed");
+					.info(" Test Passed Issue 89");
 		else
 			slf4jLogger.info(" Test Failed ");
 

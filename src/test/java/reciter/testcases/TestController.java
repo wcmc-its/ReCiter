@@ -21,5 +21,6 @@ public class TestController {
 	//CWID for which the tests are to be Done 
 	
 	public static String cwid_junit = "dml2005";
+	public static boolean logger = true;
 	
 }

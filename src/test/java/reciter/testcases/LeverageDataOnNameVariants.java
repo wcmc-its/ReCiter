@@ -61,9 +61,9 @@ public class LeverageDataOnNameVariants {
 		boolean Test = true;
 		if (Test)
 			slf4jLogger
-					.info("Article is encoded to utf 8 characters , Test Passed");
+					.info(" Test Passed issue 48");
 		else
-			slf4jLogger.info(" Test Failed ");
+			slf4jLogger.info(" Test Failed issue 48");
 
 	}
 }
