@@ -28,7 +28,8 @@ import xmlparser.pubmed.model.PubmedArticle;
 public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
-	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
+//	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
+	private static final String DEFAULT_LOCATION = "/home/jil3004/reciter_data/data/pubmed/";
 	private List<String> queries = new ArrayList<String>();
 	private PubmedXmlParser pubmedXmlParser;
 

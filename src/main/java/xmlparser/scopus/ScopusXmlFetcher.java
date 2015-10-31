@@ -21,8 +21,9 @@ import xmlparser.scopus.model.ScopusArticle;
 public class ScopusXmlFetcher extends AbstractXmlFetcher {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
-	private static final String DEFAULT_LOCATION = "src/main/resources/data/scopus/";
-
+//	private static final String DEFAULT_LOCATION = "src/main/resources/data/scopus/";
+	private static final String DEFAULT_LOCATION = "/home/jil3004/reciter_data/data/scopus/";
+	
 	private ScopusXmlParser scopusXmlParser;
 
 	public class ScopusXmlFetcherRunnable implements Runnable {
