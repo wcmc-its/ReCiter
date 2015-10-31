@@ -20,7 +20,7 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
-// issue 97
+// issue 97,78
 
 public class UseCitizenshipAndEducationalBackground {
 	private final static Logger slf4jLogger = LoggerFactory
