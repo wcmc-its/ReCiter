@@ -31,9 +31,18 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	//	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
 	private static final String DEFAULT_LOCATION = "/home/jil3004/reciter_data/data/pubmed/";
 	private static final String EMAIL_LOCATION = "/home/jil3004/reciter_data/data/pubmed_xml_searched_by_email/";
-	
+
 	private List<String> queries = new ArrayList<String>();
 	private PubmedXmlParser pubmedXmlParser;
+
+	public PubmedXmlFetcher() {
+		super(DEFAULT_LOCATION);
+		pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler());
+	}
+
+	public PubmedXmlFetcher(String directory) {
+		super(directory);
+	}
 
 	public static String getDefaultLocation() {
 		return DEFAULT_LOCATION;
@@ -46,7 +55,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			pubmedDir.mkdirs();
 		}
 	}
-	
+
 	// Create EMAIL_LOCATION if not exist.
 	public void createEmailLocation() {
 		File emailDir = new File(EMAIL_LOCATION);
@@ -75,16 +84,39 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			fetch(lastName, firstInitial, middleName, cwid);
 		} else {
 			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
-
 		}
-		if(pubmedXmlParser==null)pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler()); // to make sure, the paubmedXmlParser object should not be null
 
 		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {
 			pubmedXmlParser.setXmlInputSource(xmlFile);
 			pubmedArticleList.addAll(pubmedXmlParser.parse());
 		}
 		return pubmedArticleList;
-	}	
+	}
+
+	/**
+	 * Fetch from disk or network a list of PubMed articles for this email.
+	 * @param email
+	 * @param cwid
+	 * @return
+	 */
+	public List<PubmedArticle> getPubmedArticleByEmail(String email, String cwid) {
+		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
+		createEmailLocation();
+		// Create folder for cwid if not exist.
+		File cwidDir = new File(EMAIL_LOCATION + cwid);
+		if (!cwidDir.exists()) {
+			slf4jLogger.info("Fetching PubMed articles for " + cwid);
+			fetch(email, cwid);
+		} else {
+			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
+		}
+
+		for (File xmlFile : new File(EMAIL_LOCATION + cwid).listFiles()) {
+			pubmedXmlParser.setXmlInputSource(xmlFile);
+			pubmedArticleList.addAll(pubmedXmlParser.parse());
+		}
+		return pubmedArticleList;
+	}
 
 	//  For each of an author�셲 aliases, modify initial query based on lexical rules #100 
 	public void preparePubMedQueries(String lastName, String firstName, String middleName){
@@ -303,14 +335,4 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		}
 		return unableToObtainQueryMessage.equals(lineContent);
 	}
-
-	public PubmedXmlFetcher() {
-		super(DEFAULT_LOCATION);
-		pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler());
-	}
-
-	public PubmedXmlFetcher(String directory) {
-		super(directory);
-	}
-
 }
