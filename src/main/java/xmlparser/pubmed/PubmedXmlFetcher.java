@@ -28,20 +28,30 @@ import xmlparser.pubmed.model.PubmedArticle;
 public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
-//	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
+	//	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
 	private static final String DEFAULT_LOCATION = "/home/jil3004/reciter_data/data/pubmed/";
+	private static final String EMAIL_LOCATION = "/home/jil3004/reciter_data/data/pubmed_xml_searched_by_email/";
+	
 	private List<String> queries = new ArrayList<String>();
 	private PubmedXmlParser pubmedXmlParser;
 
 	public static String getDefaultLocation() {
 		return DEFAULT_LOCATION;
 	}
-	
+
 	// Create default location if not exist.
 	public void createPubMedLocation() {
 		File pubmedDir = new File(DEFAULT_LOCATION);
 		if (!pubmedDir.exists()) {
 			pubmedDir.mkdirs();
+		}
+	}
+	
+	// Create EMAIL_LOCATION if not exist.
+	public void createEmailLocation() {
+		File emailDir = new File(EMAIL_LOCATION);
+		if (!emailDir.exists()) {
+			emailDir.mkdirs();
 		}
 	}
 
@@ -65,26 +75,26 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			fetch(lastName, firstInitial, middleName, cwid);
 		} else {
 			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
-			
+
 		}
 		if(pubmedXmlParser==null)pubmedXmlParser = new PubmedXmlParser(new PubmedEFetchHandler()); // to make sure, the paubmedXmlParser object should not be null
-		
+
 		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {
 			pubmedXmlParser.setXmlInputSource(xmlFile);
 			pubmedArticleList.addAll(pubmedXmlParser.parse());
 		}
 		return pubmedArticleList;
 	}	
-	
+
 	//  For each of an author�셲 aliases, modify initial query based on lexical rules #100 
 	public void preparePubMedQueries(String lastName, String firstName, String middleName){
 		String firstInitial = "%20" + firstName.substring(0, 1)+ "[au]";
 		String middleInitial = "%20" +   (middleName!=null && !middleName.trim().equals("")?middleName.substring(0, 1):"")+ "[au]";
 		//  For each of an author�셲 aliases, modify initial query based on lexical rules #100 
-		
+
 		// Circumstance 3. The author�셲 name has a suffix.
 		if(firstName.contains("JR") || firstName.contains("II") || firstName.contains("III")|| firstName.contains("IV")){
-			
+
 			String a = firstName.replace("JR", "");
 			a = firstName.replace("II", "");
 			a = firstName.replace("III", "");
@@ -95,15 +105,15 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			if(!queries.contains(term))queries.add(term);
 			slf4jLogger.info(" Querry Modified to meet issue100 circumstance 3");
 		}
-		
+
 		// Circumstance 4. The author�셲 last name contains a space or hyphen
-		
+
 		queries.add(lastName.replaceAll(" ", "%20") + firstInitial); 
 		if(lastName.trim().indexOf(" ")!=-1){
 			String[] lastNameTerms = lastName.split(" ");
 			String term = lastName.replaceAll(" ", "-") + firstInitial;
 			if(!queries.contains(term))queries.add(term);
-			
+
 			term = lastNameTerms[0]+","+firstInitial; //FirstTermFromLastName, FirstInitial[au]
 			if(!queries.contains(term))queries.add(term);
 			term=lastNameTerms[0]+"-"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName-LastTermFromLastName, FirstInitial[au]
@@ -111,7 +121,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			term=lastNameTerms[0]+"%20"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName LastTermFromLastName, FirstInitial[au]
 			slf4jLogger.info(" Querry Modified to meet issue100 circumstance 4");
 		}
-		
+
 		if(lastName.trim().indexOf("-")!=-1){
 			String[] lastNameTerms = lastName.split("-");
 			String term = lastNameTerms[0]+","+firstInitial; //FirstTermFromLastName, FirstInitial[au]
@@ -119,7 +129,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			term=lastNameTerms[0]+"-"+lastNameTerms[lastNameTerms.length-1]+","+firstInitial; //FirstTermFromLastName-LastTermFromLastName, FirstInitial[au]
 			if(!queries.contains(term))queries.add(term);
 		}
-		
+
 		// Circumstance 5. The author�셲 first name consists of a single letter
 		if(firstName.length()==1){
 			String term = lastName +firstInitial;//LastName FirstInitial[au] 
@@ -139,7 +149,55 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		String firstInitial = firstName.substring(0, 1);
 		return lastName + "%20" + firstInitial + "[au]";
 	}
-	
+
+	/**
+	 * Fetch all the publications for this query:
+	 * http://www.ncbi.nlm.nih.gov/pubmed/?term=wcb2001%40med.cornell.edu
+	 * 
+	 * and stores it to disk.
+	 * 
+	 * @param email
+	 */
+	public void fetch(String email, String cwid) {
+		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
+		pubmedXmlQuery.setTerm(email);
+		pubmedXmlQuery.setRetMax(1);
+		String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+		PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
+		int numPubMedArticles = xmlHandler.getCount();
+
+		slf4jLogger.info("PubMed Search Query: " + eSearchUrl);
+		slf4jLogger.info("Number of articles need to be retrieved for : " + email + " is " + numPubMedArticles);
+
+		// Retrieve the publications 10,000 records at one time and store to disk.
+		int retMax = 10000;
+		pubmedXmlQuery.setRetMax(retMax);
+		int currentRetStart = 0;
+
+		// Number of partitions that we need to finish retrieving all XML.
+		int numSteps = (int) Math.ceil((double)numPubMedArticles / retMax); 
+
+		// Use the retstart value to iteratively fetch all XMLs.
+		for (int i = 0; i < numSteps; i++) {
+			// Get webenv value.
+			pubmedXmlQuery.setRetStart(currentRetStart);
+			eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+
+			pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
+
+			// Use the webenv value to retrieve xml.
+			String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
+			slf4jLogger.info("PubMed EFetch Url = " + eFetchUrl);
+
+			// Save the xml file to directory data/xml/cwid
+			saveXml(eFetchUrl, EMAIL_LOCATION, cwid, cwid + "_" + i);
+
+			// Update the retstart value.
+			currentRetStart += pubmedXmlQuery.getRetMax();
+			pubmedXmlQuery.setRetStart(currentRetStart);
+		}
+	}
+
 	/**
 	 * Fetch all the publications for this query "lastname firstInitial[au]" in PubMed and store it on disk.
 	 * @param lastName last name of the author.
@@ -184,13 +242,13 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				// Get webenv value.
 				pubmedXmlQuery.setRetStart(currentRetStart);
 				eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-				
+
 				pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
 
 				// Use the webenv value to retrieve xml.
 				String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
 				slf4jLogger.info("PubMed EFetch Url = " + eFetchUrl);
-				
+
 				// Save the xml file to directory data/xml/cwid
 				saveXml(eFetchUrl, cwid, cwid + "_" + i);
 
