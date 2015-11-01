@@ -37,9 +37,9 @@ public class ReCiterEngine implements Engine {
 	}
 
 	@Override
-	public void run(String lastName, String firstInitial, String middleName, String cwid) {
+	public void run(String lastName, String firstInitial, String middleName, String cwid, String email) {
 		// Fetch the articles for this person.
-		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(lastName, firstInitial, middleName, cwid);
+		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(lastName, firstInitial, middleName, cwid, email);
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 		
 		// Perform Phase 1 clustering.
@@ -67,7 +67,6 @@ public class ReCiterEngine implements Engine {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-
+		
 	}
 }
