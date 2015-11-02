@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.ReCiterExample;
-import reciter.algorithm.evidence.targetauthor.grant.strategy.KnownCoinvestigatorStrategy;
+import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CoauthorAffiliationsStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 import reciter.service.TargetAuthorService;
@@ -23,9 +23,8 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
-// issue 49
-
-public class LeverageKnownCoinvestigatorsOnGrants {
+public class CoauthorAffiliationsStrategyTest {
+	CoauthorAffiliationsStrategy test = new CoauthorAffiliationsStrategy(null);
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
 	Identity identity = null;
@@ -33,14 +32,14 @@ public class LeverageKnownCoinvestigatorsOnGrants {
 	List<PubmedArticle> pubmedArticleList;
 	List<ReCiterArticle> reCiterArticleList;
 	List<String> gspPmidList;
-	KnownCoinvestigatorStrategy test = new KnownCoinvestigatorStrategy();
 	private TargetAuthorService targetAuthorService;
+
 
 	@Before
 	public void setUp() throws Exception {
+
 		IdentityDaoImpl dao = new IdentityDaoImpl();
 		identity = dao.getIdentityByCwid(TestController.cwid_junit);
-		
 		pubmedXmlFetcher = new PubmedXmlFetcher();
 		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(
 				identity.getLastName(), identity.getFirstInitial(),
@@ -60,11 +59,11 @@ public class LeverageKnownCoinvestigatorsOnGrants {
 			reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle,
 					scopusArticle));
 		}
+	
 	}
 
 	@Test
 	public void test() {
-		
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(TestController.cwid_junit);
 		for(ReCiterArticle article : reCiterArticleList)
 		{
@@ -72,13 +71,6 @@ public class LeverageKnownCoinvestigatorsOnGrants {
 		slf4jLogger.info("Score = "+score);
 		
 		}
-		
-		boolean Test = true;
-		if (Test)
-			slf4jLogger
-					.info(" Test Passed issue 49");
-		else
-			slf4jLogger.info(" Test Failed issue 49");
-
 	}
+
 }
