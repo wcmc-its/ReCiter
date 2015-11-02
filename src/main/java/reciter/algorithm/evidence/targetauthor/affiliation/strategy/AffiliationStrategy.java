@@ -33,7 +33,7 @@ public class AffiliationStrategy extends AbstractTargetAuthorStrategy {
 				} catch (ParseException e) {					
 					e.printStackTrace();
 					return 1;
-				}				
+				}
 			}else return 1;
 		} else {
 			return 0;
