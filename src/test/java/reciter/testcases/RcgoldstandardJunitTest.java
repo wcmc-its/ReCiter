@@ -1,4 +1,4 @@
-package reciter.junit.testcases;
+package reciter.testcases;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,18 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
-public class issue97 {
+// Issue #22
+
+/* 	for  given cwid retrieved pubmedarticle list using GoldStandardPmidsDao.
+ checking the article pmid with authors known publications.
+ so if known publications list size is zero that means all the 
+ publications are added to the reciterArticleList.
+ and test case is passed, if known publications 
+ list size is greater than zero it means 
+ all known articles are not added to cluster
+ it that case the test fails */
+
+public class RcgoldstandardJunitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
 	Identity identity = null;
@@ -34,9 +45,8 @@ public class issue97 {
 		IdentityDaoImpl dao = new IdentityDaoImpl();
 		identity = dao.getIdentityByCwid(TestController.cwid_junit);
 		pubmedXmlFetcher = new PubmedXmlFetcher();
-		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(
-				identity.getLastName(), identity.getFirstInitial(),
-				identity.getMiddleName(), TestController.cwid_junit);
+		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(identity.getLastName(),
+				identity.getFirstInitial(), identity.getMiddleName(), TestController.cwid_junit);
 
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
@@ -56,13 +66,16 @@ public class issue97 {
 
 	@Test
 	public void test() {
-
-		
-		boolean Test = true;
-		if (Test)
+		if (gspPmidList.size() > 0) {
+			StringBuilder sb = new StringBuilder();
+			for (String pmid : gspPmidList) {
+				sb.append(pmid).append(" ");
+			}
 			slf4jLogger
-					.info("Article is encoded to utf 8 characters , Test Passed");
-		else
-			slf4jLogger.info(" Test Failed ");
+					.info("Test case is failed , the following PMIDs are not added into cluster one ["
+							+ sb.toString().trim() + "]");
+		}
+		slf4jLogger.info("Test Passed");
+
 	}
 }

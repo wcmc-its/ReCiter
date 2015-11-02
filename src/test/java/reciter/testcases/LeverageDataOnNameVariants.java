@@ -1,4 +1,4 @@
-package reciter.junit.testcases;
+package reciter.testcases;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,9 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
-public class issue78 {
+//Issue # 48
+
+public class LeverageDataOnNameVariants {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
 	Identity identity = null;
@@ -56,12 +58,12 @@ public class issue78 {
 
 	@Test
 	public void test() {
-
 		boolean Test = true;
 		if (Test)
 			slf4jLogger
-					.info("Article is encoded to utf 8 characters , Test Passed");
+					.info(" Test Passed issue 48");
 		else
-			slf4jLogger.info(" Test Failed ");
+			slf4jLogger.info(" Test Failed issue 48");
+
 	}
 }

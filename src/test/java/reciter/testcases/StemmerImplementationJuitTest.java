@@ -1,4 +1,4 @@
-package reciter.junit.testcases;
+package reciter.testcases;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +26,8 @@ import database.dao.impl.GoldStandardPmidsDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.model.Identity;
 
+// Issue # 17
+
 public class StemmerImplementationJuitTest {
 	private final static Logger slf4jLogger = LoggerFactory
 			.getLogger(ReCiterExample.class);
@@ -44,8 +46,9 @@ public class StemmerImplementationJuitTest {
 		IdentityDaoImpl dao = new IdentityDaoImpl();
 		identity = dao.getIdentityByCwid(TestController.cwid_junit);
 		pubmedXmlFetcher = new PubmedXmlFetcher();
-		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(identity.getLastName(),
-				identity.getFirstInitial(), identity.getMiddleName(), TestController.cwid_junit);
+		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(
+				identity.getLastName(), identity.getFirstInitial(),
+				identity.getMiddleName(), TestController.cwid_junit);
 		ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 		reCiterArticleList = new ArrayList<ReCiterArticle>();
 
@@ -55,8 +58,8 @@ public class StemmerImplementationJuitTest {
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid()
 					.getPmidString();
-			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(TestController.cwid_junit,
-					pmid);
+			ScopusArticle scopusArticle = scopusXmlFetcher.getScopusXml(
+					TestController.cwid_junit, pmid);
 			reCiterArticleList.add(ArticleTranslator.translate(pubmedArticle,
 					scopusArticle));
 		}
@@ -65,56 +68,53 @@ public class StemmerImplementationJuitTest {
 	@Test
 	public void test() {
 		for (ReCiterArticle article : reCiterArticleList) {
-			{
-				for (int i = 0; i < 1; i++) {
-					List<String> articleKeywordList = Arrays.asList(article
-							.getArticleTitle().split(" "));
-					List<String> journalKeywordList = Arrays.asList(article
-							.getJournal().getJournalTitle().split(" "));
-					for (String articleKeyword : articleKeywordList) {
 
-						String stemmedArticlekeyword = stemWord(articleKeyword);
-						if (!articleKeyword.equals(stemmedArticlekeyword)) {
-							slf4jLogger
-									.info("Article Title before stemming =   "
-											+ articleKeyword);
-							slf4jLogger.info("After stemming =     "
-									+ stemmedArticlekeyword);
-						}
+			for (int i = 0; i < 1; i++) {
+				List<String> articleKeywordList = Arrays.asList(article
+						.getArticleTitle().split(" "));
+				List<String> journalKeywordList = Arrays.asList(article
+						.getJournal().getJournalTitle().split(" "));
+				for (String articleKeyword : articleKeywordList) {
+
+					String stemmedArticlekeyword = stemWord(articleKeyword);
+					if (TestController.logger) {
+						slf4jLogger.info("Article Title before stemming =   "
+								+ articleKeyword);
+						slf4jLogger.info("After stemming =     "
+								+ stemmedArticlekeyword);
 					}
-					slf4jLogger
-							.info("-- Finished stemming for article Title List --");
-					for (String journalKeyword : journalKeywordList) {
-						String stemmedJournalKeyword = stemWord(journalKeyword);
-						if (!journalKeyword.equals(stemmedJournalKeyword)) {
-							slf4jLogger
-									.info("Journal keyword before stemming =   "
-											+ journalKeyword);
-							slf4jLogger.info("After stemming =     "
-									+ stemmedJournalKeyword);
-						}
-					}
-					slf4jLogger
-							.info("-- Finished stemming for journal Keyword List --");
-					ReCiterArticleKeywords articleKeywords = article
-							.getArticleKeywords();
-					for (Keyword keyword : articleKeywords.getKeywords()) {
-						String origKeyword = keyword.getKeyword();
-						String stemmedKeyword = stemWord(origKeyword);
-						if (!origKeyword.equals(stemmedKeyword)) {
-							slf4jLogger
-									.info("Article keyword before stemming =   "
-											+ origKeyword);
-							slf4jLogger.info("After stemming =     "
-									+ stemmedKeyword);
-						}
-					}
-					slf4jLogger
-							.info("-- Finished stemming for articleKeywordList --");
 				}
+				slf4jLogger
+						.info("-- Finished stemming for article Title List --");
+				for (String journalKeyword : journalKeywordList) {
+					String stemmedJournalKeyword = stemWord(journalKeyword);
+					if (TestController.logger) {
+						slf4jLogger.info("Journal keyword before stemming =   "
+								+ journalKeyword);
+						slf4jLogger.info("After stemming =     "
+								+ stemmedJournalKeyword);
+					}
+				}
+				slf4jLogger
+						.info("-- Finished stemming for journal Keyword List --");
+				ReCiterArticleKeywords articleKeywords = article
+						.getArticleKeywords();
+				for (Keyword keyword : articleKeywords.getKeywords()) {
+					String origKeyword = keyword.getKeyword();
+					String stemmedKeyword = stemWord(origKeyword);
+					if (TestController.logger) {
+						slf4jLogger.info("Article keyword before stemming =   "
+								+ origKeyword);
+						slf4jLogger.info("After stemming =     "
+								+ stemmedKeyword);
+					}
+				}
+				slf4jLogger
+						.info("-- Finished stemming for articleKeywordList --");
 			}
-
 		}
+		
+		slf4jLogger.info(" Test Success issue 17 ");
 
 	}
 

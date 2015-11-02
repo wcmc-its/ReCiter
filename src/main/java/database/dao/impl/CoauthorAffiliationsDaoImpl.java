@@ -19,8 +19,7 @@ import database.model.CoauthorAffiliations;
  *
  */
 public class CoauthorAffiliationsDaoImpl implements CoauthorAffiliationsDao{
-
-	// TODO: @Balu and @Hanumantha: Please create functions to get rows from the database table "rc_coauthor_affiliations".
+	
 	/**
 	 * 
 	 * @param affiliation
@@ -31,26 +30,26 @@ public class CoauthorAffiliationsDaoImpl implements CoauthorAffiliationsDao{
 		Statement pst = null;
 		ResultSet rs = null;
 		CoauthorAffiliations affiliations = null;
-		try{
-			String query = "select affiliation_id,label,score from  rc_coauthor_affiliations where label='"+affiliation+"'";
+		try {
+			String query = "select affiliation_id, score from  rc_coauthor_affiliations where label='"+affiliation+"'";
 			pst=con.createStatement();
 			rs=pst.executeQuery(query);
 			while(rs.next()){
 				affiliations=new CoauthorAffiliations();
 				affiliations.setAffiliationId(rs.getInt(1));
-				affiliations.setLabel(rs.getString(2));
+				affiliations.setLabel(affiliation);
 				affiliations.setScore(rs.getFloat(3));
-			}			
-		}catch(SQLException e){
+			}
+		} catch(SQLException e) {
 			e.printStackTrace();
-		}finally{
+		} finally {
 			DbUtil.close(rs);
 			DbUtil.close(pst);
 			DbUtil.close(con);
 		}
 		return affiliations;
 	}
-	
+
 	/**
 	 * 
 	 * @param affiliations
