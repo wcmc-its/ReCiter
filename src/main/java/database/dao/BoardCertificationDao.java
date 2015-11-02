@@ -1,6 +1,8 @@
 package database.dao;
 
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -10,4 +12,5 @@ import java.util.List;
 public interface BoardCertificationDao {
 	
 	List<String> getBoardCertificationsByCwid(String cwid);
+	public Map<String, List<String>> getBoardCertificationsMapByCwid(String cwid) throws SQLException;
 }
