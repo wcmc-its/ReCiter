@@ -23,7 +23,7 @@ public class ReCiterExample {
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		ReCiterExample example = new ReCiterExample();
-		example.engine.run("Fernandes", "H", "", "hef9020", "hef9020@med.cornell.edu");
+		example.engine.run();
 		long stopTime = System.currentTimeMillis();
 	    long elapsedTime = stopTime - startTime;
 	    slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");

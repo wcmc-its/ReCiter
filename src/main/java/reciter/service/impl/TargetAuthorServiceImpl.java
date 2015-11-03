@@ -89,7 +89,11 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		IdentityDirectoryDao dao = new IdentityDirectoryDaoImpl();
 		List<IdentityDirectory> identityDirectoryList = dao.getIdentityDirectoriesByCwid(identityDTO.getCwid());
 		targetAuthor.setAliasList(identityDirectoryList);
-
+		
+		// Set email and email_other.
+		targetAuthor.setEmail(identityDTO.getEmail());
+		targetAuthor.setEmailOther(identityDTO.getEmailOther());
+		
 		return targetAuthor;
 	}
 

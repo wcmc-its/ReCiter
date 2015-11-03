@@ -37,10 +37,15 @@ public class ReCiterEngine implements Engine {
 	}
 
 	@Override
-	public void run(String lastName, String firstInitial, String middleName, String cwid, String email) {
+	public void run(TargetAuthor targetAuthor) {
 		// Fetch the articles for this person.
-		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(lastName, firstInitial, middleName, cwid, email);
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(
+				targetAuthor.getAuthorName().getLastName(), 
+				targetAuthor.getAuthorName().getFirstInitial(),
+				targetAuthor.getAuthorName().getMiddleName(),
+				targetAuthor.getCwid(),
+				targetAuthor.getEmail());
+//		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 		
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(targetAuthor, reCiterArticleList);
@@ -62,11 +67,17 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
 		slf4jLogger.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
 		slf4jLogger.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
-		slf4jLogger.info("\n");
 	}
 
 	@Override
 	public void run() {
-		
+		List<String> cwids = reCiterEngineProperty.getCwids();
+		for (String cwid : cwids) {
+			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+			run(targetAuthor);
+		}
+		slf4jLogger.info("Average Precision: [" + totalPrecision / cwids.size() + "]");
+		slf4jLogger.info("Average Recall: [" + totalRecall / cwids.size() + "]");
+		slf4jLogger.info("\n");
 	}
 }

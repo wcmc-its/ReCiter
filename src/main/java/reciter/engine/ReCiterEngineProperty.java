@@ -1,10 +1,15 @@
 package reciter.engine;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,5 +40,15 @@ public class ReCiterEngineProperty {
 				slf4jLogger.error("Error closing inputStream while loading property file.");
 			}
 		}
+	}
+	
+	public List<String> getCwids() {
+		List<String> cwids = new ArrayList<String>();
+		try (Stream<String> stream = Files.lines(Paths.get(testDataCwidListFile),Charset.defaultCharset())) {
+			stream.forEach(e -> cwids.add(e));
+		} catch (IOException ex) {
+			slf4jLogger.error(ex.getMessage());
+		}
+		return cwids;
 	}
 }

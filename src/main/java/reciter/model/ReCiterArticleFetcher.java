@@ -17,7 +17,9 @@ public class ReCiterArticleFetcher {
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstInitial,null, cwid);
 		
-		List<PubmedArticle> pubmedArticleListFromEmail = pubmedXmlFetcher.getPubmedArticleByEmail(email, cwid);
+		// TODO fetch articles by email.
+//		List<PubmedArticle> pubmedArticleListFromEmail = pubmedXmlFetcher.getPubmedArticleByEmail(email, cwid);
+		
 		// Retrieve all the scopus xml files if not exists.
 		ScopusXmlFetcher scopusFetcher = new ScopusXmlFetcher();
 		scopusFetcher.fetch(lastName, firstInitial, middleName, cwid);
