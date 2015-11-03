@@ -38,7 +38,8 @@ public class ReCiterClusterer extends AbstractClusterer {
 	 */
 	@Override
 	public void cluster() {
-		slf4jLogger.info("Number of articles to be clustered:" + reCiterArticles.size());
+		slf4jLogger.info("Running ReCiter for: [" + targetAuthor.getCwid() + "] "
+				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		clusters = clusteringStrategy.cluster(reCiterArticles);
 	}
 	

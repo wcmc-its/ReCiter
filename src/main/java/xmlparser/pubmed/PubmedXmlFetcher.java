@@ -83,7 +83,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			slf4jLogger.info("Fetching PubMed articles for " + cwid);
 			fetch(lastName, firstInitial, middleName, cwid);
 		} else {
-			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
+//			slf4jLogger.info("PubMed articles already exist on disk for " + cwid);
 		}
 
 		for (File xmlFile : new File(getDirectory() + cwid).listFiles()) {

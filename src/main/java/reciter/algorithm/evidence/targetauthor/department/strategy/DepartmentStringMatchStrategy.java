@@ -26,7 +26,11 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				boolean isDepartmentMatch = departmentMatch(author, targetAuthor);
-				if (isDepartmentMatch) {
+				boolean isFirstNameInitialMatch = 
+						author.getAuthorName().getFirstInitial().equalsIgnoreCase(
+								targetAuthor.getAuthorName().getFirstInitial());
+				
+				if (isDepartmentMatch && isFirstNameInitialMatch) {
 					departmentMatchScore = 1;
 				}
 			}

@@ -95,7 +95,7 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 		}
 		executor.shutdown();
 		while (!executor.isTerminated()) {}
-		slf4jLogger.info("Completed retrieving Scopus articles for " + cwid);
+//		slf4jLogger.info("Completed retrieving Scopus articles for " + cwid);
 	}
 
 	public ScopusXmlFetcher() {

@@ -57,7 +57,6 @@ public class ReCiterEngine implements Engine {
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
 		
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
-
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 		totalPrecision += analysis.getPrecision();
@@ -67,6 +66,7 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
 		slf4jLogger.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
 		slf4jLogger.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
+		slf4jLogger.info("\n");
 	}
 
 	@Override

@@ -16,13 +16,11 @@ public class DegreeStrategyContext implements TargetAuthorStrategyContext {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return 0;
+		return strategy.executeStrategy(reCiterArticle, targetAuthor);
 	}
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return 0;
+		return strategy.executeStrategy(reCiterArticles, targetAuthor);
 	}
 }

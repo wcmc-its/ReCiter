@@ -19,8 +19,12 @@ import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.AffiliationStrategy;
+import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
 import reciter.algorithm.evidence.targetauthor.citizenship.CitizenshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.citizenship.strategy.CitizenshipStrategy;
+import reciter.algorithm.evidence.targetauthor.degree.DegreeStrategyContext;
+import reciter.algorithm.evidence.targetauthor.degree.strategy.DegreeType;
+import reciter.algorithm.evidence.targetauthor.degree.strategy.YearDiscrepancyStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
@@ -78,6 +82,15 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	private StrategyContext citizenshipStrategyContext;
 	
+	/**
+	 * Year Discrepancy (Bachelors).
+	 */
+	private StrategyContext bachelorsYearDiscrepancyStrategyContext;
+	
+	/**
+	 * Year Discrepancy (Doctoral).
+	 */
+	private StrategyContext doctoralYearDiscrepancyStrategyContext;
 	
 //	private StrategyContext boardCertificationStrategyContext;
 //
@@ -94,7 +107,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 		departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
 		grantCoauthorStrategyContext = new GrantStrategyContext(new KnownCoinvestigatorStrategy());
-		affiliationStrategyContext = new AffiliationStrategyContext(new AffiliationStrategy());
+		affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
 		
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
@@ -103,6 +116,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		journalStrategyContext = new JournalStrategyContext(new JournalStrategy(targetAuthor));
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		
+		// TODO: reAssignArticlesByPubmedAffiliationCosineSimilarity(map);
+		// TODO: getBoardCertificationScore(map);
+		
+		// TODO: removeArticlesBasedOnYearDiscrepancy(map);
+		bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
+		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 		this.analysisObject = analysisObject;
 	}
 
@@ -212,7 +231,6 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 							}
 							// remove from old cluster.
 							iterator.remove();
-							break; // break loop iterating over authors.
 						}
 					}
 				}
