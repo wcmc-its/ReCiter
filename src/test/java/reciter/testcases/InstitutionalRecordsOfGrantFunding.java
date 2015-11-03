@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.ReCiterExample;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.TargetAuthor;
+import reciter.service.TargetAuthorService;
 import xmlparser.pubmed.PubmedXmlFetcher;
 import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.ScopusXmlFetcher;
@@ -30,6 +32,7 @@ public class InstitutionalRecordsOfGrantFunding {
 	List<PubmedArticle> pubmedArticleList;
 	List<ReCiterArticle> reCiterArticleList;
 	List<String> gspPmidList;
+	private TargetAuthorService targetAuthorService;
 
 	@Before
 	public void setUp() throws Exception {
@@ -59,6 +62,11 @@ public class InstitutionalRecordsOfGrantFunding {
 	@Test
 	public void test() {
 		
+		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(TestController.cwid_junit);
+		for(ReCiterArticle article : reCiterArticleList)
+		{
+		
+		}
 		boolean Test = true;
 		if (Test)
 			slf4jLogger

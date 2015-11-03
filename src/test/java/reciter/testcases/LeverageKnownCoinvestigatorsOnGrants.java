@@ -40,7 +40,7 @@ public class LeverageKnownCoinvestigatorsOnGrants {
 	public void setUp() throws Exception {
 		IdentityDaoImpl dao = new IdentityDaoImpl();
 		identity = dao.getIdentityByCwid(TestController.cwid_junit);
-		
+
 		pubmedXmlFetcher = new PubmedXmlFetcher();
 		pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(
 				identity.getLastName(), identity.getFirstInitial(),
@@ -64,19 +64,23 @@ public class LeverageKnownCoinvestigatorsOnGrants {
 
 	@Test
 	public void test() {
-		
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(TestController.cwid_junit);
-		for(ReCiterArticle article : reCiterArticleList)
-		{
-		double score =  test.executeStrategy(article, targetAuthor);
-		slf4jLogger.info("Score = "+score);
-		
+
+		TargetAuthor targetAuthor = targetAuthorService
+				.getTargetAuthor(TestController.cwid_junit);
+		double score = 0;
+		for (ReCiterArticle article : reCiterArticleList) {
+			score = test.executeStrategy(article, targetAuthor);
+			slf4jLogger.info("Score = " + score);
+
 		}
-		
+
 		boolean Test = true;
+		if (score > 0)
+			Test = true;
+		else
+			Test = false;
 		if (Test)
-			slf4jLogger
-					.info(" Test Passed issue 49");
+			slf4jLogger.info(" Test Passed issue 49");
 		else
 			slf4jLogger.info(" Test Failed issue 49");
 
