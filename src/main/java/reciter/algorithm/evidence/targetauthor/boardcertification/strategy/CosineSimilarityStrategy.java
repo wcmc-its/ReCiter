@@ -5,15 +5,18 @@ import java.util.List;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
+import reciter.model.boardcertifications.ReadBoardCertifications;
 
 
 public class CosineSimilarityStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		List<String> boardCertifications = targetAuthor.getBoardCertifications();
-		
-		return 0;
+		// Leverage data on board certifications to improve phase two matching #45 
+		//List<String> boardCertifications = targetAuthor.getBoardCertifications();
+		ReadBoardCertifications certifications = new ReadBoardCertifications(targetAuthor.getCwid());
+		targetAuthor.setBoardCertifications(certifications.getBoardCertifications());		
+		return certifications.getBoardCertificationScoreByClusterArticle(reCiterArticle);
 	}
 
 	@Override
