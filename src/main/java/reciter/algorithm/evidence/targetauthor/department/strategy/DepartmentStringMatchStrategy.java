@@ -21,7 +21,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			throw new IllegalArgumentException("ReCiter article is null.");
 		}
 		
-		double departmentMatchScore = 0;
+		double score = 0;
 		if (reCiterArticle.getArticleCoAuthors() != null &&
 			reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
@@ -31,12 +31,12 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								targetAuthor.getAuthorName().getFirstInitial());
 				
 				if (isDepartmentMatch && isFirstNameInitialMatch) {
-					departmentMatchScore = 1;
+					score = 1;
 				}
 			}
 		}
-		
-		return departmentMatchScore;
+		reCiterArticle.setDepartmentStrategyScore(score);
+		return score;
 	}
 
 	@Override

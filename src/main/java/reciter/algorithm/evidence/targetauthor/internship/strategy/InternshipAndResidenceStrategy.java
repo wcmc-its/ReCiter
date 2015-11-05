@@ -18,6 +18,8 @@ import reciter.utils.stemmer.SnowballStemmer;
 
 public class InternshipAndResidenceStrategy extends AbstractTargetAuthorStrategy{
 
+	// TODO: should use a service class to query db. not dao class.
+	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		IdentityIntershipsResidenciesDao dao = new IdentityIntershipsResidenciesDaoImpl();

@@ -22,6 +22,16 @@ public class DbUtil {
 		}
 	}
 
+	public static void close(NamedParameterStatement statement) {
+		if (statement != null) {
+			try {
+				statement.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public static void close(Statement statement) {
 		if (statement != null) {
 			try {

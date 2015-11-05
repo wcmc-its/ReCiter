@@ -16,6 +16,7 @@ public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		double score = 0;
 		boolean isCitizenshipMatchFromScopus = false;
 		if (reCiterArticle.getScopusArticle() != null) {
 			isCitizenshipMatchFromScopus = isCitizenshipFromScopus(reCiterArticle.getScopusArticle(), targetAuthor);
@@ -32,10 +33,11 @@ public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 				}
 			}
 		}
-		if (isCitizenShipMatchFromPubmed || isCitizenshipMatchFromScopus) {
-			return 1;
+		if (isFirstNameMatch && (isCitizenShipMatchFromPubmed || isCitizenshipMatchFromScopus)) {
+			score = 1;
 		}
-		return 0;
+		reCiterArticle.setCitizenshipStrategyScore(score);
+		return score;
 	}
 
 	@Override

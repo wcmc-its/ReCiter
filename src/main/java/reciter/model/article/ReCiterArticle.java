@@ -59,6 +59,15 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	 */
 	private String clusterInfo;
 	
+	private double emailStrategyScore;
+	private double departmentStrategyScore;
+	private double knownCoinvestigatorScore;
+	private double affiliationScore;
+	private double scopusStrategyScore;
+	private double coauthorStrategyScore;
+	private double journalStrategyScore;
+	private double citizenshipStrategyScore;
+
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID
@@ -186,5 +195,69 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	
 	public void appendClusterInfo(String clusterInfo) {
 		this.clusterInfo += " | " + clusterInfo;
+	}
+	
+	public double getEmailStrategyScore() {
+		return emailStrategyScore;
+	}
+
+	public void setEmailStrategyScore(double emailStrategyScore) {
+		this.emailStrategyScore = emailStrategyScore;
+	}
+
+	public double getDepartmentStrategyScore() {
+		return departmentStrategyScore;
+	}
+
+	public void setDepartmentStrategyScore(double departmentStrategyScore) {
+		this.departmentStrategyScore = departmentStrategyScore;
+	}
+
+	public double getKnownCoinvestigatorScore() {
+		return knownCoinvestigatorScore;
+	}
+
+	public void setKnownCoinvestigatorScore(double knownCoinvestigatorScore) {
+		this.knownCoinvestigatorScore = knownCoinvestigatorScore;
+	}
+
+	public double getAffiliationScore() {
+		return affiliationScore;
+	}
+
+	public void setAffiliationScore(double affiliationScore) {
+		this.affiliationScore = affiliationScore;
+	}
+
+	public double getScopusStrategyScore() {
+		return scopusStrategyScore;
+	}
+
+	public void setScopusStrategyScore(double scopusStrategyScore) {
+		this.scopusStrategyScore = scopusStrategyScore;
+	}
+
+	public double getCoauthorStrategyScore() {
+		return coauthorStrategyScore;
+	}
+
+	public void setCoauthorStrategyScore(double coauthorStrategyScore) {
+		this.coauthorStrategyScore = coauthorStrategyScore;
+	}
+
+	public double getJournalStrategyScore() {
+		return journalStrategyScore;
+	}
+
+	public void setJournalStrategyScore(double journalStrategyScore) {
+		this.journalStrategyScore = journalStrategyScore;
+	}
+
+	public double getCitizenshipStrategyScore() {
+		return citizenshipStrategyScore;
+	}
+
+	public void setCitizenshipStrategyScore(double citizenshipStrategyScore) {
+		this.citizenshipStrategyScore = citizenshipStrategyScore;
 	}
 }

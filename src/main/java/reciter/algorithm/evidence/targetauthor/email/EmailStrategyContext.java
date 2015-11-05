@@ -9,6 +9,7 @@ import reciter.model.author.TargetAuthor;
 
 public class EmailStrategyContext implements TargetAuthorStrategyContext {
 	private final TargetAuthorStrategy strategy;
+	private double strategyScore;
 	
 	public EmailStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
@@ -16,7 +17,8 @@ public class EmailStrategyContext implements TargetAuthorStrategyContext {
 	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticle, targetAuthor);
+		strategyScore = strategy.executeStrategy(reCiterArticle, targetAuthor);
+		return strategyScore;
 	}
 	
 	@Override

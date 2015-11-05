@@ -9,6 +9,7 @@ import reciter.model.author.TargetAuthor;
 
 public class BoardCertificationStrategyContext implements TargetAuthorStrategyContext {
 	private final TargetAuthorStrategy strategy;
+	private double strategyScore;
 	
 	public BoardCertificationStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
@@ -16,7 +17,8 @@ public class BoardCertificationStrategyContext implements TargetAuthorStrategyCo
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticles, targetAuthor);
+		strategyScore = strategy.executeStrategy(reCiterArticles, targetAuthor);
+		return strategyScore;
 	}
 
 	@Override

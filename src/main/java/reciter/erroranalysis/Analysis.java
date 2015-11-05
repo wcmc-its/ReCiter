@@ -93,7 +93,7 @@ public class Analysis {
 	 * @param cwid
 	 * @return
 	 */
-	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector) {
+	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, AnalysisObject analysisObject) {
 		
 //		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
 //	    Map<String, Integer> authorCount = 
@@ -106,11 +106,10 @@ public class Analysis {
 //	    }
 //	    slf4jLogger.info("Number of different author names: " + authorCount.size());
 	    
-	    
 		Map<Integer, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 		Set<Integer> selection = clusterSelector.getSelectedClusterIds();
 		String cwid = reCiterClusterer.getTargetAuthor().getCwid();
-
+		
 		Analysis analysis = new Analysis();
 		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
 		List<String> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
@@ -154,8 +153,6 @@ public class Analysis {
 							analysis.getTruePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
 						}
 					}
-//					slf4jLogger.info("year diff [True Positive]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
 					statusEnum = StatusEnum.TRUE_POSITIVE;
 				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(Integer.toString(pmid))) {
 					
@@ -211,11 +208,18 @@ public class Analysis {
 				if (articleList.contains(reCiterArticle)) {
 					isArticleSelected = true;
 				}
-				AnalysisObject analysisObject = AnalysisTranslator.translate(
-						reCiterArticle, statusEnum, cwid, reCiterClusterer.getTargetAuthor(), isClusterOriginator, 
+				
+				analysisObject = AnalysisTranslator.translate(
+						reCiterArticle, 
+						statusEnum, 
+						cwid, 
+						reCiterClusterer.getTargetAuthor(), 
+						isClusterOriginator, 
 						entry.getValue().getClusterID(), 
 						entry.getValue().getArticleCluster().size(), 
-						isArticleSelected);
+						isArticleSelected,
+						analysisObject);
+				
 				analysis.getAnalysisObjectList().add(analysisObject);
 			}
 		}

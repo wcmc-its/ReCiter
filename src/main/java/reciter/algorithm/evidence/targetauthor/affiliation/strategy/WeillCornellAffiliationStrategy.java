@@ -10,11 +10,12 @@ public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrateg
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		double score = 0;
 		if (containsWeillCornell(reCiterArticle)) {
-			return 1;
-		} else {
-			return 0;
+			score = 1;
 		}
+		reCiterArticle.setAffiliationScore(score);
+		return score;
 	}
 
 	@Override

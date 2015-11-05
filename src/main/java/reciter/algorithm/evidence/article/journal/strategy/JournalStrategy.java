@@ -19,6 +19,7 @@ public class JournalStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
+		double score = 0;
 		boolean isJournalMatch = isJournalMatch(reCiterArticle, otherReCiterArticle);
 		if (isJournalMatch) {
 			// If the two articles' target author share the same first name, then it's likely that
@@ -33,13 +34,14 @@ public class JournalStrategy extends AbstractReCiterArticleStrategy {
 								otherAuthor.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
 						
 						if (isOtherFirstNameMatch) {
-							return 1;
+							score += 1;
 						}
 					}
 				}
 			}
 		}
-		return 0;
+		reCiterArticle.setJournalStrategyScore(score);
+		return score;
 	}
 
 	@Override

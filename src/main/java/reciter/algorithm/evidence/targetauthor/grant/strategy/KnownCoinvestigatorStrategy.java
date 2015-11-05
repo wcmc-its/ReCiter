@@ -12,7 +12,7 @@ public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-
+		double score = 0;
 		List<AuthorName> authorNames = targetAuthor.getGrantCoauthors();
 
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
@@ -20,12 +20,13 @@ public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 			if (!author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
 				for (AuthorName authorName : authorNames) {
 					if (authorName.isFullNameMatch(author.getAuthorName())) {
-						return 1;
+						score += 1;
 					}
 				}
 			}
 		}
-		return 0;
+		reCiterArticle.setKnownCoinvestigatorScore(score);
+		return score;
 	}
 
 	@Override

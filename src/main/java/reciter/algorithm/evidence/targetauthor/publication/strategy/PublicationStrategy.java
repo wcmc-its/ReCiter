@@ -1,4 +1,4 @@
-package reciter.algorithm.evidence.article.publication.strategy;
+package reciter.algorithm.evidence.targetauthor.publication.strategy;
 
 import java.util.List;
 

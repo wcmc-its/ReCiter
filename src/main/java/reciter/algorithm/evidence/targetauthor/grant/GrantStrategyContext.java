@@ -9,6 +9,7 @@ import reciter.model.author.TargetAuthor;
 
 public class GrantStrategyContext implements TargetAuthorStrategyContext {
 	private final TargetAuthorStrategy strategy;
+	private double strategyScore;
 	
 	public GrantStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
@@ -16,7 +17,8 @@ public class GrantStrategyContext implements TargetAuthorStrategyContext {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticles, targetAuthor);
+		strategyScore = strategy.executeStrategy(reCiterArticles, targetAuthor);
+		return strategyScore;
 	}
 
 	@Override

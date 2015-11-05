@@ -22,8 +22,8 @@ public class AnalysisTranslator {
 			boolean isClusterOriginator,
 			int clusterId,
 			int countOfArticleInCluster,
-			boolean isClusterSelected) {
-		AnalysisObject analysisObject = new AnalysisObject();
+			boolean isClusterSelected,
+			AnalysisObject analysisObject) {
 
 		analysisObject.setStatus(status);
 		analysisObject.setCwid(cwid);
@@ -115,26 +115,20 @@ public class AnalysisTranslator {
 		analysisObject.setPubmedCoAuthorAffiliation(pubmedCoAuthorAffiliation.toString());
 
 		analysisObject.setArticleKeywords(reCiterArticle.getArticleKeywords().toString());
-		analysisObject.setNameMatchingScore(0);
 
 		analysisObject.setClusterOriginator(isClusterOriginator);
 		analysisObject.setClusterArticleAssignedTo(clusterId);
 		analysisObject.setCountArticlesInAssignedCluster(countOfArticleInCluster);
 		analysisObject.setClusterSelectedInPhaseTwoMatching(isClusterSelected);
 		
-//		analysisObject.setJournalSimilarityPhaseOne(0);
-//		analysisObject.setCoauthorAffiliationScore(0);
-//		analysisObject.setTargetAuthorAffiliationScore(0);
-//		analysisObject.setKnownCoinvestigatorScore(0);
-//		analysisObject.setFundingStatementScore(0);
-//		analysisObject.setTerminalDegreeScore(0);
-//		analysisObject.setDefaultDepartmentJournalSimilarityScore(0);
-//		analysisObject.setDepartmentOfAffiliationScore(0);
-//		analysisObject.setKeywordMatchingScore(0);
-//		analysisObject.setPhaseTwoSimilarityThreshold(0);
-//		analysisObject.setAffiliationSimilarity(0);
-//		analysisObject.setKeywordSimilarity(0);
-//		analysisObject.setJournalSimilarityPhaseTwo(0);
+		analysisObject.setEmailStrategyScore(reCiterArticle.getEmailStrategyScore());
+		analysisObject.setDepartmentStrategyScore(reCiterArticle.getDepartmentStrategyScore());
+		analysisObject.setKnownCoinvestigatorScore(reCiterArticle.getKnownCoinvestigatorScore());
+		analysisObject.setAffiliationScore(reCiterArticle.getAffiliationScore());
+		analysisObject.setScopusStrategyScore(reCiterArticle.getScopusStrategyScore());
+		analysisObject.setCoauthorStrategyScore(reCiterArticle.getCoauthorStrategyScore());
+		analysisObject.setJournalStrategyScore(reCiterArticle.getJournalStrategyScore());
+		analysisObject.setCitizenshipStrategyScore(reCiterArticle.getCitizenshipStrategyScore());
 
 		return analysisObject;
 	}

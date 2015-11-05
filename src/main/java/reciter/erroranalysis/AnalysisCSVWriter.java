@@ -47,25 +47,10 @@ public class AnalysisCSVWriter {
 			printer.print(analysisObject.getPubmedTargetAuthorAffiliation());
 			printer.print(analysisObject.getPubmedCoAuthorAffiliation());
 			printer.print(analysisObject.getArticleKeywords());
-			printer.print(analysisObject.getNameMatchingScore());
 			printer.print(analysisObject.isClusterOriginator());
-			printer.print(analysisObject.getJournalSimilarityPhaseOne());
-			printer.print(analysisObject.getCoauthorAffiliationScore());
-			printer.print(analysisObject.getTargetAuthorAffiliationScore());
-			printer.print(analysisObject.getKnownCoinvestigatorScore());
-			printer.print(analysisObject.getFundingStatementScore());
-			printer.print(analysisObject.getTerminalDegreeScore());
-			printer.print(analysisObject.getDefaultDepartmentJournalSimilarityScore());
-			printer.print(analysisObject.getDepartmentStrategyScore());
-			printer.print(analysisObject.getKeywordMatchingScore());
-			printer.print(analysisObject.getPhaseTwoSimilarityThreshold());
 			printer.print(analysisObject.getClusterArticleAssignedTo());
 			printer.print(analysisObject.getCountArticlesInAssignedCluster());
 			printer.print(analysisObject.isClusterSelectedInPhaseTwoMatching());
-			printer.print(analysisObject.getAffiliationScore());
-			printer.print(analysisObject.getKeywordSimilarity());
-			printer.print(analysisObject.getJournalSimilarityPhaseTwo());
-			printer.print(analysisObject.getBoardCertificationsPhaseTwoScore());
 			printer.println();
 		}
 		

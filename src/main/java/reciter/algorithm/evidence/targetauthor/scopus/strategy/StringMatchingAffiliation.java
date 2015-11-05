@@ -16,6 +16,7 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		double score = 0;
 		ScopusArticle scopusArticle = reCiterArticle.getScopusArticle();
 		if (scopusArticle != null) {
 			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
@@ -26,14 +27,15 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 						if (scopusAffialition != null) {
 							String affilName = scopusAffialition.getAffilname();
 							if (containsWeillCornell(affilName)) {
-								return 1;
+								score += 1;
 							}
 						}
 					}
 				}
 			}
 		}
-		return 0;
+		reCiterArticle.setScopusStrategyScore(score);
+		return score;
 	}
 
 	@Override

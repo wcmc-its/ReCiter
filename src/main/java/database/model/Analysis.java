@@ -14,24 +14,62 @@ public class Analysis {
 	private String pubmedTargetAuthorAffiliation;
 	private String pubmedCoauthorAffiliation;
 	private String articleKeywords;
-	private double nameMatchingScore;
 	private boolean clusterOriginator;
-	private double journalSimilarityPhaseOne;
-	private double coauthorAffiliationScore;
-	private double targetAuthorAffiliationScore;
-	private double knownCoinvestigatorScore;
-	private double fundingStatementScore;
-	private double terminalDegreeScore;
-	private double defaultDepartmentJournalSimilarityScore;
-	private double departmentOfAffiliationScore;
-	private double keywordMatchingScore;
-	private double phaseTwoSimilarityThreshold;
 	private int clusterArticleAssignedTo;
 	private int countArticlesInAssignedClsuter;
 	private int clusterSelectedInPhaseTwoMatching;
-	private double phaseTwoAffiliationSimilarity;
-	private double phaseTwoKeywordSimilarity;
-	private double phaseTwoJournalSimilarity;
+
+	private double emailStrategyScore;
+	private double departmentStrategyScore;
+	private double knownCoinvestigatorScore;
+	private double affiliationScore;
+	private double scopusStrategyScore;
+	private double coauthorStrategyScore;
+	private double journalStrategyScore;
+	private double citizenshipStrategyScore;
+	
+	public double getEmailStrategyScore() {
+		return emailStrategyScore;
+	}
+	public void setEmailStrategyScore(double emailStrategyScore) {
+		this.emailStrategyScore = emailStrategyScore;
+	}
+	public double getDepartmentStrategyScore() {
+		return departmentStrategyScore;
+	}
+	public void setDepartmentStrategyScore(double departmentStrategyScore) {
+		this.departmentStrategyScore = departmentStrategyScore;
+	}
+	public double getAffiliationScore() {
+		return affiliationScore;
+	}
+	public void setAffiliationScore(double affiliationScore) {
+		this.affiliationScore = affiliationScore;
+	}
+	public double getScopusStrategyScore() {
+		return scopusStrategyScore;
+	}
+	public void setScopusStrategyScore(double scopusStrategyScore) {
+		this.scopusStrategyScore = scopusStrategyScore;
+	}
+	public double getCoauthorStrategyScore() {
+		return coauthorStrategyScore;
+	}
+	public void setCoauthorStrategyScore(double coauthorStrategyScore) {
+		this.coauthorStrategyScore = coauthorStrategyScore;
+	}
+	public double getJournalStrategyScore() {
+		return journalStrategyScore;
+	}
+	public void setJournalStrategyScore(double journalStrategyScore) {
+		this.journalStrategyScore = journalStrategyScore;
+	}
+	public double getCitizenshipStrategyScore() {
+		return citizenshipStrategyScore;
+	}
+	public void setCitizenshipStrategyScore(double citizenshipStrategyScore) {
+		this.citizenshipStrategyScore = citizenshipStrategyScore;
+	}
 	public String getCwid() {
 		return cwid;
 	}
@@ -110,35 +148,11 @@ public class Analysis {
 	public void setArticleKeywords(String articleKeywords) {
 		this.articleKeywords = articleKeywords;
 	}
-	public double getNameMatchingScore() {
-		return nameMatchingScore;
-	}
-	public void setNameMatchingScore(double nameMatchingScore) {
-		this.nameMatchingScore = nameMatchingScore;
-	}
 	public boolean isClusterOriginator() {
 		return clusterOriginator;
 	}
 	public void setClusterOriginator(boolean clusterOriginator) {
 		this.clusterOriginator = clusterOriginator;
-	}
-	public double getJournalSimilarityPhaseOne() {
-		return journalSimilarityPhaseOne;
-	}
-	public void setJournalSimilarityPhaseOne(double journalSimilarityPhaseOne) {
-		this.journalSimilarityPhaseOne = journalSimilarityPhaseOne;
-	}
-	public double getCoauthorAffiliationScore() {
-		return coauthorAffiliationScore;
-	}
-	public void setCoauthorAffiliationScore(double coauthorAffiliationScore) {
-		this.coauthorAffiliationScore = coauthorAffiliationScore;
-	}
-	public double getTargetAuthorAffiliationScore() {
-		return targetAuthorAffiliationScore;
-	}
-	public void setTargetAuthorAffiliationScore(double targetAuthorAffiliationScore) {
-		this.targetAuthorAffiliationScore = targetAuthorAffiliationScore;
 	}
 	public double getKnownCoinvestigatorScore() {
 		return knownCoinvestigatorScore;
@@ -146,42 +160,7 @@ public class Analysis {
 	public void setKnownCoinvestigatorScore(double knownCoinvestigatorScore) {
 		this.knownCoinvestigatorScore = knownCoinvestigatorScore;
 	}
-	public double getFundingStatementScore() {
-		return fundingStatementScore;
-	}
-	public void setFundingStatementScore(double fundingStatementScore) {
-		this.fundingStatementScore = fundingStatementScore;
-	}
-	public double getTerminalDegreeScore() {
-		return terminalDegreeScore;
-	}
-	public void setTerminalDegreeScore(double terminalDegreeScore) {
-		this.terminalDegreeScore = terminalDegreeScore;
-	}
-	public double getDefaultDepartmentJournalSimilarityScore() {
-		return defaultDepartmentJournalSimilarityScore;
-	}
-	public void setDefaultDepartmentJournalSimilarityScore(double defaultDepartmentJournalSimilarityScore) {
-		this.defaultDepartmentJournalSimilarityScore = defaultDepartmentJournalSimilarityScore;
-	}
-	public double getDepartmentOfAffiliationScore() {
-		return departmentOfAffiliationScore;
-	}
-	public void setDepartmentOfAffiliationScore(double departmentOfAffiliationScore) {
-		this.departmentOfAffiliationScore = departmentOfAffiliationScore;
-	}
-	public double getKeywordMatchingScore() {
-		return keywordMatchingScore;
-	}
-	public void setKeywordMatchingScore(double keywordMatchingScore) {
-		this.keywordMatchingScore = keywordMatchingScore;
-	}
-	public double getPhaseTwoSimilarityThreshold() {
-		return phaseTwoSimilarityThreshold;
-	}
-	public void setPhaseTwoSimilarityThreshold(double phaseTwoSimilarityThreshold) {
-		this.phaseTwoSimilarityThreshold = phaseTwoSimilarityThreshold;
-	}
+
 	public int getClusterArticleAssignedTo() {
 		return clusterArticleAssignedTo;
 	}
@@ -199,23 +178,5 @@ public class Analysis {
 	}
 	public void setClusterSelectedInPhaseTwoMatching(int clusterSelectedInPhaseTwoMatching) {
 		this.clusterSelectedInPhaseTwoMatching = clusterSelectedInPhaseTwoMatching;
-	}
-	public double getPhaseTwoAffiliationSimilarity() {
-		return phaseTwoAffiliationSimilarity;
-	}
-	public void setPhaseTwoAffiliationSimilarity(double phaseTwoAffiliationSimilarity) {
-		this.phaseTwoAffiliationSimilarity = phaseTwoAffiliationSimilarity;
-	}
-	public double getPhaseTwoKeywordSimilarity() {
-		return phaseTwoKeywordSimilarity;
-	}
-	public void setPhaseTwoKeywordSimilarity(double phaseTwoKeywordSimilarity) {
-		this.phaseTwoKeywordSimilarity = phaseTwoKeywordSimilarity;
-	}
-	public double getPhaseTwoJournalSimilarity() {
-		return phaseTwoJournalSimilarity;
-	}
-	public void setPhaseTwoJournalSimilarity(double phaseTwoJournalSimilarity) {
-		this.phaseTwoJournalSimilarity = phaseTwoJournalSimilarity;
 	}
 }

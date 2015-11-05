@@ -1,10 +1,13 @@
 package reciter.engine;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.dao.AnalysisDao;
+import database.dao.impl.AnalysisDaoImpl;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
@@ -15,6 +18,7 @@ import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 import reciter.service.TargetAuthorService;
+import reciter.service.converters.AnalysisConverter;
 import reciter.service.impl.TargetAuthorServiceImpl;
 
 public class ReCiterEngine implements Engine {
@@ -23,6 +27,7 @@ public class ReCiterEngine implements Engine {
 	
 	private ReCiterEngineProperty reCiterEngineProperty;
 	private TargetAuthorService targetAuthorService;
+	private List<AnalysisObject> analysisObjects;
 	
 	public double totalPrecision;
 	public double totalRecall;
@@ -30,6 +35,7 @@ public class ReCiterEngine implements Engine {
 	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
 		this.reCiterEngineProperty = reCiterEngineProperty;
 		targetAuthorService = new TargetAuthorServiceImpl();
+		analysisObjects = new ArrayList<AnalysisObject>();
 	}
 
 	public ReCiterEngineProperty getReCiterEngineProperty() {
@@ -53,10 +59,11 @@ public class ReCiterEngine implements Engine {
 
 		// Perform Phase 2 clusters selection.
 		AnalysisObject analysisObject = new AnalysisObject();
+		analysisObjects.add(analysisObject);
 		ClusterSelector clusterSelector = new ReCiterClusterSelector(analysisObject, targetAuthor);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
 		
-		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
+		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, analysisObject);
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 		totalPrecision += analysis.getPrecision();
@@ -67,6 +74,11 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
 		slf4jLogger.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
 		slf4jLogger.info("\n");
+		
+		// TODO use service class.
+		AnalysisDao analysisDao = new AnalysisDaoImpl();
+		analysisDao.emptyTable();
+		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
 	}
 
 	@Override

@@ -9,14 +9,16 @@ import reciter.model.article.ReCiterArticle;
 public class CoauthorStrategyContext implements ReCiterArticleStrategyContext{
 
 	private final ReCiterArticleStrategy strategy;
-
+	private double strategyScore;
+	
 	public CoauthorStrategyContext(ReCiterArticleStrategy strategy) {
 		this.strategy = strategy;
 	}
 	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
-		return strategy.executeStrategy(reCiterArticle, otherReCiterArticle);
+		strategyScore = strategy.executeStrategy(reCiterArticle, otherReCiterArticle);
+		return strategyScore;
 	}
 
 	@Override

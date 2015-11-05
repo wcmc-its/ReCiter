@@ -17,7 +17,9 @@ public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
-		return getNumberOfMutualCoauthors(reCiterArticle, otherReCiterArticle);
+		double score = getNumberOfMutualCoauthors(reCiterArticle, otherReCiterArticle);
+		reCiterArticle.setCoauthorStrategyScore(score);
+		return score;
 	}
 
 	@Override

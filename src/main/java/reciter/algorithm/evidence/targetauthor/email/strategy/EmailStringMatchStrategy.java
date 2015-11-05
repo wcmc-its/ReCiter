@@ -11,6 +11,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		double score = 0;
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
@@ -24,11 +25,12 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 					affiliation.contains(emailCase3) ||
 					affiliation.contains(emailCase4)) {
 					
-					return 1;
+					score += 1;
 				}
 			}
 		}
-		return 0;
+		reCiterArticle.setEmailStrategyScore(score);
+		return score;
 	}
 
 	@Override

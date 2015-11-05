@@ -18,7 +18,6 @@ import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
 import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
-import reciter.algorithm.evidence.targetauthor.affiliation.strategy.AffiliationStrategy;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
 import reciter.algorithm.evidence.targetauthor.citizenship.CitizenshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.citizenship.strategy.CitizenshipStrategy;
@@ -96,13 +95,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 //
 //	private StrategyContext degreeStrategyContext;
 //	
-
-	private AnalysisObject analysisObject;
+	private List<StrategyContext> strategyContexts;
 
 	private Set<Integer> selectedClusterIds;
 
 	public ReCiterClusterSelector(AnalysisObject analysisObject, TargetAuthor targetAuthor) {
-
+		
 		// Strategies that select clusters that are similar to the target author.
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 		departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
@@ -122,22 +120,21 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		// TODO: removeArticlesBasedOnYearDiscrepancy(map);
 		bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
-		this.analysisObject = analysisObject;
+		
+		strategyContexts = new ArrayList<StrategyContext>();
+		strategyContexts.add(scopusStrategyContext);
+		strategyContexts.add(coauthorStrategyContext);
+		strategyContexts.add(journalStrategyContext);
+		strategyContexts.add(citizenshipStrategyContext);
 	}
 
 	@Override
 	public void runSelectionStrategy(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
-		List<StrategyContext> list = new ArrayList<StrategyContext>();
-		list.add(scopusStrategyContext);
-		list.add(coauthorStrategyContext);
-		list.add(journalStrategyContext);
-		list.add(citizenshipStrategyContext);
-		
 		// Select clusters that are similar to the target author.
 		selectClusters(clusters, targetAuthor);
 
 		// Reassign individual article that are similar to the target author. 
-		reAssignArticles(list, clusters, targetAuthor);
+		reAssignArticles(strategyContexts, clusters, targetAuthor);
 	}
 
 	/**
@@ -159,25 +156,25 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
 			if (emailStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
-				analysisObject.setEmailStrategyScore(emailStrategyScore);
+//				analysisObject.setEmailStrategyScore(emailStrategyScore);
 			}
 
 			double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
 			if (departmentStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
-				analysisObject.setDepartmentStrategyScore(departmentStrategyScore);
+//				analysisObject.setDepartmentStrategyScore(departmentStrategyScore);
 			}
 
 			double knownCoinvestigatorStrategyScore = ((TargetAuthorStrategyContext) grantCoauthorStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
 			if (knownCoinvestigatorStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
-				analysisObject.setKnownCoinvestigatorScore(knownCoinvestigatorStrategyScore);
+//				analysisObject.setKnownCoinvestigatorScore(knownCoinvestigatorStrategyScore);
 			}
 
 			double affiliationScore = ((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
 			if (affiliationScore > 0) {
 				selectedClusterIds.add(clusterId);
-				analysisObject.setAffiliationScore(affiliationScore);
+//				analysisObject.setAffiliationScore(affiliationScore);
 			}
 		}
 		this.selectedClusterIds = selectedClusterIds;
@@ -313,5 +310,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 	public void setSelectedClusterIds(Set<Integer> selectedClusterIds) {
 		this.selectedClusterIds = selectedClusterIds;
+	}
+	
+	public List<StrategyContext> getStrategyContexts() {
+		return strategyContexts;
 	}
 }
