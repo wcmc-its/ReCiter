@@ -58,12 +58,10 @@ public class ReCiterEngine implements Engine {
 		clusterer.cluster();
 
 		// Perform Phase 2 clusters selection.
-		AnalysisObject analysisObject = new AnalysisObject();
-		analysisObjects.add(analysisObject);
-		ClusterSelector clusterSelector = new ReCiterClusterSelector(analysisObject, targetAuthor);
+		ClusterSelector clusterSelector = new ReCiterClusterSelector(targetAuthor);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
 		
-		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, analysisObject);
+		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 		totalPrecision += analysis.getPrecision();

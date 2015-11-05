@@ -22,9 +22,9 @@ public class AnalysisTranslator {
 			boolean isClusterOriginator,
 			int clusterId,
 			int countOfArticleInCluster,
-			boolean isClusterSelected,
-			AnalysisObject analysisObject) {
-
+			boolean isClusterSelected) {
+		
+		AnalysisObject analysisObject = new AnalysisObject();
 		analysisObject.setStatus(status);
 		analysisObject.setCwid(cwid);
 		analysisObject.setTargetName(

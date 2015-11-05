@@ -32,7 +32,6 @@ import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
 import reciter.algorithm.evidence.targetauthor.grant.strategy.KnownCoinvestigatorStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
-import reciter.erroranalysis.AnalysisObject;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
@@ -99,7 +98,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 	private Set<Integer> selectedClusterIds;
 
-	public ReCiterClusterSelector(AnalysisObject analysisObject, TargetAuthor targetAuthor) {
+	public ReCiterClusterSelector(TargetAuthor targetAuthor) {
 		
 		// Strategies that select clusters that are similar to the target author.
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());

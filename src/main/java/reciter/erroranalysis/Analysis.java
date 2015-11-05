@@ -93,7 +93,7 @@ public class Analysis {
 	 * @param cwid
 	 * @return
 	 */
-	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, AnalysisObject analysisObject) {
+	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector) {
 		
 //		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
 //	    Map<String, Integer> authorCount = 
@@ -209,7 +209,7 @@ public class Analysis {
 					isArticleSelected = true;
 				}
 				
-				analysisObject = AnalysisTranslator.translate(
+				AnalysisObject analysisObject = AnalysisTranslator.translate(
 						reCiterArticle, 
 						statusEnum, 
 						cwid, 
@@ -217,8 +217,7 @@ public class Analysis {
 						isClusterOriginator, 
 						entry.getValue().getClusterID(), 
 						entry.getValue().getArticleCluster().size(), 
-						isArticleSelected,
-						analysisObject);
+						isArticleSelected);
 				
 				analysis.getAnalysisObjectList().add(analysisObject);
 			}

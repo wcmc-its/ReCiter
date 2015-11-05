@@ -58,8 +58,24 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				+ "cluster_originator, "
 				+ "cluster_article_assigned_to, "
 				+ "count_articles_in_assigned_cluster, "
-				+ "cluster_selected_in_phase_two_matching) "
+				+ "cluster_selected_in_phase_two_matching, "
+				+ "email_score, "
+				+ "department_score, "
+				+ "known_coinvestigator_score, "
+				+ "affiliation_score, "
+				+ "scopus_score, "
+				+ "coauthor_score, "
+				+ "journal_score, "
+				+ "citizenship_score) "
 				+ "VALUES ("
+				+ "?, "
+				+ "?, "
+				+ "?, "
+				+ "?, "
+				+ "?, "
+				+ "?, "
+				+ "?, "
+				+ "?, "
 				+ "?, "
 				+ "?, "
 				+ "?, "
@@ -98,6 +114,14 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				pst.setInt(15, analysis.getClusterArticleAssignedTo());
 				pst.setInt(16, analysis.getCountArticlesInAssignedClsuter());
 				pst.setInt(17, analysis.getClusterSelectedInPhaseTwoMatching());
+				pst.setDouble(18, analysis.getEmailStrategyScore());
+				pst.setDouble(19, analysis.getDepartmentStrategyScore());
+				pst.setDouble(20, analysis.getKnownCoinvestigatorScore());
+				pst.setDouble(21, analysis.getAffiliationScore());
+				pst.setDouble(22, analysis.getScopusStrategyScore());
+				pst.setDouble(23, analysis.getCoauthorStrategyScore());
+				pst.setDouble(24, analysis.getJournalStrategyScore());
+				pst.setDouble(25, analysis.getCitizenshipStrategyScore());
 				pst.addBatch();
 			}
 			pst.executeBatch();
