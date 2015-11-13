@@ -2,16 +2,16 @@ package reciter.algorithm.evidence.targetauthor.degree;
 
 import java.util.List;
 
-import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategy;
-import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
+import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategy;
+import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
-public class DegreeStrategyContext implements TargetAuthorStrategyContext {
-	private final TargetAuthorStrategy strategy;
+public class DegreeStrategyContext implements RemoveReCiterArticleStrategyContext {
+	private final RemoveReCiterArticleStrategy strategy;
 	private double strategyScore;
 	
-	public DegreeStrategyContext(TargetAuthorStrategy strategy) {
+	public DegreeStrategyContext(RemoveReCiterArticleStrategy strategy) {
 		this.strategy = strategy;
 	}
 

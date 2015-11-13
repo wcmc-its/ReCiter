@@ -9,6 +9,11 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 
+/**
+ * 
+ * @author jil3004
+ *
+ */
 public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
@@ -32,6 +37,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 				
 				if (isDepartmentMatch && isFirstNameInitialMatch) {
 					score = 1;
+					break;
 				}
 			}
 		}

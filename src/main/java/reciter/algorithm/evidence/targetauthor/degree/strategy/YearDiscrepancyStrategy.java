@@ -2,7 +2,7 @@ package reciter.algorithm.evidence.targetauthor.degree.strategy;
 
 import java.util.List;
 
-import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 
@@ -19,7 +19,7 @@ import reciter.model.author.TargetAuthor;
  * @author jil3004
  *
  */
-public class YearDiscrepancyStrategy extends AbstractTargetAuthorStrategy {
+public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 	/**
 	 * DegreeType used by this strategy.
