@@ -36,7 +36,7 @@ public class AnalysisConverter {
 		analysis.setCountArticlesInAssignedClsuter(analysisObject.getCountArticlesInAssignedCluster());
 		
 		analysis.setEmailStrategyScore(analysisObject.getEmailStrategyScore());
-		analysis.setDepartmentStrategyScore(analysis.getDepartmentStrategyScore());
+		analysis.setDepartmentStrategyScore(analysisObject.getDepartmentStrategyScore());
 		analysis.setKnownCoinvestigatorScore(analysisObject.getKnownCoinvestigatorScore());
 		analysis.setAffiliationScore(analysisObject.getAffiliationScore());
 		analysis.setScopusStrategyScore(analysisObject.getScopusStrategyScore());
