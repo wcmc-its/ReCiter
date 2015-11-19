@@ -20,7 +20,10 @@ public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrateg
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return 0;
+		double sum = 0;
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			sum += executeStrategy(reCiterArticle, targetAuthor);
+		}
+		return sum;
 	}
 }

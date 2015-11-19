@@ -5,6 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import database.DbConnectionFactory;
 import database.DbUtil;
 import database.NamedParameterStatement;
@@ -18,6 +21,8 @@ import database.model.Analysis;
  *
  */
 public class AnalysisDaoImpl implements AnalysisDao {
+
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(AnalysisDaoImpl.class);	
 
 	@Override
 	public void emptyTable() {
@@ -44,6 +49,7 @@ public class AnalysisDaoImpl implements AnalysisDao {
 		String query = "INSERT INTO rc_analysis ("
 				+ "cwid, "
 				+ "analysis_status, "
+				+ "gold_standard, "
 				+ "target_name, "
 				+ "pubmed_search_query, "
 				+ "pmid, "
@@ -92,36 +98,40 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				+ "?, "
 				+ "?, "
 				+ "?, "
+				+ "?, "
 				+ "?)";
 
 		try {
 			pst = con.prepareStatement(query);
+			
 			for (Analysis analysis : analysisList) {
-				pst.setString(1, analysis.getCwid());
-				pst.setString(2, analysis.getAnalysisStatus());
-				pst.setString(3, analysis.getTargetName());
-				pst.setString(4, analysis.getPubmedSearchQuery());
-				pst.setString(5, analysis.getPmid());
-				pst.setString(6, analysis.getArticleTitle());
-				pst.setString(7, analysis.getFullJournalTitle());
-				pst.setString(8, analysis.getPublicationYear());
-				pst.setString(9, analysis.getScopusTargetAuthorAffiliation());
-				pst.setString(10, analysis.getScopusCoauthorAffiliation());
-				pst.setString(11, analysis.getPubmedTargetAuthorAffiliation());
-				pst.setString(12, analysis.getPubmedCoauthorAffiliation());
-				pst.setString(13, analysis.getArticleKeywords());
-				pst.setBoolean(14, analysis.isClusterOriginator());
-				pst.setInt(15, analysis.getClusterArticleAssignedTo());
-				pst.setInt(16, analysis.getCountArticlesInAssignedClsuter());
-				pst.setInt(17, analysis.getClusterSelectedInPhaseTwoMatching());
-				pst.setDouble(18, analysis.getEmailStrategyScore());
-				pst.setDouble(19, analysis.getDepartmentStrategyScore());
-				pst.setDouble(20, analysis.getKnownCoinvestigatorScore());
-				pst.setDouble(21, analysis.getAffiliationScore());
-				pst.setDouble(22, analysis.getScopusStrategyScore());
-				pst.setDouble(23, analysis.getCoauthorStrategyScore());
-				pst.setDouble(24, analysis.getJournalStrategyScore());
-				pst.setDouble(25, analysis.getCitizenshipStrategyScore());
+				int i = 0;
+				pst.setString(++i, analysis.getCwid());
+				pst.setString(++i, analysis.getAnalysisStatus());
+				pst.setInt(++i, analysis.getGoldStandard());
+				pst.setString(++i, analysis.getTargetName());
+				pst.setString(++i, analysis.getPubmedSearchQuery());
+				pst.setString(++i, analysis.getPmid());
+				pst.setString(++i, analysis.getArticleTitle());
+				pst.setString(++i, analysis.getFullJournalTitle());
+				pst.setString(++i, analysis.getPublicationYear());
+				pst.setString(++i, analysis.getScopusTargetAuthorAffiliation());
+				pst.setString(++i, analysis.getScopusCoauthorAffiliation());
+				pst.setString(++i, analysis.getPubmedTargetAuthorAffiliation());
+				pst.setString(++i, analysis.getPubmedCoauthorAffiliation());
+				pst.setString(++i, analysis.getArticleKeywords());
+				pst.setBoolean(++i, analysis.isClusterOriginator());
+				pst.setInt(++i, analysis.getClusterArticleAssignedTo());
+				pst.setInt(++i, analysis.getCountArticlesInAssignedClsuter());
+				pst.setInt(++i, analysis.getClusterSelectedInPhaseTwoMatching());
+				pst.setDouble(++i, analysis.getEmailStrategyScore());
+				pst.setDouble(++i, analysis.getDepartmentStrategyScore());
+				pst.setDouble(++i, analysis.getKnownCoinvestigatorScore());
+				pst.setDouble(++i, analysis.getAffiliationScore());
+				pst.setDouble(++i, analysis.getScopusStrategyScore());
+				pst.setDouble(++i, analysis.getCoauthorStrategyScore());
+				pst.setDouble(++i, analysis.getJournalStrategyScore());
+				pst.setDouble(++i, analysis.getCitizenshipStrategyScore());
 				pst.addBatch();
 			}
 			pst.executeBatch();

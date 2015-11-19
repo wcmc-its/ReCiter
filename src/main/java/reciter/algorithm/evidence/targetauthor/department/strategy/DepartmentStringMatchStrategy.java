@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
@@ -15,7 +19,7 @@ import reciter.model.author.TargetAuthor;
  *
  */
 public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
-
+	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		if (targetAuthor == null) {
@@ -30,7 +34,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterArticle.getArticleCoAuthors() != null &&
 			reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-				boolean isDepartmentMatch = departmentMatch(author, targetAuthor);
+				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
 				boolean isFirstNameInitialMatch = 
 						author.getAuthorName().getFirstInitial().equalsIgnoreCase(
 								targetAuthor.getAuthorName().getFirstInitial());
@@ -47,8 +51,11 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return 0;
+		double sum = 0;
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			sum += executeStrategy(reCiterArticle, targetAuthor);
+		}
+		return sum;
 	}
 
 	/**
@@ -68,7 +75,27 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			String extractedDept = extractDepartment(affiliation);
 			String targetAuthorDept = targetAuthor.getDepartment();
 			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
-			if (extractedDept.equalsIgnoreCase(targetAuthorDept) || extractedDept.equalsIgnoreCase(targetAuthorOtherDept)) {
+			if (StringUtils.containsIgnoreCase(extractedDept, targetAuthorDept) || 
+				StringUtils.containsIgnoreCase(extractedDept, targetAuthorOtherDept) ||
+				StringUtils.containsIgnoreCase(targetAuthorDept, extractedDept) || 
+				StringUtils.containsIgnoreCase(targetAuthorOtherDept, extractedDept)) {
+				
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean departmentMatchStrict(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
+
+		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
+			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
+			String extractedDept = extractDepartment(affiliation);
+			String targetAuthorDept = targetAuthor.getDepartment();
+			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
+			if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
+				StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
+				
 				return true;
 			}
 		}

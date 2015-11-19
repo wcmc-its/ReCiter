@@ -24,8 +24,11 @@ public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, ReCiterArticle otherReCiterArticle) {
-		// TODO Auto-generated method stub
-		return 0;
+		double sum = 0;
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			sum += executeStrategy(reCiterArticle, otherReCiterArticle);
+		}
+		return sum;
 	}
 
 	/**

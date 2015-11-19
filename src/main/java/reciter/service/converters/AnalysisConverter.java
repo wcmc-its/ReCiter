@@ -5,6 +5,7 @@ import java.util.List;
 
 import database.model.Analysis;
 import reciter.erroranalysis.AnalysisObject;
+import reciter.erroranalysis.StatusEnum;
 
 public class AnalysisConverter {
 
@@ -19,6 +20,12 @@ public class AnalysisConverter {
 	public static Analysis convertToAnalysis(AnalysisObject analysisObject) {
 		Analysis analysis = new Analysis();
 		analysis.setCwid(analysisObject.getCwid());
+		if (analysisObject.getStatus().equals(StatusEnum.TRUE_POSITIVE) || 
+			analysisObject.getStatus().equals(StatusEnum.FALSE_NEGATIVE)) {
+			analysis.setGoldStandard(1);
+		} else {
+			analysis.setGoldStandard(0);
+		}
 		analysis.setAnalysisStatus(analysisObject.getStatus().name());
 		analysis.setTargetName(analysisObject.getTargetName());
 		analysis.setPubmedSearchQuery(analysisObject.getPubmedSearchQuery());

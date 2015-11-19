@@ -3,6 +3,7 @@ package database.model;
 public class Analysis {
 	private String cwid;
 	private String analysisStatus;
+	private int goldStandard;
 	private String targetName;
 	private String pubmedSearchQuery;
 	private String pmid;
@@ -178,5 +179,11 @@ public class Analysis {
 	}
 	public void setClusterSelectedInPhaseTwoMatching(int clusterSelectedInPhaseTwoMatching) {
 		this.clusterSelectedInPhaseTwoMatching = clusterSelectedInPhaseTwoMatching;
+	}
+	public int getGoldStandard() {
+		return goldStandard;
+	}
+	public void setGoldStandard(int goldStandard) {
+		this.goldStandard = goldStandard;
 	}
 }

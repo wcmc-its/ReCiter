@@ -24,18 +24,21 @@ import reciter.service.impl.TargetAuthorServiceImpl;
 public class ReCiterEngine implements Engine {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngine.class);
-	
+
 	private ReCiterEngineProperty reCiterEngineProperty;
 	private TargetAuthorService targetAuthorService;
 	private List<AnalysisObject> analysisObjects;
-	
+	private AnalysisDao analysisDao;
+
 	public double totalPrecision;
 	public double totalRecall;
-	
+
 	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
 		this.reCiterEngineProperty = reCiterEngineProperty;
 		targetAuthorService = new TargetAuthorServiceImpl();
 		analysisObjects = new ArrayList<AnalysisObject>();
+		// TODO use service class.
+		analysisDao = new AnalysisDaoImpl();
 	}
 
 	public ReCiterEngineProperty getReCiterEngineProperty() {
@@ -51,8 +54,8 @@ public class ReCiterEngine implements Engine {
 				targetAuthor.getAuthorName().getMiddleName(),
 				targetAuthor.getCwid(),
 				targetAuthor.getEmail());
-//		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		
+		//		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(targetAuthor, reCiterArticleList);
 		clusterer.cluster();
@@ -60,7 +63,7 @@ public class ReCiterEngine implements Engine {
 		// Perform Phase 2 clusters selection.
 		ClusterSelector clusterSelector = new ReCiterClusterSelector(targetAuthor);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
-		
+
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
@@ -72,16 +75,14 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
 		slf4jLogger.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
 		slf4jLogger.info("\n");
-		
-		// TODO use service class.
-		AnalysisDao analysisDao = new AnalysisDaoImpl();
-		analysisDao.emptyTable();
+
 		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
 	}
 
 	@Override
 	public void run() {
 		List<String> cwids = reCiterEngineProperty.getCwids();
+		analysisDao.emptyTable(); // empty the analysis table.
 		for (String cwid : cwids) {
 			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 			run(targetAuthor);

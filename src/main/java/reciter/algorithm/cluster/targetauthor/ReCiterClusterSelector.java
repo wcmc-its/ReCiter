@@ -10,6 +10,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.mysql.jdbc.log.Slf4JLogger;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
@@ -101,6 +105,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 	private Set<Integer> selectedClusterIds;
 
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterSelector.class);
+	
 	public ReCiterClusterSelector(TargetAuthor targetAuthor) {
 
 		// Strategies that select clusters that are similar to the target author.
@@ -166,6 +172,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 				selectedClusterIds.add(clusterId);
 			}
 
+//			slf4jLogger.info("Execute department matching strategy");
 			double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
 			if (departmentStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
