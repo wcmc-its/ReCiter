@@ -67,7 +67,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double coauthorStrategyScore;
 	private double journalStrategyScore;
 	private double citizenshipStrategyScore;
-
+	
+	private double nameStrategyScore;
+	private double boardCertificationStrategyScore;
+	private double internshipAndResidenceStrategyScore;
+	private int goldStandard;
+	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID
@@ -259,5 +264,37 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setCitizenshipStrategyScore(double citizenshipStrategyScore) {
 		this.citizenshipStrategyScore = citizenshipStrategyScore;
+	}
+
+	public double getNameStrategyScore() {
+		return nameStrategyScore;
+	}
+
+	public void setNameStrategyScore(double nameStrategyScore) {
+		this.nameStrategyScore = nameStrategyScore;
+	}
+
+	public double getBoardCertificationStrategyScore() {
+		return boardCertificationStrategyScore;
+	}
+
+	public void setBoardCertificationStrategyScore(double boardCertificationStrategyScore) {
+		this.boardCertificationStrategyScore = boardCertificationStrategyScore;
+	}
+
+	public double getInternshipAndResidenceStrategyScore() {
+		return internshipAndResidenceStrategyScore;
+	}
+
+	public void setInternshipAndResidenceStrategyScore(double internshipAndResidenceStrategyScore) {
+		this.internshipAndResidenceStrategyScore = internshipAndResidenceStrategyScore;
+	}
+
+	public int getGoldStandard() {
+		return goldStandard;
+	}
+
+	public void setGoldStandard(int goldStandard) {
+		this.goldStandard = goldStandard;
 	}
 }

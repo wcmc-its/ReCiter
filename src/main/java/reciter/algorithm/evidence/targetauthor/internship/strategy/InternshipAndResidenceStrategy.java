@@ -97,6 +97,7 @@ public class InternshipAndResidenceStrategy extends AbstractTargetAuthorStrategy
 				}
 			}
 		}
+		reCiterArticle.setInternshipAndResidenceStrategyScore(score);
 		return score;
 	}
 	

@@ -115,7 +115,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		grantCoauthorStrategyContext = new GrantStrategyContext(new KnownCoinvestigatorStrategy());
 		affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
 
-		// Using the following strategy contexts in sequence to reassign individual articles
+		// Using the following strategy contexts in sequence to reassign individual articlesf
 		// to selected clusters.
 		scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
 		coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(targetAuthor));
@@ -138,7 +138,15 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 //		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
 //		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
 	}
-
+	
+	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if (strategyContext instanceof TargetAuthorStrategyContext) {
+				((TargetAuthorStrategyContext) strategyContext).executeStrategy(reCiterArticle, targetAuthor);
+			}
+		}
+	}
+	
 	@Override
 	public void runSelectionStrategy(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 		// Select clusters that are similar to the target author.
@@ -172,7 +180,6 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 				selectedClusterIds.add(clusterId);
 			}
 
-//			slf4jLogger.info("Execute department matching strategy");
 			double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
 			if (departmentStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);

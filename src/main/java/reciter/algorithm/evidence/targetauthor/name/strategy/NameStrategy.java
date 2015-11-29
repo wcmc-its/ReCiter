@@ -34,10 +34,14 @@ public class NameStrategy extends AbstractTargetAuthorStrategy {
 					isMatchName = true;
 			}
 		}
-		if (isMatchName)
+
+		if (isMatchName) {
+			reCiterArticle.setNameStrategyScore(1);
 			return 1;
-		else
+		} else {
+			reCiterArticle.setNameStrategyScore(0);
 			return 0;
+		}
 	}
 
 	@Override

@@ -29,9 +29,11 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
 	//	private static final String DEFAULT_LOCATION = "src/main/resources/data/pubmed/";
-	private static final String DEFAULT_LOCATION = "/home/jil3004/reciter_data/data/pubmed/";
-	private static final String EMAIL_LOCATION = "/home/jil3004/reciter_data/data/pubmed_xml_searched_by_email/";
-
+//	private static final String DEFAULT_LOCATION = "/home/jil3004/reciter_data/data/pubmed/";
+//	private static final String EMAIL_LOCATION = "/home/jil3004/reciter_data/data/pubmed_xml_searched_by_email/";
+	private static final String DEFAULT_LOCATION = "C:/Users/Jie/Downloads/reciter_data/data/pubmed/";
+	private static final String EMAIL_LOCATION = "C:/Users/Jie/Downloads/reciter_data/data/pubmed_xml_searched_by_email/";
+	
 	private List<String> queries = new ArrayList<String>();
 	private PubmedXmlParser pubmedXmlParser;
 
