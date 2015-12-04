@@ -101,6 +101,9 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
 		slf4jLogger.info("\n");
 
+		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
+			slf4jLogger.info(reCiterArticle.getArticleId() + ": " + reCiterArticle.getClusterInfo());
+		}
 		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
 	}
 

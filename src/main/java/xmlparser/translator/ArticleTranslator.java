@@ -12,6 +12,7 @@ import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
+import xmlparser.pubmed.model.MedlineCitationGrant;
 import xmlparser.pubmed.model.MedlineCitationKeyword;
 import xmlparser.pubmed.model.MedlineCitationKeywordList;
 import xmlparser.pubmed.model.MedlineCitationMeshHeading;
@@ -152,6 +153,12 @@ public class ArticleTranslator {
 			}
 		}
 		reCiterArticle.setScopusArticle(scopusArticle);
+		
+		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlineCitation().getArticle().getGrantList();
+		
+//		for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
+//			
+//		}
 		return reCiterArticle;
 	}
 }

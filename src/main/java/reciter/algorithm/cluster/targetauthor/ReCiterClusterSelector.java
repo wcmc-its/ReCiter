@@ -13,11 +13,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mysql.jdbc.log.Slf4JLogger;
-
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
@@ -105,8 +104,6 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 	private Set<Integer> selectedClusterIds;
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterSelector.class);
-	
 	public ReCiterClusterSelector(TargetAuthor targetAuthor) {
 
 		// Strategies that select clusters that are similar to the target author.
@@ -115,7 +112,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		grantCoauthorStrategyContext = new GrantStrategyContext(new KnownCoinvestigatorStrategy());
 		affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
 
-		// Using the following strategy contexts in sequence to reassign individual articlesf
+		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
 		scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
 		coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(targetAuthor));
@@ -125,7 +122,6 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		// TODO: reAssignArticlesByPubmedAffiliationCosineSimilarity(map);
 		// TODO: getBoardCertificationScore(map);
 
-		// TODO: removeArticlesBasedOnYearDiscrepancy(map);
 		bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 
@@ -135,8 +131,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
 		
-//		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
-//		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
+		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
+		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
 	}
 	
 	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
@@ -328,6 +324,36 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			}
 		}
 	}
+	
+	/**
+	 * Handle removal of articles from selected clusters.
+	 * @param removeReCiterArticleStrategyContext
+	 * @param clusters
+	 * @param targetAuthor
+	 */
+	public void handleRemoveReCiterArticleStrategyContext(
+			RemoveReCiterArticleStrategyContext removeReCiterArticleStrategyContext,
+			Map<Integer, ReCiterCluster> clusters,
+			TargetAuthor targetAuthor) {
+		
+		ReCiterCluster clusterOfRemovedArticles = new ReCiterCluster();
+		
+		for (int clusterId : selectedClusterIds) {
+			Iterator<ReCiterArticle> iterator = clusters.get(clusterId).getArticleCluster().iterator();
+			while (iterator.hasNext()) {
+				ReCiterArticle reCiterArticle = iterator.next();
+				double score = removeReCiterArticleStrategyContext.executeStrategy(reCiterArticle, targetAuthor);
+				if (score > 0) {
+					clusterOfRemovedArticles.add(reCiterArticle);
+					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
+							+ " Removed by year discrepancy");
+					iterator.remove();
+				}
+			}
+		}
+		
+		clusters.put(clusterOfRemovedArticles.getClusterID(), clusterOfRemovedArticles);
+	}
 
 	/**
 	 * Handler for a generic StrategyContext object.
@@ -340,6 +366,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			handleTargetAuthorStrategyContext((TargetAuthorStrategyContext) strategyContext, clusters, targetAuthor);
 		} else if (strategyContext instanceof ReCiterArticleStrategyContext) {
 			handleReCiterArticleStrategyContext((ReCiterArticleStrategyContext) strategyContext, clusters, targetAuthor);
+		} else if (strategyContext instanceof RemoveReCiterArticleStrategyContext) {
+			handleRemoveReCiterArticleStrategyContext((RemoveReCiterArticleStrategyContext) strategyContext, clusters, targetAuthor);
 		}
 	}
 

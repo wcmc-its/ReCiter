@@ -1,5 +1,6 @@
 package reciter.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import database.dao.BoardCertificationDao;
@@ -40,6 +41,18 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		// set cwid
 		targetAuthor.setCwid(identityDTO.getCwid());
 
+		// set known co-investigators.
+		List<AuthorName> coinvestigatorAuthorNames = new ArrayList<AuthorName>();
+		List<IdentityDTO> identityDTOs = identityService.getAssosiatedGrantIdentityList(cwid);
+		for (IdentityDTO coinvestigatorDTO : identityDTOs) {
+			coinvestigatorAuthorNames.add(
+					new AuthorName(
+							coinvestigatorDTO.getFirstName(), 
+							coinvestigatorDTO.getMiddleName(), 
+							coinvestigatorDTO.getLastName()));
+		}
+		targetAuthor.setGrantCoauthors(coinvestigatorAuthorNames);
+		
 		// set primary department.
 		targetAuthor.setDepartment(identityDTO.getPrimaryDepartment());
 

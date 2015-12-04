@@ -5,6 +5,7 @@ import java.util.List;
 
 import reciter.model.completeness.ArticleCompleteness;
 import reciter.model.completeness.ReCiterCompleteness;
+import xmlparser.pubmed.model.MedlineCitationGrant;
 import xmlparser.scopus.model.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
@@ -55,9 +56,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private List<String> meshList;
 	
 	/**
+	 * Grant List.
+	 */
+	private List<ReCiterArticleGrant> grantList;
+	
+	/**
 	 * Text containing how it's clustered.
 	 */
-	private String clusterInfo;
+	private String clusterInfo = "";
 	
 	private double emailStrategyScore;
 	private double departmentStrategyScore;
@@ -296,5 +302,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setGoldStandard(int goldStandard) {
 		this.goldStandard = goldStandard;
+	}
+
+	public List<ReCiterArticleGrant> getGrantList() {
+		return grantList;
+	}
+
+	public void setGrantList(List<ReCiterArticleGrant> grantList) {
+		this.grantList = grantList;
 	}
 }

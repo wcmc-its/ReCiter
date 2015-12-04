@@ -25,6 +25,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 					affiliation.contains(emailCase3) ||
 					affiliation.contains(emailCase4)) {
 					
+					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
 					score += 1;
 				}
 			}

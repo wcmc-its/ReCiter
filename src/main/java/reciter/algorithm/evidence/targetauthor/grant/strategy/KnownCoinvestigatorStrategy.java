@@ -21,6 +21,8 @@ public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 				if (!author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
 					for (AuthorName authorName : authorNames) {
 						if (authorName.isFullNameMatch(author.getAuthorName())) {
+							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known co-investigator match: " + 
+									authorName + "] ");
 							score += 1;
 						}
 					}

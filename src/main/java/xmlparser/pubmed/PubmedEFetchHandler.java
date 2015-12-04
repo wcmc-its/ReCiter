@@ -11,6 +11,7 @@ import xmlparser.pubmed.model.MedlineCitation;
 import xmlparser.pubmed.model.MedlineCitationArticle;
 import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
 import xmlparser.pubmed.model.MedlineCitationDate;
+import xmlparser.pubmed.model.MedlineCitationGrant;
 import xmlparser.pubmed.model.MedlineCitationJournal;
 import xmlparser.pubmed.model.MedlineCitationJournalIssue;
 import xmlparser.pubmed.model.MedlineCitationKeyword;
@@ -90,6 +91,12 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bPublicationStatus;
 	private boolean bArticleIdList;
 	private boolean bArticleId;
+	private boolean bGrantList;
+	private boolean bGrant;
+	private boolean bGrantId;
+	private boolean bGrantAcronym;
+	private boolean bGrantAgency;
+	private boolean bGrantCountry;
 
 	private List<PubmedArticle> pubmedArticles;
 	private List<String> meshHeading;
@@ -201,6 +208,27 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			medlineCitationMeshHeading.setDescriptorName(medlineCitationMeshHeadingDescriptorName);
 			pubmedArticle.getMedlineCitation().getMeshHeadingList().add(medlineCitationMeshHeading);
 			bDescriptorName = true;
+		}
+		if (qName.equalsIgnoreCase("GrantList")) {
+			pubmedArticle.getMedlineCitation().getArticle().setGrantList(new ArrayList<MedlineCitationGrant>());
+			bGrantList = true;
+		}
+		if (qName.equalsIgnoreCase("Grant")) {
+			MedlineCitationGrant grant = new MedlineCitationGrant();
+			pubmedArticle.getMedlineCitation().getArticle().getGrantList().add(grant);
+			bGrant = true;
+		}
+		if (qName.equalsIgnoreCase("GrantID")) {
+			bGrantId = true;
+		}
+		if (qName.equalsIgnoreCase("Acronym")) {
+			bGrantAcronym = true;
+		}
+		if (qName.equalsIgnoreCase("Agency")) {
+			bGrantAgency = true;
+		}
+		if (qName.equalsIgnoreCase("Country")) {
+			bGrantCountry = true;
 		}
 	}
 	
@@ -317,6 +345,43 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("KeywordList")) {
 			bKeywordList = false;
 		}
+		
+		// End of GrantID tag.
+		if (bGrant && bGrantId) {
+			String grantId = chars.toString();
+			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getGrantList().size() - 1;
+			pubmedArticle.getMedlineCitation().getArticle().getGrantList().get(lastInsertedIndex).setGrantID(grantId);
+			bGrantId = false;
+		}
+		
+		if (bGrant && bGrantAcronym) {
+			String grantAcronym = chars.toString();
+			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getGrantList().size() - 1;
+			pubmedArticle.getMedlineCitation().getArticle().getGrantList().get(lastInsertedIndex).setAcronym(grantAcronym);
+			bGrantAcronym = false;
+		}
+		
+		if (bGrant && bGrantAgency) {
+			String grantAgency = chars.toString();
+			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getGrantList().size() - 1;
+			pubmedArticle.getMedlineCitation().getArticle().getGrantList().get(lastInsertedIndex).setAgency(grantAgency);
+			bGrantAgency = false;
+		}
+		
+		if (bGrant && bGrantCountry) {
+			String grantCountry = chars.toString();
+			int lastInsertedIndex = pubmedArticle.getMedlineCitation().getArticle().getGrantList().size() - 1;
+			pubmedArticle.getMedlineCitation().getArticle().getGrantList().get(lastInsertedIndex).setCountry(grantCountry);
+			bGrantCountry = false;
+		}
+		
+		if (qName.equalsIgnoreCase("Grant")) {
+			bGrant = false;
+		}
+		
+		if (qName.equalsIgnoreCase("GrantList")) {
+			bGrantList = false;
+		}
 	}
 
 	@Override
@@ -367,6 +432,22 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		}
 		
 		if (bDescriptorName) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bGrant && bGrantId) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bGrant && bGrantAcronym) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bGrant && bGrantAgency) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bGrant && bGrantCountry) {
 			chars.append(ch, start, length);
 		}
 	}	

@@ -126,9 +126,9 @@ public class AuthorName {
 
 	public boolean isFullNameMatch(AuthorName name) {
 		
-		return StringUtils.equals(firstName, name.getFirstName()) &&
-				StringUtils.equals(middleName, name.getMiddleName()) &&
-				StringUtils.equals(lastName, name.getLastName());
+		return StringUtils.equalsIgnoreCase(firstName, name.getFirstName()) &&
+				StringUtils.equalsIgnoreCase(middleName, name.getMiddleName()) &&
+				StringUtils.equalsIgnoreCase(lastName, name.getLastName());
 	}
 
 	

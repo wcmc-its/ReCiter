@@ -70,7 +70,10 @@ public class IdentityDaoImpl implements IdentityDao {
 	public List<Identity> getAssosiatedGrantIdentityList(String cwid){
 		List<Identity> identityList = new ArrayList<Identity>();
 		List<String> cwids=new ArrayList<String>();
-		String targetAuthorGrantIDQuery = "SELECT distinct b.cwid FROM rc_identity_grant a left join rc_identity_grant b on b.grantid=a.grantid and a.cwid!=b.cwid where b.cwid is not null and a.cwid='" + cwid + "'";
+		String targetAuthorGrantIDQuery = "SELECT distinct b.cwid "
+				+ "FROM rc_identity_grant a "
+				+ "LEFT JOIN rc_identity_grant b ON b.grantid=a.grantid AND a.cwid!=b.cwid "
+				+ "WHERE b.cwid is not null and a.cwid='" + cwid + "'";
 		Connection con = DbConnectionFactory.getConnection();
 		Statement pst = null;
 		ResultSet rs = null;

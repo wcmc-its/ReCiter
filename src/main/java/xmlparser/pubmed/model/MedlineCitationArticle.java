@@ -26,6 +26,7 @@ public class MedlineCitationArticle {
 	private List<MedlineCitationChemical> chemicalList;
 	private List<MedlineCitationMeshHeading> meshHeadingList;
 	private List<MedlineCitationSubset> citationSubsetList;
+	private List<MedlineCitationGrant> grantList;
 	
 	public String getArticleTitle() {
 		return articleTitle;
@@ -44,5 +45,11 @@ public class MedlineCitationArticle {
 	}
 	public void setJournal(MedlineCitationJournal journal) {
 		this.journal = journal;
+	}
+	public List<MedlineCitationGrant> getGrantList() {
+		return grantList;
+	}
+	public void setGrantList(List<MedlineCitationGrant> grantList) {
+		this.grantList = grantList;
 	}
 }

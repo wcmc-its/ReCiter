@@ -20,6 +20,8 @@ import reciter.model.author.TargetAuthor;
  */
 public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
 	
+	private String extractedDept;
+	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		if (targetAuthor == null) {
@@ -40,6 +42,9 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								targetAuthor.getAuthorName().getFirstInitial());
 				
 				if (isDepartmentMatch && isFirstNameInitialMatch) {
+					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
+							" [department and first name initial matches: " + extractedDept + 
+							", first name initial: " + targetAuthor.getAuthorName().getFirstInitial() + "]");
 					score = 1;
 					break;
 				}
@@ -90,7 +95,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
-			String extractedDept = extractDepartment(affiliation);
+			extractedDept = extractDepartment(affiliation);
 			String targetAuthorDept = targetAuthor.getDepartment();
 			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
 			if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
