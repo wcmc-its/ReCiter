@@ -9,7 +9,6 @@ import reciter.model.author.TargetAuthor;
 
 public class DegreeStrategyContext implements RemoveReCiterArticleStrategyContext {
 	private final RemoveReCiterArticleStrategy strategy;
-	private double strategyScore;
 	
 	public DegreeStrategyContext(RemoveReCiterArticleStrategy strategy) {
 		this.strategy = strategy;
@@ -17,8 +16,7 @@ public class DegreeStrategyContext implements RemoveReCiterArticleStrategyContex
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		strategyScore = strategy.executeStrategy(reCiterArticle, targetAuthor);
-		return strategyScore;
+		return strategy.executeStrategy(reCiterArticle, targetAuthor);
 	}
 
 	@Override

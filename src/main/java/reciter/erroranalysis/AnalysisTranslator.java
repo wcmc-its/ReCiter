@@ -130,6 +130,8 @@ public class AnalysisTranslator {
 		analysisObject.setCitizenshipStrategyScore(reCiterArticle.getCitizenshipStrategyScore());
 		analysisObject.setBachelorsYearDiscrepancyScore(reCiterArticle.getBachelorsYearDiscrepancyScore());
 		analysisObject.setDoctoralYearDiscrepancyScore(reCiterArticle.getDoctoralYearDiscrepancyScore());
+		analysisObject.setArticleTitleStartWithBracket(reCiterArticle.isArticleTitleStartWithBracket());
+		analysisObject.setEducationScore(reCiterArticle.getEducationScore());
 		
 		return analysisObject;
 	}

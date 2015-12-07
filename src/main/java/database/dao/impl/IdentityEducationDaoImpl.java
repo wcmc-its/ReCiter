@@ -25,7 +25,7 @@ public class IdentityEducationDaoImpl implements IdentityEducationDao {
 		Statement pst = null;
 		ResultSet rs = null;
 		String query = 
-				"select id, cwid, institution, degreee_year, "
+				"select id, cwid, institution, degree_year, "
 				+ "degree_field, inst_loc, inst_abbr "
 				+ "from rc_identity_education where cwid = '" + cwid + "'";
 			try {

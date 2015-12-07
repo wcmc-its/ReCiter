@@ -68,7 +68,9 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				+ "journal_score, "
 				+ "citizenship_score,"
 				+ "bachelors_year_discrepancy_score,"
-				+ "doctoral_year_dicrepancy_score) "
+				+ "doctoral_year_dicrepancy_score,"
+				+ "article_title_starts_with_bracket,"
+				+ "education_score) "
 				+ "VALUES ("
 				+ "?, "
 				+ "?, "
@@ -97,6 +99,8 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				+ "?, "
 				+ "?, "
 				+ "?, "
+				+ "?, "
+				+ "? ,"
 				+ "?)";
 
 		try {
@@ -132,6 +136,9 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				pst.setDouble(++i, analysis.getCitizenshipStrategyScore());
 				pst.setDouble(++i, analysis.getBachelorsYearDiscrepancyScore());
 				pst.setDouble(++i, analysis.getDoctoralYearDiscrepancyScore());
+				pst.setBoolean(++i, analysis.isArticleTitleStartWithBracket());
+				pst.setDouble(++i, analysis.getEducationScore());
+				
 				pst.addBatch();
 			}
 			pst.executeBatch();

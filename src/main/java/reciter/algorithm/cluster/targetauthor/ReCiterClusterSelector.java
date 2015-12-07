@@ -10,8 +10,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
@@ -21,6 +19,8 @@ import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
 import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
+import reciter.algorithm.evidence.article.title.ArticleTitleStrategyContext;
+import reciter.algorithm.evidence.article.title.strategy.ArticleTitleInEnglish;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
@@ -31,6 +31,8 @@ import reciter.algorithm.evidence.targetauthor.degree.strategy.DegreeType;
 import reciter.algorithm.evidence.targetauthor.degree.strategy.YearDiscrepancyStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
+import reciter.algorithm.evidence.targetauthor.education.EducationStrategyContext;
+import reciter.algorithm.evidence.targetauthor.education.strategy.EducationStrategy;
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
 import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
@@ -96,6 +98,16 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	private StrategyContext doctoralYearDiscrepancyStrategyContext;
 
+	/**
+	 * Discounts Articles not in English.
+	 */
+	private StrategyContext articleTitleInEnglishStrategyContext;
+	
+	/**
+	 * Education.
+	 */
+	private StrategyContext educationStrategyContext;
+	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
@@ -118,21 +130,25 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(targetAuthor));
 		journalStrategyContext = new JournalStrategyContext(new JournalStrategy(targetAuthor));
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
-
+		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
+		
 		// TODO: reAssignArticlesByPubmedAffiliationCosineSimilarity(map);
 		// TODO: getBoardCertificationScore(map);
 
 		bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
-
+		articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
+		
 		strategyContexts = new ArrayList<StrategyContext>();
 		strategyContexts.add(scopusStrategyContext);
 		strategyContexts.add(coauthorStrategyContext);
 		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
+		strategyContexts.add(educationStrategyContext);
 		
 		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
 		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
+		strategyContexts.add(articleTitleInEnglishStrategyContext);
 	}
 	
 	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
@@ -381,5 +397,13 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 	public List<StrategyContext> getStrategyContexts() {
 		return strategyContexts;
+	}
+
+	public StrategyContext getArticleTitleInEnglishStrategyContext() {
+		return articleTitleInEnglishStrategyContext;
+	}
+
+	public void setArticleTitleInEnglishStrategyContext(StrategyContext articleTitleInEnglishStrategyContext) {
+		this.articleTitleInEnglishStrategyContext = articleTitleInEnglishStrategyContext;
 	}
 }

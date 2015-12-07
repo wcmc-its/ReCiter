@@ -33,6 +33,8 @@ public class AnalysisObject {
 	private double citizenshipStrategyScore;
 	private double bachelorsYearDiscrepancyScore;
 	private double doctoralYearDiscrepancyScore;
+	private boolean isArticleTitleStartWithBracket;
+	private double educationScore;
 	
 	public StatusEnum getStatus() {
 		return status;
@@ -198,5 +200,17 @@ public class AnalysisObject {
 	}
 	public void setDoctoralYearDiscrepancyScore(double doctoralYearDiscrepancyScore) {
 		this.doctoralYearDiscrepancyScore = doctoralYearDiscrepancyScore;
+	}
+	public boolean isArticleTitleStartWithBracket() {
+		return isArticleTitleStartWithBracket;
+	}
+	public void setArticleTitleStartWithBracket(boolean isArticleTitleStartWithBracket) {
+		this.isArticleTitleStartWithBracket = isArticleTitleStartWithBracket;
+	}
+	public double getEducationScore() {
+		return educationScore;
+	}
+	public void setEducationScore(double educationScore) {
+		this.educationScore = educationScore;
 	}
 }

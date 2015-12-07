@@ -79,6 +79,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double bachelorsYearDiscrepancyScore;
 	private double doctoralYearDiscrepancyScore;
 	private boolean isArticleTitleStartWithBracket;
+	private double educationScore;
 	
 	private int goldStandard;
 	
@@ -338,5 +339,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setArticleTitleStartWithBracket(boolean isArticleTitleStartWithBracket) {
 		this.isArticleTitleStartWithBracket = isArticleTitleStartWithBracket;
+	}
+
+	public double getEducationScore() {
+		return educationScore;
+	}
+
+	public void setEducationScore(double educationScore) {
+		this.educationScore = educationScore;
 	}
 }

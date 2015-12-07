@@ -10,7 +10,6 @@ import reciter.model.author.TargetAuthor;
 public class CitizenshipStrategyContext implements TargetAuthorStrategyContext {
 
 	private final TargetAuthorStrategy strategy;
-	private double strategyScore;
 	
 	public CitizenshipStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
@@ -18,8 +17,7 @@ public class CitizenshipStrategyContext implements TargetAuthorStrategyContext {
 	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		strategyScore = strategy.executeStrategy(reCiterArticle, targetAuthor);
-		return strategyScore;
+		return strategy.executeStrategy(reCiterArticle, targetAuthor);
 	}
 
 	@Override

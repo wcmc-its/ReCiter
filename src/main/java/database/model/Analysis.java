@@ -30,6 +30,8 @@ public class Analysis {
 	private double citizenshipStrategyScore;
 	private double bachelorsYearDiscrepancyScore;
 	private double doctoralYearDiscrepancyScore;
+	private boolean isArticleTitleStartWithBracket;
+	private double educationScore;
 	
 	public double getEmailStrategyScore() {
 		return emailStrategyScore;
@@ -199,5 +201,17 @@ public class Analysis {
 	}
 	public void setDoctoralYearDiscrepancyScore(double doctoralYearDiscrepancyScore) {
 		this.doctoralYearDiscrepancyScore = doctoralYearDiscrepancyScore;
+	}
+	public boolean isArticleTitleStartWithBracket() {
+		return isArticleTitleStartWithBracket;
+	}
+	public void setArticleTitleStartWithBracket(boolean isArticleTitleStartWithBracket) {
+		this.isArticleTitleStartWithBracket = isArticleTitleStartWithBracket;
+	}
+	public double getEducationScore() {
+		return educationScore;
+	}
+	public void setEducationScore(double educationScore) {
+		this.educationScore = educationScore;
 	}
 }

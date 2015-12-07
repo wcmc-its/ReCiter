@@ -81,7 +81,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 				}
 			} else if (degreeType.equals(DegreeType.DOCTORAL)) {
 				difference = year - targetAuthor.getDegree().getDoctoral();
-				if (difference < -5) {
+				if (difference < -13) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 							+ " Difference=" + difference);
 					reCiterArticle.setDoctoralYearDiscrepancyScore(1);

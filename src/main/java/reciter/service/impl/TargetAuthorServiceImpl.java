@@ -18,6 +18,7 @@ import reciter.model.author.AuthorDegree;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
+import reciter.service.IdentityEducationService;
 import reciter.service.IdentityService;
 import reciter.service.TargetAuthorService;
 import reciter.service.converters.IdentityDegreeConverter;
@@ -73,23 +74,9 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		targetAuthor.setDegree(authorDegree);
 
 		// set author education.
-		// assign the highest terminal year to TargetAuthor.
-		AuthorEducation authorEducation = new AuthorEducation();
-		if (identityDegree.getDoctoral() == 0) {
-			if (identityDegree.getMasters() == 0) {
-				if (identityDegree.getBachelor() == 0) {
-					authorEducation.setDegreeYear(-1); // setting -1 to terminal year if no terminal degree present.
-				} else {
-					authorEducation.setDegreeYear(identityDegree.getBachelor());
-				}
-			} else {
-				authorEducation.setDegreeYear(identityDegree.getMasters());
-			}
-		} else {
-			authorEducation.setDegreeYear(identityDegree.getDoctoral());
-		}
-
-		targetAuthor.setEducation(authorEducation);
+		IdentityEducationService identityEducationService = new IdentityEducationServiceImpl();
+		List<AuthorEducation> authorEducations = identityEducationService.getEducations(cwid);
+		targetAuthor.setEducations(authorEducations);
 
 		BoardCertificationDao boardCertificationDao = new BoardCertificationDaoImpl();
 		List<String> boardCertifications = boardCertificationDao.getBoardCertificationsByCwid(identityDTO.getCwid());

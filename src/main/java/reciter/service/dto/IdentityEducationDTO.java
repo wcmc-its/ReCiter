@@ -1,13 +1,27 @@
-package reciter.model.author;
+package reciter.service.dto;
 
-public class AuthorEducation {
+public class IdentityEducationDTO {
 
+	private long id;
+	private String cwid;
 	private String institution;
 	private int degreeYear;
 	private String degreeField;
-	private String instLoc;
-	private String instAbbr;
+	private String instLoc; // institution location.
+	private String instAbbr; // institution abbreviation.
 	
+	public long getId() {
+		return id;
+	}
+	public void setId(long id) {
+		this.id = id;
+	}
+	public String getCwid() {
+		return cwid;
+	}
+	public void setCwid(String cwid) {
+		this.cwid = cwid;
+	}
 	public String getInstitution() {
 		return institution;
 	}
@@ -37,5 +51,5 @@ public class AuthorEducation {
 	}
 	public void setInstAbbr(String instAbbr) {
 		this.instAbbr = instAbbr;
-	}	
+	}
 }

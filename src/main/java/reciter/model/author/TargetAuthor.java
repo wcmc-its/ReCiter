@@ -13,7 +13,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private String cwid;
 	private String department;
 	private String otherDeparment;
-	private AuthorEducation education;
+	private List<AuthorEducation> educations;
 	private AuthorDegree degree;
 	private String citizenship;
 	private List<IdentityDirectory> aliasList;
@@ -55,15 +55,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	public void setDepartment(String department) {
 		this.department = department;
 	}
-
-	public AuthorEducation getEducation() {
-		return education;
-	}
-
-	public void setEducation(AuthorEducation education) {
-		this.education = education;
-	}
-
+	
 	public String getOtherDeparment() {
 		return otherDeparment;
 	}
@@ -118,5 +110,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public List<AuthorEducation> getEducations() {
+		return educations;
+	}
+
+	public void setEducations(List<AuthorEducation> educations) {
+		this.educations = educations;
 	}
 }

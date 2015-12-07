@@ -52,6 +52,8 @@ public class AnalysisConverter {
 		analysis.setCitizenshipStrategyScore(analysisObject.getCitizenshipStrategyScore());
 		analysis.setBachelorsYearDiscrepancyScore(analysisObject.getBachelorsYearDiscrepancyScore());
 		analysis.setDoctoralYearDiscrepancyScore(analysisObject.getDoctoralYearDiscrepancyScore());
+		analysis.setArticleTitleStartWithBracket(analysisObject.isArticleTitleStartWithBracket());
+		analysis.setEducationScore(analysisObject.getEducationScore());
 		
 		return analysis;
 	}
