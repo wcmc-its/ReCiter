@@ -5,7 +5,6 @@ import java.util.List;
 
 import reciter.model.completeness.ArticleCompleteness;
 import reciter.model.completeness.ReCiterCompleteness;
-import xmlparser.pubmed.model.MedlineCitationGrant;
 import xmlparser.scopus.model.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
@@ -77,7 +76,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double nameStrategyScore;
 	private double boardCertificationStrategyScore;
 	private double internshipAndResidenceStrategyScore;
+	private double bachelorsYearDiscrepancyScore;
+	private double doctoralYearDiscrepancyScore;
+	private boolean isArticleTitleStartWithBracket;
+	
 	private int goldStandard;
+	
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -310,5 +314,29 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setGrantList(List<ReCiterArticleGrant> grantList) {
 		this.grantList = grantList;
+	}
+
+	public double getBachelorsYearDiscrepancyScore() {
+		return bachelorsYearDiscrepancyScore;
+	}
+
+	public void setBachelorsYearDiscrepancyScore(double bachelorsYearDiscrepancyScore) {
+		this.bachelorsYearDiscrepancyScore = bachelorsYearDiscrepancyScore;
+	}
+
+	public double getDoctoralYearDiscrepancyScore() {
+		return doctoralYearDiscrepancyScore;
+	}
+
+	public void setDoctoralYearDiscrepancyScore(double doctoralYearDiscrepancyScore) {
+		this.doctoralYearDiscrepancyScore = doctoralYearDiscrepancyScore;
+	}
+
+	public boolean isArticleTitleStartWithBracket() {
+		return isArticleTitleStartWithBracket;
+	}
+
+	public void setArticleTitleStartWithBracket(boolean isArticleTitleStartWithBracket) {
+		this.isArticleTitleStartWithBracket = isArticleTitleStartWithBracket;
 	}
 }

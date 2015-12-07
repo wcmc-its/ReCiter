@@ -28,6 +28,8 @@ public class Analysis {
 	private double coauthorStrategyScore;
 	private double journalStrategyScore;
 	private double citizenshipStrategyScore;
+	private double bachelorsYearDiscrepancyScore;
+	private double doctoralYearDiscrepancyScore;
 	
 	public double getEmailStrategyScore() {
 		return emailStrategyScore;
@@ -185,5 +187,17 @@ public class Analysis {
 	}
 	public void setGoldStandard(int goldStandard) {
 		this.goldStandard = goldStandard;
+	}
+	public double getBachelorsYearDiscrepancyScore() {
+		return bachelorsYearDiscrepancyScore;
+	}
+	public void setBachelorsYearDiscrepancyScore(double bachelorsYearDiscrepancyScore) {
+		this.bachelorsYearDiscrepancyScore = bachelorsYearDiscrepancyScore;
+	}
+	public double getDoctoralYearDiscrepancyScore() {
+		return doctoralYearDiscrepancyScore;
+	}
+	public void setDoctoralYearDiscrepancyScore(double doctoralYearDiscrepancyScore) {
+		this.doctoralYearDiscrepancyScore = doctoralYearDiscrepancyScore;
 	}
 }

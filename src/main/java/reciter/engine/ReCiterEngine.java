@@ -172,6 +172,11 @@ public class ReCiterEngine implements Engine {
 		return strategyContexts;
 	}
 	
+	/**
+	 * Assign gold standard to each ReCiterArticle.
+	 * @param reCiterArticles
+	 * @param cwid
+	 */
 	public void assignGoldStandard(List<ReCiterArticle> reCiterArticles, String cwid) {
 		GoldStandardPmidsDao dao = new GoldStandardPmidsDaoImpl();
 		List<String> pmids = dao.getPmidsByCwid(cwid);

@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
-import xmlparser.pubmed.PubmedXmlFetcher;
 import xmlparser.scopus.model.Affiliation;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
@@ -129,7 +128,9 @@ public class AnalysisTranslator {
 		analysisObject.setCoauthorStrategyScore(reCiterArticle.getCoauthorStrategyScore());
 		analysisObject.setJournalStrategyScore(reCiterArticle.getJournalStrategyScore());
 		analysisObject.setCitizenshipStrategyScore(reCiterArticle.getCitizenshipStrategyScore());
-
+		analysisObject.setBachelorsYearDiscrepancyScore(reCiterArticle.getBachelorsYearDiscrepancyScore());
+		analysisObject.setDoctoralYearDiscrepancyScore(reCiterArticle.getDoctoralYearDiscrepancyScore());
+		
 		return analysisObject;
 	}
 }

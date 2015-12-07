@@ -50,6 +50,8 @@ public class AnalysisConverter {
 		analysis.setCoauthorStrategyScore(analysisObject.getCoauthorStrategyScore());
 		analysis.setJournalStrategyScore(analysisObject.getJournalStrategyScore());
 		analysis.setCitizenshipStrategyScore(analysisObject.getCitizenshipStrategyScore());
+		analysis.setBachelorsYearDiscrepancyScore(analysisObject.getBachelorsYearDiscrepancyScore());
+		analysis.setDoctoralYearDiscrepancyScore(analysisObject.getDoctoralYearDiscrepancyScore());
 		
 		return analysis;
 	}

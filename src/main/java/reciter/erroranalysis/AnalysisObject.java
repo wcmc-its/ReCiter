@@ -31,6 +31,8 @@ public class AnalysisObject {
 	private double coauthorStrategyScore;
 	private double journalStrategyScore;
 	private double citizenshipStrategyScore;
+	private double bachelorsYearDiscrepancyScore;
+	private double doctoralYearDiscrepancyScore;
 	
 	public StatusEnum getStatus() {
 		return status;
@@ -184,5 +186,17 @@ public class AnalysisObject {
 	}
 	public void setCitizenshipStrategyScore(double citizenshipStrategyScore) {
 		this.citizenshipStrategyScore = citizenshipStrategyScore;
+	}
+	public double getBachelorsYearDiscrepancyScore() {
+		return bachelorsYearDiscrepancyScore;
+	}
+	public void setBachelorsYearDiscrepancyScore(double bachelorsYearDiscrepancyScore) {
+		this.bachelorsYearDiscrepancyScore = bachelorsYearDiscrepancyScore;
+	}
+	public double getDoctoralYearDiscrepancyScore() {
+		return doctoralYearDiscrepancyScore;
+	}
+	public void setDoctoralYearDiscrepancyScore(double doctoralYearDiscrepancyScore) {
+		this.doctoralYearDiscrepancyScore = doctoralYearDiscrepancyScore;
 	}
 }

@@ -5,12 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import database.DbConnectionFactory;
 import database.DbUtil;
-import database.NamedParameterStatement;
 import database.dao.AnalysisDao;
 import database.model.Analysis;
 
@@ -21,8 +17,6 @@ import database.model.Analysis;
  *
  */
 public class AnalysisDaoImpl implements AnalysisDao {
-
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(AnalysisDaoImpl.class);	
 
 	@Override
 	public void emptyTable() {
@@ -72,8 +66,12 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				+ "scopus_score, "
 				+ "coauthor_score, "
 				+ "journal_score, "
-				+ "citizenship_score) "
+				+ "citizenship_score,"
+				+ "bachelors_year_discrepancy_score,"
+				+ "doctoral_year_dicrepancy_score) "
 				+ "VALUES ("
+				+ "?, "
+				+ "?, "
 				+ "?, "
 				+ "?, "
 				+ "?, "
@@ -132,6 +130,8 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				pst.setDouble(++i, analysis.getCoauthorStrategyScore());
 				pst.setDouble(++i, analysis.getJournalStrategyScore());
 				pst.setDouble(++i, analysis.getCitizenshipStrategyScore());
+				pst.setDouble(++i, analysis.getBachelorsYearDiscrepancyScore());
+				pst.setDouble(++i, analysis.getDoctoralYearDiscrepancyScore());
 				pst.addBatch();
 			}
 			pst.executeBatch();
