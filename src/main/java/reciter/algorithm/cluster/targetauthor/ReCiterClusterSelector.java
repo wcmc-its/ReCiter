@@ -361,8 +361,6 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 				double score = removeReCiterArticleStrategyContext.executeStrategy(reCiterArticle, targetAuthor);
 				if (score > 0) {
 					clusterOfRemovedArticles.add(reCiterArticle);
-					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
-							+ " Removed by year discrepancy");
 					iterator.remove();
 				}
 			}

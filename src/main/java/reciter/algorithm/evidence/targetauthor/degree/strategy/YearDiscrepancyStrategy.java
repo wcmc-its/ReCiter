@@ -75,7 +75,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 				difference = year - targetAuthor.getDegree().getBachelor();
 				if (difference < 1) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
-							+ " Difference=" + difference);
+							+ " [Bachelors Degree Difference=" + difference + "]");
 					reCiterArticle.setBachelorsYearDiscrepancyScore(1);
 					return 1;
 				}
@@ -83,7 +83,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 				difference = year - targetAuthor.getDegree().getDoctoral();
 				if (difference < -13) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
-							+ " Difference=" + difference);
+							+ " [Doctoral Degree Difference=" + difference + "]");
 					reCiterArticle.setDoctoralYearDiscrepancyScore(1);
 					return 1;
 				}

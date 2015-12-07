@@ -22,7 +22,7 @@ public class AnalysisTranslator {
 			int clusterId,
 			int countOfArticleInCluster,
 			boolean isClusterSelected) {
-		
+
 		AnalysisObject analysisObject = new AnalysisObject();
 		analysisObject.setStatus(status);
 		analysisObject.setCwid(cwid);
@@ -31,8 +31,8 @@ public class AnalysisTranslator {
 						targetAuthor.getAuthorName().getMiddleName() + " " + 
 						targetAuthor.getAuthorName().getLastName());
 		//analysisObject.setPubmedSearchQuery(PubmedXmlFetcher.getPubMedSearchQuery(
-				//targetAuthor.getAuthorName().getLastName(),
-				//targetAuthor.getAuthorName().getFirstName()));
+		//targetAuthor.getAuthorName().getLastName(),
+		//targetAuthor.getAuthorName().getFirstName()));
 		analysisObject.setPmid(Integer.toString(reCiterArticle.getArticleId()));
 		analysisObject.setArticleTitle(reCiterArticle.getArticleTitle());
 		analysisObject.setFullJournalTitle(reCiterArticle.getJournal().getJournalTitle());
@@ -49,35 +49,35 @@ public class AnalysisTranslator {
 			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
 				String scopusAuthorFirstName = scopusAuthor.getGivenName();
 				String scopusAuthorLastName = scopusAuthor.getSurname();
-				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-					String reCiterAuthorLastName = reCiterAuthor.getAuthorName().getLastName();
-					if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, reCiterAuthorLastName)) {
-						String reCiterAuthorFirstInitial = reCiterAuthor.getAuthorName().getFirstInitial();
-						if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
-							if (scopusAuthorFirstName.substring(0, 1).equals(reCiterAuthorFirstInitial)) {
+				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+				if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, targetAuthorLastName)) {
+					String targetAuthorFirstInitial = targetAuthor.getAuthorName().getFirstInitial();
+					if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
+						if (scopusAuthorFirstName.substring(0, 1).equals(targetAuthorFirstInitial)) {
 
-								Set<Integer> afidSet = scopusAuthor.getAfidSet();
-								for (int afid : afidSet) {
-									Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
-									if (affiliation != null) {
-										scopusTargetAuthorAffiliation.append("[" + affiliation.getAffilname() + " " + 
-												affiliation.getAffiliationCity() + " " +
-												affiliation.getAffiliationCountry() + "], ");
-									}
+							Set<Integer> afidSet = scopusAuthor.getAfidSet();
+							for (int afid : afidSet) {
+								Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
+								if (affiliation != null) {
+									scopusTargetAuthorAffiliation.append("[" + 
+											scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
+											affiliation.getAffilname() + " " + 
+											affiliation.getAffiliationCity() + " " +
+											affiliation.getAffiliationCountry() + "]");
 								}
 							}
 						}
-					} else {
-						Set<Integer> afidSet = scopusAuthor.getAfidSet();
-						for (int afid : afidSet) {
-							Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
-							if (affiliation != null) {
-								scopusCoAuthorAffiliation.append("[" + 
-										scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
-										affiliation.getAffilname() + " " + 
-										affiliation.getAffiliationCity() + " " +
-										affiliation.getAffiliationCountry() + "], ");
-							}
+					}
+				} else {
+					Set<Integer> afidSet = scopusAuthor.getAfidSet();
+					for (int afid : afidSet) {
+						Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
+						if (affiliation != null) {
+							scopusCoAuthorAffiliation.append("[" + 
+									scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
+									affiliation.getAffilname() + " " + 
+									affiliation.getAffiliationCity() + " " +
+									affiliation.getAffiliationCountry() + "], ");
 						}
 					}
 				}
@@ -119,7 +119,7 @@ public class AnalysisTranslator {
 		analysisObject.setClusterArticleAssignedTo(clusterId);
 		analysisObject.setCountArticlesInAssignedCluster(countOfArticleInCluster);
 		analysisObject.setClusterSelectedInPhaseTwoMatching(isClusterSelected);
-		
+
 		analysisObject.setEmailStrategyScore(reCiterArticle.getEmailStrategyScore());
 		analysisObject.setDepartmentStrategyScore(reCiterArticle.getDepartmentStrategyScore());
 		analysisObject.setKnownCoinvestigatorScore(reCiterArticle.getKnownCoinvestigatorScore());
@@ -132,7 +132,7 @@ public class AnalysisTranslator {
 		analysisObject.setDoctoralYearDiscrepancyScore(reCiterArticle.getDoctoralYearDiscrepancyScore());
 		analysisObject.setArticleTitleStartWithBracket(reCiterArticle.isArticleTitleStartWithBracket());
 		analysisObject.setEducationScore(reCiterArticle.getEducationScore());
-		
+
 		return analysisObject;
 	}
 }
