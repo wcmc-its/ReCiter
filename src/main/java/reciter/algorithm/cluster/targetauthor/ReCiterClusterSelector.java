@@ -144,7 +144,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		strategyContexts.add(coauthorStrategyContext);
 		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
-		strategyContexts.add(educationStrategyContext);
+//		strategyContexts.add(educationStrategyContext);
 		
 		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
 		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);

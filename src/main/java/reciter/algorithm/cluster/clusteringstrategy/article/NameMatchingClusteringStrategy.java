@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
+
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
@@ -53,7 +55,7 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 			        ReCiterCluster reCiterCluster = entry.getValue();
 			        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 
-			          boolean isFirstNameMatch = isTargetAuthorNameMatch(article, reCiterArticle);
+			          boolean isFirstNameMatch = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
 			          if (isFirstNameMatch) {
 			            clusters.get(entry.getKey()).add(article);
 			            foundCluster = true;
@@ -93,6 +95,41 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 						reCiterAuthor.getAuthorName().getMiddleInitial().equalsIgnoreCase(
 								clusterAuthor.getAuthorName().getMiddleInitial())) {
 						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * First name matching and journal matching in phase one clustering.
+	 * <p>
+	 * For more details, see https://github.com/wcmc-its/ReCiter/issues/59.
+	 */
+	private boolean isTargetAuthorNameAndJournalMatch(ReCiterArticle newArticle, ReCiterArticle articleInCluster) {
+		for (ReCiterAuthor reCiterAuthor : newArticle.getArticleCoAuthors().getAuthors()) {
+			for (ReCiterAuthor clusterAuthor : articleInCluster.getArticleCoAuthors().getAuthors()) {
+				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
+						clusterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
+
+					// Check both first name and middle initial.
+					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(
+							clusterAuthor.getAuthorName().getFirstName())
+							&&
+						reCiterAuthor.getAuthorName().getMiddleInitial().equalsIgnoreCase(
+								clusterAuthor.getAuthorName().getMiddleInitial())) {
+						
+						// check journal.
+						if (newArticle.getJournal() != null && articleInCluster.getJournal() != null) {
+							String newArticleJournal = newArticle.getJournal().getJournalTitle();
+							String articleInClusterJournal = articleInCluster.getJournal().getJournalTitle();
+							
+							if (StringUtils.equalsIgnoreCase(newArticleJournal, articleInClusterJournal)) {
+								return true;
+							}
+						}
 					}
 				}
 			}
