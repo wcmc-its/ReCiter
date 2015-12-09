@@ -2,17 +2,13 @@ package reciter.engine;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import database.dao.AnalysisDao;
-import database.dao.GoldStandardPmidsDao;
 import database.dao.impl.AnalysisDaoImpl;
-import database.dao.impl.GoldStandardPmidsDaoImpl;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;

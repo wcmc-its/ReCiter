@@ -73,4 +73,11 @@ public class ReCiterStringUtilTest {
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
 		assertEquals("equal", "Ibanez", deAccentedS);
 	}
+	
+	@Test
+	public void testDeAccent3() {
+		String s = "Guzmán";
+		String deAccentedS = ReCiterStringUtil.deAccent(s);
+		assertEquals("equal", "Guzman", deAccentedS);
+	}
 }

@@ -34,7 +34,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
 
 				// Check if last name matches.
-				if (StringUtils.equalsIgnoreCase(lastName, targetAuthorLastName)) {
+				if (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(lastName), 
+						ReCiterStringUtil.deAccent(targetAuthorLastName))) {
 
 					if (firstName != null && targetAuthorFirstName != null) {
 
@@ -45,9 +46,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 					if (firstName.length() > 1 && targetAuthorFirstName.length() > 1) {
 						
 						// First name doesn't match! Should remove the article from the selected cluster.
-						if (!StringUtils.equalsIgnoreCase(
-								ReCiterStringUtil.deAccent(firstName), 
-								ReCiterStringUtil.deAccent(targetAuthorFirstName))) {
+						if (!StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName)) {
 							
 							firstNameFieldVar = firstName;
 //							slf4jLogger.info("Removed article id=[" + reCiterArticle.getArticleId() + "] with cwid=[" + 
