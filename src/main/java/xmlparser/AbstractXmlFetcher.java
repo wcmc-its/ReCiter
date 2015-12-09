@@ -16,9 +16,11 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
 
-	private String directory; // location in workspace where XMLs are stored.
-	private boolean performRetrievePublication = false;
-
+	/**
+	 * Location where fetched XMLs are stored.
+	 */
+	protected String directory; 
+	
 	/**
 	 * Save the url (XML) content in the {@code directoryLocation} with directory
 	 * name {@code directoryName} and file name {@code fileName}.
@@ -34,18 +36,16 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 			dir.mkdirs();
 		}
 		try {
-			BufferedReader bufferedReader = new BufferedReader(
-					new InputStreamReader(new URL(url).openStream(), "UTF-8")); // Github issue: https://github.com/wcmc-its/ReCiter/issues/87
-			String outputFileName = directoryLocation + directoryName + "/"
-					+ fileName + ".xml";
-			BufferedWriter bufferedWriter = new BufferedWriter(
-					new OutputStreamWriter(
-							new FileOutputStream(outputFileName), "UTF-8"));
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
+			String outputFileName = directoryLocation + directoryName + "/" + fileName + ".xml";
+			BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileName), "UTF-8"));
+			
 			String inputLine;
 			while ((inputLine = bufferedReader.readLine()) != null) {
-				bufferedWriter.write(removeSpecialStrings(inputLine)); // Github issue: https://github.com/wcmc-its/ReCiter/issues/87
+				bufferedWriter.write(inputLine);
 				bufferedWriter.newLine();
 			}
+			
 			bufferedReader.close();
 			bufferedWriter.close();
 		} catch (IOException e) {
@@ -81,37 +81,5 @@ public abstract class AbstractXmlFetcher implements XmlFetcher {
 
 	public void setDirectory(String directory) {
 		this.directory = directory;
-	}
-
-	public boolean isPerformRetrievePublication() {
-		return performRetrievePublication;
-	}
-
-	public void setPerformRetrievePublication(boolean performRetrievePublication) {
-		this.performRetrievePublication = performRetrievePublication;
-	}
-
-	/**
-	 * Github issue: https://github.com/wcmc-its/ReCiter/issues/87
-	 * 
-	 * @param lineString
-	 * @return
-	 * 
-	 */
-	public static String removeSpecialStrings( String lineString){
-		if (lineString.contains(" & ")) {
-			return lineString.replaceAll(" & ", " &amp; ");
-		} else {
-			return lineString;
-		}
-//		  if (lineString.contains("&quot")) {
-//		      return lineString.replaceAll("&quot", ""); 
-//		  } else if (lineString.contains("&amp;")) {
-//			  return lineString.replaceAll("amp;", ""); 
-//		  } else if (lineString.contains("?><")) {
-//			 return lineString;
-//		  } else {
-//			  return lineString;
-//		  }
 	}
 }

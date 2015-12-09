@@ -21,6 +21,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private List<AuthorName> grantCoauthors;
 	private String email;
 	private String emailOther;
+	private String pubmedSearchQuery;
 	
 	/**
 	 * @return the aliasList
@@ -118,5 +119,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setEducations(List<AuthorEducation> educations) {
 		this.educations = educations;
+	}
+
+	public String getPubmedSearchQuery() {
+		return pubmedSearchQuery;
+	}
+
+	public void setPubmedSearchQuery(String pubmedSearchQuery) {
+		this.pubmedSearchQuery = pubmedSearchQuery;
 	}
 }

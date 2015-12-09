@@ -19,8 +19,8 @@ public class ReCiterEngineProperty {
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngineProperty.class);
 
 	public String reCiterPropertyFile = "src/main/resources/config/reciter.properties";
-	public String testDataCwidListFile;
-	public String csvOutputFile;
+	public String testDataFolder;
+	public String analysisOutputFolder;
 
 	public ReCiterEngineProperty() {
 		InputStream inputStream = null;
@@ -28,26 +28,26 @@ public class ReCiterEngineProperty {
 			Properties properties = new Properties();
 			inputStream = new FileInputStream(reCiterPropertyFile);
 			properties.load(inputStream);
-			testDataCwidListFile = properties.getProperty("test.data.cwid.list.file");
-			csvOutputFile = properties.getProperty("csv.output.file");
+			testDataFolder = properties.getProperty("test_data_folder");
+			analysisOutputFolder = properties.getProperty("analysis_output_folder");
 
 		} catch (Exception e) {
-			slf4jLogger.error(e.getMessage());
+			slf4jLogger.error("Error reading properties file", e);
 		} finally {
 			try {
 				inputStream.close();
 			} catch (IOException e) {
-				slf4jLogger.error("Error closing inputStream while loading property file.");
+				slf4jLogger.error("Error closing inputStream while loading property file.", e);
 			}
 		}
 	}
 	
 	public List<String> getCwids() {
 		List<String> cwids = new ArrayList<String>();
-		try (Stream<String> stream = Files.lines(Paths.get(testDataCwidListFile),Charset.defaultCharset())) {
+		try (Stream<String> stream = Files.lines(Paths.get(testDataFolder),Charset.defaultCharset())) {
 			stream.forEach(e -> cwids.add(e));
-		} catch (IOException ex) {
-			slf4jLogger.error(ex.getMessage());
+		} catch (IOException e) {
+			slf4jLogger.error("Error fetching list of cwids from disk.", e);
 		}
 		return cwids;
 	}

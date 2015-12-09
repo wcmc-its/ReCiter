@@ -1,7 +1,11 @@
 package xmlparser.scopus;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,14 +23,24 @@ import xmlparser.scopus.model.ScopusArticle;
  *
  */
 public class ScopusXmlFetcher extends AbstractXmlFetcher {
-
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
-//	private static final String DEFAULT_LOCATION = "src/main/resources/data/scopus/";
-//	private static final String DEFAULT_LOCATION = "/home/jil3004/reciter_data/data/scopus/";
-	private static final String DEFAULT_LOCATION = "C:/Users/Jie/Downloads/reciter_data/data/scopus/";
 	
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
+	private static final String PROPERTIES_FILE_LOCATION = "src/main/resources/config/reciter.properties";
 	private ScopusXmlParser scopusXmlParser;
 
+	private void loadProperty() {
+		Properties p = new Properties();
+		InputStream inputStream;
+		try {
+			inputStream = new FileInputStream(PROPERTIES_FILE_LOCATION);
+			p.load(inputStream);
+		} catch (IOException e) {
+			slf4jLogger.error(e.getMessage(), e);
+		}
+
+		directory = p.getProperty("scopus_xml_folder");
+	}
+	
 	public class ScopusXmlFetcherRunnable implements Runnable {
 
 		private final String cwid;
@@ -65,7 +79,7 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 * @return
 	 */
 	public boolean scopusFileExist(String cwid, String pmid) {
-		File file = new File(DEFAULT_LOCATION + cwid + "/" + pmid + ".xml");
+		File file = new File(directory + cwid + "/" + pmid + ".xml");
 		return file.exists();
 	}
 
@@ -81,17 +95,17 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 * @param pmid
 	 */
 	public ScopusArticle getScopusXml(String cwid, String pmid) {
-		return getScopusXml(new File(DEFAULT_LOCATION + cwid + "/" + pmid + ".xml"));
+		return getScopusXml(new File(directory + cwid + "/" + pmid + ".xml"));
 	}
 
 	@Override
-	public void fetch(String lastName, String firstName, String middleName, String cwid) {
+	public void fetch(String query, String fileName) {
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(lastName, firstName.substring(0, 1), middleName, cwid);
+		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(query, fileName);
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);
+			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(fileName, pmid);
 			executor.execute(scopusRunnable);
 		}
 		executor.shutdown();
@@ -100,11 +114,12 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	}
 
 	public ScopusXmlFetcher() {
-		super(DEFAULT_LOCATION);
+		loadProperty();
 		scopusXmlParser = new ScopusXmlParser(new ScopusXmlHandler());
 	}
 
 	public ScopusXmlFetcher(String directory) {
 		super(directory);
+		scopusXmlParser = new ScopusXmlParser(new ScopusXmlHandler());
 	}
 }

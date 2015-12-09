@@ -5,6 +5,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import xmlparser.AbstractXmlFetcher;
+
 /**
  * DbUtil for closing MySQL database connection.
  * 
@@ -12,22 +17,15 @@ import java.sql.Statement;
  *
  */
 public class DbUtil {
+	
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(AbstractXmlFetcher.class);
+
 	public static void close(Connection connection) {
 		if (connection != null) {
 			try {
 				connection.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public static void close(NamedParameterStatement statement) {
-		if (statement != null) {
-			try {
-				statement.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
+				slf4jLogger.error(e.getMessage(), e);
 			}
 		}
 	}
@@ -37,7 +35,7 @@ public class DbUtil {
 			try {
 				statement.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				slf4jLogger.error(e.getMessage(), e);
 			}
 		}
 	}
@@ -47,7 +45,7 @@ public class DbUtil {
 			try {
 				resultSet.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				slf4jLogger.error(e.getMessage(), e);
 			}
 		}
 	}

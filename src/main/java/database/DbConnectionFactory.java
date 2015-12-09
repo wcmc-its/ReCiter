@@ -8,6 +8,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Creates a single connection to the database.
  * 
@@ -16,44 +19,47 @@ import java.util.Properties;
  */
 public class DbConnectionFactory {
 	
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(DbConnectionFactory.class);
+
 	private static DbConnectionFactory instance = new DbConnectionFactory();
-	private static String DB_CONFIG = "src/main/resources/config/database.properties";
-	private static String URL;
-	private static String USER;
-	private static String PASSWORD;
+	private static final String DB_CONFIG = "src/main/resources/config/database.properties";
+	private static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
+
+	private String url;
+	private String userName;
+	private String passWord;
 	
-	public void loadProperty() throws IOException {
-		Properties prop = new Properties();
+	private void loadProperty() throws IOException {
+		Properties p = new Properties();
 		InputStream inputStream = new FileInputStream(DB_CONFIG);
-		prop.load(inputStream);
+		p.load(inputStream);
 		
-		URL = prop.getProperty("url");
-		USER = prop.getProperty("username");
-		PASSWORD = prop.getProperty("password");
+		url = p.getProperty("url");
+		userName = p.getProperty("username");
+		passWord = p.getProperty("password");
 	}
 	
-	private static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
 
 	private DbConnectionFactory() {
 		try {
 			Class.forName(DRIVER_CLASS);
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			slf4jLogger.error(e.getMessage(), e);
 		}
 	}
 
 	private Connection createConnection() {
 		try {
 			loadProperty();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		} catch (IOException e) {
+			slf4jLogger.error(e.getMessage(), e);
 		}
+		
 		Connection connection = null;
 		try {
-			connection = DriverManager.getConnection(URL, USER, PASSWORD);
+			connection = DriverManager.getConnection(url, userName, passWord);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			slf4jLogger.error(e.getMessage(), e);
 		}
 		return connection;
 	}
