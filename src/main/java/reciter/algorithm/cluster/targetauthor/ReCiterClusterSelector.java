@@ -37,8 +37,11 @@ import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
 import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
 import reciter.algorithm.evidence.targetauthor.grant.strategy.KnownCoinvestigatorStrategy;
+import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
+import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
+import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
@@ -108,6 +111,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	private StrategyContext educationStrategyContext;
 	
+	/**
+	 * Remove article if the full first name doesn't match.
+	 */
+	private StrategyContext removeByNameStrategyContext;
+	
+	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
@@ -132,12 +141,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
 		
-		// TODO: reAssignArticlesByPubmedAffiliationCosineSimilarity(map);
 		// TODO: getBoardCertificationScore(map);
 
 		bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 		articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
+		removeByNameStrategyContext = new RemoveByNameStrategyContext(new RemoveByNameStrategy());
 		
 		strategyContexts = new ArrayList<StrategyContext>();
 		strategyContexts.add(scopusStrategyContext);
@@ -149,6 +158,11 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
 		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
 		strategyContexts.add(articleTitleInEnglishStrategyContext);
+		strategyContexts.add(removeByNameStrategyContext);
+		
+		// Re-run these evidence types (could have been removed or not processed in sequence).
+		strategyContexts.add(emailStrategyContext);
+//		strategyContexts.add(affiliationStrategyContext);
 	}
 	
 	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {

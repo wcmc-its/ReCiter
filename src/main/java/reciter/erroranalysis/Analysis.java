@@ -2,6 +2,7 @@ package reciter.erroranalysis;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +47,27 @@ public class Analysis {
 
 	public Analysis() {}
 
+	/**
+	 * Assign gold standard to each ReCiterArticle.
+	 * @param reCiterArticles
+	 * @param cwid
+	 */
+	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, String cwid) {
+		GoldStandardPmidsDao dao = new GoldStandardPmidsDaoImpl();
+		List<String> pmids = dao.getPmidsByCwid(cwid);
+		Set<Integer> pmidSet = new HashSet<Integer>();
+		for (String pmid : pmids) {
+			pmidSet.add(Integer.parseInt(pmid));
+		}
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if (pmidSet.contains(reCiterArticle.getArticleId())) {
+				reCiterArticle.setGoldStandard(1);
+			} else {
+				reCiterArticle.setGoldStandard(0);
+			}
+		}
+	}
+	
 	/**
 	 * Single Selection.
 	 * @param finalCluster

@@ -35,4 +35,42 @@ public class ReCiterStringUtilTest {
 		int numOverlap = ReCiterStringUtil.computeNumberOfOverlapTokens(s1, s2);
 		assertEquals("Number of overlaps: ", 5, numOverlap);
 	}
+	
+	@Test
+	public void testLevenshteinDistance1() {
+		String s1 = "Antony";
+		String s2 = "Anthony";
+		int dist = ReCiterStringUtil.levenshteinDistance(s1, s2);
+		assertEquals("Distance should be 1", 1, dist);
+	}
+	
+	@Test
+	public void testLevenshteinDistance2() {
+		String s1 = "Bi-Sen";
+		String s2 = "BiSen";
+		int dist = ReCiterStringUtil.levenshteinDistance(s1, s2);
+		assertEquals("Distance should be 1", 1, dist);
+	}
+	
+	@Test
+	public void testLevenshteinDistance3() {
+		String s1 = "Jeffery";
+		String s2 = "Jeffrey";
+		int dist = ReCiterStringUtil.levenshteinDistance(s1, s2);
+		assertEquals("Distance should be 2", 2, dist);
+	}
+	
+	@Test
+	public void testDeAccent1() {
+		String s = "å";
+		String deAccentedS = ReCiterStringUtil.deAccent(s);
+		assertEquals("equal", "a", deAccentedS);
+	}
+	
+	@Test
+	public void testDeAccent2() {
+		String s = "Ibáñez";
+		String deAccentedS = ReCiterStringUtil.deAccent(s);
+		assertEquals("equal", "Ibanez", deAccentedS);
+	}
 }

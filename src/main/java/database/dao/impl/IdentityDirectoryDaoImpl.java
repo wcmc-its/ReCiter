@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import database.DbConnectionFactory;
+import database.DbUtil;
 import database.dao.IdentityDirectoryDao;
 import database.model.IdentityDirectory;
 /**
@@ -25,7 +26,7 @@ public class IdentityDirectoryDaoImpl implements IdentityDirectoryDao{
 		Connection con = DbConnectionFactory.getConnection();
 		PreparedStatement pst = null;
 		ResultSet rs = null;
-		String sql = "SELECT id,recordType,cwid, givenName,middleName, surname from rc_identity_directory where cwid=?";
+		String sql = "SELECT id, recordType, cwid, givenName, middleName, surname FROM rc_identity_directory where cwid=?";
 		try{
 			pst=con.prepareStatement(sql);
 			pst.setString(1, cwid);
@@ -40,8 +41,12 @@ public class IdentityDirectoryDaoImpl implements IdentityDirectoryDao{
 				directory.setSurname(rs.getString(6));
 				list.add(directory);
 			}
-		}catch(SQLException ex){
+		} catch(SQLException ex){
 			ex.printStackTrace();
+		} finally {
+			DbUtil.close(rs);
+			DbUtil.close(pst);
+			DbUtil.close(con);
 		}
 		return list;
 	}

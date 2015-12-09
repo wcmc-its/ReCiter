@@ -81,6 +81,8 @@ public class ReCiterEngine implements Engine {
 				targetAuthor.getCwid(),
 				targetAuthor.getEmail());
 
+		Analysis.assignGoldStandard(reCiterArticleList, targetAuthor.getCwid());
+		
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(targetAuthor, reCiterArticleList);
 		clusterer.cluster();
@@ -172,27 +174,6 @@ public class ReCiterEngine implements Engine {
 		return strategyContexts;
 	}
 	
-	/**
-	 * Assign gold standard to each ReCiterArticle.
-	 * @param reCiterArticles
-	 * @param cwid
-	 */
-	public void assignGoldStandard(List<ReCiterArticle> reCiterArticles, String cwid) {
-		GoldStandardPmidsDao dao = new GoldStandardPmidsDaoImpl();
-		List<String> pmids = dao.getPmidsByCwid(cwid);
-		Set<Integer> pmidSet = new HashSet<Integer>();
-		for (String pmid : pmids) {
-			pmidSet.add(Integer.parseInt(pmid));
-		}
-		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if (pmidSet.contains(reCiterArticle.getArticleId())) {
-				reCiterArticle.setGoldStandard(1);
-			} else {
-				reCiterArticle.setGoldStandard(0);
-			}
-		}
-	}
-	
 	@Override
 	public Analysis constructAnalysis() {
 		List<String> cwids = reCiterEngineProperty.getCwids();
@@ -207,7 +188,7 @@ public class ReCiterEngine implements Engine {
 					targetAuthor.getCwid(),
 					targetAuthor.getEmail());
 			
-			assignGoldStandard(reCiterArticleList, cwid);
+			Analysis.assignGoldStandard(reCiterArticleList, cwid);
 			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
 			CSVWriter csvWriter = new CSVWriter("C:\\Users\\Jie\\Documents\\reciter_data\\" + cwid + ".csv");
 			try {
