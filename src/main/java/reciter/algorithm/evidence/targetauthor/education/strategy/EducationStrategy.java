@@ -10,7 +10,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
-import reciter.tfidf.ReCiterStringUtil;
+import reciter.string.ReCiterStringUtil;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
 

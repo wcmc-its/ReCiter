@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import reciter.string.ReCiterStringUtil;
+
 public class ReCiterStringUtilTest {
 
 	@Test
@@ -79,5 +81,12 @@ public class ReCiterStringUtilTest {
 		String s = "Guzmán";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
 		assertEquals("equal", "Guzman", deAccentedS);
+	}
+	
+	@Test
+	public void testDeAccent4() {
+		String s = "ö";
+		String deAccentedS = ReCiterStringUtil.deAccent(s);
+		assertEquals("equal", "o", deAccentedS);
 	}
 }
