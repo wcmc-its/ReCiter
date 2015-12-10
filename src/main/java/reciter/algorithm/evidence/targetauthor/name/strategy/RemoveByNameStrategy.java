@@ -22,38 +22,34 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		
-		slf4jLogger.info(reCiterArticle.getArticleId() + "");
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
-		
+
 		// TODO: Optimize: Move this out of the for-each loop because it's the same.
 		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
 		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
 		String targetAuthorMiddleName = targetAuthor.getAuthorName().getMiddleName();
-		
+
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
 				String firstName = author.getAuthorName().getFirstName();
 				String lastName = author.getAuthorName().getLastName();
 				String middleName = author.getAuthorName().getMiddleName();
-				
+
 				// Check whether last name matches.
 				if (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(lastName),  ReCiterStringUtil.deAccent(targetAuthorLastName))) {
-					
+
 					// TODO: Optimize: do not check. can never be null. always empty string.
-					if (firstName != null && targetAuthorFirstName != null) {
-						firstName = firstName.trim();
-						targetAuthorFirstName = targetAuthorFirstName.trim();
-					}
-					
+					firstName = firstName.trim();
+					targetAuthorFirstName = targetAuthorFirstName.trim();
+
 					// Check if first name is a full name (not an initial).
 					if (firstName.length() > 1 && targetAuthorFirstName.length() > 1) {
-						
+
 						// First name doesn't match! Should remove the article from the selected cluster.
 						if (!StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName)) {
-							
+
 							firstNameFieldVar = firstName;
 							shouldRemove = true;
 
@@ -73,7 +69,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 							}
-							
+
 							// Check first name with dashes removed. (Case: "Juan-miguel" in article and "Juan Miguel"
 							// in rc_identity).
 							if (shouldRemove) {
@@ -97,7 +93,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 							}
-							
+
 							// Case: "Bisen" in article and "Bi-Sen" in rc_identity. Remove dash from "Bi-Sen".
 							if (shouldRemove) {
 								if (targetAuthorFirstName.contains("-")) {
@@ -107,7 +103,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 							}
-							
+
 							// Case: "B-s" in article and "Bi-Sen" in rc_identity.
 							if (shouldRemove) {
 								if (targetAuthorFirstName.contains("-") && firstName.contains("-")) {
@@ -123,7 +119,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 							}
-							
+
 							// Check the Levenshtein distance between the target author's first name and the article
 							// author's first name, if the distance <= 1 and affiliation score is greater than 0, 
 							// un-do the removal operation.
@@ -136,7 +132,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									shouldRemove = false;
 								}
 							}
-							
+
 							// Check the first three characters of each of the first names and compare affiliation score.
 							// Case:
 							// 1. Removed article id=[19101229] with cwid=[mszulc] and name in article=[Massimo] In gold standard=[1]
@@ -149,14 +145,14 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 							}
-							
+
 							if (shouldRemove) {
 								String targetAuthorFirstNameMiddleNameCombined = targetAuthorFirstName + targetAuthorMiddleName;
 								if (StringUtils.equalsIgnoreCase(targetAuthorFirstNameMiddleNameCombined, firstName)) {
 									shouldRemove = false;
 								}
 							}
-							
+
 							// Case: "Joan h f". Split the first name by white space and use the 0th element (should
 							// it exist to check whether the first names match. If they do, un-do the removal operation.
 							if (shouldRemove) {
@@ -167,24 +163,24 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 										shouldRemove = false;
 									}
 								}
-								
+
 								// Check middle name and if they match, un-do removal operation. Case: "Joan h f" in article
 								// and "H. F." in db. Compare "hf" with "hf".
 								if (shouldRemove) {
 									if (firstNameArray.length > 1) {
-										
+
 										// Get h f and combine into single string.
 										String authorMiddleNameConcatenated = "";
 										for (int i = 1; i < firstNameArray.length; i++) {
 											authorMiddleNameConcatenated += firstNameArray[i];
 										}
-										
+
 										// Get H. F. from target author and remove '.', '-' and space.
 										String targetAuthorMiddleNameConcatenated = "";
 										if (targetAuthorMiddleName != null) {
 											targetAuthorMiddleNameConcatenated = targetAuthorMiddleName.replaceAll("[.\\-\\s+]", "");
 										}
-										
+
 										if (StringUtils.equalsIgnoreCase(authorMiddleNameConcatenated, targetAuthorMiddleNameConcatenated)) {
 											shouldRemove = false;
 										}
@@ -197,13 +193,24 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 						}
 					} else {
 						// check middle name.
-			            // Case: False Positive List: [2]: [12814220, 21740463] for Anna Bender.
-			            // Remove this article because middle name exist in article, but not in rc_identity.
-			            if (middleName.length() > 0 && targetAuthorMiddleName.length() == 0) {
-			              if (!StringUtils.equalsIgnoreCase(middleName, targetAuthorMiddleName) && reCiterArticle.getAffiliationScore() == 0) {
-			                shouldRemove = true;
-			              }
-			            }
+						// Case: False Positive List: [2]: [12814220, 21740463] for Anna Bender.
+						// Remove this article because middle name exist in article, but not in rc_identity.
+						if (middleName.length() > 0 && targetAuthorMiddleName.length() == 0) {
+							if (!StringUtils.equalsIgnoreCase(middleName, targetAuthorMiddleName) && reCiterArticle.getAffiliationScore() == 0) {
+								shouldRemove = true;
+							}
+						}
+
+						// case: pmid=11467038, cwid = ajmarcus
+						// Middle name doesn't match. Mark for removal.
+						if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
+							String middleInitial = author.getAuthorName().getMiddleInitial();
+							String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
+
+							if (!StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) && reCiterArticle.getAffiliationScore() == 0) {
+								shouldRemove = true;
+							}
+						}
 					}
 				}
 			}
