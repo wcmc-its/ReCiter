@@ -68,6 +68,12 @@ public class ReCiterEngine implements Engine {
 	}
 
 	@Override
+	public void run(String cwid) {
+		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+		run(targetAuthor);
+	}
+	
+	@Override
 	public void run(TargetAuthor targetAuthor) {
 		// Fetch the articles for this person.
 		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);

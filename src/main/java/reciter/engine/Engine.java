@@ -10,4 +10,5 @@ public interface Engine {
 	void run();
 	Analysis constructAnalysis();
 	void checkNumQueries();
+	void run(String cwid);
 }
