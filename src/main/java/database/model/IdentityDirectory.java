@@ -12,6 +12,7 @@ public class IdentityDirectory {
 	private String givenName;
 	private String middleName;
 	private String surname;
+	
 	public int getId() {
 		return id;
 	}

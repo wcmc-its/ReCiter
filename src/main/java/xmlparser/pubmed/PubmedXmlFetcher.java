@@ -88,6 +88,30 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	}
 
 	/**
+	 * Returns the number of articles that needs to be retrieved.
+	 * @param query
+	 * @return
+	 */
+	public int fetchArticleCount(String query) {
+		int numPubMedArticles = 0;
+
+		// Get the count (number of publications for this query).
+		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
+		pubmedXmlQuery.setTerm(query);
+
+		// set retmax = 1 so that query can be executed fast.
+		pubmedXmlQuery.setRetMax(1);
+
+		String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+		
+		PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
+		numPubMedArticles = xmlHandler.getCount();
+		
+		slf4jLogger.info("PubMed Seach Query: " + eSearchUrl);
+		return numPubMedArticles;
+	}
+	
+	/**
 	 * Fetch all the publications for this query in PubMed and store it on disk with name fileName.
 	 * 
 	 * @param lastName last name of the author.
@@ -105,9 +129,10 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		pubmedXmlQuery.setRetMax(1);
 
 		String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+		
 		PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
 		numPubMedArticles = xmlHandler.getCount();
-
+		
 		slf4jLogger.info("PubMed Seach Query: " + eSearchUrl);
 		slf4jLogger.info("Number of articles need to be retrieved for : " + fileName + " is "+ numPubMedArticles);
 

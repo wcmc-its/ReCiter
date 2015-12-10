@@ -10,6 +10,7 @@ import database.model.IdentityDirectory;
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
+import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.string.ReCiterStringUtil;
@@ -29,7 +30,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 			for (ReCiterAuthor author : authors.getAuthors()) {
 				String firstName = author.getAuthorName().getFirstName();
 				String lastName = author.getAuthorName().getLastName();
-
+				String middleName = author.getAuthorName().getMiddleName();
+				
 				String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
 				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
 
@@ -55,10 +57,12 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							shouldRemove = true;
 
 							// Check rc_identity_directory.
-							List<IdentityDirectory> aliasList = targetAuthor.getAliasList();
+							List<AuthorName> aliasList = targetAuthor.getAliasList();
 							if (aliasList != null) {
-								for (IdentityDirectory identityDirectory : aliasList) {
-									String givenName = identityDirectory.getGivenName();
+								for (AuthorName authorName : aliasList) {
+									String givenName = authorName.getFirstName();
+									String middleInitial = authorName.getMiddleInitial();
+									
 									if (StringUtils.equalsIgnoreCase(givenName, firstName)) {
 //										slf4jLogger.info("Un-Removed article id=[" + reCiterArticle.getArticleId() + "] with cwid=[" + 
 //												targetAuthor.getCwid() + "] and name in article=[" + firstName + "]" +

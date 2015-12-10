@@ -22,6 +22,7 @@ public class PubmedESearchHandler extends DefaultHandler {
 	private int count;
 	private boolean bWebEnv;
 	private boolean bCount;
+	private int numCountEncounteredSoFar = 0;
 	
 	/**
 	 * Sends a query to the NCBI web site to retrieve the webEnv.
@@ -57,11 +58,12 @@ public class PubmedESearchHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("WebEnv")) {
 			bWebEnv = true;
 		}
-		if (qName.equalsIgnoreCase("Count")) {
+		if (qName.equalsIgnoreCase("Count") && numCountEncounteredSoFar == 0) {
+			numCountEncounteredSoFar++;
 			bCount = true;
 		}
 	}
-	
+
 	public void characters(char ch[], int start, int length) throws SAXException {
 		if (bWebEnv) {
 			webEnv = new String(ch, start, length);

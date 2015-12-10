@@ -186,4 +186,15 @@ public class ReCiterEngine implements Engine {
 		}
 		return null;
 	}
+	
+	@Override
+	public void checkNumQueries() {
+		List<String> cwids = reCiterEngineProperty.getCwids();
+		
+		for (String cwid : cwids) {
+			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+			int articleCount = new ReCiterArticleFetcher().checkNumQueries(targetAuthor);
+			slf4jLogger.info("Article count for cwid=[" + cwid + "] is [" + articleCount + "]");
+		}
+	}
 }

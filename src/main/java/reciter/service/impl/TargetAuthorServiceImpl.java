@@ -1,7 +1,9 @@
 package reciter.service.impl;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,7 @@ import reciter.service.IdentityService;
 import reciter.service.TargetAuthorService;
 import reciter.service.converters.IdentityDegreeConverter;
 import reciter.service.dto.IdentityDTO;
-import xmlparser.AbstractXmlFetcher;
+import reciter.string.PubmedSearchQueryGenerator;
 
 public class TargetAuthorServiceImpl implements TargetAuthorService {
 
@@ -94,11 +96,20 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		//Update ReCiter code so that aliases can be included as input #93.
 		IdentityDirectoryDao dao = new IdentityDirectoryDaoImpl();
 		List<IdentityDirectory> identityDirectoryList = dao.getIdentityDirectoriesByCwid(identityDTO.getCwid());
-		targetAuthor.setAliasList(identityDirectoryList);
+		List<AuthorName> aliasList = new ArrayList<AuthorName>();
+		for (IdentityDirectory identityDirectory : identityDirectoryList) {
+			aliasList.add(new AuthorName(identityDirectory.getGivenName(), identityDirectory.getMiddleName(), identityDirectory.getSurname()));
+		}
+		targetAuthor.setAliasList(aliasList);
 		
 		// Set email and email_other.
 		targetAuthor.setEmail(identityDTO.getEmail());
 		targetAuthor.setEmailOther(identityDTO.getEmailOther());
+		
+//		Set<String> terms = constructPubmedQuery(targetAuthor);
+//		String query = getConcatTerms(terms);
+		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
+		targetAuthor.setPubmedSearchQuery(query);
 		
 		return targetAuthor;
 	}
@@ -109,10 +120,42 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		return lastName + "%20" + firstInitial + "[au]";
 	}
 	
-	public String constructPubmedQuery(TargetAuthor targetAuthor) {
-		String firstName = targetAuthor.getAuthorName().getFirstInitial();
+	public Set<String> constructPubmedQuery(TargetAuthor targetAuthor) {
+		Set<String> set = new HashSet<String>();
+		
+		String firstName = targetAuthor.getAuthorName().getFirstName();
+		String middleName = targetAuthor.getAuthorName().getMiddleName();
 		String lastName = targetAuthor.getAuthorName().getLastName();
 		
-		return null;
+		PubmedSearchQueryGenerator generator = new PubmedSearchQueryGenerator();
+		set.addAll(generator.generate(firstName, middleName, lastName));
+		
+		if (targetAuthor.getAliasList() != null) {
+			for (AuthorName authorName : targetAuthor.getAliasList()) {
+				set.addAll(generator.generate(authorName.getFirstName(), authorName.getMiddleName(), authorName.getLastName()));
+			}
+		}
+		
+		String cwid = targetAuthor.getCwid();
+		set.add(cwid + "@nyp.org");
+		set.add(cwid + "@med.cornell.edu");
+		set.add(cwid + "@med.weill.cornell.edu");
+		
+		return set;
+	}
+	
+	public String getConcatTerms(Set<String> queryTerms) {
+		StringBuilder sb = new StringBuilder();
+		for (String term : queryTerms) {
+			sb.append(term);
+			sb.append(" OR ");
+		}
+		String result = sb.toString();
+		if (result.length() > 0) {
+			result = result.substring(0, result.length() - " OR ".length());
+		}
+		
+		result = result.replace(" ", "%20");
+		return result;
 	}
 }

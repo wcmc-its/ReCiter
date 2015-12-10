@@ -30,9 +30,8 @@ public class AnalysisTranslator {
 				targetAuthor.getAuthorName().getFirstName() + " " + 
 						targetAuthor.getAuthorName().getMiddleName() + " " + 
 						targetAuthor.getAuthorName().getLastName());
-		//analysisObject.setPubmedSearchQuery(PubmedXmlFetcher.getPubMedSearchQuery(
-		//targetAuthor.getAuthorName().getLastName(),
-		//targetAuthor.getAuthorName().getFirstName()));
+		
+		analysisObject.setPubmedSearchQuery(targetAuthor.getPubmedSearchQuery());
 		analysisObject.setPmid(Integer.toString(reCiterArticle.getArticleId()));
 		analysisObject.setArticleTitle(reCiterArticle.getArticleTitle());
 		analysisObject.setFullJournalTitle(reCiterArticle.getJournal().getJournalTitle());

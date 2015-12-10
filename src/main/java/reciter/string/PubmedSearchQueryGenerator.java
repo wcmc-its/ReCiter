@@ -47,7 +47,7 @@ public class PubmedSearchQueryGenerator {
 			String lastNameWithDashReplacedByWhiteSpace = lastName.replace("-", " ");
 			nameVariants.add(lastNameWithDashReplacedByWhiteSpace + " " + firstNameInitial);
 			
-			String lastNameWithDashReplacedByEmptyString = lastName.replace("-", "");
+			String lastNameWithDashReplacedByEmptyString = lastName.replace("-", " ");
 			nameVariants.add(lastNameWithDashReplacedByEmptyString + " " + firstNameInitial);
 		}
 		
@@ -56,13 +56,19 @@ public class PubmedSearchQueryGenerator {
 			String lastNameWithSpaceReplacedByDash = lastName.replaceAll("\\s+", "-");
 			nameVariants.add(lastNameWithSpaceReplacedByDash + " " + firstNameInitial);
 			
-			String lastNameWithSpaceReplacedByEmptyString = lastName.replaceAll("\\s+", "");
+			String lastNameWithSpaceReplacedByEmptyString = lastName.replaceAll("\\s+", " ");
 			nameVariants.add(lastNameWithSpaceReplacedByEmptyString + " " + firstNameInitial);
 			
 			// source: http://stackoverflow.com/questions/20653976/remove-short-words-and-characters-from-a-string-java
-			String lastNameWithCharsLessThanSpecified = lastName.replaceAll("\\b\\w{1,3}\\b\\s?", "");
+			String lastNameWithCharsLessThanSpecified = lastName.replaceAll("\\b\\w{1,3}\\b\\s?", " ");
 			nameVariants.add(lastNameWithCharsLessThanSpecified + " " + firstNameInitial);
+			
+			String[] surNameArr = lastName.split("\\s+");
+			for (String surName : surNameArr) {
+				nameVariants.add(surName + " " + firstNameInitial);
+			}
 		}
+		
 		return nameVariants;
 	}
 	

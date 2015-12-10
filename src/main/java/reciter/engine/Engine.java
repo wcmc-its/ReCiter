@@ -9,4 +9,5 @@ public interface Engine {
 	void run(TargetAuthor targetAuthor);
 	void run();
 	Analysis constructAnalysis();
+	void checkNumQueries();
 }

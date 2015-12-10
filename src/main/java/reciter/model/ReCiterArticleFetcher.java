@@ -36,4 +36,10 @@ public class ReCiterArticleFetcher {
 		}
 		return reCiterArticleList;
 	}
+	
+	public int checkNumQueries(TargetAuthor targetAuthor) {
+		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
+		String query = targetAuthor.getPubmedSearchQuery();
+		return pubmedXmlFetcher.fetchArticleCount(query);
+	}
 }

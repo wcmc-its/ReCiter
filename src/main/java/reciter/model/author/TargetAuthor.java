@@ -2,8 +2,6 @@ package reciter.model.author;
 
 import java.util.List;
 
-import database.model.IdentityDirectory;
-
 /**
  * @author jil3004
  *
@@ -16,26 +14,12 @@ public class TargetAuthor extends ReCiterAuthor {
 	private List<AuthorEducation> educations;
 	private AuthorDegree degree;
 	private String citizenship;
-	private List<IdentityDirectory> aliasList;
+	private List<AuthorName> aliasList;
 	private List<String> boardCertifications;
 	private List<AuthorName> grantCoauthors;
 	private String email;
 	private String emailOther;
 	private String pubmedSearchQuery;
-	
-	/**
-	 * @return the aliasList
-	 */
-	public List<IdentityDirectory> getAliasList() {
-		return aliasList;
-	}
-
-	/**
-	 * @param aliasList the aliasList to set
-	 */
-	public void setAliasList(List<IdentityDirectory> aliasList) {
-		this.aliasList = aliasList;
-	}
 
 	public TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
@@ -127,5 +111,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setPubmedSearchQuery(String pubmedSearchQuery) {
 		this.pubmedSearchQuery = pubmedSearchQuery;
+	}
+
+	public List<AuthorName> getAliasList() {
+		return aliasList;
+	}
+
+	public void setAliasList(List<AuthorName> aliasList) {
+		this.aliasList = aliasList;
 	}
 }
