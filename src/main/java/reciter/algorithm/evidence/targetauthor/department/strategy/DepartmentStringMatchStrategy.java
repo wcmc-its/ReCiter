@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.ReCiterExample;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
@@ -19,28 +20,30 @@ import reciter.model.author.TargetAuthor;
  *
  */
 public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
-	
+
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(DepartmentStringMatchStrategy.class);
+
 	private String extractedDept;
-	
+
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		if (targetAuthor == null) {
 			throw new IllegalArgumentException("Target author is null.");
 		}
-		
+
 		if (reCiterArticle == null) {
 			throw new IllegalArgumentException("ReCiter article is null.");
 		}
-		
+
 		double score = 0;
 		if (reCiterArticle.getArticleCoAuthors() != null &&
-			reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
+				reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
 				boolean isFirstNameInitialMatch = 
 						author.getAuthorName().getFirstInitial().equalsIgnoreCase(
 								targetAuthor.getAuthorName().getFirstInitial());
-				
+
 				if (isDepartmentMatch && isFirstNameInitialMatch) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
 							" [department and first name initial matches: " + extractedDept + 
@@ -81,16 +84,16 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			String targetAuthorDept = targetAuthor.getDepartment();
 			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
 			if (StringUtils.containsIgnoreCase(extractedDept, targetAuthorDept) || 
-				StringUtils.containsIgnoreCase(extractedDept, targetAuthorOtherDept) ||
-				StringUtils.containsIgnoreCase(targetAuthorDept, extractedDept) || 
-				StringUtils.containsIgnoreCase(targetAuthorOtherDept, extractedDept)) {
-				
+					StringUtils.containsIgnoreCase(extractedDept, targetAuthorOtherDept) ||
+					StringUtils.containsIgnoreCase(targetAuthorDept, extractedDept) || 
+					StringUtils.containsIgnoreCase(targetAuthorOtherDept, extractedDept)) {
+
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	private boolean departmentMatchStrict(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
@@ -99,14 +102,22 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			String targetAuthorDept = targetAuthor.getDepartment();
 			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
 			if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
-				StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
-				
+					StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
 				return true;
+			}
+
+			if (targetAuthor.getAlternateDepartmentNames() != null) {
+				for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
+					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+						slf4jLogger.info("Matched by alternate dept names: " + extractedDept + " with " + alternateDeptName);
+						return true;
+					}
+				}
 			}
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Extract Department information from string of the form "Department of *," or "Department of *.".
 	 * 

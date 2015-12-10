@@ -54,7 +54,8 @@ public class ReCiterEngine implements Engine {
 
 	public double totalPrecision;
 	public double totalRecall;
-
+	public double totalAccuracy;
+	
 	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
 		this.reCiterEngineProperty = reCiterEngineProperty;
 		targetAuthorService = new TargetAuthorServiceImpl();
@@ -83,7 +84,9 @@ public class ReCiterEngine implements Engine {
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(targetAuthor, reCiterArticleList);
 		clusterer.cluster();
-
+		slf4jLogger.info("Phase 1 Clustering result");
+		slf4jLogger.info(clusterer.toString());
+		
 		// Perform Phase 2 clusters selection.
 		ClusterSelector clusterSelector = new ReCiterClusterSelector(targetAuthor);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
@@ -95,6 +98,14 @@ public class ReCiterEngine implements Engine {
 		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
 		totalRecall += analysis.getRecall();
+		
+		// (tp + tn) / (tp + tn + fp + fn) 
+		double accuracy = 1.0 * (analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size()) / 
+				(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size() +
+						analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size());
+		slf4jLogger.info("Accuracy=" + accuracy);
+		totalAccuracy += accuracy;
+		
 		slf4jLogger.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
 		slf4jLogger.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
 		slf4jLogger.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
@@ -117,6 +128,7 @@ public class ReCiterEngine implements Engine {
 		}
 		slf4jLogger.info("Average Precision: [" + totalPrecision / cwids.size() + "]");
 		slf4jLogger.info("Average Recall: [" + totalRecall / cwids.size() + "]");
+		slf4jLogger.info("Average Accuracy: [" + totalAccuracy / cwids.size() + "]");
 		slf4jLogger.info("\n");
 	}
 

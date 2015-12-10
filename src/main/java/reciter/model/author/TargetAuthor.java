@@ -20,7 +20,8 @@ public class TargetAuthor extends ReCiterAuthor {
 	private String email;
 	private String emailOther;
 	private String pubmedSearchQuery;
-
+	private List<String> alternateDepartmentNames;
+	
 	public TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
 	}
@@ -119,5 +120,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setAliasList(List<AuthorName> aliasList) {
 		this.aliasList = aliasList;
+	}
+
+	public List<String> getAlternateDepartmentNames() {
+		return alternateDepartmentNames;
+	}
+
+	public void setAlternateDepartmentNames(List<String> alternateDepartmentNames) {
+		this.alternateDepartmentNames = alternateDepartmentNames;
 	}
 }

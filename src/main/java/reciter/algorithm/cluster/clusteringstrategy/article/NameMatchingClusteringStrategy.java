@@ -55,8 +55,8 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 			        ReCiterCluster reCiterCluster = entry.getValue();
 			        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 
-			          boolean isFirstNameMatch = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
-			          if (isFirstNameMatch) {
+			          boolean isSimilar = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
+			          if (isSimilar) {
 			            clusters.get(entry.getKey()).add(article);
 			            foundCluster = true;
 			            break;
@@ -115,18 +115,18 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 						clusterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
 
 					// Check both first name and middle initial.
-					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(
-							clusterAuthor.getAuthorName().getFirstName())
+					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstName())
 							&&
-						reCiterAuthor.getAuthorName().getMiddleInitial().equalsIgnoreCase(
-								clusterAuthor.getAuthorName().getMiddleInitial())) {
+						reCiterAuthor.getAuthorName().getMiddleInitial().equalsIgnoreCase(clusterAuthor.getAuthorName().getMiddleInitial())) {
 						
 						// check journal.
 						if (newArticle.getJournal() != null && articleInCluster.getJournal() != null) {
 							String newArticleJournal = newArticle.getJournal().getJournalTitle();
 							String articleInClusterJournal = articleInCluster.getJournal().getJournalTitle();
 							
-							if (StringUtils.equalsIgnoreCase(newArticleJournal, articleInClusterJournal)) {
+							if (newArticleJournal.length() > 0 && articleInClusterJournal.length() > 0 && 
+									StringUtils.equalsIgnoreCase(newArticleJournal, articleInClusterJournal)) {
+								
 								return true;
 							}
 						}
@@ -134,6 +134,10 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 				}
 			}
 		}
+		return false;
+	}
+	
+	private boolean splitSingle(ReCiterArticle newArticle, ReCiterArticle articleInCluster) {
 		return false;
 	}
 

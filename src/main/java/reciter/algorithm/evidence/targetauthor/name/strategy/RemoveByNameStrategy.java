@@ -190,6 +190,18 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 						} else {
 							// Handle the case where there are multiple authors with the same last name.
 							foundAuthorWithSameFirstName = true;
+							
+							// case: pmid=23045697, cwid = mlg2007
+							// First name, last name matches, but middle name and affiliation doesn't match. Mark for removal.
+							if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
+								String middleInitial = author.getAuthorName().getMiddleInitial();
+								String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
+
+								if (!StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) && reCiterArticle.getAffiliationScore() == 0) {
+									shouldRemove = true;
+									foundAuthorWithSameFirstName = false; // middle name differs.
+								}
+							}
 						}
 					} else {
 						// check middle name.
