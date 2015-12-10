@@ -179,13 +179,13 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			pubmedArticle.getMedlineCitation().getArticle().getAuthorList().add(author); // add author to author list.
 			bAuthor = true;
 		}
-		if (qName.equalsIgnoreCase("LastName")) {
+		if (qName.equalsIgnoreCase("LastName") && bAuthorList) {
 			bAuthorLastName = true;
 		}
-		if (qName.equalsIgnoreCase("ForeName")) {
+		if (qName.equalsIgnoreCase("ForeName") && bAuthorList) {
 			bAuthorForeName = true;
 		}
-		if (qName.equalsIgnoreCase("Initials")) {
+		if (qName.equalsIgnoreCase("Initials") && bAuthorList) {
 			bAuthorInitials = true;
 		}
 		if (qName.equalsIgnoreCase("Affiliation")) {
@@ -381,6 +381,10 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		
 		if (qName.equalsIgnoreCase("GrantList")) {
 			bGrantList = false;
+		}
+		
+		if (qName.equalsIgnoreCase("AuthorList")) {
+			bAuthorList = false;
 		}
 	}
 

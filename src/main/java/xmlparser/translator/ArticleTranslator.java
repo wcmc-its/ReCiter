@@ -58,7 +58,7 @@ public class ArticleTranslator {
 			String initials = author.getInitials();
 			String firstName = null;
 			String middleName = null;
-
+			
 			// PubMed sometimes concatenates the first name and middle initial into <ForeName> xml tag.
 			// This extracts the first name and middle initial.
 
