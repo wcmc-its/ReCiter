@@ -3,7 +3,6 @@ package reciter.algorithm.evidence.targetauthor.name.strategy;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,36 +22,38 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-
+		
+		slf4jLogger.info(reCiterArticle.getArticleId() + "");
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
-
+		
+		// TODO: Optimize: Move this out of the for-each loop because it's the same.
+		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
+		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+		String targetAuthorMiddleName = targetAuthor.getAuthorName().getMiddleName();
+		
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
 				String firstName = author.getAuthorName().getFirstName();
 				String lastName = author.getAuthorName().getLastName();
 				String middleName = author.getAuthorName().getMiddleName();
-
-				String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
-				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
-				String targetAuthorMiddleName = targetAuthor.getAuthorName().getMiddleName();
 				
 				// Check whether last name matches.
 				if (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(lastName),  ReCiterStringUtil.deAccent(targetAuthorLastName))) {
-
+					
+					// TODO: Optimize: do not check. can never be null. always empty string.
 					if (firstName != null && targetAuthorFirstName != null) {
-						
 						firstName = firstName.trim();
 						targetAuthorFirstName = targetAuthorFirstName.trim();
 					}
-
+					
 					// Check if first name is a full name (not an initial).
 					if (firstName.length() > 1 && targetAuthorFirstName.length() > 1) {
-
+						
 						// First name doesn't match! Should remove the article from the selected cluster.
 						if (!StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName)) {
-
+							
 							firstNameFieldVar = firstName;
 							shouldRemove = true;
 
@@ -194,6 +195,15 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							// Handle the case where there are multiple authors with the same last name.
 							foundAuthorWithSameFirstName = true;
 						}
+					} else {
+						// check middle name.
+			            // Case: False Positive List: [2]: [12814220, 21740463] for Anna Bender.
+			            // Remove this article because middle name exist in article, but not in rc_identity.
+			            if (middleName.length() > 0 && targetAuthorMiddleName.length() == 0) {
+			              if (!StringUtils.equalsIgnoreCase(middleName, targetAuthorMiddleName) && reCiterArticle.getAffiliationScore() == 0) {
+			                shouldRemove = true;
+			              }
+			            }
 					}
 				}
 			}

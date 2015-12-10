@@ -90,6 +90,7 @@ public class ReCiterEngine implements Engine {
 
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
 		slf4jLogger.info(clusterer.toString());
+		slf4jLogger.info("Analysis for cwid=[" + targetAuthor.getCwid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
