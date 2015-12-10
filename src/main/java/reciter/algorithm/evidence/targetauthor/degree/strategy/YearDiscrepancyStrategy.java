@@ -80,12 +80,22 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 					return 1;
 				}
 			} else if (degreeType.equals(DegreeType.DOCTORAL)) {
+				int doctoral = targetAuthor.getDegree().getDoctoral();
 				difference = year - targetAuthor.getDegree().getDoctoral();
-				if (difference < -13) {
-					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
-							+ " [Doctoral Degree Difference=" + difference + "]");
-					reCiterArticle.setDoctoralYearDiscrepancyScore(1);
-					return 1;
+				if (doctoral < 1998) {
+					if (difference < -6) {
+						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
+								+ " [Doctoral Degree Difference (<1988) =" + difference + "]");
+						reCiterArticle.setDoctoralYearDiscrepancyScore(1);
+						return 1;
+					}
+				} else {
+					if (difference < -13) {
+						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
+								+ " [Doctoral Degree Difference (>=1998) =" + difference + "]");
+						reCiterArticle.setDoctoralYearDiscrepancyScore(1);
+						return 1;
+					}
 				}
 			}
 		}

@@ -24,9 +24,12 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(DepartmentStringMatchStrategy.class);
 
 	private String extractedDept;
+	private int pmid;
+	private int isGoldStandard;
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		
 		if (targetAuthor == null) {
 			throw new IllegalArgumentException("Target author is null.");
 		}
@@ -34,7 +37,10 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterArticle == null) {
 			throw new IllegalArgumentException("ReCiter article is null.");
 		}
-
+		
+		pmid = reCiterArticle.getArticleId();
+		isGoldStandard = reCiterArticle.getGoldStandard();
+		
 		double score = 0;
 		if (reCiterArticle.getArticleCoAuthors() != null &&
 				reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
@@ -109,7 +115,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			if (targetAuthor.getAlternateDepartmentNames() != null) {
 				for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
 					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
-						slf4jLogger.info("Matched by alternate dept names: " + extractedDept + " with " + alternateDeptName);
+						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
 						return true;
 					}
 				}
