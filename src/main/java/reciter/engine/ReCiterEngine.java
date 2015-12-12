@@ -99,10 +99,7 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info("Recall=" + analysis.getRecall());
 		totalRecall += analysis.getRecall();
 		
-		// (tp + tn) / (tp + tn + fp + fn) 
-		double accuracy = 1.0 * (analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size()) / 
-				(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size() +
-						analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size());
+		double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2;
 		slf4jLogger.info("Accuracy=" + accuracy);
 		totalAccuracy += accuracy;
 		

@@ -8,9 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.algorithm.cluster.ReCiterExample;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 
@@ -29,28 +29,35 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		
-		if (targetAuthor == null) {
-			throw new IllegalArgumentException("Target author is null.");
-		}
 
-		if (reCiterArticle == null) {
-			throw new IllegalArgumentException("ReCiter article is null.");
-		}
-		
 		pmid = reCiterArticle.getArticleId();
 		isGoldStandard = reCiterArticle.getGoldStandard();
-		
+
 		double score = 0;
-		if (reCiterArticle.getArticleCoAuthors() != null &&
-				reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
+		if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+
 				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
 				boolean isFirstNameInitialMatch = 
-						author.getAuthorName().getFirstInitial().equalsIgnoreCase(
-								targetAuthor.getAuthorName().getFirstInitial());
+						author.getAuthorName().getFirstInitial().equalsIgnoreCase(targetAuthor.getAuthorName().getFirstInitial());
 
-				if (isDepartmentMatch && isFirstNameInitialMatch) {
+				boolean isFirstNameInitialMatchFromEmailFetched = false;
+				if (targetAuthor.getAuthorNamesFromEmailFetch() != null) {
+					for (AuthorName authorName : targetAuthor.getAuthorNamesFromEmailFetch()) {
+						if (StringUtils.equalsIgnoreCase(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
+								StringUtils.equalsIgnoreCase(authorName.getLastName(), author.getAuthorName().getLastName())) {
+							isFirstNameInitialMatchFromEmailFetched = true;
+							break;
+						}
+					}
+				}
+
+				if (reCiterArticle.getArticleId() == 2369614 && author.getAuthorName().getLastName().equals("Bracken")) {
+					System.out.println("Exit");
+				}
+
+				if ((isDepartmentMatch && isFirstNameInitialMatch) || (isDepartmentMatch && isFirstNameInitialMatchFromEmailFetched)) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
 							" [department and first name initial matches: " + extractedDept + 
 							", first name initial: " + targetAuthor.getAuthorName().getFirstInitial() + "]");

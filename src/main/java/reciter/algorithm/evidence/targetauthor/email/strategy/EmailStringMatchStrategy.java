@@ -19,14 +19,30 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				String emailCase2 = targetAuthor.getCwid() + "@mail.med.cornell.edu";
 				String emailCase3 = targetAuthor.getCwid() + "@weill.cornell.edu";
 				String emailCase4 = targetAuthor.getCwid() + "@nyp.org";
+				String targetAuthorEmailAddress = targetAuthor.getEmail();
+				String targetAuthorEmailAddressOther = targetAuthor.getEmailOther();
 
 				if (affiliation.contains(emailCase1) ||
-					affiliation.contains(emailCase2) ||
-					affiliation.contains(emailCase3) ||
-					affiliation.contains(emailCase4)) {
-					
+						affiliation.contains(emailCase2) ||
+						affiliation.contains(emailCase3) ||
+						affiliation.contains(emailCase4)) {
+
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
 					score += 1;
+				}
+
+				if (targetAuthorEmailAddress != null) {
+					if (affiliation.contains(targetAuthorEmailAddress)) {
+						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + targetAuthorEmailAddress + "]");
+						score += 1;
+					}
+				}
+				
+				if (targetAuthorEmailAddressOther != null) {
+					if (affiliation.contains(targetAuthorEmailAddressOther)) {
+						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + targetAuthorEmailAddressOther + "]");
+						score += 1;
+					}
 				}
 			}
 		}

@@ -80,9 +80,11 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			fetch(query, fileName);
 		}
 
-		for (File xmlFile : new File(getDirectory() + fileName).listFiles()) {
-			pubmedXmlParser.setXmlInputSource(xmlFile);
-			pubmedArticleList.addAll(pubmedXmlParser.parse());
+		if (directory.exists()) {
+			for (File xmlFile : directory.listFiles()) {
+				pubmedXmlParser.setXmlInputSource(xmlFile);
+				pubmedArticleList.addAll(pubmedXmlParser.parse());
+			}
 		}
 		return pubmedArticleList;
 	}
@@ -103,14 +105,14 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		pubmedXmlQuery.setRetMax(1);
 
 		String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-		
+
 		PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
 		numPubMedArticles = xmlHandler.getCount();
-		
+
 		slf4jLogger.info("PubMed Seach Query: " + eSearchUrl);
 		return numPubMedArticles;
 	}
-	
+
 	/**
 	 * Fetch all the publications for this query in PubMed and store it on disk with name fileName.
 	 * 
@@ -129,10 +131,10 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		pubmedXmlQuery.setRetMax(1);
 
 		String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-		
+
 		PubmedESearchHandler xmlHandler = PubmedESearchHandler.executeESearchQuery(eSearchUrl);
 		numPubMedArticles = xmlHandler.getCount();
-		
+
 		slf4jLogger.info("PubMed Seach Query: " + eSearchUrl);
 		slf4jLogger.info("Number of articles need to be retrieved for : " + fileName + " is "+ numPubMedArticles);
 

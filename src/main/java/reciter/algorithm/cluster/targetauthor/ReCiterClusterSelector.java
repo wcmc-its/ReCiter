@@ -143,9 +143,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		
 		// TODO: getBoardCertificationScore(map);
 
-		bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
+		// bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
-		articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
+		// articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
 		removeByNameStrategyContext = new RemoveByNameStrategyContext(new RemoveByNameStrategy());
 		
 		strategyContexts = new ArrayList<StrategyContext>();

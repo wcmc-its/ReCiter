@@ -13,27 +13,27 @@ public class AuthorName {
 	 * First Name.
 	 */
 	private String firstName;
-	
+
 	/**
 	 * First Initial.
 	 */
 	private String firstInitial;
-	
+
 	/**
 	 * Middle Name.
 	 */
 	private String middleName;
-	
+
 	/**
 	 * Middle Initial.
 	 */
 	private String middleInitial;
-	
+
 	/**
 	 * Last Name.
 	 */
 	private String lastName;
-	
+
 	/**
 	 * Name variants.
 	 */
@@ -52,7 +52,7 @@ public class AuthorName {
 		this.lastName = StringUtils.capitalize(StringUtils.lowerCase(lastName));
 		firstInitial = StringUtils.substring(this.firstName, 0, 1);
 		middleInitial = StringUtils.substring(this.middleName, 0, 1);
-		
+
 		if (firstName == null) {
 			this.firstName = "";
 		}
@@ -111,7 +111,7 @@ public class AuthorName {
 			return "0";
 		}
 	}
-	
+
 	/**
 	 * Match two names accounting for variants
 	 * > 330: last and first match
@@ -125,13 +125,13 @@ public class AuthorName {
 	}
 
 	public boolean isFullNameMatch(AuthorName name) {
-		
+
 		return StringUtils.equalsIgnoreCase(firstName, name.getFirstName()) &&
 				StringUtils.equalsIgnoreCase(middleName, name.getMiddleName()) &&
 				StringUtils.equalsIgnoreCase(lastName, name.getLastName());
 	}
 
-	
+
 	public boolean isFullName() {
 		return (StringUtils.length(firstName) > 1 || StringUtils.length(middleName) > 1);
 	}
@@ -227,8 +227,16 @@ public class AuthorName {
 		this.nameVariants = variants("coauthor", 1);
 	}
 
+	public String pubmedFormat() {
+		return lastName + " " + firstInitial;
+	}
+	
 	@Override
 	public String toString() {
-		return firstName + " " + middleName + " " + lastName;
+		if (middleName.length() > 0) {
+			return firstName + " " + middleName + " " + lastName;
+		} else {
+			return firstName + " " + lastName;
+		}
 	}
 }

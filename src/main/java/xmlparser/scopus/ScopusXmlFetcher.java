@@ -23,7 +23,7 @@ import xmlparser.scopus.model.ScopusArticle;
  *
  */
 public class ScopusXmlFetcher extends AbstractXmlFetcher {
-	
+
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
 	private static final String PROPERTIES_FILE_LOCATION = "src/main/resources/config/reciter.properties";
 	private ScopusXmlParser scopusXmlParser;
@@ -40,20 +40,34 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 
 		directory = p.getProperty("scopus_xml_folder");
 	}
-	
+
 	public class ScopusXmlFetcherRunnable implements Runnable {
 
 		private final String cwid;
 		private final String pmid;
+		private final String scopusDirectory;
+
+		public ScopusXmlFetcherRunnable(String cwid, String pmid, String scopusDirectory) {
+			this.cwid = cwid;
+			this.pmid = pmid;
+			this.scopusDirectory = scopusDirectory;
+		}
 
 		public ScopusXmlFetcherRunnable(String cwid, String pmid) {
 			this.cwid = cwid;
 			this.pmid = pmid;
+			scopusDirectory = null;
+
 		}
 
 		@Override
 		public void run() {
-			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+			ScopusXmlFetcher scopusXmlFetcher;
+			if (scopusDirectory == null) {
+				scopusXmlFetcher = new ScopusXmlFetcher();
+			} else {
+				scopusXmlFetcher = new ScopusXmlFetcher(scopusDirectory);
+			}
 			if (!scopusFileExist(cwid, pmid)) {
 				scopusXmlFetcher.fetchSingleScopus(cwid, pmid);
 			}
@@ -98,19 +112,28 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 		return getScopusXml(new File(directory + cwid + "/" + pmid + ".xml"));
 	}
 
-	@Override
-	public void fetch(String query, String fileName) {
+	public void fetch(String query, String fileName, String pubmedFileLocation, String scopusFileLocation) {
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
+		PubmedXmlFetcher pubmedXmlFetcher;
+		if (pubmedFileLocation == null) {
+			pubmedXmlFetcher = new PubmedXmlFetcher();
+		} else {
+			pubmedXmlFetcher = new PubmedXmlFetcher(pubmedFileLocation);
+		}
 		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(query, fileName);
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(fileName, pmid);
+			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(fileName, pmid, scopusFileLocation);
 			executor.execute(scopusRunnable);
 		}
 		executor.shutdown();
 		while (!executor.isTerminated()) {}
-//		slf4jLogger.info("Completed retrieving Scopus articles for " + cwid);
+		//		slf4jLogger.info("Completed retrieving Scopus articles for " + cwid);
+	}
+
+	@Override
+	public void fetch(String query, String fileName) {
+		fetch(query, fileName, null, null);
 	}
 
 	public ScopusXmlFetcher() {

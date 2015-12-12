@@ -33,6 +33,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
+
 				String firstName = author.getAuthorName().getFirstName();
 				String lastName = author.getAuthorName().getLastName();
 				String middleName = author.getAuthorName().getMiddleName();
@@ -187,10 +188,24 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 							}
+
+							// Check target author's list of name variants from the names fetched by email addresses.
+							if (shouldRemove) {
+								if (targetAuthor.getAuthorNamesFromEmailFetch() != null) {
+									for (AuthorName authorNameFromEmail : targetAuthor.getAuthorNamesFromEmailFetch()) {
+										// check whether last name and first initial matches.
+										if (StringUtils.equalsIgnoreCase(lastName, authorNameFromEmail.getLastName()) &&
+												StringUtils.equalsIgnoreCase(firstName.substring(0, 1), authorNameFromEmail.getFirstInitial())) {
+											shouldRemove = false;
+											break;
+										}
+									}
+								}
+							}
 						} else {
 							// Handle the case where there are multiple authors with the same last name.
 							foundAuthorWithSameFirstName = true;
-							
+
 							// case: pmid=23045697, cwid = mlg2007
 							// First name, last name matches, but middle name and affiliation doesn't match. Mark for removal.
 							if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
@@ -221,6 +236,17 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 							if (!StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) && reCiterArticle.getAffiliationScore() == 0) {
 								shouldRemove = true;
+							}
+						}
+
+						// case: pmid=17943945, cwid = wcb2001
+						// Name in article: W Clay Bracken, name in rc_identity = W. clay Bracken
+						// Name in article becomes firstname = W, middle initial = Clay.
+						if (shouldRemove) {
+							String firstNameMiddleName = firstName + " " + middleName;
+							String targetAuthorFirstNameRemovedPeriod = targetAuthor.getAuthorName().getFirstName().replace(".", "");
+							if (StringUtils.equalsIgnoreCase(firstNameMiddleName, targetAuthorFirstNameRemovedPeriod)) {
+								shouldRemove = false;
 							}
 						}
 					}

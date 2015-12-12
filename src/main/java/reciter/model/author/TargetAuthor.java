@@ -21,6 +21,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private String emailOther;
 	private String pubmedSearchQuery;
 	private List<String> alternateDepartmentNames;
+	private List<AuthorName> authorNamesFromEmailFetch;
 	
 	public TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
@@ -128,5 +129,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setAlternateDepartmentNames(List<String> alternateDepartmentNames) {
 		this.alternateDepartmentNames = alternateDepartmentNames;
+	}
+
+	public List<AuthorName> getAuthorNamesFromEmailFetch() {
+		return authorNamesFromEmailFetch;
+	}
+
+	public void setAuthorNamesFromEmailFetch(List<AuthorName> authorNamesFromEmailFetch) {
+		this.authorNamesFromEmailFetch = authorNamesFromEmailFetch;
 	}
 }
