@@ -203,3 +203,16 @@ java.sql.BatchUpdateException: Packet for query is too large (19926700 > 1048576
 ```
 1. Execute this query on your MYSQL server: `SET GLOBAL max_allowed_packet=1073741824;`
 2. Try running again. (Note that the value for max_allowed_packet will reset when your MYSQL server restarts.)
+
+### Author name is not in the rc_identity data table of the ReCiter database
+
+If when attempting to run ReCiter you encounter an error like this:
+```
+Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String index out of range: 1
+	at java.lang.String.substring(String.java:1950)
+	at reciter.service.impl.TargetAuthorServiceImpl.getPubMedSearchQuery(TargetAuthorServiceImpl.java:128)
+	at reciter.service.impl.TargetAuthorServiceImpl.getTargetAuthor(TargetAuthorServiceImpl.java:120)
+	at reciter.engine.ReCiterEngine.run(ReCiterEngine.java:123)
+	at reciter.algorithm.cluster.ReCiterExample.main(ReCiterExample.java:26)
+```
+Verify that there is a row in rc_identity that contains the CWID of the target author.
