@@ -65,23 +65,28 @@ If you are running an instance of ReCiter that will be connecting to the ReCiter
 
 ### For a single cwid
 Note: if you are connecting to the ReCiter database, there must be a row for the target author in the rc_identity table.
-1. In `Eclipse`, edit `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`.
-2. Go to the line after `public static void main(String[] args) throws IOException {`
-3. Edit the line that looks like this, replacing the last name, first initial, and cwid with that of your target author `runExample("Falk", "A", "avf2003");`
+1. In `Eclipse`, edit `/src/test/java/reciter/algorithm/cluster/ReCiterExampleRunSingle.java`.
+2. Go to the line after `ReCiterExampleRunSingle example = new ReCiterExampleRunSingle();`
+3. Edit the line that looks like this, replacing the cwid with that of your target author `example.engine.run("als7001");`
 4. Right-click the class in the left navigation pane, select `Run As`, then `Java Application`
 
 ### For the 63 cwids in the reference standard:
+Note: there must be a row for each target author in the rc_identity table.
 1. In `Eclipse`, edit `/src/test/java/reciter/algorithm/cluster/ReCiterExample.java`.
 2. If needed, add two forward-slashes to comment out the line that runs ReCiter for a single CWID
 3. Ensure that the following line is not commented out: `runTestCwids();`
-4. Right-click the class in the left navigation pane, select `Run As`, then `Java Application`
+4. Right-click the class in the left navigation pane, select `Run As`, then `Java Application`.
 
 ## Committing code from Eclipse to GitHub.
 1. Inside Eclipse, Right Click project -> Select `Team` -> Select `Commit` -> Select `Push to Upstream`.
 
+## Retrieving the latest code commits from GitHub.
+1. Inside Eclipse, Right Click project -> Select `Team` -> Select `Fetch from Upstream`. This will fetch the latest version of code from GitHub into your local repository.
+2. Right Click project -> Select `Team` -> Select `Pull`. This will pull the latest version of code from your local repository into the Eclipse project.
+
 ## Examining ReCiter output.
 1. ReCiter outputs a csv file for each cwid in the folder `ReCiter/src/main/resources/data/csv_output/`.
-2. The precision and recall can be found in `reciter.log` or inside `Eclipse` console.
+2. The precision and recall can be found in `reciter.log` or inside the `Eclipse` console.
 
 ## Special Note for Eclipse UTF-8 Encoding Configuration
 
