@@ -52,7 +52,7 @@ public class ReCiterArticleFetcher {
 		commonAffiliationsQuery = p.getProperty("common_affiliations_query");
 	}
 	
-	public List<ReCiterArticle> fetch(TargetAuthor targetAuthor) {
+	public List<ReCiterArticle> fetchUsingLastNameFirstInitial(TargetAuthor targetAuthor) {
 		String query = targetAuthor.getPubmedSearchQuery();
 		String cwid = targetAuthor.getCwid();
 		
@@ -76,7 +76,7 @@ public class ReCiterArticleFetcher {
 		return reCiterArticleList;
 	}
 	
-	public List<ReCiterArticle> fetchRevised(TargetAuthor targetAuthor) {
+	public List<ReCiterArticle> fetchLimitByArticleCount(TargetAuthor targetAuthor) {
 		String cwid = targetAuthor.getCwid();
 
 		// Retrieve the scopus affiliation information for this cwid if the affiliations have not been retrieve yet.

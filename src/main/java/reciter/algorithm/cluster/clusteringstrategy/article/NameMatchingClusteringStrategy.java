@@ -109,6 +109,11 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	 * For more details, see https://github.com/wcmc-its/ReCiter/issues/59.
 	 */
 	private boolean isTargetAuthorNameAndJournalMatch(ReCiterArticle newArticle, ReCiterArticle articleInCluster) {
+		// check two or more mutual co-authors (in addition to the target author).
+		int numMatchingMutualCoAuthors = 0;
+		boolean isTargetAuthorNameMatch = false;
+		boolean isJournalNameMatch = false;
+		
 		for (ReCiterAuthor reCiterAuthor : newArticle.getArticleCoAuthors().getAuthors()) {
 			for (ReCiterAuthor clusterAuthor : articleInCluster.getArticleCoAuthors().getAuthors()) {
 				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
@@ -119,6 +124,8 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 							&&
 						reCiterAuthor.getAuthorName().getMiddleInitial().equalsIgnoreCase(clusterAuthor.getAuthorName().getMiddleInitial())) {
 						
+						isTargetAuthorNameMatch = true;
+						
 						// check journal.
 						if (newArticle.getJournal() != null && articleInCluster.getJournal() != null) {
 							String newArticleJournal = newArticle.getJournal().getJournalTitle();
@@ -127,15 +134,31 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 							if (newArticleJournal.length() > 0 && articleInClusterJournal.length() > 0 && 
 									StringUtils.equalsIgnoreCase(newArticleJournal, articleInClusterJournal)) {
 								
-								return true;
+								isJournalNameMatch = true;
 							}
 						}
+						
+						
+					}
+				} else {
+					// Check both first name and middle initial.
+					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstName())
+							&&
+						reCiterAuthor.getAuthorName().getMiddleInitial().equalsIgnoreCase(clusterAuthor.getAuthorName().getMiddleInitial())) {
+						
+						numMatchingMutualCoAuthors++;
 					}
 				}
 			}
 		}
+		
+		if (isTargetAuthorNameMatch && (isJournalNameMatch)) {
+			return true;
+		}
 		return false;
 	}
+	
+	
 	
 	private boolean splitSingle(ReCiterArticle newArticle, ReCiterArticle articleInCluster) {
 		return false;

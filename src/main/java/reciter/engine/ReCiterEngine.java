@@ -77,7 +77,7 @@ public class ReCiterEngine implements Engine {
 	@Override
 	public void run(TargetAuthor targetAuthor) {
 		// Fetch the articles for this person.
-		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
+		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetchUsingLastNameFirstInitial(targetAuthor);
 
 		Analysis.assignGoldStandard(reCiterArticleList, targetAuthor.getCwid());
 		
@@ -188,7 +188,7 @@ public class ReCiterEngine implements Engine {
 		List<StrategyContext> strategyContexts = getStrategyContexts();
 		for (String cwid : cwids) {
 			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-			List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
+			List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetchUsingLastNameFirstInitial(targetAuthor);
 			
 			Analysis.assignGoldStandard(reCiterArticleList, cwid);
 			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
