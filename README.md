@@ -7,7 +7,7 @@ The <a href="../../wiki">wiki</a> includes descriptions of files used for comput
 1. Install `Java JDK 8` from http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
 2. Download the latest version of Eclipse from http://eclipse.org/downloads/. As of 9-24-15, the latest version was `Eclipse Mars`.
 3. Follow the instructions here (http://www.vogella.com/tutorials/EclipseGit/article.html) to install `EGit` for `Eclipse`.
-4. Install `Maven Integration for Eclipse` in Eclipse Marketplace (https://marketplace.eclipse.org/content/maven-integration-eclipse-luna). (As of 9-24-15, `Maven Integration for Eclipse` was the most recent version available for Eclipse Mars.) 
+4. Install `Maven Integration for Eclipse` in Eclipse Marketplace (https://marketplace.eclipse.org/content/maven-integration-eclipse-luna). (As of 1-12-16, `Maven Integration for Eclipse Luna` was the most recent version available for Eclipse Mars.) 
 5. Use the `git clone` command to clone a copy of ReCiter in an empty directory: Using the command line, navigate to the directory in which you wish to install ReCiter, then type `git clone https://github.com/wcmc-its/ReCiter.git`.
 6. Open `Eclipse`, go to `File` -> `New` -> `Java Project` -> Enter `Project name` -> Uncheck `Use default location` -> `Browse` to the location of the cloned ReCiter project -> Identify the parent folder of the cloned ReCiter project, `ReCiter` -> `Finish`.
 7. Unzip `data.7z` and place the resulting `data` folder in the project's `/src/main/resources/` directory (Note that .7z is a type of compressed file that can only be unzipped by software capable of reading files of this type, such as <a href="http://www.7-zip.org">7-zip</a>).
