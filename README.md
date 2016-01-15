@@ -222,6 +222,8 @@ Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String ind
 ```
 Verify that there is a row in rc_identity that contains the CWID of the target author.
 
+## Key ReCiter methods and their functions, in order of program flow, as of 1-15-2016. Note that this list is not exhaustive; it is meant to be an overview of the functioning of the algorithm.
+
 | Phase                        | Class                          | Method                            | Purpose                                                                                                                                                                                                    |
 |------------------------------|--------------------------------|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Retrieval                    | ReCiterExample                 | main                              | Invoke ReCiter                                                                                                                                                                                             |
