@@ -120,7 +120,30 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
 		targetAuthor.setPubmedSearchQuery(query);
 
+		updateMiddleNameFromAlias(targetAuthor);
+		
 		return targetAuthor;
+	}
+	
+	/**
+	 * In the case where the target author's middle name is an empty string, update the author's middle name from
+	 * rc_identity_directory. In the case where there are multiple middle names from rc_identity_directory,
+	 * select the middle name with the longest string length.
+	 */
+	public void updateMiddleNameFromAlias(TargetAuthor targetAuthor) {
+		if (targetAuthor.getAuthorName().getMiddleName().length() == 0) {
+			int maxLength = 0;
+			String maxLengthMiddleName = "";
+			List<AuthorName> alias = targetAuthor.getAliasList();
+			for (AuthorName authorName : alias) {
+				String aliasMiddleName = authorName.getMiddleName();
+				if (aliasMiddleName.length() > maxLength) {
+					maxLength = aliasMiddleName.length();
+					maxLengthMiddleName = aliasMiddleName;
+				}
+			}
+			targetAuthor.getAuthorName().setMiddleName(maxLengthMiddleName);
+		}
 	}
 
 	public String getPubMedSearchQuery(String lastName, String firstName) {

@@ -22,11 +22,11 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 
-		// TODO: Optimize: Move this out of the for-each loop because it's the same.
 		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
 		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
 		String targetAuthorMiddleName = targetAuthor.getAuthorName().getMiddleName();
@@ -41,7 +41,6 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 				// Check whether last name matches.
 				if (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(lastName),  ReCiterStringUtil.deAccent(targetAuthorLastName))) {
 
-					// TODO: Optimize: do not check. can never be null. always empty string.
 					firstName = firstName.trim();
 					targetAuthorFirstName = targetAuthorFirstName.trim();
 

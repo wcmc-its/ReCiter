@@ -206,7 +206,9 @@ public class AuthorName {
 		return firstName;
 	}
 	public void setFirstName(String firstName) {
+		if (firstName == null) throw new IllegalArgumentException("first name should not be null.");
 		this.firstName = firstName;
+		this.firstInitial = firstName.length() > 0 ? firstName.substring(0, 1) : "";
 	}
 	public String getFirstInitial() {
 		return firstInitial;
@@ -214,11 +216,20 @@ public class AuthorName {
 	public String getMiddleName() {
 		return middleName;
 	}
+	public void setMiddleName(String middleName) {
+		if (middleName == null) throw new IllegalArgumentException("middle name should not be null.");
+		this.middleName = middleName;
+		this.middleInitial = middleName.length() > 0 ? middleName.substring(0, 1) : "";
+	}
 	public String getMiddleInitial() {
 		return middleInitial;
 	}
 	public String getLastName() {
 		return lastName;
+	}
+	public void setLastName(String lastName) {
+		if (lastName == null) throw new IllegalArgumentException("last name should not be null.");
+		this.lastName = lastName;
 	}
 	public Set<AuthorName> getNameVariants() {
 		return nameVariants;
