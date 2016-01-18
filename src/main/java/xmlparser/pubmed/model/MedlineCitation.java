@@ -38,6 +38,7 @@ public class MedlineCitation {
 	private MedlineCitationArticle article;
 	private List<MedlineCitationMeshHeading> meshHeadingList;
 	private MedlineCitationKeywordList keywordList;
+	private List<MedlineCitationCommentsCorrections> commentsCorrectionsList;
 	
 	public MedlineCitationPMID getPmid() {
 		return pmid;
@@ -80,5 +81,11 @@ public class MedlineCitation {
 	}
 	public void setDateRevised(MedlineCitationDate dateRevised) {
 		this.dateRevised = dateRevised;
+	}
+	public List<MedlineCitationCommentsCorrections> getCommentsCorrectionsList() {
+		return commentsCorrectionsList;
+	}
+	public void setCommentsCorrectionsList(List<MedlineCitationCommentsCorrections> commentsCorrectionsList) {
+		this.commentsCorrectionsList = commentsCorrectionsList;
 	}
 }

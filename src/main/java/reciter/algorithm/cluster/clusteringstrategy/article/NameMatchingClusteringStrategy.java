@@ -8,6 +8,10 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
+import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
@@ -16,7 +20,11 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	
 	private final TargetAuthor targetAuthor;
 	
+	private StrategyContext citationStrategyContext;
+	
+	
 	public NameMatchingClusteringStrategy(TargetAuthor targetAuthor) {
+		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
 		this.targetAuthor = targetAuthor;
 	}
 
@@ -56,7 +64,9 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 			        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 
 			          boolean isSimilar = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
-			          if (isSimilar) {
+			          double citationReferenceScore = ((ReCiterArticleStrategyContext) citationStrategyContext).executeStrategy(article, reCiterArticle);
+			          
+			          if (isSimilar || citationReferenceScore == 1) {
 			            clusters.get(entry.getKey()).add(article);
 			            foundCluster = true;
 			            break;
@@ -157,8 +167,6 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		}
 		return false;
 	}
-	
-	
 	
 	private boolean splitSingle(ReCiterArticle newArticle, ReCiterArticle articleInCluster) {
 		return false;

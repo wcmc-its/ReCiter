@@ -2,6 +2,7 @@ package reciter.model.article;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import reciter.model.completeness.ArticleCompleteness;
 import reciter.model.completeness.ReCiterCompleteness;
@@ -82,7 +83,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double educationScore;
 	
 	private int goldStandard;
-	
+	private Set<Integer> commentsCorrectionsPmids;
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -348,4 +349,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setEducationScore(double educationScore) {
 		this.educationScore = educationScore;
 	}
+
+	public Set<Integer> getCommentsCorrectionsPmids() {
+		return commentsCorrectionsPmids;
+	}
+
+	public void setCommentsCorrectionsPmids(Set<Integer> commentsCorrectionsPmids) {
+		this.commentsCorrectionsPmids = commentsCorrectionsPmids;
+	}
+
 }

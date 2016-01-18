@@ -25,7 +25,7 @@ public class MedlineCitationArticle {
 	private MedlineCitationJournalInfo journalInfo;
 	private List<MedlineCitationChemical> chemicalList;
 	private List<MedlineCitationMeshHeading> meshHeadingList;
-	private List<MedlineCitationSubset> citationSubsetList;
+	private	MedlineCitationSubset citationSubset;
 	private List<MedlineCitationGrant> grantList;
 	
 	public String getArticleTitle() {

@@ -10,6 +10,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import xmlparser.pubmed.model.MedlineCitation;
 import xmlparser.pubmed.model.MedlineCitationArticle;
 import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
+import xmlparser.pubmed.model.MedlineCitationCommentsCorrections;
 import xmlparser.pubmed.model.MedlineCitationDate;
 import xmlparser.pubmed.model.MedlineCitationGrant;
 import xmlparser.pubmed.model.MedlineCitationJournal;
@@ -97,7 +98,13 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bGrantAcronym;
 	private boolean bGrantAgency;
 	private boolean bGrantCountry;
-
+	private boolean bCommentsCorrectionsList;
+	private boolean bCommentsCorrections;
+	private boolean bCommentsCorrectionsRefType;
+	private boolean bCommentsCorrectionsRefSource;
+	private boolean bCommentsCorrectionsPmidVersion;
+	private boolean bCommentsCorrectionsPmid;
+	
 	private List<PubmedArticle> pubmedArticles;
 	private List<String> meshHeading;
 	private PubmedArticle pubmedArticle;
@@ -126,7 +133,8 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			pubmedArticle.setMedlineCitation(new MedlineCitation()); // set the PubmedArticle's MedlineCitation.
 			bMedlineCitation = true;
 		}
-		if (qName.equalsIgnoreCase("PMID")) {
+		if (qName.equalsIgnoreCase("PMID") && !bCommentsCorrectionsList) {
+			// CommentsCorrectionsList tag also has pmid.
 			bPMID = true;
 		}
 		
@@ -229,6 +237,23 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		}
 		if (qName.equalsIgnoreCase("Country")) {
 			bGrantCountry = true;
+		}
+		if (qName.equalsIgnoreCase("CommentsCorrectionsList")) {
+			List<MedlineCitationCommentsCorrections> medlineCitationCommentsCorrections = new ArrayList<MedlineCitationCommentsCorrections>();
+			pubmedArticle.getMedlineCitation().setCommentsCorrectionsList(medlineCitationCommentsCorrections);
+			bCommentsCorrectionsList = true;
+		}
+		if (qName.equalsIgnoreCase("CommentsCorrections") && bCommentsCorrectionsList) {
+			bCommentsCorrections = true;
+		}
+		
+		// not used.
+//		if (qName.equalsIgnoreCase("RefSource") && bCommentsCorrections) {
+//			bCommentsCorrectionsRefSource = true;
+//		}
+		if (qName.equalsIgnoreCase("PMID") && bCommentsCorrections) {
+//			bCommentsCorrectionsPmidVersion = true;
+			bCommentsCorrectionsPmid = true;
 		}
 	}
 	
@@ -386,6 +411,22 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("AuthorList")) {
 			bAuthorList = false;
 		}
+		
+		if (bCommentsCorrections && bCommentsCorrectionsPmid) {
+			MedlineCitationCommentsCorrections medlineCitationCommentsCorrections = new MedlineCitationCommentsCorrections();
+			medlineCitationCommentsCorrections.setPmid(chars.toString());
+			pubmedArticle.getMedlineCitation().getCommentsCorrectionsList().add(medlineCitationCommentsCorrections);
+			bCommentsCorrectionsPmid = false;
+			bCommentsCorrections = false;
+		}
+		
+		if (qName.equalsIgnoreCase("CommentsCorrections") && bCommentsCorrectionsList) {
+			bCommentsCorrections = false;
+		}
+		
+		if (qName.equalsIgnoreCase("CommentsCorrectionsList")) {
+			bCommentsCorrectionsList = false;
+		}
 	}
 
 	@Override
@@ -452,6 +493,10 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		}
 		
 		if (bGrant && bGrantCountry) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bCommentsCorrections && bCommentsCorrectionsPmid) {
 			chars.append(ch, start, length);
 		}
 	}	

@@ -1,6 +1,8 @@
 package xmlparser.translator;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -12,6 +14,7 @@ import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
+import xmlparser.pubmed.model.MedlineCitationCommentsCorrections;
 import xmlparser.pubmed.model.MedlineCitationGrant;
 import xmlparser.pubmed.model.MedlineCitationKeyword;
 import xmlparser.pubmed.model.MedlineCitationKeywordList;
@@ -159,6 +162,17 @@ public class ArticleTranslator {
 //		for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
 //			
 //		}
+		
+		// translate the CommentsCorrections.
+		
+		if (pubmedArticle.getMedlineCitation().getCommentsCorrectionsList() != null) {
+			Set<Integer> commentsCorrectionsPmids = new HashSet<Integer>();
+			List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlineCitation().getCommentsCorrectionsList();
+			for (MedlineCitationCommentsCorrections medlineCitationCommentsCorrections : commentsCorrectionsList) {
+				commentsCorrectionsPmids.add(Integer.parseInt(medlineCitationCommentsCorrections.getPmid()));
+			}
+			reCiterArticle.setCommentsCorrectionsPmids(commentsCorrectionsPmids);
+		}
 		return reCiterArticle;
 	}
 }
