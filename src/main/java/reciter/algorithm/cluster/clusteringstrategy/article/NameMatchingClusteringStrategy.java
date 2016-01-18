@@ -12,6 +12,7 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
 import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
+import reciter.algorithm.evidence.article.citation.strategy.CoCitationStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
@@ -21,10 +22,11 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	private final TargetAuthor targetAuthor;
 	
 	private StrategyContext citationStrategyContext;
-	
+	private StrategyContext coCitationStrategyContext;
 	
 	public NameMatchingClusteringStrategy(TargetAuthor targetAuthor) {
 		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
+		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
 		this.targetAuthor = targetAuthor;
 	}
 
@@ -65,8 +67,9 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 
 			          boolean isSimilar = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
 			          double citationReferenceScore = ((ReCiterArticleStrategyContext) citationStrategyContext).executeStrategy(article, reCiterArticle);
+			          double coCitationReferenceScore = ((ReCiterArticleStrategyContext) coCitationStrategyContext).executeStrategy(article, reCiterArticle);
 			          
-			          if (isSimilar || citationReferenceScore == 1) {
+			          if (isSimilar || citationReferenceScore == 1 || coCitationReferenceScore > 0) {
 			            clusters.get(entry.getKey()).add(article);
 			            foundCluster = true;
 			            break;
