@@ -22,11 +22,11 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	private final TargetAuthor targetAuthor;
 	
 	private StrategyContext citationStrategyContext;
-	private StrategyContext coCitationStrategyContext;
+//	private StrategyContext coCitationStrategyContext;
 	
 	public NameMatchingClusteringStrategy(TargetAuthor targetAuthor) {
 		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
-		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
+//		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
 		this.targetAuthor = targetAuthor;
 	}
 
@@ -67,9 +67,9 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 
 			          boolean isSimilar = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
 			          double citationReferenceScore = ((ReCiterArticleStrategyContext) citationStrategyContext).executeStrategy(article, reCiterArticle);
-			          double coCitationReferenceScore = ((ReCiterArticleStrategyContext) coCitationStrategyContext).executeStrategy(article, reCiterArticle);
+//			          double coCitationReferenceScore = ((ReCiterArticleStrategyContext) coCitationStrategyContext).executeStrategy(article, reCiterArticle);
 			          
-			          if (isSimilar || citationReferenceScore == 1 || coCitationReferenceScore > 0) {
+			          if (isSimilar || citationReferenceScore == 1) {
 			            clusters.get(entry.getKey()).add(article);
 			            foundCluster = true;
 			            break;
