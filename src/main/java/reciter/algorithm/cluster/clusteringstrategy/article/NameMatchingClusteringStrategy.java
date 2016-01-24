@@ -37,13 +37,15 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	@Override
 	public Map<Integer, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles) {
 		
+		targetAuthor.setArticleSize(reCiterArticles.size());
+		
 		// Reset ReCiterCluster's static id counter to 0, so that subsequent calls
 		// to cluster method has ReCiterCluster id starts with 0.
 		ReCiterCluster.getClusterIDCounter().set(0);
 		
 		Map<Integer, ReCiterCluster> clusters = new HashMap<Integer, ReCiterCluster>();
 		boolean isFirstArticleSelected = false;
-
+		
 		for (ReCiterArticle article : reCiterArticles) {
 			if (!isFirstArticleSelected) {
 				// Select first article.

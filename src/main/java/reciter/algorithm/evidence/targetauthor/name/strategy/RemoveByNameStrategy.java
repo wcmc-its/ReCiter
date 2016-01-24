@@ -23,6 +23,9 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		
+		if (12502369 == reCiterArticle.getArticleId()) {
+			System.out.println("Here");
+		}
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();

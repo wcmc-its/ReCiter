@@ -28,10 +28,10 @@ public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
 			}
 		}
 
-		if (count > 0) {
-			reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[article " + reCiterArticle.getArticleId() +
-					" and article " + otherReCiterArticle.getArticleId() + " share " + count + " references and those are + " + sharedPmids + "], ");
-		}
+		reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
+				"[article " + reCiterArticle.getArticleId() + "(" + reCiterArticle.getGoldStandard() + ") " +
+				" and article " + otherReCiterArticle.getArticleId() + "(" + otherReCiterArticle.getGoldStandard() + ")" + 
+				" share " + count + " references and those are + " + sharedPmids + "], ");
 		return count;
 	}
 

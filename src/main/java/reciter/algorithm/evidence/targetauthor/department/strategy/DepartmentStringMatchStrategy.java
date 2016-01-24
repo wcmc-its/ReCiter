@@ -26,7 +26,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	private String extractedDept;
 	private int pmid;
 	private int isGoldStandard;
-
+//	private Set<String> departments = new HashSet<String>();
+	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 
@@ -36,7 +37,6 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		double score = 0;
 		if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-
 
 				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
 				boolean isFirstNameInitialMatch = 
@@ -51,10 +51,6 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 							break;
 						}
 					}
-				}
-
-				if (reCiterArticle.getArticleId() == 2369614 && author.getAuthorName().getLastName().equals("Bracken")) {
-					System.out.println("Exit");
 				}
 
 				if ((isDepartmentMatch && isFirstNameInitialMatch) || (isDepartmentMatch && isFirstNameInitialMatchFromEmailFetched)) {
@@ -109,13 +105,23 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 
 	private boolean departmentMatchStrict(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
+		String targetAuthorDept = targetAuthor.getDepartment();
+		String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
+		
+		// this causes precision to decrease, but increases recall.
+//		if (departments.contains(targetAuthorDept) || departments.contains(targetAuthorOtherDept)) {
+//			return true;
+//		}
+		
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
 			extractedDept = extractDepartment(affiliation);
-			String targetAuthorDept = targetAuthor.getDepartment();
-			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
+//			if (extractedDept.length() > 0) {
+//				departments.add(extractedDept);
+//			}
+			
 			if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
-					StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
+				StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
 				return true;
 			}
 

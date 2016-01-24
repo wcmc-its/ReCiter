@@ -19,11 +19,11 @@ import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
 import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
-import reciter.algorithm.evidence.article.title.ArticleTitleStrategyContext;
-import reciter.algorithm.evidence.article.title.strategy.ArticleTitleInEnglish;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
+import reciter.algorithm.evidence.targetauthor.articlesize.ArticleSizeStrategyContext;
+import reciter.algorithm.evidence.targetauthor.articlesize.strategy.ArticleSizeStrategy;
 import reciter.algorithm.evidence.targetauthor.citizenship.CitizenshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.citizenship.strategy.CitizenshipStrategy;
 import reciter.algorithm.evidence.targetauthor.degree.DegreeStrategyContext;
@@ -41,7 +41,6 @@ import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
-import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
@@ -116,6 +115,11 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	private StrategyContext removeByNameStrategyContext;
 	
+	/**
+	 * Article size.
+	 */
+	private StrategyContext articleSizeStrategyContext;
+	
 	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
@@ -140,6 +144,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		journalStrategyContext = new JournalStrategyContext(new JournalStrategy(targetAuthor));
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
+		articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy());
 		
 		// TODO: getBoardCertificationScore(map);
 
@@ -154,10 +159,11 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
 //		strategyContexts.add(educationStrategyContext);
+		strategyContexts.add(articleSizeStrategyContext);
 		
 		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
 		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
-		strategyContexts.add(articleTitleInEnglishStrategyContext);
+//		strategyContexts.add(articleTitleInEnglishStrategyContext);
 		strategyContexts.add(removeByNameStrategyContext);
 		
 		// Re-run these evidence types (could have been removed or not processed in sequence).
