@@ -1,5 +1,6 @@
 package database.dao.impl;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,7 +15,7 @@ import database.dao.IdentityDao;
 import database.model.Identity;
 
 public class IdentityDaoImpl implements IdentityDao {
-
+	
 	/**
 	 * Retrieves identity information for cwid. Identity information includes first name, last name, middle name, etc.
 	 * @param cwid
@@ -32,7 +33,7 @@ public class IdentityDaoImpl implements IdentityDao {
 		}
 		return identity;
 	}
-	
+
 	private Identity getIdentityByCwid(Connection con, String cwid) throws SQLException {
 		PreparedStatement pst = null;
 		ResultSet rs = null;
@@ -66,7 +67,7 @@ public class IdentityDaoImpl implements IdentityDao {
 		}
 		return identity;
 	}
-	
+
 	public List<Identity> getAssosiatedGrantIdentityList(String cwid){
 		List<Identity> identityList = new ArrayList<Identity>();
 		List<String> cwids=new ArrayList<String>();
@@ -98,5 +99,32 @@ public class IdentityDaoImpl implements IdentityDao {
 			DbUtil.close(con);
 		}
 		return identityList;
+	}
+
+	@Override
+	public String getPubmedQuery(String cwid) {
+		String pubmedQuery = null;
+		ResultSet rs = null;
+		CallableStatement callableStatement = null;
+		Connection con = DbConnectionFactory.getConnection();
+		
+		try {
+			String query = "{call create_pubmed_query (?)}";
+			callableStatement = con.prepareCall(query);
+			callableStatement.setString(1, cwid);
+			rs = callableStatement.executeQuery();
+
+			while (rs.next()) {
+				pubmedQuery = rs.getString("pubmedQuery");
+			}
+			
+		}  catch (SQLException e) {
+			e.printStackTrace();
+		} finally{
+			DbUtil.close(rs);
+			DbUtil.close(callableStatement);
+			DbUtil.close(con);
+		}
+		return pubmedQuery;
 	}
 }

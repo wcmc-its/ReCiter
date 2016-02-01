@@ -22,4 +22,11 @@ public interface IdentityDao {
 	 * @return
 	 */
 	List<Identity> getAssosiatedGrantIdentityList(String cwid);
+	
+	/**
+	 * Returns the pubmed query for this cwid.
+	 * @param cwid
+	 * @return
+	 */
+	String getPubmedQuery(String cwid);
 }

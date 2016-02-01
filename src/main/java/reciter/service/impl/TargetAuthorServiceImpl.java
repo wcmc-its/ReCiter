@@ -1,5 +1,7 @@
 package reciter.service.impl;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -11,11 +13,13 @@ import org.slf4j.LoggerFactory;
 import database.dao.BoardCertificationDao;
 import database.dao.IdentityAlternateDeptNamesDao;
 import database.dao.IdentityCitizenshipDao;
+import database.dao.IdentityDao;
 import database.dao.IdentityDegreeDao;
 import database.dao.IdentityDirectoryDao;
 import database.dao.impl.BoardCertificationDaoImpl;
 import database.dao.impl.IdentityAlternateDeptNamesDaoImpl;
 import database.dao.impl.IdentityCitizenshipDaoImpl;
+import database.dao.impl.IdentityDaoImpl;
 import database.dao.impl.IdentityDegreeDaoImpl;
 import database.dao.impl.IdentityDirectoryDaoImpl;
 import database.model.IdentityDegree;
@@ -117,7 +121,8 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 
 		//		Set<String> terms = constructPubmedQuery(targetAuthor);
 		//		String query = getConcatTerms(terms);
-		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
+//		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
+		String query = getPubMedSearchQuery(cwid);
 		targetAuthor.setPubmedSearchQuery(query);
 
 		updateMiddleNameFromAlias(targetAuthor);
@@ -146,6 +151,19 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		}
 	}
 
+	public String getPubMedSearchQuery(String cwid) {
+		IdentityDao identityDao = new IdentityDaoImpl();
+		String query = identityDao.getPubmedQuery(cwid);
+		String encodedUrl = null;
+		try {
+		    encodedUrl = URLEncoder.encode(query, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+		    // Can be safely ignored because UTF-8 is always supported.
+			e.printStackTrace();
+		}
+		return encodedUrl;
+	}
+	
 	public String getPubMedSearchQuery(String lastName, String firstName) {
 		lastName = lastName.replaceAll(" ", "%20");
 		String firstInitial = firstName.substring(0, 1);

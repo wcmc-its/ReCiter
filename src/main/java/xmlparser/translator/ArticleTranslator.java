@@ -55,37 +55,39 @@ public class ArticleTranslator {
 
 		// Translating Co-Authors
 		ReCiterArticleAuthors reCiterCoAuthors = new ReCiterArticleAuthors();
-		for (MedlineCitationArticleAuthor author : coAuthors) {
-			String lastName = author.getLastName();
-			String foreName = author.getForeName();
-			String initials = author.getInitials();
-			String firstName = null;
-			String middleName = null;
-			
-			// PubMed sometimes concatenates the first name and middle initial into <ForeName> xml tag.
-			// This extracts the first name and middle initial.
+		if (coAuthors != null) {
+			for (MedlineCitationArticleAuthor author : coAuthors) {
+				String lastName = author.getLastName();
+				String foreName = author.getForeName();
+				String initials = author.getInitials();
+				String firstName = null;
+				String middleName = null;
 
-			// Sometimes forename doesn't exist in XML (ie: 8661541). So initials are used instead.
-			// Forename take precedence. If foreName doesn't exist, use initials. If initials doesn't exist, use null.
-			// TODO: Deal with collective names in XML.
-			if (lastName != null) {
-				if (foreName != null) {
-					String[] foreNameArray = foreName.split("\\s+");
-					if (foreNameArray.length == 2) {
-						firstName = foreNameArray[0];
-						middleName = foreNameArray[1];
-					} else {
-						firstName = foreName;
+				// PubMed sometimes concatenates the first name and middle initial into <ForeName> xml tag.
+				// This extracts the first name and middle initial.
+
+				// Sometimes forename doesn't exist in XML (ie: 8661541). So initials are used instead.
+				// Forename take precedence. If foreName doesn't exist, use initials. If initials doesn't exist, use null.
+				// TODO: Deal with collective names in XML.
+				if (lastName != null) {
+					if (foreName != null) {
+						String[] foreNameArray = foreName.split("\\s+");
+						if (foreNameArray.length == 2) {
+							firstName = foreNameArray[0];
+							middleName = foreNameArray[1];
+						} else {
+							firstName = foreName;
+						}
+					} else if (initials != null) {
+						firstName = initials;
 					}
-				} else if (initials != null) {
-					firstName = initials;
-				}
-				String affiliation = author.getAffiliation();
-				AuthorName authorName = new AuthorName(firstName, middleName, lastName);
-				AuthorAffiliation authorAffiliation = new AuthorAffiliation(affiliation);
+					String affiliation = author.getAffiliation();
+					AuthorName authorName = new AuthorName(firstName, middleName, lastName);
+					AuthorAffiliation authorAffiliation = new AuthorAffiliation(affiliation);
 
-				ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, authorAffiliation);
-				reCiterCoAuthors.addAuthor(reCiterAuthor);
+					ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, authorAffiliation);
+					reCiterCoAuthors.addAuthor(reCiterAuthor);
+				}
 			}
 		}
 
@@ -100,7 +102,7 @@ public class ArticleTranslator {
 		}
 
 		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
-		
+
 		if (meshList != null) {
 			// Translating Mesh
 			for (MedlineCitationMeshHeading mesh : meshList) {
@@ -123,7 +125,7 @@ public class ArticleTranslator {
 		// 4. Check that scopus author's first name is more "complete" than Pubmed'a author name.
 		// 5. Only update if PubMed's author name is length = 1.
 		// 6. remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
-		
+
 		if (scopusArticle != null) {
 			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
 				String scopusAuthorFirstName = scopusAuthor.getGivenName();
@@ -136,7 +138,7 @@ public class ArticleTranslator {
 						if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
 							if (scopusAuthorFirstName.substring(0, 1).equals(reCiterAuthorFirstInitial)) {
 								if (scopusAuthorFirstName.length() > reCiterAuthorFirstName.length()) {
-//									System.out.println("[" + scopusAuthorFirstName + "], [" + reCiterAuthorFirstName + "]");
+									//									System.out.println("[" + scopusAuthorFirstName + "], [" + reCiterAuthorFirstName + "]");
 
 									if (reCiterAuthorFirstName.length() == 1) {
 
@@ -156,15 +158,15 @@ public class ArticleTranslator {
 			}
 		}
 		reCiterArticle.setScopusArticle(scopusArticle);
-		
+
 		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlineCitation().getArticle().getGrantList();
-		
-//		for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
-//			
-//		}
-		
+
+		//		for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
+		//			
+		//		}
+
 		// translate the CommentsCorrections.
-		
+
 		if (pubmedArticle.getMedlineCitation().getCommentsCorrectionsList() != null) {
 			Set<Integer> commentsCorrectionsPmids = new HashSet<Integer>();
 			List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlineCitation().getCommentsCorrectionsList();

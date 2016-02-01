@@ -52,7 +52,7 @@ public class ReCiterArticleFetcher {
 		commonAffiliationsQuery = p.getProperty("common_affiliations_query");
 	}
 	
-	public List<ReCiterArticle> fetchUsingLastNameFirstInitial(TargetAuthor targetAuthor) {
+	public List<ReCiterArticle> fetch(TargetAuthor targetAuthor) {
 		String query = targetAuthor.getPubmedSearchQuery();
 		String cwid = targetAuthor.getCwid();
 		
