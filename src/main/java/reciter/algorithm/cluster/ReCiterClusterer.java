@@ -48,7 +48,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 		StringBuilder sb = new StringBuilder();
 
 		for (Entry<Integer, ReCiterCluster> cluster : clusters.entrySet()) {
-			sb.append("\nCluster id: " + cluster.getKey() + "= ");
+			sb.append("\nCluster id: " + cluster.getKey() + "= ," + cluster.getValue().getClusterInfo());
 			for (ReCiterArticle reCiterArticle : cluster.getValue().getArticleCluster()) {
 				sb.append(reCiterArticle.getArticleId() + ", ");
 			}

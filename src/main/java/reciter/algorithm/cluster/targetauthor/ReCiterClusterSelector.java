@@ -19,6 +19,9 @@ import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
 import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
+import reciter.algorithm.evidence.cluster.RemoveClusterStrategyContext;
+import reciter.algorithm.evidence.cluster.clustersize.ClusterSizeStrategyContext;
+import reciter.algorithm.evidence.cluster.clustersize.strategy.ClusterSizeStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
@@ -120,6 +123,10 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	private StrategyContext articleSizeStrategyContext;
 	
+	/**
+	 * Remove clusters based on cluster information.
+	 */
+	private StrategyContext clusterSizeStrategyContext;
 	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
@@ -127,7 +134,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	//	
 	private List<StrategyContext> strategyContexts;
 
-	private Set<Integer> selectedClusterIds;
+	private Set<Integer> selectedClusterIds; // List of currently selected cluster ids.
 
 	public ReCiterClusterSelector(TargetAuthor targetAuthor) {
 
@@ -153,6 +160,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		// articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
 		removeByNameStrategyContext = new RemoveByNameStrategyContext(new RemoveByNameStrategy());
 		
+		clusterSizeStrategyContext = new ClusterSizeStrategyContext(new ClusterSizeStrategy());
+		
 		strategyContexts = new ArrayList<StrategyContext>();
 		strategyContexts.add(scopusStrategyContext);
 		strategyContexts.add(coauthorStrategyContext);
@@ -169,6 +178,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		strategyContexts.add(emailStrategyContext);
 //		strategyContexts.add(affiliationStrategyContext);
+		
+		// https://github.com/wcmc-its/ReCiter/issues/136
+		strategyContexts.add(clusterSizeStrategyContext);
 	}
 	
 	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
@@ -388,6 +400,28 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		
 		clusters.put(clusterOfRemovedArticles.getClusterID(), clusterOfRemovedArticles);
 	}
+	
+	/**
+	 * Handle removal of a cluster from selected clusters.
+	 * @param removeClusterStrategyContext
+	 * @param clusters
+	 * @param targetAuthor
+	 */
+	public void handleRemoveClusterStrategyContext(
+			RemoveClusterStrategyContext removeClusterStrategyContext,
+			Map<Integer, ReCiterCluster> clusters,
+			TargetAuthor targetAuthor) {
+		
+		Iterator<Integer> iterator = selectedClusterIds.iterator();
+		while (iterator.hasNext()) {
+			int clusterId = iterator.next();
+			ReCiterCluster cluster = clusters.get(clusterId);
+			double score = removeClusterStrategyContext.executeStrategy(cluster, targetAuthor);
+			if (score > 0) {
+				iterator.remove();
+			}
+		}
+	}
 
 	/**
 	 * Handler for a generic StrategyContext object.
@@ -402,6 +436,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			handleReCiterArticleStrategyContext((ReCiterArticleStrategyContext) strategyContext, clusters, targetAuthor);
 		} else if (strategyContext instanceof RemoveReCiterArticleStrategyContext) {
 			handleRemoveReCiterArticleStrategyContext((RemoveReCiterArticleStrategyContext) strategyContext, clusters, targetAuthor);
+		} else if (strategyContext instanceof RemoveClusterStrategyContext) {
+			handleRemoveClusterStrategyContext((RemoveClusterStrategyContext) strategyContext, clusters, targetAuthor);
 		}
 	}
 

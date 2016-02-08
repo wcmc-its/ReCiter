@@ -40,6 +40,8 @@ public class ReCiterCluster {
 	 */
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterCluster.class);	
 
+	private String clusterInfo = "";
+	
 	/**
 	 * Returns a list of pmids of articles in this cluster.
 	 */
@@ -185,5 +187,13 @@ public class ReCiterCluster {
 
 	public void setClusterOriginator(int clusterOriginator) {
 		this.clusterOriginator = clusterOriginator;
+	}
+
+	public String getClusterInfo() {
+		return clusterInfo;
+	}
+
+	public void setClusterInfo(String clusterInfo) {
+		this.clusterInfo = clusterInfo;
 	}
 }
