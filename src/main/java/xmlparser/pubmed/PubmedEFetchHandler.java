@@ -20,6 +20,7 @@ import xmlparser.pubmed.model.MedlineCitationKeywordList;
 import xmlparser.pubmed.model.MedlineCitationMeshHeading;
 import xmlparser.pubmed.model.MedlineCitationMeshHeadingDescriptorName;
 import xmlparser.pubmed.model.MedlineCitationPMID;
+import xmlparser.pubmed.model.MedlineCitationYNEnum;
 import xmlparser.pubmed.model.PubmedArticle;
 
 /**
@@ -79,6 +80,7 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bMeshHeadingList;
 	private boolean bMeshHeading;
 	private boolean bDescriptorName;
+	private boolean bMajorTopicYN;
 	private boolean bKeywordList;
 	private boolean bKeyword;
 	private boolean bPubmedData;
@@ -106,14 +108,14 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bCommentsCorrectionsPmid;
 	
 	private List<PubmedArticle> pubmedArticles;
-	private List<String> meshHeading;
+//	private List<String> meshHeading;
 	private PubmedArticle pubmedArticle;
 	
 	private StringBuilder chars = new StringBuilder();
 	
-	public List<String> getMeshHeading() {
-		return meshHeading;
-	}
+//	public List<String> getMeshHeading() {
+//		return meshHeading;
+//	}
 	public List<PubmedArticle> getPubmedArticles() {
 		return pubmedArticles;
 	}
@@ -211,8 +213,18 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			pubmedArticle.getMedlineCitation().setMeshHeadingList(new ArrayList<MedlineCitationMeshHeading>());
 		}
 		if (qName.equalsIgnoreCase("DescriptorName")) {
+			// Set MedlineCitationYNEnum.
+			String majorTopicYN = attributes.getValue("MajorTopicYN");
+			MedlineCitationYNEnum medlineCitationYNEnum = null;
+			if (majorTopicYN != null) {
+				if ("Y".equals(majorTopicYN))
+					medlineCitationYNEnum = MedlineCitationYNEnum.Y;
+				else if ("N".equals(majorTopicYN))
+					medlineCitationYNEnum = MedlineCitationYNEnum.N;
+			}
 			MedlineCitationMeshHeading medlineCitationMeshHeading = new MedlineCitationMeshHeading();
 			MedlineCitationMeshHeadingDescriptorName medlineCitationMeshHeadingDescriptorName = new MedlineCitationMeshHeadingDescriptorName();
+			medlineCitationMeshHeadingDescriptorName.setMajorTopicYN(medlineCitationYNEnum);
 			medlineCitationMeshHeading.setDescriptorName(medlineCitationMeshHeadingDescriptorName);
 			pubmedArticle.getMedlineCitation().getMeshHeadingList().add(medlineCitationMeshHeading);
 			bDescriptorName = true;

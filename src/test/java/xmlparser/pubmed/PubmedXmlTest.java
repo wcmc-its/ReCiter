@@ -10,16 +10,15 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
-import xmlparser.pubmed.PubmedEFetchHandler;
-import xmlparser.pubmed.PubmedESearchHandler;
-import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
-import xmlparser.pubmed.model.MedlineCitationKeywordList;
-import xmlparser.pubmed.model.MedlineCitationMeshHeading;
-import xmlparser.pubmed.model.PubmedArticle;
-
 import org.junit.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
+import xmlparser.pubmed.model.MedlineCitationKeywordList;
+import xmlparser.pubmed.model.MedlineCitationMeshHeading;
+import xmlparser.pubmed.model.MedlineCitationYNEnum;
+import xmlparser.pubmed.model.PubmedArticle;
 
 public class PubmedXmlTest {
 
@@ -96,9 +95,20 @@ public class PubmedXmlTest {
 		// PMID: 24551322
 		List<MedlineCitationMeshHeading> meshHeadings = p2.getMedlineCitation().getMeshHeadingList();
 		String[] meshArray = {"Audiovisual Aids", "Comprehension", "Health Literacy", "Humans", "Mathematical Concepts", "Self Care", "United States"};
+		MedlineCitationYNEnum[] medlineCitationYNEnumArray = {
+				MedlineCitationYNEnum.Y,
+				MedlineCitationYNEnum.N,
+				MedlineCitationYNEnum.Y,
+				MedlineCitationYNEnum.N,
+				MedlineCitationYNEnum.Y,
+				MedlineCitationYNEnum.N,
+				MedlineCitationYNEnum.N
+		};
+		
 		assertEquals(meshArray.length, meshHeadings.size());
 		for (int i = 0; i < meshHeadings.size(); i++) {
 			assertEquals(meshArray[i], meshHeadings.get(i).getDescriptorName().getDescriptorNameString());
+			assertEquals(medlineCitationYNEnumArray[i], meshHeadings.get(i).getDescriptorName().getMajorTopicYN());
 		}
 		
 		assertEquals("2013", p2.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
