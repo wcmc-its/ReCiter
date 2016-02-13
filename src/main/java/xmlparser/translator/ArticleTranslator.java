@@ -1,5 +1,6 @@
 package xmlparser.translator;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,7 +10,11 @@ import org.apache.commons.lang3.StringUtils;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleKeywords;
+import reciter.model.article.ReCiterArticleMeshHeading;
+import reciter.model.article.ReCiterCitationYNEnum;
 import reciter.model.article.ReCiterJournal;
+import reciter.model.article.ReCiterMeshHeadingDescriptorName;
+import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
@@ -19,6 +24,8 @@ import xmlparser.pubmed.model.MedlineCitationGrant;
 import xmlparser.pubmed.model.MedlineCitationKeyword;
 import xmlparser.pubmed.model.MedlineCitationKeywordList;
 import xmlparser.pubmed.model.MedlineCitationMeshHeading;
+import xmlparser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
+import xmlparser.pubmed.model.MedlineCitationYNEnum;
 import xmlparser.pubmed.model.PubmedArticle;
 import xmlparser.scopus.model.Author;
 import xmlparser.scopus.model.ScopusArticle;
@@ -102,22 +109,59 @@ public class ArticleTranslator {
 		}
 
 		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
-
+		List<ReCiterArticleMeshHeading> reCiterArticleMeshHeadings = new ArrayList<ReCiterArticleMeshHeading>(meshList.size());
 		if (meshList != null) {
 			// Translating Mesh
-			for (MedlineCitationMeshHeading mesh : meshList) {
-				String meshTerm = mesh.getDescriptorName().getDescriptorNameString();				
-				articleKeywords.addKeyword(meshTerm);
-				reCiterArticle.setMeshTerm(meshTerm);
+			for (MedlineCitationMeshHeading medlineCitationMeshHeading : meshList) {
+				String descriptorNameString = medlineCitationMeshHeading.getDescriptorName().getDescriptorNameString();
+				MedlineCitationYNEnum meshMajorTopicYN = medlineCitationMeshHeading.getDescriptorName().getMajorTopicYN();
+				List<MedlineCitationMeshHeadingQualifierName> medlineCitationMeshHeadingQualifierNames = 
+						medlineCitationMeshHeading.getQualifierNameList();
+				
+				List<ReCiterMeshHeadingQualifierName> reCiterMeshHeadingQualifierNames = 
+						new ArrayList<ReCiterMeshHeadingQualifierName>(medlineCitationMeshHeadingQualifierNames.size());
+				
+				// Set descriptor name and major topic.
+				ReCiterArticleMeshHeading reCiterArticleMeshHeading = new ReCiterArticleMeshHeading();
+				ReCiterMeshHeadingDescriptorName reCiterMeshHeadingDescriptorName = new ReCiterMeshHeadingDescriptorName();
+				reCiterMeshHeadingDescriptorName.setDescriptorName(descriptorNameString);
+				ReCiterCitationYNEnum reCiterCitationYNEnum;
+				if (MedlineCitationYNEnum.Y == meshMajorTopicYN) {
+					reCiterCitationYNEnum = ReCiterCitationYNEnum.Y;
+				} else {
+					reCiterCitationYNEnum = ReCiterCitationYNEnum.N;
+				}
+				reCiterMeshHeadingDescriptorName.setMajorTopicYN(reCiterCitationYNEnum);
+				reCiterArticleMeshHeading.setDescriptorName(reCiterMeshHeadingDescriptorName);
+				
+				// For each qualifier, set name and major topic.
+				for (MedlineCitationMeshHeadingQualifierName medlineCitationMeshHeadingQualifierName : medlineCitationMeshHeadingQualifierNames) {
+					ReCiterMeshHeadingQualifierName reCiterMeshHeadingQualifierName = new ReCiterMeshHeadingQualifierName();
+					reCiterMeshHeadingQualifierName.setQualifierName(medlineCitationMeshHeadingQualifierName.getQualifierName());
+					
+					ReCiterCitationYNEnum e;
+					if (medlineCitationMeshHeadingQualifierName.getMajorTopicYN() == MedlineCitationYNEnum.Y) {
+						e = ReCiterCitationYNEnum.Y;
+					} else {
+						e = ReCiterCitationYNEnum.N;
+					}
+					reCiterMeshHeadingQualifierName.setMajorTopicYN(e);
+					reCiterMeshHeadingQualifierNames.add(reCiterMeshHeadingQualifierName);
+				}
+				
+				reCiterArticleMeshHeading.setQualifierNameList(reCiterMeshHeadingQualifierNames);
+				reCiterArticleMeshHeadings.add(reCiterArticleMeshHeading);
 			}	
 		}
+		
 		reCiterArticle.setArticleTitle(articleTitle);
 		reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
 		reCiterArticle.setArticleKeywords(articleKeywords);
 		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
 		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlineCitation().getArticle().getJournal().getIsoAbbreviation());
-
+		reCiterArticle.setMeshHeadings(reCiterArticleMeshHeadings);
+		
 		// Update PubMed's authors' first name from Scopus Article. Logic is as follows:
 		// 1. First compare last name if match:
 		// 2. Check scopus's first name has length > 1, so no initials (b/c PubMed already contains this info.)

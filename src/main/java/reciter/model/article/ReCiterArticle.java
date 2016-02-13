@@ -1,6 +1,5 @@
 package reciter.model.article;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -51,11 +50,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private ScopusArticle scopusArticle;
 	
 	/**
-	 * MeSH Terms.
-	 */
-	private List<String> meshList;
-	
-	/**
 	 * Grant List.
 	 */
 	private List<ReCiterArticleGrant> grantList;
@@ -81,10 +75,9 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double doctoralYearDiscrepancyScore;
 	private boolean isArticleTitleStartWithBracket;
 	private double educationStrategyScore;
-	
 	private int goldStandard;
 	private Set<Integer> commentsCorrectionsPmids;
-	
+	private List<ReCiterArticleMeshHeading> meshHeadings;
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID
@@ -92,7 +85,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public ReCiterArticle(int articleId) {
 		this.articleId = articleId;
 		this.setArticleCompleteness(new ReCiterCompleteness());
-		setMeshList(new ArrayList<String>());
 	}
 	
 	@Override
@@ -166,18 +158,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setScopusArticle(ScopusArticle scopusArticle) {
 		this.scopusArticle = scopusArticle;
-	}
-
-	public List<String> getMeshList() {
-		return meshList;
-	}
-
-	public void setMeshList(List<String> meshList) {
-		this.meshList = meshList;
-	}
-	public void setMeshTerm(String meshTerm) {
-		if(this.meshList==null)this.meshList=new ArrayList<String>();
-		this.meshList.add(meshTerm);
 	}
 
 	@Override
@@ -356,6 +336,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setCommentsCorrectionsPmids(Set<Integer> commentsCorrectionsPmids) {
 		this.commentsCorrectionsPmids = commentsCorrectionsPmids;
+	}
+
+	public List<ReCiterArticleMeshHeading> getMeshHeadings() {
+		return meshHeadings;
+	}
+
+	public void setMeshHeadings(List<ReCiterArticleMeshHeading> meshHeadings) {
+		this.meshHeadings = meshHeadings;
 	}
 
 }
