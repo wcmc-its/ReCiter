@@ -26,4 +26,3 @@ public class MeshMajorStrategyContext implements ReCiterArticleStrategyContext {
 		return strategy.executeStrategy(reCiterArticles, otherReCiterArticle);
 	}
 }
-
