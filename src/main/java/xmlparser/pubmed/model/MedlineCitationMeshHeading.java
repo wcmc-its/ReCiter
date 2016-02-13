@@ -13,4 +13,10 @@ public class MedlineCitationMeshHeading {
 	public void setDescriptorName(MedlineCitationMeshHeadingDescriptorName descriptorName) {
 		this.descriptorName = descriptorName;
 	}
+	public List<MedlineCitationMeshHeadingQualifierName> getQualifierNameList() {
+		return qualifierNameList;
+	}
+	public void setQualifierNameList(List<MedlineCitationMeshHeadingQualifierName> qualifierNameList) {
+		this.qualifierNameList = qualifierNameList;
+	}
 }

@@ -1,6 +1,6 @@
 package xmlparser.pubmed;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,10 +11,7 @@ import java.util.List;
 
 import javax.xml.parsers.SAXParserFactory;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
@@ -25,21 +22,10 @@ public class PubmedXmlCommentsCorrectionsListTest {
 
 	private String location = "src/test/resources/xml/";
 	private String fileName = "14691233.xml";
-	private PubmedArticle article;
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-		System.out.println("Set Up before class");
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-		System.out.println("Tear down after class");
-	}
+	private List<MedlineCitationCommentsCorrections> commentsCorrectionsList;
 
 	@Before
 	public void setUp() throws Exception {
-		System.out.println("Setup");
 		File file = new File(location + fileName);
 		InputStream inputStream = new FileInputStream(file);
 		Reader reader = new InputStreamReader(inputStream, "UTF-8");
@@ -50,24 +36,24 @@ public class PubmedXmlCommentsCorrectionsListTest {
 						.newSAXParser()
 						.parse(is, pubmedXmlHandler);
 		
-		article = pubmedXmlHandler.getPubmedArticles().get(0);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		System.out.println("Tear Down");
+		PubmedArticle article = pubmedXmlHandler.getPubmedArticles().get(0);
+		commentsCorrectionsList = article.getMedlineCitation().getCommentsCorrectionsList();
 	}
 	
 	/**
-	 * Test that pmid is parsed corrected from the '<CommentsCorrections>' tag in the PubMed xml.
+	 * Test that size of '<CommentsCorrections>' is correct.
 	 */
 	@Test
-	public void testCommentsCorrections() {
-		System.out.println("Testing 'testCommentsCorrections'");
-		List<MedlineCitationCommentsCorrections> commentsCorrectionsList = article.getMedlineCitation().getCommentsCorrectionsList();
-		assertEquals(commentsCorrectionsList.size(), 61);
-		MedlineCitationCommentsCorrections first = commentsCorrectionsList.get(0);
-		assertEquals(first.getPmid(), "1814507");
+	public void testSizeOfCommentsCorrectionsList() {
+		assertEquals(61, commentsCorrectionsList.size());
 	}
-
+	
+	/**
+	 * Test that the first pmid is parsed correctly from the '<CommentsCorrections>' tag in the PubMed xml.
+	 */
+	@Test
+	public void testFirstPmidOfCommentsCorrectionsList() {
+		MedlineCitationCommentsCorrections first = commentsCorrectionsList.get(0);
+		assertEquals("1814507", first.getPmid());
+	}
 }
