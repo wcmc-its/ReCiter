@@ -59,7 +59,7 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 */
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 
-		boolean isAuthorNameMatch = matchRelaxedAuthorName(reCiterArticle, targetAuthor);
+		boolean isAuthorNameMatch = matchAuthorName(reCiterArticle, targetAuthor);
 
 		if (isAuthorNameMatch) {
 			List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
