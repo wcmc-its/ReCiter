@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
@@ -49,6 +51,8 @@ import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 
 public class ReCiterClusterSelector extends AbstractClusterSelector {
+
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterSelector.class);
 
 	/** Cluster selection strategy contexts. */
 
@@ -107,27 +111,27 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * Discounts Articles not in English.
 	 */
 	private StrategyContext articleTitleInEnglishStrategyContext;
-	
+
 	/**
 	 * Education.
 	 */
 	private StrategyContext educationStrategyContext;
-	
+
 	/**
 	 * Remove article if the full first name doesn't match.
 	 */
 	private StrategyContext removeByNameStrategyContext;
-	
+
 	/**
 	 * Article size.
 	 */
 	private StrategyContext articleSizeStrategyContext;
-	
+
 	/**
 	 * Remove clusters based on cluster information.
 	 */
 	private StrategyContext clusterSizeStrategyContext;
-	
+
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
@@ -136,7 +140,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 	private Set<Integer> selectedClusterIds; // List of currently selected cluster ids.
 
-	public ReCiterClusterSelector(TargetAuthor targetAuthor) {
+	public ReCiterClusterSelector(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 
 		// Strategies that select clusters that are similar to the target author.
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
@@ -152,37 +156,37 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
 		articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy());
-		
+
 		// TODO: getBoardCertificationScore(map);
 
 		// bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 		// articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
 		removeByNameStrategyContext = new RemoveByNameStrategyContext(new RemoveByNameStrategy());
-		
+
 		clusterSizeStrategyContext = new ClusterSizeStrategyContext(new ClusterSizeStrategy());
-		
+
 		strategyContexts = new ArrayList<StrategyContext>();
 		strategyContexts.add(scopusStrategyContext);
 		strategyContexts.add(coauthorStrategyContext);
 		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
-//		strategyContexts.add(educationStrategyContext);
+		//		strategyContexts.add(educationStrategyContext);
 		strategyContexts.add(articleSizeStrategyContext);
-		
+
 		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
 		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
-//		strategyContexts.add(articleTitleInEnglishStrategyContext);
+		//		strategyContexts.add(articleTitleInEnglishStrategyContext);
 		strategyContexts.add(removeByNameStrategyContext);
-		
+
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		strategyContexts.add(emailStrategyContext);
-//		strategyContexts.add(affiliationStrategyContext);
-		
+		//		strategyContexts.add(affiliationStrategyContext);
+
 		// https://github.com/wcmc-its/ReCiter/issues/136
 		strategyContexts.add(clusterSizeStrategyContext);
 	}
-	
+
 	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			if (strategyContext instanceof TargetAuthorStrategyContext) {
@@ -190,7 +194,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			}
 		}
 	}
-	
+
 	@Override
 	public void runSelectionStrategy(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 		// Select clusters that are similar to the target author.
@@ -198,7 +202,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 		// If no cluster ids are selected, select the cluster with the first name and middle name matches.
 		selectClustersFallBack(clusters, targetAuthor);
-		
+
 		// Reassign individual article that are similar to the target author. 
 		reAssignArticles(strategyContexts, clusters, targetAuthor);
 	}
@@ -316,7 +320,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 				}
 			}
 		}
-		// Now move the selected article to new cluster using clusterIdToReCiterArticleList map.
+		// Now move the selected article to its cluster where the score returns greater than 0
+		// using clusterIdToReCiterArticleList map.
 		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
 			for (ReCiterArticle article : entry.getValue()) {
 				clusters.get(entry.getKey()).add(article);
@@ -365,14 +370,14 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			}
 		}
 
-		// Add to new cluster.
+		// Add article to existing cluster.
 		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
 			for (ReCiterArticle article : entry.getValue()) {
 				clusters.get(entry.getKey()).add(article);
 			}
 		}
 	}
-	
+
 	/**
 	 * Handle removal of articles from selected clusters.
 	 * @param removeReCiterArticleStrategyContext
@@ -383,9 +388,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			RemoveReCiterArticleStrategyContext removeReCiterArticleStrategyContext,
 			Map<Integer, ReCiterCluster> clusters,
 			TargetAuthor targetAuthor) {
-		
+
 		ReCiterCluster clusterOfRemovedArticles = new ReCiterCluster();
-		
+
 		for (int clusterId : selectedClusterIds) {
 			Iterator<ReCiterArticle> iterator = clusters.get(clusterId).getArticleCluster().iterator();
 			while (iterator.hasNext()) {
@@ -397,10 +402,10 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 				}
 			}
 		}
-		
+
 		clusters.put(clusterOfRemovedArticles.getClusterID(), clusterOfRemovedArticles);
 	}
-	
+
 	/**
 	 * Handle removal of a cluster from selected clusters.
 	 * @param removeClusterStrategyContext
@@ -411,7 +416,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			RemoveClusterStrategyContext removeClusterStrategyContext,
 			Map<Integer, ReCiterCluster> clusters,
 			TargetAuthor targetAuthor) {
-		
+
 		Iterator<Integer> iterator = selectedClusterIds.iterator();
 		while (iterator.hasNext()) {
 			int clusterId = iterator.next();
@@ -422,6 +427,46 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			}
 		}
 	}
+
+
+	@Override
+	public void handleNonSelectedClusters(
+			TargetAuthorStrategyContext strategyContext, 
+			Map<Integer, ReCiterCluster> clusters, 
+			TargetAuthor targetAuthor) {
+
+		// Map of cluster ids to ReCiterarticle objects. A new cluster that contains previously not selected articles.
+		List<ReCiterArticle> movedArticles = new ArrayList<ReCiterArticle>();
+		for (Entry<Integer, ReCiterCluster> entry : clusters.entrySet()) {
+			// Do not iterate through the selected cluster ids's articles.
+			if (!selectedClusterIds.contains(entry.getKey())) {
+
+				// Iterate through the remaining final cluster that are not selected in selectedClusterIds.
+				Iterator<ReCiterArticle> iterator = entry.getValue().getArticleCluster().iterator();
+				while (iterator.hasNext()) {
+					ReCiterArticle article = iterator.next();
+
+					if (strategyContext.executeStrategy(article, targetAuthor) > 0) {
+						movedArticles.add(article);
+						iterator.remove();
+					}
+				}
+			}
+		}
+
+		slf4jLogger.info("size=" + movedArticles.size());
+
+		// Create a new cluster containing these articles and put its cluster id into the selectedClusterIds.
+		if (movedArticles.size() > 0) {
+			ReCiterCluster newCluster = new ReCiterCluster();
+			newCluster.setClusterOriginator(movedArticles.get(0).getArticleId()); // select a cluster originator.
+			newCluster.setArticleCluster(movedArticles);
+			clusters.put(newCluster.getClusterID(), newCluster);
+			selectedClusterIds.add(newCluster.getClusterID());
+			slf4jLogger.info("new cluster=" + newCluster.getClusterID());
+		}
+	}
+
 
 	/**
 	 * Handler for a generic StrategyContext object.

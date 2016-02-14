@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.model.author.TargetAuthor;
 
 public interface ClusterSelector {
@@ -11,4 +12,6 @@ public interface ClusterSelector {
 	void runSelectionStrategy(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor);
 	
 	Set<Integer> getSelectedClusterIds();
+	
+	void handleNonSelectedClusters(TargetAuthorStrategyContext strategyContext, Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor);
 }

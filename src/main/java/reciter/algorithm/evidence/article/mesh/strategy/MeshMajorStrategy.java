@@ -6,7 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import database.dao.MeshRawCount;
+import database.dao.impl.MeshRawCountImpl;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
@@ -29,8 +33,12 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 
 	private static Map<String, Long> meshRawCountCache = new HashMap<String, Long>();
 
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(MeshMajorStrategy.class);
+
 	public MeshMajorStrategy(List<ReCiterArticle> selectedReCiterArticles) {
+		meshRawCount = new MeshRawCountImpl();
 		meshFrequency = buildMeshFrequency(selectedReCiterArticles);
+		generatedMeshMajors = buildGeneratedMesh(meshFrequency, threshold);
 	}
 
 	/**
@@ -51,16 +59,20 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 */
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 
-		boolean isAuthorNameMatch = matchAuthorName(reCiterArticle, targetAuthor);
+		boolean isAuthorNameMatch = matchRelaxedAuthorName(reCiterArticle, targetAuthor);
 
 		if (isAuthorNameMatch) {
 			List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
 			for (ReCiterArticleMeshHeading meshHeading : meshHeadings) {
 				String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
 				if (generatedMeshMajors.contains(descriptorName)) {
+					slf4jLogger.info("Moved reCiterArticle=[" + reCiterArticle.getArticleId() + "] to 'yes` pile using "
+							+ "mesh=[" + descriptorName + "] gold standard=[" + reCiterArticle.getGoldStandard() + "]");
 					return 1;
 				}
 			}
+		} else {
+			slf4jLogger.info("reCiterArticle=[" + reCiterArticle.getArticleId() + "] author name doesn't match.");
 		}
 
 		return 0;
@@ -104,9 +116,9 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 * @param threshold
 	 * @return
 	 */
-	private Set<String> buildGeneratedMesh(Map<String, Integer> meshFrequency, double threshold) {
+	private Set<String> buildGeneratedMesh(Map<String, Long> meshFrequency, double threshold) {
 		Set<String> generatedMeshMajors = new HashSet<String>();
-		for (Map.Entry<String, Integer> entry : meshFrequency.entrySet()) {
+		for (Map.Entry<String, Long> entry : meshFrequency.entrySet()) {
 			String mesh = entry.getKey();
 			long meshCountInTargetAuthorArticles = entry.getValue();
 
@@ -117,12 +129,15 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 
 			long rawCountFromPubmed = meshRawCount.getCount(mesh);
 			if (rawCountFromPubmed != 0) {
-				double score = meshCountInTargetAuthorArticles / (rawCountFromPubmed * 10000.0);
+				double score = meshCountInTargetAuthorArticles * 10000.0 / (rawCountFromPubmed) ;
+				slf4jLogger.info("mesh count=[" + meshCountInTargetAuthorArticles + "], raw=[" + rawCountFromPubmed + "], mesh=[" + mesh + "], score=[" + score + "]");
 				if (score > threshold) {
 					generatedMeshMajors.add(mesh);
 				}
 			}
 		}
+		slf4jLogger.info("generated mesh majors = " + generatedMeshMajors);
+		slf4jLogger.info("meshRawCountCache = " + meshRawCountCache);
 		return generatedMeshMajors;
 	}
 

@@ -14,6 +14,8 @@ import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.algorithm.cluster.targetauthor.ReCiterClusterSelector;
 import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.article.mesh.MeshMajorStrategyContext;
+import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
@@ -52,10 +54,15 @@ public class ReCiterEngine implements Engine {
 	private List<AnalysisObject> analysisObjects;
 	private AnalysisDao analysisDao;
 
+	/**
+	 * Mesh Major Strategy Context.
+	 */
+	private StrategyContext meshMajorStrategyContext;
+	
 	public double totalPrecision;
 	public double totalRecall;
 	public double totalAccuracy;
-	
+
 	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
 		this.reCiterEngineProperty = reCiterEngineProperty;
 		targetAuthorService = new TargetAuthorServiceImpl();
@@ -73,23 +80,33 @@ public class ReCiterEngine implements Engine {
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 		run(targetAuthor);
 	}
-	
+
 	@Override
 	public void run(TargetAuthor targetAuthor) {
 		// Fetch the articles for this person.
 		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
 
 		Analysis.assignGoldStandard(reCiterArticleList, targetAuthor.getCwid());
-		
+
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(targetAuthor, reCiterArticleList);
 		clusterer.cluster();
 		slf4jLogger.info("Phase 1 Clustering result");
 		slf4jLogger.info(clusterer.toString());
-		
+
 		// Perform Phase 2 clusters selection.
-		ClusterSelector clusterSelector = new ReCiterClusterSelector(targetAuthor);
+		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), targetAuthor);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
+
+		// Perform Mesh Heading recall improvement.
+		// Use MeSH major to improve recall after phase two (https://github.com/wcmc-its/ReCiter/issues/131)
+		List<ReCiterArticle> selectedArticles = new ArrayList<ReCiterArticle>();
+		
+		for (int id : clusterSelector.getSelectedClusterIds()) {
+			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
+		}
+		meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));
+		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), targetAuthor);
 
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
 		slf4jLogger.info(clusterer.toString());
@@ -98,11 +115,11 @@ public class ReCiterEngine implements Engine {
 		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
 		totalRecall += analysis.getRecall();
-		
+
 		double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2;
 		slf4jLogger.info("Accuracy=" + accuracy);
 		totalAccuracy += accuracy;
-		
+
 		slf4jLogger.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
 		slf4jLogger.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
 		slf4jLogger.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
@@ -149,16 +166,16 @@ public class ReCiterEngine implements Engine {
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
 		StrategyContext scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
-//		StrategyContext coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(targetAuthor));
-//		StrategyContext journalStrategyContext = new JournalStrategyContext(new JournalStrategy(targetAuthor));
+		//		StrategyContext coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(targetAuthor));
+		//		StrategyContext journalStrategyContext = new JournalStrategyContext(new JournalStrategy(targetAuthor));
 		StrategyContext citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		StrategyContext nameStrategyContext = new NameStrategyContext(new NameStrategy());
 		StrategyContext boardCertificationStrategyContext = new BoardCertificationStrategyContext(new CosineSimilarityStrategy());
 		StrategyContext internshipsAndResidenceStrategyContext = new InternshipAndResidenceStrategyContext(new InternshipAndResidenceStrategy());
-		
+
 		// TODO: removeArticlesBasedOnYearDiscrepancy(map);
-//		StrategyContext bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
-//		StrategyContext doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+		//		StrategyContext bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
+		//		StrategyContext doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 
 		List<StrategyContext> strategyContexts = new ArrayList<StrategyContext>();
 
@@ -166,21 +183,21 @@ public class ReCiterEngine implements Engine {
 		strategyContexts.add(departmentStringMatchStrategyContext);
 		strategyContexts.add(grantCoauthorStrategyContext);
 		strategyContexts.add(affiliationStrategyContext);
-		
+
 		strategyContexts.add(scopusStrategyContext);
-//		strategyContexts.add(coauthorStrategyContext);
-//		strategyContexts.add(journalStrategyContext);
+		//		strategyContexts.add(coauthorStrategyContext);
+		//		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
 		strategyContexts.add(nameStrategyContext);
 		strategyContexts.add(boardCertificationStrategyContext);
 		strategyContexts.add(internshipsAndResidenceStrategyContext);
-		
-//		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
-//		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
-		
+
+		//		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
+		//		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
+
 		return strategyContexts;
 	}
-	
+
 	@Override
 	public Analysis constructAnalysis() {
 		List<String> cwids = reCiterEngineProperty.getCwids();
@@ -189,7 +206,7 @@ public class ReCiterEngine implements Engine {
 		for (String cwid : cwids) {
 			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 			List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
-			
+
 			Analysis.assignGoldStandard(reCiterArticleList, cwid);
 			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
 			CSVWriter csvWriter = new CSVWriter("C:\\Users\\Jie\\Documents\\reciter_data\\" + cwid + ".csv");
@@ -202,11 +219,11 @@ public class ReCiterEngine implements Engine {
 		}
 		return null;
 	}
-	
+
 	@Override
 	public void checkNumQueries() {
 		List<String> cwids = reCiterEngineProperty.getCwids();
-		
+
 		for (String cwid : cwids) {
 			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 			int articleCount = new ReCiterArticleFetcher().checkNumQueries(targetAuthor);

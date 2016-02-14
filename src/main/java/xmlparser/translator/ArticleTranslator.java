@@ -109,7 +109,7 @@ public class ArticleTranslator {
 		}
 
 		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
-		List<ReCiterArticleMeshHeading> reCiterArticleMeshHeadings = new ArrayList<ReCiterArticleMeshHeading>(meshList.size());
+		List<ReCiterArticleMeshHeading> reCiterArticleMeshHeadings = new ArrayList<ReCiterArticleMeshHeading>();
 		if (meshList != null) {
 			// Translating Mesh
 			for (MedlineCitationMeshHeading medlineCitationMeshHeading : meshList) {

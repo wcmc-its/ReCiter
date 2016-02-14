@@ -2,27 +2,27 @@ package reciter.algorithm.evidence.article.mesh;
 
 import java.util.List;
 
-import reciter.algorithm.evidence.article.ReCiterArticleStrategy;
-import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategy;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.TargetAuthor;
 
-public class MeshMajorStrategyContext implements ReCiterArticleStrategyContext {
+public class MeshMajorStrategyContext implements TargetAuthorStrategyContext {
 
-	private final ReCiterArticleStrategy strategy;
-	private double strategyScore;
+private final TargetAuthorStrategy strategy;
 	
-	public MeshMajorStrategyContext(ReCiterArticleStrategy strategy) {
+	public MeshMajorStrategyContext(TargetAuthorStrategy strategy) {
 		this.strategy = strategy;
 	}
 	
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
-		strategyScore = strategy.executeStrategy(reCiterArticle, otherReCiterArticle);
-		return strategyScore;
+	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		return strategy.executeStrategy(reCiterArticle, targetAuthor);
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, ReCiterArticle otherReCiterArticle) {
-		return strategy.executeStrategy(reCiterArticles, otherReCiterArticle);
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+		return strategy.executeStrategy(reCiterArticles, targetAuthor);
 	}
+	
 }

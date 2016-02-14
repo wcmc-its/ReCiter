@@ -30,4 +30,26 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 		}
 		return false;
 	}
+	
+	protected boolean matchRelaxedAuthorName(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
+		if (authors != null) {
+			for (ReCiterAuthor author : authors.getAuthors()) {
+				String firstInitial = author.getAuthorName().getFirstInitial();
+				String middleInitial = author.getAuthorName().getMiddleInitial();
+				String lastName = author.getAuthorName().getLastName();
+				
+				String targetAuthorFirstInitial = targetAuthor.getAuthorName().getFirstInitial();
+				String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
+				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+				
+				if (StringUtils.equalsIgnoreCase(firstInitial, targetAuthorFirstInitial) &&
+					StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) &&
+					StringUtils.equalsIgnoreCase(lastName, targetAuthorLastName))
+					
+					return true;
+			}
+		}
+		return false;
+	}
 }
