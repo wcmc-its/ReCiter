@@ -26,7 +26,7 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 					if (middleInitial.length() == 0) {
 						// If first name is only a first initial, and no middle name.
 						// check using first name of target author.
-						if (firstName.length() == 0) {
+						if (firstName.length() == 1) {
 							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstNameInitial)) {
 								return true;
 							}
@@ -37,7 +37,7 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 						}
 					} // If first name is full, and middle initial exist.
 					else {
-						if (firstName.length() == 0) {
+						if (firstName.length() == 1) {
 							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstNameInitial) &&
 								StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial)) {
 								return true;
