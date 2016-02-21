@@ -65,10 +65,15 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 			List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
 			for (ReCiterArticleMeshHeading meshHeading : meshHeadings) {
 				String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
-				if (generatedMeshMajors.contains(descriptorName)) {
-					slf4jLogger.info("Moved reCiterArticle=[" + reCiterArticle.getArticleId() + "] to 'yes` pile using "
-							+ "mesh=[" + descriptorName + "] gold standard=[" + reCiterArticle.getGoldStandard() + "]");
-					return 1;
+				if (isMeshMajor(meshHeading)) { // check if this is a mesh major. (i.e., An article A may say mesh
+					// heading H is a major, but another article B may say otherwise.)
+					if (generatedMeshMajors.contains(descriptorName)) {
+						slf4jLogger.info("Moved reCiterArticle=[" + reCiterArticle.getArticleId() + "] to 'yes` pile using "
+								+ "mesh=[" + descriptorName + "] gold standard=[" + reCiterArticle.getGoldStandard() + "]");
+						return 1;
+					}
+				} else {
+					slf4jLogger.info("reCiterArticle=[" + reCiterArticle.getArticleId() + "] " + descriptorName + " is not a mesh major.");
 				}
 			}
 		} else {
@@ -89,7 +94,11 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 			List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
 			for (ReCiterArticleMeshHeading meshHeading : meshHeadings) {
 				if (isMeshMajor(meshHeading)) { // check if it's a mesh heading.
+
 					String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
+					if ("Lymph Nodes".equals(descriptorName)) {
+						slf4jLogger.info("lymph node id=" + reCiterArticle.getArticleId());
+					}
 					if (!map.containsKey(descriptorName)) {
 						map.put(descriptorName, 1L);
 					} else {
