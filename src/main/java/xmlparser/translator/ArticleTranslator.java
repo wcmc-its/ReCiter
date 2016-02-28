@@ -186,8 +186,9 @@ public class ArticleTranslator {
 
 									if (reCiterAuthorFirstName.length() == 1) {
 
-										int indexOfWhiteSpace = scopusAuthorFirstName.indexOf(" ");
 										scopusAuthorFirstName = scopusAuthorFirstName.replaceAll("[\\.]", "");
+										int indexOfWhiteSpace = scopusAuthorFirstName.indexOf(" "); // index should be calculated here because scopusFirstName is updated. 
+										// i.e. If scopusAuthorFirstName = "A. J.", indexOfWhiteSpace would be 2, but it should be 1 after the scopusAuthorFirstName is trimmed.
 										if (indexOfWhiteSpace == -1) {
 											reCiterAuthor.getAuthorName().setFirstName(scopusAuthorFirstName);
 										} else {

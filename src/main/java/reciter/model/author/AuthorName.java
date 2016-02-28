@@ -47,9 +47,9 @@ public class AuthorName {
 	 * @param lastName Last name.
 	 */
 	public AuthorName(String firstName, String middleName, String lastName) {
-		this.firstName = StringUtils.capitalize(StringUtils.lowerCase(firstName));
-		this.middleName = StringUtils.capitalize(StringUtils.lowerCase(middleName));
-		this.lastName = StringUtils.capitalize(StringUtils.lowerCase(lastName));
+		this.firstName = StringUtils.capitalize(StringUtils.lowerCase(StringUtils.trim(firstName)));
+		this.middleName = StringUtils.capitalize(StringUtils.lowerCase(StringUtils.trim(middleName)));
+		this.lastName = StringUtils.capitalize(StringUtils.lowerCase(StringUtils.trim(lastName)));
 		firstInitial = StringUtils.substring(this.firstName, 0, 1);
 		middleInitial = StringUtils.substring(this.middleName, 0, 1);
 
@@ -207,7 +207,7 @@ public class AuthorName {
 	}
 	public void setFirstName(String firstName) {
 		if (firstName == null) throw new IllegalArgumentException("first name should not be null.");
-		this.firstName = firstName;
+		this.firstName = StringUtils.capitalize(StringUtils.lowerCase(StringUtils.trim(firstName)));
 		this.firstInitial = firstName.length() > 0 ? firstName.substring(0, 1) : "";
 	}
 	public String getFirstInitial() {
@@ -218,7 +218,7 @@ public class AuthorName {
 	}
 	public void setMiddleName(String middleName) {
 		if (middleName == null) throw new IllegalArgumentException("middle name should not be null.");
-		this.middleName = middleName;
+		this.middleName = StringUtils.capitalize(StringUtils.lowerCase(StringUtils.trim(middleName)));
 		this.middleInitial = middleName.length() > 0 ? middleName.substring(0, 1) : "";
 	}
 	public String getMiddleInitial() {
@@ -229,7 +229,7 @@ public class AuthorName {
 	}
 	public void setLastName(String lastName) {
 		if (lastName == null) throw new IllegalArgumentException("last name should not be null.");
-		this.lastName = lastName;
+		this.lastName = StringUtils.capitalize(StringUtils.lowerCase(StringUtils.trim(lastName)));
 	}
 	public Set<AuthorName> getNameVariants() {
 		return nameVariants;
