@@ -1,13 +1,18 @@
 package reciter.algorithm.evidence.targetauthor;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
+import reciter.string.ReCiterStringUtil;
 
 public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrategy {
+
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractTargetAuthorStrategy.class);
 
 	protected boolean matchAuthorName(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
@@ -31,7 +36,15 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 								return true;
 							}
 						} else {
-							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName)) {
+							int levenshteinDist = ReCiterStringUtil.levenshteinDistance(firstName, targetAuthorFirstName);
+							boolean isAcceptableDistance = Double.valueOf(levenshteinDist) / firstName.length() <= 0.25;
+							
+							if (isAcceptableDistance) {
+								slf4jLogger.info("PMID=[" + reCiterArticle.getArticleId() + "], levenshtein distance of firstName=[" + 
+										firstName + "] targetAuthorFirstName=[" + targetAuthorFirstName + "] is [" + levenshteinDist + "] is accepted");
+							}
+							isAcceptableDistance = false; // TODO remove
+							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance) {
 								return true;
 							}
 						}
@@ -43,7 +56,15 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 								return true;
 							}
 						} else {
-							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) &&
+							int levenshteinDist = ReCiterStringUtil.levenshteinDistance(firstName, targetAuthorFirstName);
+							boolean isAcceptableDistance = Double.valueOf(levenshteinDist) / firstName.length() <= 0.25;
+							
+							if (isAcceptableDistance) {
+								slf4jLogger.info("PMID=[" + reCiterArticle.getArticleId() + "], levenshtein distance of firstName=[" + 
+										firstName + "] targetAuthorFirstName=[" + targetAuthorFirstName + "] is [" + levenshteinDist + "] is accepted");
+							}
+							isAcceptableDistance = false; // TODO remove.
+							if ((StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance) &&
 								StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial)) {
 								return true;
 							}
