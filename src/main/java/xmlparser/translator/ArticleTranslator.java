@@ -170,41 +170,41 @@ public class ArticleTranslator {
 		// 5. Only update if PubMed's author name is length = 1.
 		// 6. remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
 
-//		if (scopusArticle != null) {
-//			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
-//				String scopusAuthorFirstName = scopusAuthor.getGivenName();
-//				String scopusAuthorLastName = scopusAuthor.getSurname();
-//				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-//					String reCiterAuthorLastName = reCiterAuthor.getAuthorName().getLastName();
-//					if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, reCiterAuthorLastName)) {
-//						String reCiterAuthorFirstName = reCiterAuthor.getAuthorName().getFirstName();
-//						String reCiterAuthorFirstInitial = reCiterAuthor.getAuthorName().getFirstInitial();
-//						if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
-//							if (scopusAuthorFirstName.substring(0, 1).equals(reCiterAuthorFirstInitial)) {
-//								if (scopusAuthorFirstName.length() > reCiterAuthorFirstName.length()) {
-//									//									System.out.println("[" + scopusAuthorFirstName + "], [" + reCiterAuthorFirstName + "]");
-//
-//									if (reCiterAuthorFirstName.length() == 1) {
-//
-//										scopusAuthorFirstName = scopusAuthorFirstName.replaceAll("[\\.]", "");
-//										int indexOfWhiteSpace = scopusAuthorFirstName.indexOf(" "); // index should be calculated here because scopusFirstName is updated. 
-//										// i.e. If scopusAuthorFirstName = "A. J.", indexOfWhiteSpace would be 2, but it should be 1 after the scopusAuthorFirstName is trimmed.
-//										if (indexOfWhiteSpace == -1) {
-//											reCiterAuthor.getAuthorName().setFirstName(scopusAuthorFirstName);
-//										} else {
-//											reCiterAuthor.getAuthorName().setFirstName(scopusAuthorFirstName.substring(0, indexOfWhiteSpace));
-//										}
-//									}
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
+		if (scopusArticle != null) {
+			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
+				String scopusAuthorFirstName = scopusAuthor.getGivenName();
+				String scopusAuthorLastName = scopusAuthor.getSurname();
+				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+					String reCiterAuthorLastName = reCiterAuthor.getAuthorName().getLastName();
+					if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, reCiterAuthorLastName)) {
+						String reCiterAuthorFirstName = reCiterAuthor.getAuthorName().getFirstName();
+						String reCiterAuthorFirstInitial = reCiterAuthor.getAuthorName().getFirstInitial();
+						if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
+							if (scopusAuthorFirstName.substring(0, 1).equals(reCiterAuthorFirstInitial)) {
+								if (scopusAuthorFirstName.length() > reCiterAuthorFirstName.length()) {
+									//									System.out.println("[" + scopusAuthorFirstName + "], [" + reCiterAuthorFirstName + "]");
+
+									if (reCiterAuthorFirstName.length() == 1) {
+
+										scopusAuthorFirstName = scopusAuthorFirstName.replaceAll("[\\.]", "");
+										int indexOfWhiteSpace = scopusAuthorFirstName.indexOf(" "); // index should be calculated here because scopusFirstName is updated. 
+										// i.e. If scopusAuthorFirstName = "A. J.", indexOfWhiteSpace would be 2, but it should be 1 after the scopusAuthorFirstName is trimmed.
+										if (indexOfWhiteSpace == -1) {
+											reCiterAuthor.getAuthorName().setFirstName(scopusAuthorFirstName);
+										} else {
+											reCiterAuthor.getAuthorName().setFirstName(scopusAuthorFirstName.substring(0, indexOfWhiteSpace));
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		reCiterArticle.setScopusArticle(scopusArticle);
 
-		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlineCitation().getArticle().getGrantList();
+		//		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlineCitation().getArticle().getGrantList();
 
 		//		for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
 		//			

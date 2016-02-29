@@ -43,7 +43,7 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 								slf4jLogger.info("PMID=[" + reCiterArticle.getArticleId() + "], levenshtein distance of firstName=[" + 
 										firstName + "] targetAuthorFirstName=[" + targetAuthorFirstName + "] is [" + levenshteinDist + "] is accepted");
 							}
-							isAcceptableDistance = false; // TODO remove
+
 							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance) {
 								return true;
 							}
@@ -63,7 +63,7 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 								slf4jLogger.info("PMID=[" + reCiterArticle.getArticleId() + "], levenshtein distance of firstName=[" + 
 										firstName + "] targetAuthorFirstName=[" + targetAuthorFirstName + "] is [" + levenshteinDist + "] is accepted");
 							}
-							isAcceptableDistance = false; // TODO remove.
+							
 							if ((StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance) &&
 								StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial)) {
 								return true;
