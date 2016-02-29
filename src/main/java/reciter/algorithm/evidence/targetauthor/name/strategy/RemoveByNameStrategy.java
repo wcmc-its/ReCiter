@@ -23,9 +23,6 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
 		
-		if (12502369 == reCiterArticle.getArticleId()) {
-			System.out.println("Here");
-		}
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
@@ -123,6 +120,23 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								}
 							}
 
+							// Case: PMID=10234135, author name in PubMed = "Mj Roman". First initial and middle initial
+							// are concatenated.
+							if (shouldRemove) {
+								if (firstName.length() == 2) {
+									String firstNameInitial = firstName.substring(0, 1);
+									String middleInitial = firstName.substring(1);
+									
+									String targetAuthorFirstNameInitial = targetAuthor.getAuthorName().getFirstInitial();
+									String targetAuthorMiddleNameInitial = targetAuthor.getAuthorName().getMiddleInitial();
+									
+									if (StringUtils.equalsIgnoreCase(firstNameInitial, targetAuthorFirstNameInitial) &&
+										StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleNameInitial)) {
+										shouldRemove = false;
+									}
+								}
+							}
+							
 							// Check the Levenshtein distance between the target author's first name and the article
 							// author's first name, if the distance <= 1 and affiliation score is greater than 0, 
 							// un-do the removal operation.
