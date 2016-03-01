@@ -81,7 +81,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 					String firstName = author.getAuthorName().getFirstName();
 					String lastName = author.getAuthorName().getLastName();
 					String middleName = author.getAuthorName().getMiddleName();
-
+					String middleNameInitial = author.getAuthorName().getMiddleInitial();
+					
 					// Check whether last name matches.
 					if (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(lastName),  ReCiterStringUtil.deAccent(targetAuthorLastName))) {
 
@@ -105,9 +106,19 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									if (aliasList != null) {
 										for (AuthorName authorName : aliasList) {
 											String givenName = authorName.getFirstName();
+											String aliasMiddleNameInitial = authorName.getMiddleInitial();
 											if (StringUtils.equalsIgnoreCase(givenName, firstName)) {
-												shouldRemove = false;
-												break;
+												// Need to compare middle initial in cases of bsg2001. pmid = 16961803.
+												if (middleNameInitial.length() > 0) {
+													boolean isMatch = StringUtils.equalsIgnoreCase(aliasMiddleNameInitial, middleNameInitial);
+													if (isMatch) {
+														shouldRemove = false;
+														break;
+													}
+												} else {
+													shouldRemove = false;
+													break;
+												}
 											}
 										}
 									}

@@ -27,7 +27,19 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 				String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
 				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
 
-				if (StringUtils.equalsIgnoreCase(lastName, targetAuthorLastName)) {
+				// Case: ses9022, Last name = 'Somersan Karakaya', PMID = 11673488, last name = 'Somersan'.
+				// Split last name and check if each individual parts match the last name from article.
+				boolean partNameMatch = false;
+				String[] targetAuthorLastNameArray = targetAuthorLastName.split("\\s+");
+				if (targetAuthorLastNameArray.length > 1) {
+					for (int i = 0; i < targetAuthorLastNameArray.length; i++) {
+						if (StringUtils.equalsIgnoreCase(lastName, targetAuthorLastNameArray[i])) {
+							partNameMatch = true;
+							break;
+						}
+					}
+				}
+				if (StringUtils.equalsIgnoreCase(lastName, targetAuthorLastName) || partNameMatch) {
 					if (middleInitial.length() == 0) {
 						// If first name is only a first initial, and no middle name.
 						// check using first name of target author.
@@ -44,7 +56,10 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 										firstName + "] targetAuthorFirstName=[" + targetAuthorFirstName + "] is [" + levenshteinDist + "] is accepted");
 							}
 
-							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance) {
+							// Case: PMID = 12069979, first name = "Juan", in db name = "Juan Miguel".
+							boolean isFirstNameMatchByPart = isFirstNameMatchByPart(targetAuthorFirstName, firstName);
+							
+							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance || isFirstNameMatchByPart) {
 								return true;
 							}
 						}
@@ -64,7 +79,10 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 										firstName + "] targetAuthorFirstName=[" + targetAuthorFirstName + "] is [" + levenshteinDist + "] is accepted");
 							}
 							
-							if ((StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance) &&
+							// Case: PMID = 12069979, first name = "Juan", in db name = "Juan Miguel".
+							boolean isFirstNameMatchByPart = isFirstNameMatchByPart(targetAuthorFirstName, firstName);
+							
+							if ((StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance || isFirstNameMatchByPart) &&
 								StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial)) {
 								return true;
 							}
@@ -74,6 +92,21 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 			}
 		}
 		return false;
+	}
+	
+	private boolean isFirstNameMatchByPart(String targetAuthorFirstName, String firstName) {
+		// Case: PMID = 12069979, first name = "Juan", in db name = "Juan Miguel".
+		boolean isFirstNameMatchByPart = false;
+		String[] firstNameParts = targetAuthorFirstName.split("\\s+");
+		if (firstNameParts.length > 0) {
+			for (int i = 0; i < firstNameParts.length; i++) {
+				if (StringUtils.equalsIgnoreCase(firstName, firstNameParts[i])) {
+					isFirstNameMatchByPart = true;
+					break;
+				}
+			}
+		}
+		return isFirstNameMatchByPart;
 	}
 
 	protected boolean matchRelaxedAuthorName(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
