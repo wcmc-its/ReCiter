@@ -60,6 +60,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
+		boolean foundMatchingAuthor = false; // found matching author with the same last name and first and middle initial as target author.
+		
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 
 		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
@@ -78,6 +80,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 				}
 
 				if (author != null) {
+					foundMatchingAuthor = true;
 					String firstName = author.getAuthorName().getFirstName();
 					String lastName = author.getAuthorName().getLastName();
 					String middleName = author.getAuthorName().getMiddleName();
@@ -325,7 +328,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 			}
 		}
 
-		if (shouldRemove && !foundAuthorWithSameFirstName) {
+		if ((shouldRemove && !foundAuthorWithSameFirstName) || !foundMatchingAuthor) {
 			slf4jLogger.info("Removed article id=[" + reCiterArticle.getArticleId() + "] with cwid=[" + 
 					targetAuthor.getCwid() + "] and name in article=[" + firstNameFieldVar + ", " + middleNameFieldVar + "]" +
 					" In gold standard=[" + reCiterArticle.getGoldStandard() + "]");
