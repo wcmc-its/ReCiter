@@ -61,7 +61,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
 		boolean foundMatchingAuthor = false; // found matching author with the same last name and first and middle initial as target author.
-		
+
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 
 		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
@@ -85,7 +85,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 					String lastName = author.getAuthorName().getLastName();
 					String middleName = author.getAuthorName().getMiddleName();
 					String middleNameInitial = author.getAuthorName().getMiddleInitial();
-					
+
 					// Check whether last name matches.
 					if (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(lastName),  ReCiterStringUtil.deAccent(targetAuthorLastName))) {
 
@@ -93,6 +93,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 						middleNameFieldVar = middleName;
 
 						// Check if first name is a full name (not an initial).
+
 						if (firstName.length() > 1 && targetAuthorFirstName.length() > 1) {
 
 							// First name doesn't match! Should remove the article from the selected cluster.
@@ -272,6 +273,20 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 												shouldRemove = false;
 												break;
 											}
+										}
+									}
+								}
+
+								if (shouldRemove) {
+									// Case pmid = 10651632, first name in article is Clay (from Scopus), name in db is w. clay.
+									// Match Clay to w. clay.
+									String[] targetAuthorFirstNameParts = targetAuthorFirstName.split("\\s+");
+									if (targetAuthorFirstNameParts.length > 1) {
+										String firstPart = targetAuthorFirstNameParts[0];
+										String secondPart = targetAuthorFirstNameParts[1];
+										if (StringUtils.equalsIgnoreCase(firstName, firstPart) ||
+											StringUtils.equalsIgnoreCase(firstName, secondPart)) {
+											shouldRemove = false;
 										}
 									}
 								}
