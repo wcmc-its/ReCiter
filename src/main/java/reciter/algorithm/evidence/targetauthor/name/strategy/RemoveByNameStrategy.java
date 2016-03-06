@@ -65,8 +65,10 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 
 		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
+		String targetAuthorFirstNameInitial = targetAuthor.getAuthorName().getFirstInitial();
 		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
 		String targetAuthorMiddleName = targetAuthor.getAuthorName().getMiddleName();
+		String targetAuthorMiddleNameInitial = targetAuthor.getAuthorName().getMiddleInitial();
 
 		boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor = isMultipleAuthorsWithSameLastNameAsTargetAuthor(
 				reCiterArticle, targetAuthor);
@@ -82,6 +84,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 				if (author != null) {
 					foundMatchingAuthor = true;
 					String firstName = author.getAuthorName().getFirstName();
+					String firstNameInitial = author.getAuthorName().getFirstInitial();
 					String lastName = author.getAuthorName().getLastName();
 					String middleName = author.getAuthorName().getMiddleName();
 					String middleNameInitial = author.getAuthorName().getMiddleInitial();
@@ -182,14 +185,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								// are concatenated.
 								if (shouldRemove) {
 									if (firstName.length() == 2) {
-										String firstNameInitial = firstName.substring(0, 1);
-										String middleInitial = firstName.substring(1);
-
-										String targetAuthorFirstNameInitial = targetAuthor.getAuthorName().getFirstInitial();
-										String targetAuthorMiddleNameInitial = targetAuthor.getAuthorName().getMiddleInitial();
-
 										if (StringUtils.equalsIgnoreCase(firstNameInitial, targetAuthorFirstNameInitial) &&
-												StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleNameInitial)) {
+												StringUtils.equalsIgnoreCase(middleNameInitial, targetAuthorMiddleNameInitial)) {
 											shouldRemove = false;
 										}
 									}
@@ -307,6 +304,17 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								}
 							}
 						} else {
+							
+							// Case:  For jdw2003 - 2913152 (and other PMIDs)… If our target  person has a first name 
+							// with an initial, it needs to be in the correct order. In other words, “DJ Warren” won’t cut it.
+							if (!StringUtils.equalsIgnoreCase(firstNameInitial, targetAuthorFirstNameInitial)) {
+								if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
+									if (!StringUtils.equalsIgnoreCase(middleNameInitial, targetAuthorMiddleNameInitial)) {
+										shouldRemove = true;
+									}
+								}
+							}
+							
 							// check middle name.
 							// Case: False Positive List: [2]: [12814220, 21740463] for Anna Bender.
 							// Remove this article because middle name exist in article, but not in rc_identity.
