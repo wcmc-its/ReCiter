@@ -275,7 +275,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								}
 
 								if (shouldRemove) {
-									// Case pmid = 10651632, first name in article is Clay (from Scopus), name in db is w. clay.
+									// Case pmid = 10651632, first name in article is Clay (from Scopus), name in db is w. clay. cwid = wcb2001.
 									// Match Clay to w. clay.
 									String[] targetAuthorFirstNameParts = targetAuthorFirstName.split("\\s+");
 									if (targetAuthorFirstNameParts.length > 1) {
@@ -284,6 +284,14 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 										if (StringUtils.equalsIgnoreCase(firstName, firstPart) ||
 											StringUtils.equalsIgnoreCase(firstName, secondPart)) {
 											shouldRemove = false;
+											
+											// Case: 26336036, name in article is David K Warren, cwid = jdw2003, name
+											// in db is "J David Warren", check middle initial.
+											if (middleName.length() > 0) {
+												if (!StringUtils.equalsIgnoreCase(middleNameInitial, targetAuthorMiddleNameInitial)) {
+													shouldRemove = true;
+												}
+											}
 										}
 									}
 								}
