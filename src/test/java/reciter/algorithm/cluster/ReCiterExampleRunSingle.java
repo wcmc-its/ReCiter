@@ -22,7 +22,7 @@ public class ReCiterExampleRunSingle {
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		ReCiterExampleRunSingle example = new ReCiterExampleRunSingle();
-		example.engine.run("jdw2003");
+		example.engine.run("wex2004");
 		long stopTime = System.currentTimeMillis();
 	    long elapsedTime = stopTime - startTime;
 	    slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");

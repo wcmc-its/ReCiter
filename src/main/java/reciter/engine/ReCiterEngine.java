@@ -85,6 +85,11 @@ public class ReCiterEngine implements Engine {
 	public void run(TargetAuthor targetAuthor) {
 		// Fetch the articles for this person.
 		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
+		run(targetAuthor, reCiterArticleList);
+	}
+	
+	@Override
+	public void run(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticleList) {
 
 		Analysis.assignGoldStandard(reCiterArticleList, targetAuthor.getCwid());
 
