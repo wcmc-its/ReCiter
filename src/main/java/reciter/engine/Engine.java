@@ -15,4 +15,5 @@ public interface Engine {
 	void checkNumQueries();
 	void run(String cwid);
 	void run(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticleList);
+	Analysis getAnalysis();
 }

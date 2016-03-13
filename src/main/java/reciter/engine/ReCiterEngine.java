@@ -37,7 +37,6 @@ import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
 import reciter.csv.CSVWriter;
 import reciter.erroranalysis.Analysis;
-import reciter.erroranalysis.AnalysisObject;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
@@ -51,9 +50,9 @@ public class ReCiterEngine implements Engine {
 
 	private ReCiterEngineProperty reCiterEngineProperty;
 	private TargetAuthorService targetAuthorService;
-	private List<AnalysisObject> analysisObjects;
 	private AnalysisDao analysisDao;
-
+	private Analysis analysis;
+	
 	/**
 	 * Mesh Major Strategy Context.
 	 */
@@ -66,7 +65,6 @@ public class ReCiterEngine implements Engine {
 	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
 		this.reCiterEngineProperty = reCiterEngineProperty;
 		targetAuthorService = new TargetAuthorServiceImpl();
-		analysisObjects = new ArrayList<AnalysisObject>();
 		// TODO use service class.
 		analysisDao = new AnalysisDaoImpl();
 	}
@@ -113,7 +111,7 @@ public class ReCiterEngine implements Engine {
 		meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));
 		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), targetAuthor);
 
-		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
+		analysis = Analysis.performAnalysis(clusterer, clusterSelector);
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Analysis for cwid=[" + targetAuthor.getCwid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
@@ -234,5 +232,14 @@ public class ReCiterEngine implements Engine {
 			int articleCount = new ReCiterArticleFetcher().checkNumQueries(targetAuthor);
 			slf4jLogger.info("Article count for cwid=[" + cwid + "] is [" + articleCount + "]");
 		}
+	}
+
+	@Override
+	public Analysis getAnalysis() {
+		return analysis;
+	}
+
+	public void setAnalysis(Analysis analysis) {
+		this.analysis = analysis;
 	}
 }

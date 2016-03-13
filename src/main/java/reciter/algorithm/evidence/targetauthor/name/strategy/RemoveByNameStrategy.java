@@ -209,10 +209,10 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								// Case:
 								// 1. Removed article id=[19101229] with cwid=[mszulc] and name in article=[Massimo] In gold standard=[1]
 								if (shouldRemove && reCiterArticle.getAffiliationScore() > 0) {
-									if (targetAuthorFirstName.length() > 4 && firstName.length() > 4) {
-										String targetAuthorFirstName3Chars = targetAuthorFirstName.substring(0, 3);
-										String articleAuthorFirstName3Chars = firstName.substring(0, 3);
-										if (StringUtils.equalsIgnoreCase(targetAuthorFirstName3Chars, articleAuthorFirstName3Chars)) {
+									if (targetAuthorFirstName.length() > 5 && firstName.length() > 5) {
+										String targetAuthorFirstName5Chars = targetAuthorFirstName.substring(0, 5);
+										String articleAuthorFirstName5Chars = firstName.substring(0, 5);
+										if (StringUtils.equalsIgnoreCase(targetAuthorFirstName5Chars, articleAuthorFirstName5Chars)) {
 											shouldRemove = false;
 										}
 									}

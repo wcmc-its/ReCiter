@@ -91,13 +91,13 @@ public class Analysis {
 
 		for (ReCiterArticle reCiterArticle : finalCluster.get(selection).getArticleCluster()) {
 			int pmid = reCiterArticle.getArticleId();
-			StatusEnum statusEnum;
+//			StatusEnum statusEnum;
 			if (goldStandardPmids.contains(Integer.toString(pmid))) {
 				numTruePos++;
-				statusEnum = StatusEnum.TRUE_POSITIVE;
+//				statusEnum = StatusEnum.TRUE_POSITIVE;
 			} else {
 				analysis.falsePositiveList.add(pmid);
-				statusEnum = StatusEnum.FALSE_POSITIVE;
+//				statusEnum = StatusEnum.FALSE_POSITIVE;
 			}
 
 			//			AnalysisObject analysisObject = AnalysisTranslator.translate(reCiterArticle, statusEnum, cwid, targetAuthor, isClusterOriginator)
