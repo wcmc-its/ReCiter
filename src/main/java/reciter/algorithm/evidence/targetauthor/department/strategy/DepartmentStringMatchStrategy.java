@@ -38,7 +38,10 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
-				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
+//				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
+				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(
+						reCiterArticle.getArticleCoAuthors().getAuthors(), author, targetAuthor);
+				
 				boolean isFirstNameInitialMatch = 
 						author.getAuthorName().getFirstInitial().equalsIgnoreCase(targetAuthor.getAuthorName().getFirstInitial());
 
@@ -57,6 +60,9 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
 							" [department and first name initial matches: " + extractedDept + 
 							", first name initial: " + targetAuthor.getAuthorName().getFirstInitial() + "]");
+					slf4jLogger.info("Department and first name initial matches. "
+							+ "PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+							"] Is Gold=[" + isGoldStandard + "]");
 					score = 1;
 					break;
 				}
@@ -103,6 +109,58 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		return false;
 	}
 
+	private boolean departmentMatchStrictAndFillInAffiliationIfNotPresent(List<ReCiterAuthor> authors, 
+			ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
+
+		String targetAuthorDept = targetAuthor.getDepartment();
+		String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
+		
+		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
+			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
+			extractedDept = extractDepartment(affiliation);
+			
+			if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
+				StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
+				return true;
+			}
+
+			if (targetAuthor.getAlternateDepartmentNames() != null) {
+				for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
+					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
+						return true;
+					}
+				}
+			}
+		} else {
+			// get affiliation from one of the other authors.
+			for (ReCiterAuthor author : authors) {
+				if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null 
+						&& author.getAffiliation().getAffiliationName().length() > 0) {
+					String affiliation = author.getAffiliation().getAffiliationName();
+					extractedDept = extractDepartment(affiliation);
+					
+					if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
+						StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
+						return true;
+					}
+
+					if (targetAuthor.getAlternateDepartmentNames() != null) {
+						for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
+							if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+								slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+										"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 	private boolean departmentMatchStrict(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
 		String targetAuthorDept = targetAuthor.getDepartment();
@@ -128,8 +186,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			if (targetAuthor.getAlternateDepartmentNames() != null) {
 				for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
 					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
-						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
-								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
+//						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+//								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
 						return true;
 					}
 				}
