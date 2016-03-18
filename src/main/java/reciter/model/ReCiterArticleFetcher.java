@@ -164,7 +164,6 @@ public class ReCiterArticleFetcher {
 		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
 		String firstName = targetAuthor.getAuthorName().getFirstName();
 
-		// Search for verbose name and common affiliations.
 		String query = URLEncoder.encode(lastName + " " + firstInitial + " AND " + department, "UTF-8");
 		PubmedESearchHandler handler = getPubmedESearchHandler(query);
 
@@ -195,9 +194,51 @@ public class ReCiterArticleFetcher {
 		}
 		return "";
 	}
-	
-	private List<PubmedArticle> fetchByGrants(TargetAuthor targetAuthor) {
-		return null;
+
+	/**
+	 * Fetch PubMed articles by sponsor award ids.
+	 * @param targetAuthor
+	 * @return
+	 * @throws ParserConfigurationException 
+	 * @throws SAXException 
+	 * @throws IOException 
+	 * @throws MalformedURLException 
+	 */
+	private List<PubmedArticle> fetchByGrants(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+		List<String> sponsorAwardIds = targetAuthor.getSponsorAwardIds();
+
+		if (sponsorAwardIds.size() > 0) {
+			StringBuilder sb = new StringBuilder();
+			int i = 0;
+			for (String sponsorAwardId : sponsorAwardIds) {
+				String parsed = parseSponsorAwardId(sponsorAwardId);
+				if (i != sponsorAwardIds.size() - 1) {
+					sb.append(parsed + "[Grant Number] OR ");
+				} else {
+					sb.append(parsed + "[Grant Number]");
+				}
+			}
+
+			String lastName = targetAuthor.getAuthorName().getLastName();
+			String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+			String firstName = targetAuthor.getAuthorName().getFirstName();
+
+
+			// Search for verbose name and common affiliations.
+			String query = URLEncoder.encode("(" + lastName + " " + firstInitial + " AND (" + sb.toString() + ")", "UTF-8");
+			PubmedESearchHandler handler = getPubmedESearchHandler(query);
+
+			PubmedXmlFetcher xmlFetcher = new PubmedXmlFetcher();
+
+			if (handler.getCount() > THRESHOLD) {
+				String queryVerboseFirstName = URLEncoder.encode(lastName + " " + firstName + " AND (" + sb.toString() + ")", "UTF-8");
+				return xmlFetcher.getPubmedArticle(queryVerboseFirstName, targetAuthor.getCwid());
+			} else {
+				return xmlFetcher.getPubmedArticle(query, targetAuthor.getCwid());
+			}
+		} else {
+			return new ArrayList<PubmedArticle>();
+		}
 	}
 
 	public List<ReCiterArticle> fetchLimitByArticleCount(TargetAuthor targetAuthor) {

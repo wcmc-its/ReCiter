@@ -19,6 +19,7 @@ public class IdentityGrantDaoImpl implements IdentityGrantDao{
 	 * @param cwid cwid.
 	 * @return List of IdentityGrants.
 	 */
+	@Override
 	public List<IdentityGrant> getIdentityGrantListByCwid(String cwid) {
 		Connection con = DbConnectionFactory.getConnection();
 		PreparedStatement pst = null;
@@ -40,6 +41,29 @@ public class IdentityGrantDaoImpl implements IdentityGrantDao{
 				identityGrant.setAdministeringDepartmentDivision(rs.getString(6));
 				identityGrant.setAwardingOrganization(rs.getString(7));
 				list.add(identityGrant);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DbUtil.close(rs);
+			DbUtil.close(pst);
+			DbUtil.close(con);
+		}
+		return list;
+	}
+	
+	@Override
+	public List<String> getSponsorAwardIdListByCwid(String cwid) {
+		Connection con = DbConnectionFactory.getConnection();
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		String query = "SELECT sponsorAwardId FROM rc_identity_grant WHERE cwid='" + cwid + "'";
+		List<String> list = new ArrayList<String>();
+		try {
+			pst = con.prepareStatement(query);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				list.add(rs.getString(1));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

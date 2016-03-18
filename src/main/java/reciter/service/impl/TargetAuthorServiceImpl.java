@@ -1,24 +1,14 @@
 package reciter.service.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import database.dao.BoardCertificationDao;
 import database.dao.IdentityAlternateDeptNamesDao;
@@ -26,6 +16,7 @@ import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
 import database.dao.IdentityDegreeDao;
 import database.dao.IdentityDirectoryDao;
+import database.dao.IdentityGrantDao;
 import database.dao.IdentityInstitutionDao;
 import database.dao.impl.BoardCertificationDaoImpl;
 import database.dao.impl.IdentityAlternateDeptNamesDaoImpl;
@@ -33,6 +24,7 @@ import database.dao.impl.IdentityCitizenshipDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.dao.impl.IdentityDegreeDaoImpl;
 import database.dao.impl.IdentityDirectoryDaoImpl;
+import database.dao.impl.IdentityGrantDaoImpl;
 import database.dao.impl.IdentityInstitutionDaoImpl;
 import database.model.IdentityDegree;
 import database.model.IdentityDirectory;
@@ -48,8 +40,6 @@ import reciter.service.converters.IdentityDegreeConverter;
 import reciter.service.dto.IdentityDTO;
 import reciter.string.PubmedSearchQueryGenerator;
 import xmlparser.pubmed.PubmedESearchHandler;
-import xmlparser.pubmed.PubmedXmlFetcher;
-import xmlparser.pubmed.PubmedXmlQuery;
 
 public class TargetAuthorServiceImpl implements TargetAuthorService {
 
@@ -138,7 +128,11 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		// Set email and email_other.
 		targetAuthor.setEmail(identityDTO.getEmail());
 		targetAuthor.setEmailOther(identityDTO.getEmailOther());
-
+		
+		// Sponsor Award ids.
+		IdentityGrantDao identityGrantDao = new IdentityGrantDaoImpl();
+		targetAuthor.setSponsorAwardIds(identityGrantDao.getSponsorAwardIdListByCwid(targetAuthor.getCwid()));
+		
 		//		Set<String> terms = constructPubmedQuery(targetAuthor);
 		//		String query = getConcatTerms(terms);
 		//		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
