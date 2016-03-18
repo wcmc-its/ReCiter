@@ -1,9 +1,15 @@
 package xmlparser.pubmed;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -40,7 +46,8 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			slf4jLogger.error(e.getMessage(), e);
 		}
 
-		directory = p.getProperty("pubmed_xml_folder");
+//		directory = p.getProperty("pubmed_xml_folder");
+		directory = "C:/Users/Jie/Downloads/reciter_data/data/pubmed_singles/";
 	}
 
 	public PubmedXmlFetcher() {
@@ -59,6 +66,27 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		if (!pubmedDir.exists()) {
 			pubmedDir.mkdirs();
 		}
+	}
+	
+	/**
+	 * Read in an url that contains a list of pmids and returns this list of pmids.
+	 * 
+	 * @param url
+	 * @return
+	 */
+	public List<String> getPmids(String url) {
+		List<String> pmids = new ArrayList<String>(); 
+		try {
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
+			String inputLine;
+			while ((inputLine = bufferedReader.readLine()) != null) {
+				pmids.add(inputLine);
+			}
+			bufferedReader.close();
+		} catch (IOException e) {
+			slf4jLogger.warn(e.getMessage());
+		}
+		return pmids;
 	}
 
 	/**
@@ -112,7 +140,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		slf4jLogger.info("PubMed Seach Query: " + eSearchUrl);
 		return numPubMedArticles;
 	}
-
+	
 	/**
 	 * Fetch all the publications for this query in PubMed and store it on disk with name fileName.
 	 * 

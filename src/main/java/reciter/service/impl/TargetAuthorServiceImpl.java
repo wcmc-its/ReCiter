@@ -1,14 +1,24 @@
 package reciter.service.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import database.dao.BoardCertificationDao;
 import database.dao.IdentityAlternateDeptNamesDao;
@@ -16,12 +26,14 @@ import database.dao.IdentityCitizenshipDao;
 import database.dao.IdentityDao;
 import database.dao.IdentityDegreeDao;
 import database.dao.IdentityDirectoryDao;
+import database.dao.IdentityInstitutionDao;
 import database.dao.impl.BoardCertificationDaoImpl;
 import database.dao.impl.IdentityAlternateDeptNamesDaoImpl;
 import database.dao.impl.IdentityCitizenshipDaoImpl;
 import database.dao.impl.IdentityDaoImpl;
 import database.dao.impl.IdentityDegreeDaoImpl;
 import database.dao.impl.IdentityDirectoryDaoImpl;
+import database.dao.impl.IdentityInstitutionDaoImpl;
 import database.model.IdentityDegree;
 import database.model.IdentityDirectory;
 import reciter.model.author.AuthorAffiliation;
@@ -35,6 +47,9 @@ import reciter.service.TargetAuthorService;
 import reciter.service.converters.IdentityDegreeConverter;
 import reciter.service.dto.IdentityDTO;
 import reciter.string.PubmedSearchQueryGenerator;
+import xmlparser.pubmed.PubmedESearchHandler;
+import xmlparser.pubmed.PubmedXmlFetcher;
+import xmlparser.pubmed.PubmedXmlQuery;
 
 public class TargetAuthorServiceImpl implements TargetAuthorService {
 
@@ -92,6 +107,11 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		List<AuthorEducation> authorEducations = identityEducationService.getEducations(cwid);
 		targetAuthor.setEducations(authorEducations);
 
+		// Set author institutions.
+		IdentityInstitutionDao identityInstitutionDao = new IdentityInstitutionDaoImpl();
+		List<String> institutions = identityInstitutionDao.getInstitutionByCwid(cwid);
+		targetAuthor.setInstitutions(institutions);
+
 		BoardCertificationDao boardCertificationDao = new BoardCertificationDaoImpl();
 		List<String> boardCertifications = boardCertificationDao.getBoardCertificationsByCwid(identityDTO.getCwid());
 		if (!boardCertifications.isEmpty()) {
@@ -114,22 +134,27 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 			List<String> alternateDepartmentNames = identityAlternateDeptNamesDao.getAlternateNames(targetAuthor.getDepartment());
 			targetAuthor.setAlternateDepartmentNames(alternateDepartmentNames);
 		}
-		
+
 		// Set email and email_other.
 		targetAuthor.setEmail(identityDTO.getEmail());
 		targetAuthor.setEmailOther(identityDTO.getEmailOther());
 
 		//		Set<String> terms = constructPubmedQuery(targetAuthor);
 		//		String query = getConcatTerms(terms);
-//		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
+		//		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
 		String query = getPubMedSearchQuery(cwid);
 		targetAuthor.setPubmedSearchQuery(query);
 
 		updateMiddleNameFromAlias(targetAuthor);
-		
+
 		return targetAuthor;
 	}
-	
+
+	public int buildPubmedQuery(String searchQuery) {
+		PubmedESearchHandler pubmedESearchHandler = PubmedESearchHandler.executeESearchQuery(searchQuery);
+		return pubmedESearchHandler.getCount();
+	}
+
 	/**
 	 * In the case where the target author's middle name is an empty string, update the author's middle name from
 	 * rc_identity_directory. In the case where there are multiple middle names from rc_identity_directory,
@@ -156,14 +181,14 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		String query = identityDao.getPubmedQuery(cwid);
 		String encodedUrl = null;
 		try {
-		    encodedUrl = URLEncoder.encode(query, "UTF-8");
+			encodedUrl = URLEncoder.encode(query, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-		    // Can be safely ignored because UTF-8 is always supported.
+			// Can be safely ignored because UTF-8 is always supported.
 			e.printStackTrace();
 		}
 		return encodedUrl;
 	}
-	
+
 	public String getPubMedSearchQuery(String lastName, String firstName) {
 		lastName = lastName.replaceAll(" ", "%20");
 		String firstInitial = firstName.substring(0, 1);

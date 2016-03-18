@@ -68,7 +68,7 @@ public class PubmedXmlQuery {
 	private int queryKey = 1;
 	
 	/**
-	 * Returned format for query.
+	 * Returned format for query. xml or json.
 	 */
 	private String retMode = "xml";
 	
@@ -128,6 +128,32 @@ public class PubmedXmlQuery {
 		sb.append(queryKey);
 		sb.append("&WebEnv=");
 		sb.append(webEnv);
+		return sb.toString();
+	}
+	
+	public String buildEFetchQueryWithoutRetmax() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(EFETCH_BASE_URL);
+		sb.append("?retmode=");
+		sb.append(retMode);
+		sb.append("&db=");
+		sb.append(db);
+		sb.append("&query_key=");
+		sb.append(queryKey);
+		sb.append("&WebEnv=");
+		sb.append(webEnv);
+		return sb.toString();
+	}
+	
+	public String buildEFetchQueryWithSinglePmid(String pmid) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(EFETCH_BASE_URL);
+		sb.append("?retmode=");
+		sb.append(retMode);
+		sb.append("&db=");
+		sb.append(db);
+		sb.append("&id=");
+		sb.append(pmid);
 		return sb.toString();
 	}
 

@@ -23,6 +23,7 @@ public class TargetAuthor extends ReCiterAuthor {
 	private List<String> alternateDepartmentNames;
 	private List<AuthorName> authorNamesFromEmailFetch;
 	private int articleSize;
+	private List<String> institutions;
 	
 	public TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
@@ -146,5 +147,13 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setArticleSize(int articleSize) {
 		this.articleSize = articleSize;
+	}
+
+	public List<String> getInstitutions() {
+		return institutions;
+	}
+
+	public void setInstitutions(List<String> institutions) {
+		this.institutions = institutions;
 	}
 }
