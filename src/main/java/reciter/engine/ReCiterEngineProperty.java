@@ -18,11 +18,22 @@ public class ReCiterEngineProperty {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngineProperty.class);
 
-	public String reCiterPropertyFile = "src/main/resources/config/reciter.properties";
-	public String testDataFolder;
-	public String analysisOutputFolder;
+	private static String reCiterPropertyFile = "src/main/resources/config/reciter.properties";
+	public static String testDataFolder;
+	public static String analysisOutputFolder;
+	
+	public static String commonAffiliationsXmlFolder;
+	public static String affiliationsXmlFolder;
+	public static String emailXmlFolder;
+	public static String departmentXmlFolder;
+	public static String grantXmlFolder;
 
-	public ReCiterEngineProperty() {
+	public static void main(String[] args) {
+		ReCiterEngineProperty.loadProperty();
+		System.out.println(ReCiterEngineProperty.affiliationsXmlFolder);
+	}
+	
+	public static void loadProperty() {
 		InputStream inputStream = null;
 		try {
 			Properties properties = new Properties();
@@ -30,7 +41,11 @@ public class ReCiterEngineProperty {
 			properties.load(inputStream);
 			testDataFolder = properties.getProperty("test_data_folder");
 			analysisOutputFolder = properties.getProperty("analysis_output_folder");
-
+			commonAffiliationsXmlFolder = properties.getProperty("pubmed_common_affiliations_xml_folder");
+			affiliationsXmlFolder = properties.getProperty("pubmed_affiliations_xml_folder");
+			emailXmlFolder = properties.getProperty("pubmed_email_xml_folder");
+			departmentXmlFolder = properties.getProperty("pubmed_dept_xml_folder");
+			grantXmlFolder = properties.getProperty("pumbed_grant_xml_folder");
 		} catch (Exception e) {
 			slf4jLogger.error("Error reading properties file", e);
 		} finally {

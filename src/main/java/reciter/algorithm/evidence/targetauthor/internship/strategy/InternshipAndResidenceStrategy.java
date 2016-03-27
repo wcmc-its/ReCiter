@@ -3,10 +3,10 @@ package reciter.algorithm.evidence.targetauthor.internship.strategy;
 import java.util.ArrayList;
 import java.util.List;
 
-import database.dao.IdentityIntershipsResidenciesDao;
-import database.dao.impl.IdentityIntershipsResidenciesDaoImpl;
-import database.model.IdentityIntershipsResidencies;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.dao.IdentityIntershipsResidenciesDao;
+import reciter.database.dao.impl.IdentityIntershipsResidenciesDaoImpl;
+import reciter.database.model.IdentityIntershipsResidencies;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.model.author.ReCiterAuthor;

@@ -3,9 +3,9 @@ package reciter.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import database.dao.IdentityDao;
-import database.dao.impl.IdentityDaoImpl;
-import database.model.Identity;
+import reciter.database.dao.IdentityDao;
+import reciter.database.dao.impl.IdentityDaoImpl;
+import reciter.database.model.Identity;
 import reciter.service.IdentityService;
 import reciter.service.converters.IdentityConverter;
 import reciter.service.dto.IdentityDTO;

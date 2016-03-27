@@ -11,8 +11,8 @@ import reciter.model.author.AuthorEducation;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.string.ReCiterStringUtil;
-import xmlparser.scopus.model.Author;
-import xmlparser.scopus.model.ScopusArticle;
+import reciter.xml.parser.scopus.model.Author;
+import reciter.xml.parser.scopus.model.ScopusArticle;
 
 public class EducationStrategy extends AbstractTargetAuthorStrategy {
 

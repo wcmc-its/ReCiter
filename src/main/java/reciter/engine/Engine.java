@@ -12,7 +12,7 @@ public interface Engine {
 	void run(TargetAuthor targetAuthor);
 	void run();
 	Analysis constructAnalysis();
-	void checkNumQueries();
+//	void checkNumQueries();
 	void run(String cwid);
 	void run(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticleList);
 	Analysis getAnalysis();

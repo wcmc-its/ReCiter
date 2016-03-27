@@ -5,7 +5,7 @@ import java.util.Set;
 
 import reciter.model.completeness.ArticleCompleteness;
 import reciter.model.completeness.ReCiterCompleteness;
-import xmlparser.scopus.model.ScopusArticle;
+import reciter.xml.parser.scopus.model.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
 

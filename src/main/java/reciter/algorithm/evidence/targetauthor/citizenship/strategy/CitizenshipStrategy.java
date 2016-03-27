@@ -9,8 +9,8 @@ import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
-import xmlparser.scopus.model.Author;
-import xmlparser.scopus.model.ScopusArticle;
+import reciter.xml.parser.scopus.model.Author;
+import reciter.xml.parser.scopus.model.ScopusArticle;
 
 public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 

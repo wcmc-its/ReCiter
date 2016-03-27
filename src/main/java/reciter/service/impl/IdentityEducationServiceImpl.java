@@ -2,9 +2,9 @@ package reciter.service.impl;
 
 import java.util.List;
 
-import database.dao.IdentityEducationDao;
-import database.dao.impl.IdentityEducationDaoImpl;
-import database.model.IdentityEducation;
+import reciter.database.dao.IdentityEducationDao;
+import reciter.database.dao.impl.IdentityEducationDaoImpl;
+import reciter.database.model.IdentityEducation;
 import reciter.model.author.AuthorEducation;
 import reciter.service.IdentityEducationService;
 import reciter.service.converters.IdentityEducationConverter;

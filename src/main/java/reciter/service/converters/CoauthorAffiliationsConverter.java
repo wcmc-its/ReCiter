@@ -1,6 +1,6 @@
 package reciter.service.converters;
 
-import database.model.CoauthorAffiliations;
+import reciter.database.model.CoauthorAffiliations;
 import reciter.service.dto.CoauthorAffiliationsDTO;
 
 public class CoauthorAffiliationsConverter {

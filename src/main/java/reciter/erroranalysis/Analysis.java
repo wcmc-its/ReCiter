@@ -11,11 +11,11 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import database.dao.GoldStandardPmidsDao;
-import database.dao.impl.GoldStandardPmidsDaoImpl;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
+import reciter.database.dao.GoldStandardPmidsDao;
+import reciter.database.dao.impl.GoldStandardPmidsDaoImpl;
 import reciter.model.article.ReCiterArticle;
 
 /**

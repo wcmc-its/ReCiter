@@ -1,7 +1,7 @@
 package reciter.service.impl;
 
-import database.dao.CoauthorAffiliationsDao;
-import database.dao.impl.CoauthorAffiliationsDaoImpl;
+import reciter.database.dao.CoauthorAffiliationsDao;
+import reciter.database.dao.impl.CoauthorAffiliationsDaoImpl;
 import reciter.service.CoauthorAffiliationsService;
 import reciter.service.converters.CoauthorAffiliationsConverter;
 import reciter.service.dto.CoauthorAffiliationsDTO;

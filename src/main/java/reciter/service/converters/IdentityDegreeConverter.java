@@ -1,6 +1,6 @@
 package reciter.service.converters;
 
-import database.model.IdentityDegree;
+import reciter.database.model.IdentityDegree;
 import reciter.model.author.AuthorDegree;
 
 /**

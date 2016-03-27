@@ -1,10 +1,10 @@
 package reciter.service.converters;
 
+import reciter.database.model.Identity;
+import reciter.database.model.IdentityEducation;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
-import database.model.Identity;
-import database.model.IdentityEducation;
 
 public class TargetAuthorConverter {
 	

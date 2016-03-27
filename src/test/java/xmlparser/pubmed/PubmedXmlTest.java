@@ -14,11 +14,13 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import xmlparser.pubmed.model.MedlineCitationArticleAuthor;
-import xmlparser.pubmed.model.MedlineCitationKeywordList;
-import xmlparser.pubmed.model.MedlineCitationMeshHeading;
-import xmlparser.pubmed.model.MedlineCitationYNEnum;
-import xmlparser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
+import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
+import reciter.xml.parser.pubmed.model.MedlineCitationArticleAuthor;
+import reciter.xml.parser.pubmed.model.MedlineCitationKeywordList;
+import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
+import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
+import reciter.xml.parser.pubmed.model.PubmedArticle;
 
 public class PubmedXmlTest {
 

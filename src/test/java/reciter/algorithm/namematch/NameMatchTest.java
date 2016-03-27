@@ -25,9 +25,9 @@ import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 import reciter.service.impl.TargetAuthorServiceImpl;
-import xmlparser.pubmed.PubmedEFetchHandler;
-import xmlparser.pubmed.model.PubmedArticle;
-import xmlparser.translator.ArticleTranslator;
+import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
+import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.translator.ArticleTranslator;
 
 /**
  * https://github.com/wcmc-its/ReCiter/issues/133

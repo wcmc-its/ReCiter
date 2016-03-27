@@ -3,7 +3,7 @@ package reciter.service.converters;
 import java.util.ArrayList;
 import java.util.List;
 
-import database.model.Analysis;
+import reciter.database.model.Analysis;
 import reciter.erroranalysis.AnalysisObject;
 import reciter.erroranalysis.StatusEnum;
 

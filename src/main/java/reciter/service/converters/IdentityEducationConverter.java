@@ -3,7 +3,7 @@ package reciter.service.converters;
 import java.util.ArrayList;
 import java.util.List;
 
-import database.model.IdentityEducation;
+import reciter.database.model.IdentityEducation;
 import reciter.model.author.AuthorEducation;
 
 public class IdentityEducationConverter {

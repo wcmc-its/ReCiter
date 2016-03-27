@@ -1,6 +1,7 @@
 package reciter.model.author;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author jil3004
@@ -25,6 +26,8 @@ public class TargetAuthor extends ReCiterAuthor {
 	private int articleSize;
 	private List<String> institutions;
 	private List<String> sponsorAwardIds;
+	private List<String> emailAddresses; // rc_identity_email
+	private Set<AuthorName> authorNameVariationsRetrievedFromPubmedUsingEmail;
 	
 	public TargetAuthor(AuthorName name, AuthorAffiliation affiliation) {
 		super(name, affiliation);
@@ -164,5 +167,22 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	public void setSponsorAwardIds(List<String> sponsorAwardIds) {
 		this.sponsorAwardIds = sponsorAwardIds;
+	}
+
+	public List<String> getEmailAddresses() {
+		return emailAddresses;
+	}
+
+	public void setEmailAddresses(List<String> emailAddresses) {
+		this.emailAddresses = emailAddresses;
+	}
+
+	public Set<AuthorName> getAuthorNameVariationsRetrievedFromPubmedUsingEmail() {
+		return authorNameVariationsRetrievedFromPubmedUsingEmail;
+	}
+
+	public void setAuthorNameVariationsRetrievedFromPubmedUsingEmail(
+			Set<AuthorName> authorNameVariationsRetrievedFromPubmedUsingEmail) {
+		this.authorNameVariationsRetrievedFromPubmedUsingEmail = authorNameVariationsRetrievedFromPubmedUsingEmail;
 	}
 }

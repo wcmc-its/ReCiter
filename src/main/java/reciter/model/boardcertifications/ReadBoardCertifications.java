@@ -9,8 +9,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import database.dao.BoardCertificationDao;
-import database.dao.impl.BoardCertificationDaoImpl;
+import reciter.database.dao.BoardCertificationDao;
+import reciter.database.dao.impl.BoardCertificationDaoImpl;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.tfidf.Document;

@@ -7,8 +7,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import database.dao.AnalysisDao;
-import database.dao.impl.AnalysisDaoImpl;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
@@ -36,6 +34,8 @@ import reciter.algorithm.evidence.targetauthor.name.strategy.NameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
 import reciter.csv.CSVWriter;
+import reciter.database.dao.AnalysisDao;
+import reciter.database.dao.impl.AnalysisDaoImpl;
 import reciter.erroranalysis.Analysis;
 import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
@@ -223,16 +223,16 @@ public class ReCiterEngine implements Engine {
 		return null;
 	}
 
-	@Override
-	public void checkNumQueries() {
-		List<String> cwids = reCiterEngineProperty.getCwids();
-
-		for (String cwid : cwids) {
-			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-			int articleCount = new ReCiterArticleFetcher().checkNumQueries(targetAuthor);
-			slf4jLogger.info("Article count for cwid=[" + cwid + "] is [" + articleCount + "]");
-		}
-	}
+//	@Override
+//	public void checkNumQueries() {
+//		List<String> cwids = reCiterEngineProperty.getCwids();
+//
+//		for (String cwid : cwids) {
+//			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+//			int articleCount = new ReCiterArticleFetcher().checkNumQueries(targetAuthor);
+//			slf4jLogger.info("Article count for cwid=[" + cwid + "] is [" + articleCount + "]");
+//		}
+//	}
 
 	@Override
 	public Analysis getAnalysis() {

@@ -18,10 +18,11 @@ import org.xml.sax.InputSource;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterCitationYNEnum;
 import reciter.model.article.ReCiterMeshHeadingQualifierName;
-import xmlparser.pubmed.model.MedlineCitationMeshHeading;
-import xmlparser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
-import xmlparser.pubmed.model.MedlineCitationYNEnum;
-import xmlparser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
+import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
+import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
+import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
+import reciter.xml.parser.pubmed.model.PubmedArticle;
 
 public class PubmedXmlMeshHeadingTest2 {
 

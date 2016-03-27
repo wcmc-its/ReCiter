@@ -17,7 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
-import xmlparser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
+import reciter.xml.parser.pubmed.model.PubmedArticle;
 
 public class PubmedEFetchHandlerTest {
 

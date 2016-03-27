@@ -20,7 +20,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import xmlparser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
+import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
+import reciter.xml.parser.pubmed.model.PubmedArticle;
 
 public class RetrievalArticleByEmailTest {
 

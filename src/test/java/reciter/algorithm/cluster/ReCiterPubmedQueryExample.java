@@ -2,7 +2,7 @@ package reciter.algorithm.cluster;
 
 import java.util.List;
 
-import database.dao.impl.IdentityDaoImpl;
+import reciter.database.dao.impl.IdentityDaoImpl;
 import reciter.engine.ReCiterEngineProperty;
 
 public class ReCiterPubmedQueryExample {

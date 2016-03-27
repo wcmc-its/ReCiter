@@ -9,9 +9,9 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import database.dao.MeshRawCount;
-import database.dao.impl.MeshRawCountImpl;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.dao.MeshRawCount;
+import reciter.database.dao.impl.MeshRawCountImpl;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterCitationYNEnum;

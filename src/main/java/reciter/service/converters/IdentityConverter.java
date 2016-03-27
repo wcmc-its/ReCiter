@@ -1,6 +1,6 @@
 package reciter.service.converters;
 
-import database.model.Identity;
+import reciter.database.model.Identity;
 import reciter.service.dto.IdentityDTO;
 
 public class IdentityConverter {

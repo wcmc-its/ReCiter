@@ -7,10 +7,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import database.dao.IdentityEarliestStartDateDao;
-import database.dao.impl.IdentityEarliestStartDateDaoImpl;
-import database.model.IdentityEarliestStartDate;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.dao.IdentityEarliestStartDateDao;
+import reciter.database.dao.impl.IdentityEarliestStartDateDaoImpl;
+import reciter.database.model.IdentityEarliestStartDate;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 

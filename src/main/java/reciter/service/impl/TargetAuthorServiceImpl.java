@@ -10,24 +10,26 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import database.dao.BoardCertificationDao;
-import database.dao.IdentityAlternateDeptNamesDao;
-import database.dao.IdentityCitizenshipDao;
-import database.dao.IdentityDao;
-import database.dao.IdentityDegreeDao;
-import database.dao.IdentityDirectoryDao;
-import database.dao.IdentityGrantDao;
-import database.dao.IdentityInstitutionDao;
-import database.dao.impl.BoardCertificationDaoImpl;
-import database.dao.impl.IdentityAlternateDeptNamesDaoImpl;
-import database.dao.impl.IdentityCitizenshipDaoImpl;
-import database.dao.impl.IdentityDaoImpl;
-import database.dao.impl.IdentityDegreeDaoImpl;
-import database.dao.impl.IdentityDirectoryDaoImpl;
-import database.dao.impl.IdentityGrantDaoImpl;
-import database.dao.impl.IdentityInstitutionDaoImpl;
-import database.model.IdentityDegree;
-import database.model.IdentityDirectory;
+import reciter.database.dao.BoardCertificationDao;
+import reciter.database.dao.IdentityAlternateDeptNamesDao;
+import reciter.database.dao.IdentityCitizenshipDao;
+import reciter.database.dao.IdentityDao;
+import reciter.database.dao.IdentityDegreeDao;
+import reciter.database.dao.IdentityDirectoryDao;
+import reciter.database.dao.IdentityEmailDao;
+import reciter.database.dao.IdentityGrantDao;
+import reciter.database.dao.IdentityInstitutionDao;
+import reciter.database.dao.impl.BoardCertificationDaoImpl;
+import reciter.database.dao.impl.IdentityAlternateDeptNamesDaoImpl;
+import reciter.database.dao.impl.IdentityCitizenshipDaoImpl;
+import reciter.database.dao.impl.IdentityDaoImpl;
+import reciter.database.dao.impl.IdentityDegreeDaoImpl;
+import reciter.database.dao.impl.IdentityDirectoryDaoImpl;
+import reciter.database.dao.impl.IdentityEmailDaoImpl;
+import reciter.database.dao.impl.IdentityGrantDaoImpl;
+import reciter.database.dao.impl.IdentityInstitutionDaoImpl;
+import reciter.database.model.IdentityDegree;
+import reciter.database.model.IdentityDirectory;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorDegree;
 import reciter.model.author.AuthorEducation;
@@ -39,7 +41,7 @@ import reciter.service.TargetAuthorService;
 import reciter.service.converters.IdentityDegreeConverter;
 import reciter.service.dto.IdentityDTO;
 import reciter.string.PubmedSearchQueryGenerator;
-import xmlparser.pubmed.PubmedESearchHandler;
+import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 
 public class TargetAuthorServiceImpl implements TargetAuthorService {
 
@@ -132,6 +134,12 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		// Sponsor Award ids.
 		IdentityGrantDao identityGrantDao = new IdentityGrantDaoImpl();
 		targetAuthor.setSponsorAwardIds(identityGrantDao.getSponsorAwardIdListByCwid(targetAuthor.getCwid()));
+		
+		// set emails from rc_identity_email and combine this information
+		// with email and email_other from rc_identity.
+		IdentityEmailDao identityEmailDao = new IdentityEmailDaoImpl();
+		List<String> emailAddresses = identityEmailDao.getEmailAddressesForCwid(cwid);
+		targetAuthor.setEmailAddresses(emailAddresses);
 		
 		//		Set<String> terms = constructPubmedQuery(targetAuthor);
 		//		String query = getConcatTerms(terms);

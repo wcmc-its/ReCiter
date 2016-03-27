@@ -23,7 +23,7 @@ public class ReCiterCheckNumArticlesForQuery {
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		ReCiterCheckNumArticlesForQuery reCiterCheckNumArticlesForQuery = new ReCiterCheckNumArticlesForQuery();
-		reCiterCheckNumArticlesForQuery.engine.checkNumQueries();
+//		reCiterCheckNumArticlesForQuery.engine.checkNumQueries();
 		long stopTime = System.currentTimeMillis();
 	    long elapsedTime = stopTime - startTime;
 	    slf4jLogger.info("Total execution time: " + elapsedTime + " ms.");
