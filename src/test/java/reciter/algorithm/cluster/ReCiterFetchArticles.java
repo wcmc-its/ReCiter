@@ -26,18 +26,19 @@ public class ReCiterFetchArticles {
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 		
 		try {
-			// Fetch by email to search for name variations.
-			pubmedXmlFetcher.fetchByEmail(targetAuthor);
-			pubmedXmlFetcher.fetchUsingFirstName(targetAuthor);
-			
-			pubmedXmlFetcher.fetchByAffiliationInDb(targetAuthor);
-			pubmedXmlFetcher.fetchByCommonAffiliations(targetAuthor);
-			pubmedXmlFetcher.fetchByDepartment(targetAuthor);
-			pubmedXmlFetcher.fetchByGrants(targetAuthor);
-			
-			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
-			scopusXmlFetcher.fetch(targetAuthor.getCwid());
-			
+			System.out.println(pubmedXmlFetcher.getPubmedArticle(targetAuthor.getCwid()).size());
+//			// Fetch by email to search for name variations.
+//			pubmedXmlFetcher.fetchByEmail(targetAuthor);
+//			pubmedXmlFetcher.fetchUsingFirstName(targetAuthor);
+//			
+//			pubmedXmlFetcher.fetchByAffiliationInDb(targetAuthor);
+//			pubmedXmlFetcher.fetchByCommonAffiliations(targetAuthor);
+//			pubmedXmlFetcher.fetchByDepartment(targetAuthor);
+//			pubmedXmlFetcher.fetchByGrants(targetAuthor);
+//			
+//			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+//			scopusXmlFetcher.fetch(targetAuthor.getCwid());
+//			
 		} catch (IOException | SAXException | ParserConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
