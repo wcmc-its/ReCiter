@@ -7,6 +7,8 @@ import java.net.URL;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -18,11 +20,15 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class PubmedESearchHandler extends DefaultHandler {
 	
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(PubmedESearchHandler.class);
+	
 	private String webEnv;
 	private int count;
 	private boolean bWebEnv;
 	private boolean bCount;
 	private int numCountEncounteredSoFar = 0;
+	
+	private StringBuilder chars = new StringBuilder();
 	
 	/**
 	 * Sends a query to the NCBI web site to retrieve the webEnv.
@@ -40,21 +46,21 @@ public class PubmedESearchHandler extends DefaultHandler {
 		try {
 			inputStream = new URL(eSearchUrl).openStream();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			slf4jLogger.error("Error in executeESearchQuery", e);
 		}
 		try {
-			SAXParserFactory.newInstance()
-							.newSAXParser()
-							.parse(inputStream, webEnvHandler);
+			SAXParserFactory.newInstance().newSAXParser().parse(inputStream, webEnvHandler);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			slf4jLogger.error("Error in executeESearchQuery", e);
 		}
 		return webEnvHandler;
 	}
 	
+	@Override
 	public void startElement(String uri, String localName,String qName, Attributes attributes) throws SAXException {
+		
+		chars.setLength(0);
+		
 		if (qName.equalsIgnoreCase("WebEnv")) {
 			bWebEnv = true;
 		}
@@ -63,14 +69,29 @@ public class PubmedESearchHandler extends DefaultHandler {
 			bCount = true;
 		}
 	}
-
+	
+	@Override
 	public void characters(char ch[], int start, int length) throws SAXException {
 		if (bWebEnv) {
-			webEnv = new String(ch, start, length);
-			bWebEnv = false;
+			chars.append(ch, start, length);
 		}
 		if (bCount) {
-			count = Integer.parseInt(new String(ch, start, length));
+			chars.append(ch, start, length);
+		}
+	}
+	
+	@Override
+	public void endElement(String uri, String localName, String qName) throws SAXException {
+		// WebEnv
+		if (bWebEnv) {
+			webEnv = chars.toString();
+			bWebEnv = false;
+		}
+		
+		// Count.
+		if (bCount) {
+			count = Integer.parseInt(chars.toString());
+			slf4jLogger.info("Count in handler=[" + count + "].");
 			bCount = false;
 		}
 	}
