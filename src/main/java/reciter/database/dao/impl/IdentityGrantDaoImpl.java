@@ -51,7 +51,7 @@ public class IdentityGrantDaoImpl implements IdentityGrantDao{
 		}
 		return list;
 	}
-	
+
 	@Override
 	public List<String> getSponsorAwardIdListByCwid(String cwid) {
 		Connection con = DbConnectionFactory.getConnection();
@@ -63,7 +63,10 @@ public class IdentityGrantDaoImpl implements IdentityGrantDao{
 			pst = con.prepareStatement(query);
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				list.add(rs.getString(1));
+				String sponsorAwardId = rs.getString(1);
+				if (sponsorAwardId != null) {
+					list.add(sponsorAwardId);
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

@@ -91,7 +91,6 @@ public class PubmedESearchHandler extends DefaultHandler {
 		// Count.
 		if (bCount) {
 			count = Integer.parseInt(chars.toString());
-			slf4jLogger.info("Count in handler=[" + count + "].");
 			bCount = false;
 		}
 	}

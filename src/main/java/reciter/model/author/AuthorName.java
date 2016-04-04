@@ -245,9 +245,9 @@ public class AuthorName {
 	@Override
 	public String toString() {
 		if (middleName.length() > 0) {
-			return firstName + " " + middleName + " " + lastName;
+			return "{firstName=[" + firstName + "], middleName=[" + middleName + "], lastName=[" + lastName + "]}";
 		} else {
-			return firstName + " " + lastName;
+			return "{firstName=[" + firstName + "], lastName=[" + lastName + "]}";
 		}
 	}
 

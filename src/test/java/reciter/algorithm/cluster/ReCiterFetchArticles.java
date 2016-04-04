@@ -13,14 +13,12 @@ import reciter.model.author.TargetAuthor;
 import reciter.service.TargetAuthorService;
 import reciter.service.impl.TargetAuthorServiceImpl;
 import reciter.xml.parser.pubmed.PubmedXmlFetcher;
+import reciter.xml.parser.scopus.ScopusXmlFetcher;
 
 public class ReCiterFetchArticles {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterFetchArticles.class);
-	
 	public static void main(String[] args) {
 		ReCiterEngineProperty.loadProperty();
-		slf4jLogger.info("Email folder=[" + ReCiterEngineProperty.emailXmlFolder + "].");
 		
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
 		String cwid = "yiwang";
@@ -28,7 +26,18 @@ public class ReCiterFetchArticles {
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 		
 		try {
-			pubmedXmlFetcher.retrieveByEmail(targetAuthor);
+			// Fetch by email to search for name variations.
+			pubmedXmlFetcher.fetchByEmail(targetAuthor);
+			pubmedXmlFetcher.fetchUsingFirstName(targetAuthor);
+			
+			pubmedXmlFetcher.fetchByAffiliationInDb(targetAuthor);
+			pubmedXmlFetcher.fetchByCommonAffiliations(targetAuthor);
+			pubmedXmlFetcher.fetchByDepartment(targetAuthor);
+			pubmedXmlFetcher.fetchByGrants(targetAuthor);
+			
+			ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
+			scopusXmlFetcher.fetch(targetAuthor.getCwid());
+			
 		} catch (IOException | SAXException | ParserConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -22,12 +22,15 @@ public class ReCiterEngineProperty {
 	public static String testDataFolder;
 	public static String analysisOutputFolder;
 	
+	public static String pubmedFolder;
 	public static String commonAffiliationsXmlFolder;
 	public static String affiliationsXmlFolder;
 	public static String emailXmlFolder;
 	public static String departmentXmlFolder;
 	public static String grantXmlFolder;
 
+	public static String scopusFolder;
+	
 	public static void main(String[] args) {
 		ReCiterEngineProperty.loadProperty();
 		System.out.println(ReCiterEngineProperty.affiliationsXmlFolder);
@@ -42,10 +45,12 @@ public class ReCiterEngineProperty {
 			testDataFolder = properties.getProperty("test_data_folder");
 			analysisOutputFolder = properties.getProperty("analysis_output_folder");
 			commonAffiliationsXmlFolder = properties.getProperty("pubmed_common_affiliations_xml_folder");
+			pubmedFolder = properties.getProperty("pubmed_xml_folder");
 			affiliationsXmlFolder = properties.getProperty("pubmed_affiliations_xml_folder");
 			emailXmlFolder = properties.getProperty("pubmed_email_xml_folder");
 			departmentXmlFolder = properties.getProperty("pubmed_dept_xml_folder");
 			grantXmlFolder = properties.getProperty("pumbed_grant_xml_folder");
+			scopusFolder = properties.getProperty("scopus_xml_folder");
 		} catch (Exception e) {
 			slf4jLogger.error("Error reading properties file", e);
 		} finally {
