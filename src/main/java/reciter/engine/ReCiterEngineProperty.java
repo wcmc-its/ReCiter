@@ -20,7 +20,6 @@ public class ReCiterEngineProperty {
 
 	private static String reCiterPropertyFile = "src/main/resources/config/reciter.properties";
 	public static String testDataFolder;
-	public static String analysisOutputFolder;
 	
 	public static String pubmedFolder;
 	public static String commonAffiliationsXmlFolder;
@@ -43,7 +42,6 @@ public class ReCiterEngineProperty {
 			inputStream = new FileInputStream(reCiterPropertyFile);
 			properties.load(inputStream);
 			testDataFolder = properties.getProperty("test_data_folder");
-			analysisOutputFolder = properties.getProperty("analysis_output_folder");
 			commonAffiliationsXmlFolder = properties.getProperty("pubmed_common_affiliations_xml_folder");
 			pubmedFolder = properties.getProperty("pubmed_xml_folder");
 			affiliationsXmlFolder = properties.getProperty("pubmed_affiliations_xml_folder");
