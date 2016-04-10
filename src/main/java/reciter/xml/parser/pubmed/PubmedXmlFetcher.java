@@ -1,8 +1,13 @@
 package reciter.xml.parser.pubmed;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,7 +67,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				all.add(article);
 			}
 		}
-		
+
 		List<PubmedArticle> commonAffiliations = getPubmedArticle(ReCiterEngineProperty.commonAffiliationsXmlFolder, cwid);
 		for (PubmedArticle article : commonAffiliations) {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
@@ -70,7 +75,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				all.add(article);
 			}
 		}
-		
+
 		List<PubmedArticle> depts = getPubmedArticle(ReCiterEngineProperty.departmentXmlFolder, cwid);
 		for (PubmedArticle article : depts) {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
@@ -78,7 +83,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				all.add(article);
 			}
 		}
-		
+
 		List<PubmedArticle> emails = getPubmedArticle(ReCiterEngineProperty.emailXmlFolder, cwid);
 		for (PubmedArticle article : emails) {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
@@ -86,7 +91,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				all.add(article);
 			}
 		}
-		
+
 		List<PubmedArticle> grants = getPubmedArticle(ReCiterEngineProperty.grantXmlFolder, cwid);
 		for (PubmedArticle article : grants) {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
@@ -94,10 +99,10 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				all.add(article);
 			}
 		}
-				
+
 		return all;
 	}
-	
+
 	/**
 	 * Retrieve and parse the PubMed xml in <code>commonDirectory</code> specified by <code>cwid</code>
 	 * 
@@ -111,7 +116,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	public List<PubmedArticle> getPubmedArticle(String commonDirectory, String cwid) 
 			throws ParserConfigurationException, SAXException, IOException {
 		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
-		
+
 		File directory = new File(commonDirectory + cwid);
 
 		if (directory.exists()) {
@@ -252,6 +257,17 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		return pubmedESearchHandler;
 	}
 
+	private PubmedESearchHandler getPubmedESearchHandlerJson(String query) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
+		pubmedXmlQuery.setRetMode("json");
+		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
+		slf4jLogger.info("URL=[" + fullUrl + "]");
+		PubmedESearchHandler pubmedESearchHandler = new PubmedESearchHandler();
+		InputStream esearchStream = new URL(fullUrl).openStream();
+		SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
+		return pubmedESearchHandler;
+	}
+
 	/**
 	 * Returns the number of articles that needs to be retrieved.
 	 * @param query
@@ -318,6 +334,44 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		fetch(encodedUrl, ReCiterEngineProperty.emailXmlFolder, targetAuthor.getCwid(), count);
 	}
 
+	public Set<String> fetchPmidsByEmail(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+
+		Set<String> pmids = new HashSet<String>();
+
+		// Construct email query.
+		List<String> emailAddresses = targetAuthor.getEmailAddresses();
+		String email = targetAuthor.getEmail();
+		String emailOther = targetAuthor.getEmailOther();
+		Set<String> distinctEmailAddresses = new HashSet<String>();
+		distinctEmailAddresses.addAll(emailAddresses);
+
+		if (email != null) {
+			distinctEmailAddresses.add(email);
+		}
+
+		if (emailOther != null) {
+			distinctEmailAddresses.add(emailOther);
+		}
+
+		slf4jLogger.info("rc_identity_email: " + distinctEmailAddresses);
+
+		StringBuffer sb = new StringBuffer();
+		int i = 0;
+		for (String s : distinctEmailAddresses) {
+			if (i != distinctEmailAddresses.size() - 1) {
+				sb.append(s + " OR ");
+			} else {
+				sb.append(s);
+			}
+		}
+
+		// Fetch pmids only.
+		String encodedUrl = URLEncoder.encode(sb.toString(), "UTF-8");
+		pmids = getPmids(encodedUrl);
+		
+		return pmids;
+	}
+
 	/**
 	 * Fetch PubMed articles by searching for verbose name and common affiliations.
 	 * 
@@ -378,6 +432,81 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		}
 	}
 
+	private Set<String> getPmids(String encodedUrl) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+		Set<String> pmids = new HashSet<String>();
+		// Fetch pmids only.
+		// String encodedUrl = URLEncoder.encode(query, "UTF-8");
+		PubmedESearchHandler handler = getPubmedESearchHandlerJson(encodedUrl);
+		String webEnv = handler.getWebEnv();
+
+		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
+		pubmedXmlQuery.setRetMode("json");
+		pubmedXmlQuery.setWevEnv(webEnv);
+
+		String url = pubmedXmlQuery.buildEFetchQuery();
+
+		// Save Pmids.
+		try {
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
+
+			String inputLine;
+			while ((inputLine = bufferedReader.readLine()) != null) {
+				pmids.add(inputLine);
+			}
+
+			bufferedReader.close();
+		} catch (IOException e) {
+			slf4jLogger.warn(e.getMessage());
+		}
+		
+		return pmids;
+	}
+
+	public Set<String> fetchPmidsByCommonAffiliations(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+
+		Set<String> pmids = new HashSet<String>();
+
+		String lastName = targetAuthor.getAuthorName().getLastName();
+		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+		String firstName = targetAuthor.getAuthorName().getFirstName();
+
+		// Search for verbose name and common affiliations.
+		String query = URLEncoder.encode(lastName + " " + firstInitial + " " + AFFILIATION_QUERY, "UTF-8");
+		PubmedESearchHandler handler = getPubmedESearchHandler(query);
+
+		if (handler.getCount() > THRESHOLD) {
+			String queryVerboseFirstName = URLEncoder.encode(lastName + " " + firstName + " " + AFFILIATION_QUERY, "UTF-8");
+			pmids.addAll(getPmids(queryVerboseFirstName));
+		} else {
+			pmids.addAll(getPmids(query));
+		}
+
+		Set<AuthorName> nameVariations = getAuthorNameVariationFromEmails(targetAuthor);
+		if (!nameVariations.isEmpty()) {
+			for (AuthorName authorName : nameVariations) {
+				String anotherFirstName = authorName.getFirstName();
+				String anotherFirstInitial = authorName.getFirstInitial();
+				if (!StringUtils.equalsIgnoreCase(anotherFirstInitial, firstInitial) && !StringUtils.equalsIgnoreCase(anotherFirstName, firstName)) {
+
+					slf4jLogger.info("Fetch using name variation=[" + authorName + "]");
+
+					// Search again using name variations for verbose name and common affiliations.
+					String anotherQuery = URLEncoder.encode(lastName + " " + anotherFirstInitial + " " + AFFILIATION_QUERY, "UTF-8");
+					PubmedESearchHandler anotherHandler = getPubmedESearchHandler(anotherQuery);
+
+					if (anotherHandler.getCount() > THRESHOLD) {
+						String queryVerboseFirstName = URLEncoder.encode(lastName + " " + anotherFirstName + " " + AFFILIATION_QUERY, "UTF-8");
+						pmids.addAll(getPmids(queryVerboseFirstName));
+					} else {
+						pmids.addAll(getPmids(anotherQuery));
+					}
+				}
+			}
+		}
+
+		return pmids;
+	}
+
 	/**
 	 * Fetch PubMed articles by searching for department.
 	 * 
@@ -436,6 +565,51 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				}
 			}
 		}
+	}
+	
+	public Set<String> fetchPmidsByDepartment(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+
+		Set<String> pmids = new HashSet<String>();
+
+		String department = targetAuthor.getDepartment();
+
+		String lastName = targetAuthor.getAuthorName().getLastName();
+		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+		String firstName = targetAuthor.getAuthorName().getFirstName();
+
+		String query = URLEncoder.encode(lastName + " " + firstInitial + " AND " + department, "UTF-8");
+		PubmedESearchHandler handler = getPubmedESearchHandler(query);
+
+		if (handler.getCount() > THRESHOLD) {
+			String queryVerboseFirstName = URLEncoder.encode(lastName + " " + firstName + " AND " + department, "UTF-8");
+			pmids.addAll(getPmids(queryVerboseFirstName));
+		} else {
+			pmids.addAll(getPmids(query));
+		}
+
+		Set<AuthorName> nameVariations = getAuthorNameVariationFromEmails(targetAuthor);
+		if (!nameVariations.isEmpty()) {
+			for (AuthorName authorName : nameVariations) {
+				String anotherFirstName = authorName.getFirstName();
+				String anotherFirstInitial = authorName.getFirstInitial();
+				if (!StringUtils.equalsIgnoreCase(anotherFirstInitial, firstInitial) && !StringUtils.equalsIgnoreCase(anotherFirstName, firstName)) {
+
+					slf4jLogger.info("Fetch using name variation=[" + authorName + "]");
+
+					String anotherQuery = URLEncoder.encode(lastName + " " + anotherFirstInitial + " AND " + department, "UTF-8");
+					PubmedESearchHandler anotherHandler = getPubmedESearchHandler(anotherQuery);
+
+					if (anotherHandler.getCount() > THRESHOLD) {
+						String queryVerboseFirstName = URLEncoder.encode(lastName + " " + anotherFirstName + " AND " + department, "UTF-8");
+						pmids.addAll(getPmids(queryVerboseFirstName));
+					} else {
+						pmids.addAll(getPmids(anotherQuery));
+					}
+				}
+			}
+		}
+		
+		return pmids;
 	}
 
 	/**
@@ -513,6 +687,67 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				}
 			}
 		}
+	}
+	
+	public Set<String> fetchPmidsByAffiliationInDb(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+
+		Set<String> pmids = new HashSet<String>();
+
+		List<String> affiliations = targetAuthor.getInstitutions();
+		if (!affiliations.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			int i = 0;
+			// Concantenate the string with 'OR'.
+			// ex: Wang Yi[Author] and (Fudan University (China) OR University of Wisconsin, Madison OR University of Wisconsin, Milwaukee).
+			for (String affiliation : affiliations) {
+				if (i != affiliations.size() - 1) {
+					sb.append(affiliation + " OR ");
+				} else {
+					sb.append(affiliation);
+				}
+				i++;
+			}
+
+			slf4jLogger.info("Institutions=[" + sb.toString() + "].");
+			String lastName = targetAuthor.getAuthorName().getLastName();
+			String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+			String firstName = targetAuthor.getAuthorName().getFirstName();
+
+			String query = URLEncoder.encode(lastName + " " + firstInitial + "[Author] AND (" + sb.toString() + ")", "UTF-8");
+			PubmedESearchHandler handler = getPubmedESearchHandler(query);
+
+			if (handler.getCount() > THRESHOLD) {
+				String queryVerboseFirstName = URLEncoder.encode(lastName + " " + firstName + "[Author] AND (" + sb.toString() + ")", "UTF-8");
+				pmids.addAll(getPmids(queryVerboseFirstName));
+			} else {
+				pmids.addAll(getPmids(query));
+			}
+
+			Set<AuthorName> nameVariations = getAuthorNameVariationFromEmails(targetAuthor);
+			if (!nameVariations.isEmpty()) {
+				for (AuthorName authorName : nameVariations) {
+
+					String anotherFirstName = authorName.getFirstName();
+					String anotherFirstInitial = authorName.getFirstInitial();
+					if (!StringUtils.equalsIgnoreCase(anotherFirstInitial, firstInitial) && !StringUtils.equalsIgnoreCase(anotherFirstName, firstName)) {
+
+						slf4jLogger.info("Fetch using name variation=[" + authorName + "]");
+
+						String anotherQuery = URLEncoder.encode(lastName + " " + anotherFirstInitial + "[Author] AND (" + sb.toString() + ")", "UTF-8");
+						PubmedESearchHandler anotherHandler = getPubmedESearchHandler(anotherQuery);
+
+						if (anotherHandler.getCount() > THRESHOLD) {
+							String queryVerboseFirstName = URLEncoder.encode(lastName + " " + anotherFirstName + "[Author] AND (" + sb.toString() + ")", "UTF-8");
+							pmids.addAll(getPmids(queryVerboseFirstName));
+						} else {
+							pmids.addAll(getPmids(anotherQuery));
+						}
+					}
+				}
+			}
+		}
+		
+		return pmids;
 	}
 
 	/**
@@ -604,5 +839,64 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				}
 			}
 		}
+	}
+	
+	public Set<String> fetchPmidsByGrants(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+
+		Set<String> pmids = new HashSet<String>();
+
+		List<String> sponsorAwardIds = targetAuthor.getSponsorAwardIds();
+
+		if (sponsorAwardIds.size() > 0) {
+			StringBuilder sb = new StringBuilder();
+			int i = 0;
+			for (String sponsorAwardId : sponsorAwardIds) {
+				String parsed = parseSponsorAwardId(sponsorAwardId);
+				if (i != sponsorAwardIds.size() - 1) {
+					sb.append(parsed + "[Grant Number] OR ");
+				} else {
+					sb.append(parsed + "[Grant Number]");
+				}
+			}
+
+			String lastName = targetAuthor.getAuthorName().getLastName();
+			String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+			String firstName = targetAuthor.getAuthorName().getFirstName();
+
+			// Search for verbose name and common affiliations.
+			String query = URLEncoder.encode("(" + lastName + " " + firstInitial + " AND (" + sb.toString() + ")", "UTF-8");
+			PubmedESearchHandler handler = getPubmedESearchHandler(query);
+
+			if (handler.getCount() > THRESHOLD) {
+				String queryVerboseFirstName = URLEncoder.encode(lastName + " " + firstName + " AND (" + sb.toString() + ")", "UTF-8");
+				pmids.addAll(getPmids(queryVerboseFirstName));
+			} else {
+				pmids.addAll(getPmids(query));
+			}
+
+			Set<AuthorName> nameVariations = getAuthorNameVariationFromEmails(targetAuthor);
+			if (!nameVariations.isEmpty()) {
+				for (AuthorName authorName : nameVariations) {
+					String anotherFirstName = authorName.getFirstName();
+					String anotherFirstInitial = authorName.getFirstInitial();
+					if (!StringUtils.equalsIgnoreCase(anotherFirstInitial, firstInitial) && !StringUtils.equalsIgnoreCase(anotherFirstName, firstName)) {
+
+						slf4jLogger.info("Fetch using name variation=[" + authorName + "]");
+
+						String anotherQuery = URLEncoder.encode(lastName + " " + anotherFirstInitial + " AND (" + sb.toString() + ")", "UTF-8");
+						PubmedESearchHandler anotherHandler = getPubmedESearchHandler(anotherQuery);
+
+						if (anotherHandler.getCount() > THRESHOLD) {
+							String queryVerboseFirstName = URLEncoder.encode(lastName + " " + anotherFirstName + " AND (" + sb.toString() + ")", "UTF-8");
+							pmids.addAll(getPmids(queryVerboseFirstName));
+						} else {
+							pmids.addAll(getPmids(anotherQuery));
+						}
+					}
+				}
+			}
+		}
+		
+		return pmids;
 	}
 }
