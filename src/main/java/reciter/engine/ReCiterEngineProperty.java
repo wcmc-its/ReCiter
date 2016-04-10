@@ -29,12 +29,7 @@ public class ReCiterEngineProperty {
 	public static String grantXmlFolder;
 
 	public static String scopusFolder;
-	
-	public static void main(String[] args) {
-		ReCiterEngineProperty.loadProperty();
-		System.out.println(ReCiterEngineProperty.affiliationsXmlFolder);
-	}
-	
+
 	public static void loadProperty() {
 		InputStream inputStream = null;
 		try {

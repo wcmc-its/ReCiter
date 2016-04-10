@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
@@ -63,6 +66,7 @@ public class ReCiterEngine implements Engine {
 	public double totalAccuracy;
 
 	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
+		ReCiterEngineProperty.loadProperty();
 		this.reCiterEngineProperty = reCiterEngineProperty;
 		targetAuthorService = new TargetAuthorServiceImpl();
 		// TODO use service class.
@@ -82,7 +86,12 @@ public class ReCiterEngine implements Engine {
 	@Override
 	public void run(TargetAuthor targetAuthor) {
 		// Fetch the articles for this person.
-		List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
+		List<ReCiterArticle> reCiterArticleList = null;
+		try {
+			reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			slf4jLogger.error("Error retrieving articles for cwid=[" + targetAuthor.getCwid() + "].", e);
+		}
 		run(targetAuthor, reCiterArticleList);
 	}
 	
@@ -208,7 +217,12 @@ public class ReCiterEngine implements Engine {
 		List<StrategyContext> strategyContexts = getStrategyContexts();
 		for (String cwid : cwids) {
 			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-			List<ReCiterArticle> reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
+			List<ReCiterArticle> reCiterArticleList = null;
+			try {
+				reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
+			} catch (ParserConfigurationException | SAXException | IOException e) {
+				slf4jLogger.error("Error retrieving articles for cwid=[" + targetAuthor.getCwid() + "].", e);
+			}
 
 			Analysis.assignGoldStandard(reCiterArticleList, cwid);
 			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
@@ -216,8 +230,7 @@ public class ReCiterEngine implements Engine {
 			try {
 				csvWriter.write(reCiterArticleList);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				slf4jLogger.error("Error writing csv for cwid=[" + targetAuthor.getCwid() + "].", e);
 			}
 		}
 		return null;
