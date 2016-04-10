@@ -65,6 +65,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
 			if (!pmids.contains(pmid)) {
 				all.add(article);
+				pmids.add(pmid);
 			}
 		}
 
@@ -73,6 +74,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
 			if (!pmids.contains(pmid)) {
 				all.add(article);
+				pmids.add(pmid);
 			}
 		}
 
@@ -81,6 +83,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
 			if (!pmids.contains(pmid)) {
 				all.add(article);
+				pmids.add(pmid);
 			}
 		}
 
@@ -89,6 +92,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
 			if (!pmids.contains(pmid)) {
 				all.add(article);
+				pmids.add(pmid);
 			}
 		}
 
@@ -97,6 +101,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
 			if (!pmids.contains(pmid)) {
 				all.add(article);
+				pmids.add(pmid);
 			}
 		}
 
