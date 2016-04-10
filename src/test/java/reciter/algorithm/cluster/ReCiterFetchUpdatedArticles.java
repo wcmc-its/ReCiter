@@ -54,9 +54,10 @@ public class ReCiterFetchUpdatedArticles {
 			
 			// Retrieve by using PMIDS in set needToBeRetrievedPmids.
 			// Write a method in pubmedXMLFetch that accepts emails.
+			System.out.println("Need to retrieve=[" + needToBeRetrievedPmids + "].");
+			pubmedXmlFetcher.fetchByPmids(needToBeRetrievedPmids, ReCiterEngineProperty.emailXmlFolder, cwid);
 			
 			
-			System.out.println(pmids);
 		} catch (IOException | SAXException | ParserConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

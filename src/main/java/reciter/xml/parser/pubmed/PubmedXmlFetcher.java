@@ -247,6 +247,28 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		}
 	}
 
+	public void fetchByPmids(Set<String> pmids, String commonDirectory, String cwid) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+		int i = 1;
+
+		for (String pmid : pmids) {
+			String encodedUrl = URLEncoder.encode(pmid, "UTF-8");
+			PubmedESearchHandler handler = getPubmedESearchHandler(encodedUrl);
+			fetch(encodedUrl, commonDirectory, cwid, handler.getCount());
+//			if (i % 100 != 0) {
+//				sb.append(pmid + ",");
+//			} else {
+//				sb.append(pmid);
+//				i = 1;
+//				String encodedUrl = URLEncoder.encode(sb.toString(), "UTF-8");
+//				PubmedESearchHandler handler = getPubmedESearchHandler(encodedUrl);
+//				fetch(encodedUrl, commonDirectory, cwid, handler.getCount());
+//				sb = new StringBuffer();
+//			}
+		}
+	}
+
+
+
 	private PubmedESearchHandler getPubmedESearchHandler(String query) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
 		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
@@ -368,7 +390,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		// Fetch pmids only.
 		String encodedUrl = URLEncoder.encode(sb.toString(), "UTF-8");
 		pmids = getPmids(encodedUrl);
-		
+
 		return pmids;
 	}
 
@@ -458,7 +480,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		} catch (IOException e) {
 			slf4jLogger.warn(e.getMessage());
 		}
-		
+
 		return pmids;
 	}
 
@@ -566,7 +588,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			}
 		}
 	}
-	
+
 	public Set<String> fetchPmidsByDepartment(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 
 		Set<String> pmids = new HashSet<String>();
@@ -608,7 +630,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				}
 			}
 		}
-		
+
 		return pmids;
 	}
 
@@ -688,7 +710,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			}
 		}
 	}
-	
+
 	public Set<String> fetchPmidsByAffiliationInDb(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 
 		Set<String> pmids = new HashSet<String>();
@@ -746,7 +768,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				}
 			}
 		}
-		
+
 		return pmids;
 	}
 
@@ -840,7 +862,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			}
 		}
 	}
-	
+
 	public Set<String> fetchPmidsByGrants(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 
 		Set<String> pmids = new HashSet<String>();
@@ -896,7 +918,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 				}
 			}
 		}
-		
+
 		return pmids;
 	}
 }
