@@ -16,6 +16,12 @@ import reciter.service.impl.TargetAuthorServiceImpl;
 import reciter.xml.parser.pubmed.PubmedXmlFetcher;
 import reciter.xml.parser.pubmed.model.PubmedArticle;
 
+/**
+ * Fetch additional articles when required.
+ * 
+ * @author Jie
+ *
+ */
 public class ReCiterFetchUpdatedArticles {
 
 	public static void main(String[] args) {
