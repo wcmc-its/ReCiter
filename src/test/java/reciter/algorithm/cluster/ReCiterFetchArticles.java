@@ -26,12 +26,15 @@ public class ReCiterFetchArticles {
 			try {
 				// Fetch by email to search for name variations.
 				pubmedXmlFetcher.fetchByEmail(targetAuthor);
-				pubmedXmlFetcher.fetchUsingFirstName(targetAuthor);
+				boolean hasFetched = pubmedXmlFetcher.fetchRegular(targetAuthor);
 
-				pubmedXmlFetcher.fetchByAffiliationInDb(targetAuthor);
-				pubmedXmlFetcher.fetchByCommonAffiliations(targetAuthor);
-				pubmedXmlFetcher.fetchByDepartment(targetAuthor);
-				pubmedXmlFetcher.fetchByGrants(targetAuthor);
+				if (!hasFetched) {
+					pubmedXmlFetcher.fetchUsingFirstName(targetAuthor);
+					pubmedXmlFetcher.fetchByAffiliationInDb(targetAuthor);
+					pubmedXmlFetcher.fetchByCommonAffiliations(targetAuthor);
+					pubmedXmlFetcher.fetchByDepartment(targetAuthor);
+					pubmedXmlFetcher.fetchByGrants(targetAuthor);
+				}
 
 				ScopusXmlFetcher scopusXmlFetcher = new ScopusXmlFetcher();
 				scopusXmlFetcher.fetch(targetAuthor.getCwid());

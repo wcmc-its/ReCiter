@@ -1,13 +1,10 @@
 package reciter.xml.parser.pubmed;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -60,6 +57,16 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 	public List<PubmedArticle> getPubmedArticle(String cwid) throws ParserConfigurationException, SAXException, IOException {
 		List<PubmedArticle> all = new ArrayList<PubmedArticle>();
 		Set<String> pmids = new HashSet<String>();
+
+		List<PubmedArticle> regular = getPubmedArticle(ReCiterEngineProperty.pubmedFolder, cwid);
+		for (PubmedArticle article : regular) {
+			String pmid = article.getMedlineCitation().getPmid().getPmidString();
+			if (!pmids.contains(pmid)) {
+				all.add(article);
+				pmids.add(pmid);
+			}
+		}
+
 		List<PubmedArticle> affiliations = getPubmedArticle(ReCiterEngineProperty.affiliationsXmlFolder, cwid);
 		for (PubmedArticle article : affiliations) {
 			String pmid = article.getMedlineCitation().getPmid().getPmidString();
@@ -259,20 +266,76 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 			String encodedUrl = URLEncoder.encode(pmid, "UTF-8");
 			PubmedESearchHandler handler = getPubmedESearchHandler(encodedUrl);
 			fetch(encodedUrl, commonDirectory, cwid, handler.getCount());
-//			if (i % 100 != 0) {
-//				sb.append(pmid + ",");
-//			} else {
-//				sb.append(pmid);
-//				i = 1;
-//				String encodedUrl = URLEncoder.encode(sb.toString(), "UTF-8");
-//				PubmedESearchHandler handler = getPubmedESearchHandler(encodedUrl);
-//				fetch(encodedUrl, commonDirectory, cwid, handler.getCount());
-//				sb = new StringBuffer();
-//			}
+			//			if (i % 100 != 0) {
+			//				sb.append(pmid + ",");
+			//			} else {
+			//				sb.append(pmid);
+			//				i = 1;
+			//				String encodedUrl = URLEncoder.encode(sb.toString(), "UTF-8");
+			//				PubmedESearchHandler handler = getPubmedESearchHandler(encodedUrl);
+			//				fetch(encodedUrl, commonDirectory, cwid, handler.getCount());
+			//				sb = new StringBuffer();
+			//			}
 		}
 	}
 
+	/**
+	 * Returns true if fetch by last name and first initial. False otherwise.
+	 * @param targetAuthor
+	 * @return
+	 * @throws IOException 
+	 * @throws SAXException 
+	 * @throws ParserConfigurationException 
+	 */
+	public boolean fetchRegular(TargetAuthor targetAuthor) throws ParserConfigurationException, SAXException, IOException {
+		File directory = new File(ReCiterEngineProperty.pubmedFolder + targetAuthor.getCwid());
 
+		if (directory.exists()) {
+			slf4jLogger.info("Directory [" + ReCiterEngineProperty.pubmedFolder + "] exists for user=[" + targetAuthor.getCwid() + "]. Please delete it before re-retrieving.");
+			return true;
+		}
+
+		String lastName = targetAuthor.getAuthorName().getLastName();
+		String firstName = targetAuthor.getAuthorName().getFirstName();
+		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+
+		String encodedUrl = URLEncoder.encode(lastName + " " + firstInitial + "[au]", "UTF-8");
+		int count = retrieveNumberOfSearchResult(encodedUrl);
+		slf4jLogger.info("Number of articles need to be retrieved for : " + targetAuthor.getCwid() + " is "+ count);
+
+		Set<AuthorName> nameVariations = getAuthorNameVariationFromEmails(targetAuthor);
+		if (!nameVariations.isEmpty()) {
+			for (AuthorName authorName : nameVariations) {
+				String anotherFirstName = authorName.getFirstName();
+				String anotherFirstInitial = authorName.getFirstInitial();
+				if (!StringUtils.equalsIgnoreCase(anotherFirstInitial, firstInitial) && !StringUtils.equalsIgnoreCase(anotherFirstName, firstName)) {
+
+					slf4jLogger.info("Fetch using name variation=[" + authorName + "]");
+
+					// Search again using name variations for verbose name and common affiliations.
+					String anotherQuery = URLEncoder.encode(lastName + " " + anotherFirstInitial + "[au]", "UTF-8");
+					PubmedESearchHandler anotherHandler = getPubmedESearchHandler(anotherQuery);
+
+					if (anotherHandler.getCount() > THRESHOLD) {
+						String queryVerboseFirstName = URLEncoder.encode(lastName + " " + anotherFirstName + "[au]", "UTF-8");
+						PubmedESearchHandler handlerVerboseFirstName = getPubmedESearchHandler(queryVerboseFirstName);
+						// fetch only if less than threshold.
+						if (handlerVerboseFirstName.getCount() <= THRESHOLD) {
+							fetch(queryVerboseFirstName, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), handlerVerboseFirstName.getCount());
+						}
+					} else {
+						fetch(anotherQuery, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), anotherHandler.getCount());
+					}
+				}
+			}
+		}
+
+		if (count > THRESHOLD) {
+			return false;
+		}
+		fetch(encodedUrl, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), count);
+		return true;
+	}
 
 	private PubmedESearchHandler getPubmedESearchHandler(String query) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
