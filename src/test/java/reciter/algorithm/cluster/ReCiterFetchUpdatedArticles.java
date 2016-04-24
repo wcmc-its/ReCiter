@@ -28,7 +28,7 @@ public class ReCiterFetchUpdatedArticles {
 		ReCiterEngineProperty.loadProperty();
 
 		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-		String cwid = "yiwang";
+		String cwid = "aas2003";
 		TargetAuthorService targetAuthorService = new TargetAuthorServiceImpl();
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 

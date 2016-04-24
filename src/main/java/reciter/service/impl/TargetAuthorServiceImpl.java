@@ -144,8 +144,8 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		//		Set<String> terms = constructPubmedQuery(targetAuthor);
 		//		String query = getConcatTerms(terms);
 		//		String query = getPubMedSearchQuery(targetAuthor.getAuthorName().getLastName(), targetAuthor.getAuthorName().getFirstName());
-		String query = getPubMedSearchQuery(cwid);
-		targetAuthor.setPubmedSearchQuery(query);
+//		String query = getPubMedSearchQuery(cwid);
+//		targetAuthor.setPubmedSearchQuery(query);
 
 		updateMiddleNameFromAlias(targetAuthor);
 

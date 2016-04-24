@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -48,7 +47,18 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(PubmedXmlFetcher.class);
 	private static final String AFFILIATION_QUERY = "AND ((new york) OR 10065 OR 10021 OR weill OR cornell OR (newyork AND presbyterian) OR (new york AND presbyterian) OR HSS OR (hospital special surgery) OR (North Shore hospital) OR (Long Island Jewish) OR (memorial sloan) OR (sloan kettering) OR sloan-kettering OR hamad OR (mount sinai) OR (methodist houston) OR (National Institute of Mental Health) OR (beth israel) OR (University of Pennsylvania Medicine) OR (Merck Research) OR (New York Medical College) OR (Medicine Dentistry New Jersey) OR Montefiore OR (Lenox Hill) OR (Cold Spring Harbor) OR (St. Luke's-Roosevelt) OR (New York University Medicine) OR Langone OR (SUNY Downstate) OR (Albert Einstein Medicine) OR Yeshiva OR UMDNJ OR Icahn Medicine OR (Mount Sinai) OR (columbia medical) OR (columbia physicians))";
-
+	private boolean isFetch = false;
+	
+	private static enum SearchType {
+		EMAIL,
+		FIRST_INITIAL_LAST_NAME,
+		FIRST_NAME_LAST_NAME,
+		DEPARTMENT,
+		GRANTS,
+		COMMON_AFFILIATIONS,
+		AFFILIATIONS_IN_DB
+	}
+	
 	/**
 	 * Maximum number of articles that can be retrieved at once.
 	 */
@@ -187,7 +197,7 @@ public class PubmedXmlFetcher extends AbstractXmlFetcher {
 		File directory = new File(ReCiterEngineProperty.pubmedFolder + targetAuthor.getCwid());
 
 		if (directory.exists()) {
-			slf4jLogger.info("Directory [" + ReCiterEngineProperty.pubmedFolder + "] exists for user=[" + targetAuthor.getCwid() + "]. Please delete it before re-retrieving.");
+//			slf4jLogger.info("Directory [" + ReCiterEngineProperty.pubmedFolder + "] exists for user=[" + targetAuthor.getCwid() + "]. Please delete it before re-retrieving.");
 			return;
 		}
 
