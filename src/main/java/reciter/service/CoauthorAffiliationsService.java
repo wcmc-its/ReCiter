@@ -1,8 +1,8 @@
 package reciter.service;
 
-import reciter.service.dto.CoauthorAffiliationsDTO;
+import reciter.service.bean.CoauthorAffiliationsBean;
 
 public interface CoauthorAffiliationsService {
 
-	CoauthorAffiliationsDTO getCoauthorAffiliationsByLabel(String label);
+	CoauthorAffiliationsBean getCoauthorAffiliationsByLabel(String label);
 }

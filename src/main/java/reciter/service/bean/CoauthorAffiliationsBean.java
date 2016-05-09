@@ -1,6 +1,6 @@
-package reciter.service.dto;
+package reciter.service.bean;
 
-public class CoauthorAffiliationsDTO {
+public class CoauthorAffiliationsBean {
 
 	private int affiliationId;
 	private String label;

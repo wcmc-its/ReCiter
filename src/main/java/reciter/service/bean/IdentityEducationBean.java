@@ -1,6 +1,6 @@
-package reciter.service.dto;
+package reciter.service.bean;
 
-public class IdentityEducationDTO {
+public class IdentityEducationBean {
 
 	private long id;
 	private String cwid;

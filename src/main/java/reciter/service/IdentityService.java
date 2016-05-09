@@ -2,9 +2,9 @@ package reciter.service;
 
 import java.util.List;
 
-import reciter.service.dto.IdentityDTO;
+import reciter.service.bean.IdentityBean;
 
 public interface IdentityService {
-	IdentityDTO getIdentityByCwid(String cwid);
-	List<IdentityDTO> getAssosiatedGrantIdentityList(String cwid);
+	IdentityBean getIdentityByCwid(String cwid);
+	List<IdentityBean> getAssosiatedGrantIdentityList(String cwid);
 }

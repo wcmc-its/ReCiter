@@ -1,8 +1,8 @@
-package reciter.service.dto;
+package reciter.service.bean;
 
 import java.time.LocalDateTime;
 
-public class IdentityDTO {
+public class IdentityBean {
 
 	private int identityPk;
 	private String cwid;

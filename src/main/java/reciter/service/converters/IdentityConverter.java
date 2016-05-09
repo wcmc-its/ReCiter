@@ -1,12 +1,12 @@
 package reciter.service.converters;
 
 import reciter.database.model.Identity;
-import reciter.service.dto.IdentityDTO;
+import reciter.service.bean.IdentityBean;
 
 public class IdentityConverter {
 
-	public IdentityDTO convertToDTO(Identity identity) {
-		IdentityDTO identityDTO = new IdentityDTO();
+	public IdentityBean convertToDTO(Identity identity) {
+		IdentityBean identityDTO = new IdentityBean();
 		identityDTO.setIdentityPk(identity.getIdentityPk());
 		identityDTO.setCwid(identity.getCwid());
 		identityDTO.setStatus(identity.getStatus());

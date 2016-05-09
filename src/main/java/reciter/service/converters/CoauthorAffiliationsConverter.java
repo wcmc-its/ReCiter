@@ -1,12 +1,12 @@
 package reciter.service.converters;
 
 import reciter.database.model.CoauthorAffiliations;
-import reciter.service.dto.CoauthorAffiliationsDTO;
+import reciter.service.bean.CoauthorAffiliationsBean;
 
 public class CoauthorAffiliationsConverter {
 
-	public static CoauthorAffiliationsDTO convert(CoauthorAffiliations coauthorAffiliations) {
-		CoauthorAffiliationsDTO coauthorAffiliationsDTO = new CoauthorAffiliationsDTO();
+	public static CoauthorAffiliationsBean convert(CoauthorAffiliations coauthorAffiliations) {
+		CoauthorAffiliationsBean coauthorAffiliationsDTO = new CoauthorAffiliationsBean();
 		coauthorAffiliationsDTO.setAffiliationId(coauthorAffiliations.getAffiliationId());
 		coauthorAffiliationsDTO.setLabel(coauthorAffiliations.getLabel());
 		coauthorAffiliationsDTO.setScore(coauthorAffiliations.getScore());

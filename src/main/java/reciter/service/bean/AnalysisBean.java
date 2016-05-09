@@ -1,6 +1,6 @@
-package reciter.service.dto;
+package reciter.service.bean;
 
-public class AnalysisDTO {
+public class AnalysisBean {
 
 	private String cwid;
 	private String analysisStatus;

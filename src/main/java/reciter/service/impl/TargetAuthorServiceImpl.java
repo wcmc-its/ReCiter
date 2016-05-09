@@ -38,8 +38,8 @@ import reciter.model.author.TargetAuthor;
 import reciter.service.IdentityEducationService;
 import reciter.service.IdentityService;
 import reciter.service.TargetAuthorService;
+import reciter.service.bean.IdentityBean;
 import reciter.service.converters.IdentityDegreeConverter;
-import reciter.service.dto.IdentityDTO;
 import reciter.string.PubmedSearchQueryGenerator;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 
@@ -50,7 +50,7 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 	@Override
 	public TargetAuthor getTargetAuthor(String cwid) {
 		IdentityService identityService = new IdentityServiceImpl();
-		IdentityDTO identityDTO = identityService.getIdentityByCwid(cwid);
+		IdentityBean identityDTO = identityService.getIdentityByCwid(cwid);
 
 		// set first name, middle name, last name, and affiliation.
 		TargetAuthor targetAuthor = new TargetAuthor(
@@ -65,8 +65,8 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 
 		// set known co-investigators.
 		List<AuthorName> coinvestigatorAuthorNames = new ArrayList<AuthorName>();
-		List<IdentityDTO> identityDTOs = identityService.getAssosiatedGrantIdentityList(cwid);
-		for (IdentityDTO coinvestigatorDTO : identityDTOs) {
+		List<IdentityBean> identityDTOs = identityService.getAssosiatedGrantIdentityList(cwid);
+		for (IdentityBean coinvestigatorDTO : identityDTOs) {
 			coinvestigatorAuthorNames.add(
 					new AuthorName(
 							coinvestigatorDTO.getFirstName(), 
