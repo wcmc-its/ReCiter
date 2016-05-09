@@ -36,7 +36,6 @@ import reciter.algorithm.evidence.targetauthor.name.NameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.NameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
-import reciter.csv.CSVWriter;
 import reciter.database.dao.AnalysisDao;
 import reciter.database.dao.impl.AnalysisDaoImpl;
 import reciter.erroranalysis.Analysis;
@@ -226,12 +225,6 @@ public class ReCiterEngine implements Engine {
 
 			Analysis.assignGoldStandard(reCiterArticleList, cwid);
 			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
-			CSVWriter csvWriter = new CSVWriter("C:\\Users\\Jie\\Documents\\reciter_data\\" + cwid + ".csv");
-			try {
-				csvWriter.write(reCiterArticleList);
-			} catch (IOException e) {
-				slf4jLogger.error("Error writing csv for cwid=[" + targetAuthor.getCwid() + "].", e);
-			}
 		}
 		return null;
 	}
