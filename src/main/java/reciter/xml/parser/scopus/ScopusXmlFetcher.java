@@ -14,7 +14,6 @@ import org.xml.sax.SAXException;
 
 import reciter.engine.ReCiterEngineProperty;
 import reciter.xml.parser.AbstractXmlFetcher;
-import reciter.xml.parser.pubmed.PubmedXmlFetcher;
 import reciter.xml.parser.pubmed.model.PubmedArticle;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 

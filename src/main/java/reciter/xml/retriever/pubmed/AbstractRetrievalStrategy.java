@@ -10,12 +10,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
@@ -47,13 +49,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	
 	@Override
 	public void retrieve(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
-		
-		File directory = new File(ReCiterEngineProperty.pubmedFolder + targetAuthor.getCwid());
-
-		if (directory.exists()) {
-//			slf4jLogger.info("Directory [" + ReCiterEngineProperty.pubmedFolder + "] exists for user=[" + targetAuthor.getCwid() + "]. Please delete it before re-retrieving.");
-			return;
-		}
 
 		String initialQuery = URLEncoder.encode(constructInitialQuery(targetAuthor), "UTF-8");
 		PubmedESearchHandler handler = getPubmedESearchHandler(initialQuery);
@@ -71,6 +66,30 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		} else {
 			fetch(initialQuery, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), handler.getCount());
 		}
+	}
+	
+	/**
+	 * Query the PubMed database and returns a list of PMIDs.
+	 * @param query
+	 * @return
+	 * @throws IOException 
+	 */
+	public List<Integer> retrievePmids(String query, int numberOfPubmedArticles) throws IOException {
+		List<Integer> pmids = new ArrayList<Integer>();
+		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
+		pubmedXmlQuery.setTerm(query);
+		pubmedXmlQuery.setRetMode("json");
+		pubmedXmlQuery.setRetMax(1);
+		
+		String pageText;
+		URL url = new URL("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=wang[au]&retmode=json&retmax=1");
+		URLConnection conn = url.openConnection();
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"))) {
+		    pageText = reader.lines().collect(Collectors.joining("\n"));
+		}
+		
+		System.out.println(pageText);
+		return pmids;
 	}
 	
 	/**
@@ -135,6 +154,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
+		
 		try {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
 			String outputFileName = commonDirectory + cwid + "/" + xmlFileName + ".xml";

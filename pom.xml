@@ -107,5 +107,21 @@
 			<artifactId>commons-csv</artifactId>
 			<version>1.2</version>
 		</dependency>
+		<dependency>
+	        <groupId>org.mongodb</groupId>
+	        <artifactId>mongodb-driver</artifactId>
+	        <version>3.2.2</version>
+        </dependency>
+        <dependency>
+		    <groupId>org.mongodb</groupId>
+		    <artifactId>bson</artifactId>
+		    <version>3.2.2</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.google.code.gson</groupId>
+		    <artifactId>gson</artifactId>
+		    <version>2.6.2</version>
+		</dependency>
+        
 	</dependencies>
 </project>

@@ -19,5 +19,4 @@ public class DepartmentRetrievalStrategy extends AbstractRetrievalStrategy {
 		String firstName = targetAuthor.getAuthorName().getFirstName();
 		return lastName + " " + firstName + " AND " + department;
 	}
-
 }

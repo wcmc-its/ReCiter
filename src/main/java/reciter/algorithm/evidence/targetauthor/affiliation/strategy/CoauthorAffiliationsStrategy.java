@@ -7,7 +7,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.service.CoauthorAffiliationsService;
-import reciter.service.dto.CoauthorAffiliationsDTO;
+import reciter.service.bean.CoauthorAffiliationsBean;
 
 /**
  * Assign Phase Two score to reflect the extent to which candidate articles 
@@ -34,7 +34,7 @@ public class CoauthorAffiliationsStrategy extends AbstractTargetAuthorStrategy {
 				if (author.getAffiliation() != null) {
 					String affiliation = author.getAffiliation().getAffiliationName();
 					if (affiliation != null && affiliation.length() > 0) {
-						CoauthorAffiliationsDTO coauthorAffiliations = coauthorAffiliationsService.getCoauthorAffiliationsByLabel(affiliation);
+						CoauthorAffiliationsBean coauthorAffiliations = coauthorAffiliationsService.getCoauthorAffiliationsByLabel(affiliation);
 						if (coauthorAffiliations != null && coauthorAffiliations.getScore() != 0) {
 							averageScore += coauthorAffiliations.getScore();
 						}

@@ -14,6 +14,8 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import reciter.service.PubMedService;
+import reciter.service.impl.PubMedServiceImpl;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 import reciter.xml.parser.pubmed.model.MedlineCitationArticleAuthor;
@@ -58,6 +60,7 @@ public class PubmedXmlTest {
 				p2 = article;
 			}
 		}
+		
 		// PMID: 25548331
 		String p1Title = p1.getMedlineCitation().getArticle().getArticleTitle();
 		assertEquals("Registry-linked electronic influenza vaccine provider reminders: a cluster-crossover trial.", p1Title);
