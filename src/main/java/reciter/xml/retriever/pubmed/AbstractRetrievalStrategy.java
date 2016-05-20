@@ -27,6 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import reciter.engine.ReCiterEngineProperty;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorName;
@@ -38,15 +41,27 @@ import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 import reciter.xml.parser.pubmed.model.PubmedArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
+import reciter.xml.retriever.pubmed.json.EsearchObject;
+import reciter.xml.retriever.pubmed.json.EsearchObjectJsonDeserializer;
 
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	protected static int THRESHOLD = 2000;
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractRetrievalStrategy.class);
-	
+
 	protected abstract String constructInitialQuery(TargetAuthor targetAuthor);
 	protected abstract String constructStrictQuery(TargetAuthor targetAuthor);
-	
+
+	public static void main(String[] args) {
+		AffiliationInDbRetrievalStrategy s = new AffiliationInDbRetrievalStrategy();
+		try {
+			s.retrievePmids(null, 0);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	@Override
 	public void retrieve(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 
@@ -56,7 +71,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		if (handler.getCount() > THRESHOLD) {
 			String strictQuery = URLEncoder.encode(constructStrictQuery(targetAuthor), "UTF-8");
 			PubmedESearchHandler handlerVerboseFirstName = getPubmedESearchHandler(strictQuery);
-			
+
 			// Still greater than THRESHOLD, do not retrieve.
 			if (handlerVerboseFirstName.getCount() > THRESHOLD) {
 				return;
@@ -67,7 +82,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			fetch(initialQuery, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), handler.getCount());
 		}
 	}
-	
+
 	/**
 	 * Query the PubMed database and returns a list of PMIDs.
 	 * @param query
@@ -80,18 +95,28 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		pubmedXmlQuery.setTerm(query);
 		pubmedXmlQuery.setRetMode("json");
 		pubmedXmlQuery.setRetMax(1);
-		
+
 		String pageText;
 		URL url = new URL("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=wang[au]&retmode=json&retmax=1");
 		URLConnection conn = url.openConnection();
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"))) {
-		    pageText = reader.lines().collect(Collectors.joining("\n"));
+			pageText = reader.lines().collect(Collectors.joining("\n"));
 		}
-		
+
 		System.out.println(pageText);
+		GsonBuilder gsonBuilder = new GsonBuilder();
+		gsonBuilder.registerTypeAdapter(EsearchObject.class, new EsearchObjectJsonDeserializer());
+		Gson gson = gsonBuilder.create();
+
+		// Parse JSON to Java
+		EsearchObject eSearchObject = gson.fromJson(pageText, EsearchObject.class);
+		System.out.println(eSearchObject.geteSearchResult().getCount());
+
 		return pmids;
 	}
-	
+
+
+
 	/**
 	 * Fetch PubMed xmls using <code>pubmedQuery</code> and store the xmls in <code>commonDirectory</code> specified
 	 * by <code>cwid</code>
@@ -136,7 +161,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			pubmedXmlQuery.setRetStart(currentRetStart);
 		}
 	}
-	
+
 	/**
 	 * Save the url (XML) content in the {@code directoryLocation} with directory
 	 * name {@code directoryName} and file name {@code fileName}.
@@ -147,33 +172,33 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @param xmlFileName file name.
 	 */
 	public void saveXml(String url, String commonDirectory, String cwid, String xmlFileName) {
-		
+
 		slf4jLogger.info("commonDirectory=[" + commonDirectory + "].");
-		
+
 		File dir = new File(commonDirectory + cwid);
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
-		
+
 		try {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
 			String outputFileName = commonDirectory + cwid + "/" + xmlFileName + ".xml";
 			BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileName), "UTF-8"));
-			
+
 			String inputLine;
 			while ((inputLine = bufferedReader.readLine()) != null) {
 				bufferedWriter.write(inputLine);
 				bufferedWriter.newLine();
 			}
-			
+
 			bufferedReader.close();
 			bufferedWriter.close();
 		} catch (IOException e) {
 			slf4jLogger.warn(e.getMessage());
 		}
 	}
-	
-	
+
+
 	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
 		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
@@ -194,7 +219,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
 		return pubmedESearchHandler;
 	}
-	
+
 	/**
 	 * Go through each of the articles retrieved by email and check if the first name matches the one in the
 	 * database. If it doesn't, include that first name in the initial retrieval.
@@ -233,7 +258,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		targetAuthor.setAuthorNameVariationsRetrievedFromPubmedUsingEmail(nameVariations);
 		return nameVariations;
 	}
-	
+
 	/**
 	 * Retrieve and parse the PubMed xml in <code>commonDirectory</code> specified by <code>cwid</code>
 	 * 
