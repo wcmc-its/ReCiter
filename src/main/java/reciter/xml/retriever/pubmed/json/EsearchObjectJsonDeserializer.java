@@ -17,7 +17,6 @@ public class EsearchObjectJsonDeserializer implements JsonDeserializer<EsearchOb
 		final JsonObject jsonObject = jsonElement.getAsJsonObject();
 		EsearchResult eSearchResults = context.deserialize(jsonObject.get("esearchresult"), EsearchResult.class);
 		final EsearchObject eSearchObject = new EsearchObject();
-		
 		if (eSearchResults != null) {
 			eSearchObject.seteSearchResult(eSearchResults);
 		}

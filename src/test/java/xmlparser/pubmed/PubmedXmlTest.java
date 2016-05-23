@@ -14,8 +14,6 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import reciter.service.PubMedService;
-import reciter.service.impl.PubMedServiceImpl;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 import reciter.xml.parser.pubmed.model.MedlineCitationArticleAuthor;

@@ -35,6 +35,8 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
+import reciter.service.ESearchResultService;
+import reciter.service.impl.ESearchResultServiceImpl;
 import reciter.xml.parser.pubmed.PubmedXmlParser;
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
@@ -43,6 +45,8 @@ import reciter.xml.parser.pubmed.model.PubmedArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.pubmed.json.EsearchObject;
 import reciter.xml.retriever.pubmed.json.EsearchObjectJsonDeserializer;
+import reciter.xml.retriever.pubmed.json.EsearchResult;
+import reciter.xml.retriever.pubmed.json.EsearchResultJsonDeserializer;
 
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
@@ -54,12 +58,15 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	public static void main(String[] args) {
 		AffiliationInDbRetrievalStrategy s = new AffiliationInDbRetrievalStrategy();
-		try {
-			s.retrievePmids(null, 0);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+			PubMedRetrieverWorker worker = new PubMedRetrieverWorker("wang%20y[au]", "wangy", "wangy", 85732);
+			worker.run();
+//			List<String> pmids = s.retrievePmids("wang[au]");
+//			s.persistQueryResults("yiwang", pmids);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 
 	@Override
@@ -83,39 +90,70 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 	}
 
+	public void persistQueryResults(String cwid, List<String> pmids) {
+		ESearchResultService eSearchResultService = new ESearchResultServiceImpl();
+		eSearchResultService.insertESearchResult(cwid, pmids);
+	}
+	
 	/**
 	 * Query the PubMed database and returns a list of PMIDs.
 	 * @param query
 	 * @return
 	 * @throws IOException 
 	 */
-	public List<Integer> retrievePmids(String query, int numberOfPubmedArticles) throws IOException {
-		List<Integer> pmids = new ArrayList<Integer>();
+	public List<String> retrievePmids(String query) throws IOException {
+		List<String> pmids = new ArrayList<String>();
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
 		pubmedXmlQuery.setTerm(query);
 		pubmedXmlQuery.setRetMode("json");
 		pubmedXmlQuery.setRetMax(1);
 
 		String pageText;
-		URL url = new URL("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=wang[au]&retmode=json&retmax=1");
+		// "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=wang[au]&retmode=json&retmax=1"
+		String firstQuery = pubmedXmlQuery.buildESearchQuery();
+
+		URL url = new URL(firstQuery);
 		URLConnection conn = url.openConnection();
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"))) {
 			pageText = reader.lines().collect(Collectors.joining("\n"));
 		}
 
-		System.out.println(pageText);
+		//		System.out.println(pageText);
 		GsonBuilder gsonBuilder = new GsonBuilder();
 		gsonBuilder.registerTypeAdapter(EsearchObject.class, new EsearchObjectJsonDeserializer());
+		gsonBuilder.registerTypeAdapter(EsearchResult.class, new EsearchResultJsonDeserializer());
 		Gson gson = gsonBuilder.create();
 
 		// Parse JSON to Java
 		EsearchObject eSearchObject = gson.fromJson(pageText, EsearchObject.class);
-		System.out.println(eSearchObject.geteSearchResult().getCount());
+		String count = eSearchObject.geteSearchResult().getCount();
+		//		System.out.println(eSearchObject.geteSearchResult().getIdList().length);
 
+		// "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=wang[au]&"
+		// + "retmode=json&retmax=" + count
+		
+		PubmedXmlQuery queryToGetPmids = new PubmedXmlQuery();
+		queryToGetPmids.setTerm(query);
+		queryToGetPmids.setRetMode("json");
+		queryToGetPmids.setRetMax(Integer.parseInt(count));
+		URL secondUrl = new URL(queryToGetPmids.buildESearchQuery());
+		conn = secondUrl.openConnection();
+		
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"))) {
+			pageText = reader.lines().collect(Collectors.joining("\n"));
+		}
+
+		// Parse JSON to Java
+		EsearchObject eSearchObject2 = gson.fromJson(pageText, EsearchObject.class);
+		String[] results = eSearchObject2.geteSearchResult().getIdList();
+		
+		for (String r : results) {
+			pmids.add(r);
+		}
 		return pmids;
 	}
-
-
+	
+	
 
 	/**
 	 * Fetch PubMed xmls using <code>pubmedQuery</code> and store the xmls in <code>commonDirectory</code> specified

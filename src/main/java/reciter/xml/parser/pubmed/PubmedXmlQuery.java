@@ -102,6 +102,8 @@ public class PubmedXmlQuery {
 		sb.append(useHistory);
 		sb.append("&term=");
 		sb.append(term);
+		sb.append("&retmode=");
+		sb.append(retMode);
 		return sb.toString();
 	}
 	

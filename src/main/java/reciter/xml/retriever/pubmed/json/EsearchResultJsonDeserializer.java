@@ -16,9 +16,11 @@ public class EsearchResultJsonDeserializer implements JsonDeserializer<EsearchRe
 		
 		final JsonObject jsonObject = jsonElement.getAsJsonObject();
 		String count = jsonObject.get("count").getAsString();
+		String[] idList = context.deserialize(jsonObject.get("idlist"), String[].class);
 		
 		final EsearchResult eSearchResult = new EsearchResult();
 		eSearchResult.setCount(count);
+		eSearchResult.setIdList(idList);
 		return eSearchResult;
 	}
 
