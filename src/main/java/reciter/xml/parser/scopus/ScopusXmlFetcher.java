@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import reciter.engine.ReCiterEngineProperty;
+import reciter.service.impl.PubMedServiceImpl;
 import reciter.xml.parser.AbstractXmlFetcher;
 import reciter.xml.parser.pubmed.model.PubmedArticle;
 import reciter.xml.parser.scopus.model.ScopusArticle;
@@ -87,8 +88,8 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 
 	public void fetch(String cwid) throws ParserConfigurationException, SAXException, IOException {
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		PubmedXmlFetcher pubmedXmlFetcher = new PubmedXmlFetcher();
-		List<PubmedArticle> pubmedArticleList = pubmedXmlFetcher.getPubmedArticle(cwid);
+		PubMedServiceImpl pubMedServiceImpl = new PubMedServiceImpl();
+		List<PubmedArticle> pubmedArticleList = pubMedServiceImpl.retrieve(cwid);
 		for (PubmedArticle pubmedArticle : pubmedArticleList) {
 			String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
 			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);

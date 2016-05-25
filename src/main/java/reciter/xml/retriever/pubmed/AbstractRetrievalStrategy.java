@@ -55,12 +55,19 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	protected abstract String constructInitialQuery(TargetAuthor targetAuthor);
 	protected abstract String constructStrictQuery(TargetAuthor targetAuthor);
-
+	
+	protected boolean isRetrieveExceedThreshold;
+	
+	public void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold) {
+		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
+	}
+	
 	public static void main(String[] args) {
 		AffiliationInDbRetrievalStrategy s = new AffiliationInDbRetrievalStrategy();
 //		try {
 			PubMedRetrieverWorker worker = new PubMedRetrieverWorker("wang%20y[au]", "wangy", "wangy", 85732);
-			worker.run();
+			Thread workerThread = new Thread(worker);
+			workerThread.start();
 //			List<String> pmids = s.retrievePmids("wang[au]");
 //			s.persistQueryResults("yiwang", pmids);
 //		} catch (IOException e) {
@@ -70,24 +77,39 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	}
 
 	@Override
-	public void retrieve(TargetAuthor targetAuthor) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+	public boolean retrieve(TargetAuthor targetAuthor) throws IOException, SAXException, ParserConfigurationException {
 
 		String initialQuery = URLEncoder.encode(constructInitialQuery(targetAuthor), "UTF-8");
 		PubmedESearchHandler handler = getPubmedESearchHandler(initialQuery);
 
+		// check initial query's threshold. if it's greater than the threshold, retrieve using the strict query.
 		if (handler.getCount() > THRESHOLD) {
 			String strictQuery = URLEncoder.encode(constructStrictQuery(targetAuthor), "UTF-8");
 			PubmedESearchHandler handlerVerboseFirstName = getPubmedESearchHandler(strictQuery);
-
-			// Still greater than THRESHOLD, do not retrieve.
-			if (handlerVerboseFirstName.getCount() > THRESHOLD) {
-				return;
+			if (isRetrieveExceedThreshold) {
+				startRetrieval(strictQuery, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), handlerVerboseFirstName.getCount());
+				return true;
 			} else {
-				fetch(strictQuery, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), handlerVerboseFirstName.getCount());
+				return false;
 			}
 		} else {
-			fetch(initialQuery, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), handler.getCount());
+			startRetrieval(initialQuery, ReCiterEngineProperty.pubmedFolder, targetAuthor.getCwid(), handler.getCount());
+			return true;
 		}
+	}
+	
+	/**
+	 * Initializes and starts a thread that handles the retrieval process.
+	 * 
+	 * @param query
+	 * @param commonLocation
+	 * @param cwid
+	 * @param count
+	 */
+	private void startRetrieval(String query, String commonLocation, String cwid, int count) {
+		PubMedRetrieverWorker worker = new PubMedRetrieverWorker(query, commonLocation, cwid, count);
+		Thread workerThread = new Thread(worker);
+		workerThread.start();
 	}
 
 	public void persistQueryResults(String cwid, List<String> pmids) {
@@ -152,90 +174,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		return pmids;
 	}
-	
-	
-
-	/**
-	 * Fetch PubMed xmls using <code>pubmedQuery</code> and store the xmls in <code>commonDirectory</code> specified
-	 * by <code>cwid</code>
-	 * @param pubmedQuery
-	 * @param commonDirectory
-	 * @param cwid
-	 * @param numberOfPubmedArticles
-	 */
-	public void fetch(String pubmedQuery, String commonDirectory, String cwid, int numberOfPubmedArticles) {
-
-		slf4jLogger.info("query=[" + pubmedQuery + "]");
-		slf4jLogger.info("number of articles needed to be retrieved=[" + numberOfPubmedArticles + "].");
-
-		// Get the count (number of publications for this query).
-		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
-		pubmedXmlQuery.setTerm(pubmedQuery);
-
-		// Retrieve the publications retMax records at one time and store to disk.
-		int currentRetStart = 0;
-
-		// Number of partitions that we need to finish retrieving all XML.
-		int numSteps = (int) Math.ceil((double)numberOfPubmedArticles / pubmedXmlQuery.getRetMax()); 
-
-		// Use the retstart value to iteratively fetch all XMLs.
-		for (int i = 0; i < numSteps; i++) {
-			// Get webenv value.
-			pubmedXmlQuery.setRetStart(currentRetStart);
-			String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
-
-			pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
-
-			// Use the webenv value to retrieve xml.
-			String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
-			slf4jLogger.info("PubMed EFetch Url = " + eFetchUrl);
-
-			// Save the xml file to directory data/xml/cwid
-			LocalDateTime timePoint = LocalDateTime.now();
-			saveXml(eFetchUrl, commonDirectory, cwid, timePoint.toString().replace(":", "-"));
-
-			// Update the retstart value.
-			currentRetStart += pubmedXmlQuery.getRetMax();
-			pubmedXmlQuery.setRetStart(currentRetStart);
-		}
-	}
-
-	/**
-	 * Save the url (XML) content in the {@code directoryLocation} with directory
-	 * name {@code directoryName} and file name {@code fileName}.
-	 * 
-	 * @param url URL
-	 * @param commonDirectory directory path.
-	 * @param cwid directory name.
-	 * @param xmlFileName file name.
-	 */
-	public void saveXml(String url, String commonDirectory, String cwid, String xmlFileName) {
-
-		slf4jLogger.info("commonDirectory=[" + commonDirectory + "].");
-
-		File dir = new File(commonDirectory + cwid);
-		if (!dir.exists()) {
-			dir.mkdirs();
-		}
-
-		try {
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
-			String outputFileName = commonDirectory + cwid + "/" + xmlFileName + ".xml";
-			BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileName), "UTF-8"));
-
-			String inputLine;
-			while ((inputLine = bufferedReader.readLine()) != null) {
-				bufferedWriter.write(inputLine);
-				bufferedWriter.newLine();
-			}
-
-			bufferedReader.close();
-			bufferedWriter.close();
-		} catch (IOException e) {
-			slf4jLogger.warn(e.getMessage());
-		}
-	}
-
 
 	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);

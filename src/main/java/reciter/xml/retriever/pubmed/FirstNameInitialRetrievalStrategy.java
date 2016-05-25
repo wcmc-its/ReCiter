@@ -2,7 +2,7 @@ package reciter.xml.retriever.pubmed;
 
 import reciter.model.author.TargetAuthor;
 
-public class FirstNameRetrievalStrategy extends AbstractRetrievalStrategy {
+public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	@Override
 	public String constructInitialQuery(TargetAuthor targetAuthor) {

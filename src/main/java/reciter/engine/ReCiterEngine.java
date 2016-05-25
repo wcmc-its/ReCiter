@@ -1,14 +1,10 @@
 package reciter.engine;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
@@ -39,11 +35,12 @@ import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAff
 import reciter.database.dao.AnalysisDao;
 import reciter.database.dao.impl.AnalysisDaoImpl;
 import reciter.erroranalysis.Analysis;
-import reciter.model.ReCiterArticleFetcher;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
+import reciter.service.ReCiterArticleService;
 import reciter.service.TargetAuthorService;
 import reciter.service.converters.AnalysisConverter;
+import reciter.service.impl.ReCiterArticleServiceImpl;
 import reciter.service.impl.TargetAuthorServiceImpl;
 
 public class ReCiterEngine implements Engine {
@@ -54,12 +51,12 @@ public class ReCiterEngine implements Engine {
 	private TargetAuthorService targetAuthorService;
 	private AnalysisDao analysisDao;
 	private Analysis analysis;
-	
+
 	/**
 	 * Mesh Major Strategy Context.
 	 */
 	private StrategyContext meshMajorStrategyContext;
-	
+
 	public double totalPrecision;
 	public double totalRecall;
 	public double totalAccuracy;
@@ -84,16 +81,12 @@ public class ReCiterEngine implements Engine {
 
 	@Override
 	public void run(TargetAuthor targetAuthor) {
-		// Fetch the articles for this person.
 		List<ReCiterArticle> reCiterArticleList = null;
-		try {
-			reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-			slf4jLogger.error("Error retrieving articles for cwid=[" + targetAuthor.getCwid() + "].", e);
-		}
+		ReCiterArticleService reCiterArticleService = new ReCiterArticleServiceImpl();
+		reCiterArticleList = reCiterArticleService.retrieve(targetAuthor.getCwid());
 		run(targetAuthor, reCiterArticleList);
 	}
-	
+
 	@Override
 	public void run(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticleList) {
 
@@ -112,7 +105,7 @@ public class ReCiterEngine implements Engine {
 		// Perform Mesh Heading recall improvement.
 		// Use MeSH major to improve recall after phase two (https://github.com/wcmc-its/ReCiter/issues/131)
 		List<ReCiterArticle> selectedArticles = new ArrayList<ReCiterArticle>();
-		
+
 		for (int id : clusterSelector.getSelectedClusterIds()) {
 			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
 		}
@@ -216,29 +209,13 @@ public class ReCiterEngine implements Engine {
 		List<StrategyContext> strategyContexts = getStrategyContexts();
 		for (String cwid : cwids) {
 			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-			List<ReCiterArticle> reCiterArticleList = null;
-			try {
-				reCiterArticleList = new ReCiterArticleFetcher().fetch(targetAuthor);
-			} catch (ParserConfigurationException | SAXException | IOException e) {
-				slf4jLogger.error("Error retrieving articles for cwid=[" + targetAuthor.getCwid() + "].", e);
-			}
-
+			ReCiterArticleService reCiterArticleService = new ReCiterArticleServiceImpl();
+			List<ReCiterArticle> reCiterArticleList = reCiterArticleService.retrieve(cwid);
 			Analysis.assignGoldStandard(reCiterArticleList, cwid);
 			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
 		}
 		return null;
 	}
-
-//	@Override
-//	public void checkNumQueries() {
-//		List<String> cwids = reCiterEngineProperty.getCwids();
-//
-//		for (String cwid : cwids) {
-//			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-//			int articleCount = new ReCiterArticleFetcher().checkNumQueries(targetAuthor);
-//			slf4jLogger.info("Article count for cwid=[" + cwid + "] is [" + articleCount + "]");
-//		}
-//	}
 
 	@Override
 	public Analysis getAnalysis() {

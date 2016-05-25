@@ -73,11 +73,13 @@ public class PubMedRetrieverWorker implements Runnable {
 			String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
 
 			// Save the xml file to directory data/xml/cwid
-			LocalDateTime timePoint = LocalDateTime.now();
+			LocalDateTime time = LocalDateTime.now();
 			
 			PubMedPersistenceWorker worker = 
-					new PubMedPersistenceWorker(eFetchUrl, commonDirectory, cwid, timePoint.toString().replace(":", "-"));
-			worker.run();
+					new PubMedPersistenceWorker(eFetchUrl, commonDirectory, cwid, time.toString().replace(":", "-"));
+			slf4jLogger.info("Starting persisting worker for EFetch URL=[" + eFetchUrl + "].");
+			Thread workerThread = new Thread(worker);
+			workerThread.start();
 			
 			// Update the retstart value.
 			currentRetStart += pubmedXmlQuery.getRetMax();
