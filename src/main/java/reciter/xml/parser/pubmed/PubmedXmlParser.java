@@ -2,6 +2,7 @@ package reciter.xml.parser.pubmed;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -36,6 +37,12 @@ public class PubmedXmlParser {
 	public List<PubmedArticle> parse(File xmlFile) throws ParserConfigurationException, SAXException, IOException {
 		SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 		saxParser.parse(xmlFile, xmlHandler);
+		return xmlHandler.getPubmedArticles();
+	}
+	
+	public List<PubmedArticle> parse(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
+		SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
+		saxParser.parse(inputStream, xmlHandler);
 		return xmlHandler.getPubmedArticles();
 	}
 }

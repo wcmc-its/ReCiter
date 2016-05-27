@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
+import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 
 public class PubMedRetrieverWorker implements Runnable {
@@ -31,7 +32,7 @@ public class PubMedRetrieverWorker implements Runnable {
 	public void run() {
 		try {
 			slf4jLogger.info("retrieving PubMed articles for cwid=[" + cwid + "]...");
-			retrieve(pubmedQuery, commonDirectory, cwid, numberOfPubmedArticles);
+			retrieveParsePersist(pubmedQuery, commonDirectory, cwid, numberOfPubmedArticles);
 		} catch (IOException e) {
 			slf4jLogger.error("Error retrieving articles for cwid=[" + cwid + "].", e);
 		}
@@ -79,6 +80,52 @@ public class PubMedRetrieverWorker implements Runnable {
 					new PubMedPersistenceWorker(eFetchUrl, commonDirectory, cwid, time.toString().replace(":", "-"));
 			slf4jLogger.info("Starting persisting worker for EFetch URL=[" + eFetchUrl + "].");
 			Thread workerThread = new Thread(worker);
+			workerThread.start();
+			
+			// Update the retstart value.
+			currentRetStart += pubmedXmlQuery.getRetMax();
+			pubmedXmlQuery.setRetStart(currentRetStart);
+		}
+	}
+	
+	/**
+	 * Fetch PubMed xmls using <code>pubmedQuery</code> and store the xmls in <code>commonDirectory</code> specified
+	 * by <code>cwid</code>
+	 * @param pubmedQuery
+	 * @param commonDirectory
+	 * @param cwid
+	 * @param numberOfPubmedArticles
+	 * @throws IOException 
+	 * @throws MalformedURLException 
+	 * @throws UnsupportedEncodingException 
+	 */
+	public void retrieveParsePersist(String pubmedQuery, String commonDirectory, String cwid, int numberOfPubmedArticles) 
+			throws UnsupportedEncodingException, MalformedURLException, IOException {
+
+		// Get the count (number of publications for this query).
+		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
+		pubmedXmlQuery.setTerm(pubmedQuery);
+
+		// Retrieve the publications retMax records at one time and store to disk.
+		int currentRetStart = 0;
+
+		// Number of partitions that we need to finish retrieving all XML.
+		int numSteps = (int) Math.ceil((double)numberOfPubmedArticles / pubmedXmlQuery.getRetMax()); 
+
+		// Use the retstart value to iteratively fetch all XMLs.
+		for (int i = 0; i < numSteps; i++) {
+			// Get webenv value.
+			pubmedXmlQuery.setRetStart(currentRetStart);
+			String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+
+			pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
+
+			// Use the webenv value to retrieve xml.
+			String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
+
+			PubMedXmlParseWorker pubMedXmlParseWorker = 
+					new PubMedXmlParseWorker(new PubmedEFetchHandler(), eFetchUrl);
+			Thread workerThread = new Thread(pubMedXmlParseWorker);
 			workerThread.start();
 			
 			// Update the retstart value.
