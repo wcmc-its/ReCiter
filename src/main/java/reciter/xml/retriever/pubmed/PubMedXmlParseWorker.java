@@ -9,16 +9,27 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
 import reciter.service.PubMedService;
-import reciter.service.impl.PubMedServiceImpl;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.model.PubmedArticle;
 
 public class PubMedXmlParseWorker implements Runnable {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(PubMedXmlParseWorker.class);
+
+	@Autowired
+	private PubMedService pubMedService;
+	
+	public PubMedService getPubMedService() {
+		return pubMedService;
+	}
+
+	public void setPubMedService(PubMedService pubMedService) {
+		this.pubMedService = pubMedService;
+	}
 
 	private final PubmedEFetchHandler xmlHandler;
 	private final String uri;
@@ -32,9 +43,8 @@ public class PubMedXmlParseWorker implements Runnable {
 	public void run() {
 		try {
 			List<PubmedArticle> pubMedArticles = parse(uri);
-			PubMedService pubMedService = new PubMedServiceImpl();
 			for (PubmedArticle pubMedArticle : pubMedArticles) {
-				pubMedService.persist(pubMedArticle);
+				pubMedService.insertPubMedArticle(pubMedArticle);
 			}
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			slf4jLogger.error("Error parsing PubMed XML input stream.", e);

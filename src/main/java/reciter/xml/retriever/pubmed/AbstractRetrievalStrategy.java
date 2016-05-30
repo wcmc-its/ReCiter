@@ -77,7 +77,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	}
 
 	@Override
-	public boolean retrieve(TargetAuthor targetAuthor) throws IOException, SAXException, ParserConfigurationException {
+	public boolean retrieve(TargetAuthor targetAuthor) throws IOException {
 
 		String initialQuery = URLEncoder.encode(constructInitialQuery(targetAuthor), "UTF-8");
 		PubmedESearchHandler handler = getPubmedESearchHandler(initialQuery);
@@ -140,7 +140,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			pageText = reader.lines().collect(Collectors.joining("\n"));
 		}
 
-		//		System.out.println(pageText);
 		GsonBuilder gsonBuilder = new GsonBuilder();
 		gsonBuilder.registerTypeAdapter(EsearchObject.class, new EsearchObjectJsonDeserializer());
 		gsonBuilder.registerTypeAdapter(EsearchResult.class, new EsearchResultJsonDeserializer());
@@ -149,10 +148,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		// Parse JSON to Java
 		EsearchObject eSearchObject = gson.fromJson(pageText, EsearchObject.class);
 		String count = eSearchObject.geteSearchResult().getCount();
-		//		System.out.println(eSearchObject.geteSearchResult().getIdList().length);
-
-		// "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=wang[au]&"
-		// + "retmode=json&retmax=" + count
 		
 		PubmedXmlQuery queryToGetPmids = new PubmedXmlQuery();
 		queryToGetPmids.setTerm(query);
@@ -175,13 +170,17 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return pmids;
 	}
 
-	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws MalformedURLException, IOException, SAXException, ParserConfigurationException {
+	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws IOException {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
 		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
 		slf4jLogger.info("URL=[" + fullUrl + "]");
 		PubmedESearchHandler pubmedESearchHandler = new PubmedESearchHandler();
 		InputStream esearchStream = new URL(fullUrl).openStream();
-		SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
+		try {
+			SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
+		} catch (SAXException | ParserConfigurationException e) {
+			slf4jLogger.error("Error parsing XML file for query=[" + query + "].", e);
+		}
 		return pubmedESearchHandler;
 	}
 

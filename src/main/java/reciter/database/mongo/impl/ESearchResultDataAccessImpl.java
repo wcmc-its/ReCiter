@@ -4,13 +4,14 @@ import org.bson.Document;
 
 import com.mongodb.MongoClient;
 
-import reciter.database.mongo.ESearchResultDao;
+import reciter.database.mongo.ESearchResultDataAccess;
+import reciter.database.mongo.MongoConnectionFactory;
 
-public class ESearchResultDaoImpl implements ESearchResultDao {
+public class ESearchResultDataAccessImpl implements ESearchResultDataAccess {
 
 	@Override
 	public void insertESearchResult(Document eSearchResult) {
-		MongoClient mongoClient = new MongoClient();
+		MongoClient mongoClient = MongoConnectionFactory.CONNECTION.getClient();
 		mongoClient.getDatabase("reciter").getCollection("esearchresult").insertOne(eSearchResult);
 		mongoClient.close();
 	}

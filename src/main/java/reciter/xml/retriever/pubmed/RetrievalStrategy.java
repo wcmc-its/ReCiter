@@ -21,7 +21,7 @@ public interface RetrievalStrategy {
 	 * @throws SAXException
 	 * @throws ParserConfigurationException
 	 */
-	boolean retrieve(TargetAuthor targetAuthor) throws IOException, SAXException, ParserConfigurationException;
+	boolean retrieve(TargetAuthor targetAuthor) throws IOException;
 	
 	/**
 	 * Set to <code>true</code> if the retrieval strategy should retrieve the articles even if the number of articles

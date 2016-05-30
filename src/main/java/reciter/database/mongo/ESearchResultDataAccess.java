@@ -2,7 +2,7 @@ package reciter.database.mongo;
 
 import org.bson.Document;
 
-public interface ESearchResultDao {
+public interface ESearchResultDataAccess {
 
 	void insertESearchResult(Document eSearchResult);
 }

@@ -7,10 +7,17 @@ import reciter.xml.parser.pubmed.model.PubmedArticle;
 public interface PubMedService {
 
 	/**
-	 * Persist the PubMedArticle to disk.
+	 * Insert the PubMedArticle to disk.
 	 * @param article
 	 */
-	void persist(PubmedArticle article);
+	void insertPubMedArticle(PubmedArticle article);
+
+	/**
+	 * Updates or insert if not exist by query pmid.
+	 * @param json
+	 * @param pmid
+	 */
+	void upsertPubMedArticle(PubmedArticle article);
 	
 	/**
 	 * Retrieve PubMed articles for <code>cwid</code>.
@@ -18,6 +25,5 @@ public interface PubMedService {
 	 * @return
 	 */
 	List<PubmedArticle> retrieve(String cwid);
-	
 	
 }
