@@ -15,7 +15,7 @@ import org.xml.sax.SAXException;
 import reciter.engine.ReCiterEngineProperty;
 import reciter.service.impl.PubMedServiceImpl;
 import reciter.xml.parser.AbstractXmlFetcher;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 
 /**
@@ -31,10 +31,10 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	public class ScopusXmlFetcherRunnable implements Runnable {
 
 		private final String cwid;
-		private final String pmid;
+		private final long pmid;
 
 
-		public ScopusXmlFetcherRunnable(String cwid, String pmid) {
+		public ScopusXmlFetcherRunnable(String cwid, long pmid) {
 			this.cwid = cwid;
 			this.pmid = pmid;
 		}
@@ -55,9 +55,10 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 * @param cwid
 	 * @param pmid
 	 */
-	public void fetchSingleScopus(String cwid, String pmid) {
-		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(pmid).build();
-		saveXml(scopusXmlQuery.getQueryUrl(), ReCiterEngineProperty.scopusFolder, cwid, pmid);
+	public void fetchSingleScopus(String cwid, long pmid) {
+		String pmidStr = String.valueOf(pmid);
+		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(pmidStr).build();
+		saveXml(scopusXmlQuery.getQueryUrl(), ReCiterEngineProperty.scopusFolder, cwid, pmidStr);
 	}
 
 	/**
@@ -66,7 +67,7 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 * @param pmid
 	 * @return
 	 */
-	public boolean scopusFileExist(String cwid, String pmid) {
+	public boolean scopusFileExist(String cwid, long pmid) {
 		File file = new File(ReCiterEngineProperty.scopusFolder + cwid + "/" + pmid + ".xml");
 		return file.exists();
 	}
@@ -89,9 +90,9 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	public void fetch(String cwid) throws ParserConfigurationException, SAXException, IOException {
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		PubMedServiceImpl pubMedServiceImpl = new PubMedServiceImpl();
-		List<PubmedArticle> pubmedArticleList = pubMedServiceImpl.retrieve(cwid);
-		for (PubmedArticle pubmedArticle : pubmedArticleList) {
-			String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
+		List<PubMedArticle> pubmedArticleList = pubMedServiceImpl.retrieve(cwid);
+		for (PubMedArticle pubmedArticle : pubmedArticleList) {
+			long pmid = pubmedArticle.getMedlineCitation().getPmid().getPmid();
 			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);
 			executor.execute(scopusRunnable);
 		}

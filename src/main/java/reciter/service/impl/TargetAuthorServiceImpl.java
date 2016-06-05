@@ -7,27 +7,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import reciter.database.dao.BoardCertificationDao;
-import reciter.database.dao.IdentityAlternateDeptNamesDao;
-import reciter.database.dao.IdentityCitizenshipDao;
 import reciter.database.dao.IdentityDao;
-import reciter.database.dao.IdentityDegreeDao;
-import reciter.database.dao.IdentityDirectoryDao;
-import reciter.database.dao.IdentityEmailDao;
-import reciter.database.dao.IdentityGrantDao;
-import reciter.database.dao.IdentityInstitutionDao;
 import reciter.database.dao.impl.BoardCertificationDaoImpl;
-import reciter.database.dao.impl.IdentityAlternateDeptNamesDaoImpl;
-import reciter.database.dao.impl.IdentityCitizenshipDaoImpl;
 import reciter.database.dao.impl.IdentityDaoImpl;
-import reciter.database.dao.impl.IdentityDegreeDaoImpl;
-import reciter.database.dao.impl.IdentityDirectoryDaoImpl;
-import reciter.database.dao.impl.IdentityEmailDaoImpl;
-import reciter.database.dao.impl.IdentityGrantDaoImpl;
-import reciter.database.dao.impl.IdentityInstitutionDaoImpl;
 import reciter.database.model.IdentityDegree;
 import reciter.database.model.IdentityDirectory;
 import reciter.model.author.AuthorAffiliation;
@@ -35,7 +21,14 @@ import reciter.model.author.AuthorDegree;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
+import reciter.service.IdentityAlternateDeptNamesService;
+import reciter.service.IdentityCitizenshipService;
+import reciter.service.IdentityDegreeService;
+import reciter.service.IdentityDirectoryService;
 import reciter.service.IdentityEducationService;
+import reciter.service.IdentityEmailService;
+import reciter.service.IdentityGrantService;
+import reciter.service.IdentityInstitutionService;
 import reciter.service.IdentityService;
 import reciter.service.TargetAuthorService;
 import reciter.service.bean.IdentityBean;
@@ -43,13 +36,38 @@ import reciter.service.converters.IdentityDegreeConverter;
 import reciter.string.PubmedSearchQueryGenerator;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 
+@Service("targetAuthorService")
 public class TargetAuthorServiceImpl implements TargetAuthorService {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(TargetAuthorServiceImpl.class);
-
+	@Autowired
+	private IdentityService identityService;
+	
+	@Autowired
+	private IdentityCitizenshipService identityCitizenshipService;
+	
+	@Autowired
+	private IdentityDegreeService identityDegreeService;
+	
+	@Autowired
+	private IdentityEducationService identityEducationService;
+	
+	@Autowired
+	private IdentityInstitutionService identityInstitutionService;
+	
+	@Autowired
+	private IdentityDirectoryService identityDirectoryService;
+	
+	@Autowired
+	private IdentityAlternateDeptNamesService identityAlternateDeptNamesService;
+	
+	@Autowired
+	private IdentityGrantService identityGrantService;
+	
+	@Autowired
+	private IdentityEmailService identityEmailService;
+	
 	@Override
 	public TargetAuthor getTargetAuthor(String cwid) {
-		IdentityService identityService = new IdentityServiceImpl();
 		IdentityBean identityDTO = identityService.getIdentityByCwid(cwid);
 
 		// set first name, middle name, last name, and affiliation.
@@ -82,26 +100,22 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		targetAuthor.setOtherDeparment(identityDTO.getOtherDepartment());
 
 		// set citizenship
-		IdentityCitizenshipDao identityCitizenshipDao = new IdentityCitizenshipDaoImpl();
-		String countryOfCitizenship = identityCitizenshipDao.getIdentityCitizenshipCountry(identityDTO.getCwid());
+		String countryOfCitizenship = identityCitizenshipService.getIdentityCitizenshipCountry(identityDTO.getCwid());
 		if (countryOfCitizenship != null) {
 			targetAuthor.setCitizenship(countryOfCitizenship);
 		}
 
 		// set education degree.
-		IdentityDegreeDao identityDegreeDao = new IdentityDegreeDaoImpl();
-		IdentityDegree identityDegree = identityDegreeDao.getIdentityDegreeByCwid(identityDTO.getCwid());
+		IdentityDegree identityDegree = identityDegreeService.getIdentityDegreeByCwid(identityDTO.getCwid());
 		AuthorDegree authorDegree = IdentityDegreeConverter.convert(identityDegree);
 		targetAuthor.setDegree(authorDegree);
 
 		// set author education.
-		IdentityEducationService identityEducationService = new IdentityEducationServiceImpl();
 		List<AuthorEducation> authorEducations = identityEducationService.getEducations(cwid);
 		targetAuthor.setEducations(authorEducations);
 
 		// Set author institutions.
-		IdentityInstitutionDao identityInstitutionDao = new IdentityInstitutionDaoImpl();
-		List<String> institutions = identityInstitutionDao.getInstitutionByCwid(cwid);
+		List<String> institutions = identityInstitutionService.getInstitutionByCwid(cwid);
 		targetAuthor.setInstitutions(institutions);
 
 		BoardCertificationDao boardCertificationDao = new BoardCertificationDaoImpl();
@@ -112,8 +126,7 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 
 		// Merge from gemini
 		//Update ReCiter code so that aliases can be included as input #93.
-		IdentityDirectoryDao dao = new IdentityDirectoryDaoImpl();
-		List<IdentityDirectory> identityDirectoryList = dao.getIdentityDirectoriesByCwid(identityDTO.getCwid());
+		List<IdentityDirectory> identityDirectoryList = identityDirectoryService.getIdentityDirectoriesByCwid(identityDTO.getCwid());
 		List<AuthorName> aliasList = new ArrayList<AuthorName>();
 		for (IdentityDirectory identityDirectory : identityDirectoryList) {
 			aliasList.add(new AuthorName(identityDirectory.getGivenName(), identityDirectory.getMiddleName(), identityDirectory.getSurname()));
@@ -122,8 +135,7 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 
 		// Set up alternate department names:
 		if (targetAuthor.getDepartment() != null) {
-			IdentityAlternateDeptNamesDao identityAlternateDeptNamesDao = new IdentityAlternateDeptNamesDaoImpl();
-			List<String> alternateDepartmentNames = identityAlternateDeptNamesDao.getAlternateNames(targetAuthor.getDepartment());
+			List<String> alternateDepartmentNames = identityAlternateDeptNamesService.getAlternateNames(targetAuthor.getDepartment());
 			targetAuthor.setAlternateDepartmentNames(alternateDepartmentNames);
 		}
 
@@ -132,13 +144,11 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		targetAuthor.setEmailOther(identityDTO.getEmailOther());
 		
 		// Sponsor Award ids.
-		IdentityGrantDao identityGrantDao = new IdentityGrantDaoImpl();
-		targetAuthor.setSponsorAwardIds(identityGrantDao.getSponsorAwardIdListByCwid(targetAuthor.getCwid()));
+		targetAuthor.setSponsorAwardIds(identityGrantService.getSponsorAwardIdListByCwid(targetAuthor.getCwid()));
 		
 		// set emails from rc_identity_email and combine this information
 		// with email and email_other from rc_identity.
-		IdentityEmailDao identityEmailDao = new IdentityEmailDaoImpl();
-		List<String> emailAddresses = identityEmailDao.getEmailAddressesForCwid(cwid);
+		List<String> emailAddresses = identityEmailService.getEmailAddressesForCwid(cwid);
 		targetAuthor.setEmailAddresses(emailAddresses);
 		
 		//		Set<String> terms = constructPubmedQuery(targetAuthor);

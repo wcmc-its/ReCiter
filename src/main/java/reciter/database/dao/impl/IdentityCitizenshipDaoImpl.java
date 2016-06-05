@@ -5,10 +5,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityCitizenshipDao;
 
+@Repository("identityCitizenshipDao")
 public class IdentityCitizenshipDaoImpl implements IdentityCitizenshipDao {
 
 	public String getIdentityCitizenshipCountry(String cwid) {

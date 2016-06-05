@@ -4,11 +4,6 @@ import java.util.List;
 
 import reciter.database.model.Identity;
 
-/**
- * 
- * @author htadimeti
- *
- */
 public interface IdentityDao {
 	/**
 	 * 

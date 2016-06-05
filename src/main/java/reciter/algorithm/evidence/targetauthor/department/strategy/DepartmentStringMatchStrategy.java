@@ -24,7 +24,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(DepartmentStringMatchStrategy.class);
 
 	private String extractedDept;
-	private int pmid;
+	private long pmid;
 	private int isGoldStandard;
 //	private Set<String> departments = new HashSet<String>();
 	

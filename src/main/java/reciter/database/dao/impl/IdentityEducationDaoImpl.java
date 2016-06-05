@@ -7,6 +7,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityEducationDao;
@@ -14,9 +16,8 @@ import reciter.database.model.IdentityEducation;
 
 /**
  * DAO class for table rc_identity_education.
- * @author jil3004
- *
  */
+@Repository("identityEducationDao")
 public class IdentityEducationDaoImpl implements IdentityEducationDao {
 
 	public List<IdentityEducation> getEducation(String cwid) {

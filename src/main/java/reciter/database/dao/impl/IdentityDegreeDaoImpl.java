@@ -5,13 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityDegreeDao;
 import reciter.database.model.IdentityDegree;
 
-
-public class IdentityDegreeDaoImpl implements IdentityDegreeDao{
+@Repository("identityDegreeDao")
+public class IdentityDegreeDaoImpl implements IdentityDegreeDao {
 	
 	/**
 	 * Retrieves an IdentityDegree object to retrieve Identity Degree information from database.

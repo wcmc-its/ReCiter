@@ -9,9 +9,9 @@ import reciter.model.author.TargetAuthor;
 
 public interface ClusterSelector {
 
-	void runSelectionStrategy(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor);
+	void runSelectionStrategy(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor);
 	
-	Set<Integer> getSelectedClusterIds();
+	Set<Long> getSelectedClusterIds();
 	
-	void handleNonSelectedClusters(TargetAuthorStrategyContext strategyContext, Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor);
+	void handleNonSelectedClusters(TargetAuthorStrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor);
 }

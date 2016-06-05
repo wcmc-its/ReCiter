@@ -1,0 +1,152 @@
+<project name="ReCiter" default="install" basedir=".">
+    <property name="install.dir" value="${basedir}/install"/>
+    <property name="scripts.dir" value="${basedir}/src/main/resources/scripts"/>
+    <property name="config.dir" value="${basedir}/src/main/resources/config"/>
+    <property name="install.config.dir" value="${install.dir}/config"/>
+    <property name="install.scripts.dir" value="${install.dir}/scripts"/>
+    <property name="client.build.path" value="${basedir}/build"/>
+    <property name="client.web.path" value="${client.build.path}/WebContent"/>
+    <property name="client.src.web.path" value="${basedir}/WebContent"/>
+    <property name="client.meta.inf.path" value="${client.web.path}/META-INF"/>
+    <property name="client.web.inf.path" value="${client.web.path}/WEB-INF"/>
+    <property name="client.classes.path" value="${client.web.inf.path}/classes"/>
+    <property name="client.lib.path" value="${client.web.inf.path}/lib"/>
+    <property name="client.source.path" value="${basedir}/src/main/java"/>
+    <property name="client.resource.path" value="${basedir}/src/main/resources"/>
+    <property name="client.install.path" value="${basedir}/install"/>
+    <property name="client.test.path" value="${basedir}/src/java/test"/>
+    
+    <property name="MAVEN_REPOSITORY" value="C:/Users/Jie/.m2/repository"/>
+    
+    <path id="class.path">
+        <!-- <pathelement location="${MAVEN_REPOSITORY}/org/slf4j/slf4j-log4j12/1.7.10/slf4j-log4j12-1.7.10.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/slf4j/slf4j-api/1.7.10/slf4j-api-1.7.10.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/log4j/log4j/1.2.17/log4j-1.2.17.jar"/> -->
+        <pathelement location="${MAVEN_REPOSITORY}/mysql/mysql-connector-java/5.1.34/mysql-connector-java-5.1.34.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/apache/commons/commons-lang3/3.3.2/commons-lang3-3.3.2.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/mongodb/mongodb-driver/3.2.2/mongodb-driver-3.2.2.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/mongodb/mongodb-driver-core/3.2.2/mongodb-driver-core-3.2.2.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/mongodb/bson/3.2.2/bson-3.2.2.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/com/google/code/gson/gson/2.6.2/gson-2.6.2.jar"/>
+        <!--  Spring Boot Starter -->
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-web/1.3.5.RELEASE/spring-boot-starter-web-1.3.5.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter/1.3.5.RELEASE/spring-boot-starter-1.3.5.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot/1.3.5.RELEASE/spring-boot-1.3.5.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-autoconfigure/1.3.5.RELEASE/spring-boot-autoconfigure-1.3.5.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-logging/1.3.5.RELEASE/spring-boot-starter-logging-1.3.5.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/ch/qos/logback/logback-classic/1.1.7/logback-classic-1.1.7.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/ch/qos/logback/logback-core/1.1.7/logback-core-1.1.7.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/slf4j/jcl-over-slf4j/1.7.21/jcl-over-slf4j-1.7.21.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/slf4j/jul-to-slf4j/1.7.21/jul-to-slf4j-1.7.21.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/slf4j/log4j-over-slf4j/1.7.21/log4j-over-slf4j-1.7.21.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/spring-core/4.2.6.RELEASE/spring-core-4.2.6.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/yaml/snakeyaml/1.16/snakeyaml-1.16.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-tomcat/1.3.5.RELEASE/spring-boot-starter-tomcat-1.3.5.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-core/8.0.33/tomcat-embed-core-8.0.33.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-el/8.0.33/tomcat-embed-el-8.0.33.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-logging-juli/8.0.33/tomcat-embed-logging-juli-8.0.33.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-websocket/8.0.33/tomcat-embed-websocket-8.0.33.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-validation/1.3.5.RELEASE/spring-boot-starter-validation-1.3.5.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/hibernate/hibernate-validator/5.2.4.Final/hibernate-validator-5.2.4.Final.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/javax/validation/validation-api/1.1.0.Final/validation-api-1.1.0.Final.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/jboss/logging/jboss-logging/3.2.1.Final/jboss-logging-3.2.1.Final.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/com/fasterxml/classmate/1.1.0/classmate-1.1.0.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-databind/2.6.6/jackson-databind-2.6.6.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-annotations/2.6.0/jackson-annotations-2.6.0.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-core/2.6.6/jackson-core-2.6.6.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/spring-web/4.2.6.RELEASE/spring-web-4.2.6.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/spring-aop/4.2.6.RELEASE/spring-aop-4.2.6.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/aopalliance/aopalliance/1.0/aopalliance-1.0.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/spring-beans/4.2.6.RELEASE/spring-beans-4.2.6.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/spring-context/4.2.6.RELEASE/spring-context-4.2.6.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/spring-webmvc/4.2.6.RELEASE/spring-webmvc-4.2.6.RELEASE.jar"/>
+        <pathelement location="${MAVEN_REPOSITORY}/org/springframework/spring-expression/4.2.6.RELEASE/spring-expression-4.2.6.RELEASE.jar"/>
+    </path>
+    
+    <target name="clean">
+        <delete dir="${client.build.path}"/>
+        <delete dir="${client.install.path}"/>
+    </target>
+    
+    <target name="prepare" depends="clean">
+        <mkdir dir="${client.build.path}"/>
+        <mkdir dir="${client.install.path}"/>
+        <copy todir="${client.web.path}">
+            <fileset dir="${client.src.web.path}"/>
+        </copy>
+        <mkdir dir="${client.meta.inf.path}"/>
+        <mkdir dir="${client.classes.path}"/>
+        <mkdir dir="${client.lib.path}"/>
+    </target>
+    
+    <target name="compile" depends="prepare">
+        <mkdir dir="${client.classes.path}" />
+        <copy todir="${client.classes.path}" overwrite="true">
+            <fileset dir="${client.resource.path}">
+                <include name="*.*"/>
+            </fileset>
+        </copy>
+        <javac srcdir="${client.source.path}"
+            debug="true"
+            deprecation="false"
+            destdir="${client.classes.path}">
+            <classpath refid="class.path"/>
+        </javac>
+    </target>
+    
+    <target name="install-libs" depends="compile">
+	<copy todir="${client.lib.path}">
+        <!-- <fileset dir="${MAVEN_REPOSITORY}/org/slf4j/slf4j-log4j12/1.7.10/" includes="slf4j-log4j12-1.7.10.jar" />
+        <fileset dir="${MAVEN_REPOSITORY}/log4j/log4j/1.2.17/" includes="log4j-1.2.17.jar" /> -->
+        <fileset dir="${MAVEN_REPOSITORY}/mysql/mysql-connector-java/5.1.34/" includes="mysql-connector-java-5.1.34.jar" />
+        <fileset dir="${MAVEN_REPOSITORY}/org/apache/commons/commons-lang3/3.3.2/" includes="commons-lang3-3.3.2.jar" />
+        <fileset dir="${MAVEN_REPOSITORY}/org/mongodb/mongodb-driver/3.2.2/" includes="mongodb-driver-3.2.2.jar" />
+        <fileset dir="${MAVEN_REPOSITORY}/org/mongodb/mongodb-driver-core/3.2.2/" includes="mongodb-driver-core-3.2.2.jar " />
+        <fileset dir="${MAVEN_REPOSITORY}/org/mongodb/bson/3.2.2/" includes="bson-3.2.2.jar" />
+        <fileset dir="${MAVEN_REPOSITORY}/com/google/code/gson/gson/2.6.2/" includes="gson-2.6.2.jar" />
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-web/1.3.5.RELEASE/" includes="spring-boot-starter-web-1.3.5.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter/1.3.5.RELEASE/" includes="spring-boot-starter-1.3.5.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot/1.3.5.RELEASE/" includes="spring-boot-1.3.5.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-autoconfigure/1.3.5.RELEASE/" includes="spring-boot-autoconfigure-1.3.5.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-logging/1.3.5.RELEASE/" includes="spring-boot-starter-logging-1.3.5.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/ch/qos/logback/logback-classic/1.1.7/" includes="logback-classic-1.1.7.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/ch/qos/logback/logback-core/1.1.7/" includes="logback-core-1.1.7.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/slf4j/jcl-over-slf4j/1.7.21/" includes="jcl-over-slf4j-1.7.21.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/slf4j/jul-to-slf4j/1.7.21/" includes="jul-to-slf4j-1.7.21.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/slf4j/log4j-over-slf4j/1.7.21/" includes="log4j-over-slf4j-1.7.21.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/spring-core/4.2.6.RELEASE/" includes="spring-core-4.2.6.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/yaml/snakeyaml/1.16/" includes="snakeyaml-1.16.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-tomcat/1.3.5.RELEASE/" includes="spring-boot-starter-tomcat-1.3.5.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-core/8.0.33/" includes="tomcat-embed-core-8.0.33.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-el/8.0.33/" includes="tomcat-embed-el-8.0.33.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-logging-juli/8.0.33/" includes="tomcat-embed-logging-juli-8.0.33.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/apache/tomcat/embed/tomcat-embed-websocket/8.0.33/" includes="tomcat-embed-websocket-8.0.33.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/boot/spring-boot-starter-validation/1.3.5.RELEASE/" includes="spring-boot-starter-validation-1.3.5.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/hibernate/hibernate-validator/5.2.4.Final/" includes="hibernate-validator-5.2.4.Final.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/javax/validation/validation-api/1.1.0.Final/" includes="validation-api-1.1.0.Final.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/jboss/logging/jboss-logging/3.2.1.Final/" includes="jboss-logging-3.2.1.Final.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/com/fasterxml/classmate/1.1.0/" includes="classmate-1.1.0.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-databind/2.6.6/" includes="jackson-databind-2.6.6.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-annotations/2.6.0/" includes="jackson-annotations-2.6.0.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/com/fasterxml/jackson/core/jackson-core/2.6.6/" includes="jackson-core-2.6.6.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/spring-web/4.2.6.RELEASE/" includes="spring-web-4.2.6.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/spring-aop/4.2.6.RELEASE/" includes="spring-aop-4.2.6.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/aopalliance/aopalliance/1.0/" includes="aopalliance-1.0.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/spring-beans/4.2.6.RELEASE/" includes="spring-beans-4.2.6.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/spring-context/4.2.6.RELEASE/" includes="spring-context-4.2.6.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/spring-webmvc/4.2.6.RELEASE/" includes="spring-webmvc-4.2.6.RELEASE.jar"/>
+        <fileset dir="${MAVEN_REPOSITORY}/org/springframework/spring-expression/4.2.6.RELEASE/" includes="spring-expression-4.2.6.RELEASE.jar"/>
+	</copy>
+        
+        <mkdir dir="${client.install.path}" />
+        <mkdir dir="${client.classes.path}/META-INF"/>
+        
+        <war destfile="${client.install.path}/ReCiter.war" 
+            basedir="${client.web.path}"
+            webxml="${client.web.inf.path}/web.xml"/>
+    </target>
+    
+    <target name="install" depends="compile, install-libs">
+    </target>
+    
+</project>

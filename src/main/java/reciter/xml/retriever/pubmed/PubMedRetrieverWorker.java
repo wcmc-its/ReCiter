@@ -20,7 +20,7 @@ public class PubMedRetrieverWorker implements Runnable {
 	private final String commonDirectory;
 	private final String cwid;
 	private final int numberOfPubmedArticles;
-
+	
 	public PubMedRetrieverWorker(String pubmedQuery, String commonDirectory, String cwid, int numberOfPubmedArticles) {
 		this.pubmedQuery = pubmedQuery;
 		this.commonDirectory = commonDirectory;

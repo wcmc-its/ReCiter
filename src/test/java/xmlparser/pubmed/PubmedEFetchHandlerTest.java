@@ -18,13 +18,13 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedEFetchHandlerTest {
 
 	private String location = "src/test/resources/xml/";
 	private String fileName = "hef9020_19944046_truncated_pmid_test.xml";
-	private PubmedArticle article;
+	private PubMedArticle article;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -59,8 +59,8 @@ public class PubmedEFetchHandlerTest {
 
 	@Test
 	public void testPmid() {
-		String pmid = article.getMedlineCitation().getPmid().getPmidString();
-		assertEquals(pmid, "19944046");
+		long pmid = article.getMedlineCitation().getPmid().getPmid();
+		assertEquals(pmid, 19944046);
 	}
 	
 	@Test

@@ -25,7 +25,7 @@ import reciter.xml.parser.pubmed.model.MedlineCitationKeywordList;
 import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
 import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
 import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 import reciter.xml.parser.scopus.model.Author;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 
@@ -41,11 +41,11 @@ public class ArticleTranslator {
 	 * @param pubmedArticle
 	 * @return
 	 */
-	public static ReCiterArticle translate(PubmedArticle pubmedArticle, ScopusArticle scopusArticle) {
+	public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle) {
 
 		// PMID
-		String pmid = pubmedArticle.getMedlineCitation().getPmid().getPmidString();
-		ReCiterArticle reCiterArticle = new ReCiterArticle(Integer.parseInt(pmid));
+		long pmid = pubmedArticle.getMedlineCitation().getPmid().getPmid();
+		ReCiterArticle reCiterArticle = new ReCiterArticle(pmid);
 
 		// Article title
 		String articleTitle = pubmedArticle.getMedlineCitation().getArticle().getArticleTitle();

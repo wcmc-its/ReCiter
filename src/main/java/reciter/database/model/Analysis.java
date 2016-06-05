@@ -6,7 +6,7 @@ public class Analysis {
 	private int goldStandard;
 	private String targetName;
 	private String pubmedSearchQuery;
-	private String pmid;
+	private long pmid;
 	private String articleTitle;
 	private String fullJournalTitle;
 	private String publicationYear;
@@ -16,7 +16,7 @@ public class Analysis {
 	private String pubmedCoauthorAffiliation;
 	private String articleKeywords;
 	private boolean clusterOriginator;
-	private int clusterArticleAssignedTo;
+	private long clusterArticleAssignedTo;
 	private int countArticlesInAssignedClsuter;
 	private int clusterSelectedInPhaseTwoMatching;
 
@@ -99,10 +99,10 @@ public class Analysis {
 	public void setPubmedSearchQuery(String pubmedSearchQuery) {
 		this.pubmedSearchQuery = pubmedSearchQuery;
 	}
-	public String getPmid() {
+	public long getPmid() {
 		return pmid;
 	}
-	public void setPmid(String pmid) {
+	public void setPmid(long pmid) {
 		this.pmid = pmid;
 	}
 	public String getArticleTitle() {
@@ -165,11 +165,10 @@ public class Analysis {
 	public void setKnownCoinvestigatorScore(double knownCoinvestigatorScore) {
 		this.knownCoinvestigatorScore = knownCoinvestigatorScore;
 	}
-
-	public int getClusterArticleAssignedTo() {
+	public long getClusterArticleAssignedTo() {
 		return clusterArticleAssignedTo;
 	}
-	public void setClusterArticleAssignedTo(int clusterArticleAssignedTo) {
+	public void setClusterArticleAssignedTo(long clusterArticleAssignedTo) {
 		this.clusterArticleAssignedTo = clusterArticleAssignedTo;
 	}
 	public int getCountArticlesInAssignedClsuter() {

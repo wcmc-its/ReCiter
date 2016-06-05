@@ -12,7 +12,6 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
 import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
-import reciter.algorithm.evidence.article.citation.strategy.CoCitationStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
@@ -35,7 +34,7 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	 * articles and assign article based on target author name match.
 	 */
 	@Override
-	public Map<Integer, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles) {
+	public Map<Long, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles) {
 		
 		targetAuthor.setArticleSize(reCiterArticles.size());
 		
@@ -43,7 +42,7 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		// to cluster method has ReCiterCluster id starts with 0.
 		ReCiterCluster.getClusterIDCounter().set(0);
 		
-		Map<Integer, ReCiterCluster> clusters = new HashMap<Integer, ReCiterCluster>();
+		Map<Long, ReCiterCluster> clusters = new HashMap<Long, ReCiterCluster>();
 		boolean isFirstArticleSelected = false;
 		
 		for (ReCiterArticle article : reCiterArticles) {
@@ -63,7 +62,7 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 			} else {
 				// Assign subsequent articles to a cluster.
 				boolean foundCluster = false;
-				for (Entry<Integer, ReCiterCluster> entry : clusters.entrySet()) {
+				for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			        ReCiterCluster reCiterCluster = entry.getValue();
 			        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 

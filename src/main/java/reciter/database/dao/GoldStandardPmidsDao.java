@@ -11,6 +11,6 @@ import reciter.database.model.GoldStandardPmid;
  */
 public interface GoldStandardPmidsDao {
 
-	List<String> getPmidsByCwid(String cwid);
+	List<Long> getPmidsByCwid(String cwid);
 	List<GoldStandardPmid> getGoldStandardPmidsByCwid(String cwid);
 }

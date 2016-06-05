@@ -1,18 +1,14 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,7 +37,7 @@ import reciter.xml.parser.pubmed.PubmedXmlParser;
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.pubmed.json.EsearchObject;
 import reciter.xml.retriever.pubmed.json.EsearchObjectJsonDeserializer;
@@ -60,20 +56,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	
 	public void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
-	}
-	
-	public static void main(String[] args) {
-		AffiliationInDbRetrievalStrategy s = new AffiliationInDbRetrievalStrategy();
-//		try {
-			PubMedRetrieverWorker worker = new PubMedRetrieverWorker("wang%20y[au]", "wangy", "wangy", 85732);
-			Thread workerThread = new Thread(worker);
-			workerThread.start();
-//			List<String> pmids = s.retrievePmids("wang[au]");
-//			s.persistQueryResults("yiwang", pmids);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 	}
 
 	@Override
@@ -106,10 +88,11 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @param cwid
 	 * @param count
 	 */
-	private void startRetrieval(String query, String commonLocation, String cwid, int count) {
+	private List<PubMedArticle> startRetrieval(String query, String commonLocation, String cwid, int count) {
 		PubMedRetrieverWorker worker = new PubMedRetrieverWorker(query, commonLocation, cwid, count);
 		Thread workerThread = new Thread(worker);
 		workerThread.start();
+		return null;
 	}
 
 	public void persistQueryResults(String cwid, List<String> pmids) {
@@ -208,9 +191,9 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	protected Set<AuthorName> getAuthorNameVariationFromEmails(TargetAuthor targetAuthor) 
 			throws ParserConfigurationException, SAXException, IOException {
 		Set<AuthorName> nameVariations = new HashSet<AuthorName>();
-		List<PubmedArticle> pubmedArticles = getPubmedArticle(ReCiterEngineProperty.emailXmlFolder, targetAuthor.getCwid());
+		List<PubMedArticle> pubmedArticles = getPubmedArticle(ReCiterEngineProperty.emailXmlFolder, targetAuthor.getCwid());
 		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
-		for (PubmedArticle pubmedArticle : pubmedArticles) {
+		for (PubMedArticle pubmedArticle : pubmedArticles) {
 			reCiterArticles.add(ArticleTranslator.translate(pubmedArticle, null));
 		}
 
@@ -244,9 +227,9 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @throws SAXException 
 	 * @throws ParserConfigurationException 
 	 */
-	public List<PubmedArticle> getPubmedArticle(String commonDirectory, String cwid) 
+	public List<PubMedArticle> getPubmedArticle(String commonDirectory, String cwid) 
 			throws ParserConfigurationException, SAXException, IOException {
-		List<PubmedArticle> pubmedArticleList = new ArrayList<PubmedArticle>();
+		List<PubMedArticle> pubmedArticleList = new ArrayList<PubMedArticle>();
 
 		File directory = new File(commonDirectory + cwid);
 

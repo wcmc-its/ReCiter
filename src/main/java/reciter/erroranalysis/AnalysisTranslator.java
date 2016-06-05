@@ -19,7 +19,7 @@ public class AnalysisTranslator {
 			String cwid,
 			TargetAuthor targetAuthor,
 			boolean isClusterOriginator,
-			int clusterId,
+			long clusterId,
 			int countOfArticleInCluster,
 			boolean isClusterSelected) {
 
@@ -32,7 +32,7 @@ public class AnalysisTranslator {
 						targetAuthor.getAuthorName().getLastName());
 		
 		analysisObject.setPubmedSearchQuery(targetAuthor.getPubmedSearchQuery());
-		analysisObject.setPmid(Integer.toString(reCiterArticle.getArticleId()));
+		analysisObject.setPmid(reCiterArticle.getArticleId());
 		analysisObject.setArticleTitle(reCiterArticle.getArticleTitle());
 		analysisObject.setFullJournalTitle(reCiterArticle.getJournal().getJournalTitle());
 		analysisObject.setPublicationYear(Integer.toString(reCiterArticle.getJournal().getJournalIssuePubDateYear()));

@@ -22,7 +22,7 @@ import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingDescriptorName;
 import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
 import reciter.xml.parser.pubmed.model.MedlineCitationPMID;
 import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 /**
  * A SAX handler that parses PubMed XML content.
@@ -109,11 +109,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 	private boolean bCommentsCorrectionsPmidVersion;
 	private boolean bCommentsCorrectionsPmid;
 
-	private List<PubmedArticle> pubmedArticles;
-	private PubmedArticle pubmedArticle;
+	private List<PubMedArticle> pubmedArticles;
+	private PubMedArticle pubmedArticle;
 	private StringBuilder chars = new StringBuilder();
 
-	public List<PubmedArticle> getPubmedArticles() {
+	public List<PubMedArticle> getPubmedArticles() {
 		return pubmedArticles;
 	}
 
@@ -135,10 +135,10 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		chars.setLength(0);
 
 		if (qName.equalsIgnoreCase("PubmedArticleSet")) {
-			pubmedArticles = new ArrayList<PubmedArticle>(); // create a new list of PubmedArticle.
+			pubmedArticles = new ArrayList<PubMedArticle>(); // create a new list of PubmedArticle.
 		}
 		if (qName.equalsIgnoreCase("PubmedArticle")) {
-			pubmedArticle = new PubmedArticle(); // create a new PubmedArticle.
+			pubmedArticle = new PubMedArticle(); // create a new PubmedArticle.
 		}
 		if (qName.equalsIgnoreCase("MedlineCitation")) {
 			pubmedArticle.setMedlineCitation(new MedlineCitation()); // set the PubmedArticle's MedlineCitation.
@@ -303,7 +303,7 @@ public class PubmedEFetchHandler extends DefaultHandler {
 
 		// PMID
 		if (bMedlineCitation && bPMID) {
-			String pmid = chars.toString();
+			long pmid = Long.valueOf(chars.toString());
 			pubmedArticle.getMedlineCitation().setPmid(new MedlineCitationPMID(pmid));
 			bPMID = false;
 			bMedlineCitation = false;

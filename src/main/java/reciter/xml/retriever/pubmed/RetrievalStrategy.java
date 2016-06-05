@@ -1,12 +1,10 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
+import java.util.List;
 
 import reciter.model.author.TargetAuthor;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public interface RetrievalStrategy {
 
@@ -15,11 +13,9 @@ public interface RetrievalStrategy {
 	 * 
 	 * @param targetAuthor
 	 * 
-	 * @return <code>True</code> if the retrieval is successful. <code>False</code> otherwise.
+	 * @return List of PubMed articles for this author.
 	 * 
 	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
 	 */
 	boolean retrieve(TargetAuthor targetAuthor) throws IOException;
 	

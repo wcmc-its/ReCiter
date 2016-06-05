@@ -2,43 +2,32 @@ package reciter.service.impl;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.google.gson.Gson;
 
 import reciter.database.mongo.PubMedDataAccess;
+import reciter.database.mongo.impl.PubMedDataAccessImpl;
 import reciter.service.PubMedService;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
-@Service
 public class PubMedServiceImpl implements PubMedService {
 
-	@Autowired
-	private PubMedDataAccess pubMedDataAccess;
-	
 	@Override
-	public void insertPubMedArticle(PubmedArticle article) {
+	public void insertPubMedArticle(PubMedArticle article) {
 		String json = new Gson().toJson(article);
+		PubMedDataAccess pubMedDataAccess = new PubMedDataAccessImpl();
 		pubMedDataAccess.insertPubMedArticle(json);
 	}
 
 	@Override
-	public void upsertPubMedArticle(PubmedArticle article) {
-		String pmid = article.getMedlineCitation().getPmid().getPmidString();
+	public void upsertPubMedArticle(PubMedArticle article) {
+		long pmid = article.getMedlineCitation().getPmid().getPmid();
 		String json = new Gson().toJson(article);
+		PubMedDataAccess pubMedDataAccess = new PubMedDataAccessImpl();
+		pubMedDataAccess.upsertPubMedArticle(json, pmid);
 	}
 	
 	@Override
-	public List<PubmedArticle> retrieve(String cwid) {
+	public List<PubMedArticle> retrieve(String cwid) {
 		throw new RuntimeException("Implement me.");
-	}
-	
-	public PubMedDataAccess getPubMedDataAccess() {
-		return pubMedDataAccess;
-	}
-	
-	public void setPubMedDataAccess(PubMedDataAccess pubMedDataAccess) {
-		this.pubMedDataAccess = pubMedDataAccess; 
 	}
 }

@@ -9,11 +9,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityDao;
 import reciter.database.model.Identity;
 
+@Repository("identityDao")
 public class IdentityDaoImpl implements IdentityDao {
 	
 	/**
@@ -23,21 +26,12 @@ public class IdentityDaoImpl implements IdentityDao {
 	 */
 	public Identity getIdentityByCwid(String cwid) {
 		Connection con = DbConnectionFactory.getConnection();
-		Identity identity = null;
-		try{
-			identity=getIdentityByCwid(con,cwid);
-		}catch(SQLException e){
-			e.printStackTrace();
-		}finally{
-			DbUtil.close(con);
-		}
-		return identity;
-	}
-
-	private Identity getIdentityByCwid(Connection con, String cwid) throws SQLException {
 		PreparedStatement pst = null;
 		ResultSet rs = null;
-		String query = "SELECT first_name, last_name, middle_name, title, primary_department, primary_affiliation,first_initial,middle_initial,full_published_name,prefix,suffix,other_departments,email,email_other FROM rc_identity WHERE cwid='" + cwid + "'";
+		String query = "SELECT first_name, last_name, middle_name, title, primary_department, primary_affiliation,"
+				+ "first_initial,middle_initial,full_published_name,prefix,suffix,other_departments,email,"
+				+ "email_other FROM rc_identity WHERE cwid='" + cwid + "'";
+		
 		Identity identity = new Identity();
 		identity.setCwid(cwid);
 		try {
@@ -60,10 +54,10 @@ public class IdentityDaoImpl implements IdentityDao {
 				identity.setEmailOther(rs.getString(14));
 			}
 		} catch (SQLException e) {
-			throw e;
 		} finally {
 			DbUtil.close(rs);
-			DbUtil.close(pst);			
+			DbUtil.close(pst);	
+			DbUtil.close(con);
 		}
 		return identity;
 	}
@@ -89,7 +83,7 @@ public class IdentityDaoImpl implements IdentityDao {
 				}
 			}
 			for(String grantCwid: cwids){
-				identityList.add(getIdentityByCwid(con,grantCwid));
+				identityList.add(getIdentityByCwid(grantCwid));
 			}
 		}  catch (SQLException e) {
 			e.printStackTrace();

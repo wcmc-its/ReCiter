@@ -26,7 +26,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
 import reciter.service.impl.TargetAuthorServiceImpl;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 
 /**
@@ -83,7 +83,7 @@ public class NameMatchTest {
 		SAXParserFactory.newInstance().newSAXParser().parse(is, pubmedXmlHandler);
 
 		List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
-		for (PubmedArticle article : pubmedXmlHandler.getPubmedArticles()) {
+		for (PubMedArticle article : pubmedXmlHandler.getPubmedArticles()) {
 			reCiterArticleList.add(ArticleTranslator.translate(article, null));
 		}
 		reCiterEngineFactory = new ReCiterEngineFactory();

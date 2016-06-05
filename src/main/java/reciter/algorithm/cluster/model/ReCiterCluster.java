@@ -18,7 +18,7 @@ public class ReCiterCluster {
 	/**
 	 * Cluster Id.
 	 */
-	private final int clusterId;
+	private final long clusterId;
 	
 	/**
 	 * Atomic integer counter
@@ -33,7 +33,7 @@ public class ReCiterCluster {
 	/**
 	 * Cluster originator.
 	 */
-	private int clusterOriginator;
+	private long clusterOriginator;
 	
 	/**
 	 * Logger.
@@ -45,8 +45,8 @@ public class ReCiterCluster {
 	/**
 	 * Returns a list of pmids of articles in this cluster.
 	 */
-	public Set<Integer> getPmidSet() {
-		Set<Integer> pmidSet = new HashSet<Integer>();
+	public Set<Long> getPmidSet() {
+		Set<Long> pmidSet = new HashSet<Long>();
 		for (ReCiterArticle reCiterArticle : articleCluster) {
 			pmidSet.add(reCiterArticle.getArticleId());
 		}
@@ -173,7 +173,7 @@ public class ReCiterCluster {
 		articleCluster = new ArrayList<ReCiterArticle>();
 	}
 
-	public int getClusterID() {
+	public long getClusterID() {
 		return clusterId;
 	}
 	
@@ -181,11 +181,11 @@ public class ReCiterCluster {
 		return clusterIDCounter;
 	}
 
-	public int getClusterOriginator() {
+	public long getClusterOriginator() {
 		return clusterOriginator;
 	}
 
-	public void setClusterOriginator(int clusterOriginator) {
+	public void setClusterOriginator(long clusterOriginator) {
 		this.clusterOriginator = clusterOriginator;
 	}
 

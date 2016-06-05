@@ -7,12 +7,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityGrantDao;
 import reciter.database.model.IdentityGrant;
 
-public class IdentityGrantDaoImpl implements IdentityGrantDao{
+@Repository("identityGrantDao")
+public class IdentityGrantDaoImpl implements IdentityGrantDao {
 
 	/**
 	 * Returns a list of IdentityGrant objects by query the cwid in table rc_identity_grant.

@@ -9,28 +9,16 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
 import reciter.service.PubMedService;
+import reciter.service.impl.PubMedServiceImpl;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubMedXmlParseWorker implements Runnable {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(PubMedXmlParseWorker.class);
-
-	@Autowired
-	private PubMedService pubMedService;
-	
-	public PubMedService getPubMedService() {
-		return pubMedService;
-	}
-
-	public void setPubMedService(PubMedService pubMedService) {
-		this.pubMedService = pubMedService;
-	}
-
 	private final PubmedEFetchHandler xmlHandler;
 	private final String uri;
 	
@@ -42,16 +30,17 @@ public class PubMedXmlParseWorker implements Runnable {
 	@Override
 	public void run() {
 		try {
-			List<PubmedArticle> pubMedArticles = parse(uri);
-			for (PubmedArticle pubMedArticle : pubMedArticles) {
-				pubMedService.insertPubMedArticle(pubMedArticle);
+			List<PubMedArticle> pubMedArticles = parse(uri);
+			PubMedService pubMedService = new PubMedServiceImpl();
+			for (PubMedArticle pubMedArticle : pubMedArticles) {
+				pubMedService.upsertPubMedArticle(pubMedArticle);
 			}
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			slf4jLogger.error("Error parsing PubMed XML input stream.", e);
 		}
 	}
 
-	public List<PubmedArticle> parse(String uri) throws ParserConfigurationException, SAXException, IOException {
+	public List<PubMedArticle> parse(String uri) throws ParserConfigurationException, SAXException, IOException {
 		SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 		saxParser.parse(uri, xmlHandler);
 		return xmlHandler.getPubmedArticles();

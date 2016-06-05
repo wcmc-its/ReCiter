@@ -138,9 +138,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	//	
 	private List<StrategyContext> strategyContexts;
 
-	private Set<Integer> selectedClusterIds; // List of currently selected cluster ids.
+	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
 
-	public ReCiterClusterSelector(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public ReCiterClusterSelector(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 
 		// Strategies that select clusters that are similar to the target author.
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
@@ -196,7 +196,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	}
 
 	@Override
-	public void runSelectionStrategy(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void runSelectionStrategy(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 		// Select clusters that are similar to the target author.
 		selectClusters(clusters, targetAuthor);
 
@@ -216,11 +216,11 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * @return A set of cluster ids that are selected because of the cluster's
 	 * similarity to target author.
 	 */
-	public void selectClusters(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void selectClusters(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 
-		Set<Integer> selectedClusterIds = new HashSet<Integer>();
-		for (Entry<Integer, ReCiterCluster> entry : clusters.entrySet()) {
-			int clusterId = entry.getKey();
+		Set<Long> selectedClusterIds = new HashSet<Long>();
+		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
+			long clusterId = entry.getKey();
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
 
 			double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
@@ -246,9 +246,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		this.selectedClusterIds = selectedClusterIds;
 	}
 
-	public void selectClustersFallBack(Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void selectClustersFallBack(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 		if (selectedClusterIds.size() == 0) {
-			for (Entry<Integer, ReCiterCluster> entry : clusters.entrySet()) {
+			for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 				for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
 					for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
@@ -274,7 +274,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * @param clusters current state of the clusters.
 	 * @param targetAuthor target author.
 	 */
-	public void reAssignArticles(List<StrategyContext> strategyContexts, Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void reAssignArticles(List<StrategyContext> strategyContexts, Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 		for (StrategyContext strategyContext : strategyContexts) {
 			handleStrategyContext(strategyContext, clusters, targetAuthor);
 		}
@@ -288,15 +288,15 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	public void handleTargetAuthorStrategyContext(
 			TargetAuthorStrategyContext targetAuthorStrategyContext, 
-			Map<Integer, ReCiterCluster> clusters, 
+			Map<Long, ReCiterCluster> clusters, 
 			TargetAuthor targetAuthor) {
 
 		// Map of cluster ids to ReCiterarticle objects. Keep tracks of the new cluster ids that these
 		// ReCiterArticle objects will be placed at the end of the below loop.
-		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Long, List<ReCiterArticle>>();
 
-		for (int clusterId : selectedClusterIds) {
-			for (Entry<Integer, ReCiterCluster> entry : clusters.entrySet()) {
+		for (long clusterId : selectedClusterIds) {
+			for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 				// Do not iterate through the selected cluster ids's articles.
 				if (!selectedClusterIds.contains(entry.getKey())) {
 
@@ -322,7 +322,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		}
 		// Now move the selected article to its cluster where the score returns greater than 0
 		// using clusterIdToReCiterArticleList map.
-		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+		for (Entry<Long, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
 			for (ReCiterArticle article : entry.getValue()) {
 				clusters.get(entry.getKey()).add(article);
 			}
@@ -337,13 +337,13 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	public void handleReCiterArticleStrategyContext(
 			ReCiterArticleStrategyContext reCiterArticleStrategyContext,
-			Map<Integer, ReCiterCluster> clusters, 
+			Map<Long, ReCiterCluster> clusters, 
 			TargetAuthor targetAuthor) {
 
-		Map<Integer, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Integer, List<ReCiterArticle>>();
+		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Long, List<ReCiterArticle>>();
 
-		for (int clusterId : selectedClusterIds) {
-			for (Entry<Integer, ReCiterCluster> entry : clusters.entrySet()) {
+		for (long clusterId : selectedClusterIds) {
+			for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 				// Do not iterate through the selected cluster ids's articles.
 				if (!selectedClusterIds.contains(entry.getKey())) {
 					for (ReCiterArticle reCiterArticle : clusters.get(clusterId).getArticleCluster()) {
@@ -371,7 +371,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		}
 
 		// Add article to existing cluster.
-		for (Entry<Integer, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
+		for (Entry<Long, List<ReCiterArticle>> entry : clusterIdToReCiterArticleList.entrySet()) {
 			for (ReCiterArticle article : entry.getValue()) {
 				clusters.get(entry.getKey()).add(article);
 			}
@@ -386,12 +386,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	public void handleRemoveReCiterArticleStrategyContext(
 			RemoveReCiterArticleStrategyContext removeReCiterArticleStrategyContext,
-			Map<Integer, ReCiterCluster> clusters,
+			Map<Long, ReCiterCluster> clusters,
 			TargetAuthor targetAuthor) {
 
 		ReCiterCluster clusterOfRemovedArticles = new ReCiterCluster();
 
-		for (int clusterId : selectedClusterIds) {
+		for (long clusterId : selectedClusterIds) {
 			Iterator<ReCiterArticle> iterator = clusters.get(clusterId).getArticleCluster().iterator();
 			while (iterator.hasNext()) {
 				ReCiterArticle reCiterArticle = iterator.next();
@@ -414,12 +414,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	public void handleRemoveClusterStrategyContext(
 			RemoveClusterStrategyContext removeClusterStrategyContext,
-			Map<Integer, ReCiterCluster> clusters,
+			Map<Long, ReCiterCluster> clusters,
 			TargetAuthor targetAuthor) {
 
-		Iterator<Integer> iterator = selectedClusterIds.iterator();
+		Iterator<Long> iterator = selectedClusterIds.iterator();
 		while (iterator.hasNext()) {
-			int clusterId = iterator.next();
+			long clusterId = iterator.next();
 			ReCiterCluster cluster = clusters.get(clusterId);
 			double score = removeClusterStrategyContext.executeStrategy(cluster, targetAuthor);
 			if (score > 0) {
@@ -432,12 +432,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	@Override
 	public void handleNonSelectedClusters(
 			TargetAuthorStrategyContext strategyContext, 
-			Map<Integer, ReCiterCluster> clusters, 
+			Map<Long, ReCiterCluster> clusters, 
 			TargetAuthor targetAuthor) {
 
 		// Map of cluster ids to ReCiterarticle objects. A new cluster that contains previously not selected articles.
 		List<ReCiterArticle> movedArticles = new ArrayList<ReCiterArticle>();
-		for (Entry<Integer, ReCiterCluster> entry : clusters.entrySet()) {
+		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			// Do not iterate through the selected cluster ids's articles.
 			if (!selectedClusterIds.contains(entry.getKey())) {
 
@@ -474,7 +474,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * @param clusters
 	 * @param targetAuthor
 	 */
-	public void handleStrategyContext(StrategyContext strategyContext, Map<Integer, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void handleStrategyContext(StrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
 		if (strategyContext instanceof TargetAuthorStrategyContext) {
 			handleTargetAuthorStrategyContext((TargetAuthorStrategyContext) strategyContext, clusters, targetAuthor);
 		} else if (strategyContext instanceof ReCiterArticleStrategyContext) {
@@ -486,11 +486,11 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		}
 	}
 
-	public Set<Integer> getSelectedClusterIds() {
+	public Set<Long> getSelectedClusterIds() {
 		return selectedClusterIds;
 	}
 
-	public void setSelectedClusterIds(Set<Integer> selectedClusterIds) {
+	public void setSelectedClusterIds(Set<Long> selectedClusterIds) {
 		this.selectedClusterIds = selectedClusterIds;
 	}
 

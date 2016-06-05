@@ -17,7 +17,7 @@ import org.xml.sax.InputSource;
 
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.model.MedlineCitationCommentsCorrections;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedXmlCommentsCorrectionsListTest {
 
@@ -37,7 +37,7 @@ public class PubmedXmlCommentsCorrectionsListTest {
 						.newSAXParser()
 						.parse(is, pubmedXmlHandler);
 		
-		PubmedArticle article = pubmedXmlHandler.getPubmedArticles().get(0);
+		PubMedArticle article = pubmedXmlHandler.getPubmedArticles().get(0);
 		commentsCorrectionsList = article.getMedlineCitation().getCommentsCorrectionsList();
 	}
 	

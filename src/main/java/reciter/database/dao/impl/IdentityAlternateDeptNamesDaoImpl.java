@@ -7,17 +7,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityAlternateDeptNamesDao;
 
+@Repository("identityAlternateDeptNamesDao")
 public class IdentityAlternateDeptNamesDaoImpl implements IdentityAlternateDeptNamesDao {
-
-	public static void main(String[] args) {
-		IdentityAlternateDeptNamesDaoImpl d = new IdentityAlternateDeptNamesDaoImpl();
-		List<String> names = d.getAlternateNames("Medicine");
-		System.out.println(names);
-	}
 
 	@Override
 	public List<String> getAlternateNames(String nameOfa) {

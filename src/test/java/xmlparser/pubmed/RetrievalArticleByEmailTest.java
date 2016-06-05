@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
 
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class RetrievalArticleByEmailTest {
 
@@ -65,13 +65,13 @@ public class RetrievalArticleByEmailTest {
 						.newSAXParser()
 						.parse(webEnvStream, pubmedXmlHandler);
 		
-		List<PubmedArticle> articles = pubmedXmlHandler.getPubmedArticles();
+		List<PubMedArticle> articles = pubmedXmlHandler.getPubmedArticles();
 		slf4jLogger.info("Number of articles is: " + articles.size());
 		
 		assertEquals(2, articles.size()); // as of 11/1/2015, there are only two articles returned.
 		
-		PubmedArticle article1 = articles.get(0);
-		PubmedArticle article2 = articles.get(1);
+		PubMedArticle article1 = articles.get(0);
+		PubMedArticle article2 = articles.get(1);
 		
 		// Below tests are optional, because we are not testing whether the parser is working, but that the number
 		// of articles retrieved by using email is correct.

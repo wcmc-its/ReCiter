@@ -106,7 +106,7 @@ public class ReCiterEngine implements Engine {
 		// Use MeSH major to improve recall after phase two (https://github.com/wcmc-its/ReCiter/issues/131)
 		List<ReCiterArticle> selectedArticles = new ArrayList<ReCiterArticle>();
 
-		for (int id : clusterSelector.getSelectedClusterIds()) {
+		for (long id : clusterSelector.getSelectedClusterIds()) {
 			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
 		}
 		meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));

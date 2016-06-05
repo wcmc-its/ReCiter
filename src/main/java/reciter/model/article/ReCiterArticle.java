@@ -12,7 +12,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	/**
 	 * Article id: (usually PMID).
 	 */
-	private final int articleId;
+	private final long articleId;
 	
 	/**
 	 * Article title.
@@ -82,7 +82,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID
 	 */
-	public ReCiterArticle(int articleId) {
+	public ReCiterArticle(long articleId) {
 		this.articleId = articleId;
 		this.setArticleCompleteness(new ReCiterCompleteness());
 	}
@@ -100,7 +100,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		}
 	}
 	
-	public int getArticleId() {
+	public long getArticleId() {
 		return articleId;
 	}
 	
@@ -164,7 +164,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + articleId;
+		result = prime * result + (int) (articleId ^ (articleId >>> 32));
 		return result;
 	}
 

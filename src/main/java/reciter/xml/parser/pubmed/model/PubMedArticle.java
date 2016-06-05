@@ -1,9 +1,9 @@
 package reciter.xml.parser.pubmed.model;
 
-public class PubmedArticle {
+public class PubMedArticle {
 	
 	private MedlineCitation medlineCitation;
-	private PubmedData pubmedData;
+	private PubMedData pubMedData;
 	
 	public MedlineCitation getMedlineCitation() {
 		return medlineCitation;
@@ -11,10 +11,10 @@ public class PubmedArticle {
 	public void setMedlineCitation(MedlineCitation medlineCitation) {
 		this.medlineCitation = medlineCitation;
 	}
-	public PubmedData getPubmedData() {
-		return pubmedData;
+	public PubMedData getPubMedData() {
+		return pubMedData;
 	}
-	public void setPubmedData(PubmedData pubmedData) {
-		this.pubmedData = pubmedData;
+	public void setPubmedData(PubMedData pubMedData) {
+		this.pubMedData = pubMedData;
 	}
 }

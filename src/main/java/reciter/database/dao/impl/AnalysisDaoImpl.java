@@ -113,7 +113,7 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				pst.setInt(++i, analysis.getGoldStandard());
 				pst.setString(++i, analysis.getTargetName());
 				pst.setString(++i, analysis.getPubmedSearchQuery());
-				pst.setString(++i, analysis.getPmid());
+				pst.setLong(++i, analysis.getPmid());
 				pst.setString(++i, analysis.getArticleTitle());
 				pst.setString(++i, analysis.getFullJournalTitle());
 				pst.setString(++i, analysis.getPublicationYear());
@@ -123,7 +123,7 @@ public class AnalysisDaoImpl implements AnalysisDao {
 				pst.setString(++i, analysis.getPubmedCoauthorAffiliation());
 				pst.setString(++i, analysis.getArticleKeywords());
 				pst.setBoolean(++i, analysis.isClusterOriginator());
-				pst.setInt(++i, analysis.getClusterArticleAssignedTo());
+				pst.setLong(++i, analysis.getClusterArticleAssignedTo());
 				pst.setInt(++i, analysis.getCountArticlesInAssignedClsuter());
 				pst.setInt(++i, analysis.getClusterSelectedInPhaseTwoMatching());
 				pst.setDouble(++i, analysis.getEmailStrategyScore());

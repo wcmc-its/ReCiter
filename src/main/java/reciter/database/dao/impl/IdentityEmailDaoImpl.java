@@ -9,11 +9,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
 
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityEmailDao;
 
+@Repository("identityEmailDao")
 public class IdentityEmailDaoImpl implements IdentityEmailDao {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(IdentityEmailDaoImpl.class);

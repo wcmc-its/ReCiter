@@ -9,7 +9,7 @@ import reciter.model.article.ReCiterArticle;
 public class KnownPublicationClusteringStrategy extends AbstractClusteringStrategy {
 
 	@Override
-	public Map<Integer, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles) {
+	public Map<Long, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles) {
 		// TODO Auto-generated method stub
 		return null;
 	}

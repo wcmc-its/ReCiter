@@ -21,8 +21,8 @@ public class GoldStandardPmidsDaoImpl implements GoldStandardPmidsDao {
 	 * @return set of PMIDs.
 	 */
 	@Override
-	public List<String> getPmidsByCwid(String cwid) {
-		List<String> pmids = new ArrayList<String>();
+	public List<Long> getPmidsByCwid(String cwid) {
+		List<Long> pmids = new ArrayList<Long>();
 		Connection con = DbConnectionFactory.getConnection();
 		PreparedStatement pst = null;
 		ResultSet rs = null;
@@ -31,7 +31,7 @@ public class GoldStandardPmidsDaoImpl implements GoldStandardPmidsDao {
 			pst = con.prepareStatement(query);
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				pmids.add(rs.getString(1));
+				pmids.add(rs.getLong(1));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

@@ -7,7 +7,7 @@ public class AnalysisObject {
 	private String cwid;
 	private String targetName;
 	private String pubmedSearchQuery;
-	private String pmid;
+	private long pmid;
 	private String articleTitle;
 	private String fullJournalTitle;
 	private String publicationYear;
@@ -18,7 +18,7 @@ public class AnalysisObject {
 	private String articleKeywords;
 	
 	private boolean isClusterOriginator;
-	private int clusterArticleAssignedTo;
+	private long clusterArticleAssignedTo;
 	private int countArticlesInAssignedCluster;
 	private boolean isClusterSelectedInPhaseTwoMatching;
 	
@@ -60,10 +60,10 @@ public class AnalysisObject {
 	public void setPubmedSearchQuery(String pubmedSearchQuery) {
 		this.pubmedSearchQuery = pubmedSearchQuery;
 	}
-	public String getPmid() {
+	public long getPmid() {
 		return pmid;
 	}
-	public void setPmid(String pmid) {
+	public void setPmid(long pmid) {
 		this.pmid = pmid;
 	}
 	public String getArticleTitle() {
@@ -122,10 +122,10 @@ public class AnalysisObject {
 	public void setClusterOriginator(boolean isClusterOriginator) {
 		this.isClusterOriginator = isClusterOriginator;
 	}
-	public int getClusterArticleAssignedTo() {
+	public long getClusterArticleAssignedTo() {
 		return clusterArticleAssignedTo;
 	}
-	public void setClusterArticleAssignedTo(int clusterArticleAssignedTo) {
+	public void setClusterArticleAssignedTo(long clusterArticleAssignedTo) {
 		this.clusterArticleAssignedTo = clusterArticleAssignedTo;
 	}
 	public int getCountArticlesInAssignedCluster() {

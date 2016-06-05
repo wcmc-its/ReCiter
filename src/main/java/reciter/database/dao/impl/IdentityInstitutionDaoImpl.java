@@ -7,10 +7,13 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityInstitutionDao;
 
+@Repository("identityInstitutionDao")
 public class IdentityInstitutionDaoImpl implements IdentityInstitutionDao {
 	
 	@Override

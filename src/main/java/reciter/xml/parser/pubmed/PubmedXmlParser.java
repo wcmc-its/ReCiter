@@ -12,7 +12,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 /**
  * This class handles PubMed XML parsing.
@@ -34,13 +34,13 @@ public class PubmedXmlParser {
 	 * @throws ParserConfigurationException 
 	 * @throws IOException 
 	 */
-	public List<PubmedArticle> parse(File xmlFile) throws ParserConfigurationException, SAXException, IOException {
+	public List<PubMedArticle> parse(File xmlFile) throws ParserConfigurationException, SAXException, IOException {
 		SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 		saxParser.parse(xmlFile, xmlHandler);
 		return xmlHandler.getPubmedArticles();
 	}
 	
-	public List<PubmedArticle> parse(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
+	public List<PubMedArticle> parse(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
 		SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 		saxParser.parse(inputStream, xmlHandler);
 		return xmlHandler.getPubmedArticles();

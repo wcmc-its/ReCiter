@@ -31,10 +31,10 @@ public class Analysis {
 	private int falsePos;
 	private int goldStandardSize;
 	private int selectedClusterSize;
-	private List<Integer> truePositiveList = new ArrayList<Integer>();
-	private List<Integer> trueNegativeList = new ArrayList<Integer>();
-	private List<Integer> falsePositiveList = new ArrayList<Integer>();
-	private List<Integer> falseNegativeList = new ArrayList<Integer>();
+	private List<Long> truePositiveList = new ArrayList<Long>();
+	private List<Long> trueNegativeList = new ArrayList<Long>();
+	private List<Long> falsePositiveList = new ArrayList<Long>();
+	private List<Long> falseNegativeList = new ArrayList<Long>();
 	
 	private Map<String, Integer> truePositiveJournalCount = new HashMap<String, Integer>();
 	private Map<String, Integer> trueNegativeJournalCount = new HashMap<String, Integer>();
@@ -54,10 +54,10 @@ public class Analysis {
 	 */
 	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, String cwid) {
 		GoldStandardPmidsDao dao = new GoldStandardPmidsDaoImpl();
-		List<String> pmids = dao.getPmidsByCwid(cwid);
-		Set<Integer> pmidSet = new HashSet<Integer>();
-		for (String pmid : pmids) {
-			pmidSet.add(Integer.parseInt(pmid));
+		List<Long> pmids = dao.getPmidsByCwid(cwid);
+		Set<Long> pmidSet = new HashSet<Long>();
+		for (long pmid : pmids) {
+			pmidSet.add(pmid);
 		}
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			if (pmidSet.contains(reCiterArticle.getArticleId())) {
@@ -78,7 +78,7 @@ public class Analysis {
 	public static Analysis performAnalysis(Map<Integer, ReCiterCluster> finalCluster, int selection, String cwid) {
 		Analysis analysis = new Analysis();
 		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
-		List<String> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
+		List<Long> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
 
 		slf4jLogger.info("Gold Standard: " + goldStandardPmids);
 
@@ -90,9 +90,9 @@ public class Analysis {
 
 
 		for (ReCiterArticle reCiterArticle : finalCluster.get(selection).getArticleCluster()) {
-			int pmid = reCiterArticle.getArticleId();
+			long pmid = reCiterArticle.getArticleId();
 //			StatusEnum statusEnum;
-			if (goldStandardPmids.contains(Integer.toString(pmid))) {
+			if (goldStandardPmids.contains(pmid)) {
 				numTruePos++;
 //				statusEnum = StatusEnum.TRUE_POSITIVE;
 			} else {
@@ -128,13 +128,13 @@ public class Analysis {
 //	    }
 //	    slf4jLogger.info("Number of different author names: " + authorCount.size());
 	    
-		Map<Integer, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
-		Set<Integer> selection = clusterSelector.getSelectedClusterIds();
+		Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
+		Set<Long> selection = clusterSelector.getSelectedClusterIds();
 		String cwid = reCiterClusterer.getTargetAuthor().getCwid();
 		
 		Analysis analysis = new Analysis();
 		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
-		List<String> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
+		List<Long> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
 
 		slf4jLogger.info("Gold Standard [" + goldStandardPmids.size() + "]: " + goldStandardPmids);
 
@@ -142,7 +142,7 @@ public class Analysis {
 
 		// Combine all articles into a single list.
 		List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
-		for (int s : selection) {
+		for (long s : selection) {
 			for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
 				articleList.add(reCiterArticle);
 			}
@@ -160,11 +160,11 @@ public class Analysis {
 //			}
 //		}
 
-		for (Entry<Integer, ReCiterCluster> entry : finalCluster.entrySet()) {
+		for (Entry<Long, ReCiterCluster> entry : finalCluster.entrySet()) {
 			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
-				int pmid = reCiterArticle.getArticleId();
+				long pmid = reCiterArticle.getArticleId();
 				StatusEnum statusEnum;
-				if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(Integer.toString(pmid))) {
+				if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
 					analysis.getTruePositiveList().add(pmid);
 					
 					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
@@ -176,7 +176,7 @@ public class Analysis {
 						}
 					}
 					statusEnum = StatusEnum.TRUE_POSITIVE;
-				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(Integer.toString(pmid))) {
+				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(pmid)) {
 					
 					analysis.getFalsePositiveList().add(pmid);
 					statusEnum = StatusEnum.FALSE_POSITIVE;
@@ -191,7 +191,7 @@ public class Analysis {
 						}
 					}
 					
-				} else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(Integer.toString(pmid))) {
+				} else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
 					analysis.getFalseNegativeList().add(pmid);
 					statusEnum = StatusEnum.FALSE_NEGATIVE;
 //					slf4jLogger.info("year diff [False Negative]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
@@ -221,7 +221,7 @@ public class Analysis {
 				}
 
 				boolean isClusterOriginator = false;
-				int clusterOriginator = entry.getValue().getClusterOriginator();
+				long clusterOriginator = entry.getValue().getClusterOriginator();
 				if (pmid == clusterOriginator) {
 					isClusterOriginator = true;
 				}
@@ -288,11 +288,11 @@ public class Analysis {
 		this.selectedClusterSize = selectedClusterSize;
 	}
 
-	public List<Integer> getFalsePositiveList() {
+	public List<Long> getFalsePositiveList() {
 		return falsePositiveList;
 	}
 
-	public void setFalsePositiveList(List<Integer> falsePositiveList) {
+	public void setFalsePositiveList(List<Long> falsePositiveList) {
 		this.falsePositiveList = falsePositiveList;
 	}
 
@@ -304,11 +304,11 @@ public class Analysis {
 		this.analysisObjectList = analysisObjectList;
 	}
 
-	public List<Integer> getFalseNegativeList() {
+	public List<Long> getFalseNegativeList() {
 		return falseNegativeList;
 	}
 
-	public void setFalseNegativeList(List<Integer> falseNegativeList) {
+	public void setFalseNegativeList(List<Long> falseNegativeList) {
 		this.falseNegativeList = falseNegativeList;
 	}
 
@@ -336,19 +336,19 @@ public class Analysis {
 		this.falsePos = falsePos;
 	}
 
-	public List<Integer> getTruePositiveList() {
+	public List<Long> getTruePositiveList() {
 		return truePositiveList;
 	}
 
-	public void setTruePositiveList(List<Integer> truePositiveList) {
+	public void setTruePositiveList(List<Long> truePositiveList) {
 		this.truePositiveList = truePositiveList;
 	}
 
-	public List<Integer> getTrueNegativeList() {
+	public List<Long> getTrueNegativeList() {
 		return trueNegativeList;
 	}
 
-	public void setTrueNegativeList(List<Integer> trueNegativeList) {
+	public void setTrueNegativeList(List<Long> trueNegativeList) {
 		this.trueNegativeList = trueNegativeList;
 	}
 

@@ -22,7 +22,7 @@ import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
 import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
 import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedXmlMeshHeadingTest2 {
 
@@ -42,7 +42,7 @@ public class PubmedXmlMeshHeadingTest2 {
 						.newSAXParser()
 						.parse(is, pubmedXmlHandler);
 		
-		PubmedArticle article = pubmedXmlHandler.getPubmedArticles().get(0);
+		PubMedArticle article = pubmedXmlHandler.getPubmedArticles().get(0);
 		meshHeadingList = article.getMedlineCitation().getMeshHeadingList();
 	}
 	

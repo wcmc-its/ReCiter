@@ -22,5 +22,5 @@ public interface Clusterer {
 	
 	List<ReCiterArticle> getReCiterArticles();
 	
-	Map<Integer, ReCiterCluster> getClusters();
+	Map<Long, ReCiterCluster> getClusters();
 }

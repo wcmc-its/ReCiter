@@ -7,20 +7,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityDirectoryDao;
 import reciter.database.model.IdentityDirectory;
-/**
- * 
- * @author htadimeti
- *
- */
-public class IdentityDirectoryDaoImpl implements IdentityDirectoryDao{
-	/**
-	 * 
-	 */
-	public List<IdentityDirectory> getIdentityDirectoriesByCwid(String cwid){
+
+@Repository("identityDirectoryDao")
+public class IdentityDirectoryDaoImpl implements IdentityDirectoryDao {
+	
+	public List<IdentityDirectory> getIdentityDirectoriesByCwid(String cwid) {
 		List<IdentityDirectory> list = new ArrayList<IdentityDirectory>();
 		
 		Connection con = DbConnectionFactory.getConnection();

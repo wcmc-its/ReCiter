@@ -2,14 +2,14 @@ package reciter.xml.parser.pubmed.model;
 
 public class MedlineCitationPMID {
 
-	private final String pmid;
+	private final long pmid;
 	private String version;
 		
-	public MedlineCitationPMID(String pmid) {
+	public MedlineCitationPMID(long pmid) {
 		this.pmid = pmid;
 	}
 	
-	public String getPmidString() {
+	public long getPmid() {
 		return pmid;
 	}
 	public String getVersion() {

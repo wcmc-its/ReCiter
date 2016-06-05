@@ -20,7 +20,7 @@ import reciter.xml.parser.pubmed.model.MedlineCitationArticleAuthor;
 import reciter.xml.parser.pubmed.model.MedlineCitationKeywordList;
 import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
 import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubmedArticle;
+import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedXmlTest {
 
@@ -45,16 +45,16 @@ public class PubmedXmlTest {
 						.newSAXParser()
 						.parse(webEnvStream, pubmedXmlHandler);
 		
-		List<PubmedArticle> articles = pubmedXmlHandler.getPubmedArticles();
+		List<PubMedArticle> articles = pubmedXmlHandler.getPubmedArticles();
 //		assertEquals(64, articles.size());
 		
-		PubmedArticle p1 = null;
-		PubmedArticle p2 = null;
+		PubMedArticle p1 = null;
+		PubMedArticle p2 = null;
 		
-		for (PubmedArticle article : articles) {
-			if (article.getMedlineCitation().getPmid().getPmidString().equals("25548331")) {
+		for (PubMedArticle article : articles) {
+			if (article.getMedlineCitation().getPmid().getPmid() == 25548331) {
 				p1 = article;
-			} else if (article.getMedlineCitation().getPmid().getPmidString().equals("24551322")) {
+			} else if (article.getMedlineCitation().getPmid().getPmid() == 24551322) {
 				p2 = article;
 			}
 		}

@@ -8,5 +8,5 @@ import reciter.model.article.ReCiterArticle;
 
 public interface ClusteringStrategy {
 
-	Map<Integer, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles);
+	Map<Long, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles);
 }

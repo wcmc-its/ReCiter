@@ -20,13 +20,13 @@ public class ReCiterClusterer extends AbstractClusterer {
 	
 	private List<ReCiterArticle> reCiterArticles;
 	private TargetAuthor targetAuthor;
-	private Map<Integer, ReCiterCluster> clusters;
+	private Map<Long, ReCiterCluster> clusters;
 	private ClusteringStrategy clusteringStrategy;
 	
 	public ReCiterClusterer(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticles) {
 		this.reCiterArticles = reCiterArticles;
 		this.targetAuthor = targetAuthor;
-		clusters = new HashMap<Integer, ReCiterCluster>();
+		clusters = new HashMap<Long, ReCiterCluster>();
 		clusteringStrategy = new NameMatchingClusteringStrategy(targetAuthor);
 	}
 
@@ -47,7 +47,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
-		for (Entry<Integer, ReCiterCluster> cluster : clusters.entrySet()) {
+		for (Entry<Long, ReCiterCluster> cluster : clusters.entrySet()) {
 			sb.append("\nCluster id: " + cluster.getKey() + "= ," + cluster.getValue().getClusterInfo());
 			for (ReCiterArticle reCiterArticle : cluster.getValue().getArticleCluster()) {
 				sb.append(reCiterArticle.getArticleId() + ", ");
@@ -56,7 +56,8 @@ public class ReCiterClusterer extends AbstractClusterer {
 		return sb.toString();
 	}
 
-	public Map<Integer, ReCiterCluster> getClusters() {
+	@Override
+	public Map<Long, ReCiterCluster> getClusters() {
 		return clusters;
 	}
 
