@@ -75,6 +75,7 @@ src/main/resources/data/csv_output/*
 src/main/resources/data/pubmed/*
 src/main/resources/data/scopus/*
 
-# Do not include reciter.log
+# Do not any log files.
 reciter.log
 logs/*
+*.log
