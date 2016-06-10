@@ -18,14 +18,14 @@ import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
-import reciter.xml.parser.pubmed.model.MedlineCitationArticleAuthor;
-import reciter.xml.parser.pubmed.model.MedlineCitationCommentsCorrections;
-import reciter.xml.parser.pubmed.model.MedlineCitationKeyword;
-import reciter.xml.parser.pubmed.model.MedlineCitationKeywordList;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
-import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
+import reciter.model.pubmed.MedlineCitationArticleAuthor;
+import reciter.model.pubmed.MedlineCitationCommentsCorrections;
+import reciter.model.pubmed.MedlineCitationKeyword;
+import reciter.model.pubmed.MedlineCitationKeywordList;
+import reciter.model.pubmed.MedlineCitationMeshHeading;
+import reciter.model.pubmed.MedlineCitationMeshHeadingQualifierName;
+import reciter.model.pubmed.MedlineCitationYNEnum;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.scopus.model.Author;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 
@@ -44,7 +44,7 @@ public class ArticleTranslator {
 	public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle) {
 
 		// PMID
-		long pmid = pubmedArticle.getMedlineCitation().getPmid().getPmid();
+		long pmid = pubmedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
 		ReCiterArticle reCiterArticle = new ReCiterArticle(pmid);
 
 		// Article title

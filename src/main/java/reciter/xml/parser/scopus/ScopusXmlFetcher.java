@@ -10,12 +10,13 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
+import reciter.database.mongo.PubMedRepository;
 import reciter.engine.ReCiterEngineProperty;
-import reciter.service.impl.PubMedServiceImpl;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.AbstractXmlFetcher;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 
 /**
@@ -28,6 +29,9 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(ScopusXmlFetcher.class);
 	private ScopusXmlParser scopusXmlParser;
 
+	@Autowired
+	private PubMedRepository pubMedRepository;
+	
 	public class ScopusXmlFetcherRunnable implements Runnable {
 
 		private final String cwid;
@@ -89,10 +93,11 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 
 	public void fetch(String cwid) throws ParserConfigurationException, SAXException, IOException {
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		PubMedServiceImpl pubMedServiceImpl = new PubMedServiceImpl();
-		List<PubMedArticle> pubmedArticleList = pubMedServiceImpl.retrieve(cwid);
+		// TODO
+		List<PubMedArticle> pubmedArticleList= null;
+//		List<PubMedArticle> pubmedArticleList = pubMedRepository.findPubMedArticles(cwid);
 		for (PubMedArticle pubmedArticle : pubmedArticleList) {
-			long pmid = pubmedArticle.getMedlineCitation().getPmid().getPmid();
+			long pmid = pubmedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
 			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);
 			executor.execute(scopusRunnable);
 		}

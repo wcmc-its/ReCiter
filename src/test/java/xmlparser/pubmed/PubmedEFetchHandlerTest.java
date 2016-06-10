@@ -17,8 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedEFetchHandlerTest {
 
@@ -59,7 +59,7 @@ public class PubmedEFetchHandlerTest {
 
 	@Test
 	public void testPmid() {
-		long pmid = article.getMedlineCitation().getPmid().getPmid();
+		long pmid = article.getMedlineCitation().getMedlineCitationPMID().getPmid();
 		assertEquals(pmid, 19944046);
 	}
 	

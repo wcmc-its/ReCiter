@@ -14,13 +14,13 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import reciter.model.pubmed.MedlineCitationArticleAuthor;
+import reciter.model.pubmed.MedlineCitationKeywordList;
+import reciter.model.pubmed.MedlineCitationMeshHeading;
+import reciter.model.pubmed.MedlineCitationYNEnum;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
-import reciter.xml.parser.pubmed.model.MedlineCitationArticleAuthor;
-import reciter.xml.parser.pubmed.model.MedlineCitationKeywordList;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
-import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedXmlTest {
 
@@ -52,9 +52,9 @@ public class PubmedXmlTest {
 		PubMedArticle p2 = null;
 		
 		for (PubMedArticle article : articles) {
-			if (article.getMedlineCitation().getPmid().getPmid() == 25548331) {
+			if (article.getMedlineCitation().getMedlineCitationPMID().getPmid() == 25548331) {
 				p1 = article;
-			} else if (article.getMedlineCitation().getPmid().getPmid() == 24551322) {
+			} else if (article.getMedlineCitation().getMedlineCitationPMID().getPmid() == 24551322) {
 				p2 = article;
 			}
 		}

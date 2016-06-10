@@ -24,9 +24,9 @@ import reciter.engine.ReCiterEngineProperty;
 import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.service.impl.TargetAuthorServiceImpl;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 
 /**

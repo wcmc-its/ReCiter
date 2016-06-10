@@ -15,9 +15,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import reciter.model.pubmed.MedlineCitationCommentsCorrections;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.MedlineCitationCommentsCorrections;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedXmlCommentsCorrectionsListTest {
 

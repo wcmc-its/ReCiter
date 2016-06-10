@@ -11,8 +11,8 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
 
+import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 /**
  * This class handles PubMed XML parsing.

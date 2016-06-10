@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import reciter.model.author.TargetAuthor;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
+import reciter.model.pubmed.PubMedArticle;
 
 public interface RetrievalStrategy {
 
@@ -17,7 +17,7 @@ public interface RetrievalStrategy {
 	 * 
 	 * @throws IOException
 	 */
-	boolean retrieve(TargetAuthor targetAuthor) throws IOException;
+	List<PubMedArticle> retrieve(TargetAuthor targetAuthor) throws IOException;
 	
 	/**
 	 * Set to <code>true</code> if the retrieval strategy should retrieve the articles even if the number of articles

@@ -7,22 +7,22 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import reciter.xml.parser.pubmed.model.MedlineCitation;
-import reciter.xml.parser.pubmed.model.MedlineCitationArticle;
-import reciter.xml.parser.pubmed.model.MedlineCitationArticleAuthor;
-import reciter.xml.parser.pubmed.model.MedlineCitationCommentsCorrections;
-import reciter.xml.parser.pubmed.model.MedlineCitationDate;
-import reciter.xml.parser.pubmed.model.MedlineCitationGrant;
-import reciter.xml.parser.pubmed.model.MedlineCitationJournal;
-import reciter.xml.parser.pubmed.model.MedlineCitationJournalIssue;
-import reciter.xml.parser.pubmed.model.MedlineCitationKeyword;
-import reciter.xml.parser.pubmed.model.MedlineCitationKeywordList;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingDescriptorName;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
-import reciter.xml.parser.pubmed.model.MedlineCitationPMID;
-import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
+import reciter.model.pubmed.MedlineCitation;
+import reciter.model.pubmed.MedlineCitationArticle;
+import reciter.model.pubmed.MedlineCitationArticleAuthor;
+import reciter.model.pubmed.MedlineCitationCommentsCorrections;
+import reciter.model.pubmed.MedlineCitationDate;
+import reciter.model.pubmed.MedlineCitationGrant;
+import reciter.model.pubmed.MedlineCitationJournal;
+import reciter.model.pubmed.MedlineCitationJournalIssue;
+import reciter.model.pubmed.MedlineCitationKeyword;
+import reciter.model.pubmed.MedlineCitationKeywordList;
+import reciter.model.pubmed.MedlineCitationMeshHeading;
+import reciter.model.pubmed.MedlineCitationMeshHeadingDescriptorName;
+import reciter.model.pubmed.MedlineCitationMeshHeadingQualifierName;
+import reciter.model.pubmed.MedlineCitationPMID;
+import reciter.model.pubmed.MedlineCitationYNEnum;
+import reciter.model.pubmed.PubMedArticle;
 
 /**
  * A SAX handler that parses PubMed XML content.
@@ -304,7 +304,7 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		// PMID
 		if (bMedlineCitation && bPMID) {
 			long pmid = Long.valueOf(chars.toString());
-			pubmedArticle.getMedlineCitation().setPmid(new MedlineCitationPMID(pmid));
+			pubmedArticle.getMedlineCitation().setMedlineCitationPMID(new MedlineCitationPMID(pmid));
 			bPMID = false;
 			bMedlineCitation = false;
 		}

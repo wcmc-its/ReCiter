@@ -15,11 +15,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import reciter.model.pubmed.MedlineCitationMeshHeading;
+import reciter.model.pubmed.MedlineCitationMeshHeadingQualifierName;
+import reciter.model.pubmed.MedlineCitationYNEnum;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeading;
-import reciter.xml.parser.pubmed.model.MedlineCitationMeshHeadingQualifierName;
-import reciter.xml.parser.pubmed.model.MedlineCitationYNEnum;
-import reciter.xml.parser.pubmed.model.PubMedArticle;
 
 public class PubmedXmlMeshHeadingTest {
 

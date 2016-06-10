@@ -2,7 +2,7 @@ package reciter.service;
 
 import java.util.List;
 
-import reciter.xml.parser.pubmed.model.PubMedArticle;
+import reciter.model.pubmed.PubMedArticle;
 
 public interface PubMedService {
 
@@ -25,5 +25,7 @@ public interface PubMedService {
 	 * @return
 	 */
 	List<PubMedArticle> retrieve(String cwid);
+
+	void save(List<PubMedArticle> pubMedArticles);
 	
 }
