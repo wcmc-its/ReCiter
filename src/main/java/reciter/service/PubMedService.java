@@ -28,4 +28,8 @@ public interface PubMedService {
 
 	void save(List<PubMedArticle> pubMedArticles);
 	
+	List<PubMedArticle> findByMedlineCitationMedlineCitationPMIDPmid(List<Long> pmids);
+
+	List<PubMedArticle> findByMedlineCitationArticleAuthorListLastName(String lastName);
+	
 }

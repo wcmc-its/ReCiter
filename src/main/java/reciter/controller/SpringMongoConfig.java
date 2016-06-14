@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 
 @Configuration
 public class SpringMongoConfig extends AbstractMongoConfiguration {
@@ -28,7 +29,12 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
 		return new MongoClient("localhost", 27017);
 	}
 
+	/**
+	 * http://jonathan-whywecanthavenicethings.blogspot.com/2011/11/wheres-my-exceptions-spring-data.html
+	 */
 	public @Bean MongoTemplate mongoTemplate() throws Exception {
-		return new MongoTemplate(mongo(), getDatabaseName());
+		MongoTemplate mongoTemplate = new MongoTemplate(mongo(), getDatabaseName());
+		mongoTemplate.setWriteConcern(new WriteConcern(0));
+		return mongoTemplate;
 	}    
 }

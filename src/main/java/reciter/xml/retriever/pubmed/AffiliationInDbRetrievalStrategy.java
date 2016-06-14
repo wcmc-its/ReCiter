@@ -15,4 +15,16 @@ public class AffiliationInDbRetrievalStrategy extends AbstractRetrievalStrategy 
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public int getThreshold() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void setThreshold(int threshold) {
+		// TODO Auto-generated method stub
+		
+	}
 }

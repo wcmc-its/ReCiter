@@ -1,5 +1,6 @@
 package reciter.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
 
-import reciter.database.mongo.PubMedRepository;
+import reciter.database.mongo.repository.PubMedRepository;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.PubMedService;
 
@@ -33,7 +34,7 @@ public class PubMedServiceImpl implements PubMedService {
 	}
 	
 	@Override
-	public void save(List<PubMedArticle> pubMedArticles) {
+	public void save(List<PubMedArticle> pubMedArticles) {		
 		pubMedRepository.save(pubMedArticles);
 	}
 
@@ -41,5 +42,15 @@ public class PubMedServiceImpl implements PubMedService {
 	public List<PubMedArticle> retrieve(String cwid) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public List<PubMedArticle> findByMedlineCitationMedlineCitationPMIDPmid(List<Long> pmids) {
+		return pubMedRepository.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
+	}
+	
+	@Override
+	public List<PubMedArticle> findByMedlineCitationArticleAuthorListLastName(String lastName) {
+		return pubMedRepository.findByMedlineCitationArticleAuthorListLastName(lastName);
 	}
 }

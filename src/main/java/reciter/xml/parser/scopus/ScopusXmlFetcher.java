@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
-import reciter.database.mongo.PubMedRepository;
+import reciter.database.mongo.repository.PubMedRepository;
 import reciter.engine.ReCiterEngineProperty;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.xml.parser.AbstractXmlFetcher;

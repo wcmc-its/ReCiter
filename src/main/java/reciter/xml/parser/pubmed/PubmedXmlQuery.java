@@ -8,6 +8,8 @@ package reciter.xml.parser.pubmed;
  */
 public class PubmedXmlQuery {
 
+	public static final int DEFAULT_RETMAX = 10000;
+	
 	/**
 	 * Required Parameters.
 	 */
@@ -36,7 +38,7 @@ public class PubmedXmlQuery {
 	 * If the total set is larger than this maximum, the value of retstart can be iterated 
 	 * while holding retmax constant, thereby downloading the entire set in batches of size retmax.
 	 */
-	private int retMax = 10000;
+	private int retMax = DEFAULT_RETMAX;
 	
 	/**
 	 * Sequential index of the first UID in the retrieved set to be shown in the XML output, 

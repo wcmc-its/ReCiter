@@ -1,8 +1,8 @@
 package reciter.service;
 
-import java.util.List;
+import reciter.database.mongo.model.ESearchResult;
 
 public interface ESearchResultService {
 
-	void insertESearchResult(String cwid, List<String> pmids);
+	void save(ESearchResult eSearchResult);
 }

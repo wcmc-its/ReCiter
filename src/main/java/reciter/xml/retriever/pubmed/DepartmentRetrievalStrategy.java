@@ -19,4 +19,16 @@ public class DepartmentRetrievalStrategy extends AbstractRetrievalStrategy {
 		String firstName = targetAuthor.getAuthorName().getFirstName();
 		return lastName + " " + firstName + " AND " + department;
 	}
+
+	@Override
+	public int getThreshold() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void setThreshold(int threshold) {
+		// TODO Auto-generated method stub
+		
+	}
 }
