@@ -16,14 +16,11 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	@Override
 	protected String constructInitialQuery(TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return null;
+		return targetAuthor.getEmail();
 	}
 
 	@Override
 	protected String constructStrictQuery(TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return null;
+		return targetAuthor.getEmail();
 	}
-
 }

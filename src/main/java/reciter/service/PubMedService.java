@@ -31,5 +31,7 @@ public interface PubMedService {
 	List<PubMedArticle> findByMedlineCitationMedlineCitationPMIDPmid(List<Long> pmids);
 
 	List<PubMedArticle> findByMedlineCitationArticleAuthorListLastName(String lastName);
+
+	List<PubMedArticle> findMatchingAuthorsByLastName(String lastName);
 	
 }

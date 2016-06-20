@@ -28,18 +28,22 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 	@Override
 	public List<PubMedArticle> retrieve(TargetAuthor targetAuthor) throws IOException {
 		
+		// Get all the full author names that matches that of target author.
 		List<PubMedArticle> pubMedArticles = new ArrayList<PubMedArticle>();
 		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy();
 		emailRetrievalStrategy.constructPubMedQuery(targetAuthor);
+		
+		slf4jLogger.info(emailRetrievalStrategy.getPubMedQuery());
 		pubMedArticles.addAll(emailRetrievalStrategy.retrieve());
 		
 		
 		
-		// First retrieve using first name initial and last name. i.e., Kukafka r[au].
-		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy();
-		firstNameInitialRetrievalStrategy.constructPubMedQuery(targetAuthor);
 		
-		pubMedArticles.addAll(firstNameInitialRetrievalStrategy.retrieve());
+		// First retrieve using first name initial and last name. i.e., Kukafka r[au].
+//		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy();
+//		firstNameInitialRetrievalStrategy.constructPubMedQuery(targetAuthor);
+//		
+//		pubMedArticles.addAll(firstNameInitialRetrievalStrategy.retrieve());
 		
 		return pubMedArticles;
 	}

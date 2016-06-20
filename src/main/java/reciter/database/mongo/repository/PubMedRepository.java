@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.repository.Query;
 
 import reciter.model.pubmed.PubMedArticle;
 
-public interface PubMedRepository extends MongoRepository<PubMedArticle, String> {
+public interface PubMedRepository extends MongoRepository<PubMedArticle, String>, PubMedRepositoryCustom {
 
 //	void insertPubMedArticle(String json);
 //

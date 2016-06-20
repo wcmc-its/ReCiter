@@ -140,7 +140,9 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 		// The number of articles will be less than 10,000. Set retMax equal to minimum of number of articles needed to be
 		// retrieved divided by the number of available processors and 10,000.
-		pubmedXmlQuery.setRetMax(Math.min(numberOfPubmedArticles / Math.max(numAvailableProcessors, 1), PubmedXmlQuery.DEFAULT_RETMAX));
+		// If number of articles is less than 4, use number of articles as retmax.
+		pubmedXmlQuery.setRetMax(Math.min(Math.max(numberOfPubmedArticles / Math.max(numAvailableProcessors, 1), numberOfPubmedArticles)
+					, PubmedXmlQuery.DEFAULT_RETMAX));
 		slf4jLogger.info("numAvailableProcessors=[" + numAvailableProcessors + "] retMax=[" 
 				+ pubmedXmlQuery.getRetMax() + "] for PubMedQuery=[" + pubMedQuery + "], "
 				+ "] numberOfPubmedArticles=[" + numberOfPubmedArticles + "].");

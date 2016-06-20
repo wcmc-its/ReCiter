@@ -53,4 +53,9 @@ public class PubMedServiceImpl implements PubMedService {
 	public List<PubMedArticle> findByMedlineCitationArticleAuthorListLastName(String lastName) {
 		return pubMedRepository.findByMedlineCitationArticleAuthorListLastName(lastName);
 	}
+	
+	@Override
+	public List<PubMedArticle> findMatchingAuthorsByLastName(String lastName) {
+		return pubMedRepository.findMatchingAuthorsByLastName(lastName);
+	}
 }

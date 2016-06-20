@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.database.mongo.model.ESearchResult;
+import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.BoardCertificationService;
@@ -111,4 +112,16 @@ public class ReCiterController {
 		
 		return pmids;
 	}
+
+	@RequestMapping(value = "/reciter/pubmedarticle/matchinglastname/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public List<PubMedArticle> getAuthorsWithMatchingLastName(@RequestParam(value="cwid") String cwid) {
+		// Get target author information.
+		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+		
+		List<PubMedArticle> pubMedArticles = pubMedService.findMatchingAuthorsByLastName("test");
+		
+		return pubMedArticles;
+	}
+	
 }
