@@ -4,6 +4,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import reciter.database.mongo.model.ESearchResult;
 
-public interface ESearchResultRepository extends MongoRepository<ESearchResult, String> {
+public interface ESearchResultRepository extends MongoRepository<ESearchResult, String>, ESearchResultRepositoryCustom {
 
+	ESearchResult findByCwid(String cwid);
 }

@@ -6,6 +6,10 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private int threshold = DEFAULT_THRESHOLD;
 	
+	public EmailRetrievalStrategy(boolean isRetrieveExceedThreshold) {
+		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
+	}
+
 	public int getThreshold() {
 		return threshold;
 	}

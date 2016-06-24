@@ -18,6 +18,16 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 		eSearchResultRepository.save(eSearchResult);
 	}
 
+	@Override
+	public ESearchResult findByCwid(String cwid) {
+		return eSearchResultRepository.findByCwid(cwid);
+	}
+	
+	@Override
+	public boolean pushESearchResult(ESearchResult eSearchResult) {
+		return eSearchResultRepository.pushESearchResult(eSearchResult);
+	}
+	
 //	@Override
 //	public void insertESearchResult(String cwid, List<String> pmids) {
 //		ESearchResultRepository eSearchResultDao = new ESearchResultDataAccessImpl();

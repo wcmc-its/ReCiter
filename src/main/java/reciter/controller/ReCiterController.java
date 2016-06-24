@@ -3,6 +3,7 @@ package reciter.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +51,18 @@ public class ReCiterController {
 	@Autowired
 	private ReCiterRetrievalEngine defaultReCiterRetrievalEngine;
 	
-	@RequestMapping("/")
+	@RequestMapping("/test")
 	@ResponseBody
 	public List<String> home() {
 		List<String> list = boardCertificationService.getBoardCertificationsByCwid("ccole");
 		return list;
 	}
+	
+	@RequestMapping(value = "/reciter/esearchresult/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+    public ESearchResult index(@RequestParam(value="cwid") String cwid) {
+		return eSearchResultService.findByCwid(cwid);
+    }
 
 	@RequestMapping(value = "/reciter/targetauthor/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
@@ -75,53 +82,27 @@ public class ReCiterController {
 //		return pubMedArticles;
 		ReCiterRetrievalEngine retrievalEngine = new DefaultReCiterRetrievalEngine();
 		List<PubMedArticle> pubMedArticles = null;
-		try {
-			pubMedArticles = retrievalEngine.retrieve(null);
-		} catch (IOException e) {
-			slf4jLogger.error("Error retrieving articles for cwid=[" + "" + "].", e);
-		}
-		
+//		try {
+//			pubMedArticles = retrievalEngine.retrieve(null);
+//		} catch (IOException e) {
+//			slf4jLogger.error("Error retrieving articles for cwid=[" + "" + "].", e);
+//		}
 		return null;
+	}
+	
+	@RequestMapping(value = "/reciter/authornames/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(@RequestParam(value="cwid") String cwid) {
+		// Get target author information.
+		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+		return defaultReCiterRetrievalEngine.findUniqueAuthorsWithSameLastNameAsTargetAuthor(targetAuthor);
 	}
 	
 	@RequestMapping(value = "/reciter/pubmedarticle/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Long> getPubMedArticleByCwid(@RequestParam(value="cwid") String cwid) {
+	public void retrievePubMedArticles(@RequestParam(value="cwid") String cwid) {
 		// Get target author information.
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		
-		// Retrieve the articles.
-		List<PubMedArticle> pubMedArticles = null;
-		try {
-			pubMedArticles = defaultReCiterRetrievalEngine.retrieve(targetAuthor);
-		} catch (IOException e) {
-			slf4jLogger.error("Error retrieving articles for cwid=[" + cwid + "].", e);
-		}
-		
-		// Save the articles.
-		pubMedService.save(pubMedArticles);
-		
-		// Save the search result.
-		List<Long> pmids = new ArrayList<Long>();
-		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
-		}
-		if (!pmids.isEmpty()) {
-			eSearchResultService.save(new ESearchResult(cwid, pmids));
-		}
-		
-		return pmids;
+		defaultReCiterRetrievalEngine.retrieve(targetAuthor);
 	}
-
-	@RequestMapping(value = "/reciter/pubmedarticle/matchinglastname/cwid", method = RequestMethod.GET)
-	@ResponseBody
-	public List<PubMedArticle> getAuthorsWithMatchingLastName(@RequestParam(value="cwid") String cwid) {
-		// Get target author information.
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		
-		List<PubMedArticle> pubMedArticles = pubMedService.findMatchingAuthorsByLastName("test");
-		
-		return pubMedArticles;
-	}
-	
 }

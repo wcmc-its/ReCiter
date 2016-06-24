@@ -8,7 +8,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @Configuration 
 @ComponentScan(basePackages = "reciter")
 @EnableMongoRepositories("reciter.database.mongo")
-@EnableWebMvc   
 public class AppConfig {
 
 } 

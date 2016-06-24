@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -21,7 +20,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.xml.sax.SAXException;
 
@@ -30,7 +28,6 @@ import com.google.gson.GsonBuilder;
 
 import reciter.model.author.TargetAuthor;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.PubMedService;
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
@@ -77,7 +74,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @return
 	 */
 	protected abstract String constructStrictQuery(TargetAuthor targetAuthor);
-
+	
 	public void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
@@ -195,11 +192,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		List<PubMedArticle> results = new ArrayList<PubMedArticle>();
 		list.forEach(results::addAll);
 		return results;
-	}
-
-	public void persistQueryResults(String cwid, List<String> pmids) {
-		//		ESearchResultService eSearchResultService = new ESearchResultServiceImpl();
-		//		eSearchResultService.insertESearchResult(cwid, pmids);
 	}
 
 	/**

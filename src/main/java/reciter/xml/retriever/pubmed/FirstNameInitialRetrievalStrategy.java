@@ -6,6 +6,10 @@ public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy
 
 	private int threshold = DEFAULT_THRESHOLD;
 	
+	public FirstNameInitialRetrievalStrategy(boolean isRetrieveExceedThreshold) {
+		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
+	}
+
 	@Override
 	public int getThreshold() {
 		return threshold;
