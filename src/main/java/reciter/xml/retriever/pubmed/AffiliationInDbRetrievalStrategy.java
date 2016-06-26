@@ -4,27 +4,35 @@ import reciter.model.author.TargetAuthor;
 
 public class AffiliationInDbRetrievalStrategy extends AbstractRetrievalStrategy {
 
+	private int threshold = DEFAULT_THRESHOLD;
+	
+	public AffiliationInDbRetrievalStrategy(boolean isRetrieveExceedThreshold) {
+		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
+	}
+	
 	@Override
 	protected String constructInitialQuery(TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return null;
+		String affiliation = targetAuthor.getAffiliation().getAffiliationName();
+		String lastName = targetAuthor.getAuthorName().getLastName();
+		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+		return lastName + " " + firstInitial + " AND " + affiliation;
 	}
 
 	@Override
 	protected String constructStrictQuery(TargetAuthor targetAuthor) {
-		// TODO Auto-generated method stub
-		return null;
+		String affiliation = targetAuthor.getAffiliation().getAffiliationName();
+		String lastName = targetAuthor.getAuthorName().getLastName();
+		String firstName = targetAuthor.getAuthorName().getFirstName();
+		return lastName + " " + firstName + " AND " + affiliation;
 	}
 
 	@Override
 	public int getThreshold() {
-		// TODO Auto-generated method stub
-		return 0;
+		return threshold;
 	}
 
 	@Override
 	public void setThreshold(int threshold) {
-		// TODO Auto-generated method stub
-		
+		this.threshold = threshold;
 	}
 }

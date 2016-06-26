@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>JReCiter</groupId>
-	<artifactId>JReCiter</artifactId>
+	<groupId>ReCiter</groupId>
+	<artifactId>ReCiter</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -12,6 +12,13 @@
 				<excludes>
 					<exclude>**/*.java</exclude>
 				</excludes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>static</directory>
+				<targetPath>static</targetPath>
 			</resource>
 		</resources>
 		<plugins>
@@ -25,7 +32,11 @@
 			</plugin>
 		</plugins>
 	</build>
-
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.3.5.RELEASE</version>
+	</parent>
 	<dependencies>
 		<dependency>
 			<groupId>mysql</groupId>
@@ -55,17 +66,33 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
-			<version>1.3.5.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
-			<version>1.3.5.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.webjars/angularjs -->
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>angularjs</artifactId>
+			<version>1.5.7</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.webjars/bootstrap -->
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>bootstrap</artifactId>
+			<version>3.3.6</version>
+		</dependency>
+
 	</dependencies>
+
+	<properties>
+		<!-- The main class to start by executing java -jar -->
+		<start-class>reciter.controller.Application</start-class>
+	</properties>
 </project>

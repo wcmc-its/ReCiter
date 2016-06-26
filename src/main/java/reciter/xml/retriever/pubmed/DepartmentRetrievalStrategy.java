@@ -4,6 +4,12 @@ import reciter.model.author.TargetAuthor;
 
 public class DepartmentRetrievalStrategy extends AbstractRetrievalStrategy {
 
+	private int threshold = DEFAULT_THRESHOLD;
+	
+	public DepartmentRetrievalStrategy(boolean isRetrieveExceedThreshold) {
+		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
+	}
+	
 	@Override
 	protected String constructInitialQuery(TargetAuthor targetAuthor) {
 		String department = targetAuthor.getDepartment();
@@ -22,13 +28,11 @@ public class DepartmentRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	@Override
 	public int getThreshold() {
-		// TODO Auto-generated method stub
-		return 0;
+		return threshold;
 	}
 
 	@Override
 	public void setThreshold(int threshold) {
-		// TODO Auto-generated method stub
-		
+		this.threshold = threshold;
 	}
 }

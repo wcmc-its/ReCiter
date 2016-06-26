@@ -19,6 +19,8 @@ import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
+import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
+import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
 import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
 import reciter.xml.retriever.pubmed.RetrievalStrategy;
@@ -40,11 +42,16 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
 		
 		// Retrieve by email.
-		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
+//		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
 		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
+//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
 		
-		retrievalStrategies.add(emailRetrievalStrategy);
+//		retrievalStrategies.add(emailRetrievalStrategy);
 		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
+//		retrievalStrategies.add(departmentRetrievalStrategy);
+//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+		
 		retrieve(retrievalStrategies, targetAuthor);
 	}
 
@@ -61,6 +68,11 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		}
 	}
 	
+	/**
+	 * Save the PubMed articles and the ESearch results.
+	 * @param pubMedArticles
+	 * @param cwid
+	 */
 	private void savePubMedArticles(List<PubMedArticle> pubMedArticles, String cwid) {
 		// Save the articles.
 		pubMedService.save(pubMedArticles);
@@ -70,14 +82,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
-		System.out.println(pmids.size());
-		if (!pmids.isEmpty()) {
-			ESearchResult eSearchResult = new ESearchResult(cwid, pmids);
-			boolean acknowledged = eSearchResultService.pushESearchResult(eSearchResult);
-			if (!acknowledged) {
-				eSearchResultService.save(eSearchResult);
-			}
-		}
+		eSearchResultService.pushESearchResult(new ESearchResult(cwid, pmids));
 	}
 
 	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(TargetAuthor targetAuthor) {
