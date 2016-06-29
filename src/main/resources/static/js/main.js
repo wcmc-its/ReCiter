@@ -1,14 +1,10 @@
 /**
- * AngularJS Tutorial 1
- * @author Nick Kaye <nick.c.kaye@gmail.com>
- */
-
-/**
  * Main AngularJS Web Application
  */
-var app = angular.module('reciterWebApp', [
-  'ngRoute'
-]);
+var app = angular.module('reciterWebApp', ['ngRoute'])
+	.constant('ENDPOINT_URI', 'http://localhost:8080/api/')
+	.service('ItemsModel', function ($http, ENDPOINT_URI) {
+});
 
 /**
  * Configure the Routes
@@ -54,19 +50,12 @@ app.controller('PageCtrl', function (/* $scope, $location, $http */) {
   })
 });
 
-function Hello($scope, $http) {
-	$http.get('http://localhost:8080/reciter/targetauthor/by/cwid?cwid=ccole').
-	success(function(data) {
-		console.log(data);
-		$scope.data = data;
-	});
-}
-
-function submit($scope, $http) {
-	console.log('test');
-	$http.get('http://localhost:8080/reciter/targetauthor/by/cwid?cwid=' + $scope.cwid).
-	success(function(data) {
-		$scope.data = data;
-		console.log(data);
-	});
-}
+app.controller("submitCwid", function ($scope, $http) {
+	$scope.cwid = '';
+	$scope.submit = function () {
+		$http.get('http://localhost:8080/reciter/targetauthor/by/cwid?cwid=' + $scope.cwid).
+		success(function(data) {
+			$scope.data = data;
+		});
+	};
+});

@@ -37,12 +37,13 @@
 
 <div class="container">
     <div class="row well">
-        <form ng-submit='submit()'>
+        <form ng-controller='submitCwid' ng-submit='submit()'>
             <fieldset class="form-group">
-                <label for="cwid" ng-model="cwid">cwid</label> <input type="text"
-                    class="form-control" id="cwid" placeholder="jil3004">
+                <label for="cwid" ng-model="cwid">cwid</label> 
+                <input type="text" ng-model="cwid" class="form-control" id="cwid" placeholder="jil3004">
             </fieldset>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <input type="submit" class="btn btn-primary"></button>
+            {{ data }}
         </form>
     </div>
     <!-- /.row -->
