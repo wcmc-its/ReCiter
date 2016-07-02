@@ -27,48 +27,48 @@ import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 public class ReCiterController {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(ReCiterController.class);
-	
+
 	@Autowired
 	private AutowireCapableBeanFactory autowireCapableBeanFactory;
 
 	@Autowired
 	private BoardCertificationService boardCertificationService;
-	
+
 	@Autowired
 	private TargetAuthorService targetAuthorService;
-	
+
 	@Autowired
 	private PubMedService pubMedService;
-	
+
 	@Autowired
 	private ESearchResultService eSearchResultService;
-	
+
 	@Autowired
 	private ReCiterRetrievalEngine defaultReCiterRetrievalEngine;
-	
+
 	@RequestMapping(value="/",method = RequestMethod.GET)
-    public String homepage(){
-        return "index";
-    }
-	
+	public String homepage(){
+		return "index";
+	}
+
 	@RequestMapping(value = "/reciter/esearchresult/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
-    public ESearchResult index(@RequestParam(value="cwid") String cwid) {
+	public ESearchResult index(@RequestParam(value="cwid") String cwid) {
 		return eSearchResultService.findByCwid(cwid);
-    }
+	}
 
 	@RequestMapping(value = "/reciter/targetauthor/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
 	public TargetAuthor getTargetAuthorByCwid(@RequestParam(value="cwid") String cwid) {
 		return targetAuthorService.getTargetAuthor(cwid);
 	}
-	
+
 	@RequestMapping(value = "/reciter/test", method = RequestMethod.GET)
 	@ResponseBody
 	public List<PubMedArticle> findByMedlineCitationMedlineCitationPMIDPmid() {
 		return null;
 	}
-	
+
 	@RequestMapping(value = "/reciter/authornames/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
 	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(@RequestParam(value="cwid") String cwid) {
@@ -76,12 +76,21 @@ public class ReCiterController {
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 		return defaultReCiterRetrievalEngine.findUniqueAuthorsWithSameLastNameAsTargetAuthor(targetAuthor);
 	}
-	
+
 	@RequestMapping(value = "/reciter/pubmedarticle/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
-	public void retrievePubMedArticles(@RequestParam(value="cwid") String cwid) {
+	public List<Long> retrievePubMedArticles(@RequestParam(value="cwid") String cwid) {
 		// Get target author information.
 		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		defaultReCiterRetrievalEngine.retrieve(targetAuthor);
+		return defaultReCiterRetrievalEngine.retrieve(targetAuthor);
+	}
+
+	@RequestMapping(value = "/reciter/pubmedarticle/by/cwids", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrievePubMedArticlesForListOfCwid(@RequestParam(value="cwids") List<String> cwids) {
+		for (String cwid : cwids) {
+			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+			defaultReCiterRetrievalEngine.retrieve(targetAuthor);
+		}
 	}
 }

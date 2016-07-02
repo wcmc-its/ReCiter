@@ -59,3 +59,53 @@ app.controller("submitCwid", function ($scope, $http) {
 		});
 	};
 });
+
+app.controller("retrieveCwid", function ($scope, $http) {
+	$scope.cwid = '';
+	$scope.submit = function () {
+		$http.get('http://localhost:8080/reciter/pubmedarticle/by/cwid?cwid=' + $scope.cwid).
+		success(function(data) {
+			$scope.data = data;
+		});
+	};
+});
+
+app.controller('MainCtrl', function ($scope) {
+    $scope.showContent = function($fileContent) {
+    	// split by new line and filter all falsy (false, null, undefined, 0, NaN or an empty string) elements.
+        $scope.content = $fileContent.split(/\r|\n/).filter(Boolean);
+    };
+  });
+
+app.directive('onReadFile', function ($parse) {
+	return {
+		restrict: 'A',
+		scope: false,
+		link: function(scope, element, attrs) {
+            var fn = $parse(attrs.onReadFile);
+            
+			element.on('change', function(onChangeEvent) {
+				var reader = new FileReader();
+                
+				reader.onload = function(onLoadEvent) {
+					scope.$apply(function() {
+						fn(scope, {$fileContent:onLoadEvent.target.result});
+					});
+				};
+
+				reader.readAsText((onChangeEvent.srcElement || onChangeEvent.target).files[0]);
+			});
+		}
+	};
+});
+
+app.controller("retrieveArticles", function ($scope, $http) {
+	$scope.cwid = '';
+	$scope.submit = function () {
+		console.log($scope.content);
+		$http.get('http://localhost:8080/reciter/pubmedarticle/by/cwids?cwids=' + $scope.content);
+//		success(function(data) {
+//			$scope.data = data;
+//		});
+	};
+});

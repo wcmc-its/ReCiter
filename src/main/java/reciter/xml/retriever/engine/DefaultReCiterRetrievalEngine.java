@@ -19,9 +19,6 @@ import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
-import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
-import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
-import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
 import reciter.xml.retriever.pubmed.RetrievalStrategy;
 
@@ -37,7 +34,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 	private ESearchResultService eSearchResultService;
 	
 	@Override
-	public void retrieve(TargetAuthor targetAuthor) {
+	public List<Long> retrieve(TargetAuthor targetAuthor) {
 
 		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
 		
@@ -47,25 +44,31 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 //		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
 //		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
 		
-//		retrievalStrategies.add(emailRetrievalStrategy);
+//		retrievalStrategies.add(emailRetrievalStrategy)
 		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
 //		retrievalStrategies.add(departmentRetrievalStrategy);
 //		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
 		
-		retrieve(retrievalStrategies, targetAuthor);
+		return retrieve(retrievalStrategies, targetAuthor);
 	}
 
-	private void retrieve(List<RetrievalStrategy> retrievalStrategies, TargetAuthor targetAuthor) {
+	private List<Long> retrieve(List<RetrievalStrategy> retrievalStrategies, TargetAuthor targetAuthor) {
 		String cwid = targetAuthor.getCwid();
+		List<Long> pmids = new ArrayList<Long>();
 		for (RetrievalStrategy retrievalStrategy : retrievalStrategies) {
 			try {
 				retrievalStrategy.constructPubMedQuery(targetAuthor);
+				slf4jLogger.error("cwid=[" + cwid + "], pubmedQuery=[" + retrievalStrategy.getPubMedQuery() + "]");
 				List<PubMedArticle> pubMedArticles = retrievalStrategy.retrieve();
+				for (PubMedArticle pubMedArticle : pubMedArticles) {
+					pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+				}
 				savePubMedArticles(pubMedArticles, cwid);
 			} catch (IOException e) {
 				slf4jLogger.error("RetrievalStrategy " + retrievalStrategy + "encountered an IO Exception", e);
 			}
 		}
+		return pmids;
 	}
 	
 	/**
