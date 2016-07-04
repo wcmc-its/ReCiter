@@ -61,10 +61,10 @@ app.controller("submitCwid", function ($scope, $http) {
 });
 
 app.controller("retrieveCwid", function ($scope, $http) {
-	$scope.cwid = '';
 	$scope.submit = function () {
-		$http.get('http://localhost:8080/reciter/pubmedarticle/by/cwid?cwid=' + $scope.cwid).
+		$http.get('http://localhost:8080/reciter/analysis/by/cwid?cwid=' + $scope.cwid).
 		success(function(data) {
+			console.log(data);
 			$scope.data = data;
 		});
 	};
@@ -104,8 +104,5 @@ app.controller("retrieveArticles", function ($scope, $http) {
 	$scope.submit = function () {
 		console.log($scope.content);
 		$http.get('http://localhost:8080/reciter/pubmedarticle/by/cwids?cwids=' + $scope.content);
-//		success(function(data) {
-//			$scope.data = data;
-//		});
 	};
 });

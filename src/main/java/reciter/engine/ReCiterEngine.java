@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
@@ -32,63 +33,32 @@ import reciter.algorithm.evidence.targetauthor.name.NameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.NameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
-import reciter.database.dao.AnalysisDao;
-import reciter.database.dao.impl.AnalysisDaoImpl;
 import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.TargetAuthor;
-import reciter.service.ReCiterArticleService;
-import reciter.service.TargetAuthorService;
-import reciter.service.converters.AnalysisConverter;
-import reciter.service.impl.ReCiterArticleServiceImpl;
-import reciter.service.impl.TargetAuthorServiceImpl;
 
+@Component("reCiterEngine")
 public class ReCiterEngine implements Engine {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngine.class);
 
-	private ReCiterEngineProperty reCiterEngineProperty;
-	private TargetAuthorService targetAuthorService;
-	private AnalysisDao analysisDao;
-	private Analysis analysis;
+//	private ReCiterEngineProperty reCiterEngineProperty;
 
-	/**
-	 * Mesh Major Strategy Context.
-	 */
-	private StrategyContext meshMajorStrategyContext;
+//	public double totalPrecision;
+//	public double totalRecall;
+//	public double totalAccuracy;
 
-	public double totalPrecision;
-	public double totalRecall;
-	public double totalAccuracy;
-
-	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
-		ReCiterEngineProperty.loadProperty();
-		this.reCiterEngineProperty = reCiterEngineProperty;
-		targetAuthorService = new TargetAuthorServiceImpl();
-		// TODO use service class.
-		analysisDao = new AnalysisDaoImpl();
-	}
-
-	public ReCiterEngineProperty getReCiterEngineProperty() {
-		return reCiterEngineProperty;
-	}
+//	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
+//		ReCiterEngineProperty.loadProperty();
+//		this.reCiterEngineProperty = reCiterEngineProperty;
+//	}
+//
+//	public ReCiterEngineProperty getReCiterEngineProperty() {
+//		return reCiterEngineProperty;
+//	}
 
 	@Override
-	public void run(String cwid) {
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		run(targetAuthor);
-	}
-
-	@Override
-	public void run(TargetAuthor targetAuthor) {
-		List<ReCiterArticle> reCiterArticleList = null;
-		ReCiterArticleService reCiterArticleService = new ReCiterArticleServiceImpl();
-		reCiterArticleList = reCiterArticleService.retrieve(targetAuthor.getCwid());
-		run(targetAuthor, reCiterArticleList);
-	}
-
-	@Override
-	public void run(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticleList) {
+	public Analysis run(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticleList) {
 
 		Analysis.assignGoldStandard(reCiterArticleList, targetAuthor.getCwid());
 
@@ -109,20 +79,21 @@ public class ReCiterEngine implements Engine {
 		for (long id : clusterSelector.getSelectedClusterIds()) {
 			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
 		}
-		meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));
+		
+		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));
 		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), targetAuthor);
 
-		analysis = Analysis.performAnalysis(clusterer, clusterSelector);
+		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Analysis for cwid=[" + targetAuthor.getCwid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
-		totalPrecision += analysis.getPrecision();
+//		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
-		totalRecall += analysis.getRecall();
+//		totalRecall += analysis.getRecall();
 
 		double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2;
 		slf4jLogger.info("Accuracy=" + accuracy);
-		totalAccuracy += accuracy;
+//		totalAccuracy += accuracy;
 
 		slf4jLogger.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
 		slf4jLogger.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
@@ -133,22 +104,24 @@ public class ReCiterEngine implements Engine {
 		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
 			slf4jLogger.info(reCiterArticle.getArticleId() + ": " + reCiterArticle.getClusterInfo());
 		}
-		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
+//		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
+		
+		return analysis;
 	}
 
-	@Override
-	public void run() {
-		List<String> cwids = reCiterEngineProperty.getCwids();
-		analysisDao.emptyTable(); // empty the analysis table.
-		for (String cwid : cwids) {
-			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-			run(targetAuthor);
-		}
-		slf4jLogger.info("Average Precision: [" + totalPrecision / cwids.size() + "]");
-		slf4jLogger.info("Average Recall: [" + totalRecall / cwids.size() + "]");
-		slf4jLogger.info("Average Accuracy: [" + totalAccuracy / cwids.size() + "]");
-		slf4jLogger.info("\n");
-	}
+//	@Override
+//	public void run() {
+//		List<String> cwids = reCiterEngineProperty.getCwids();
+//		analysisDao.emptyTable(); // empty the analysis table.
+//		for (String cwid : cwids) {
+//			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+//			run(targetAuthor);
+//		}
+//		slf4jLogger.info("Average Precision: [" + totalPrecision / cwids.size() + "]");
+//		slf4jLogger.info("Average Recall: [" + totalRecall / cwids.size() + "]");
+//		slf4jLogger.info("Average Accuracy: [" + totalAccuracy / cwids.size() + "]");
+//		slf4jLogger.info("\n");
+//	}
 
 	public void executeTargetAuthorStrategy(List<StrategyContext> strategyContexts, 
 			List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
@@ -202,27 +175,18 @@ public class ReCiterEngine implements Engine {
 		return strategyContexts;
 	}
 
-	@Override
-	public Analysis constructAnalysis() {
-		List<String> cwids = reCiterEngineProperty.getCwids();
-		analysisDao.emptyTable();
-		List<StrategyContext> strategyContexts = getStrategyContexts();
-		for (String cwid : cwids) {
-			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-			ReCiterArticleService reCiterArticleService = new ReCiterArticleServiceImpl();
-			List<ReCiterArticle> reCiterArticleList = reCiterArticleService.retrieve(cwid);
-			Analysis.assignGoldStandard(reCiterArticleList, cwid);
-			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
-		}
-		return null;
-	}
-
-	@Override
-	public Analysis getAnalysis() {
-		return analysis;
-	}
-
-	public void setAnalysis(Analysis analysis) {
-		this.analysis = analysis;
-	}
+//	@Override
+//	public Analysis constructAnalysis() {
+//		List<String> cwids = reCiterEngineProperty.getCwids();
+//		analysisDao.emptyTable();
+//		List<StrategyContext> strategyContexts = getStrategyContexts();
+//		for (String cwid : cwids) {
+//			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+//			ReCiterArticleService reCiterArticleService = new ReCiterArticleServiceImpl();
+//			List<ReCiterArticle> reCiterArticleList = reCiterArticleService.retrieve(cwid);
+//			Analysis.assignGoldStandard(reCiterArticleList, cwid);
+//			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
+//		}
+//		return null;
+//	}
 }

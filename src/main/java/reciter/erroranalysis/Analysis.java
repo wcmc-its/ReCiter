@@ -43,6 +43,9 @@ public class Analysis {
 	
 	private List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
 
+	private double precision;
+	private double recall;
+	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
 
 	public Analysis() {}
@@ -383,4 +386,26 @@ public class Analysis {
 	public void setFalseNegativeJournalCount(Map<String, Integer> falseNegativeJournalCount) {
 		this.falseNegativeJournalCount = falseNegativeJournalCount;
 	}
+
+	public void setPrecision(double precision) {
+		this.precision = precision;
+	}
+
+	public void setRecall(double recall) {
+		this.recall = recall;
+	}
+
+	@Override
+	public String toString() {
+		return "Analysis [truePos=" + truePos + ", trueNeg=" + trueNeg + ", falseNeg=" + falseNeg + ", falsePos="
+				+ falsePos + ", goldStandardSize=" + goldStandardSize + ", selectedClusterSize=" + selectedClusterSize
+				+ ", truePositiveList=" + truePositiveList + ", trueNegativeList=" + trueNegativeList
+				+ ", falsePositiveList=" + falsePositiveList + ", falseNegativeList=" + falseNegativeList
+				+ ", truePositiveJournalCount=" + truePositiveJournalCount + ", trueNegativeJournalCount="
+				+ trueNegativeJournalCount + ", falsePositiveJournalCount=" + falsePositiveJournalCount
+				+ ", falseNegativeJournalCount=" + falseNegativeJournalCount + ", analysisObjectList="
+				+ analysisObjectList + ", precision=" + precision + ", recall=" + recall + "]";
+	}
+	
+	
 }

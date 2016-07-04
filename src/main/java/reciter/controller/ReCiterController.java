@@ -1,12 +1,12 @@
 package reciter.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -14,38 +14,39 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.database.mongo.model.ESearchResult;
+import reciter.engine.Engine;
+import reciter.engine.ReCiterEngine;
+import reciter.erroranalysis.Analysis;
+import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.BoardCertificationService;
 import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
 import reciter.service.TargetAuthorService;
+import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Controller
 public class ReCiterController {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(ReCiterController.class);
-
-	@Autowired
-	private AutowireCapableBeanFactory autowireCapableBeanFactory;
-
-	@Autowired
-	private BoardCertificationService boardCertificationService;
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterController.class);
 
 	@Autowired
 	private TargetAuthorService targetAuthorService;
 
 	@Autowired
-	private PubMedService pubMedService;
-
-	@Autowired
 	private ESearchResultService eSearchResultService;
 
 	@Autowired
+	private PubMedService pubMedService;
+	
+	@Autowired
 	private ReCiterRetrievalEngine defaultReCiterRetrievalEngine;
-
+	
+	@Autowired
+	private Engine reCiterEngine;
+	
 	@RequestMapping(value="/",method = RequestMethod.GET)
 	public String homepage(){
 		return "index";
@@ -92,5 +93,20 @@ public class ReCiterController {
 			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
 			defaultReCiterRetrievalEngine.retrieve(targetAuthor);
 		}
+	}
+	
+	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
+		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+		ESearchResult eSearchResult = eSearchResultService.findByCwid(cwid);
+		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(eSearchResult.getPmids());
+		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		for (PubMedArticle pubMedArticle : pubMedArticles) {
+			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+		}
+		Analysis analysis = reCiterEngine.run(targetAuthor, reCiterArticles);
+		slf4jLogger.info(analysis.toString());
+		return analysis;
 	}
 }
