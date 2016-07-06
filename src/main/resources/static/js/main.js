@@ -64,8 +64,8 @@ app.controller("retrieveCwid", function ($scope, $http) {
 	$scope.submit = function () {
 		$http.get('http://localhost:8080/reciter/analysis/by/cwid?cwid=' + $scope.cwid).
 		success(function(data) {
-			console.log(data);
-			$scope.data = data;
+			$scope.precision = data.precision;
+			$scope.recall = data.recall;
 		});
 	};
 });

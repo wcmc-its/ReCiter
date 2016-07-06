@@ -252,6 +252,8 @@ public class Analysis {
 		analysis.setTrueNeg(analysis.getTrueNegativeList().size());
 		analysis.setFalseNeg(analysis.getFalseNegativeList().size());
 		analysis.setFalsePos(analysis.getFalsePositiveList().size());
+		analysis.setPrecision(analysis.getPrecision());
+		analysis.setRecall(analysis.getRecall());
 		return analysis;
 	}
 
