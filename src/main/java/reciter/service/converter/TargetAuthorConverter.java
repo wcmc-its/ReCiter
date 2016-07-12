@@ -1,4 +1,4 @@
-package reciter.service.converters;
+package reciter.service.converter;
 
 import reciter.database.model.Identity;
 import reciter.database.model.IdentityEducation;

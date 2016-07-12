@@ -44,28 +44,26 @@
 		<div class="row well">
 			<form ng-controller='retrieveCwid' ng-submit='submit()'>
 				<fieldset class="form-group">
-					<label for="cwid" ng-model="cwid">cwid</label> <input type="text"
-						ng-model="cwid" class="form-control" id="cwid"
-						placeholder="jil3004">
+					<label for="cwid" ng-model="cwid">Run ReCiter for a single
+						cwid</label> <input type="text" ng-model="cwid" class="form-control"
+						id="cwid" placeholder="jil3004">
 				</fieldset>
 				<input type="submit" class="btn btn-primary">
-				</button>
-				<div>
-				precision: {{ precision }}
-				recall: {{ recall }}
-				</div>
+				<div>precision: {{ precision }} recall: {{ recall }}</div>
 			</form>
 		</div>
-		<div ng-controller="MainCtrl" class="container">
-			<h1>Select text file</h1>
-			<input type="file" on-read-file="showContent($fileContent)" />
-			<div ng-if="content">
-				<h2>File content is:</h2>
-				<pre>{{ content }}</pre>
+		<div class="row well">
+			<div ng-controller="MainCtrl" class="container">
+				<label for="cwid" ng-model="cwid">Run ReCiter for a single
+					cwid</label> <input type="file" on-read-file="showContent($fileContent)" />
+				<div ng-if="content">
+					<h2>File content is:</h2>
+					<pre>{{ content }}</pre>
+				</div>
+				<form ng-controller='retrieveArticles' ng-submit='submit()'>
+					<input type="submit" class="btn btn-primary">
+				</form>
 			</div>
-			<form ng-controller='retrieveArticles' ng-submit='submit()'>
-                <input type="submit" class="btn btn-primary">
-            </form>
 		</div>
 		<!-- /.row -->
 	</div>

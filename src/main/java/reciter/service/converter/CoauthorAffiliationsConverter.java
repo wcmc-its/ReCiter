@@ -1,4 +1,4 @@
-package reciter.service.converters;
+package reciter.service.converter;
 
 import reciter.database.model.CoauthorAffiliations;
 import reciter.service.bean.CoauthorAffiliationsBean;

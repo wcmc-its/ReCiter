@@ -1,4 +1,4 @@
-package reciter.service.converters;
+package reciter.service.converter;
 
 import java.util.ArrayList;
 import java.util.List;

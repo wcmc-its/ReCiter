@@ -32,7 +32,7 @@ import reciter.service.IdentityInstitutionService;
 import reciter.service.IdentityService;
 import reciter.service.TargetAuthorService;
 import reciter.service.bean.IdentityBean;
-import reciter.service.converters.IdentityDegreeConverter;
+import reciter.service.converter.IdentityDegreeConverter;
 import reciter.string.PubmedSearchQueryGenerator;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 

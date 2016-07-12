@@ -1,4 +1,4 @@
-package reciter.service.converters;
+package reciter.service.converter;
 
 import reciter.database.model.IdentityDegree;
 import reciter.model.author.AuthorDegree;

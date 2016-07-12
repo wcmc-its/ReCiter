@@ -1,4 +1,4 @@
-package reciter.algorithm.namematch;
+package reciter.utils;
 
 import static org.junit.Assert.assertEquals;
 
@@ -63,7 +63,8 @@ public class NameMatchTest {
 		int i = 0;
 		for (String cwid : cwids) {
 			test(cwid);
-			Analysis analysis = engine.getAnalysis();
+			Analysis analysis = null;
+//			Analysis analysis = engine.getAnalysis();
 			int numTrueNegatives = analysis.getTrueNeg();
 			assertEquals(trueNegatives[i], numTrueNegatives); // should expect this number of false negatives.
 			i++;
@@ -88,7 +89,7 @@ public class NameMatchTest {
 		}
 		reCiterEngineFactory = new ReCiterEngineFactory();
 		ReCiterEngineProperty property = new ReCiterEngineProperty();
-		engine = reCiterEngineFactory.getReCiterEngine(property);
+//		engine = reCiterEngineFactory.getReCiterEngine(property);
 
 		engine.run(targetAuthor, reCiterArticleList);
 	}

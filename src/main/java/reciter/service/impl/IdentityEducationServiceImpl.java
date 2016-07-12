@@ -9,7 +9,7 @@ import reciter.database.dao.IdentityEducationDao;
 import reciter.database.model.IdentityEducation;
 import reciter.model.author.AuthorEducation;
 import reciter.service.IdentityEducationService;
-import reciter.service.converters.IdentityEducationConverter;
+import reciter.service.converter.IdentityEducationConverter;
 
 @Service("identityEducationService")
 public class IdentityEducationServiceImpl implements IdentityEducationService {

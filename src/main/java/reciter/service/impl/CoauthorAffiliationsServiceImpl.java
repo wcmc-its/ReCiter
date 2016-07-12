@@ -4,7 +4,7 @@ import reciter.database.dao.CoauthorAffiliationsDao;
 import reciter.database.dao.impl.CoauthorAffiliationsDaoImpl;
 import reciter.service.CoauthorAffiliationsService;
 import reciter.service.bean.CoauthorAffiliationsBean;
-import reciter.service.converters.CoauthorAffiliationsConverter;
+import reciter.service.converter.CoauthorAffiliationsConverter;
 
 public class CoauthorAffiliationsServiceImpl implements CoauthorAffiliationsService {
 

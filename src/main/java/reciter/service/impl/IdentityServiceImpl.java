@@ -10,7 +10,7 @@ import reciter.database.dao.IdentityDao;
 import reciter.database.model.Identity;
 import reciter.service.IdentityService;
 import reciter.service.bean.IdentityBean;
-import reciter.service.converters.IdentityConverter;
+import reciter.service.converter.IdentityConverter;
 
 @Service("identityService")
 public class IdentityServiceImpl implements IdentityService {

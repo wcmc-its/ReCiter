@@ -3,8 +3,10 @@ package reciter.xml.retriever.engine;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -15,10 +17,15 @@ import org.springframework.stereotype.Component;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
+import reciter.model.converter.PubMedConverter;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
+import reciter.utils.AuthorNameUtils;
+import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
+import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
+import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
 import reciter.xml.retriever.pubmed.RetrievalStrategy;
 
@@ -39,19 +46,57 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
 		
 		// Retrieve by email.
-//		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
+		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
 		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
-//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
-//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
 		
-//		retrievalStrategies.add(emailRetrievalStrategy)
+		retrievalStrategies.add(emailRetrievalStrategy);
 		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
-//		retrievalStrategies.add(departmentRetrievalStrategy);
-//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+		retrievalStrategies.add(departmentRetrievalStrategy);
+		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
 		
 		return retrieve(retrievalStrategies, targetAuthor);
 	}
 
+	// How to determine if an article contains an alternate name of the target author?
+	// 1. If the article already contains target author's name, then the other authors with the same last name
+	// as the target author is not likely to be the same as the target author.
+	// 2. If the article contains an author's whose first name initial is the same as that of the 
+	// target author's first name initial, and another name in the article that has the same last name 
+	// as the target author, then that name is not likely an alternate name for the target author.
+	// 3. If the article contains only one author with the same last name as the target author and the first names
+	// of the target author and the aforementioned author do not match, then that author's first name is likely
+	// an alternate name of the target author.
+	public Map<Long, AuthorName> extractAlternateNamesFromPubMedArticlesRetrievedByEmail(
+			List<PubMedArticle> pubMedArticles, TargetAuthor targetAuthor) {
+		Map<Long, AuthorName> map = new HashMap<Long, AuthorName>(); // PMID to alternate author name.
+		for (PubMedArticle pubMedArticle : pubMedArticles) {
+			List<MedlineCitationArticleAuthor> authorList = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
+			boolean isSameLastNameFound = false;
+			if (authorList != null) {
+				for (MedlineCitationArticleAuthor medlineCitationArticleAuthor : authorList) {
+					AuthorName author = PubMedConverter.extractAuthorName(medlineCitationArticleAuthor);
+					if (author != null) {
+						boolean isFullNameMatch = AuthorNameUtils.isFullNameMatch(author, targetAuthor.getAuthorName());
+						if (isFullNameMatch) {
+							continue;
+						} else {
+							
+						}
+					}
+				}
+			}
+		}
+		return map;
+	}
+	
+	/**
+	 * Retrieve articles.
+	 * @param retrievalStrategies
+	 * @param targetAuthor
+	 * @return
+	 */
 	private List<Long> retrieve(List<RetrievalStrategy> retrievalStrategies, TargetAuthor targetAuthor) {
 		String cwid = targetAuthor.getCwid();
 		List<Long> pmids = new ArrayList<Long>();
@@ -107,8 +152,8 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 				for (MedlineCitationArticleAuthor author : authors) {
 					String lastName = author.getLastName();
 					if (targetAuthorLastName.equals(lastName)) {
-						AuthorName authorName = getAuthorName(author);
-						uniqueAuthors.add(authorName);
+//						AuthorName authorName = getAuthorName(author);
+//						uniqueAuthors.add(authorName);
 					}
 				}
 			} else {
@@ -116,37 +161,6 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 			}
 		}
 		return uniqueAuthors;
-	}
-
-	public AuthorName getAuthorName(MedlineCitationArticleAuthor author) {
-		String lastName = author.getLastName();
-		String foreName = author.getForeName();
-		String initials = author.getInitials();
-		String firstName = null;
-		String middleName = null;
-
-		// PubMed sometimes concatenates the first name and middle initial into <ForeName> xml tag.
-		// This extracts the first name and middle initial.
-
-		// Sometimes forename doesn't exist in XML (ie: 8661541). So initials are used instead.
-		// Forename take precedence. If foreName doesn't exist, use initials. If initials doesn't exist, use null.
-		// TODO: Deal with collective names in XML.
-		if (lastName != null) {
-			if (foreName != null) {
-				String[] foreNameArray = foreName.split("\\s+");
-				if (foreNameArray.length == 2) {
-					firstName = foreNameArray[0];
-					middleName = foreNameArray[1];
-				} else {
-					firstName = foreName;
-				}
-			} else if (initials != null) {
-				firstName = initials;
-			}
-			AuthorName authorName = new AuthorName(firstName, middleName, lastName);
-			return authorName;
-		}
-		return null;
 	}
 
 	public void updatePubMedQuery(RetrievalStrategy retrievalStrategy) throws IOException {
