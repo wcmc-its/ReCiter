@@ -58,38 +58,6 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		
 		return retrieve(retrievalStrategies, targetAuthor);
 	}
-
-	// How to determine if an article contains an alternate name of the target author?
-	// 1. If the article already contains target author's name, then the other authors with the same last name
-	// as the target author is not likely to be the same as the target author.
-	// 2. If the article contains an author's whose first name initial is the same as that of the 
-	// target author's first name initial, and another name in the article that has the same last name 
-	// as the target author, then that name is not likely an alternate name for the target author.
-	// 3. If the article contains only one author with the same last name as the target author and the first names
-	// of the target author and the aforementioned author do not match, then that author's first name is likely
-	// an alternate name of the target author.
-	public Map<Long, AuthorName> extractAlternateNamesFromPubMedArticlesRetrievedByEmail(
-			List<PubMedArticle> pubMedArticles, TargetAuthor targetAuthor) {
-		Map<Long, AuthorName> map = new HashMap<Long, AuthorName>(); // PMID to alternate author name.
-		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			List<MedlineCitationArticleAuthor> authorList = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
-			boolean isSameLastNameFound = false;
-			if (authorList != null) {
-				for (MedlineCitationArticleAuthor medlineCitationArticleAuthor : authorList) {
-					AuthorName author = PubMedConverter.extractAuthorName(medlineCitationArticleAuthor);
-					if (author != null) {
-						boolean isFullNameMatch = AuthorNameUtils.isFullNameMatch(author, targetAuthor.getAuthorName());
-						if (isFullNameMatch) {
-							continue;
-						} else {
-							
-						}
-					}
-				}
-			}
-		}
-		return map;
-	}
 	
 	/**
 	 * Retrieve articles.
