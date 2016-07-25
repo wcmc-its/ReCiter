@@ -175,16 +175,15 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 		try {
 			executor.invokeAll(callables)
-			.stream()
-			.map(future -> {
-				try {
-					return future.get();
-				}
-				catch (Exception e) {
-					throw new IllegalStateException(e);
-				}
-			})
-			.forEach(list::add);
+				.stream()
+				.map(future -> {
+					try {
+						return future.get();
+					}
+					catch (Exception e) {
+						throw new IllegalStateException(e);
+					}
+			}).forEach(list::add);
 		} catch (InterruptedException e) {
 			slf4jLogger.error("Unable to invoke callable.", e);
 		}

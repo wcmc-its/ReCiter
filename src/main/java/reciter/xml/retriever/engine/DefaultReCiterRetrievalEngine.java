@@ -2,27 +2,21 @@ package reciter.xml.retriever.engine;
 
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
-import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
-import reciter.model.converter.PubMedConverter;
-import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
-import reciter.utils.AuthorNameUtils;
 import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
 import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
 import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
@@ -76,7 +70,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 				for (PubMedArticle pubMedArticle : pubMedArticles) {
 					pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 				}
-				savePubMedArticles(pubMedArticles, cwid);
+				savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
 			} catch (IOException e) {
 				slf4jLogger.error("RetrievalStrategy " + retrievalStrategy + "encountered an IO Exception", e);
 			}
@@ -89,7 +83,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 	 * @param pubMedArticles
 	 * @param cwid
 	 */
-	private void savePubMedArticles(List<PubMedArticle> pubMedArticles, String cwid) {
+	private void savePubMedArticles(List<PubMedArticle> pubMedArticles, String cwid, String retrievalStrategyName) {
 		// Save the articles.
 		pubMedService.save(pubMedArticles);
 
@@ -98,38 +92,39 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
-		eSearchResultService.pushESearchResult(new ESearchResult(cwid, pmids));
+		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now());
+		eSearchResultService.pushESearchResult(new ESearchResult(cwid, eSearchPmid));
 	}
 
-	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(TargetAuthor targetAuthor) {
-		Set<AuthorName> uniqueAuthors = new HashSet<AuthorName>();
-		ESearchResult eSearchResult = eSearchResultService.findByCwid(targetAuthor.getCwid());
-		List<Long> pmids = eSearchResult.getPmids();
-		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
-		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
-
-		slf4jLogger.info("number of articles=[" + pubMedArticles.size() + "].");
-
-		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			if (pubMedArticle.getMedlineCitation().getArticle() != null && 
-					pubMedArticle.getMedlineCitation().getArticle().getAuthorList() != null) {
-
-				slf4jLogger.info(pubMedArticle.getMedlineCitation().getArticle().getAuthorList() + " ");
-
-				List<MedlineCitationArticleAuthor> authors = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
-				for (MedlineCitationArticleAuthor author : authors) {
-					String lastName = author.getLastName();
-					if (targetAuthorLastName.equals(lastName)) {
-//						AuthorName authorName = getAuthorName(author);
-//						uniqueAuthors.add(authorName);
-					}
-				}
-			} else {
-				slf4jLogger.info(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid() + "");
-			}
-		}
-		return uniqueAuthors;
-	}
+//	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(TargetAuthor targetAuthor) {
+//		Set<AuthorName> uniqueAuthors = new HashSet<AuthorName>();
+//		ESearchResult eSearchResult = eSearchResultService.findByCwid(targetAuthor.getCwid());
+//		List<Long> pmids = eSearchResult.getPmids();
+//		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
+//		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+//
+//		slf4jLogger.info("number of articles=[" + pubMedArticles.size() + "].");
+//
+//		for (PubMedArticle pubMedArticle : pubMedArticles) {
+//			if (pubMedArticle.getMedlineCitation().getArticle() != null && 
+//					pubMedArticle.getMedlineCitation().getArticle().getAuthorList() != null) {
+//
+//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getArticle().getAuthorList() + " ");
+//
+//				List<MedlineCitationArticleAuthor> authors = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
+//				for (MedlineCitationArticleAuthor author : authors) {
+//					String lastName = author.getLastName();
+//					if (targetAuthorLastName.equals(lastName)) {
+////						AuthorName authorName = getAuthorName(author);
+////						uniqueAuthors.add(authorName);
+//					}
+//				}
+//			} else {
+//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid() + "");
+//			}
+//		}
+//		return uniqueAuthors;
+//	}
 
 	public void updatePubMedQuery(RetrievalStrategy retrievalStrategy) throws IOException {
 

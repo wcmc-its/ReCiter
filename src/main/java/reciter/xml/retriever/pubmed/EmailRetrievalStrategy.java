@@ -5,6 +5,7 @@ import reciter.model.author.TargetAuthor;
 public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private int threshold = DEFAULT_THRESHOLD;
+	private static final String retrievalStrategyName = "EmailRetrievalStrategy";
 	
 	public EmailRetrievalStrategy(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
@@ -26,5 +27,10 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	@Override
 	protected String constructStrictQuery(TargetAuthor targetAuthor) {
 		return targetAuthor.getEmail();
+	}
+
+	@Override
+	public String getRetrievalStrategyName() {
+		return retrievalStrategyName;
 	}
 }

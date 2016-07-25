@@ -35,4 +35,6 @@ public interface RetrievalStrategy {
 	List<PubMedArticle> retrieve();
 
 	String[] retrievePmids(String query) throws IOException;
+	
+	String getRetrievalStrategyName();
 }

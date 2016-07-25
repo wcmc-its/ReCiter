@@ -5,6 +5,7 @@ import reciter.model.author.TargetAuthor;
 public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private int threshold = DEFAULT_THRESHOLD;
+	private static final String retrievalStrategyName = "FirstNameInitialRetrievalStrategy";
 	
 	public FirstNameInitialRetrievalStrategy(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
@@ -28,5 +29,10 @@ public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy
 	@Override
 	public void setThreshold(int threshold) {
 		this.threshold = threshold;
+	}
+
+	@Override
+	public String getRetrievalStrategyName() {
+		return retrievalStrategyName;
 	}
 }

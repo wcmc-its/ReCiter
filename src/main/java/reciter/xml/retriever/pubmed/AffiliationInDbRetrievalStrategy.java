@@ -5,6 +5,7 @@ import reciter.model.author.TargetAuthor;
 public class AffiliationInDbRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private int threshold = DEFAULT_THRESHOLD;
+	private static final String retrievalStrategyName = "AffiliationInDbRetrievalStrategy";
 	
 	public AffiliationInDbRetrievalStrategy(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
@@ -34,5 +35,10 @@ public class AffiliationInDbRetrievalStrategy extends AbstractRetrievalStrategy 
 	@Override
 	public void setThreshold(int threshold) {
 		this.threshold = threshold;
+	}
+
+	@Override
+	public String getRetrievalStrategyName() {
+		return retrievalStrategyName;
 	}
 }

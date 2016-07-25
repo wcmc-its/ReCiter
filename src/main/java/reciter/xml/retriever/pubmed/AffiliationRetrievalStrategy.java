@@ -4,6 +4,8 @@ import reciter.model.author.TargetAuthor;
 
 public class AffiliationRetrievalStrategy extends AbstractRetrievalStrategy {
 
+	private static final String retrievalStrategyName = "AffiliationRetrievalStrategy";
+	
 	@Override
 	public int getThreshold() {
 		// TODO Auto-generated method stub
@@ -26,6 +28,11 @@ public class AffiliationRetrievalStrategy extends AbstractRetrievalStrategy {
 	protected String constructStrictQuery(TargetAuthor targetAuthor) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public String getRetrievalStrategyName() {
+		return retrievalStrategyName;
 	}
 
 	
