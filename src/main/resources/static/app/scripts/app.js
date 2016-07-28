@@ -12,7 +12,7 @@ angular
     'oc.lazyLoad',
     'ui.router',
     'ui.bootstrap',
-    'angular-loading-bar',
+    'angular-loading-bar'
   ])
   .config(['$stateProvider','$urlRouterProvider','$ocLazyLoadProvider',function ($stateProvider,$urlRouterProvider,$ocLazyLoadProvider) {
     
@@ -155,7 +155,49 @@ angular
    })
 	  .state('dashboard.data-import',{
     	templateUrl:'views/data-import/rc-identity.html',
-    	url:'/rc-identity'
+    	url:'/rc-identity',
+    	resolve: {
+            loadMyFile:function($ocLazyLoad) {
+//              return $ocLazyLoad.load({
+//                name:'json-formatter',
+//                files:[
+//                  'bower_components/json-formatter/dist/json-formatter.min.js',
+//                  'bower_components/json-formatter/dist/json-formatter.min.css',
+//                ]
+//              }),
+              $ocLazyLoad.load(
+                      {
+                    	  name:'json-formatter',
+                          files:[
+                            'bower_components/json-formatter/dist/json-formatter.min.js',
+                            'bower_components/json-formatter/dist/json-formatter.min.css',
+                          ]
+                      })
+            }
+          }
+    })
+    	  .state('dashboard.data-import-rc-gold-standard',{
+    	templateUrl:'views/data-import/rc-gold-standard.html',
+    	url:'/rc-identity',
+    	resolve: {
+            loadMyFile:function($ocLazyLoad) {
+//              return $ocLazyLoad.load({
+//                name:'json-formatter',
+//                files:[
+//                  'bower_components/json-formatter/dist/json-formatter.min.js',
+//                  'bower_components/json-formatter/dist/json-formatter.min.css',
+//                ]
+//              }),
+              $ocLazyLoad.load(
+                      {
+                    	  name:'json-formatter',
+                          files:[
+                            'bower_components/json-formatter/dist/json-formatter.min.js',
+                            'bower_components/json-formatter/dist/json-formatter.min.css',
+                          ]
+                      })
+            }
+          }
     })
    
   }]);
