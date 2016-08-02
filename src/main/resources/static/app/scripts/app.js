@@ -77,7 +77,8 @@ angular
       .state('dashboard.home',{
         url:'/home',
         controller: 'MainCtrl',
-        templateUrl:'views/dashboard/home.html',
+        /* templateUrl:'views/dashboard/home.html', */
+        templateUrl:'views/reciter/new.html',
         resolve: {
           loadMyFiles:function($ocLazyLoad) {
             return $ocLazyLoad.load({
@@ -155,49 +156,19 @@ angular
    })
 	  .state('dashboard.data-import',{
     	templateUrl:'views/data-import/rc-identity.html',
-    	url:'/rc-identity',
-    	resolve: {
-            loadMyFile:function($ocLazyLoad) {
-//              return $ocLazyLoad.load({
-//                name:'json-formatter',
-//                files:[
-//                  'bower_components/json-formatter/dist/json-formatter.min.js',
-//                  'bower_components/json-formatter/dist/json-formatter.min.css',
-//                ]
-//              }),
-              $ocLazyLoad.load(
-                      {
-                    	  name:'json-formatter',
-                          files:[
-                            'bower_components/json-formatter/dist/json-formatter.min.js',
-                            'bower_components/json-formatter/dist/json-formatter.min.css',
-                          ]
-                      })
-            }
-          }
+    	url:'/data-import/rc-gold-standard'
     })
-    	  .state('dashboard.data-import-rc-gold-standard',{
+      .state('dashboard.data-import-rc-gold-standard',{
     	templateUrl:'views/data-import/rc-gold-standard.html',
-    	url:'/rc-identity',
-    	resolve: {
-            loadMyFile:function($ocLazyLoad) {
-//              return $ocLazyLoad.load({
-//                name:'json-formatter',
-//                files:[
-//                  'bower_components/json-formatter/dist/json-formatter.min.js',
-//                  'bower_components/json-formatter/dist/json-formatter.min.css',
-//                ]
-//              }),
-              $ocLazyLoad.load(
-                      {
-                    	  name:'json-formatter',
-                          files:[
-                            'bower_components/json-formatter/dist/json-formatter.min.js',
-                            'bower_components/json-formatter/dist/json-formatter.min.css',
-                          ]
-                      })
-            }
-          }
+    	url:'/data-import/rc-gold-standard'
+    })
+      .state('dashboard.reciter-new',{
+    	templateUrl:'views/reciter/new.html',
+    	url:'/reciter/new'
+    })
+      .state('dashboard.reciter-existing',{
+    	templateUrl:'views/reciter/existing.html',
+    	url:'/reciter/existing'
     })
    
   }]);
