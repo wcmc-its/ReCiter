@@ -24,4 +24,11 @@ public interface IdentityDao {
 	 * @return
 	 */
 	String getPubmedQuery(String cwid);
+	
+	/**
+	 * Get a list of identity objects based on search string.
+	 * @param search
+	 * @return
+	 */
+	List<Identity> getTargetAuthorByNameOrCwid(String search);
 }

@@ -24,6 +24,7 @@ import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
 import reciter.service.TargetAuthorService;
+import reciter.service.bean.IdentityBean;
 import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
@@ -65,6 +66,12 @@ public class ReCiterController {
 	@ResponseBody
 	public TargetAuthor getTargetAuthorByCwid(@RequestParam(value="cwid") String cwid) {
 		return targetAuthorService.getTargetAuthor(cwid);
+	}
+	
+	@RequestMapping(value = "/reciter/identitybeans/by/search", method = RequestMethod.GET)
+	@ResponseBody
+	public List<IdentityBean> getTargetAuthorByNameOrCwid(@RequestParam(value="search") String search) {
+		return targetAuthorService.getTargetAuthorByNameOrCwid(search);
 	}
 
 	@RequestMapping(value = "/reciter/test", method = RequestMethod.GET)

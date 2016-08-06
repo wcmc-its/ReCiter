@@ -121,4 +121,35 @@ public class IdentityDaoImpl implements IdentityDao {
 		}
 		return pubmedQuery;
 	}
+	
+	@Override
+	public List<Identity> getTargetAuthorByNameOrCwid(String search) {
+		Connection con = DbConnectionFactory.getConnection();
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		String query = "SELECT first_name, last_name, middle_name, title, primary_department, cwid FROM rc_identity WHERE "
+				+ "cwid like '" + search + "%' or last_name like '" + search + "%' or first_name like '" + search + "%'";
+		
+		List<Identity> identities = new ArrayList<Identity>();
+		try {
+			pst = con.prepareStatement(query);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				Identity identity = new Identity();
+				identity.setFirstName(rs.getString(1));
+				identity.setLastName(rs.getString(2));
+				identity.setMiddleName(rs.getString(3));
+				identity.setTitle(rs.getString(4));
+				identity.setPrimaryDepartment(rs.getString(5));
+				identity.setCwid(rs.getString(6));
+				identities.add(identity);
+			}
+		} catch (SQLException e) {
+		} finally {
+			DbUtil.close(rs);
+			DbUtil.close(pst);	
+			DbUtil.close(con);
+		}
+		return identities;
+	}
 }

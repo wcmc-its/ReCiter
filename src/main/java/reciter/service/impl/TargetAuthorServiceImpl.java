@@ -67,6 +67,11 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 	private IdentityEmailService identityEmailService;
 	
 	@Override
+	public List<IdentityBean> getTargetAuthorByNameOrCwid(String search) {
+		return identityService.getTargetAuthorByNameOrCwid(search);
+	}
+	
+	@Override
 	public TargetAuthor getTargetAuthor(String cwid) {
 		IdentityBean identityDTO = identityService.getIdentityByCwid(cwid);
 

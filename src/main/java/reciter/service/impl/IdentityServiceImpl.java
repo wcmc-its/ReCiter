@@ -25,17 +25,15 @@ public class IdentityServiceImpl implements IdentityService {
 	@Override
 	public IdentityBean getIdentityByCwid(String cwid) {
 		Identity identity = identityDao.getIdentityByCwid(cwid);
-		IdentityConverter identityConverter = new IdentityConverter();
-		return identityConverter.convertToDTO(identity);
+		return IdentityConverter.convertToDTO(identity);
 	}
 
 	@Override
 	public List<IdentityBean> getAssosiatedGrantIdentityList(String cwid) {
 		List<Identity> identities = identityDao.getAssosiatedGrantIdentityList(cwid);
 		List<IdentityBean> identityDTOs = new ArrayList<IdentityBean>();
-		IdentityConverter identityConverter = new IdentityConverter();
 		for (Identity identity : identities) {
-			identityDTOs.add(identityConverter.convertToDTO(identity));
+			identityDTOs.add(IdentityConverter.convertToDTO(identity));
 		}
 		return identityDTOs;
 	}
@@ -45,5 +43,15 @@ public class IdentityServiceImpl implements IdentityService {
 		for (reciter.database.mongo.model.Identity identity : identities) {
 			identityRepository.save(identity);
 		}
+	}
+	
+	@Override
+	public List<IdentityBean> getTargetAuthorByNameOrCwid(String search) {
+		List<Identity> identities = identityDao.getTargetAuthorByNameOrCwid(search);
+		List<IdentityBean> identityBeans = new ArrayList<IdentityBean>();
+		for (Identity identity : identities) {
+			identityBeans.add(IdentityConverter.convertToDTO(identity));
+		}
+		return identityBeans;
 	}
 }

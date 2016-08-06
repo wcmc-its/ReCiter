@@ -5,7 +5,7 @@ import reciter.service.bean.IdentityBean;
 
 public class IdentityConverter {
 
-	public IdentityBean convertToDTO(Identity identity) {
+	public static IdentityBean convertToDTO(Identity identity) {
 		IdentityBean identityDTO = new IdentityBean();
 		identityDTO.setIdentityPk(identity.getIdentityPk());
 		identityDTO.setCwid(identity.getCwid());
