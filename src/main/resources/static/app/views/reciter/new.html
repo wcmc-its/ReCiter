@@ -12,48 +12,48 @@
                 Include additional entries on separate lines
             </div>
             <div class="panel-body">
-                <div class="row">
-                    <div class="col-lg-6">
+                <div class="row" ng-controller='reciterNew'>
+                    <div class="col-lg-6"  ng-submit='submit()'>
                         <form role="form">
                             <div class="form-group">
                                 <label>CWID / Identifier</label>
-                                <input class="form-control" placeholder="rmn2131">
+                                <input ng-model="cwid" class="form-control" placeholder="rmn2131" required>
                             </div>
                             <div class="form-group">
                                 <label>First Name</label>
-                                <input class="form-control" placeholder="Richard">
+                                <input ng-model="firstName" class="form-control" placeholder="Richard" required>
                             </div>
                             <div class="form-group">
                                 <label>Middle Name</label>
-                                <input class="form-control" placeholder="Milhouse">
+                                <input ng-model="middleName" class="form-control" placeholder="Milhouse">
                             </div>
                             <div class="form-group">
                                 <label>Last Name</label>
-                                <input class="form-control" placeholder="Nixon">
+                                <input ng-model="lastName" class="form-control" placeholder="Nixon" required>
                             </div>
                             <div class="form-group">
                                 <label>Email</label>
-                                <textarea class="form-control" placeholder="rmn2131@med.cornell.edu" rows="3"></textarea>
+                                <textarea ng-model="email" class="form-control" placeholder="rmn2131@med.cornell.edu" rows="3" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Department</label>
-                                <input class="form-control" placeholder="Biochemistry">
+                                <textarea ng-model="department" class="form-control" placeholder="Biochemistry" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Year of terminal degree</label>
-                                <input class="form-control" placeholder="1982">
+                                <input ng-model="yearOfTerminalDegree" class="form-control" placeholder="1982" required>
                             </div>
                             <div class="form-group">
                                 <label>Institutions</label>
-                                <textarea class="form-control" placeholder="Weill Cornell Medicine" rows="3"></textarea>
+                                <textarea ng-model="institutions" class="form-control" placeholder="Weill Cornell Medicine" rows="3" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Known relationships <i>Last Name,First Name,Middle Name</i></label>
-                                <textarea class="form-control" placeholder="Johnson,Truman," rows="3"></textarea>
+                                <textarea ng-model="knownRelationships" class="form-control" placeholder="Johnson,Truman," rows="3" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Known PMIDs</label>
-                                <textarea class="form-control" placeholder="26321879" rows="3"></textarea>
+                                <textarea ng-model="knownPmids" class="form-control" placeholder="26321879" rows="3" required></textarea>
                             </div>
                             <button type="submit" class="btn btn-default">Submit</button>
                         </form>

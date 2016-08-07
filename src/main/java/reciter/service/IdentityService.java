@@ -10,4 +10,5 @@ public interface IdentityService {
 	List<IdentityBean> getAssosiatedGrantIdentityList(String cwid);
 	void save(List<Identity> identities);
 	List<IdentityBean> getTargetAuthorByNameOrCwid(String search);
+	void save(Identity identity);
 }

@@ -35,8 +35,10 @@ public class AuthorName {
 	/**
 	 * Name variants.
 	 */
-	private Set<AuthorName> nameVariants;
+//	private Set<AuthorName> nameVariants;
 
+	public AuthorName() {}
+	
 	/**
 	 * Constructs an author provided a first name, middle name, and last name.
 	 * 
@@ -134,9 +136,9 @@ public class AuthorName {
 		return (StringUtils.length(firstName) > 1 || StringUtils.length(middleName) > 1);
 	}
 
-	public boolean isNameVariant(AuthorName name) {
-		return nameVariants.contains(name);
-	}
+//	public boolean isNameVariant(AuthorName name) {
+//		return nameVariants.contains(name);
+//	}
 
 	/**
 	 * Return indexable variants of a name.
@@ -229,12 +231,12 @@ public class AuthorName {
 		if (lastName == null) throw new IllegalArgumentException("last name should not be null.");
 		this.lastName = StringUtils.capitalize(StringUtils.lowerCase(StringUtils.trim(lastName)));
 	}
-	public Set<AuthorName> getNameVariants() {
-		return nameVariants;
-	}
-	public void setNameVariants() {
-		this.nameVariants = variants("coauthor", 1);
-	}
+//	public Set<AuthorName> getNameVariants() {
+//		return nameVariants;
+//	}
+//	public void setNameVariants() {
+//		this.nameVariants = variants("coauthor", 1);
+//	}
 
 	public String pubmedFormat() {
 		return lastName + " " + firstInitial;

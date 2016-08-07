@@ -18,10 +18,10 @@ public class IdentityServiceImpl implements IdentityService {
 
 	@Autowired
 	private IdentityDao identityDao;
-	
+
 	@Autowired
 	private IdentityRepository identityRepository;
-	
+
 	@Override
 	public IdentityBean getIdentityByCwid(String cwid) {
 		Identity identity = identityDao.getIdentityByCwid(cwid);
@@ -37,14 +37,19 @@ public class IdentityServiceImpl implements IdentityService {
 		}
 		return identityDTOs;
 	}
-	
+
 	@Override
 	public void save(List<reciter.database.mongo.model.Identity> identities) {
 		for (reciter.database.mongo.model.Identity identity : identities) {
 			identityRepository.save(identity);
 		}
 	}
-	
+
+	@Override
+	public void save(reciter.database.mongo.model.Identity identity) {
+		identityRepository.save(identity);
+	}
+
 	@Override
 	public List<IdentityBean> getTargetAuthorByNameOrCwid(String search) {
 		List<Identity> identities = identityDao.getTargetAuthorByNameOrCwid(search);

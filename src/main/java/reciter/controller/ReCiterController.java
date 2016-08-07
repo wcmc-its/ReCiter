@@ -108,20 +108,28 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
 	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		ESearchResult eSearchResult = eSearchResultService.findByCwid(cwid);
-		List<Long> pmids = new ArrayList<Long>();
-//		for (ESearchPmid eSearchPmid : eSearchResult.getESearchPmid()) {
-//			pmids.add(eSearchPmid.getPmid());
-//		}
-		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
-		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
-		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
-		}
-		Analysis analysis = reCiterEngine.run(targetAuthor, reCiterArticles);
-		slf4jLogger.info(analysis.toString());
+		System.out.println("test");
+		
+		Analysis analysis = new Analysis();
+		analysis.setTruePos(9);
+		analysis.setGoldStandardSize(10);
+		analysis.setSelectedClusterSize(9);
+		
 		return analysis;
+//		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+//		ESearchResult eSearchResult = eSearchResultService.findByCwid(cwid);
+//		List<Long> pmids = new ArrayList<Long>();
+////		for (ESearchPmid eSearchPmid : eSearchResult.getESearchPmid()) {
+////			pmids.add(eSearchPmid.getPmid());
+////		}
+//		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
+//		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+//		for (PubMedArticle pubMedArticle : pubMedArticles) {
+//			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+//		}
+//		Analysis analysis = reCiterEngine.run(targetAuthor, reCiterArticles);
+//		slf4jLogger.info(analysis.toString());
+//		return analysis;
 	}
 	
 //	@RequestMapping(value = "/reciter/data_import/rc_identity", method = RequestMethod.POST)
@@ -134,7 +142,15 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/data_import/rc_identity", method = RequestMethod.POST)
 	@ResponseBody
 	public String importIdentity(@RequestBody List<Identity> identities) {
-		identityService.save(identities);
+		System.out.println(identities);
+//		identityService.save(identities);
+		return "Success";
+	}
+	
+	@RequestMapping(value = "/reciter/newidentity/", method = RequestMethod.POST)
+	@ResponseBody
+	public String importNewIdentity(@RequestBody Identity identity) {
+		identityService.save(identity);
 		return "Success";
 	}
 }

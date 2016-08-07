@@ -94,13 +94,13 @@ public class ReCiterCluster {
 	 * @return
 	 */
 	public boolean containsNameVariant(ReCiterAuthor targetAuthor) {
-		for (ReCiterArticle article : articleCluster) {
-			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
-				if (targetAuthor.getAuthorName().isNameVariant(author.getAuthorName())) {
-					return true;
-				}
-			}
-		}
+//		for (ReCiterArticle article : articleCluster) {
+//			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
+//				if (targetAuthor.getAuthorName().isNameVariant(author.getAuthorName())) {
+//					return true;
+//				}
+//			}
+//		}
 		return false;
 	}
 
