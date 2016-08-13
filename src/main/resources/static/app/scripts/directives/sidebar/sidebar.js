@@ -117,6 +117,7 @@ sbAdminApp.controller("reciterNew", function ($scope, $http) {
 //		knownRelationships: [first, second],
 //		knownPmids: [1, 2, 3]
 //	};
+	$scope.pending = true;
 	$scope.submit = function () {
 		var emails = $scope.email.split('\n');
 		var departments = $scope.department.split('\n');
@@ -158,9 +159,13 @@ sbAdminApp.controller("reciterNew", function ($scope, $http) {
 sbAdminApp.controller("reciterExisting", function ($scope, $http) {
 	$scope.test = "test";
 	$scope.submit = function () {
+		$scope.config = {
+				itemsPerPage: 5,
+				fillLastPage: true
+		}
 		$http.get('http://localhost:8080/reciter/analysis/by/cwid?cwid=' +  $scope.targetAuthor.originalObject.cwid).
 		success(function(data) {
-			$scope.data = data;
+			$scope.data = data.analysisObjectList;
 			console.log($scope.data);
 		});
 	};

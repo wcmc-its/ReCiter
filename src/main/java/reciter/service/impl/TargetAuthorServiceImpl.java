@@ -16,6 +16,7 @@ import reciter.database.dao.impl.BoardCertificationDaoImpl;
 import reciter.database.dao.impl.IdentityDaoImpl;
 import reciter.database.model.IdentityDegree;
 import reciter.database.model.IdentityDirectory;
+import reciter.database.mongo.model.Identity;
 import reciter.model.author.AuthorAffiliation;
 import reciter.model.author.AuthorDegree;
 import reciter.model.author.AuthorEducation;
@@ -102,7 +103,7 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		targetAuthor.setDepartment(identityDTO.getPrimaryDepartment());
 
 		// set other department.
-		targetAuthor.setOtherDeparment(identityDTO.getOtherDepartment());
+		targetAuthor.setOtherDepartment(identityDTO.getOtherDepartment());
 
 		// set citizenship
 		String countryOfCitizenship = identityCitizenshipService.getIdentityCitizenshipCountry(identityDTO.getCwid());
@@ -250,4 +251,58 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 		result = result.replace(" ", "%20");
 		return result;
 	}
+
+	@Override
+	public TargetAuthor convertToTargetAuthor(Identity identity) {
+		String institution = null;
+		if (identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
+			institution = identity.getInstitutions().get(0);
+		}
+		TargetAuthor targetAuthor = new TargetAuthor(
+			identity.getAuthorName(),
+			new AuthorAffiliation(institution)
+		);
+		targetAuthor.setCwid(identity.getCwid());
+		targetAuthor.setGrantCoauthors(identity.getKnownRelationships());
+		
+		String primaryDepartment = null;
+		String otherDepartment = null;
+		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
+			primaryDepartment = identity.getDepartments().get(0);
+			if (identity.getDepartments().size() > 1) {
+				otherDepartment = identity.getDepartments().get(1);
+			}
+		}
+		targetAuthor.setDepartment(primaryDepartment);
+		targetAuthor.setOtherDepartment(otherDepartment);
+		
+		String email = null;
+		String otherEmail = null;
+		targetAuthor.setInstitutions(identity.getInstitutions());
+		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
+			email = identity.getEmails().get(0);
+			if (identity.getEmails().size() > 1) {
+				otherEmail = identity.getEmails().get(1);
+			}
+		}
+		targetAuthor.setEmail(email);
+		targetAuthor.setEmailOther(otherEmail);
+		targetAuthor.setEmailAddresses(identity.getEmails());
+		return targetAuthor;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

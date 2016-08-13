@@ -141,8 +141,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		pubmedXmlQuery.setRetMax(Math.min(Math.max(numberOfPubmedArticles / Math.max(numAvailableProcessors, 1), numberOfPubmedArticles)
 					, PubmedXmlQuery.DEFAULT_RETMAX));
 		slf4jLogger.info("numAvailableProcessors=[" + numAvailableProcessors + "] retMax=[" 
-				+ pubmedXmlQuery.getRetMax() + "] for PubMedQuery=[" + pubMedQuery + "], "
-				+ "] numberOfPubmedArticles=[" + numberOfPubmedArticles + "].");
+				+ pubmedXmlQuery.getRetMax() + "], pubMedQuery=[" + pubMedQuery + "], "
+				+ "numberOfPubmedArticles=[" + numberOfPubmedArticles + "].");
 
 		// Retrieve the publications retMax records at one time and store to disk.
 		int currentRetStart = 0;

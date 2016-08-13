@@ -1,5 +1,7 @@
 package reciter.service.impl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +21,7 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 	}
 
 	@Override
-	public ESearchResult findByCwid(String cwid) {
+	public List<ESearchResult> findByCwid(String cwid) {
 		return eSearchResultRepository.findByCwid(cwid);
 	}
 	

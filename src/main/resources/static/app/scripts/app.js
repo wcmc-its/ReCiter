@@ -13,7 +13,8 @@ angular
     'ui.router',
     'ui.bootstrap',
     'angular-loading-bar',
-    'angucomplete'
+    'angucomplete',
+    'angular-table'
   ])
   .config(['$stateProvider','$urlRouterProvider','$ocLazyLoadProvider',function ($stateProvider,$urlRouterProvider,$ocLazyLoadProvider) {
     

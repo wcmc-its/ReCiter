@@ -10,7 +10,7 @@ public class ESearchResult {
 	
 	public ESearchResult(String cwid, ESearchPmid eSearchPmid) {
 		this.cwid = cwid;
-		this.eSearchPmid = eSearchPmid;
+		this.seteSearchPmid(eSearchPmid);
 	}
 	public String getCwid() {
 		return cwid;
@@ -18,10 +18,11 @@ public class ESearchResult {
 	public void setCwid(String cwid) {
 		this.cwid = cwid;
 	}
-	public ESearchPmid getEsearchResult() {
+	public ESearchPmid geteSearchPmid() {
 		return eSearchPmid;
 	}
-	public void setEsearchResult(ESearchPmid eSearchPmid) {
+	public void seteSearchPmid(ESearchPmid eSearchPmid) {
 		this.eSearchPmid = eSearchPmid;
 	}
+
 }

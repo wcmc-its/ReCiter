@@ -97,7 +97,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
 			String extractedDept = extractDepartment(affiliation);
 			String targetAuthorDept = targetAuthor.getDepartment();
-			String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
+			String targetAuthorOtherDept = targetAuthor.getOtherDepartment();
 			if (StringUtils.containsIgnoreCase(extractedDept, targetAuthorDept) || 
 					StringUtils.containsIgnoreCase(extractedDept, targetAuthorOtherDept) ||
 					StringUtils.containsIgnoreCase(targetAuthorDept, extractedDept) || 
@@ -113,7 +113,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
 		String targetAuthorDept = targetAuthor.getDepartment();
-		String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
+		String targetAuthorOtherDept = targetAuthor.getOtherDepartment();
 		
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
@@ -164,7 +164,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	private boolean departmentMatchStrict(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
 		String targetAuthorDept = targetAuthor.getDepartment();
-		String targetAuthorOtherDept = targetAuthor.getOtherDeparment();
+		String targetAuthorOtherDept = targetAuthor.getOtherDepartment();
 		
 		// this causes precision to decrease, but increases recall.
 //		if (departments.contains(targetAuthorDept) || departments.contains(targetAuthorOtherDept)) {

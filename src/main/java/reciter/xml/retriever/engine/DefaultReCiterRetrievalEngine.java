@@ -65,7 +65,8 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		for (RetrievalStrategy retrievalStrategy : retrievalStrategies) {
 			try {
 				retrievalStrategy.constructPubMedQuery(targetAuthor);
-				slf4jLogger.error("cwid=[" + cwid + "], pubmedQuery=[" + retrievalStrategy.getPubMedQuery() + "]");
+				slf4jLogger.error("cwid=[" + cwid + "], retrievalStrategy=[" + retrievalStrategy.getRetrievalStrategyName() 
+					+ "], pubmedQuery=[" + retrievalStrategy.getPubMedQuery() + "]");
 				List<PubMedArticle> pubMedArticles = retrievalStrategy.retrieve();
 				for (PubMedArticle pubMedArticle : pubMedArticles) {
 					pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
@@ -93,7 +94,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
 		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now());
-		eSearchResultService.pushESearchResult(new ESearchResult(cwid, eSearchPmid));
+		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid));
 	}
 
 //	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(TargetAuthor targetAuthor) {

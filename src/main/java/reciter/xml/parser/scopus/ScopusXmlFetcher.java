@@ -13,9 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
+import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.repository.PubMedRepository;
 import reciter.engine.ReCiterEngineProperty;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.service.ESearchResultService;
 import reciter.xml.parser.AbstractXmlFetcher;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 
@@ -30,7 +32,7 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	private ScopusXmlParser scopusXmlParser;
 
 	@Autowired
-	private PubMedRepository pubMedRepository;
+	private ESearchResultService eSearchResultService;
 	
 	public class ScopusXmlFetcherRunnable implements Runnable {
 
@@ -93,13 +95,14 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 
 	public void fetch(String cwid) throws ParserConfigurationException, SAXException, IOException {
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		// TODO
-		List<PubMedArticle> pubmedArticleList= null;
-//		List<PubMedArticle> pubmedArticleList = pubMedRepository.findPubMedArticles(cwid);
-		for (PubMedArticle pubmedArticle : pubmedArticleList) {
-			long pmid = pubmedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
-			ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);
-			executor.execute(scopusRunnable);
+		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
+		
+		for (ESearchResult eSearchResult : eSearchResults) {
+			List<Long> pmids = eSearchResult.geteSearchPmid().getPmids();
+			for (long pmid : pmids) {
+				ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);
+				executor.execute(scopusRunnable);
+			}
 		}
 		executor.shutdown();
 		while (!executor.isTerminated()) {}

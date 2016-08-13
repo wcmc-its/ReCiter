@@ -11,7 +11,7 @@ public class TargetAuthor extends ReCiterAuthor {
 
 	private String cwid;
 	private String department;
-	private String otherDeparment;
+	private String otherDepartment;
 	private List<AuthorEducation> educations;
 	private AuthorDegree degree;
 	private String citizenship;
@@ -49,12 +49,12 @@ public class TargetAuthor extends ReCiterAuthor {
 		this.department = department;
 	}
 	
-	public String getOtherDeparment() {
-		return otherDeparment;
+	public String getOtherDepartment() {
+		return otherDepartment;
 	}
 
-	public void setOtherDeparment(String otherDeparment) {
-		this.otherDeparment = otherDeparment;
+	public void setOtherDepartment(String otherDepartment) {
+		this.otherDepartment = otherDepartment;
 	}
 
 	public AuthorDegree getDegree() {

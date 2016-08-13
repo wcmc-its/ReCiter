@@ -17,11 +17,12 @@ public class ESearchResultRepositoryImpl implements ESearchResultRepositoryCusto
 	
 	@Override
 	public boolean pushESearchResult(ESearchResult eSearchResult) {
-		String cwid = eSearchResult.getCwid();
-		ESearchPmid eSearchPmid = eSearchResult.getEsearchResult();
-		// Insert each ESearchPmid object into the collection.
-		BasicDBObject basicDbObject = new BasicDBObject("$addToSet", new BasicDBObject("eSearchPmid", new BasicDBObject("$each", eSearchPmid)));
-		WriteResult writeResult = mongoTemplate.getCollection("esearchresult").update(new BasicDBObject("cwid", cwid), basicDbObject, true, false);
-		return writeResult.wasAcknowledged();
+		return false;
+//		String cwid = eSearchResult.getCwid();
+//		ESearchPmid eSearchPmid = eSearchResult.getEsearchResult();
+//		// Insert each ESearchPmid object into the collection.
+//		BasicDBObject basicDbObject = new BasicDBObject("$addToSet", new BasicDBObject("eSearchPmid", new BasicDBObject("$each", eSearchPmid)));
+//		WriteResult writeResult = mongoTemplate.getCollection("esearchresult").update(new BasicDBObject("cwid", cwid), basicDbObject, true, false);
+//		return writeResult.wasAcknowledged();
 	}
 }

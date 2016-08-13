@@ -1,7 +1,9 @@
 package reciter.controller;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
 import reciter.engine.Engine;
@@ -58,7 +61,7 @@ public class ReCiterController {
 
 	@RequestMapping(value = "/reciter/esearchresult/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
-	public ESearchResult index(@RequestParam(value="cwid") String cwid) {
+	public List<ESearchResult> index(@RequestParam(value="cwid") String cwid) {
 		return eSearchResultService.findByCwid(cwid);
 	}
 
@@ -108,28 +111,38 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
 	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
-		System.out.println("test");
+//		System.out.println("test");
+//		
+//		Analysis analysis = new Analysis();
+//		analysis.setTruePos(9);
+//		analysis.setGoldStandardSize(10);
+//		analysis.setSelectedClusterSize(9);
+//		
+//		List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
+//		AnalysisObject a1 = new AnalysisObject();
+//		a1.setStatus(StatusEnum.FALSE_NEGATIVE);
+//		a1.setCwid("meb7002");
+//		a1.setTargetName("Michael E. Bales");
+//		a1.setPmid(26769910);
+//		analysisObjectList.add(a1);
+//		analysis.setAnalysisObjectList(analysisObjectList);
 		
-		Analysis analysis = new Analysis();
-		analysis.setTruePos(9);
-		analysis.setGoldStandardSize(10);
-		analysis.setSelectedClusterSize(9);
-		
-		return analysis;
-//		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-//		ESearchResult eSearchResult = eSearchResultService.findByCwid(cwid);
-//		List<Long> pmids = new ArrayList<Long>();
-////		for (ESearchPmid eSearchPmid : eSearchResult.getESearchPmid()) {
-////			pmids.add(eSearchPmid.getPmid());
-////		}
-//		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
-//		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
-//		for (PubMedArticle pubMedArticle : pubMedArticles) {
-//			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
-//		}
-//		Analysis analysis = reCiterEngine.run(targetAuthor, reCiterArticles);
-//		slf4jLogger.info(analysis.toString());
 //		return analysis;
+		
+		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
+		Set<Long> pmids = new HashSet<Long>();
+		for (ESearchResult eSearchResult : eSearchResults) {
+			pmids.addAll(eSearchResult.geteSearchPmid().getPmids());
+		}
+		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(new ArrayList<Long>(pmids));
+		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		for (PubMedArticle pubMedArticle : pubMedArticles) {
+			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+		}
+		Analysis analysis = reCiterEngine.run(targetAuthor, reCiterArticles);
+		slf4jLogger.info(analysis.toString());
+		return analysis;
 	}
 	
 //	@RequestMapping(value = "/reciter/data_import/rc_identity", method = RequestMethod.POST)
@@ -151,6 +164,8 @@ public class ReCiterController {
 	@ResponseBody
 	public String importNewIdentity(@RequestBody Identity identity) {
 		identityService.save(identity);
+		TargetAuthor targetAuthor = targetAuthorService.convertToTargetAuthor(identity);
+		defaultReCiterRetrievalEngine.retrieve(targetAuthor);
 		return "Success";
 	}
 }
