@@ -165,7 +165,8 @@ sbAdminApp.controller("reciterExisting", function ($scope, $http) {
 		}
 		$http.get('http://localhost:8080/reciter/analysis/by/cwid?cwid=' +  $scope.targetAuthor.originalObject.cwid).
 		success(function(data) {
-			$scope.data = data.analysisObjectList;
+			$scope.data = data;
+			$scope.table_data = data.analysisObjectList;
 			console.log($scope.data);
 		});
 	};
