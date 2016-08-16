@@ -30,7 +30,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 	private boolean bAffiliation;
 	private boolean bAfid;
 	private boolean bAffilname;
-	private boolean bNameVariant;
+//	private boolean bNameVariant;
 	private boolean bAffiliationCity;
 	private boolean bAffiliationCountry;
 
@@ -47,7 +47,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 	private int afid;
 	private String affilname;
-	private String nameVariant;
+//	private String nameVariant;
 	private String affiliationCity;
 	private String affiliationCountry;
 	private Map<Integer, Affiliation> affiliations = new HashMap<Integer, Affiliation>();
@@ -76,9 +76,9 @@ public class ScopusXmlHandler extends DefaultHandler {
 			if (qName.equalsIgnoreCase("affilname")) {
 				bAffilname = true;
 			}
-			if (qName.equalsIgnoreCase("name-variant")) {
-				bNameVariant = true;
-			}
+//			if (qName.equalsIgnoreCase("name-variant")) {
+//				bNameVariant = true;
+//			}
 			if (qName.equalsIgnoreCase("affiliation-city")) {
 				bAffiliationCity = true;
 			}
@@ -139,9 +139,9 @@ public class ScopusXmlHandler extends DefaultHandler {
 			if (bAffilname) {
 				affilname = new String(ch, start, length);
 			}
-			if (bNameVariant) {
-				nameVariant = new String(ch, start, length);
-			}
+//			if (bNameVariant) {
+//				nameVariant = new String(ch, start, length);
+//			}
 			if (bAffiliationCity) {
 				affiliationCity = new String(ch, start, length);
 			}
@@ -184,7 +184,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 		if (qName.equalsIgnoreCase("affiliation") && bAffiliation) {
 			if (afid != 0) {
-				affiliations.put(afid, new Affiliation(afid, affilname, nameVariant, affiliationCity, affiliationCountry));
+				affiliations.put(afid, new Affiliation(afid, affilname, affiliationCity, affiliationCountry));
 			}
 			bAffiliation = false;
 		}
@@ -198,9 +198,9 @@ public class ScopusXmlHandler extends DefaultHandler {
 			if (qName.equalsIgnoreCase("affilname")) {
 				bAffilname = false;
 			}
-			if (qName.equalsIgnoreCase("name-variant")) {
-				bNameVariant = false;
-			}
+//			if (qName.equalsIgnoreCase("name-variant")) {
+//				bNameVariant = false;
+//			}
 			if (qName.equalsIgnoreCase("affiliation-city")) {
 				bAffiliationCity = false;
 			}

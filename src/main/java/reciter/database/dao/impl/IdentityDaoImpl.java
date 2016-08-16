@@ -7,17 +7,89 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
 import reciter.database.dao.IdentityDao;
+import reciter.database.model.Alias;
 import reciter.database.model.Identity;
 
 @Repository("identityDao")
 public class IdentityDaoImpl implements IdentityDao {
+	
+	public Map<String, List<Alias>> getAlias() {
+		Map<String, List<Alias>> m = new HashMap<String, List<Alias>>();
+		Connection con = DbConnectionFactory.getConnection();
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		String query = "select cwid, first_name, last_name, middle_name, title, primary_department, "
+				+ "other_departments, primary_affiliation, email, email_other from rc_identity where cwid is not null and cwid not regexp '^[0-9]+';";
+		
+		try {
+			pst = con.prepareStatement(query);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				Identity identity = new Identity();
+				identity.setCwid(rs.getString(1));
+				identity.setFirstName(rs.getString(2));
+				identity.setLastName(rs.getString(3));
+				identity.setMiddleName(rs.getString(4));
+				identity.setTitle(rs.getString(5));
+				identity.setPrimaryDepartment(rs.getString(6));
+				identity.setOtherDepartment(rs.getString(7));
+				identity.setPrimaryAffiliation(rs.getString(8));
+				identity.setEmail(rs.getString(9));
+				identity.setEmailOther(rs.getString(10));
+//				identities.add(identity); // need to clean up data in rc_identity_alias.
+			}
+		} catch (SQLException e) {
+		} finally {
+			DbUtil.close(rs);
+			DbUtil.close(pst);	
+			DbUtil.close(con);
+		}
+		
+		return m;
+	}
+	
+	public List<Identity> getAllIdentities() {
+		List<Identity> identities = new ArrayList<Identity>();
+		Connection con = DbConnectionFactory.getConnection();
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		String query = "select cwid, first_name, last_name, middle_name, title, primary_department, "
+				+ "other_departments, primary_affiliation, email, email_other from rc_identity where cwid is not null and cwid not regexp '^[0-9]+';";
+		
+		try {
+			pst = con.prepareStatement(query);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				Identity identity = new Identity();
+				identity.setCwid(rs.getString(1));
+				identity.setFirstName(rs.getString(2));
+				identity.setLastName(rs.getString(3));
+				identity.setMiddleName(rs.getString(4));
+				identity.setTitle(rs.getString(5));
+				identity.setPrimaryDepartment(rs.getString(6));
+				identity.setOtherDepartment(rs.getString(7));
+				identity.setPrimaryAffiliation(rs.getString(8));
+				identity.setEmail(rs.getString(9));
+				identity.setEmailOther(rs.getString(10));
+				identities.add(identity);
+			}
+		} catch (SQLException e) {
+		} finally {
+			DbUtil.close(rs);
+			DbUtil.close(pst);	
+			DbUtil.close(con);
+		}
+		return identities;
+	}
 	
 	/**
 	 * Retrieves identity information for cwid. Identity information includes first name, last name, middle name, etc.

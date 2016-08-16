@@ -69,7 +69,7 @@ public class EducationStrategy extends AbstractTargetAuthorStrategy {
 						scopusArticle.getAffiliationMap().get(entry.getKey()) != null) {
 						
 						String scopusAffiliation = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffilname();
-						String scopusAffiliationNameVariant = scopusArticle.getAffiliationMap().get(entry.getKey()).getNameVariant();
+//						String scopusAffiliationNameVariant = scopusArticle.getAffiliationMap().get(entry.getKey()).getNameVariant();
 						String affiliationCity = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCity();
 						String affiliationCountry = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry();
 						
@@ -79,10 +79,10 @@ public class EducationStrategy extends AbstractTargetAuthorStrategy {
 							scopusSb.append(" ");
 						}
 						
-						if (scopusAffiliationNameVariant != null) {
-							scopusSb.append(scopusAffiliationNameVariant);
-							scopusSb.append(" ");
-						}
+//						if (scopusAffiliationNameVariant != null) {
+//							scopusSb.append(scopusAffiliationNameVariant);
+//							scopusSb.append(" ");
+//						}
 						
 						if (affiliationCity != null) {
 							scopusSb.append(affiliationCity);

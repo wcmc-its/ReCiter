@@ -6,7 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import reciter.database.DbConnectionFactory;
 import reciter.database.DbUtil;
@@ -15,6 +17,40 @@ import reciter.database.model.GoldStandardPmid;
 
 public class GoldStandardPmidsDaoImpl implements GoldStandardPmidsDao {
 
+	/**
+	 * 
+	 */
+	@Override
+	public Map<String, List<Long>> getGoldStandard(){
+		Map<String, List<Long>> map = new HashMap<String, List<Long>>();
+		Connection con = DbConnectionFactory.getConnection();
+		Statement pst = null;
+		ResultSet rs = null;
+		try{
+			String query = "select cwid, pmid from rc_gold_standard_pmids";
+			pst=con.createStatement();
+			rs=pst.executeQuery(query);
+			while(rs.next()){
+				String cwid = rs.getString(1);
+				long pmid = rs.getLong(2);
+				if (!map.containsKey(cwid)) {
+					List<Long> pmids = new ArrayList<Long>();
+					pmids.add(pmid);
+					map.put(cwid, pmids);
+				} else {
+					map.get(cwid).add(pmid);
+				}
+			}
+		}catch(SQLException e){
+			e.printStackTrace();
+		}finally{
+			DbUtil.close(rs);
+			DbUtil.close(pst);
+			DbUtil.close(con);
+		}
+		return map;
+	}
+	
 	/**
 	 * Retrieves the gold standard PMIDs for cwid.
 	 * @param cwid

@@ -254,41 +254,42 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 
 	@Override
 	public TargetAuthor convertToTargetAuthor(Identity identity) {
-		String institution = null;
-		if (identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
-			institution = identity.getInstitutions().get(0);
-		}
-		TargetAuthor targetAuthor = new TargetAuthor(
-			identity.getAuthorName(),
-			new AuthorAffiliation(institution)
-		);
-		targetAuthor.setCwid(identity.getCwid());
-		targetAuthor.setGrantCoauthors(identity.getKnownRelationships());
-		
-		String primaryDepartment = null;
-		String otherDepartment = null;
-		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
-			primaryDepartment = identity.getDepartments().get(0);
-			if (identity.getDepartments().size() > 1) {
-				otherDepartment = identity.getDepartments().get(1);
-			}
-		}
-		targetAuthor.setDepartment(primaryDepartment);
-		targetAuthor.setOtherDepartment(otherDepartment);
-		
-		String email = null;
-		String otherEmail = null;
-		targetAuthor.setInstitutions(identity.getInstitutions());
-		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
-			email = identity.getEmails().get(0);
-			if (identity.getEmails().size() > 1) {
-				otherEmail = identity.getEmails().get(1);
-			}
-		}
-		targetAuthor.setEmail(email);
-		targetAuthor.setEmailOther(otherEmail);
-		targetAuthor.setEmailAddresses(identity.getEmails());
-		return targetAuthor;
+//		String institution = null;
+//		if (identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
+//			institution = identity.getInstitutions().get(0);
+//		}
+//		TargetAuthor targetAuthor = new TargetAuthor(
+//			identity.getAuthorName(),
+//			new AuthorAffiliation(institution)
+//		);
+//		targetAuthor.setCwid(identity.getCwid());
+//		targetAuthor.setGrantCoauthors(identity.getKnownRelationships());
+//		
+//		String primaryDepartment = null;
+//		String otherDepartment = null;
+//		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
+//			primaryDepartment = identity.getDepartments().get(0);
+//			if (identity.getDepartments().size() > 1) {
+//				otherDepartment = identity.getDepartments().get(1);
+//			}
+//		}
+//		targetAuthor.setDepartment(primaryDepartment);
+//		targetAuthor.setOtherDepartment(otherDepartment);
+//		
+//		String email = null;
+//		String otherEmail = null;
+//		targetAuthor.setInstitutions(identity.getInstitutions());
+//		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
+//			email = identity.getEmails().get(0);
+//			if (identity.getEmails().size() > 1) {
+//				otherEmail = identity.getEmails().get(1);
+//			}
+//		}
+//		targetAuthor.setEmail(email);
+//		targetAuthor.setEmailOther(otherEmail);
+//		targetAuthor.setEmailAddresses(identity.getEmails());
+//		return targetAuthor;
+		return null;
 	}
 	
 	

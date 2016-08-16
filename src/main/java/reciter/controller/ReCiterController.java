@@ -3,6 +3,8 @@ package reciter.controller;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -15,15 +17,19 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import reciter.database.mongo.model.ESearchPmid;
+import reciter.database.dao.impl.GoldStandardPmidsDaoImpl;
+import reciter.database.dao.impl.IdentityDaoImpl;
 import reciter.database.mongo.model.ESearchResult;
+import reciter.database.mongo.model.GoldStandard;
 import reciter.database.mongo.model.Identity;
 import reciter.engine.Engine;
 import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
+import reciter.service.GoldStandardService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
 import reciter.service.TargetAuthorService;
@@ -41,6 +47,9 @@ public class ReCiterController {
 
 	@Autowired
 	private ESearchResultService eSearchResultService;
+	
+	@Autowired
+	private GoldStandardService goldStandardService;
 
 	@Autowired
 	private PubMedService pubMedService;
@@ -81,6 +90,31 @@ public class ReCiterController {
 	@ResponseBody
 	public List<PubMedArticle> findByMedlineCitationMedlineCitationPMIDPmid() {
 		return null;
+	}
+	
+	@RequestMapping(value = "/reciter/migrate/goldstandard", method = RequestMethod.GET)
+	@ResponseBody
+	public void migrateGoldStandard() {
+		IdentityDaoImpl identityDaoImpl = new IdentityDaoImpl();
+		List<reciter.database.model.Identity> identities = identityDaoImpl.getAllIdentities();
+		List<reciter.database.mongo.model.Identity> mongoIdentities = new ArrayList<reciter.database.mongo.model.Identity>();
+		for (reciter.database.model.Identity identity : identities) {
+			reciter.database.mongo.model.Identity i = new reciter.database.mongo.model.Identity();
+			i.setCwid(identity.getCwid());
+			i.setAuthorName(new AuthorName(identity.getFirstName(), identity.getMiddleName(), identity.getLastName()));
+			
+			mongoIdentities.add(i);
+		}
+		identityService.save(mongoIdentities);
+		
+//		GoldStandardPmidsDaoImpl g = new GoldStandardPmidsDaoImpl();
+//		Map<String, List<Long>> pmids = g.getGoldStandard();
+//		for (Entry<String, List<Long>> entry : pmids.entrySet()) {
+//			GoldStandard goldStandard = new GoldStandard();
+//			goldStandard.setCwid(entry.getKey());
+//			goldStandard.setPmids(entry.getValue());
+//			goldStandardService.save(goldStandard);
+//		}
 	}
 
 //	@RequestMapping(value = "/reciter/authornames/by/cwid", method = RequestMethod.GET)
