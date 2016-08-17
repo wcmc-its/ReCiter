@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -20,17 +21,25 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.ESearchResult;
+import reciter.database.mongo.model.Identity;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.service.ESearchResultService;
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
+import reciter.xml.parser.scopus.ScopusXmlHandler;
+import reciter.xml.parser.scopus.ScopusXmlParser;
+import reciter.xml.parser.scopus.ScopusXmlQuery;
+import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.retriever.pubmed.json.EsearchObject;
 import reciter.xml.retriever.pubmed.json.EsearchObjectJsonDeserializer;
 import reciter.xml.retriever.pubmed.json.EsearchResult;
@@ -66,35 +75,41 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @param targetAuthor
 	 * @return
 	 */
-	protected abstract String constructInitialQuery(TargetAuthor targetAuthor);
+	protected abstract String constructInitialQuery(Identity identity);
 
 	/**
 	 * Strict query.
 	 * @param targetAuthor
 	 * @return
 	 */
-	protected abstract String constructStrictQuery(TargetAuthor targetAuthor);
+	protected abstract String constructStrictQuery(Identity identity);
 	
 	public void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
 
 	@Override
-	public void constructPubMedQuery(TargetAuthor targetAuthor) throws IOException {
+	public void constructPubMedQuery(Identity identity) throws IOException {
 
 		// Construct initial relaxed query.
-		String initialQuery = URLEncoder.encode(constructInitialQuery(targetAuthor), "UTF-8");
-		PubmedESearchHandler handler = getPubmedESearchHandler(initialQuery);
+		String constructedInitialQuery = constructInitialQuery(identity);
+		if (constructedInitialQuery != null) {
+			String initialQuery = URLEncoder.encode(constructedInitialQuery, "UTF-8");
+			PubmedESearchHandler handler = getPubmedESearchHandler(initialQuery);
 
-		// check initial query's threshold. if it's greater than the threshold, retrieve using the strict query.
-		if (handler.getCount() > DEFAULT_THRESHOLD) {
-			String strictQuery = URLEncoder.encode(constructStrictQuery(targetAuthor), "UTF-8");
-			PubmedESearchHandler handlerVerboseFirstName = getPubmedESearchHandler(strictQuery);
-			pubMedQuery = strictQuery;
-			numberOfPubmedArticles = handlerVerboseFirstName.getCount();
-		} else {
-			pubMedQuery = initialQuery;
-			numberOfPubmedArticles = handler.getCount();
+			// check initial query's threshold. if it's greater than the threshold, retrieve using the strict query.
+			if (handler.getCount() > DEFAULT_THRESHOLD) {
+				String constructedStrictQuery = constructStrictQuery(identity);
+				if (constructedStrictQuery != null) {
+					String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
+					PubmedESearchHandler handlerVerboseFirstName = getPubmedESearchHandler(strictQuery);
+					pubMedQuery = strictQuery;
+					numberOfPubmedArticles = handlerVerboseFirstName.getCount();
+				}
+			} else {
+				pubMedQuery = initialQuery;
+				numberOfPubmedArticles = handler.getCount();
+			}
 		}
 	}
 
@@ -192,7 +207,43 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		list.forEach(results::addAll);
 		return results;
 	}
+	
+	@Override
+	public List<ScopusArticle> retrieveScopus(List<Long> pmids) {
 
+		List<ScopusArticle> scopusArticles = new ArrayList<ScopusArticle>();
+		
+		for (Long pmid : pmids) {
+			ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(Long.toString(pmid)).build();
+			String scopusUrl = scopusXmlQuery.getQueryUrl();
+			try {
+				URL url = new URL(scopusUrl);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setRequestMethod("GET");
+				conn.setRequestProperty("Accept", "application/xml");
+				conn.setRequestProperty("X-ELS-Insttoken", "d44a98333430d51ce0c860c2b84b9032");
+				conn.setRequestProperty("X-ELS-APIKey", "e0fa610418a4859d24f2457e021aea60");
+
+				ScopusXmlHandler scopusXmlHandler = new ScopusXmlHandler();
+				ScopusXmlParser scopusParser = new ScopusXmlParser(scopusXmlHandler);
+				slf4jLogger.info("Retrieving scopus article [" + pmid + "]");
+				InputSource source = new InputSource(conn.getInputStream());
+				slf4jLogger.info("Finished retrieving scopus article [" + pmid + "]");
+				ScopusArticle scopusArticle = scopusParser.parse(source);
+				if (scopusArticle != null) {
+					slf4jLogger.info("Sanity check: " + scopusArticle.getPubmedId());
+					scopusArticles.add(scopusArticle);
+				} else {
+					slf4jLogger.info("Pmid=[" + pmid + "] has null Scopus article.");
+				}
+				conn.disconnect();
+			} catch (IOException e) {
+				slf4jLogger.error("Unable to retrieve Scopus article for pmid=[" + pmid + "].", e);
+			}
+		}
+		return scopusArticles;
+	}
+	
 	/**
 	 * Retrieve only the pmids for a query.
 	 * 

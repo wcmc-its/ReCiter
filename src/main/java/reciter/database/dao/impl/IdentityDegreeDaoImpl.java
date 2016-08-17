@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
@@ -44,5 +46,32 @@ public class IdentityDegreeDaoImpl implements IdentityDegreeDao {
 			DbUtil.close(con);
 		}
 		return identityDegree;
+	}
+	
+	public Map<String, IdentityDegree> getAllIdentityDegree() {
+		Map<String, IdentityDegree> m = new HashMap<String, IdentityDegree>();
+		Connection con = DbConnectionFactory.getConnection();
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		String query = "SELECT cwid, bachelor, masters, doctoral FROM rc_identity_degree where cwid is not null and cwid not regexp '^[0-9]+'";
+		try {
+			pst = con.prepareStatement(query);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				String cwid = rs.getString(1);
+				IdentityDegree identityDegree = new IdentityDegree();
+				identityDegree.setBachelor(rs.getInt(2));
+				identityDegree.setMasters(rs.getInt(3));
+				identityDegree.setDoctoral(rs.getInt(4));
+				m.put(cwid, identityDegree);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DbUtil.close(rs);
+			DbUtil.close(pst);
+			DbUtil.close(con);
+		}
+		return m;
 	}
 }

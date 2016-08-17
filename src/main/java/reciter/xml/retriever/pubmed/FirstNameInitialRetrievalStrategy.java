@@ -1,6 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 
 public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy {
 
@@ -12,13 +12,13 @@ public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy
 	}
 
 	@Override
-	public String constructInitialQuery(TargetAuthor targetAuthor) {
-		return targetAuthor.getAuthorName().getLastName() + " " + targetAuthor.getAuthorName().getFirstInitial() + "[au]";
+	public String constructInitialQuery(Identity identity) {
+		return identity.getAuthorName().getLastName() + " " + identity.getAuthorName().getFirstInitial() + "[au]";
 	}
 
 	@Override
-	protected String constructStrictQuery(TargetAuthor targetAuthor) {
-		return targetAuthor.getAuthorName().getLastName() + " " + targetAuthor.getAuthorName().getFirstName() + "[au]";
+	protected String constructStrictQuery(Identity identity) {
+		return identity.getAuthorName().getLastName() + " " + identity.getAuthorName().getFirstName() + "[au]";
 	}
 	
 	@Override

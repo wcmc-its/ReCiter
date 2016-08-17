@@ -57,15 +57,16 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 	 */
 	public boolean containsWeillCornellFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
 		if (scopusArticle != null) {
-			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
+			for (Author scopusAuthor : scopusArticle.getAuthors()) {
 				if (StringUtils.equalsIgnoreCase(scopusAuthor.getSurname(), targetAuthor.getAuthorName().getLastName())) {
 					Set<Integer> afidSet = scopusAuthor.getAfidSet();
 					for (int afid : afidSet) {
-						Affiliation scopusAffialition = scopusArticle.getAffiliationMap().get(afid);
-						if (scopusAffialition != null) {
-							String affilName = scopusAffialition.getAffilname();
-							if (containsWeillCornell(affilName)) {
-								return true;
+						for (Affiliation affiliation : scopusArticle.getAffiliations()) {
+							if (affiliation.getAfid() == afid) {
+								String affilName = affiliation.getAffilname();
+								if (containsWeillCornell(affilName)) {
+									return true;
+								}
 							}
 						}
 					}

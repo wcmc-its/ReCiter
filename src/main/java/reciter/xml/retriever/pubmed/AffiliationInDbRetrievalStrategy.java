@@ -1,6 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 
 public class AffiliationInDbRetrievalStrategy extends AbstractRetrievalStrategy {
 
@@ -12,19 +12,27 @@ public class AffiliationInDbRetrievalStrategy extends AbstractRetrievalStrategy 
 	}
 	
 	@Override
-	protected String constructInitialQuery(TargetAuthor targetAuthor) {
-		String affiliation = targetAuthor.getAffiliation().getAffiliationName();
-		String lastName = targetAuthor.getAuthorName().getLastName();
-		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
-		return lastName + " " + firstInitial + " AND " + affiliation;
+	protected String constructInitialQuery(Identity identity) {
+		if (identity.getAffiliations() != null && !identity.getAffiliations().isEmpty()) {
+			String affiliation = identity.getAffiliations().get(0);
+			String lastName = identity.getAuthorName().getLastName();
+			String firstInitial = identity.getAuthorName().getFirstInitial();
+			return lastName + " " + firstInitial + " AND " + affiliation;
+		} else {
+			return null;
+		}
 	}
 
 	@Override
-	protected String constructStrictQuery(TargetAuthor targetAuthor) {
-		String affiliation = targetAuthor.getAffiliation().getAffiliationName();
-		String lastName = targetAuthor.getAuthorName().getLastName();
-		String firstName = targetAuthor.getAuthorName().getFirstName();
-		return lastName + " " + firstName + " AND " + affiliation;
+	protected String constructStrictQuery(Identity identity) {
+		if (identity.getAffiliations() != null && !identity.getAffiliations().isEmpty()) {
+			String affiliation = identity.getAffiliations().get(0);
+			String lastName = identity.getAuthorName().getLastName();
+			String firstName = identity.getAuthorName().getFirstName();
+			return lastName + " " + firstName + " AND " + affiliation;
+		} else {
+			return null;
+		}
 	}
 
 	@Override

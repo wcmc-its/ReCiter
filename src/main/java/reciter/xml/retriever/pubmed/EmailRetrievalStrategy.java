@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import reciter.database.mongo.model.Identity;
 import reciter.model.author.TargetAuthor;
 
 public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
@@ -20,13 +21,21 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected String constructInitialQuery(TargetAuthor targetAuthor) {
-		return targetAuthor.getEmail();
+	protected String constructInitialQuery(Identity identity) {
+		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
+			return identity.getEmails().get(0);
+		} else {
+			return null;
+		}
 	}
 
 	@Override
-	protected String constructStrictQuery(TargetAuthor targetAuthor) {
-		return targetAuthor.getEmail();
+	protected String constructStrictQuery(Identity identity) {
+		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
+			return identity.getEmails().get(0);
+		} else {
+			return null;
+		}
 	}
 
 	@Override

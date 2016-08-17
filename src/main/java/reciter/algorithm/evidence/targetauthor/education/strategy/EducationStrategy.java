@@ -61,53 +61,53 @@ public class EducationStrategy extends AbstractTargetAuthorStrategy {
 	
 	private int numWordsOverlapByEducationFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
 		int numWordsOverlap = 0;
-		if (scopusArticle != null) {
-			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {
-				boolean isNameMatch = entry.getValue().getSurname().equals(targetAuthor.getAuthorName().getLastName());
-				if (isNameMatch) {
-					if (scopusArticle.getAffiliationMap() != null && 
-						scopusArticle.getAffiliationMap().get(entry.getKey()) != null) {
-						
-						String scopusAffiliation = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffilname();
-//						String scopusAffiliationNameVariant = scopusArticle.getAffiliationMap().get(entry.getKey()).getNameVariant();
-						String affiliationCity = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCity();
-						String affiliationCountry = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry();
-						
-						StringBuilder scopusSb = new StringBuilder();
-						if (scopusAffiliation != null) {
-							scopusSb.append(scopusAffiliation);
-							scopusSb.append(" ");
-						}
-						
-//						if (scopusAffiliationNameVariant != null) {
-//							scopusSb.append(scopusAffiliationNameVariant);
+//		if (scopusArticle != null) {
+//			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {
+//				boolean isNameMatch = entry.getValue().getSurname().equals(targetAuthor.getAuthorName().getLastName());
+//				if (isNameMatch) {
+//					if (scopusArticle.getAffiliationMap() != null && 
+//						scopusArticle.getAffiliationMap().get(entry.getKey()) != null) {
+//						
+//						String scopusAffiliation = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffilname();
+////						String scopusAffiliationNameVariant = scopusArticle.getAffiliationMap().get(entry.getKey()).getNameVariant();
+//						String affiliationCity = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCity();
+//						String affiliationCountry = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry();
+//						
+//						StringBuilder scopusSb = new StringBuilder();
+//						if (scopusAffiliation != null) {
+//							scopusSb.append(scopusAffiliation);
 //							scopusSb.append(" ");
 //						}
-						
-						if (affiliationCity != null) {
-							scopusSb.append(affiliationCity);
-							scopusSb.append(" ");
-						}
-						
-						if (affiliationCountry != null) {
-							scopusSb.append(affiliationCountry);
-							scopusSb.append(" ");
-						}
-						
-						String scopusString = scopusSb.toString();
-						
-						String authorEducationConcatenation = null;
-						if (targetAuthor.getEducations() != null) {
-							authorEducationConcatenation = concatenateAuthorEducationFields(targetAuthor.getEducations());
-						}
-						
-						if (scopusString != null && authorEducationConcatenation != null) {
-							numWordsOverlap += ReCiterStringUtil.computeNumberOfOverlapTokens(scopusString, authorEducationConcatenation);
-						}
-					}
-				}
-			}
-		}
+//						
+////						if (scopusAffiliationNameVariant != null) {
+////							scopusSb.append(scopusAffiliationNameVariant);
+////							scopusSb.append(" ");
+////						}
+//						
+//						if (affiliationCity != null) {
+//							scopusSb.append(affiliationCity);
+//							scopusSb.append(" ");
+//						}
+//						
+//						if (affiliationCountry != null) {
+//							scopusSb.append(affiliationCountry);
+//							scopusSb.append(" ");
+//						}
+//						
+//						String scopusString = scopusSb.toString();
+//						
+//						String authorEducationConcatenation = null;
+//						if (targetAuthor.getEducations() != null) {
+//							authorEducationConcatenation = concatenateAuthorEducationFields(targetAuthor.getEducations());
+//						}
+//						
+//						if (scopusString != null && authorEducationConcatenation != null) {
+//							numWordsOverlap += ReCiterStringUtil.computeNumberOfOverlapTokens(scopusString, authorEducationConcatenation);
+//						}
+//					}
+//				}
+//			}
+//		}
 		return numWordsOverlap;
 	}
 	

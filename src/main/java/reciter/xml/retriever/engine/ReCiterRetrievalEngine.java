@@ -2,9 +2,9 @@ package reciter.xml.retriever.engine;
 
 import java.util.List;
 
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 
 public interface ReCiterRetrievalEngine {
 
-	List<Long> retrieve(TargetAuthor targetAuthor);
+	List<Long> retrieve(Identity identity);
 }

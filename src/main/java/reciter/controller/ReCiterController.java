@@ -1,10 +1,10 @@
 package reciter.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.database.dao.impl.GoldStandardPmidsDaoImpl;
 import reciter.database.dao.impl.IdentityDaoImpl;
+import reciter.database.dao.impl.IdentityDegreeDaoImpl;
+import reciter.database.dao.impl.IdentityGrantDaoImpl;
+import reciter.database.model.IdentityDegree;
 import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.model.GoldStandard;
+import reciter.database.mongo.model.Education;
 import reciter.database.mongo.model.Identity;
 import reciter.engine.Engine;
 import reciter.erroranalysis.Analysis;
@@ -29,11 +32,11 @@ import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
-import reciter.service.GoldStandardService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
+import reciter.service.ScopusService;
 import reciter.service.TargetAuthorService;
-import reciter.service.bean.IdentityBean;
+import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
@@ -47,9 +50,6 @@ public class ReCiterController {
 
 	@Autowired
 	private ESearchResultService eSearchResultService;
-	
-	@Autowired
-	private GoldStandardService goldStandardService;
 
 	@Autowired
 	private PubMedService pubMedService;
@@ -62,6 +62,9 @@ public class ReCiterController {
 	
 	@Autowired
 	private IdentityService identityService;
+	
+	@Autowired
+	private ScopusService scopusService;
 	
 	@RequestMapping(value="/",method = RequestMethod.GET)
 	public String homepage(){
@@ -82,8 +85,8 @@ public class ReCiterController {
 	
 	@RequestMapping(value = "/reciter/identitybeans/by/search", method = RequestMethod.GET)
 	@ResponseBody
-	public List<IdentityBean> getTargetAuthorByNameOrCwid(@RequestParam(value="search") String search) {
-		return targetAuthorService.getTargetAuthorByNameOrCwid(search);
+	public List<Identity> getTargetAuthorByNameOrCwid(@RequestParam(value="search") String search) {
+		return identityService.findByCwidRegex(search);
 	}
 
 	@RequestMapping(value = "/reciter/test", method = RequestMethod.GET)
@@ -98,23 +101,71 @@ public class ReCiterController {
 		IdentityDaoImpl identityDaoImpl = new IdentityDaoImpl();
 		List<reciter.database.model.Identity> identities = identityDaoImpl.getAllIdentities();
 		List<reciter.database.mongo.model.Identity> mongoIdentities = new ArrayList<reciter.database.mongo.model.Identity>();
-		for (reciter.database.model.Identity identity : identities) {
-			reciter.database.mongo.model.Identity i = new reciter.database.mongo.model.Identity();
-			i.setCwid(identity.getCwid());
-			i.setAuthorName(new AuthorName(identity.getFirstName(), identity.getMiddleName(), identity.getLastName()));
-			
-			mongoIdentities.add(i);
-		}
-		identityService.save(mongoIdentities);
-		
-//		GoldStandardPmidsDaoImpl g = new GoldStandardPmidsDaoImpl();
-//		Map<String, List<Long>> pmids = g.getGoldStandard();
+		GoldStandardPmidsDaoImpl g = new GoldStandardPmidsDaoImpl();
+		Map<String, List<Long>> pmids = g.getGoldStandard();
 //		for (Entry<String, List<Long>> entry : pmids.entrySet()) {
 //			GoldStandard goldStandard = new GoldStandard();
 //			goldStandard.setCwid(entry.getKey());
 //			goldStandard.setPmids(entry.getValue());
 //			goldStandardService.save(goldStandard);
 //		}
+		Map<String, IdentityDegree> degrees = new IdentityDegreeDaoImpl().getAllIdentityDegree();
+		Map<String, List<reciter.database.mongo.model.Grant>> grants = new IdentityGrantDaoImpl().getAllIdentityGrant();
+		for (reciter.database.model.Identity identity : identities) {
+			reciter.database.mongo.model.Identity i = new reciter.database.mongo.model.Identity();
+			i.setCwid(identity.getCwid());
+			i.setAuthorName(new AuthorName(identity.getFirstName(), identity.getMiddleName(), identity.getLastName()));
+			List<String> emails = new ArrayList<String>();
+			if (identity.getEmail() != null && !identity.getEmail().isEmpty()) {
+				emails.add(identity.getEmail());
+			}
+			if (identity.getEmailOther() != null && !identity.getEmailOther().isEmpty()) {
+				emails.add(identity.getEmailOther());
+			}
+			i.setEmails(emails);
+			List<String> departments = new ArrayList<String>();
+			if (identity.getPrimaryDepartment() != null && !identity.getPrimaryDepartment().isEmpty()) {
+				departments.add(identity.getPrimaryDepartment());
+			}
+			if (identity.getOtherDepartment() != null && !identity.getOtherDepartment().isEmpty()) {
+				departments.add(identity.getOtherDepartment());
+			}
+			i.setDepartments(departments);
+			if (identity.getTitle() != null && !identity.getTitle().isEmpty()) {
+				i.setTitle(identity.getTitle());
+			}
+			List<String> affiliations = new ArrayList<String>();
+			if (identity.getPrimaryAffiliation() != null && !identity.getPrimaryAffiliation().isEmpty()) {
+				affiliations.add(identity.getPrimaryAffiliation());
+			}
+			i.setAffiliations(affiliations);
+			
+			if (pmids.containsKey(identity.getCwid())) {
+				i.setKnownPmids(pmids.get(identity.getCwid()));
+			}
+			
+			if (grants.containsKey(identity.getCwid())) {
+				i.setGrants(grants.get(identity.getCwid()));
+			}
+			
+			if (degrees.containsKey(identity.getCwid())) {
+				IdentityDegree degree = degrees.get(identity.getCwid());
+				Education b = new Education();
+				b.setDegreeYear(degree.getBachelor());
+				i.setBachelor(b);
+				
+				Education m = new Education();
+				m.setDegreeYear(degree.getMasters());
+				i.setMasters(m);
+				
+				Education d = new Education();
+				d.setDegreeYear(degree.getDoctoral());
+				i.setDoctoral(d);
+			}
+			
+			mongoIdentities.add(i);
+		}
+		identityService.save(mongoIdentities);
 	}
 
 //	@RequestMapping(value = "/reciter/authornames/by/cwid", method = RequestMethod.GET)
@@ -125,22 +176,21 @@ public class ReCiterController {
 //		return defaultReCiterRetrievalEngine.findUniqueAuthorsWithSameLastNameAsTargetAuthor(targetAuthor);
 //	}
 
-	@RequestMapping(value = "/reciter/pubmedarticle/by/cwid", method = RequestMethod.GET)
+	@RequestMapping(value = "/reciter/retrieve/article/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Long> retrievePubMedArticles(@RequestParam(value="cwid") String cwid) {
-		// Get target author information.
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-		return defaultReCiterRetrievalEngine.retrieve(targetAuthor);
+	public List<Long> retrieveArticles(@RequestParam(value="cwid") String cwid) {
+		Identity identity = identityService.findByCwid(cwid);
+		return defaultReCiterRetrievalEngine.retrieve(identity);
 	}
 
-	@RequestMapping(value = "/reciter/pubmedarticle/by/cwids", method = RequestMethod.GET)
-	@ResponseBody
-	public void retrievePubMedArticlesForListOfCwid(@RequestParam(value="cwids") List<String> cwids) {
-		for (String cwid : cwids) {
-			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-			defaultReCiterRetrievalEngine.retrieve(targetAuthor);
-		}
-	}
+//	@RequestMapping(value = "/reciter/pubmedarticle/by/cwids", method = RequestMethod.GET)
+//	@ResponseBody
+//	public void retrievePubMedArticlesForListOfCwid(@RequestParam(value="cwids") List<String> cwids) {
+//		for (String cwid : cwids) {
+//			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+//			defaultReCiterRetrievalEngine.retrieve(targetAuthor);
+//		}
+//	}
 	
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
@@ -163,17 +213,30 @@ public class ReCiterController {
 		
 //		return analysis;
 		
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+		Identity identiy = identityService.findByCwid(cwid);
+		TargetAuthor targetAuthor = targetAuthorService.convertToTargetAuthor(identiy);
 		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
 		Set<Long> pmids = new HashSet<Long>();
 		for (ESearchResult eSearchResult : eSearchResults) {
 			pmids.addAll(eSearchResult.geteSearchPmid().getPmids());
 		}
-		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(new ArrayList<Long>(pmids));
+		List<Long> pmidList = new ArrayList<Long>(pmids);
+		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmidList);
+		List<ScopusArticle> scopusArticles = scopusService.findByPubmedId(pmidList);
+		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
+		for (ScopusArticle scopusArticle : scopusArticles) {
+			map.put(scopusArticle.getPubmedId(), scopusArticle);
+		}
 		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+			if (map.containsKey(pmid)) {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
+			} else {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+			}
 		}
+		
 		Analysis analysis = reCiterEngine.run(targetAuthor, reCiterArticles);
 		slf4jLogger.info(analysis.toString());
 		return analysis;
@@ -198,8 +261,7 @@ public class ReCiterController {
 	@ResponseBody
 	public String importNewIdentity(@RequestBody Identity identity) {
 		identityService.save(identity);
-		TargetAuthor targetAuthor = targetAuthorService.convertToTargetAuthor(identity);
-		defaultReCiterRetrievalEngine.retrieve(targetAuthor);
+		defaultReCiterRetrievalEngine.retrieve(identity);
 		return "Success";
 	}
 }

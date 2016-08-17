@@ -45,7 +45,7 @@ public class AnalysisTranslator {
 		// TODO Create a separate function to get the details from Scopus.
 		ScopusArticle scopusArticle = reCiterArticle.getScopusArticle();
 		if (scopusArticle != null) {
-			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
+			for (Author scopusAuthor : scopusArticle.getAuthors()) {
 				String scopusAuthorFirstName = scopusAuthor.getGivenName();
 				String scopusAuthorLastName = scopusAuthor.getSurname();
 				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
@@ -56,28 +56,48 @@ public class AnalysisTranslator {
 
 							Set<Integer> afidSet = scopusAuthor.getAfidSet();
 							for (int afid : afidSet) {
-								Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
-								if (affiliation != null) {
-									scopusTargetAuthorAffiliation.append("[" + 
-											scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
-											affiliation.getAffilname() + " " + 
-											affiliation.getAffiliationCity() + " " +
-											affiliation.getAffiliationCountry() + "]");
+								for (Affiliation affiliation : scopusArticle.getAffiliations()) {
+									if (affiliation.getAfid() == afid) {
+										scopusTargetAuthorAffiliation.append("[" + 
+												scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
+												affiliation.getAffilname() + " " + 
+												affiliation.getAffiliationCity() + " " +
+												affiliation.getAffiliationCountry() + "]");
+										break;
+									}
 								}
+//								Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
+//								if (affiliation != null) {
+//									scopusTargetAuthorAffiliation.append("[" + 
+//											scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
+//											affiliation.getAffilname() + " " + 
+//											affiliation.getAffiliationCity() + " " +
+//											affiliation.getAffiliationCountry() + "]");
+//								}
 							}
 						}
 					}
 				} else {
 					Set<Integer> afidSet = scopusAuthor.getAfidSet();
 					for (int afid : afidSet) {
-						Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
-						if (affiliation != null) {
-							scopusCoAuthorAffiliation.append("[" + 
-									scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
-									affiliation.getAffilname() + " " + 
-									affiliation.getAffiliationCity() + " " +
-									affiliation.getAffiliationCountry() + "], ");
+						for (Affiliation affiliation : scopusArticle.getAffiliations()) {
+							if (affiliation.getAfid() == afid) {
+								scopusTargetAuthorAffiliation.append("[" + 
+										scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
+										affiliation.getAffilname() + " " + 
+										affiliation.getAffiliationCity() + " " +
+										affiliation.getAffiliationCountry() + "]");
+								break;
+							}
 						}
+//						Affiliation affiliation = scopusArticle.getAffiliationMap().get(afid);
+//						if (affiliation != null) {
+//							scopusCoAuthorAffiliation.append("[" + 
+//									scopusAuthor.getGivenName() + " " + scopusAuthor.getSurname() + "=" +
+//									affiliation.getAffilname() + " " + 
+//									affiliation.getAffiliationCity() + " " +
+//									affiliation.getAffiliationCountry() + "], ");
+//						}
 					}
 				}
 			}

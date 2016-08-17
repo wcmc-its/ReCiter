@@ -69,13 +69,14 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 	
 	@Override
 	public List<IdentityBean> getTargetAuthorByNameOrCwid(String search) {
-		return identityService.getTargetAuthorByNameOrCwid(search);
+//		return identityService.getTargetAuthorByNameOrCwid(search);
+		return null;
 	}
 	
 	@Override
 	public TargetAuthor getTargetAuthor(String cwid) {
-		IdentityBean identityDTO = identityService.getIdentityByCwid(cwid);
-
+//		IdentityBean identityDTO = identityService.getIdentityByCwid(cwid);
+		IdentityBean identityDTO = null;
 		// set first name, middle name, last name, and affiliation.
 		TargetAuthor targetAuthor = new TargetAuthor(
 				new AuthorName(
@@ -89,7 +90,7 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 
 		// set known co-investigators.
 		List<AuthorName> coinvestigatorAuthorNames = new ArrayList<AuthorName>();
-		List<IdentityBean> identityDTOs = identityService.getAssosiatedGrantIdentityList(cwid);
+		List<IdentityBean> identityDTOs = null; // identityService.getAssosiatedGrantIdentityList(cwid);
 		for (IdentityBean coinvestigatorDTO : identityDTOs) {
 			coinvestigatorAuthorNames.add(
 					new AuthorName(
@@ -254,42 +255,41 @@ public class TargetAuthorServiceImpl implements TargetAuthorService {
 
 	@Override
 	public TargetAuthor convertToTargetAuthor(Identity identity) {
-//		String institution = null;
-//		if (identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
-//			institution = identity.getInstitutions().get(0);
-//		}
-//		TargetAuthor targetAuthor = new TargetAuthor(
-//			identity.getAuthorName(),
-//			new AuthorAffiliation(institution)
-//		);
-//		targetAuthor.setCwid(identity.getCwid());
-//		targetAuthor.setGrantCoauthors(identity.getKnownRelationships());
-//		
-//		String primaryDepartment = null;
-//		String otherDepartment = null;
-//		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
-//			primaryDepartment = identity.getDepartments().get(0);
-//			if (identity.getDepartments().size() > 1) {
-//				otherDepartment = identity.getDepartments().get(1);
-//			}
-//		}
-//		targetAuthor.setDepartment(primaryDepartment);
-//		targetAuthor.setOtherDepartment(otherDepartment);
-//		
-//		String email = null;
-//		String otherEmail = null;
-//		targetAuthor.setInstitutions(identity.getInstitutions());
-//		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
-//			email = identity.getEmails().get(0);
-//			if (identity.getEmails().size() > 1) {
-//				otherEmail = identity.getEmails().get(1);
-//			}
-//		}
-//		targetAuthor.setEmail(email);
-//		targetAuthor.setEmailOther(otherEmail);
-//		targetAuthor.setEmailAddresses(identity.getEmails());
-//		return targetAuthor;
-		return null;
+		String institution = null;
+		if (identity.getAffiliations() != null && !identity.getAffiliations().isEmpty()) {
+			institution = identity.getAffiliations().get(0);
+		}
+		TargetAuthor targetAuthor = new TargetAuthor(
+			identity.getAuthorName(),
+			new AuthorAffiliation(institution)
+		);
+		targetAuthor.setCwid(identity.getCwid());
+		targetAuthor.setGrantCoauthors(identity.getRelatedAuthorNames());
+		
+		String primaryDepartment = null;
+		String otherDepartment = null;
+		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
+			primaryDepartment = identity.getDepartments().get(0);
+			if (identity.getDepartments().size() > 1) {
+				otherDepartment = identity.getDepartments().get(1);
+			}
+		}
+		targetAuthor.setDepartment(primaryDepartment);
+		targetAuthor.setOtherDepartment(otherDepartment);
+		
+		String email = null;
+		String otherEmail = null;
+		targetAuthor.setInstitutions(identity.getAffiliations());
+		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
+			email = identity.getEmails().get(0);
+			if (identity.getEmails().size() > 1) {
+				otherEmail = identity.getEmails().get(1);
+			}
+		}
+		targetAuthor.setEmail(email);
+		targetAuthor.setEmailOther(otherEmail);
+		targetAuthor.setEmailAddresses(identity.getEmails());
+		return targetAuthor;
 	}
 	
 	

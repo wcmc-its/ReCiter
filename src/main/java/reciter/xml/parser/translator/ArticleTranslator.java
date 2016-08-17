@@ -170,7 +170,7 @@ public class ArticleTranslator {
 		// 6. remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
 
 		if (scopusArticle != null) {
-			for (Author scopusAuthor : scopusArticle.getAuthors().values()) {
+			for (Author scopusAuthor : scopusArticle.getAuthors()) {
 				String scopusAuthorFirstName = scopusAuthor.getGivenName();
 				String scopusAuthorLastName = scopusAuthor.getSurname();
 				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {

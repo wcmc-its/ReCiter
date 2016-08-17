@@ -1,6 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 
 public class AffiliationRetrievalStrategy extends AbstractRetrievalStrategy {
 
@@ -23,16 +23,16 @@ public class AffiliationRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected String constructInitialQuery(TargetAuthor targetAuthor) {
-		String lastName = targetAuthor.getAuthorName().getLastName();
-		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
+	protected String constructInitialQuery(Identity identity) {
+		String lastName = identity.getAuthorName().getLastName();
+		String firstInitial = identity.getAuthorName().getFirstInitial();
 		return lastName + " " + firstInitial + " " + AFFILIATION_QUERY;
 	}
 
 	@Override
-	protected String constructStrictQuery(TargetAuthor targetAuthor) {
-		String lastName = targetAuthor.getAuthorName().getLastName();
-		String firstName = targetAuthor.getAuthorName().getFirstName();
+	protected String constructStrictQuery(Identity identity) {
+		String lastName = identity.getAuthorName().getLastName();
+		String firstName = identity.getAuthorName().getFirstName();
 		return lastName + " " + firstName + " " + AFFILIATION_QUERY;
 	}
 

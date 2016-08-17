@@ -13,13 +13,12 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
-import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
-import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
-import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
+import reciter.service.ScopusService;
+import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
 import reciter.xml.retriever.pubmed.RetrievalStrategy;
 
@@ -34,23 +33,28 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 	@Autowired
 	private ESearchResultService eSearchResultService;
 	
+	@Autowired
+	private ScopusService scopusService;
+	
 	@Override
-	public List<Long> retrieve(TargetAuthor targetAuthor) {
+	public List<Long> retrieve(Identity identity) {
 
 		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
 		
 		// Retrieve by email.
-		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
+//		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
 		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
-		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
-		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+//		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
 		
-		retrievalStrategies.add(emailRetrievalStrategy);
+//		retrievalStrategies.add(emailRetrievalStrategy);
 		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
-		retrievalStrategies.add(departmentRetrievalStrategy);
-		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+//		retrievalStrategies.add(departmentRetrievalStrategy);
+//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+//		retrievalStrategies.add(grantRetrievalStrategy);
 		
-		return retrieve(retrievalStrategies, targetAuthor);
+		return retrieve(retrievalStrategies, identity);
 	}
 	
 	/**
@@ -59,19 +63,28 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 	 * @param targetAuthor
 	 * @return
 	 */
-	private List<Long> retrieve(List<RetrievalStrategy> retrievalStrategies, TargetAuthor targetAuthor) {
-		String cwid = targetAuthor.getCwid();
+	private List<Long> retrieve(List<RetrievalStrategy> retrievalStrategies, Identity identity) {
+		String cwid = identity.getCwid();
 		List<Long> pmids = new ArrayList<Long>();
 		for (RetrievalStrategy retrievalStrategy : retrievalStrategies) {
 			try {
-				retrievalStrategy.constructPubMedQuery(targetAuthor);
+				retrievalStrategy.constructPubMedQuery(identity);
 				slf4jLogger.error("cwid=[" + cwid + "], retrievalStrategy=[" + retrievalStrategy.getRetrievalStrategyName() 
 					+ "], pubmedQuery=[" + retrievalStrategy.getPubMedQuery() + "]");
-				List<PubMedArticle> pubMedArticles = retrievalStrategy.retrieve();
-				for (PubMedArticle pubMedArticle : pubMedArticles) {
-					pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+				
+				List<Long> strategyPmids = new ArrayList<Long>();
+				int numberOfPubmedArticles = retrievalStrategy.getNumberOfPubmedArticles();
+				if (numberOfPubmedArticles > 0) {
+					List<PubMedArticle> pubMedArticles = retrievalStrategy.retrieve();
+					for (PubMedArticle pubMedArticle : pubMedArticles) {
+						strategyPmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+					}
+					savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
 				}
-				savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
+				List<ScopusArticle> scopusArticles = retrievalStrategy.retrieveScopus(strategyPmids);
+				scopusService.save(scopusArticles);
+				
+				pmids.addAll(strategyPmids);
 			} catch (IOException e) {
 				slf4jLogger.error("RetrievalStrategy " + retrievalStrategy + "encountered an IO Exception", e);
 			}

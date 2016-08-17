@@ -1,7 +1,9 @@
 package reciter.xml.parser.scopus;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,7 +54,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 	private String affiliationCountry;
 	private Map<Integer, Affiliation> affiliations = new HashMap<Integer, Affiliation>();
 
-	private int pubmedId;
+	private long pubmedId;
 
 	private int seq;
 	private long authid;
@@ -151,7 +153,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 		}
 
 		if (bPubmedId) {
-			pubmedId = Integer.parseInt(new String(ch, start, length));
+			pubmedId = Long.parseLong(new String(ch, start, length));
 		}
 
 		if (bAuthor) {
@@ -246,7 +248,15 @@ public class ScopusXmlHandler extends DefaultHandler {
 			if (bError) {
 				scopusArticle = null;
 			} else {
-				scopusArticle = new ScopusArticle(affiliations, pubmedId, authors);
+				List<Affiliation> affiliationList = new ArrayList<Affiliation>();
+				List<Author> authorList = new ArrayList<Author>();
+				for (Affiliation affiliation : affiliations.values()) {
+					affiliationList.add(affiliation);
+				}
+				for (Author author : authors.values()) {
+					authorList.add(author);
+				}
+				scopusArticle = new ScopusArticle(pubmedId, affiliationList, authorList);
 			}
 		}
 	}

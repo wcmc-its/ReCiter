@@ -1,6 +1,9 @@
 package reciter.xml.parser.scopus.model;
 
+import java.util.List;
 import java.util.Map;
+
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * A class model for representing a Scopus XML article.
@@ -16,27 +19,62 @@ import java.util.Map;
  * @author jil3004
  *
  */
+@Document(collection = "scopusarticle")
 public class ScopusArticle {
 	
-	private final Map<Integer, Affiliation> affiliations;
-	private final int pubmedId;
-	private final Map<Long, Author> authors;
+	private long pubmedId;
+//	private Map<Integer, Affiliation> affiliations;
+//	private Map<Long, Author> authors;
+	private List<Affiliation> affiliations;
+	private List<Author> authors;
 	
-	public Map<Integer, Affiliation> getAffiliationMap() {
-		return affiliations;
+	public ScopusArticle() {}
+	
+	public ScopusArticle(long pubmedId, List<Affiliation> affiliations, List<Author> authors) {
+		this.pubmedId = pubmedId;
+		this.affiliations = affiliations;
+		this.authors = authors;
 	}
 
-	public int getPubmedId() {
+	public long getPubmedId() {
 		return pubmedId;
 	}
 
-	public Map<Long, Author> getAuthors() {
+	public void setPubmedId(long pubmedId) {
+		this.pubmedId = pubmedId;
+	}
+
+	public List<Affiliation> getAffiliations() {
+		return affiliations;
+	}
+
+	public void setAffiliations(List<Affiliation> affiliations) {
+		this.affiliations = affiliations;
+	}
+
+	public List<Author> getAuthors() {
 		return authors;
 	}
 
-	public ScopusArticle(Map<Integer, Affiliation> affiliations, int pubmedId, Map<Long, Author> authors) {
-		this.affiliations = affiliations;
-		this.pubmedId = pubmedId;
+	public void setAuthors(List<Author> authors) {
 		this.authors = authors;
 	}
+	
+//	public Map<Integer, Affiliation> getAffiliationMap() {
+//		return affiliations;
+//	}
+//
+//	public int getPubmedId() {
+//		return pubmedId;
+//	}
+//
+//	public Map<Long, Author> getAuthors() {
+//		return authors;
+//	}
+
+//	public ScopusArticle(Map<Integer, Affiliation> affiliations, int pubmedId, Map<Long, Author> authors) {
+//		this.affiliations = affiliations;
+//		this.pubmedId = pubmedId;
+//		this.authors = authors;
+//	}
 }

@@ -3,8 +3,9 @@ package reciter.xml.retriever.pubmed;
 import java.io.IOException;
 import java.util.List;
 
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.xml.parser.scopus.model.ScopusArticle;
 
 public interface RetrievalStrategy {
 
@@ -15,7 +16,7 @@ public interface RetrievalStrategy {
 	 */
 	void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold);
 
-	void constructPubMedQuery(TargetAuthor targetAuthor) throws IOException;
+	void constructPubMedQuery(Identity identity) throws IOException;
 	
 	String getPubMedQuery();
 	void setPubMedQuery(String pubMedQuery);
@@ -37,4 +38,6 @@ public interface RetrievalStrategy {
 	String[] retrievePmids(String query) throws IOException;
 	
 	String getRetrievalStrategyName();
+
+	List<ScopusArticle> retrieveScopus(List<Long> pmids);
 }

@@ -20,10 +20,9 @@ public class Identity {
 	private List<Long> knownPmids; // known pmids.
 	private List<String> boardCertifications; // board certifications
 	private String citizenship; // citizenship
-	private int bachelor;
-	private int masters;
-	private int doctoral;
-	private List<Institution> institutions;
+	private Education bachelor;
+	private Education masters;
+	private Education doctoral;
 	private List<Grant> grants;
 	private List<String> keywords;
 	
@@ -93,29 +92,23 @@ public class Identity {
 	public void setCitizenship(String citizenship) {
 		this.citizenship = citizenship;
 	}
-	public int getBachelor() {
+	public Education getBachelor() {
 		return bachelor;
 	}
-	public void setBachelor(int bachelor) {
+	public void setBachelor(Education bachelor) {
 		this.bachelor = bachelor;
 	}
-	public int getMasters() {
+	public Education getMasters() {
 		return masters;
 	}
-	public void setMasters(int masters) {
+	public void setMasters(Education masters) {
 		this.masters = masters;
 	}
-	public int getDoctoral() {
+	public Education getDoctoral() {
 		return doctoral;
 	}
-	public void setDoctoral(int doctoral) {
+	public void setDoctoral(Education doctoral) {
 		this.doctoral = doctoral;
-	}
-	public List<Institution> getInstitutions() {
-		return institutions;
-	}
-	public void setInstitutions(List<Institution> institutions) {
-		this.institutions = institutions;
 	}
 	public List<Grant> getGrants() {
 		return grants;

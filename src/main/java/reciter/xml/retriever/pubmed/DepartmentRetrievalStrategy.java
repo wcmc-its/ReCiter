@@ -1,6 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 
 public class DepartmentRetrievalStrategy extends AbstractRetrievalStrategy {
 
@@ -12,19 +12,27 @@ public class DepartmentRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 	
 	@Override
-	protected String constructInitialQuery(TargetAuthor targetAuthor) {
-		String department = targetAuthor.getDepartment();
-		String lastName = targetAuthor.getAuthorName().getLastName();
-		String firstInitial = targetAuthor.getAuthorName().getFirstInitial();
-		return lastName + " " + firstInitial + " AND " + department;
+	protected String constructInitialQuery(Identity identity) {
+		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
+			String department = identity.getDepartments().get(0);
+			String lastName = identity.getAuthorName().getLastName();
+			String firstInitial = identity.getAuthorName().getFirstInitial();
+			return lastName + " " + firstInitial + " AND " + department;
+		} else {
+			return null;
+		}
 	}
 
 	@Override
-	protected String constructStrictQuery(TargetAuthor targetAuthor) {
-		String department = targetAuthor.getDepartment();
-		String lastName = targetAuthor.getAuthorName().getLastName();
-		String firstName = targetAuthor.getAuthorName().getFirstName();
-		return lastName + " " + firstName + " AND " + department;
+	protected String constructStrictQuery(Identity identity) {
+		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
+			String department = identity.getDepartments().get(0);
+			String lastName = identity.getAuthorName().getLastName();
+			String firstName = identity.getAuthorName().getFirstName();
+			return lastName + " " + firstName + " AND " + department;
+		} else {
+			return null;
+		}
 	}
 
 	@Override

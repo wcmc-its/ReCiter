@@ -62,20 +62,20 @@ public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 
 	private boolean isCitizenshipFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
 
-		if (scopusArticle != null) {
-			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {
-				boolean isNameMatch = entry.getValue().getSurname().equals(targetAuthor.getAuthorName().getLastName());
-				if (isNameMatch) {
-					if (scopusArticle.getAffiliationMap() != null && scopusArticle.getAffiliationMap().get(entry.getKey()) != null &&
-							scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry() != null) {
-						String scopusCountry = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry();
-						if (StringUtils.containsIgnoreCase(scopusCountry, targetAuthor.getCitizenship())) {
-							return true;
-						}
-					}
-				}
-			}
-		}
+//		if (scopusArticle != null) {
+//			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {
+//				boolean isNameMatch = entry.getValue().getSurname().equals(targetAuthor.getAuthorName().getLastName());
+//				if (isNameMatch) {
+//					if (scopusArticle.getAffiliationMap() != null && scopusArticle.getAffiliationMap().get(entry.getKey()) != null &&
+//							scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry() != null) {
+//						String scopusCountry = scopusArticle.getAffiliationMap().get(entry.getKey()).getAffiliationCountry();
+//						if (StringUtils.containsIgnoreCase(scopusCountry, targetAuthor.getCitizenship())) {
+//							return true;
+//						}
+//					}
+//				}
+//			}
+//		}
 		return false;
 	}
 
