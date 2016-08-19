@@ -64,6 +64,8 @@ public class ScopusXmlHandler extends DefaultHandler {
 	private String initials;
 	private Set<Integer> afids;
 	private Map<Long, Author> authors = new HashMap<Long, Author>();
+	
+	private List<ScopusArticle> scopusArticles = new ArrayList<ScopusArticle>();
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -257,11 +259,20 @@ public class ScopusXmlHandler extends DefaultHandler {
 					authorList.add(author);
 				}
 				scopusArticle = new ScopusArticle(pubmedId, affiliationList, authorList);
+				scopusArticles.add(scopusArticle);
+				// TODO refactor
+				scopusArticle = null;
+				affiliations.clear();
+				authors.clear();
 			}
 		}
 	}
 
 	public ScopusArticle getScopusArticle() {
 		return scopusArticle;
+	}
+
+	public List<ScopusArticle> getScopusArticles() {
+		return scopusArticles;
 	}
 }

@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -21,23 +20,18 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.ESearchResultService;
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 import reciter.xml.parser.scopus.ScopusXmlHandler;
-import reciter.xml.parser.scopus.ScopusXmlParser;
 import reciter.xml.parser.scopus.ScopusXmlQuery;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.retriever.pubmed.json.EsearchObject;
@@ -66,6 +60,16 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	protected static final int DEFAULT_THRESHOLD = 2000;
 
 	/**
+	 * Scopus retrieval threshold.
+	 */
+	protected static final int SCOPUS_DEFAULT_THRESHOLD = 99;
+
+	/**
+	 * Scopus retrieval max threshold.
+	 */
+	protected static final int SCOPUS_MAX_THRESHOLD = 100;
+
+	/**
 	 * Should retrieved if threshold exceeds.
 	 */
 	protected boolean isRetrieveExceedThreshold;
@@ -83,7 +87,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @return
 	 */
 	protected abstract String constructStrictQuery(Identity identity);
-	
+
 	public void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
@@ -154,7 +158,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		// retrieved divided by the number of available processors and 10,000.
 		// If number of articles is less than 4, use number of articles as retmax.
 		pubmedXmlQuery.setRetMax(Math.min(Math.max(numberOfPubmedArticles / Math.max(numAvailableProcessors, 1), numberOfPubmedArticles)
-					, PubmedXmlQuery.DEFAULT_RETMAX));
+				, PubmedXmlQuery.DEFAULT_RETMAX));
 		slf4jLogger.info("numAvailableProcessors=[" + numAvailableProcessors + "] retMax=[" 
 				+ pubmedXmlQuery.getRetMax() + "], pubMedQuery=[" + pubMedQuery + "], "
 				+ "numberOfPubmedArticles=[" + numberOfPubmedArticles + "].");
@@ -190,14 +194,14 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 		try {
 			executor.invokeAll(callables)
-				.stream()
-				.map(future -> {
-					try {
-						return future.get();
-					}
-					catch (Exception e) {
-						throw new IllegalStateException(e);
-					}
+			.stream()
+			.map(future -> {
+				try {
+					return future.get();
+				}
+				catch (Exception e) {
+					throw new IllegalStateException(e);
+				}
 			}).forEach(list::add);
 		} catch (InterruptedException e) {
 			slf4jLogger.error("Unable to invoke callable.", e);
@@ -207,43 +211,61 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		list.forEach(results::addAll);
 		return results;
 	}
-	
+
 	@Override
 	public List<ScopusArticle> retrieveScopus(List<Long> pmids) {
-
-		List<ScopusArticle> scopusArticles = new ArrayList<ScopusArticle>();
-		
-		for (Long pmid : pmids) {
-			ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(Long.toString(pmid)).build();
-			String scopusUrl = scopusXmlQuery.getQueryUrl();
-			try {
-				URL url = new URL(scopusUrl);
-				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-				conn.setRequestMethod("GET");
-				conn.setRequestProperty("Accept", "application/xml");
-				conn.setRequestProperty("X-ELS-Insttoken", "d44a98333430d51ce0c860c2b84b9032");
-				conn.setRequestProperty("X-ELS-APIKey", "e0fa610418a4859d24f2457e021aea60");
-
-				ScopusXmlHandler scopusXmlHandler = new ScopusXmlHandler();
-				ScopusXmlParser scopusParser = new ScopusXmlParser(scopusXmlHandler);
-				slf4jLogger.info("Retrieving scopus article [" + pmid + "]");
-				InputSource source = new InputSource(conn.getInputStream());
-				slf4jLogger.info("Finished retrieving scopus article [" + pmid + "]");
-				ScopusArticle scopusArticle = scopusParser.parse(source);
-				if (scopusArticle != null) {
-					slf4jLogger.info("Sanity check: " + scopusArticle.getPubmedId());
-					scopusArticles.add(scopusArticle);
-				} else {
-					slf4jLogger.info("Pmid=[" + pmid + "] has null Scopus article.");
-				}
-				conn.disconnect();
-			} catch (IOException e) {
-				slf4jLogger.error("Unable to retrieve Scopus article for pmid=[" + pmid + "].", e);
+		StringBuffer sb = new StringBuffer();
+		List<String> pmidQueries = new ArrayList<String>();
+		for (int i = 0; i < pmids.size(); i++) {
+			long pmid = pmids.get(i);
+			if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != pmids.size() - 1)) {
+				sb.append("pmid(");
+				sb.append(pmid);
+				sb.append(")+OR+");
+			} else {
+				sb.append("pmid(");
+				sb.append(pmid);
+				sb.append(")");
+			}
+			if (i != 0 && i % SCOPUS_DEFAULT_THRESHOLD == 0) {
+				pmidQueries.add(sb.toString());
+				sb = new StringBuffer();
 			}
 		}
-		return scopusArticles;
+		List<Callable<List<ScopusArticle>>> callables = new ArrayList<Callable<List<ScopusArticle>>>();
+
+		for (String query : pmidQueries) {
+			ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(query, SCOPUS_MAX_THRESHOLD).build();
+			String scopusUrl = scopusXmlQuery.getQueryUrl();
+			ScopusUriParserCallable scopusUriParserCallable = new ScopusUriParserCallable(new ScopusXmlHandler(), scopusUrl);
+			callables.add(scopusUriParserCallable);
+		}
+
+		List<List<ScopusArticle>> list = new ArrayList<List<ScopusArticle>>();
+
+		int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
+		ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);
+
+		try {
+			executor.invokeAll(callables)
+			.stream()
+			.map(future -> {
+				try {
+					return future.get();
+				}
+				catch (Exception e) {
+					throw new IllegalStateException(e);
+				}
+			}).forEach(list::add);
+		} catch (InterruptedException e) {
+			slf4jLogger.error("Unable to invoke callable.", e);
+		}
+
+		List<ScopusArticle> results = new ArrayList<ScopusArticle>();
+		list.forEach(results::addAll);
+		return results;
 	}
-	
+
 	/**
 	 * Retrieve only the pmids for a query.
 	 * 

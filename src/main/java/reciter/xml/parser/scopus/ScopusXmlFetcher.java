@@ -63,7 +63,7 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 	 */
 	public void fetchSingleScopus(String cwid, long pmid) {
 		String pmidStr = String.valueOf(pmid);
-		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(pmidStr).build();
+		ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(pmidStr).buildSingle();
 		saveXml(scopusXmlQuery.getQueryUrl(), ReCiterEngineProperty.scopusFolder, cwid, pmidStr);
 	}
 

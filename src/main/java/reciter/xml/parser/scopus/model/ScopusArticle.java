@@ -1,7 +1,6 @@
 package reciter.xml.parser.scopus.model;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 

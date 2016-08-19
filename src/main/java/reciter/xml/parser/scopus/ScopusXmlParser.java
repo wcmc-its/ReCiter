@@ -2,6 +2,7 @@ package reciter.xml.parser.scopus;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -39,6 +40,16 @@ public class ScopusXmlParser implements Parser {
 			slf4jLogger.error(e.getMessage());
 		}
 		return xmlHandler.getScopusArticle();
+	}
+	
+	public List<ScopusArticle> parseMultiple(InputSource inputSource) {
+		try {
+			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
+			saxParser.parse(inputSource, xmlHandler);
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			slf4jLogger.error(e.getMessage());
+		}
+		return xmlHandler.getScopusArticles();
 	}
 	
 	public ScopusXmlParser(ScopusXmlHandler xmlHandler) {
