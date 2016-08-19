@@ -232,6 +232,12 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				sb = new StringBuffer();
 			}
 		}
+		// add the remaining pmids
+		String remaining = sb.toString();
+		if (!remaining.isEmpty()) {
+			pmidQueries.add(remaining);
+		}
+		
 		List<Callable<List<ScopusArticle>>> callables = new ArrayList<Callable<List<ScopusArticle>>>();
 
 		for (String query : pmidQueries) {
