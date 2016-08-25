@@ -13,8 +13,6 @@ import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 import reciter.tfidf.Document;
 import reciter.tfidf.TfIdf;
-import reciter.utils.stemmer.PorterStemmer;
-import reciter.utils.stemmer.SnowballStemmer;
 
 public class InternshipAndResidenceStrategy extends AbstractTargetAuthorStrategy{
 
@@ -102,10 +100,11 @@ public class InternshipAndResidenceStrategy extends AbstractTargetAuthorStrategy
 	}
 	
 	private String stemWord(String word){
-		SnowballStemmer stemmer = new PorterStemmer();
-		stemmer.setCurrent(word);
-		stemmer.stem();
-		return stemmer.getCurrent();
+//		SnowballStemmer stemmer = new PorterStemmer();
+//		stemmer.setCurrent(word);
+//		stemmer.stem();
+//		return stemmer.getCurrent();
+		return word;
 	}
 
 	@Override
