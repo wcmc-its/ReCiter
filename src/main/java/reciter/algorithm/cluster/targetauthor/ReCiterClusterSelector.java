@@ -49,7 +49,6 @@ import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAff
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 
 public class ReCiterClusterSelector extends AbstractClusterSelector {
 

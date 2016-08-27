@@ -33,7 +33,7 @@ import reciter.algorithm.evidence.targetauthor.name.strategy.NameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
 import reciter.database.mongo.model.Identity;
-import reciter.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 
 @Component("reCiterEngine")

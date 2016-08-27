@@ -15,9 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
-import reciter.model.article.ReCiterArticleMeshHeading;
-import reciter.model.article.ReCiterCitationYNEnum;
-import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.pubmed.MedlineCitationMeshHeading;
 import reciter.model.pubmed.MedlineCitationMeshHeadingQualifierName;
 import reciter.model.pubmed.MedlineCitationYNEnum;

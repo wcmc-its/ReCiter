@@ -1,7 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
 import reciter.database.mongo.model.Identity;
-import reciter.model.author.TargetAuthor;
 
 public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 

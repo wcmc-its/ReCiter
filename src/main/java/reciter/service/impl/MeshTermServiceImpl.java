@@ -1,4 +1,4 @@
-package reciter.service.mongo.impl;
+package reciter.service.impl;
 
 import java.util.List;
 

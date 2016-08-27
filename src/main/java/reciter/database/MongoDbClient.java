@@ -1,15 +1,16 @@
 package reciter.database;
 
+import static java.util.Arrays.asList;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-import static java.util.Arrays.asList;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 
 public class MongoDbClient {
 

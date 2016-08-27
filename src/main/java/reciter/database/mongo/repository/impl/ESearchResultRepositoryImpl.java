@@ -3,10 +3,6 @@ package reciter.database.mongo.repository.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.WriteResult;
-
-import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.repository.ESearchResultRepositoryCustom;
 

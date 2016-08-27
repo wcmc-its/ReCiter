@@ -21,7 +21,7 @@ import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.model.MeshTerm;
 import reciter.engine.Engine;
-import reciter.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;

@@ -14,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
 
 import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.repository.PubMedRepository;
 import reciter.engine.ReCiterEngineProperty;
-import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.xml.parser.AbstractXmlFetcher;
 import reciter.xml.parser.scopus.model.ScopusArticle;

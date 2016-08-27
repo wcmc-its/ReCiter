@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import reciter.database.mongo.model.Identity;
-import reciter.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 
 public interface Engine {

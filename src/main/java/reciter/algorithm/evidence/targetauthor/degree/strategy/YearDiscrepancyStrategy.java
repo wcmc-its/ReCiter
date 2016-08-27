@@ -5,7 +5,6 @@ import java.util.List;
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 /**
  * Year-based matching for TargetAuthor (Phase II)

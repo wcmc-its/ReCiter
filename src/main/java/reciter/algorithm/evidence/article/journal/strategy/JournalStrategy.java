@@ -8,7 +8,6 @@ import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 
 public class JournalStrategy extends AbstractReCiterArticleStrategy {
 
