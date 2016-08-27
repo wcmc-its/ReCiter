@@ -11,23 +11,23 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
 import reciter.algorithm.cluster.clusteringstrategy.article.NameMatchingClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 public class ReCiterClusterer extends AbstractClusterer {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);
 	
 	private List<ReCiterArticle> reCiterArticles;
-	private TargetAuthor targetAuthor;
+	private Identity identity;
 	private Map<Long, ReCiterCluster> clusters;
 	private ClusteringStrategy clusteringStrategy;
 	
-	public ReCiterClusterer(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticles) {
+	public ReCiterClusterer(Identity identity, List<ReCiterArticle> reCiterArticles) {
 		this.reCiterArticles = reCiterArticles;
-		this.targetAuthor = targetAuthor;
+		this.identity = identity;
 		clusters = new HashMap<Long, ReCiterCluster>();
-		clusteringStrategy = new NameMatchingClusteringStrategy(targetAuthor);
+		clusteringStrategy = new NameMatchingClusteringStrategy(identity);
 	}
 
 	/**
@@ -38,7 +38,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 	 */
 	@Override
 	public void cluster() {
-		slf4jLogger.info("Running ReCiter for: [" + targetAuthor.getCwid() + "] "
+		slf4jLogger.info("Running ReCiter for: [" + identity.getCwid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		clusters = clusteringStrategy.cluster(reCiterArticles);
 	}
@@ -69,11 +69,11 @@ public class ReCiterClusterer extends AbstractClusterer {
 		this.reCiterArticles = reCiterArticles;
 	}
 
-	public TargetAuthor getTargetAuthor() {
-		return targetAuthor;
+	public Identity getIdentity() {
+		return identity;
 	}
 
-	public void setTargetAuthor(TargetAuthor targetAuthor) {
-		this.targetAuthor = targetAuthor;
+	public void setIdentity(Identity identity) {
+		this.identity = identity;
 	}
 }

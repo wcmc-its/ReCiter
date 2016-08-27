@@ -2,8 +2,8 @@ package reciter.algorithm.evidence.cluster.clustersize.strategy;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.cluster.AbstractRemoveClusterStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 public class ClusterSizeStrategy extends AbstractRemoveClusterStrategy {
 
@@ -12,7 +12,7 @@ public class ClusterSizeStrategy extends AbstractRemoveClusterStrategy {
 	 * https://github.com/wcmc-its/ReCiter/issues/136
 	 */
 	@Override
-	public double executeStrategy(ReCiterCluster reCiterCluster, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterCluster reCiterCluster, Identity identity) {
 		double sumOfArticleScores = 0;
 		int clusterSize = reCiterCluster.getArticleCluster().size();
 		for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {

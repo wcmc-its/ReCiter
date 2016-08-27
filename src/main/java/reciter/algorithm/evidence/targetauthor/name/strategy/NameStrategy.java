@@ -5,15 +5,15 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 
 public class NameStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		boolean isMatchName = false;
 
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
@@ -23,9 +23,9 @@ public class NameStrategy extends AbstractTargetAuthorStrategy {
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 				String lastName = author.getAuthorName().getLastName();
 				
-				String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
-				String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+				String targetAuthorFirstName = identity.getAuthorName().getFirstName();
+				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
+				String targetAuthorLastName = identity.getAuthorName().getLastName();
 				
 				if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) &&
 					StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) &&
@@ -45,10 +45,10 @@ public class NameStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			sum += executeStrategy(reCiterArticle, targetAuthor);
+			sum += executeStrategy(reCiterArticle, identity);
 		}
 		return sum;
 	}

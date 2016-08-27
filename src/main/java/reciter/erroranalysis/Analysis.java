@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
-import reciter.database.dao.GoldStandardPmidsDao;
-import reciter.database.dao.impl.GoldStandardPmidsDaoImpl;
 import reciter.model.article.ReCiterArticle;
 
 /**
@@ -55,9 +53,7 @@ public class Analysis {
 	 * @param reCiterArticles
 	 * @param cwid
 	 */
-	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, String cwid) {
-		GoldStandardPmidsDao dao = new GoldStandardPmidsDaoImpl();
-		List<Long> pmids = dao.getPmidsByCwid(cwid);
+	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> pmids) {
 		Set<Long> pmidSet = new HashSet<Long>();
 		for (long pmid : pmids) {
 			pmidSet.add(pmid);
@@ -78,11 +74,8 @@ public class Analysis {
 	 * @param cwid
 	 * @return
 	 */
-	public static Analysis performAnalysis(Map<Integer, ReCiterCluster> finalCluster, int selection, String cwid) {
+	public static Analysis performAnalysis(Map<Integer, ReCiterCluster> finalCluster, int selection, List<Long> goldStandardPmids) {
 		Analysis analysis = new Analysis();
-		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
-		List<Long> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
-
 		slf4jLogger.info("Gold Standard: " + goldStandardPmids);
 
 		analysis.setGoldStandardSize(goldStandardPmids.size());
@@ -118,7 +111,7 @@ public class Analysis {
 	 * @param cwid
 	 * @return
 	 */
-	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector) {
+	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, List<Long> goldStandardPmids) {
 		
 //		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
 //	    Map<String, Integer> authorCount = 
@@ -133,12 +126,9 @@ public class Analysis {
 	    
 		Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 		Set<Long> selection = clusterSelector.getSelectedClusterIds();
-		String cwid = reCiterClusterer.getTargetAuthor().getCwid();
+		String cwid = reCiterClusterer.getIdentity().getCwid();
 		
 		Analysis analysis = new Analysis();
-		GoldStandardPmidsDao goldStandardPmidsDao = new GoldStandardPmidsDaoImpl();
-		List<Long> goldStandardPmids = goldStandardPmidsDao.getPmidsByCwid(cwid);
-
 		slf4jLogger.info("Gold Standard [" + goldStandardPmids.size() + "]: " + goldStandardPmids);
 
 		analysis.setGoldStandardSize(goldStandardPmids.size());
@@ -238,7 +228,7 @@ public class Analysis {
 						reCiterArticle, 
 						statusEnum, 
 						cwid, 
-						reCiterClusterer.getTargetAuthor(), 
+						reCiterClusterer.getIdentity(), 
 						isClusterOriginator, 
 						entry.getValue().getClusterID(), 
 						entry.getValue().getArticleCluster().size(), 

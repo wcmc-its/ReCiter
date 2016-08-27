@@ -1,35 +1,33 @@
 package reciter.algorithm.evidence.targetauthor.citizenship.strategy;
 
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
-import reciter.xml.parser.scopus.model.Author;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 
 public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double score = 0;
 		boolean isCitizenshipMatchFromScopus = false;
 		if (reCiterArticle.getScopusArticle() != null) {
-			isCitizenshipMatchFromScopus = isCitizenshipFromScopus(reCiterArticle.getScopusArticle(), targetAuthor);
+			isCitizenshipMatchFromScopus = isCitizenshipFromScopus(reCiterArticle.getScopusArticle(), identity);
 		}
 		boolean isCitizenShipMatchFromPubmed = false;
 		boolean isFirstNameMatch = false;
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if (StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName())) {
+			if (StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstName(), identity.getAuthorName().getFirstName())) {
 				isFirstNameMatch = true;
 				
 				if (author.getAffiliation() != null) {
 					String affiliation = author.getAffiliation().getAffiliationName();
-					isCitizenShipMatchFromPubmed = isCitizenshipFromPubmed(affiliation, targetAuthor);
+					isCitizenShipMatchFromPubmed = isCitizenshipFromPubmed(affiliation, identity);
 				}
 			}
 		}
@@ -41,10 +39,10 @@ public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			sum += executeStrategy(reCiterArticle, targetAuthor);
+			sum += executeStrategy(reCiterArticle, identity);
 		}
 		return sum;
 	}
@@ -53,14 +51,14 @@ public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 	 * Use citizenship to improve recall.
 	 * (https://github.com/wcmc-its/ReCiter/issues/78).
 	 */
-	private boolean isCitizenshipFromPubmed(String affiliation, TargetAuthor targetAuthor) {
-		if (targetAuthor.getCitizenship() != null) {
-			return StringUtils.containsIgnoreCase(affiliation, targetAuthor.getCitizenship());
+	private boolean isCitizenshipFromPubmed(String affiliation, Identity identity) {
+		if (identity.getCitizenship() != null) {
+			return StringUtils.containsIgnoreCase(affiliation, identity.getCitizenship());
 		}
 		return false;
 	}
 
-	private boolean isCitizenshipFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
+	private boolean isCitizenshipFromScopus(ScopusArticle scopusArticle, Identity identity) {
 
 //		if (scopusArticle != null) {
 //			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {

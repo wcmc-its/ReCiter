@@ -3,22 +3,23 @@ package reciter.algorithm.evidence.targetauthor.grant.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 
 public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double score = 0;
-		List<AuthorName> authorNames = targetAuthor.getGrantCoauthors();
+//		List<AuthorName> authorNames = identity.getGrantCoauthors();
+		List<AuthorName> authorNames = identity.getRelatedAuthorNames();
 
 		if (authorNames != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				// do not match target author's name
-				if (!author.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
+				if (!author.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName())) {
 					for (AuthorName authorName : authorNames) {
 						if (authorName.isFullNameMatch(author.getAuthorName())) {
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known co-investigator match: " + 
@@ -34,10 +35,10 @@ public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			sum += executeStrategy(reCiterArticle, targetAuthor);
+			sum += executeStrategy(reCiterArticle, identity);
 		}
 		return sum;
 	}

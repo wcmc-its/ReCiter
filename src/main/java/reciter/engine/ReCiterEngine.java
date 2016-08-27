@@ -33,44 +33,29 @@ import reciter.algorithm.evidence.targetauthor.name.NameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.NameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
+import reciter.database.mongo.model.Identity;
 import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 @Component("reCiterEngine")
 public class ReCiterEngine implements Engine {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngine.class);
 
-//	private ReCiterEngineProperty reCiterEngineProperty;
-
-//	public double totalPrecision;
-//	public double totalRecall;
-//	public double totalAccuracy;
-
-//	public ReCiterEngine(ReCiterEngineProperty reCiterEngineProperty) {
-//		ReCiterEngineProperty.loadProperty();
-//		this.reCiterEngineProperty = reCiterEngineProperty;
-//	}
-//
-//	public ReCiterEngineProperty getReCiterEngineProperty() {
-//		return reCiterEngineProperty;
-//	}
-
 	@Override
-	public Analysis run(TargetAuthor targetAuthor, List<ReCiterArticle> reCiterArticleList) {
+	public Analysis run(Identity identity, List<ReCiterArticle> reCiterArticleList) {
 
-		Analysis.assignGoldStandard(reCiterArticleList, targetAuthor.getCwid());
+		Analysis.assignGoldStandard(reCiterArticleList, identity.getKnownPmids());
 
 		// Perform Phase 1 clustering.
-		Clusterer clusterer = new ReCiterClusterer(targetAuthor, reCiterArticleList);
+		Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticleList);
 		clusterer.cluster();
 		slf4jLogger.info("Phase 1 Clustering result");
 		slf4jLogger.info(clusterer.toString());
 
 		// Perform Phase 2 clusters selection.
-		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), targetAuthor);
-		clusterSelector.runSelectionStrategy(clusterer.getClusters(), targetAuthor);
+		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity);
+		clusterSelector.runSelectionStrategy(clusterer.getClusters(), identity);
 
 		// Perform Mesh Heading recall improvement.
 		// Use MeSH major to improve recall after phase two (https://github.com/wcmc-its/ReCiter/issues/131)
@@ -80,12 +65,12 @@ public class ReCiterEngine implements Engine {
 			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
 		}
 		
-		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));
-		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), targetAuthor);
+//		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));
+//		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
 
-		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector);
+		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, identity.getKnownPmids());
 		slf4jLogger.info(clusterer.toString());
-		slf4jLogger.info("Analysis for cwid=[" + targetAuthor.getCwid() + "]");
+		slf4jLogger.info("Analysis for cwid=[" + identity.getCwid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 //		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
@@ -104,31 +89,16 @@ public class ReCiterEngine implements Engine {
 		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
 			slf4jLogger.info(reCiterArticle.getArticleId() + ": " + reCiterArticle.getClusterInfo());
 		}
-//		analysisDao.insertAnalysisList(AnalysisConverter.convertToAnalysisList(analysis.getAnalysisObjectList()));
 		
 		return analysis;
 	}
 
-//	@Override
-//	public void run() {
-//		List<String> cwids = reCiterEngineProperty.getCwids();
-//		analysisDao.emptyTable(); // empty the analysis table.
-//		for (String cwid : cwids) {
-//			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-//			run(targetAuthor);
-//		}
-//		slf4jLogger.info("Average Precision: [" + totalPrecision / cwids.size() + "]");
-//		slf4jLogger.info("Average Recall: [" + totalRecall / cwids.size() + "]");
-//		slf4jLogger.info("Average Accuracy: [" + totalAccuracy / cwids.size() + "]");
-//		slf4jLogger.info("\n");
-//	}
-
 	public void executeTargetAuthorStrategy(List<StrategyContext> strategyContexts, 
-			List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+			List<ReCiterArticle> reCiterArticles, Identity identity) {
 
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			for (StrategyContext context : strategyContexts) {
-				((TargetAuthorStrategyContext) context).executeStrategy(reCiterArticle, targetAuthor);
+				((TargetAuthorStrategyContext) context).executeStrategy(reCiterArticle, identity);
 			}
 		}
 	}
@@ -174,19 +144,4 @@ public class ReCiterEngine implements Engine {
 
 		return strategyContexts;
 	}
-
-//	@Override
-//	public Analysis constructAnalysis() {
-//		List<String> cwids = reCiterEngineProperty.getCwids();
-//		analysisDao.emptyTable();
-//		List<StrategyContext> strategyContexts = getStrategyContexts();
-//		for (String cwid : cwids) {
-//			TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-//			ReCiterArticleService reCiterArticleService = new ReCiterArticleServiceImpl();
-//			List<ReCiterArticle> reCiterArticleList = reCiterArticleService.retrieve(cwid);
-//			Analysis.assignGoldStandard(reCiterArticleList, cwid);
-//			executeTargetAuthorStrategy(strategyContexts, reCiterArticleList, targetAuthor);
-//		}
-//		return null;
-//	}
 }

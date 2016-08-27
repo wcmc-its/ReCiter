@@ -5,16 +5,17 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
 
 public class JournalStrategy extends AbstractReCiterArticleStrategy {
 
-	private final TargetAuthor targetAuthor;
+	private final Identity identity;
 
-	public JournalStrategy(TargetAuthor targetAuthor) {
-		this.targetAuthor = targetAuthor;
+	public JournalStrategy(Identity identity) {
+		this.identity = identity;
 	}
 
 	@Override
@@ -26,12 +27,12 @@ public class JournalStrategy extends AbstractReCiterArticleStrategy {
 			// these two articles are written by the same target author.
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
-						author.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
+						author.getAuthorName().getFirstName(), identity.getAuthorName().getFirstName());
 
 				if (isFirstNameMatch) {
 					for (ReCiterAuthor otherAuthor : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
 						boolean isOtherFirstNameMatch = StringUtils.equalsIgnoreCase(
-								otherAuthor.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
+								otherAuthor.getAuthorName().getFirstName(), identity.getAuthorName().getFirstName());
 						
 						if (isOtherFirstNameMatch) {
 							score += 1;

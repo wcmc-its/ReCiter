@@ -237,7 +237,7 @@ public class ReCiterController {
 			}
 		}
 		
-		Analysis analysis = reCiterEngine.run(targetAuthor, reCiterArticles);
+		Analysis analysis = reCiterEngine.run(identiy, reCiterArticles);
 		slf4jLogger.info(analysis.toString());
 		return analysis;
 	}

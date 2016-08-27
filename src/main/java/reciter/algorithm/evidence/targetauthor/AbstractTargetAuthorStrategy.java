@@ -4,17 +4,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 import reciter.string.ReCiterStringUtil;
 
 public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrategy {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractTargetAuthorStrategy.class);
 
-	protected boolean matchAuthorName(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	protected boolean matchAuthorName(ReCiterArticle reCiterArticle, Identity identity) {
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
@@ -22,10 +22,10 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 				String lastName = author.getAuthorName().getLastName();
 
-				String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
-				String targetAuthorFirstNameInitial = targetAuthor.getAuthorName().getFirstInitial();
-				String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+				String targetAuthorFirstName = identity.getAuthorName().getFirstName();
+				String targetAuthorFirstNameInitial = identity.getAuthorName().getFirstInitial();
+				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
+				String targetAuthorLastName = identity.getAuthorName().getLastName();
 
 				// Case: ses9022, Last name = 'Somersan Karakaya', PMID = 11673488, last name = 'Somersan'.
 				// Split last name and check if each individual parts match the last name from article.
@@ -109,7 +109,7 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 		return isFirstNameMatchByPart;
 	}
 
-	protected boolean matchRelaxedAuthorName(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	protected boolean matchRelaxedAuthorName(ReCiterArticle reCiterArticle, Identity identity) {
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
@@ -117,9 +117,9 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 				String lastName = author.getAuthorName().getLastName();
 
-				String targetAuthorFirstInitial = targetAuthor.getAuthorName().getFirstInitial();
-				String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+				String targetAuthorFirstInitial = identity.getAuthorName().getFirstInitial();
+				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
+				String targetAuthorLastName = identity.getAuthorName().getLastName();
 
 				if (StringUtils.equalsIgnoreCase(firstInitial, targetAuthorFirstInitial) &&
 						StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) &&

@@ -12,21 +12,21 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
 import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 
 public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	
-	private final TargetAuthor targetAuthor;
+	private final Identity identity;
 	
 	private StrategyContext citationStrategyContext;
 //	private StrategyContext coCitationStrategyContext;
 	
-	public NameMatchingClusteringStrategy(TargetAuthor targetAuthor) {
+	public NameMatchingClusteringStrategy(Identity identity) {
 		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
 //		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
-		this.targetAuthor = targetAuthor;
+		this.identity = identity;
 	}
 
 	/**
@@ -35,8 +35,6 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	 */
 	@Override
 	public Map<Long, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles) {
-		
-		targetAuthor.setArticleSize(reCiterArticles.size());
 		
 		// Reset ReCiterCluster's static id counter to 0, so that subsequent calls
 		// to cluster method has ReCiterCluster id starts with 0.
@@ -99,8 +97,8 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 	private boolean isTargetAuthorNameMatch(ReCiterArticle newArticle, ReCiterArticle articleInCluster) {
 		for (ReCiterAuthor reCiterAuthor : newArticle.getArticleCoAuthors().getAuthors()) {
 			for (ReCiterAuthor clusterAuthor : articleInCluster.getArticleCoAuthors().getAuthors()) {
-				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
-						clusterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
+				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName()) &&
+						clusterAuthor.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName())) {
 
 					// Check both first name and middle initial.
 					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(
@@ -130,8 +128,8 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		
 		for (ReCiterAuthor reCiterAuthor : newArticle.getArticleCoAuthors().getAuthors()) {
 			for (ReCiterAuthor clusterAuthor : articleInCluster.getArticleCoAuthors().getAuthors()) {
-				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
-						clusterAuthor.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName())) {
+				if (reCiterAuthor.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName()) &&
+						clusterAuthor.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName())) {
 
 					// Check both first name and middle initial.
 					if (reCiterAuthor.getAuthorName().getFirstName().equalsIgnoreCase(clusterAuthor.getAuthorName().getFirstName())
@@ -176,8 +174,8 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		return false;
 	}
 
-	public TargetAuthor getTargetAuthor() {
-		return targetAuthor;
+	public Identity getIdentity() {
+		return identity;
 	}
 
 }

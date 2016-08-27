@@ -7,11 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 import reciter.string.ReCiterStringUtil;
 
 public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
@@ -21,8 +21,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 	private String firstNameFieldVar;
 	private String middleNameFieldVar;
 
-	private ReCiterAuthor getCorrectAuthor(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+	private ReCiterAuthor getCorrectAuthor(ReCiterArticle reCiterArticle, Identity identity) {
+		String targetAuthorLastName = identity.getAuthorName().getLastName();
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 		ReCiterAuthor correctAuthor = null;
 		if (authors != null) {
@@ -30,7 +30,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 				String lastName = author.getAuthorName().getLastName();
 				if (StringUtils.equalsIgnoreCase(targetAuthorLastName, lastName)) {
 					String firstInitial = author.getAuthorName().getFirstInitial();
-					if (StringUtils.equalsIgnoreCase(firstInitial, targetAuthor.getAuthorName().getFirstInitial())) {
+					if (StringUtils.equalsIgnoreCase(firstInitial, identity.getAuthorName().getFirstInitial())) {
 						correctAuthor = author;
 					}
 				}
@@ -39,9 +39,9 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 		return correctAuthor;
 	}
 
-	private boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	private boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor(ReCiterArticle reCiterArticle, Identity identity) {
 		int count = 0;
-		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+		String targetAuthorLastName = identity.getAuthorName().getLastName();
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
@@ -56,7 +56,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 	}
 
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
@@ -64,21 +64,21 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 
-		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
-		String targetAuthorFirstNameInitial = targetAuthor.getAuthorName().getFirstInitial();
-		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
-		String targetAuthorMiddleName = targetAuthor.getAuthorName().getMiddleName();
-		String targetAuthorMiddleNameInitial = targetAuthor.getAuthorName().getMiddleInitial();
+		String targetAuthorFirstName = identity.getAuthorName().getFirstName();
+		String targetAuthorFirstNameInitial = identity.getAuthorName().getFirstInitial();
+		String targetAuthorLastName = identity.getAuthorName().getLastName();
+		String targetAuthorMiddleName = identity.getAuthorName().getMiddleName();
+		String targetAuthorMiddleNameInitial = identity.getAuthorName().getMiddleInitial();
 
 		boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor = isMultipleAuthorsWithSameLastNameAsTargetAuthor(
-				reCiterArticle, targetAuthor);
+				reCiterArticle, identity);
 
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
 
 				// Update author with the correct author.
 				if (isMultipleAuthorsWithSameLastNameAsTargetAuthor) {
-					author = getCorrectAuthor(reCiterArticle, targetAuthor);
+					author = getCorrectAuthor(reCiterArticle, identity);
 				}
 
 				if (author != null) {
@@ -109,7 +109,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								// So this article should still be in the selected cluster.
 
 								if (shouldRemove) {
-									List<AuthorName> aliasList = targetAuthor.getAliasList();
+									List<AuthorName> aliasList = identity.getAliases();
 									if (aliasList != null) {
 										for (AuthorName authorName : aliasList) {
 											String givenName = authorName.getFirstName();
@@ -261,18 +261,18 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								}
 
 								// Check target author's list of name variants from the names fetched by email addresses.
-								if (shouldRemove) {
-									if (targetAuthor.getAuthorNamesFromEmailFetch() != null) {
-										for (AuthorName authorNameFromEmail : targetAuthor.getAuthorNamesFromEmailFetch()) {
-											// check whether last name and first initial matches.
-											if (StringUtils.equalsIgnoreCase(lastName, authorNameFromEmail.getLastName()) &&
-													StringUtils.equalsIgnoreCase(firstName.substring(0, 1), authorNameFromEmail.getFirstInitial())) {
-												shouldRemove = false;
-												break;
-											}
-										}
-									}
-								}
+//								if (shouldRemove) {
+//									if (identity.getAuthorNamesFromEmailFetch() != null) {
+//										for (AuthorName authorNameFromEmail : identity.getAuthorNamesFromEmailFetch()) {
+//											// check whether last name and first initial matches.
+//											if (StringUtils.equalsIgnoreCase(lastName, authorNameFromEmail.getLastName()) &&
+//													StringUtils.equalsIgnoreCase(firstName.substring(0, 1), authorNameFromEmail.getFirstInitial())) {
+//												shouldRemove = false;
+//												break;
+//											}
+//										}
+//									}
+//								}
 
 								if (shouldRemove) {
 									// Case pmid = 10651632, first name in article is Clay (from Scopus), name in db is w. clay. cwid = wcb2001.
@@ -303,7 +303,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								// First name, last name matches, but middle name and affiliation doesn't match. Mark for removal.
 								if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
 									String middleInitial = author.getAuthorName().getMiddleInitial();
-									String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
+									String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
 
 									if (!StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) && reCiterArticle.getAffiliationScore() == 0) {
 										shouldRemove = true;
@@ -336,7 +336,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							// Middle name doesn't match. Mark for removal.
 							if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
 								String middleInitial = author.getAuthorName().getMiddleInitial();
-								String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
+								String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
 
 								if (!StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) && reCiterArticle.getAffiliationScore() == 0) {
 									shouldRemove = true;
@@ -348,7 +348,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							// Name in article becomes firstname = W, middle initial = Clay.
 							if (shouldRemove) {
 								String firstNameMiddleName = firstName + " " + middleName;
-								String targetAuthorFirstNameRemovedPeriod = targetAuthor.getAuthorName().getFirstName().replace(".", "");
+								String targetAuthorFirstNameRemovedPeriod = identity.getAuthorName().getFirstName().replace(".", "");
 								if (StringUtils.equalsIgnoreCase(firstNameMiddleName, targetAuthorFirstNameRemovedPeriod)) {
 									shouldRemove = false;
 								}
@@ -361,7 +361,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 		if ((shouldRemove && !foundAuthorWithSameFirstName) || !foundMatchingAuthor) {
 			slf4jLogger.info("Removed article id=[" + reCiterArticle.getArticleId() + "] with cwid=[" + 
-					targetAuthor.getCwid() + "] and name in article=[" + firstNameFieldVar + ", " + middleNameFieldVar + "]" +
+					identity.getCwid() + "] and name in article=[" + firstNameFieldVar + ", " + middleNameFieldVar + "]" +
 					" In gold standard=[" + reCiterArticle.getGoldStandard() + "]");
 			return 1;
 		} else {
@@ -370,7 +370,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		return 0;
 	}
 }

@@ -72,25 +72,25 @@ public class NameMatchTest {
 	}
 	
 	public void test(String cwid) throws SAXException, IOException, ParserConfigurationException {
-		TargetAuthorServiceImpl targetAuthorService = new TargetAuthorServiceImpl();
-		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
-
-		File file = new File(location + cwid + ".xml");
-		InputStream inputStream = new FileInputStream(file);
-		Reader reader = new InputStreamReader(inputStream, "UTF-8");
-		InputSource is = new InputSource(reader);
-		is.setEncoding("UTF-8");
-		PubmedEFetchHandler pubmedXmlHandler = new PubmedEFetchHandler();
-		SAXParserFactory.newInstance().newSAXParser().parse(is, pubmedXmlHandler);
-
-		List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
-		for (PubMedArticle article : pubmedXmlHandler.getPubmedArticles()) {
-			reCiterArticleList.add(ArticleTranslator.translate(article, null));
-		}
-		reCiterEngineFactory = new ReCiterEngineFactory();
-		ReCiterEngineProperty property = new ReCiterEngineProperty();
-//		engine = reCiterEngineFactory.getReCiterEngine(property);
-
-		engine.run(targetAuthor, reCiterArticleList);
+//		TargetAuthorServiceImpl targetAuthorService = new TargetAuthorServiceImpl();
+//		TargetAuthor targetAuthor = targetAuthorService.getTargetAuthor(cwid);
+//
+//		File file = new File(location + cwid + ".xml");
+//		InputStream inputStream = new FileInputStream(file);
+//		Reader reader = new InputStreamReader(inputStream, "UTF-8");
+//		InputSource is = new InputSource(reader);
+//		is.setEncoding("UTF-8");
+//		PubmedEFetchHandler pubmedXmlHandler = new PubmedEFetchHandler();
+//		SAXParserFactory.newInstance().newSAXParser().parse(is, pubmedXmlHandler);
+//
+//		List<ReCiterArticle> reCiterArticleList = new ArrayList<ReCiterArticle>();
+//		for (PubMedArticle article : pubmedXmlHandler.getPubmedArticles()) {
+//			reCiterArticleList.add(ArticleTranslator.translate(article, null));
+//		}
+//		reCiterEngineFactory = new ReCiterEngineFactory();
+//		ReCiterEngineProperty property = new ReCiterEngineProperty();
+////		engine = reCiterEngineFactory.getReCiterEngine(property);
+//
+//		engine.run(targetAuthor, reCiterArticleList);
 	}
 }

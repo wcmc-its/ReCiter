@@ -5,13 +5,13 @@ import java.util.Set;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 
 public interface ClusterSelector {
 
-	void runSelectionStrategy(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor);
+	void runSelectionStrategy(Map<Long, ReCiterCluster> clusters, Identity identity);
 	
 	Set<Long> getSelectedClusterIds();
 	
-	void handleNonSelectedClusters(TargetAuthorStrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor);
+	void handleNonSelectedClusters(TargetAuthorStrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, Identity identity);
 }

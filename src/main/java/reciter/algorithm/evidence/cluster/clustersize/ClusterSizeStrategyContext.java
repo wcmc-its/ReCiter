@@ -3,7 +3,7 @@ package reciter.algorithm.evidence.cluster.clustersize;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.cluster.RemoveClusterStrategy;
 import reciter.algorithm.evidence.cluster.RemoveClusterStrategyContext;
-import reciter.model.author.TargetAuthor;
+import reciter.database.mongo.model.Identity;
 
 public class ClusterSizeStrategyContext implements RemoveClusterStrategyContext {
 
@@ -14,7 +14,7 @@ public class ClusterSizeStrategyContext implements RemoveClusterStrategyContext 
 	}
 
 	@Override
-	public double executeStrategy(ReCiterCluster reCiterCluster, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterCluster, targetAuthor);
+	public double executeStrategy(ReCiterCluster reCiterCluster, Identity identity) {
+		return strategy.executeStrategy(reCiterCluster, identity);
 	}
 }

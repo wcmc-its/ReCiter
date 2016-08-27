@@ -3,16 +3,16 @@ package reciter.algorithm.evidence.article.coauthor.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 
 public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 
-	private final TargetAuthor targetAuthor;
+	private final Identity identity;
 
-	public CoauthorStrategy(TargetAuthor targetAuthor) {
-		this.targetAuthor = targetAuthor;
+	public CoauthorStrategy(Identity identity) {
+		this.identity = identity;
 	}
 
 	@Override
@@ -34,7 +34,7 @@ public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 	/**
 	 * Determine whether two reCiterArticles contain mutual authors.
 	 * @param reCiterArticle
-	 * @param targetAuthor
+	 * @param identity
 	 * @return
 	 */
 	public int getNumberOfMutualCoauthors(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
@@ -44,8 +44,8 @@ public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 			for (ReCiterAuthor authorB : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 				// Only check authors except for the target author (because target author always matches)
-				if (!authorA.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
-					!authorB.getAuthorName().firstInitialLastNameMatch(targetAuthor.getAuthorName()) &&
+				if (!authorA.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName()) &&
+					!authorB.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName()) &&
 					 authorA.getAuthorName().isFullNameMatch(authorB.getAuthorName())) {
 
 					++numCoauthorMatches;

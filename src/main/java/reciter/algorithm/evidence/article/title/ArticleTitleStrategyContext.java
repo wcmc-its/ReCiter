@@ -3,8 +3,8 @@ package reciter.algorithm.evidence.article.title;
 import java.util.List;
 
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 public class ArticleTitleStrategyContext implements RemoveReCiterArticleStrategyContext {
 
@@ -15,12 +15,12 @@ public class ArticleTitleStrategyContext implements RemoveReCiterArticleStrategy
 	}
 	
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticle, targetAuthor);
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
+		return strategy.executeStrategy(reCiterArticle, identity);
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticles, targetAuthor);
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		return strategy.executeStrategy(reCiterArticles, identity);
 	}	
 }

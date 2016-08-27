@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 /**
  * Clusterer interface. Provides a set of functions that must be implemented
@@ -18,7 +18,7 @@ public interface Clusterer {
 	
 	void cluster();
 	
-	TargetAuthor getTargetAuthor();
+	Identity getIdentity();
 	
 	List<ReCiterArticle> getReCiterArticles();
 	

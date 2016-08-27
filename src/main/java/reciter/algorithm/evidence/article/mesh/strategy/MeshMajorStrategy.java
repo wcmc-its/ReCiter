@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.database.dao.MeshRawCount;
 import reciter.database.dao.impl.MeshRawCountImpl;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterCitationYNEnum;
 import reciter.model.article.ReCiterMeshHeadingQualifierName;
-import reciter.model.author.TargetAuthor;
 
 /**
  * https://github.com/wcmc-its/ReCiter/issues/131
@@ -54,12 +54,12 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 * is NOT added to the list of MeSH major terms that we generated in step 1.
 	 * 
 	 * @param reCiterArticle
-	 * @param targetAuthor
+	 * @param identity
 	 * @return
 	 */
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 
-		boolean isAuthorNameMatch = matchAuthorName(reCiterArticle, targetAuthor);
+		boolean isAuthorNameMatch = matchAuthorName(reCiterArticle, identity);
 
 		if (isAuthorNameMatch) {
 			List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
@@ -179,7 +179,7 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

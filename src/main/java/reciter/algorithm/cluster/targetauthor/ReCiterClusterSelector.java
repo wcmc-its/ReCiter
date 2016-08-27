@@ -46,6 +46,7 @@ import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 import reciter.model.author.TargetAuthor;
@@ -140,7 +141,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
 
-	public ReCiterClusterSelector(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public ReCiterClusterSelector(Map<Long, ReCiterCluster> clusters, Identity identity) {
 
 		// Strategies that select clusters that are similar to the target author.
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
@@ -151,11 +152,16 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
 		scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
-		coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(targetAuthor));
-		journalStrategyContext = new JournalStrategyContext(new JournalStrategy(targetAuthor));
+		coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(identity));
+		journalStrategyContext = new JournalStrategyContext(new JournalStrategy(identity));
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
-		articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy());
+		
+		int numArticles = 0;
+		for (ReCiterCluster reCiterCluster : clusters.values()) {
+			numArticles += reCiterCluster.getArticleCluster().size();
+		}
+		articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy(numArticles));
 
 		// TODO: getBoardCertificationScore(map);
 
@@ -187,58 +193,58 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		strategyContexts.add(clusterSizeStrategyContext);
 	}
 
-	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, Identity identity) {
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			if (strategyContext instanceof TargetAuthorStrategyContext) {
-				((TargetAuthorStrategyContext) strategyContext).executeStrategy(reCiterArticle, targetAuthor);
+				((TargetAuthorStrategyContext) strategyContext).executeStrategy(reCiterArticle, identity);
 			}
 		}
 	}
 
 	@Override
-	public void runSelectionStrategy(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void runSelectionStrategy(Map<Long, ReCiterCluster> clusters, Identity identity) {
 		// Select clusters that are similar to the target author.
-		selectClusters(clusters, targetAuthor);
+		selectClusters(clusters, identity);
 
 		// If no cluster ids are selected, select the cluster with the first name and middle name matches.
-		selectClustersFallBack(clusters, targetAuthor);
+		selectClustersFallBack(clusters, identity);
 
 		// Reassign individual article that are similar to the target author. 
-		reAssignArticles(strategyContexts, clusters, targetAuthor);
+		reAssignArticles(strategyContexts, clusters, identity);
 	}
 
 	/**
 	 * Selecting clusters based on evidence types.
 	 * 
 	 * @param clusters Clusters formed in Phase I clustering.
-	 * @param targetAuthor Target author.
+	 * @param identity Target author.
 	 * 
 	 * @return A set of cluster ids that are selected because of the cluster's
 	 * similarity to target author.
 	 */
-	public void selectClusters(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void selectClusters(Map<Long, ReCiterCluster> clusters, Identity identity) {
 
 		Set<Long> selectedClusterIds = new HashSet<Long>();
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long clusterId = entry.getKey();
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
 
-			double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
+			double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
 			if (emailStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
 			}
 
-			double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
+			double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
 			if (departmentStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
 			}
 
-			double knownCoinvestigatorStrategyScore = ((TargetAuthorStrategyContext) grantCoauthorStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
+			double knownCoinvestigatorStrategyScore = ((TargetAuthorStrategyContext) grantCoauthorStrategyContext).executeStrategy(reCiterArticles, identity);
 			if (knownCoinvestigatorStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
 			}
 
-			double affiliationScore = ((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, targetAuthor);
+			double affiliationScore = ((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
 			if (affiliationScore > 0) {
 				selectedClusterIds.add(clusterId);
 			}
@@ -246,17 +252,17 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		this.selectedClusterIds = selectedClusterIds;
 	}
 
-	public void selectClustersFallBack(Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void selectClustersFallBack(Map<Long, ReCiterCluster> clusters, Identity identity) {
 		if (selectedClusterIds.size() == 0) {
 			for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 				for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
 					for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 						boolean isMiddleNameMatch = StringUtils.equalsIgnoreCase(
-								reCiterAuthor.getAuthorName().getMiddleInitial(), targetAuthor.getAuthorName().getMiddleInitial());
+								reCiterAuthor.getAuthorName().getMiddleInitial(), identity.getAuthorName().getMiddleInitial());
 
 						boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
-								reCiterAuthor.getAuthorName().getFirstName(), targetAuthor.getAuthorName().getFirstName());
+								reCiterAuthor.getAuthorName().getFirstName(), identity.getAuthorName().getFirstName());
 
 						if (isMiddleNameMatch && isFirstNameMatch) {
 							selectedClusterIds.add(entry.getKey());
@@ -272,11 +278,11 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * on a given instance of strategy context.
 	 * @param strategyContexts list of strategy context that are going to be used to reassign the article.
 	 * @param clusters current state of the clusters.
-	 * @param targetAuthor target author.
+	 * @param identity target author.
 	 */
-	public void reAssignArticles(List<StrategyContext> strategyContexts, Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void reAssignArticles(List<StrategyContext> strategyContexts, Map<Long, ReCiterCluster> clusters, Identity identity) {
 		for (StrategyContext strategyContext : strategyContexts) {
-			handleStrategyContext(strategyContext, clusters, targetAuthor);
+			handleStrategyContext(strategyContext, clusters, identity);
 		}
 	}
 
@@ -284,12 +290,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * Handler for target author specific strategy context.
 	 * @param targetAuthorStrategyContext
 	 * @param clusters
-	 * @param targetAuthor
+	 * @param identity
 	 */
 	public void handleTargetAuthorStrategyContext(
 			TargetAuthorStrategyContext targetAuthorStrategyContext, 
 			Map<Long, ReCiterCluster> clusters, 
-			TargetAuthor targetAuthor) {
+			Identity identity) {
 
 		// Map of cluster ids to ReCiterarticle objects. Keep tracks of the new cluster ids that these
 		// ReCiterArticle objects will be placed at the end of the below loop.
@@ -305,7 +311,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 					while (iterator.hasNext()) {
 						ReCiterArticle otherReCiterArticle = iterator.next();
 
-						if (targetAuthorStrategyContext.executeStrategy(otherReCiterArticle, targetAuthor) > 0) {
+						if (targetAuthorStrategyContext.executeStrategy(otherReCiterArticle, identity) > 0) {
 							if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
 								clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
 							} else {
@@ -333,12 +339,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * Handler for ReCiterArticle specific strategy context.
 	 * @param reCiterArticleStrategyContext
 	 * @param clusters
-	 * @param targetAuthor
+	 * @param identity
 	 */
 	public void handleReCiterArticleStrategyContext(
 			ReCiterArticleStrategyContext reCiterArticleStrategyContext,
 			Map<Long, ReCiterCluster> clusters, 
-			TargetAuthor targetAuthor) {
+			Identity identity) {
 
 		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Long, List<ReCiterArticle>>();
 
@@ -382,12 +388,12 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * Handle removal of articles from selected clusters.
 	 * @param removeReCiterArticleStrategyContext
 	 * @param clusters
-	 * @param targetAuthor
+	 * @param identity
 	 */
 	public void handleRemoveReCiterArticleStrategyContext(
 			RemoveReCiterArticleStrategyContext removeReCiterArticleStrategyContext,
 			Map<Long, ReCiterCluster> clusters,
-			TargetAuthor targetAuthor) {
+			Identity identity) {
 
 		ReCiterCluster clusterOfRemovedArticles = new ReCiterCluster();
 
@@ -395,7 +401,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			Iterator<ReCiterArticle> iterator = clusters.get(clusterId).getArticleCluster().iterator();
 			while (iterator.hasNext()) {
 				ReCiterArticle reCiterArticle = iterator.next();
-				double score = removeReCiterArticleStrategyContext.executeStrategy(reCiterArticle, targetAuthor);
+				double score = removeReCiterArticleStrategyContext.executeStrategy(reCiterArticle, identity);
 				if (score > 0) {
 					clusterOfRemovedArticles.add(reCiterArticle);
 					iterator.remove();
@@ -410,18 +416,18 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * Handle removal of a cluster from selected clusters.
 	 * @param removeClusterStrategyContext
 	 * @param clusters
-	 * @param targetAuthor
+	 * @param identity
 	 */
 	public void handleRemoveClusterStrategyContext(
 			RemoveClusterStrategyContext removeClusterStrategyContext,
 			Map<Long, ReCiterCluster> clusters,
-			TargetAuthor targetAuthor) {
+			Identity identity) {
 
 		Iterator<Long> iterator = selectedClusterIds.iterator();
 		while (iterator.hasNext()) {
 			long clusterId = iterator.next();
 			ReCiterCluster cluster = clusters.get(clusterId);
-			double score = removeClusterStrategyContext.executeStrategy(cluster, targetAuthor);
+			double score = removeClusterStrategyContext.executeStrategy(cluster, identity);
 			if (score > 0) {
 				iterator.remove();
 			}
@@ -433,7 +439,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	public void handleNonSelectedClusters(
 			TargetAuthorStrategyContext strategyContext, 
 			Map<Long, ReCiterCluster> clusters, 
-			TargetAuthor targetAuthor) {
+			Identity identity) {
 
 		// Map of cluster ids to ReCiterarticle objects. A new cluster that contains previously not selected articles.
 		List<ReCiterArticle> movedArticles = new ArrayList<ReCiterArticle>();
@@ -446,7 +452,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 				while (iterator.hasNext()) {
 					ReCiterArticle article = iterator.next();
 
-					if (strategyContext.executeStrategy(article, targetAuthor) > 0) {
+					if (strategyContext.executeStrategy(article, identity) > 0) {
 						movedArticles.add(article);
 						iterator.remove();
 					}
@@ -472,17 +478,17 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 * Handler for a generic StrategyContext object.
 	 * @param strategyContext
 	 * @param clusters
-	 * @param targetAuthor
+	 * @param identity
 	 */
-	public void handleStrategyContext(StrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, TargetAuthor targetAuthor) {
+	public void handleStrategyContext(StrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, Identity identity) {
 		if (strategyContext instanceof TargetAuthorStrategyContext) {
-			handleTargetAuthorStrategyContext((TargetAuthorStrategyContext) strategyContext, clusters, targetAuthor);
+			handleTargetAuthorStrategyContext((TargetAuthorStrategyContext) strategyContext, clusters, identity);
 		} else if (strategyContext instanceof ReCiterArticleStrategyContext) {
-			handleReCiterArticleStrategyContext((ReCiterArticleStrategyContext) strategyContext, clusters, targetAuthor);
+			handleReCiterArticleStrategyContext((ReCiterArticleStrategyContext) strategyContext, clusters, identity);
 		} else if (strategyContext instanceof RemoveReCiterArticleStrategyContext) {
-			handleRemoveReCiterArticleStrategyContext((RemoveReCiterArticleStrategyContext) strategyContext, clusters, targetAuthor);
+			handleRemoveReCiterArticleStrategyContext((RemoveReCiterArticleStrategyContext) strategyContext, clusters, identity);
 		} else if (strategyContext instanceof RemoveClusterStrategyContext) {
-			handleRemoveClusterStrategyContext((RemoveClusterStrategyContext) strategyContext, clusters, targetAuthor);
+			handleRemoveClusterStrategyContext((RemoveClusterStrategyContext) strategyContext, clusters, identity);
 		}
 	}
 

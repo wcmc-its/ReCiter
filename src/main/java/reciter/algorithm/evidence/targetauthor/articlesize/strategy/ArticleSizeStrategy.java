@@ -3,15 +3,17 @@ package reciter.algorithm.evidence.targetauthor.articlesize.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 
 public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 
 	private static final int FIRST_LEVEL = 200;
 	private static final int SECOND_LEVEL = 500;
+	private int numberOfArticles;
+	
 	/**
 	 * If a person has < 200 candidate publications, assume that the person wrote it in these circumstances:
 	 * 1. Matching full first name (Richard Granstein, e.g., 6605225)
@@ -20,8 +22,12 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 	 * If a person has < 500 candidate publications, assume that the person wrote it in these circumstances:
 	 * 3. Both full first name and matching middle initial (Richard D. Granstein, e.g., 6231484, or Carl F. Nathan, e.g., 3989315)
 	 */
+	public ArticleSizeStrategy(int numberOfArticles) {
+		this.numberOfArticles = numberOfArticles;
+	}
+	
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
@@ -30,14 +36,14 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 				String firstName = author.getAuthorName().getFirstName();
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 
-				String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
-				String targetAuthorMiddleInitial = targetAuthor.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+				String targetAuthorFirstName = identity.getAuthorName().getFirstName();
+				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
+				String targetAuthorLastName = identity.getAuthorName().getLastName();
 
 				if (lastName.equals(targetAuthorLastName)) {
 					if ((targetAuthorFirstName.equalsIgnoreCase(firstName) || 
 							(middleInitial.length() > 0 && middleInitial.equalsIgnoreCase(targetAuthorMiddleInitial))) &&
-							targetAuthor.getArticleSize() < FIRST_LEVEL) {
+							numberOfArticles < FIRST_LEVEL) {
 						
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
 								" [article size < 200 : pmid=" + reCiterArticle.getArticleId() + " is gold standard=" + reCiterArticle.getGoldStandard() + "]");
@@ -45,7 +51,7 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 						return 1;
 					} else if (targetAuthorFirstName.equalsIgnoreCase(firstName) && middleInitial.length() > 0 &&
 							middleInitial.equalsIgnoreCase(targetAuthorMiddleInitial) &&
-							targetAuthor.getArticleSize() < SECOND_LEVEL) {
+							numberOfArticles < SECOND_LEVEL) {
 						
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
 								" [article size < 500 : pmid=" + reCiterArticle.getArticleId() + " is gold standard=" + reCiterArticle.getGoldStandard() + "]");
@@ -58,7 +64,7 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

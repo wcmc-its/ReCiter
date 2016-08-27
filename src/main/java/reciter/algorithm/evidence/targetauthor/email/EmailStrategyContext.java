@@ -4,8 +4,8 @@ import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 
 public class EmailStrategyContext implements TargetAuthorStrategyContext {
 	private final TargetAuthorStrategy strategy;
@@ -16,13 +16,13 @@ public class EmailStrategyContext implements TargetAuthorStrategyContext {
 	}
 	
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
-		strategyScore = strategy.executeStrategy(reCiterArticle, targetAuthor);
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
+		strategyScore = strategy.executeStrategy(reCiterArticle, identity);
 		return strategyScore;
 	}
 	
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
-		return strategy.executeStrategy(reCiterArticles, targetAuthor);
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		return strategy.executeStrategy(reCiterArticles, identity);
 	}
 }

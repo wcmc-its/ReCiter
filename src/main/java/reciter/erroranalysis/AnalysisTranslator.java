@@ -4,9 +4,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 import reciter.xml.parser.scopus.model.Affiliation;
 import reciter.xml.parser.scopus.model.Author;
 import reciter.xml.parser.scopus.model.ScopusArticle;
@@ -17,7 +17,7 @@ public class AnalysisTranslator {
 			ReCiterArticle reCiterArticle,
 			StatusEnum status,
 			String cwid,
-			TargetAuthor targetAuthor,
+			Identity identity,
 			boolean isClusterOriginator,
 			long clusterId,
 			int countOfArticleInCluster,
@@ -27,11 +27,11 @@ public class AnalysisTranslator {
 		analysisObject.setStatus(status);
 		analysisObject.setCwid(cwid);
 		analysisObject.setTargetName(
-				targetAuthor.getAuthorName().getFirstName() + " " + 
-						targetAuthor.getAuthorName().getMiddleName() + " " + 
-						targetAuthor.getAuthorName().getLastName());
+				identity.getAuthorName().getFirstName() + " " + 
+						identity.getAuthorName().getMiddleName() + " " + 
+						identity.getAuthorName().getLastName());
 		
-		analysisObject.setPubmedSearchQuery(targetAuthor.getPubmedSearchQuery());
+//		analysisObject.setPubmedSearchQuery(identity.getPubmedSearchQuery());
 		analysisObject.setPmid(reCiterArticle.getArticleId());
 		analysisObject.setArticleTitle(reCiterArticle.getArticleTitle());
 		analysisObject.setFullJournalTitle(reCiterArticle.getJournal().getJournalTitle());
@@ -48,9 +48,9 @@ public class AnalysisTranslator {
 			for (Author scopusAuthor : scopusArticle.getAuthors()) {
 				String scopusAuthorFirstName = scopusAuthor.getGivenName();
 				String scopusAuthorLastName = scopusAuthor.getSurname();
-				String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+				String targetAuthorLastName = identity.getAuthorName().getLastName();
 				if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, targetAuthorLastName)) {
-					String targetAuthorFirstInitial = targetAuthor.getAuthorName().getFirstInitial();
+					String targetAuthorFirstInitial = identity.getAuthorName().getFirstInitial();
 					if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
 						if (scopusAuthorFirstName.substring(0, 1).equals(targetAuthorFirstInitial)) {
 
@@ -104,7 +104,7 @@ public class AnalysisTranslator {
 		}
 
 		for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if (reCiterAuthor.getAuthorName().getLastName().equalsIgnoreCase(targetAuthor.getAuthorName().getLastName())) {
+			if (reCiterAuthor.getAuthorName().getLastName().equalsIgnoreCase(identity.getAuthorName().getLastName())) {
 				if (reCiterAuthor.getAffiliation() != null) {
 					pubmedTargetAuthorAffiliation.append(reCiterAuthor.getAffiliation().getAffiliationName());
 				}

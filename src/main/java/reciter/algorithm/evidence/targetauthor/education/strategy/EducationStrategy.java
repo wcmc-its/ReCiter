@@ -1,30 +1,28 @@
 package reciter.algorithm.evidence.targetauthor.education.strategy;
 
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 import reciter.string.ReCiterStringUtil;
-import reciter.xml.parser.scopus.model.Author;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 
 public class EducationStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		int numWordsOverlap = 0;
 		ScopusArticle scopusArticle = reCiterArticle.getScopusArticle();
 		if (scopusArticle != null) {
-			numWordsOverlap += numWordsOverlapByEducationFromScopus(scopusArticle, targetAuthor);
+			numWordsOverlap += numWordsOverlapByEducationFromScopus(scopusArticle, identity);
 		}
 		if (reCiterArticle.getArticleCoAuthors() != null) {
-			numWordsOverlap += numWordsOverlapByEducationFromPubmed(reCiterArticle.getArticleCoAuthors().getAuthors(), targetAuthor);
+			numWordsOverlap += numWordsOverlapByEducationFromPubmed(reCiterArticle.getArticleCoAuthors().getAuthors(), identity);
 		}
 		reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[Education number of overlapping words=" + numWordsOverlap + "]");
 		reCiterArticle.setEducationScore(numWordsOverlap);
@@ -32,23 +30,23 @@ public class EducationStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		int numWordsOverlap = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles)
-			numWordsOverlap += executeStrategy(reCiterArticle, targetAuthor);
+			numWordsOverlap += executeStrategy(reCiterArticle, identity);
 		return numWordsOverlap;
 	}
 	
-	private int numWordsOverlapByEducationFromPubmed(List<ReCiterAuthor> authors, TargetAuthor targetAuthor) {
+	private int numWordsOverlapByEducationFromPubmed(List<ReCiterAuthor> authors, Identity identity) {
 		int numWordsOverlap = 0;
 		for (ReCiterAuthor author : authors) {
 			String lastName = author.getAuthorName().getLastName();
 			if (lastName != null) {
-				if (StringUtils.equalsIgnoreCase(targetAuthor.getAuthorName().getLastName(), lastName)) {
+				if (StringUtils.equalsIgnoreCase(identity.getAuthorName().getLastName(), lastName)) {
 					String authorEducationConcatenation = null;
-					if (targetAuthor.getEducations() != null) {
-						authorEducationConcatenation = concatenateAuthorEducationFields(targetAuthor.getEducations());
-					}
+//					if (identity.getEducations() != null) {
+//						authorEducationConcatenation = concatenateAuthorEducationFields(identity.getEducations());
+//					}
 					String affiliation = author.getAffiliation().getAffiliationName();
 					if (affiliation != null && authorEducationConcatenation != null) {
 						numWordsOverlap += ReCiterStringUtil.computeNumberOfOverlapTokens(authorEducationConcatenation, affiliation);
@@ -59,7 +57,7 @@ public class EducationStrategy extends AbstractTargetAuthorStrategy {
 		return numWordsOverlap;
 	}
 	
-	private int numWordsOverlapByEducationFromScopus(ScopusArticle scopusArticle, TargetAuthor targetAuthor) {
+	private int numWordsOverlapByEducationFromScopus(ScopusArticle scopusArticle, Identity identity) {
 		int numWordsOverlap = 0;
 //		if (scopusArticle != null) {
 //			for (Entry<Long, Author> entry : scopusArticle.getAuthors().entrySet()) {

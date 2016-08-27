@@ -3,9 +3,9 @@ package reciter.algorithm.evidence.targetauthor.affiliation.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
 import reciter.service.CoauthorAffiliationsService;
 import reciter.service.bean.CoauthorAffiliationsBean;
 
@@ -26,7 +26,7 @@ public class CoauthorAffiliationsStrategy extends AbstractTargetAuthorStrategy {
 	}
 	
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double averageScore = 0;
 		if (reCiterArticle.getArticleCoAuthors() != null) {
 			List<ReCiterAuthor> authors = reCiterArticle.getArticleCoAuthors().getAuthors();
@@ -46,7 +46,7 @@ public class CoauthorAffiliationsStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

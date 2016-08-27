@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
@@ -26,10 +27,10 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	private String extractedDept;
 	private long pmid;
 	private int isGoldStandard;
-//	private Set<String> departments = new HashSet<String>();
-	
+	//	private Set<String> departments = new HashSet<String>();
+
 	@Override
-	public double executeStrategy(ReCiterArticle reCiterArticle, TargetAuthor targetAuthor) {
+	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 
 		pmid = reCiterArticle.getArticleId();
 		isGoldStandard = reCiterArticle.getGoldStandard();
@@ -38,16 +39,16 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
-//				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
+				//				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
 				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(
-						reCiterArticle.getArticleCoAuthors().getAuthors(), author, targetAuthor);
-				
+						reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
+
 				boolean isFirstNameInitialMatch = 
-						author.getAuthorName().getFirstInitial().equalsIgnoreCase(targetAuthor.getAuthorName().getFirstInitial());
+						author.getAuthorName().getFirstInitial().equalsIgnoreCase(identity.getAuthorName().getFirstInitial());
 
 				boolean isFirstNameInitialMatchFromEmailFetched = false;
-				if (targetAuthor.getAuthorNamesFromEmailFetch() != null) {
-					for (AuthorName authorName : targetAuthor.getAuthorNamesFromEmailFetch()) {
+				if (identity.getAliases() != null) {
+					for (AuthorName authorName : identity.getAliases()) {
 						if (StringUtils.equalsIgnoreCase(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
 								StringUtils.equalsIgnoreCase(authorName.getLastName(), author.getAuthorName().getLastName())) {
 							isFirstNameInitialMatchFromEmailFetched = true;
@@ -59,7 +60,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 				if ((isDepartmentMatch && isFirstNameInitialMatch) || (isDepartmentMatch && isFirstNameInitialMatchFromEmailFetched)) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
 							" [department and first name initial matches: " + extractedDept + 
-							", first name initial: " + targetAuthor.getAuthorName().getFirstInitial() + "]");
+							", first name initial: " + identity.getAuthorName().getFirstInitial() + "]");
 					slf4jLogger.info("Department and first name initial matches. "
 							+ "PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
 							"] Is Gold=[" + isGoldStandard + "]");
@@ -73,10 +74,10 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	}
 
 	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, TargetAuthor targetAuthor) {
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			sum += executeStrategy(reCiterArticle, targetAuthor);
+			sum += executeStrategy(reCiterArticle, identity);
 		}
 		return sum;
 	}
@@ -110,29 +111,27 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	}
 
 	private boolean departmentMatchStrictAndFillInAffiliationIfNotPresent(List<ReCiterAuthor> authors, 
-			ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
+			ReCiterAuthor reCiterAuthor, Identity identity) {
 
-		String targetAuthorDept = targetAuthor.getDepartment();
-		String targetAuthorOtherDept = targetAuthor.getOtherDepartment();
-		
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
 			extractedDept = extractDepartment(affiliation);
-			
-			if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
-				StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
-				return true;
-			}
 
-			if (targetAuthor.getAlternateDepartmentNames() != null) {
-				for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
-					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
-						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
-								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
-						return true;
-					}
+			for (String department : identity.getDepartments()) {
+				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
+					return true;
 				}
 			}
+
+			//			if (identity.getAlternateDepartmentNames() != null) {
+			//				for (String alternateDeptName : identity.getAlternateDepartmentNames()) {
+			//					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+			//						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+			//								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
+			//						return true;
+			//					}
+			//				}
+			//			}
 		} else {
 			// get affiliation from one of the other authors.
 			for (ReCiterAuthor author : authors) {
@@ -140,58 +139,56 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 						&& author.getAffiliation().getAffiliationName().length() > 0) {
 					String affiliation = author.getAffiliation().getAffiliationName();
 					extractedDept = extractDepartment(affiliation);
-					
-					if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
-						StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
-						return true;
-					}
 
-					if (targetAuthor.getAlternateDepartmentNames() != null) {
-						for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
-							if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
-								slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
-										"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
-								return true;
-							}
+					for (String department : identity.getDepartments()) {
+						if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
+							return true;
 						}
 					}
+
+					//					if (identity.getAlternateDepartmentNames() != null) {
+					//						for (String alternateDeptName : identity.getAlternateDepartmentNames()) {
+					//							if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+					//								slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+					//										"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
+					//								return true;
+					//							}
+					//						}
+					//					}
 				}
 			}
 		}
 		return false;
 	}
-	
-	private boolean departmentMatchStrict(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
 
-		String targetAuthorDept = targetAuthor.getDepartment();
-		String targetAuthorOtherDept = targetAuthor.getOtherDepartment();
-		
+	private boolean departmentMatchStrict(ReCiterAuthor reCiterAuthor, Identity identity) {
+
 		// this causes precision to decrease, but increases recall.
-//		if (departments.contains(targetAuthorDept) || departments.contains(targetAuthorOtherDept)) {
-//			return true;
-//		}
-		
+		//		if (departments.contains(targetAuthorDept) || departments.contains(targetAuthorOtherDept)) {
+		//			return true;
+		//		}
+
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
 			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
 			extractedDept = extractDepartment(affiliation);
-//			if (extractedDept.length() > 0) {
-//				departments.add(extractedDept);
-//			}
-			
-			if (StringUtils.equalsIgnoreCase(extractedDept, targetAuthorDept) || 
-				StringUtils.equalsIgnoreCase(extractedDept, targetAuthorOtherDept)) {
-				return true;
-			}
-
-			if (targetAuthor.getAlternateDepartmentNames() != null) {
-				for (String alternateDeptName : targetAuthor.getAlternateDepartmentNames()) {
-					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
-//						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
-//								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
-						return true;
-					}
+			//			if (extractedDept.length() > 0) {
+			//				departments.add(extractedDept);
+			//			}
+			for (String department : identity.getDepartments()) {
+				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
+					return true;
 				}
 			}
+
+			//			if (identity.getAlternateDepartmentNames() != null) {
+			//				for (String alternateDeptName : identity.getAlternateDepartmentNames()) {
+			//					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+			//						//						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+			//						//								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
+			//						return true;
+			//					}
+			//				}
+			//			}
 		}
 		return false;
 	}
