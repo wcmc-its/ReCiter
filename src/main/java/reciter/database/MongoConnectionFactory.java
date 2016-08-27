@@ -1,4 +1,4 @@
-package reciter.database.mongo;
+package reciter.database;
 
 import com.mongodb.MongoClient;
 

@@ -1,4 +1,4 @@
-package reciter.string;
+package reciter.utils;
 
 import java.util.HashSet;
 import java.util.Set;

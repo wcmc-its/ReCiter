@@ -12,7 +12,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
-import reciter.string.ReCiterStringUtil;
+import reciter.utils.ReCiterStringUtil;
 
 public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 

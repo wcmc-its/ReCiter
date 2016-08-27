@@ -1,4 +1,4 @@
-package reciter.database.mongo;
+package reciter.database;
 
 import java.text.DateFormat;
 import java.text.ParseException;

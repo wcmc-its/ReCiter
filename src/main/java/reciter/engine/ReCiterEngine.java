@@ -18,8 +18,6 @@ import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
-import reciter.algorithm.evidence.targetauthor.boardcertification.BoardCertificationStrategyContext;
-import reciter.algorithm.evidence.targetauthor.boardcertification.strategy.CosineSimilarityStrategy;
 import reciter.algorithm.evidence.targetauthor.citizenship.CitizenshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.citizenship.strategy.CitizenshipStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
@@ -120,7 +118,7 @@ public class ReCiterEngine implements Engine {
 		//		StrategyContext journalStrategyContext = new JournalStrategyContext(new JournalStrategy(targetAuthor));
 		StrategyContext citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		StrategyContext nameStrategyContext = new NameStrategyContext(new NameStrategy());
-		StrategyContext boardCertificationStrategyContext = new BoardCertificationStrategyContext(new CosineSimilarityStrategy());
+//		StrategyContext boardCertificationStrategyContext = new BoardCertificationStrategyContext(new CosineSimilarityStrategy());
 		StrategyContext internshipsAndResidenceStrategyContext = new InternshipAndResidenceStrategyContext(new InternshipAndResidenceStrategy());
 
 		// TODO: removeArticlesBasedOnYearDiscrepancy(map);
@@ -139,7 +137,7 @@ public class ReCiterEngine implements Engine {
 		//		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
 		strategyContexts.add(nameStrategyContext);
-		strategyContexts.add(boardCertificationStrategyContext);
+//		strategyContexts.add(boardCertificationStrategyContext);
 		strategyContexts.add(internshipsAndResidenceStrategyContext);
 
 		//		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);

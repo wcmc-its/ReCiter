@@ -17,21 +17,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import reciter.database.dao.impl.MeshRawCountImpl;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.model.MeshTerm;
 import reciter.engine.Engine;
 import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.TargetAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.MeshTermService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
-import reciter.service.TargetAuthorService;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
@@ -41,8 +38,8 @@ public class ReCiterController {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterController.class);
 
-	@Autowired
-	private TargetAuthorService targetAuthorService;
+//	@Autowired
+//	private TargetAuthorService targetAuthorService;
 
 	@Autowired
 	private ESearchResultService eSearchResultService;
@@ -76,11 +73,11 @@ public class ReCiterController {
 		return eSearchResultService.findByCwid(cwid);
 	}
 
-	@RequestMapping(value = "/reciter/targetauthor/by/cwid", method = RequestMethod.GET)
-	@ResponseBody
-	public TargetAuthor getTargetAuthorByCwid(@RequestParam(value="cwid") String cwid) {
-		return targetAuthorService.getTargetAuthor(cwid);
-	}
+//	@RequestMapping(value = "/reciter/targetauthor/by/cwid", method = RequestMethod.GET)
+//	@ResponseBody
+//	public TargetAuthor getTargetAuthorByCwid(@RequestParam(value="cwid") String cwid) {
+//		return targetAuthorService.getTargetAuthor(cwid);
+//	}
 	
 	@RequestMapping(value = "/reciter/identitybeans/by/search", method = RequestMethod.GET)
 	@ResponseBody
@@ -165,8 +162,8 @@ public class ReCiterController {
 //			mongoIdentities.add(i);
 //		}
 //		identityService.save(mongoIdentities);
-		List<MeshTerm> meshTerms = new MeshRawCountImpl().getAllMeshTerms();
-		meshTermService.save(meshTerms);
+//		List<MeshTerm> meshTerms = new MeshRawCountImpl().getAllMeshTerms();
+//		meshTermService.save(meshTerms);
 	}
 
 //	@RequestMapping(value = "/reciter/authornames/by/cwid", method = RequestMethod.GET)

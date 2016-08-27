@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import reciter.string.ReCiterStringUtil;
+import reciter.utils.ReCiterStringUtil;
 
 public class ReCiterStringUtilTest {
 
