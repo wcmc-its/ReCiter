@@ -17,22 +17,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import reciter.database.dao.impl.GoldStandardPmidsDaoImpl;
-import reciter.database.dao.impl.IdentityDaoImpl;
-import reciter.database.dao.impl.IdentityDegreeDaoImpl;
-import reciter.database.dao.impl.IdentityGrantDaoImpl;
-import reciter.database.model.IdentityDegree;
+import reciter.database.dao.impl.MeshRawCountImpl;
 import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.model.Education;
 import reciter.database.mongo.model.Identity;
+import reciter.database.mongo.model.MeshTerm;
 import reciter.engine.Engine;
 import reciter.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.AuthorName;
 import reciter.model.author.TargetAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
+import reciter.service.MeshTermService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.service.TargetAuthorService;
@@ -66,6 +62,9 @@ public class ReCiterController {
 	@Autowired
 	private ScopusService scopusService;
 	
+	@Autowired
+	private MeshTermService meshTermService;
+	
 	@RequestMapping(value="/",method = RequestMethod.GET)
 	public String homepage(){
 		return "index";
@@ -98,74 +97,76 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/migrate/goldstandard", method = RequestMethod.GET)
 	@ResponseBody
 	public void migrateGoldStandard() {
-		IdentityDaoImpl identityDaoImpl = new IdentityDaoImpl();
-		List<reciter.database.model.Identity> identities = identityDaoImpl.getAllIdentities();
-		List<reciter.database.mongo.model.Identity> mongoIdentities = new ArrayList<reciter.database.mongo.model.Identity>();
-		GoldStandardPmidsDaoImpl g = new GoldStandardPmidsDaoImpl();
-		Map<String, List<Long>> pmids = g.getGoldStandard();
-//		for (Entry<String, List<Long>> entry : pmids.entrySet()) {
-//			GoldStandard goldStandard = new GoldStandard();
-//			goldStandard.setCwid(entry.getKey());
-//			goldStandard.setPmids(entry.getValue());
-//			goldStandardService.save(goldStandard);
+//		IdentityDaoImpl identityDaoImpl = new IdentityDaoImpl();
+//		List<reciter.database.model.Identity> identities = identityDaoImpl.getAllIdentities();
+//		List<reciter.database.mongo.model.Identity> mongoIdentities = new ArrayList<reciter.database.mongo.model.Identity>();
+//		GoldStandardPmidsDaoImpl g = new GoldStandardPmidsDaoImpl();
+//		Map<String, List<Long>> pmids = g.getGoldStandard();
+////		for (Entry<String, List<Long>> entry : pmids.entrySet()) {
+////			GoldStandard goldStandard = new GoldStandard();
+////			goldStandard.setCwid(entry.getKey());
+////			goldStandard.setPmids(entry.getValue());
+////			goldStandardService.save(goldStandard);
+////		}
+//		Map<String, IdentityDegree> degrees = new IdentityDegreeDaoImpl().getAllIdentityDegree();
+//		Map<String, List<reciter.database.mongo.model.Grant>> grants = new IdentityGrantDaoImpl().getAllIdentityGrant();
+//		for (reciter.database.model.Identity identity : identities) {
+//			reciter.database.mongo.model.Identity i = new reciter.database.mongo.model.Identity();
+//			i.setCwid(identity.getCwid());
+//			i.setAuthorName(new AuthorName(identity.getFirstName(), identity.getMiddleName(), identity.getLastName()));
+//			List<String> emails = new ArrayList<String>();
+//			if (identity.getEmail() != null && !identity.getEmail().isEmpty()) {
+//				emails.add(identity.getEmail());
+//			}
+//			if (identity.getEmailOther() != null && !identity.getEmailOther().isEmpty()) {
+//				emails.add(identity.getEmailOther());
+//			}
+//			i.setEmails(emails);
+//			List<String> departments = new ArrayList<String>();
+//			if (identity.getPrimaryDepartment() != null && !identity.getPrimaryDepartment().isEmpty()) {
+//				departments.add(identity.getPrimaryDepartment());
+//			}
+//			if (identity.getOtherDepartment() != null && !identity.getOtherDepartment().isEmpty()) {
+//				departments.add(identity.getOtherDepartment());
+//			}
+//			i.setDepartments(departments);
+//			if (identity.getTitle() != null && !identity.getTitle().isEmpty()) {
+//				i.setTitle(identity.getTitle());
+//			}
+//			List<String> affiliations = new ArrayList<String>();
+//			if (identity.getPrimaryAffiliation() != null && !identity.getPrimaryAffiliation().isEmpty()) {
+//				affiliations.add(identity.getPrimaryAffiliation());
+//			}
+//			i.setAffiliations(affiliations);
+//			
+//			if (pmids.containsKey(identity.getCwid())) {
+//				i.setKnownPmids(pmids.get(identity.getCwid()));
+//			}
+//			
+//			if (grants.containsKey(identity.getCwid())) {
+//				i.setGrants(grants.get(identity.getCwid()));
+//			}
+//			
+//			if (degrees.containsKey(identity.getCwid())) {
+//				IdentityDegree degree = degrees.get(identity.getCwid());
+//				Education b = new Education();
+//				b.setDegreeYear(degree.getBachelor());
+//				i.setBachelor(b);
+//				
+//				Education m = new Education();
+//				m.setDegreeYear(degree.getMasters());
+//				i.setMasters(m);
+//				
+//				Education d = new Education();
+//				d.setDegreeYear(degree.getDoctoral());
+//				i.setDoctoral(d);
+//			}
+//			
+//			mongoIdentities.add(i);
 //		}
-		Map<String, IdentityDegree> degrees = new IdentityDegreeDaoImpl().getAllIdentityDegree();
-		Map<String, List<reciter.database.mongo.model.Grant>> grants = new IdentityGrantDaoImpl().getAllIdentityGrant();
-		for (reciter.database.model.Identity identity : identities) {
-			reciter.database.mongo.model.Identity i = new reciter.database.mongo.model.Identity();
-			i.setCwid(identity.getCwid());
-			i.setAuthorName(new AuthorName(identity.getFirstName(), identity.getMiddleName(), identity.getLastName()));
-			List<String> emails = new ArrayList<String>();
-			if (identity.getEmail() != null && !identity.getEmail().isEmpty()) {
-				emails.add(identity.getEmail());
-			}
-			if (identity.getEmailOther() != null && !identity.getEmailOther().isEmpty()) {
-				emails.add(identity.getEmailOther());
-			}
-			i.setEmails(emails);
-			List<String> departments = new ArrayList<String>();
-			if (identity.getPrimaryDepartment() != null && !identity.getPrimaryDepartment().isEmpty()) {
-				departments.add(identity.getPrimaryDepartment());
-			}
-			if (identity.getOtherDepartment() != null && !identity.getOtherDepartment().isEmpty()) {
-				departments.add(identity.getOtherDepartment());
-			}
-			i.setDepartments(departments);
-			if (identity.getTitle() != null && !identity.getTitle().isEmpty()) {
-				i.setTitle(identity.getTitle());
-			}
-			List<String> affiliations = new ArrayList<String>();
-			if (identity.getPrimaryAffiliation() != null && !identity.getPrimaryAffiliation().isEmpty()) {
-				affiliations.add(identity.getPrimaryAffiliation());
-			}
-			i.setAffiliations(affiliations);
-			
-			if (pmids.containsKey(identity.getCwid())) {
-				i.setKnownPmids(pmids.get(identity.getCwid()));
-			}
-			
-			if (grants.containsKey(identity.getCwid())) {
-				i.setGrants(grants.get(identity.getCwid()));
-			}
-			
-			if (degrees.containsKey(identity.getCwid())) {
-				IdentityDegree degree = degrees.get(identity.getCwid());
-				Education b = new Education();
-				b.setDegreeYear(degree.getBachelor());
-				i.setBachelor(b);
-				
-				Education m = new Education();
-				m.setDegreeYear(degree.getMasters());
-				i.setMasters(m);
-				
-				Education d = new Education();
-				d.setDegreeYear(degree.getDoctoral());
-				i.setDoctoral(d);
-			}
-			
-			mongoIdentities.add(i);
-		}
-		identityService.save(mongoIdentities);
+//		identityService.save(mongoIdentities);
+		List<MeshTerm> meshTerms = new MeshRawCountImpl().getAllMeshTerms();
+		meshTermService.save(meshTerms);
 	}
 
 //	@RequestMapping(value = "/reciter/authornames/by/cwid", method = RequestMethod.GET)
@@ -214,7 +215,6 @@ public class ReCiterController {
 //		return analysis;
 		
 		Identity identiy = identityService.findByCwid(cwid);
-		TargetAuthor targetAuthor = targetAuthorService.convertToTargetAuthor(identiy);
 		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
 		Set<Long> pmids = new HashSet<Long>();
 		for (ESearchResult eSearchResult : eSearchResults) {
@@ -235,6 +235,15 @@ public class ReCiterController {
 			} else {
 				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
 			}
+		}
+		
+		if (reCiterEngine.getMeshTermCache() == null) {
+			List<MeshTerm> meshTerms = meshTermService.findAll();
+			Map<String, Long> meshTermCache = new HashMap<String, Long>();
+			for (MeshTerm meshTerm : meshTerms) {
+				meshTermCache.put(meshTerm.getMesh(), meshTerm.getCount());
+			}
+			reCiterEngine.setMeshTermCache(meshTermCache);
 		}
 		
 		Analysis analysis = reCiterEngine.run(identiy, reCiterArticles);

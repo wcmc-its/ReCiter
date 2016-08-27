@@ -2,6 +2,7 @@ package reciter.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,9 @@ import reciter.model.article.ReCiterArticle;
 public class ReCiterEngine implements Engine {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngine.class);
-
+	
+	private Map<String, Long> meshTermCache;
+	
 	@Override
 	public Analysis run(Identity identity, List<ReCiterArticle> reCiterArticleList) {
 
@@ -65,8 +68,8 @@ public class ReCiterEngine implements Engine {
 			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
 		}
 		
-//		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles));
-//		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
+		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles, meshTermCache));
+		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
 
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, identity.getKnownPmids());
 		slf4jLogger.info(clusterer.toString());
@@ -143,5 +146,15 @@ public class ReCiterEngine implements Engine {
 		//		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
 
 		return strategyContexts;
+	}
+
+	@Override
+	public Map<String, Long> getMeshTermCache() {
+		return meshTermCache;
+	}
+
+	@Override
+	public void setMeshTermCache(Map<String, Long> meshTermCache) {
+		this.meshTermCache = meshTermCache;
 	}
 }

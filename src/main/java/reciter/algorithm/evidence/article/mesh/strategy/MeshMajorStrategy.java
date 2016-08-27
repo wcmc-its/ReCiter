@@ -10,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.dao.MeshRawCount;
-import reciter.database.dao.impl.MeshRawCountImpl;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
@@ -26,17 +24,15 @@ import reciter.model.article.ReCiterMeshHeadingQualifierName;
  */
 public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 
-	private MeshRawCount meshRawCount;
 	private Set<String> generatedMeshMajors;
 	private Map<String, Long> meshFrequency;
 	private final double threshold = 0.4;
-
-	private static Map<String, Long> meshRawCountCache = new HashMap<String, Long>();
+	private Map<String, Long> meshTermCache;
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(MeshMajorStrategy.class);
 
-	public MeshMajorStrategy(List<ReCiterArticle> selectedReCiterArticles) {
-		meshRawCount = new MeshRawCountImpl();
+	public MeshMajorStrategy(List<ReCiterArticle> selectedReCiterArticles, Map<String, Long> meshTermCache) {
+		this.meshTermCache = meshTermCache;
 		meshFrequency = buildMeshFrequency(selectedReCiterArticles);
 		generatedMeshMajors = buildGeneratedMesh(meshFrequency, threshold);
 	}
@@ -96,9 +92,6 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 				if (isMeshMajor(meshHeading)) { // check if it's a mesh heading.
 
 					String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
-					if ("Lymph Nodes".equals(descriptorName)) {
-						slf4jLogger.info("lymph node id=" + reCiterArticle.getArticleId());
-					}
 					if (!map.containsKey(descriptorName)) {
 						map.put(descriptorName, 1L);
 					} else {
@@ -130,14 +123,8 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 		for (Map.Entry<String, Long> entry : meshFrequency.entrySet()) {
 			String mesh = entry.getKey();
 			long meshCountInTargetAuthorArticles = entry.getValue();
-
-			if (!meshRawCountCache.containsKey(mesh)) {
-				long rawCountFromPubmed = meshRawCount.getCount(mesh);
-				meshRawCountCache.put(mesh, rawCountFromPubmed);
-			}
-
-			long rawCountFromPubmed = meshRawCount.getCount(mesh);
-			if (rawCountFromPubmed != 0) {
+			Long rawCountFromPubmed = meshTermCache.get(mesh);
+			if (rawCountFromPubmed != null) {
 				double score = meshCountInTargetAuthorArticles * 10000.0 / (rawCountFromPubmed) ;
 				slf4jLogger.info("mesh count=[" + meshCountInTargetAuthorArticles + "], raw=[" + rawCountFromPubmed + "], mesh=[" + mesh + "], score=[" + score + "]");
 				if (score > threshold) {
@@ -146,7 +133,6 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 			}
 		}
 		slf4jLogger.info("generated mesh majors = " + generatedMeshMajors);
-		slf4jLogger.info("meshRawCountCache = " + meshRawCountCache);
 		return generatedMeshMajors;
 	}
 

@@ -1,5 +1,9 @@
 package reciter.database.dao;
 
+import java.util.List;
+
+import reciter.database.mongo.model.MeshTerm;
+
 public interface MeshRawCount {
 
 	/**
@@ -8,4 +12,6 @@ public interface MeshRawCount {
 	 * @return
 	 */
 	long getCount(String mesh);
+
+	List<MeshTerm> getAllMeshTerms();
 }
