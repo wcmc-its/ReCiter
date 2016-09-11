@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
@@ -62,5 +63,12 @@ public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrateg
 				StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center") ||
 				StringUtils.containsIgnoreCase(affiliation, "Sloan-Kettering") ||
 				StringUtils.containsIgnoreCase(affiliation, "Sloan Kettering");
+	}
+
+	@Override
+	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
+		if (containsWeillCornell(reCiterArticle)) {
+			feature.setWeillCornellAffiliation(1);
+		}
 	}
 }

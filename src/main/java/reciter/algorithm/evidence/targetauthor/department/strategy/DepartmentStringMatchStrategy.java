@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorName;
@@ -206,6 +207,36 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			return matcher.group(1);
 		} else {
 			return "";
+		}
+	}
+
+	@Override
+	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
+		if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
+			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(
+						reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
+
+				boolean isFirstNameInitialMatch = 
+						author.getAuthorName().getFirstInitial().equalsIgnoreCase(identity.getAuthorName().getFirstInitial());
+
+				boolean isFirstNameInitialMatchFromEmailFetched = false;
+				if (identity.getAliases() != null) {
+					for (AuthorName authorName : identity.getAliases()) {
+						if (StringUtils.equalsIgnoreCase(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
+								StringUtils.equalsIgnoreCase(authorName.getLastName(), author.getAuthorName().getLastName())) {
+							isFirstNameInitialMatchFromEmailFetched = true;
+							break;
+						}
+					}
+				}
+
+				if ((isDepartmentMatch && isFirstNameInitialMatch) || (isDepartmentMatch && isFirstNameInitialMatchFromEmailFetched)) {
+					feature.setDepartmentMatch(1);
+					break;
+				}
+			}
 		}
 	}
 }

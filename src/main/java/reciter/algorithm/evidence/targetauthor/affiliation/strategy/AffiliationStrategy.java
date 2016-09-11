@@ -3,6 +3,7 @@ package reciter.algorithm.evidence.targetauthor.affiliation.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 
@@ -38,5 +39,11 @@ public class AffiliationStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
+		// TODO Auto-generated method stub
+		
 	}
 }

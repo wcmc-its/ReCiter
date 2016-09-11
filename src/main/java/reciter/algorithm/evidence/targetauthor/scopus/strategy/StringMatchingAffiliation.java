@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
@@ -104,5 +105,26 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 				StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center") ||
 				StringUtils.containsIgnoreCase(affiliation, "Sloan-Kettering") ||
 				StringUtils.containsIgnoreCase(affiliation, "Sloan Kettering");
+	}
+
+	@Override
+	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
+		ScopusArticle scopusArticle = reCiterArticle.getScopusArticle();
+
+		if (scopusArticle != null) {
+			boolean containsWeillCornellFromScopus = containsWeillCornellFromScopus(scopusArticle, identity);
+
+			if (containsWeillCornellFromScopus) {
+				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+
+					boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
+							reCiterAuthor.getAuthorName().getFirstInitial(), identity.getAuthorName().getFirstInitial());
+
+					if (isFirstNameMatch) {
+						feature.setContainsWeillCornellFromScopus(1);
+					}
+				}
+			}
+		}
 	}
 }

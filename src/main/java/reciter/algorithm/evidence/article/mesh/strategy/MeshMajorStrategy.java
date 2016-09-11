@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
@@ -168,5 +169,11 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
+		// TODO Auto-generated method stub
+		
 	}
 }

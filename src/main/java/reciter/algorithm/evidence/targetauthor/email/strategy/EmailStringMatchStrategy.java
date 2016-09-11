@@ -1,33 +1,47 @@
 package reciter.algorithm.evidence.targetauthor.email.strategy;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
 
 public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
+	private List<String> emailSuffixes;
+	
+	private final String[] defaultSuffixes = {"@med.cornell.edu", "@mail.med.cornell.edu", "@weill.cornell.edu", "@nyp.org"};
+	
+	public EmailStringMatchStrategy() {
+		setEmailSuffixes(Arrays.asList(defaultSuffixes));
+	}
+	
+	public EmailStringMatchStrategy(List<String> emailSuffixes) {
+		this.setEmailSuffixes(emailSuffixes);
+	}
+	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double score = 0;
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
-				String emailCase1 = identity.getCwid() + "@med.cornell.edu";
-				String emailCase2 = identity.getCwid() + "@mail.med.cornell.edu";
-				String emailCase3 = identity.getCwid() + "@weill.cornell.edu";
-				String emailCase4 = identity.getCwid() + "@nyp.org";
-
-				if (affiliation.contains(emailCase1) ||
-						affiliation.contains(emailCase2) ||
-						affiliation.contains(emailCase3) ||
-						affiliation.contains(emailCase4)) {
-
-					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
-					score += 1;
+				
+				for (String suffix : emailSuffixes) {
+					String email = identity.getCwid() + suffix;
+					if (StringUtils.containsIgnoreCase(affiliation, email)) {
+						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
+						score += 1;
+					}
 				}
+				
+				// TODO output features.
 
 				for (String email : identity.getEmails()) {
 					if (affiliation.contains(email)) {
@@ -48,5 +62,38 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 			sumScore += executeStrategy(reCiterArticle, identity);
 		}
 		return sumScore;
+	}
+	
+	/**
+	 * @med.cornell.edu", "@mail.med.cornell.edu", "@weill.cornell.edu", "@nyp.org
+	 */
+	@Override
+	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
+		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+			if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
+				String affiliation = author.getAffiliation().getAffiliationName();
+				if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[0])) {
+					feature.setMedCornellEdu(1);
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[1])) {
+					feature.setMailMedCornellEdu(1);
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[2])) {
+					feature.setWeillCornellEdu(1);
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[3])) {
+					feature.setNypOrg(1);
+				}
+			}
+		}
+	}
+
+	public String[] getDefaultSuffixes() {
+		return defaultSuffixes;
+	}
+
+	public List<String> getEmailSuffixes() {
+		return emailSuffixes;
+	}
+
+	public void setEmailSuffixes(List<String> emailSuffixes) {
+		this.emailSuffixes = emailSuffixes;
 	}
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
@@ -51,5 +52,11 @@ public class NameStrategy extends AbstractTargetAuthorStrategy {
 			sum += executeStrategy(reCiterArticle, identity);
 		}
 		return sum;
+	}
+
+	@Override
+	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
+		// TODO Auto-generated method stub
+		
 	}
 }
