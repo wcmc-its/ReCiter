@@ -1,5 +1,8 @@
 package reciter.database.mongo.model;
 
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "feature")
 public class Feature {
 
 	private long pmid;

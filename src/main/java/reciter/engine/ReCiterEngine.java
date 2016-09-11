@@ -49,7 +49,7 @@ public class ReCiterEngine implements Engine {
 		List<Feature> features = new ArrayList<Feature>();
 		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
 			Feature feature = new Feature();
-			
+			feature.setPmid(reCiterArticle.getArticleId());
 			TargetAuthorStrategyContext emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 			emailStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			TargetAuthorStrategyContext departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());

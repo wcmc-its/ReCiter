@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.database.mongo.model.ESearchResult;
+import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.model.MeshTerm;
 import reciter.engine.Engine;
@@ -85,7 +86,7 @@ public class ReCiterController {
 	@ResponseBody
 	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
 		
-		Identity identiy = identityService.findByCwid(cwid);
+		Identity identity = identityService.findByCwid(cwid);
 		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
 		Set<Long> pmids = new HashSet<Long>();
 		for (ESearchResult eSearchResult : eSearchResults) {
@@ -117,7 +118,7 @@ public class ReCiterController {
 			reCiterEngine.setMeshTermCache(meshTermCache);
 		}
 		
-		Analysis analysis = reCiterEngine.run(identiy, reCiterArticles);
+		Analysis analysis = reCiterEngine.run(identity, reCiterArticles);
 		slf4jLogger.info(analysis.toString());
 		return analysis;
 	}
@@ -136,5 +137,35 @@ public class ReCiterController {
 		identityService.save(identity);
 		defaultReCiterRetrievalEngine.retrieve(identity);
 		return "Success";
+	}
+	
+	@RequestMapping(value = "/reciter/feature/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public List<Feature> generateFeature(@RequestParam(value="cwid") String cwid) {
+		
+		Identity identiy = identityService.findByCwid(cwid);
+		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
+		Set<Long> pmids = new HashSet<Long>();
+		for (ESearchResult eSearchResult : eSearchResults) {
+			pmids.addAll(eSearchResult.geteSearchPmid().getPmids());
+		}
+		List<Long> pmidList = new ArrayList<Long>(pmids);
+		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmidList);
+		List<ScopusArticle> scopusArticles = scopusService.findByPubmedId(pmidList);
+		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
+		for (ScopusArticle scopusArticle : scopusArticles) {
+			map.put(scopusArticle.getPubmedId(), scopusArticle);
+		}
+		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		for (PubMedArticle pubMedArticle : pubMedArticles) {
+			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+			if (map.containsKey(pmid)) {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
+			} else {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+			}
+		}
+		
+		return reCiterEngine.generateFeature(identiy, reCiterArticles);
 	}
 }
