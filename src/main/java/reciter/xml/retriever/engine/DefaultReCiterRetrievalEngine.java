@@ -19,7 +19,11 @@ import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
+import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
+import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
+import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
 import reciter.xml.retriever.pubmed.RetrievalStrategy;
 
 @Component("defaultReCiterRetrievalEngine")
@@ -53,6 +57,26 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 //		retrievalStrategies.add(departmentRetrievalStrategy);
 //		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
 //		retrievalStrategies.add(grantRetrievalStrategy);
+		
+		return retrieve(retrievalStrategies, identity);
+	}
+	
+	@Override
+	public List<Long> retrieveWithMultipleStrategies(Identity identity) {
+		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
+		
+		// Retrieve by email.
+		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
+		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
+		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
+		
+		retrievalStrategies.add(emailRetrievalStrategy);
+		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
+		retrievalStrategies.add(departmentRetrievalStrategy);
+		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+		retrievalStrategies.add(grantRetrievalStrategy);
 		
 		return retrieve(retrievalStrategies, identity);
 	}

@@ -19,16 +19,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.model.MeshTerm;
+import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
+import reciter.engine.Feature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.MeshTermService;
+import reciter.service.PubMedArticleFeatureService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.xml.parser.scopus.model.ScopusArticle;
@@ -60,6 +62,9 @@ public class ReCiterController {
 	
 	@Autowired
 	private MeshTermService meshTermService;
+	
+	@Autowired
+	private PubMedArticleFeatureService pubMedArticleFeatureService;
 
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/esearchresult/by/cwid", method = RequestMethod.GET)
@@ -82,6 +87,7 @@ public class ReCiterController {
 		return defaultReCiterRetrievalEngine.retrieve(identity);
 	}
 	
+	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
 	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
@@ -165,7 +171,11 @@ public class ReCiterController {
 				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
 			}
 		}
-		
-		return reCiterEngine.generateFeature(identiy, reCiterArticles);
+		List<Feature> features = reCiterEngine.generateFeature(identiy, reCiterArticles);
+		PubMedArticleFeature pubMedArticleFeature = new PubMedArticleFeature();
+		pubMedArticleFeature.setCwid(cwid);
+		pubMedArticleFeature.setFeatures(features);
+		pubMedArticleFeatureService.save(pubMedArticleFeature);
+		return features;
 	}
 }

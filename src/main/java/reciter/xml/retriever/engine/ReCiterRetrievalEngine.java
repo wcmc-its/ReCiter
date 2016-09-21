@@ -7,4 +7,6 @@ import reciter.database.mongo.model.Identity;
 public interface ReCiterRetrievalEngine {
 
 	List<Long> retrieve(Identity identity);
+
+	List<Long> retrieveWithMultipleStrategies(Identity identity);
 }

@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
+import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;

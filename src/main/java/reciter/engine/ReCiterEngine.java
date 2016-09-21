@@ -32,7 +32,6 @@ import reciter.algorithm.evidence.targetauthor.name.NameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.NameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
-import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
@@ -46,18 +45,27 @@ public class ReCiterEngine implements Engine {
 
 	@Override
 	public List<Feature> generateFeature(Identity identity, List<ReCiterArticle> reCiterArticleList) {
+		
+		Analysis.assignGoldStandard(reCiterArticleList, identity.getKnownPmids());
+		
 		List<Feature> features = new ArrayList<Feature>();
 		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
 			Feature feature = new Feature();
 			feature.setPmid(reCiterArticle.getArticleId());
+			feature.setIsGoldStandard(reCiterArticle.getGoldStandard());
+			
 			TargetAuthorStrategyContext emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 			emailStrategyContext.populateFeature(reCiterArticle, identity, feature);
+			
 			TargetAuthorStrategyContext departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
 			departmentStringMatchStrategyContext.populateFeature(reCiterArticle, identity, feature);
+			
 			TargetAuthorStrategyContext grantCoauthorStrategyContext = new GrantStrategyContext(new KnownCoinvestigatorStrategy());
 			grantCoauthorStrategyContext.populateFeature(reCiterArticle, identity, feature);
+			
 			TargetAuthorStrategyContext affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
 			affiliationStrategyContext.populateFeature(reCiterArticle, identity, feature);
+			
 			TargetAuthorStrategyContext scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
 			scopusStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			

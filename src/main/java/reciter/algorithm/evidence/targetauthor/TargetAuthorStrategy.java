@@ -2,8 +2,8 @@ package reciter.algorithm.evidence.targetauthor;
 
 import java.util.List;
 
-import reciter.database.mongo.model.Feature;
 import reciter.database.mongo.model.Identity;
+import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 
 public interface TargetAuthorStrategy {
