@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,9 @@ import org.springframework.stereotype.Component;
 import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
+import reciter.model.author.AuthorName;
+import reciter.model.converter.PubMedConverter;
+import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.PubMedService;
@@ -36,51 +41,135 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 
 	@Autowired
 	private ESearchResultService eSearchResultService;
-	
+
 	@Autowired
 	private ScopusService scopusService;
-	
+
 	@Override
 	public List<Long> retrieve(Identity identity) {
 
 		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
-		
+
 		// Retrieve by email.
-//		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
+		//		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
 		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
-//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
-//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
-//		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
-		
-//		retrievalStrategies.add(emailRetrievalStrategy);
+		//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+		//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+		//		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
+
+		//		retrievalStrategies.add(emailRetrievalStrategy);
 		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
-//		retrievalStrategies.add(departmentRetrievalStrategy);
-//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
-//		retrievalStrategies.add(grantRetrievalStrategy);
-		
+		//		retrievalStrategies.add(departmentRetrievalStrategy);
+		//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+		//		retrievalStrategies.add(grantRetrievalStrategy);
+
 		return retrieve(retrievalStrategies, identity);
 	}
-	
+
 	@Override
 	public List<Long> retrieveWithMultipleStrategies(Identity identity) {
 		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
-		
+
 		// Retrieve by email.
 		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
-		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
-		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
-		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
-		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
+		List<PubMedArticle> emailPubMedArticles = retrieve(emailRetrievalStrategy, identity);
+		Set<AuthorName> aliasSet = new HashSet<AuthorName>();
+		for (PubMedArticle pubMedArticle : emailPubMedArticles) {
+			for (MedlineCitationArticleAuthor author : pubMedArticle.getMedlineCitation().getArticle().getAuthorList()) {
+				String affiliation = author.getAffiliation();
+				if (affiliation != null) {
+					for (String email : identity.getEmails()) {
+						if (affiliation.contains(email)) {
+							// possibility of an alias:
+							if (author.getLastName().equals(identity.getAuthorName().getLastName())) {
+								// sanity check: last name matches
+								AuthorName alias = PubMedConverter.extractAuthorName(author);
+								if (!alias.getFirstInitial().equals(identity.getAuthorName().getFirstInitial())) {
+									// check if the same first initial is already added to the set.
+									if (aliasSet.isEmpty()) {
+										aliasSet.add(alias);
+										slf4jLogger.info(identity.getCwid() + ": (Empty set) Adding alias: " + alias);
+									} else {
+										for (AuthorName aliasAuthorName : aliasSet) {
+											if (!aliasAuthorName.getFirstInitial().equals(alias.getFirstInitial())) {
+												aliasSet.add(alias);
+												slf4jLogger.info(identity.getCwid() + ": (Different first initial) Adding alias: " + alias);
+												break;
+											} else {
+												String firstNameInSet = aliasAuthorName.getFirstName();
+												String currentFirstName = alias.getFirstName();
+												// prefer the name with the longer first name: i.e., prefer 'Clay' over 'C.'
+												// so remove the 'C.' and add the 'Clay'
+												if (firstNameInSet.length() < currentFirstName.length()) {
+													aliasSet.remove(aliasAuthorName);
+													aliasSet.add(alias);
+													slf4jLogger.info(identity.getCwid() + ": (Prefer longer first name) Adding alias: " + alias);
+													break;
+												}
+											}
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
 		
-		retrievalStrategies.add(emailRetrievalStrategy);
-		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
-		retrievalStrategies.add(departmentRetrievalStrategy);
-		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
-		retrievalStrategies.add(grantRetrievalStrategy);
 		
+
+		//		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
+		//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+		//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+		//		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
+		//
+		//		retrievalStrategies.add(emailRetrievalStrategy);
+		//		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
+		//		retrievalStrategies.add(departmentRetrievalStrategy);
+		//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+		//		retrievalStrategies.add(grantRetrievalStrategy);
+
 		return retrieve(retrievalStrategies, identity);
 	}
-	
+
+	/**
+	 * Retrieve PubMed and Scopus articles for a single strategy.
+	 * 
+	 * @param retrievalStrategy
+	 * @param identity
+	 * 
+	 * @return List of pmids that were retrieved
+	 */
+	private List<PubMedArticle> retrieve(RetrievalStrategy retrievalStrategy, Identity identity) {
+		String cwid = identity.getCwid();
+		List<Long> pmids = new ArrayList<Long>();
+		List<PubMedArticle> pubMedArticles = new ArrayList<PubMedArticle>();
+		try {
+			retrievalStrategy.constructPubMedQuery(identity);
+			slf4jLogger.info("cwid=[" + cwid + "], retrievalStrategy=[" + retrievalStrategy.getRetrievalStrategyName() 
+			+ "], pubmedQuery=[" + retrievalStrategy.getPubMedQuery() + "]");
+
+			List<Long> strategyPmids = new ArrayList<Long>();
+			int numberOfPubmedArticles = retrievalStrategy.getNumberOfPubmedArticles();
+			if (numberOfPubmedArticles > 0) {
+				pubMedArticles = retrievalStrategy.retrieve();
+				for (PubMedArticle pubMedArticle : pubMedArticles) {
+					strategyPmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+				}
+				//savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
+			}
+			//List<ScopusArticle> scopusArticles = retrievalStrategy.retrieveScopus(strategyPmids);
+			//scopusService.save(scopusArticles);
+
+			pmids.addAll(strategyPmids);
+		} catch (IOException e) {
+			slf4jLogger.error("RetrievalStrategy " + retrievalStrategy + "encountered an IO Exception", e);
+		}
+		return pubMedArticles;
+	}
+
 	/**
 	 * Retrieve articles.
 	 * @param retrievalStrategies
@@ -94,8 +183,8 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 			try {
 				retrievalStrategy.constructPubMedQuery(identity);
 				slf4jLogger.error("cwid=[" + cwid + "], retrievalStrategy=[" + retrievalStrategy.getRetrievalStrategyName() 
-					+ "], pubmedQuery=[" + retrievalStrategy.getPubMedQuery() + "]");
-				
+				+ "], pubmedQuery=[" + retrievalStrategy.getPubMedQuery() + "]");
+
 				List<Long> strategyPmids = new ArrayList<Long>();
 				int numberOfPubmedArticles = retrievalStrategy.getNumberOfPubmedArticles();
 				if (numberOfPubmedArticles > 0) {
@@ -107,7 +196,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 				}
 				List<ScopusArticle> scopusArticles = retrievalStrategy.retrieveScopus(strategyPmids);
 				scopusService.save(scopusArticles);
-				
+
 				pmids.addAll(strategyPmids);
 			} catch (IOException e) {
 				slf4jLogger.error("RetrievalStrategy " + retrievalStrategy + "encountered an IO Exception", e);
@@ -115,7 +204,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		}
 		return pmids;
 	}
-	
+
 	/**
 	 * Save the PubMed articles and the ESearch results.
 	 * @param pubMedArticles
@@ -134,35 +223,35 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid));
 	}
 
-//	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(TargetAuthor targetAuthor) {
-//		Set<AuthorName> uniqueAuthors = new HashSet<AuthorName>();
-//		ESearchResult eSearchResult = eSearchResultService.findByCwid(targetAuthor.getCwid());
-//		List<Long> pmids = eSearchResult.getPmids();
-//		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
-//		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
-//
-//		slf4jLogger.info("number of articles=[" + pubMedArticles.size() + "].");
-//
-//		for (PubMedArticle pubMedArticle : pubMedArticles) {
-//			if (pubMedArticle.getMedlineCitation().getArticle() != null && 
-//					pubMedArticle.getMedlineCitation().getArticle().getAuthorList() != null) {
-//
-//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getArticle().getAuthorList() + " ");
-//
-//				List<MedlineCitationArticleAuthor> authors = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
-//				for (MedlineCitationArticleAuthor author : authors) {
-//					String lastName = author.getLastName();
-//					if (targetAuthorLastName.equals(lastName)) {
-////						AuthorName authorName = getAuthorName(author);
-////						uniqueAuthors.add(authorName);
-//					}
-//				}
-//			} else {
-//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid() + "");
-//			}
-//		}
-//		return uniqueAuthors;
-//	}
+	//	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(TargetAuthor targetAuthor) {
+	//		Set<AuthorName> uniqueAuthors = new HashSet<AuthorName>();
+	//		ESearchResult eSearchResult = eSearchResultService.findByCwid(targetAuthor.getCwid());
+	//		List<Long> pmids = eSearchResult.getPmids();
+	//		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
+	//		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
+	//
+	//		slf4jLogger.info("number of articles=[" + pubMedArticles.size() + "].");
+	//
+	//		for (PubMedArticle pubMedArticle : pubMedArticles) {
+	//			if (pubMedArticle.getMedlineCitation().getArticle() != null && 
+	//					pubMedArticle.getMedlineCitation().getArticle().getAuthorList() != null) {
+	//
+	//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getArticle().getAuthorList() + " ");
+	//
+	//				List<MedlineCitationArticleAuthor> authors = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
+	//				for (MedlineCitationArticleAuthor author : authors) {
+	//					String lastName = author.getLastName();
+	//					if (targetAuthorLastName.equals(lastName)) {
+	////						AuthorName authorName = getAuthorName(author);
+	////						uniqueAuthors.add(authorName);
+	//					}
+	//				}
+	//			} else {
+	//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid() + "");
+	//			}
+	//		}
+	//		return uniqueAuthors;
+	//	}
 
 	public void updatePubMedQuery(RetrievalStrategy retrievalStrategy) throws IOException {
 

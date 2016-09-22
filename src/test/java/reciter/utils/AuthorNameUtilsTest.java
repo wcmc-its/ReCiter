@@ -31,7 +31,7 @@ public class AuthorNameUtilsTest {
 	 * In this test case, one of the authors in the PubMed article matches fully to the target author. Therefore,
 	 * we assume that no alternative author name for the target author in this PubMed article.
 	 */
-//	@Test
+	@Test
 	public void testExtractAlternateNamesFromPubMedArticlesRetrievedByEmail() {
 		List<PubMedArticle> pubMedArticles = new ArrayList<>();
 		PubMedArticle pubMedArticle = new PubMedArticle();

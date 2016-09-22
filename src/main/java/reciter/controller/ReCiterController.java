@@ -87,6 +87,13 @@ public class ReCiterController {
 		return defaultReCiterRetrievalEngine.retrieve(identity);
 	}
 	
+	@RequestMapping(value = "/reciter/retrieve/limited/article/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public List<Long> retrieveLimitedArticles(@RequestParam(value="cwid") String cwid) {
+		Identity identity = identityService.findByCwid(cwid);
+		return defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
+	}
+	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
