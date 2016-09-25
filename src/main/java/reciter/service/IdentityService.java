@@ -6,7 +6,7 @@ import reciter.database.mongo.model.Identity;
 
 public interface IdentityService {
 	void save(List<Identity> identities);
-	void save(Identity identity);
+	Identity save(Identity identity);
 	Identity findByCwid(String cwid);
 	List<Identity> findByCwidRegex(String search);
 }

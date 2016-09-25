@@ -25,6 +25,7 @@ import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
 import reciter.engine.Feature;
 import reciter.engine.erroranalysis.Analysis;
+import reciter.engine.notification.Notifier;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
@@ -33,6 +34,7 @@ import reciter.service.MeshTermService;
 import reciter.service.PubMedArticleFeatureService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
+import reciter.service.TrainingDataService;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
@@ -64,8 +66,11 @@ public class ReCiterController {
 	private MeshTermService meshTermService;
 	
 	@Autowired
+	private TrainingDataService trainingDataService;
+	
+	@Autowired
 	private PubMedArticleFeatureService pubMedArticleFeatureService;
-
+	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/esearchresult/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
@@ -93,6 +98,12 @@ public class ReCiterController {
 		Identity identity = identityService.findByCwid(cwid);
 		return defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
 	}
+	
+//	@RequestMapping(value = "/reciter/test/notification", method = RequestMethod.GET)
+//	@ResponseBody
+//	public void testNotification() {
+//		notifier.sendNotification();
+//	}
 	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)

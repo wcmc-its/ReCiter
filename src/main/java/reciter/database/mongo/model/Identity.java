@@ -25,6 +25,7 @@ public class Identity {
 	private Education doctoral;
 	private List<Grant> grants;
 	private List<String> keywords;
+	private List<PubMedAlias> pubMedAliases;
 	
 	public String getCwid() {
 		return cwid;
@@ -121,5 +122,11 @@ public class Identity {
 	}
 	public void setKeywords(List<String> keywords) {
 		this.keywords = keywords;
+	}
+	public List<PubMedAlias> getPubMedAliases() {
+		return pubMedAliases;
+	}
+	public void setPubMedAliases(List<PubMedAlias> pubMedAliases) {
+		this.pubMedAliases = pubMedAliases;
 	}
 }

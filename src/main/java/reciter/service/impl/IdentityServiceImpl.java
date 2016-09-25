@@ -16,15 +16,15 @@ public class IdentityServiceImpl implements IdentityService {
 	private IdentityRepository identityRepository;
 
 	@Override
-	public void save(List<reciter.database.mongo.model.Identity> identities) {
+	public void save(List<Identity> identities) {
 		for (reciter.database.mongo.model.Identity identity : identities) {
 			identityRepository.save(identity);
 		}
 	}
 
 	@Override
-	public void save(reciter.database.mongo.model.Identity identity) {
-		identityRepository.save(identity);
+	public Identity save(Identity identity) {
+		return identityRepository.save(identity);
 	}
 	
 	@Override

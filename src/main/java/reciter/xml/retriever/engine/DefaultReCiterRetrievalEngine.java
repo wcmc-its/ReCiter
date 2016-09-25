@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +16,14 @@ import org.springframework.stereotype.Component;
 import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
+import reciter.database.mongo.model.PubMedAlias;
+import reciter.engine.notification.Notifier;
 import reciter.model.author.AuthorName;
 import reciter.model.converter.PubMedConverter;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
+import reciter.service.IdentityService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.xml.parser.scopus.model.ScopusArticle;
@@ -44,6 +47,12 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 
 	@Autowired
 	private ScopusService scopusService;
+
+	@Autowired
+	private IdentityService identityService;
+
+	@Autowired
+	private Notifier notifier;
 
 	@Override
 	public List<Long> retrieve(Identity identity) {
@@ -73,7 +82,7 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		// Retrieve by email.
 		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
 		List<PubMedArticle> emailPubMedArticles = retrieve(emailRetrievalStrategy, identity);
-		Set<AuthorName> aliasSet = new HashSet<AuthorName>();
+		Map<Long, AuthorName> aliasSet = new HashMap<Long, AuthorName>();
 		for (PubMedArticle pubMedArticle : emailPubMedArticles) {
 			for (MedlineCitationArticleAuthor author : pubMedArticle.getMedlineCitation().getArticle().getAuthorList()) {
 				String affiliation = author.getAffiliation();
@@ -87,13 +96,13 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 								if (!alias.getFirstInitial().equals(identity.getAuthorName().getFirstInitial())) {
 									// check if the same first initial is already added to the set.
 									if (aliasSet.isEmpty()) {
-										aliasSet.add(alias);
-										slf4jLogger.info(identity.getCwid() + ": (Empty set) Adding alias: " + alias);
+										aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
+										slf4jLogger.info(identity.getCwid() + ": " + identity.getAuthorName() + ": (Empty set) Adding alias: " + alias);
 									} else {
-										for (AuthorName aliasAuthorName : aliasSet) {
+										for (AuthorName aliasAuthorName : aliasSet.values()) {
 											if (!aliasAuthorName.getFirstInitial().equals(alias.getFirstInitial())) {
-												aliasSet.add(alias);
-												slf4jLogger.info(identity.getCwid() + ": (Different first initial) Adding alias: " + alias);
+												aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
+												slf4jLogger.info(identity.getCwid() + ": " + identity.getAuthorName() + ": (Different first initial) Adding alias: " + alias);
 												break;
 											} else {
 												String firstNameInSet = aliasAuthorName.getFirstName();
@@ -101,9 +110,9 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 												// prefer the name with the longer first name: i.e., prefer 'Clay' over 'C.'
 												// so remove the 'C.' and add the 'Clay'
 												if (firstNameInSet.length() < currentFirstName.length()) {
-													aliasSet.remove(aliasAuthorName);
-													aliasSet.add(alias);
-													slf4jLogger.info(identity.getCwid() + ": (Prefer longer first name) Adding alias: " + alias);
+													aliasSet.remove(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+													aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
+													slf4jLogger.info(identity.getCwid() + ": " + identity.getAuthorName() + ": (Prefer longer first name) Adding alias: " + alias);
 													break;
 												}
 											}
@@ -117,20 +126,27 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 				}
 			}
 		}
-		
-		
 
-		//		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
-		//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
-		//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
-		//		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
-		//
-		//		retrievalStrategies.add(emailRetrievalStrategy);
-		//		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
-		//		retrievalStrategies.add(departmentRetrievalStrategy);
-		//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
-		//		retrievalStrategies.add(grantRetrievalStrategy);
+		List<PubMedAlias> pubMedAliases = new ArrayList<PubMedAlias>();
+		for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
+			PubMedAlias pubMedAlias = new PubMedAlias();
+			pubMedAlias.setAuthorName(entry.getValue());
+			pubMedAlias.setPmid(entry.getKey());
+		}
+		identity.setPubMedAliases(pubMedAliases);
+		identity = identityService.save(identity);
 
+		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
+		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
+
+		retrievalStrategies.add(emailRetrievalStrategy);
+		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
+		retrievalStrategies.add(departmentRetrievalStrategy);
+		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+		retrievalStrategies.add(grantRetrievalStrategy);
+		notifier.sendNotification();
 		return retrieve(retrievalStrategies, identity);
 	}
 
@@ -158,10 +174,10 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 				for (PubMedArticle pubMedArticle : pubMedArticles) {
 					strategyPmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 				}
-				//savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
+				savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
 			}
-			//List<ScopusArticle> scopusArticles = retrievalStrategy.retrieveScopus(strategyPmids);
-			//scopusService.save(scopusArticles);
+			List<ScopusArticle> scopusArticles = retrievalStrategy.retrieveScopus(strategyPmids);
+			scopusService.save(scopusArticles);
 
 			pmids.addAll(strategyPmids);
 		} catch (IOException e) {
@@ -222,36 +238,6 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now());
 		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid));
 	}
-
-	//	public Set<AuthorName> findUniqueAuthorsWithSameLastNameAsTargetAuthor(TargetAuthor targetAuthor) {
-	//		Set<AuthorName> uniqueAuthors = new HashSet<AuthorName>();
-	//		ESearchResult eSearchResult = eSearchResultService.findByCwid(targetAuthor.getCwid());
-	//		List<Long> pmids = eSearchResult.getPmids();
-	//		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmids);
-	//		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
-	//
-	//		slf4jLogger.info("number of articles=[" + pubMedArticles.size() + "].");
-	//
-	//		for (PubMedArticle pubMedArticle : pubMedArticles) {
-	//			if (pubMedArticle.getMedlineCitation().getArticle() != null && 
-	//					pubMedArticle.getMedlineCitation().getArticle().getAuthorList() != null) {
-	//
-	//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getArticle().getAuthorList() + " ");
-	//
-	//				List<MedlineCitationArticleAuthor> authors = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
-	//				for (MedlineCitationArticleAuthor author : authors) {
-	//					String lastName = author.getLastName();
-	//					if (targetAuthorLastName.equals(lastName)) {
-	////						AuthorName authorName = getAuthorName(author);
-	////						uniqueAuthors.add(authorName);
-	//					}
-	//				}
-	//			} else {
-	//				slf4jLogger.info(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid() + "");
-	//			}
-	//		}
-	//		return uniqueAuthors;
-	//	}
 
 	public void updatePubMedQuery(RetrievalStrategy retrievalStrategy) throws IOException {
 
