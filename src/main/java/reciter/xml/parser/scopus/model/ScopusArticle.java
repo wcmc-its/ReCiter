@@ -22,8 +22,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class ScopusArticle {
 	
 	private long pubmedId;
-//	private Map<Integer, Affiliation> affiliations;
-//	private Map<Long, Author> authors;
 	private List<Affiliation> affiliations;
 	private List<Author> authors;
 	

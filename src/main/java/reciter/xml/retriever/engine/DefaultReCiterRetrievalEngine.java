@@ -82,6 +82,9 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		// Retrieve by email.
 		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
 		List<PubMedArticle> emailPubMedArticles = retrieve(emailRetrievalStrategy, identity);
+		
+		// TODO Send it to a separate thread to calculate the potential alias for a given author.
+		
 		Map<Long, AuthorName> aliasSet = new HashMap<Long, AuthorName>();
 		for (PubMedArticle pubMedArticle : emailPubMedArticles) {
 			for (MedlineCitationArticleAuthor author : pubMedArticle.getMedlineCitation().getArticle().getAuthorList()) {

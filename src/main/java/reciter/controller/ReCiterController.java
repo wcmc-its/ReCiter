@@ -25,7 +25,6 @@ import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
 import reciter.engine.Feature;
 import reciter.engine.erroranalysis.Analysis;
-import reciter.engine.notification.Notifier;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
@@ -104,6 +103,8 @@ public class ReCiterController {
 //	public void testNotification() {
 //		notifier.sendNotification();
 //	}
+	
+	
 	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
