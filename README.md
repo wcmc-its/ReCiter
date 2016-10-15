@@ -9,9 +9,12 @@ See the wikis [ReCiter wikis](https://github.com/wcmc-its/ReCiter/wiki) for an i
 ## Getting Started
 
 1. Install [jdk 8](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html) or higher.
-2. Do `git clone https://github.com/wcmc-its/ReCiter.git`
-3. Import project into Eclipse.
-4. Detailed instructions to come....
+2. Import project into Eclipse, Intellij or your favorite IDE.
+3. Clone the project into your local workspace by `git clone https://github.com/wcmc-its/ReCiter.git`.
+4. Install the latest version of [MongoDB](https://www.mongodb.com/download-center).
+
+More work needs to be done on the following:
+5. Create a script to download data from PubMed and Scopus into MongoDB.
 
 ## Getting Help
 
@@ -28,5 +31,3 @@ If you encounter a bug with ReCiter, we'd love to hear it. Please contact Jie Li
 For more information about contributing, please contact Paul Albert (paa2013@med.cornell.edu) or Michael Bales (meb2007@med.cornell.edu).
 
 ## License
-
-To be determined...
