@@ -141,17 +141,17 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		identity.setPubMedAliases(pubMedAliases);
 		identity = identityService.save(identity);
 
-		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
-		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
-		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
-		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
-
-		retrievalStrategies.add(emailRetrievalStrategy);
-		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
-		retrievalStrategies.add(departmentRetrievalStrategy);
-		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
-		retrievalStrategies.add(grantRetrievalStrategy);
-		notifier.sendNotification();
+//		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
+//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
+//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
+//		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
+//
+//		retrievalStrategies.add(emailRetrievalStrategy);
+//		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
+//		retrievalStrategies.add(departmentRetrievalStrategy);
+//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
+//		retrievalStrategies.add(grantRetrievalStrategy);
+		notifier.sendNotification(identity.getCwid());
 		return retrieve(retrievalStrategies, identity);
 	}
 
@@ -179,10 +179,10 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 				for (PubMedArticle pubMedArticle : pubMedArticles) {
 					strategyPmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 				}
-				savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
+//				savePubMedArticles(pubMedArticles, cwid, retrievalStrategy.getRetrievalStrategyName());
 			}
 			List<ScopusArticle> scopusArticles = retrievalStrategy.retrieveScopus(strategyPmids);
-			scopusService.save(scopusArticles);
+//			scopusService.save(scopusArticles);
 
 			pmids.addAll(strategyPmids);
 		} catch (IOException e) {

@@ -5,9 +5,11 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @Configuration
 @EnableAutoConfiguration
+@EnableAsync
 @EnableMongoRepositories("reciter.database.mongo")
 @ComponentScan("reciter")
 public class Application {

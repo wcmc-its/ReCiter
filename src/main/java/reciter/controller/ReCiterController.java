@@ -10,6 +10,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -91,11 +92,12 @@ public class ReCiterController {
 		return defaultReCiterRetrievalEngine.retrieve(identity);
 	}
 	
+	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/retrieve/limited/article/by/cwid", method = RequestMethod.GET)
-	@ResponseBody
-	public List<Long> retrieveLimitedArticles(@RequestParam(value="cwid") String cwid) {
+	@Async
+	public void retrieveLimitedArticles(@RequestParam(value="cwid") String cwid) {
 		Identity identity = identityService.findByCwid(cwid);
-		return defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
+		defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
 	}
 	
 //	@RequestMapping(value = "/reciter/test/notification", method = RequestMethod.GET)
