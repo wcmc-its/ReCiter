@@ -53,6 +53,8 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 
 	@Autowired
 	private Notifier notifier;
+	
+	
 
 	@Override
 	public List<Long> retrieve(Identity identity) {

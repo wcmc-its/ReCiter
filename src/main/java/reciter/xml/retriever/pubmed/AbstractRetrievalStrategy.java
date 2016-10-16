@@ -52,7 +52,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	/**
 	 * Number of articles retrieved by query.
 	 */
-	private int numberOfPubmedArticles;
+	private int numberOfPubmedArticles = 0;
 
 	/**
 	 * Retrieval threshold.
@@ -106,9 +106,13 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				String constructedStrictQuery = constructStrictQuery(identity);
 				if (constructedStrictQuery != null) {
 					String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
-					PubmedESearchHandler handlerVerboseFirstName = getPubmedESearchHandler(strictQuery);
-					pubMedQuery = strictQuery;
-					numberOfPubmedArticles = handlerVerboseFirstName.getCount();
+					PubmedESearchHandler strictSearchHandler = getPubmedESearchHandler(strictQuery);
+					// only retrieve articles if number is less than threshold, otherwise the article download
+					// may take too long
+					if (strictSearchHandler.getCount() <= DEFAULT_THRESHOLD) {
+						pubMedQuery = strictQuery;
+						numberOfPubmedArticles = strictSearchHandler.getCount();
+					}
 				}
 			} else {
 				pubMedQuery = initialQuery;
@@ -134,7 +138,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	}
 
 	/**
-	 * Initializes and starts a thread that handles the retrieval process.
+	 * Initializes and starts threads that handles the retrieval process. Partition the number of articles
+	 * into manageable pieces and ask each thread to handle one partition.
 	 * 
 	 * @param query
 	 * @param commonLocation
