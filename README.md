@@ -28,6 +28,6 @@ If you encounter a bug with ReCiter, we'd love to hear it. Please contact Jie Li
 
 ## Contributing
 
-For more information about contributing, please contact Paul Albert (paa2013@med.cornell.edu) or Michael Bales (meb2007@med.cornell.edu).
+For more information about contributing, please contact Paul Albert (paa2013@med.cornell.edu) or Michael Bales (meb7002@med.cornell.edu).
 
 ## License
