@@ -9,4 +9,5 @@ public interface IdentityService {
 	Identity save(Identity identity);
 	Identity findByCwid(String cwid);
 	List<Identity> findByCwidRegex(String search);
+	void updatePubMedAlias(Identity identity);
 }

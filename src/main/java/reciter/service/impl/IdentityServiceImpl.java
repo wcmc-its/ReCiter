@@ -36,4 +36,9 @@ public class IdentityServiceImpl implements IdentityService {
 	public List<Identity> findByCwidRegex(String search) {
 		return identityRepository.findByCwidRegex(search);
 	}
+	
+	@Override
+	public void updatePubMedAlias(Identity identity) {
+		identityRepository.updatePubMedAlias(identity);
+	}
 }

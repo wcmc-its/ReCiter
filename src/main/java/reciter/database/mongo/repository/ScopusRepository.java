@@ -1,4 +1,4 @@
-package reciter.database.mongo.repository.impl;
+package reciter.database.mongo.repository;
 
 import java.util.List;
 

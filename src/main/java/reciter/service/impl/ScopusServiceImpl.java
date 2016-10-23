@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import reciter.database.mongo.repository.impl.ScopusRepository;
+import reciter.database.mongo.repository.ScopusRepository;
 import reciter.service.ScopusService;
 import reciter.xml.parser.scopus.model.ScopusArticle;
 

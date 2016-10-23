@@ -62,18 +62,9 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 		List<RetrievalStrategy> retrievalStrategies = new  ArrayList<RetrievalStrategy>();
 
 		// Retrieve by email.
-		//		RetrievalStrategy emailRetrievalStrategy = new EmailRetrievalStrategy(false);
 		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
-		//		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
-		//		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);
-		//		RetrievalStrategy grantRetrievalStrategy = new GrantRetrievalStrategy(false);
 
-		//		retrievalStrategies.add(emailRetrievalStrategy);
 		retrievalStrategies.add(firstNameInitialRetrievalStrategy);
-		//		retrievalStrategies.add(departmentRetrievalStrategy);
-		//		retrievalStrategies.add(affiliationInDbRetrievalStrategy);
-		//		retrievalStrategies.add(grantRetrievalStrategy);
-
 		return retrieve(retrievalStrategies, identity);
 	}
 
@@ -137,10 +128,11 @@ public class DefaultReCiterRetrievalEngine extends AbstractReCiterRetrievalEngin
 			PubMedAlias pubMedAlias = new PubMedAlias();
 			pubMedAlias.setAuthorName(entry.getValue());
 			pubMedAlias.setPmid(entry.getKey());
+			slf4jLogger.info("new alias for cwid=[" + identity.getCwid() + "], alias=[" + entry.getValue() + "] from pmid=[" + entry.getKey() + "]");
+			pubMedAliases.add(pubMedAlias);
 		}
 		identity.setPubMedAliases(pubMedAliases);
-		identity = identityService.save(identity);
-
+		identityService.updatePubMedAlias(identity);
 //		RetrievalStrategy firstNameInitialRetrievalStrategy = new FirstNameInitialRetrievalStrategy(false);
 //		RetrievalStrategy departmentRetrievalStrategy = new DepartmentRetrievalStrategy(false);
 //		RetrievalStrategy affiliationInDbRetrievalStrategy = new AffiliationInDbRetrievalStrategy(false);

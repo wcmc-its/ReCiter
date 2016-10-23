@@ -23,6 +23,7 @@ import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.model.MeshTerm;
 import reciter.database.mongo.model.PubMedArticleFeature;
+import reciter.database.mongo.model.TrainingData;
 import reciter.engine.Engine;
 import reciter.engine.Feature;
 import reciter.engine.erroranalysis.Analysis;
@@ -100,14 +101,20 @@ public class ReCiterController {
 		defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
 	}
 	
-//	@RequestMapping(value = "/reciter/test/notification", method = RequestMethod.GET)
-//	@ResponseBody
-//	public void testNotification() {
-//		notifier.sendNotification();
-//	}
-	
-	
-	
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/reciter/retrieve/limited/article/for/testcwids", method = RequestMethod.GET)
+	@Async
+	public void retrieveLimitedArticlesForTestCwids() {
+		List<TrainingData> trainingDatas = trainingDataService.findAll();
+		if (!trainingDatas.isEmpty()) {
+			List<String> cwids = trainingDatas.get(0).getCwids();
+			for (String cwid : cwids) {
+				Identity identity = identityService.findByCwid(cwid);
+				defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
+			}
+		}
+	}
+
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
