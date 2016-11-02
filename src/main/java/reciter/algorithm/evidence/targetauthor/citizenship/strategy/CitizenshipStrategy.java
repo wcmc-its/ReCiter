@@ -9,7 +9,7 @@ import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.model.scopus.ScopusArticle;
 
 public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 

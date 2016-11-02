@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
-import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.model.scopus.ScopusArticle;
 
 public interface ScopusRepository extends MongoRepository<ScopusArticle, String> {
 

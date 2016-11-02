@@ -1,43 +1,47 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import reciter.database.mongo.model.Identity;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.model.scopus.ScopusArticle;
 
 public interface RetrievalStrategy {
-
-	/**
-	 * Set to <code>true</code> if the retrieval strategy should retrieve the articles even if the number of articles
-	 * exceeds the threshold.
-	 * @param isRetrieveExceedThreshold
-	 */
-	void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold);
-
-	void constructPubMedQuery(Identity identity) throws IOException;
-	
-	String getPubMedQuery();
-	void setPubMedQuery(String pubMedQuery);
-	int getNumberOfPubmedArticles();
-	void setNumberOfPubmedArticles(int numberOfPubmedArticles);
-	int getThreshold();
-	void setThreshold(int threshold);
 	
 	/**
-	 * Retrieve the articles for this author.
+	 * Return the name of the retrieval strategy.
 	 * 
-	 * @param targetAuthor
-	 * 
-	 * @return List of PubMed articles for this author.
-	 * 
+	 * @return name of the retrieval strategy.
 	 */
-	List<PubMedArticle> retrieve();
-
-	String[] retrievePmids(String query) throws IOException;
-	
 	String getRetrievalStrategyName();
 
-	List<ScopusArticle> retrieveScopus(List<Long> pmids);
+	/**
+	 * Retrieve Scopus articles based on list of pmids.
+	 * 
+	 * @param pmids List of pmids.
+	 * 
+	 * @return list of Scopus articles.
+	 */
+	List<ScopusArticle> retrieveScopus(Collection<Long> pmids);
+
+	/**
+	 * Retrieve the articles for this identity.
+	 * 
+	 * @param identity
+	 * 
+	 * @return Unique map of PMID to of PubMed articles for this identity.
+	 */
+	Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException;
+	
+	/**
+	 * Construct a list of PubMed query for this identity.
+	 * 
+	 * @param identity
+	 * 
+	 * @return List of PubMed query.
+	 */
+	List<PubMedQuery> constructPubMedQueryList(Identity identity);
 }

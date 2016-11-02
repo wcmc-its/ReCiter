@@ -1,4 +1,4 @@
-package reciter.xml.parser.scopus.model;
+package reciter.model.scopus;
 
 import java.util.List;
 

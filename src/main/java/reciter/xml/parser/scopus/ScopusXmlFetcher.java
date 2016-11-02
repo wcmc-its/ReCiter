@@ -15,9 +15,9 @@ import org.xml.sax.SAXException;
 
 import reciter.database.mongo.model.ESearchResult;
 import reciter.engine.ReCiterEngineProperty;
+import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
 import reciter.xml.parser.AbstractXmlFetcher;
-import reciter.xml.parser.scopus.model.ScopusArticle;
 
 /**
  * This class handles fetching the XML from Scopus and saving it to disk.

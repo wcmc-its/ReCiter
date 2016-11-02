@@ -13,9 +13,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import reciter.xml.parser.scopus.model.Affiliation;
-import reciter.xml.parser.scopus.model.Author;
-import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.model.scopus.Affiliation;
+import reciter.model.scopus.Author;
+import reciter.model.scopus.ScopusArticle;
 
 /**
  * The {@code ScopusXmlHandler} class parses Scopus XML.

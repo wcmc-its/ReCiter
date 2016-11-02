@@ -1,5 +1,6 @@
 package reciter.service;
 
+import java.util.Collection;
 import java.util.List;
 
 import reciter.model.pubmed.PubMedArticle;
@@ -26,7 +27,7 @@ public interface PubMedService {
 	 */
 	List<PubMedArticle> retrieve(String cwid);
 
-	void save(List<PubMedArticle> pubMedArticles);
+	void save(Collection<PubMedArticle> pubMedArticles);
 	
 	List<PubMedArticle> findByMedlineCitationMedlineCitationPMIDPmid(List<Long> pmids);
 

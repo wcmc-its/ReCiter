@@ -1,4 +1,4 @@
-package reciter.xml.parser.scopus.model;
+package reciter.model.scopus;
 
 /**
  * A class model for a Scopus article affiliation XML tag.

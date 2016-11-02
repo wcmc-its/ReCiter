@@ -36,9 +36,7 @@ public class IdentityRepositoryImpl implements IdentityRepositoryCustom {
 		    pubmedAliasDbObject.put("pmid", pubMedAlias.getPmid());
 		    pubmedAliasDbList.add(pubmedAliasDbObject);
 		}
-//		BasicDBObject obj = new BasicDBObject();
-//		obj.put("pubMedAlias", pubmedAliasDbList);
-		
+
 		// add or modify field 'pubMedAlias'.
 		BasicDBObject basicDbObject = new BasicDBObject("$set", new BasicDBObject("pubMedAlias", pubmedAliasDbList));
 		mongoTemplate.getCollection("identity").update(new BasicDBObject("cwid", cwid), basicDbObject, true, false);

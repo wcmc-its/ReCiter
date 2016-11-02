@@ -1,5 +1,6 @@
 package reciter.service.impl;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class PubMedServiceImpl implements PubMedService {
 	}
 	
 	@Override
-	public void save(List<PubMedArticle> pubMedArticles) {		
+	public void save(Collection<PubMedArticle> pubMedArticles) {		
 		pubMedRepository.save(pubMedArticles);
 	}
 

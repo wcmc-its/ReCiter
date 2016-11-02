@@ -9,7 +9,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,13 +32,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import reciter.database.mongo.model.Identity;
+import reciter.database.mongo.model.PubMedAlias;
+import reciter.model.author.AuthorName;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.model.scopus.ScopusArticle;
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
 import reciter.xml.parser.pubmed.handler.PubmedEFetchHandler;
 import reciter.xml.parser.pubmed.handler.PubmedESearchHandler;
 import reciter.xml.parser.scopus.ScopusXmlHandler;
 import reciter.xml.parser.scopus.ScopusXmlQuery;
-import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.retriever.pubmed.json.EsearchObject;
 import reciter.xml.retriever.pubmed.json.EsearchObjectJsonDeserializer;
 import reciter.xml.retriever.pubmed.json.EsearchResult;
@@ -43,16 +50,6 @@ import reciter.xml.retriever.pubmed.json.EsearchResultJsonDeserializer;
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractRetrievalStrategy.class);
-
-	/**
-	 * PubMed Query
-	 */
-	private String pubMedQuery;
-
-	/**
-	 * Number of articles retrieved by query.
-	 */
-	private int numberOfPubmedArticles = 0;
 
 	/**
 	 * Retrieval threshold.
@@ -74,69 +71,97 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 */
 	protected boolean isRetrieveExceedThreshold;
 
-	/**
-	 * Initial query.
-	 * @param targetAuthor
-	 * @return
-	 */
-	protected abstract String constructInitialQuery(Identity identity);
-
-	/**
-	 * Strict query.
-	 * @param targetAuthor
-	 * @return
-	 */
-	protected abstract String constructStrictQuery(Identity identity);
-
 	public void setRetrieveExceedThreshold(boolean isRetrieveExceedThreshold) {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
 
+	protected abstract String getStrategySpecificQuerySuffix(Identity identity);
+
 	@Override
-	public void constructPubMedQuery(Identity identity) throws IOException {
+	public List<PubMedQuery> constructPubMedQueryList(Identity identity) {
+		String strategySpecificQuery = getStrategySpecificQuerySuffix(identity);
 
-		// Construct initial relaxed query.
-		String constructedInitialQuery = constructInitialQuery(identity);
-		if (constructedInitialQuery != null) {
-			String initialQuery = URLEncoder.encode(constructedInitialQuery, "UTF-8");
-			PubmedESearchHandler handler = getPubmedESearchHandler(initialQuery);
+		if (strategySpecificQuery != null) {
+			List<PubMedQuery> pubMedQueries = new ArrayList<PubMedQuery>(1 + identity.getPubMedAliases().size());
 
-			// check initial query's threshold. if it's greater than the threshold, retrieve using the strict query.
-			if (handler.getCount() > DEFAULT_THRESHOLD) {
-				String constructedStrictQuery = constructStrictQuery(identity);
-				if (constructedStrictQuery != null) {
-					String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
-					PubmedESearchHandler strictSearchHandler = getPubmedESearchHandler(strictQuery);
-					// only retrieve articles if number is less than threshold, otherwise the article download
-					// may take too long
-					if (strictSearchHandler.getCount() <= DEFAULT_THRESHOLD) {
-						pubMedQuery = strictQuery;
-						numberOfPubmedArticles = strictSearchHandler.getCount();
-					}
-				}
-			} else {
-				pubMedQuery = initialQuery;
-				numberOfPubmedArticles = handler.getCount();
+			String lastName = identity.getAuthorName().getLastName();
+			String firstName = identity.getAuthorName().getFirstName();
+			String firstInitial = identity.getAuthorName().getFirstInitial();
+
+			PubMedQuery pubMedQuery = new PubMedQuery();
+			pubMedQuery.setLenientQuery(new PubMedQueryResult(lastName + " " + firstInitial + " AND " + strategySpecificQuery));
+			pubMedQuery.setStrictQuery(new PubMedQueryResult(lastName + " " + firstName + " AND " + strategySpecificQuery));
+
+			pubMedQueries.add(pubMedQuery);
+
+			// Construct the same queries based on the alias as well to download those PubMed articles
+			// that uses the alias name.
+			for (PubMedAlias pubMedAlias : identity.getPubMedAliases()) {
+
+				AuthorName alias = pubMedAlias.getAuthorName();
+				String aliasLastName = alias.getLastName();
+				String aliasFirstInitial = alias.getFirstInitial();
+				String aliasFirstName = alias.getFirstName();
+
+				PubMedQuery aliasPubMedQuery = new PubMedQuery();
+				pubMedQuery.setLenientQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstInitial + " AND " + strategySpecificQuery));
+				pubMedQuery.setStrictQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstName + " AND " + strategySpecificQuery));
+
+				pubMedQueries.add(aliasPubMedQuery);
 			}
+			return pubMedQueries;
+		} else {
+			return Collections.emptyList();
 		}
 	}
 
-	public String getPubMedQuery() {
-		return pubMedQuery;
-	}
+	public Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException {
 
-	public void setPubMedQuery(String pubMedQuery) {
-		this.pubMedQuery = pubMedQuery;
-	}
+		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
+		
+		// Construct initial relaxed query.
+		List<PubMedQuery> pubMedQueries = constructPubMedQueryList(identity);
 
-	public int getNumberOfPubmedArticles() {
-		return numberOfPubmedArticles;
-	}
+		for (PubMedQuery pubMedQuery : pubMedQueries) {
 
-	public void setNumberOfPubmedArticles(int numberOfPubmedArticles) {
-		this.numberOfPubmedArticles = numberOfPubmedArticles;
-	}
+			String encodedInitialQuery = URLEncoder.encode(pubMedQuery.getLenientQuery().getQuery(), "UTF-8");
+			PubmedESearchHandler handler = getPubmedESearchHandler(encodedInitialQuery);
 
+			// check number of PubMed results returned by initial query.
+			// If it's greater than the threshold, query using the strict query.
+			pubMedQuery.getLenientQuery().setNumResult(handler.getCount());
+			
+			if (handler.getCount() > DEFAULT_THRESHOLD) {
+				String constructedStrictQuery = pubMedQuery.getStrictQuery().getQuery();
+				String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
+				PubmedESearchHandler strictSearchHandler = getPubmedESearchHandler(strictQuery);
+				
+				pubMedQuery.getStrictQuery().setNumResult(strictSearchHandler.getCount());
+				
+				// only retrieve articles if number is less than threshold, otherwise the article download
+				// may take too long
+				if (strictSearchHandler.getCount() <= DEFAULT_THRESHOLD) {
+					List<PubMedArticle> result = retrievePubMed(identity, constructedStrictQuery, strictSearchHandler.getCount());
+					for (PubMedArticle pubMedArticle : result) {
+						long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+						if (!pubMedArticles.containsKey(pmid)) {
+							pubMedArticles.put(pmid, pubMedArticle);
+						}
+					}
+				}
+			} else {
+				List<PubMedArticle> result = retrievePubMed(identity, encodedInitialQuery, handler.getCount());
+				for (PubMedArticle pubMedArticle : result) {
+					long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+					if (!pubMedArticles.containsKey(pmid)) {
+						pubMedArticles.put(pmid, pubMedArticle);
+					}
+				}
+			}
+		}
+		return pubMedArticles;
+	}
+	
 	/**
 	 * Initializes and starts threads that handles the retrieval process. Partition the number of articles
 	 * into manageable pieces and ask each thread to handle one partition.
@@ -146,11 +171,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @param cwid
 	 * @param count
 	 */
-	@Override
-	public List<PubMedArticle> retrieve()  {
-
-		// Check if some of the pmids has already been retrieved. And modify the pubMedQuery to not include
-		// already retrieved articles.
+	public List<PubMedArticle> retrievePubMed(Identity identity, String pubMedQuery, int numberOfPubmedArticles)  {
 
 		int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
 		ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);
@@ -218,11 +239,13 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	}
 
 	@Override
-	public List<ScopusArticle> retrieveScopus(List<Long> pmids) {
+	public List<ScopusArticle> retrieveScopus(Collection<Long> pmids) {
 		StringBuffer sb = new StringBuffer();
 		List<String> pmidQueries = new ArrayList<String>();
-		for (int i = 0; i < pmids.size(); i++) {
-			long pmid = pmids.get(i);
+		int i = 0;
+		Iterator<Long> itr = pmids.iterator();
+		while (itr.hasNext()) {
+			long pmid = itr.next();
 			if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != pmids.size() - 1)) {
 				sb.append("pmid(");
 				sb.append(pmid);
@@ -236,13 +259,14 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				pmidQueries.add(sb.toString());
 				sb = new StringBuffer();
 			}
+			i++;
 		}
 		// add the remaining pmids
 		String remaining = sb.toString();
 		if (!remaining.isEmpty()) {
 			pmidQueries.add(remaining);
 		}
-		
+
 		List<Callable<List<ScopusArticle>>> callables = new ArrayList<Callable<List<ScopusArticle>>>();
 
 		for (String query : pmidQueries) {
@@ -324,7 +348,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @return
 	 * @throws IOException 
 	 */
-	@Override
 	public String[] retrievePmids(String query) throws IOException {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
 		pubmedXmlQuery.setTerm(query);
@@ -390,43 +413,4 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
 		return pubmedESearchHandler;
 	}
-
-	/**
-	 * Go through each of the articles retrieved by email and check if the first name matches the one in the
-	 * database. If it doesn't, include that first name in the initial retrieval.
-	 *
-	 * @param targetAuthor
-	 * @return
-	 * @throws ParserConfigurationException
-	 * @throws SAXException
-	 * @throws IOException
-	 */
-	//	protected Set<AuthorName> getAuthorNameVariationFromEmails(TargetAuthor targetAuthor) 
-	//			throws ParserConfigurationException, SAXException, IOException {
-	//		Set<AuthorName> nameVariations = new HashSet<AuthorName>();
-	//		List<PubMedArticle> pubmedArticles = getPubmedArticle(ReCiterEngineProperty.emailXmlFolder, targetAuthor.getCwid());
-	//		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
-	//		for (PubMedArticle pubmedArticle : pubmedArticles) {
-	//			reCiterArticles.add(ArticleTranslator.translate(pubmedArticle, null));
-	//		}
-	//
-	//		String targetAuthorFirstName = targetAuthor.getAuthorName().getFirstName();
-	//		String targetAuthorLastName = targetAuthor.getAuthorName().getLastName();
-	//
-	//		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-	//			List<ReCiterAuthor> authors = reCiterArticle.getArticleCoAuthors().getAuthors();
-	//			for (ReCiterAuthor author : authors) {
-	//				String lastName = author.getAuthorName().getLastName();
-	//				String firstName = author.getAuthorName().getFirstName();
-	//				if (StringUtils.equalsIgnoreCase(lastName, targetAuthorLastName) && 
-	//						!StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName)) {
-	//					nameVariations.add(author.getAuthorName());
-	//				}
-	//			}
-	//		}
-	//
-	//		// Set targetAuthor's author name variations.
-	//		targetAuthor.setAuthorNameVariationsRetrievedFromPubmedUsingEmail(nameVariations);
-	//		return nameVariations;
-	//	}
 }

@@ -2,7 +2,7 @@ package reciter.service;
 
 import java.util.List;
 
-import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.model.scopus.ScopusArticle;
 
 public interface ScopusService {
 

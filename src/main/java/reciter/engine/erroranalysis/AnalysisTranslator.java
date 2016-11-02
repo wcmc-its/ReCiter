@@ -7,9 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.ReCiterAuthor;
-import reciter.xml.parser.scopus.model.Affiliation;
-import reciter.xml.parser.scopus.model.Author;
-import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.model.scopus.Affiliation;
+import reciter.model.scopus.Author;
+import reciter.model.scopus.ScopusArticle;
 
 public class AnalysisTranslator {
 

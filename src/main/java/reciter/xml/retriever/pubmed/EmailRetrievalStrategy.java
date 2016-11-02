@@ -2,38 +2,18 @@ package reciter.xml.retriever.pubmed;
 
 import java.util.Iterator;
 
+import org.springframework.stereotype.Component;
+
 import reciter.database.mongo.model.Identity;
 
 /**
  * There are no differences between initial query and the strict query.
  */
+@Component("emailRetrievalStrategy")
 public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 
-	private int threshold = DEFAULT_THRESHOLD;
 	private static final String retrievalStrategyName = "EmailRetrievalStrategy";
 	
-	public EmailRetrievalStrategy(boolean isRetrieveExceedThreshold) {
-		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
-	}
-
-	public int getThreshold() {
-		return threshold;
-	}
-
-	public void setThreshold(int threshold) {
-		this.threshold = threshold;
-	}
-
-	@Override
-	protected String constructInitialQuery(Identity identity) {
-		return constructEmailQuery(identity);
-	}
-
-	@Override
-	protected String constructStrictQuery(Identity identity) {
-		return constructEmailQuery(identity);
-	}
-
 	@Override
 	public String getRetrievalStrategyName() {
 		return retrievalStrategyName;
@@ -42,7 +22,7 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	/**
 	 * Concatenate email strings with " or ".
 	 */
-	protected String constructEmailQuery(Identity identity) {
+	private String constructEmailQuery(Identity identity) {
 		if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
 			// data cleaning: sometimes emails would have ',' instead of '.'
 			// i.e. (ayr2001@med.cornell,edu)
@@ -71,5 +51,10 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 		} else {
 			return null;
 		}
+	}
+
+	@Override
+	protected String getStrategySpecificQuerySuffix(Identity identity) {
+		return constructEmailQuery(identity);
 	}
 }

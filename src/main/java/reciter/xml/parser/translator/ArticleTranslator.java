@@ -26,8 +26,8 @@ import reciter.model.pubmed.MedlineCitationMeshHeading;
 import reciter.model.pubmed.MedlineCitationMeshHeadingQualifierName;
 import reciter.model.pubmed.MedlineCitationYNEnum;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.xml.parser.scopus.model.Author;
-import reciter.xml.parser.scopus.model.ScopusArticle;
+import reciter.model.scopus.Author;
+import reciter.model.scopus.ScopusArticle;
 
 /**
  * Translator that translates a PubmedArticle to ReCiterArticle.

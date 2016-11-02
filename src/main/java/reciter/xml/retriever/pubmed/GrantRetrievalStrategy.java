@@ -3,75 +3,19 @@ package reciter.xml.retriever.pubmed;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.stereotype.Component;
+
 import reciter.database.mongo.model.Grant;
 import reciter.database.mongo.model.Identity;
 
+@Component("grantRetrievalStrategy")
 public class GrantRetrievalStrategy extends AbstractRetrievalStrategy {
 
-	private int threshold = DEFAULT_THRESHOLD;
 	private static final String retrievalStrategyName = "GrantRetrievalStrategy";
 	
-	public GrantRetrievalStrategy(boolean isRetrieveExceedThreshold) {
-		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
-	}
-	
-	@Override
-	public int getThreshold() {
-		return threshold;
-	}
-
-	@Override
-	public void setThreshold(int threshold) {
-		this.threshold = threshold;		
-	}
-
 	@Override
 	public String getRetrievalStrategyName() {
 		return retrievalStrategyName;
-	}
-
-	@Override
-	protected String constructInitialQuery(Identity identity) {
-		if (identity.getGrants() != null && !identity.getGrants().isEmpty()) {
-			StringBuilder sb = new StringBuilder();
-            int i = 0;
-            for (Grant grant : identity.getGrants()) {
-            	String sponsorAwardId = grant.getSponsorAwardId();
-                String parsed = parseSponsorAwardId(sponsorAwardId);
-                if (i != identity.getGrants().size() - 1) {
-                    sb.append(parsed + "[Grant Number] OR ");
-                } else {
-                    sb.append(parsed + "[Grant Number]");
-                }
-            }
-            String lastName = identity.getAuthorName().getLastName();
-			String firstInitial = identity.getAuthorName().getFirstInitial();
-			return lastName + " " + firstInitial + " AND (" + sb.toString() + ")";
-		} else {
-			return null;
-		}
-	}
-
-	@Override
-	protected String constructStrictQuery(Identity identity) {
-		if (identity.getGrants() != null && !identity.getGrants().isEmpty()) {
-			StringBuilder sb = new StringBuilder();
-            int i = 0;
-            for (Grant grant : identity.getGrants()) {
-            	String sponsorAwardId = grant.getSponsorAwardId();
-                String parsed = parseSponsorAwardId(sponsorAwardId);
-                if (i != identity.getGrants().size() - 1) {
-                    sb.append(parsed + "[Grant Number] OR ");
-                } else {
-                    sb.append(parsed + "[Grant Number]");
-                }
-            }
-            String lastName = identity.getAuthorName().getLastName();
-			String firstName = identity.getAuthorName().getFirstName();
-			return lastName + " " + firstName + " AND (" + sb.toString() + ")";
-		} else {
-			return null;
-		}
 	}
 	
 	/**
@@ -91,4 +35,24 @@ public class GrantRetrievalStrategy extends AbstractRetrievalStrategy {
         }
         return "";
     }
+
+	@Override
+	protected String getStrategySpecificQuerySuffix(Identity identity) {
+		if (identity.getGrants() != null && !identity.getGrants().isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+            int i = 0;
+            for (Grant grant : identity.getGrants()) {
+            	String sponsorAwardId = grant.getSponsorAwardId();
+                String parsed = parseSponsorAwardId(sponsorAwardId);
+                if (i != identity.getGrants().size() - 1) {
+                    sb.append(parsed + "[Grant Number] OR ");
+                } else {
+                    sb.append(parsed + "[Grant Number]");
+                }
+            }
+			return "(" + sb.toString() + ")";
+		} else {
+			return null;
+		}
+	}
 }

@@ -1,5 +1,6 @@
 package reciter.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,10 +11,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,12 +22,12 @@ import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.model.MeshTerm;
 import reciter.database.mongo.model.PubMedArticleFeature;
-import reciter.database.mongo.model.TrainingData;
 import reciter.engine.Engine;
 import reciter.engine.Feature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.MeshTermService;
@@ -36,7 +35,6 @@ import reciter.service.PubMedArticleFeatureService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.service.TrainingDataService;
-import reciter.xml.parser.scopus.model.ScopusArticle;
 import reciter.xml.parser.translator.ArticleTranslator;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
@@ -52,7 +50,7 @@ public class ReCiterController {
 	private PubMedService pubMedService;
 	
 	@Autowired
-	private ReCiterRetrievalEngine defaultReCiterRetrievalEngine;
+	private ReCiterRetrievalEngine aliasReCiterRetrievalEngine;
 	
 	@Autowired
 	private Engine reCiterEngine;
@@ -86,32 +84,15 @@ public class ReCiterController {
 		return identityService.findByCwidRegex(search);
 	}
 
+	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/retrieve/article/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Long> retrieveArticles(@RequestParam(value="cwid") String cwid) {
+	public void retrieveArticles(@RequestParam(value="cwid") String cwid) {
 		Identity identity = identityService.findByCwid(cwid);
-		return defaultReCiterRetrievalEngine.retrieve(identity);
-	}
-	
-	@CrossOrigin(origins = "http://localhost:9000")
-	@RequestMapping(value = "/reciter/retrieve/limited/article/by/cwid", method = RequestMethod.GET)
-	@Async
-	public void retrieveLimitedArticles(@RequestParam(value="cwid") String cwid) {
-		Identity identity = identityService.findByCwid(cwid);
-		defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
-	}
-	
-	@CrossOrigin(origins = "http://localhost:9000")
-	@RequestMapping(value = "/reciter/retrieve/limited/article/for/testcwids", method = RequestMethod.GET)
-	@Async
-	public void retrieveLimitedArticlesForTestCwids() {
-		List<TrainingData> trainingDatas = trainingDataService.findAll();
-		if (!trainingDatas.isEmpty()) {
-			List<String> cwids = trainingDatas.get(0).getCwids();
-			for (String cwid : cwids) {
-				Identity identity = identityService.findByCwid(cwid);
-				defaultReCiterRetrievalEngine.retrieveWithMultipleStrategies(identity);
-			}
+		try {
+			aliasReCiterRetrievalEngine.retrieve(identity);
+		} catch (IOException e) {
+			slf4jLogger.error("Unable to retrieve articles for cwid=[" + cwid + "]", e);
 		}
 	}
 
@@ -155,22 +136,6 @@ public class ReCiterController {
 		Analysis analysis = reCiterEngine.run(identity, reCiterArticles);
 		slf4jLogger.info(analysis.toString());
 		return analysis;
-	}
-	
-	@RequestMapping(value = "/reciter/data_import/rc_identity", method = RequestMethod.POST)
-	@ResponseBody
-	public String importIdentity(@RequestBody List<Identity> identities) {
-		System.out.println(identities);
-//		identityService.save(identities);
-		return "Success";
-	}
-	
-	@RequestMapping(value = "/reciter/newidentity/", method = RequestMethod.POST)
-	@ResponseBody
-	public String importNewIdentity(@RequestBody Identity identity) {
-		identityService.save(identity);
-		defaultReCiterRetrievalEngine.retrieve(identity);
-		return "Success";
 	}
 	
 	@RequestMapping(value = "/reciter/feature/by/cwid", method = RequestMethod.GET)

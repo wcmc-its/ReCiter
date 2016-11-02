@@ -10,8 +10,8 @@ import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.author.AuthorEducation;
 import reciter.model.author.ReCiterAuthor;
+import reciter.model.scopus.ScopusArticle;
 import reciter.utils.ReCiterStringUtil;
-import reciter.xml.parser.scopus.model.ScopusArticle;
 
 public class EducationStrategy extends AbstractTargetAuthorStrategy {
 
