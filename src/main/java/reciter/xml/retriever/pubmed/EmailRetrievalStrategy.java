@@ -1,6 +1,7 @@
 package reciter.xml.retriever.pubmed;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,11 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	@Override
 	public String getRetrievalStrategyName() {
 		return retrievalStrategyName;
+	}
+	
+	@Override
+	protected List<PubMedQuery> constructPubMedQueryList(Identity identity) {
+		return constructPubMedQueryList(identity, false, null);
 	}
 	
 	/**

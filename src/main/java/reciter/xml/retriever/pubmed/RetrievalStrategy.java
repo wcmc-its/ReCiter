@@ -35,13 +35,4 @@ public interface RetrievalStrategy {
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
 	Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException;
-	
-	/**
-	 * Construct a list of PubMed query for this identity.
-	 * 
-	 * @param identity
-	 * 
-	 * @return List of PubMed query.
-	 */
-	List<PubMedQuery> constructPubMedQueryList(Identity identity);
 }

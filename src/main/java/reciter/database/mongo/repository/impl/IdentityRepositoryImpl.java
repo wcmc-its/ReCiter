@@ -23,7 +23,7 @@ public class IdentityRepositoryImpl implements IdentityRepositoryCustom {
 		String cwid = identity.getCwid();
 
 		List<Object> pubmedAliasDbList = new BasicDBList();
-		for (PubMedAlias pubMedAlias : identity.getPubMedAliases()) {
+		for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
 			DBObject pubmedAliasDbObject = new BasicDBObject();
 			DBObject authorNameDbObject = new BasicDBObject();
 			authorNameDbObject.put("firstName", pubMedAlias.getAuthorName().getFirstName());

@@ -38,6 +38,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if (emailPubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, emailPubMedArticles.values());
 
+			slf4jLogger.info("Found " + aliasSet.size() + " new alias for cwid=[" + cwid + "]");
+			 
 			// Update alias.
 			List<PubMedAlias> pubMedAliases = new ArrayList<PubMedAlias>();
 			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
@@ -48,7 +50,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedAliases.add(pubMedAlias);
 			}
 
-			identity.setPubMedAliases(pubMedAliases);
+			identity.setPubMedAlias(pubMedAliases);
 			identityService.updatePubMedAlias(identity);
 			
 			uniquePmids.addAll(emailPubMedArticles.keySet());

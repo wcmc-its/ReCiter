@@ -77,36 +77,48 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	protected abstract String getStrategySpecificQuerySuffix(Identity identity);
 
-	@Override
-	public List<PubMedQuery> constructPubMedQueryList(Identity identity) {
+	protected List<PubMedQuery> constructPubMedQueryList(Identity identity) {
+		return constructPubMedQueryList(identity, true, "AND");
+	}
+	
+	protected List<PubMedQuery> constructPubMedQueryList(Identity identity, boolean includeName, String concatenator){
 		String strategySpecificQuery = getStrategySpecificQuerySuffix(identity);
 
 		if (strategySpecificQuery != null) {
-			List<PubMedQuery> pubMedQueries = new ArrayList<PubMedQuery>(1 + identity.getPubMedAliases().size());
+			List<PubMedQuery> pubMedQueries = new ArrayList<PubMedQuery>();
 
 			String lastName = identity.getAuthorName().getLastName();
 			String firstName = identity.getAuthorName().getFirstName();
 			String firstInitial = identity.getAuthorName().getFirstInitial();
 
 			PubMedQuery pubMedQuery = new PubMedQuery();
-			pubMedQuery.setLenientQuery(new PubMedQueryResult(lastName + " " + firstInitial + " AND " + strategySpecificQuery));
-			pubMedQuery.setStrictQuery(new PubMedQueryResult(lastName + " " + firstName + " AND " + strategySpecificQuery));
-
+			
+			if (includeName) {
+				pubMedQuery.setLenientQuery(new PubMedQueryResult(lastName + " " + firstInitial + concatenator + strategySpecificQuery));
+				pubMedQuery.setStrictQuery(new PubMedQueryResult(lastName + " " + firstName + concatenator + strategySpecificQuery));
+			} else {
+				pubMedQuery.setLenientQuery(new PubMedQueryResult(strategySpecificQuery));
+				pubMedQuery.setStrictQuery(new PubMedQueryResult(strategySpecificQuery));
+			}
 			pubMedQueries.add(pubMedQuery);
 
 			// Construct the same queries based on the alias as well to download those PubMed articles
 			// that uses the alias name.
-			for (PubMedAlias pubMedAlias : identity.getPubMedAliases()) {
-
+			for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
+				
 				AuthorName alias = pubMedAlias.getAuthorName();
 				String aliasLastName = alias.getLastName();
 				String aliasFirstInitial = alias.getFirstInitial();
 				String aliasFirstName = alias.getFirstName();
 
 				PubMedQuery aliasPubMedQuery = new PubMedQuery();
-				pubMedQuery.setLenientQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstInitial + " AND " + strategySpecificQuery));
-				pubMedQuery.setStrictQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstName + " AND " + strategySpecificQuery));
-
+				if (includeName) {
+					aliasPubMedQuery.setLenientQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstInitial + concatenator + strategySpecificQuery));
+					aliasPubMedQuery.setStrictQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstName + concatenator + strategySpecificQuery));
+				} else {
+					aliasPubMedQuery.setLenientQuery(new PubMedQueryResult(strategySpecificQuery));
+					aliasPubMedQuery.setStrictQuery(new PubMedQueryResult(strategySpecificQuery));
+				}
 				pubMedQueries.add(aliasPubMedQuery);
 			}
 			return pubMedQueries;
@@ -159,6 +171,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				}
 			}
 		}
+		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getCwid() 
+			+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
 		return pubMedArticles;
 	}
 	
