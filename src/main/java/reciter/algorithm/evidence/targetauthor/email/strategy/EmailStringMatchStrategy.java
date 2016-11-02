@@ -2,7 +2,6 @@ package reciter.algorithm.evidence.targetauthor.email.strategy;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
