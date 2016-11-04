@@ -59,12 +59,12 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	/**
 	 * Scopus retrieval threshold.
 	 */
-	protected static final int SCOPUS_DEFAULT_THRESHOLD = 99;
+	protected static final int SCOPUS_DEFAULT_THRESHOLD = 24;
 
 	/**
 	 * Scopus retrieval max threshold.
 	 */
-	protected static final int SCOPUS_MAX_THRESHOLD = 100;
+	protected static final int SCOPUS_MAX_THRESHOLD = 25;
 
 	/**
 	 * Should retrieved if threshold exceeds.
