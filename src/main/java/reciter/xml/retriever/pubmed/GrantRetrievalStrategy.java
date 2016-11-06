@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import java.time.LocalDate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -7,9 +8,10 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.Grant;
 import reciter.database.mongo.model.Identity;
+import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
 
 @Component("grantRetrievalStrategy")
-public class GrantRetrievalStrategy extends AbstractRetrievalStrategy {
+public class GrantRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
 	private static final String retrievalStrategyName = "GrantRetrievalStrategy";
 
@@ -37,7 +39,7 @@ public class GrantRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected String getStrategySpecificQuerySuffix(Identity identity) {
+	protected String getStrategySpecificKeyword(Identity identity) {
 		if (identity.getGrants() != null && !identity.getGrants().isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			int i = 0;
@@ -57,5 +59,25 @@ public class GrantRetrievalStrategy extends AbstractRetrievalStrategy {
 		} else {
 			return null;
 		}
+	}
+
+	@Override
+	protected String buildNameQuery(String lastName, String firstName, Identity identity) {
+		PubMedQueryBuilder pubMedQueryBuilder = 
+				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
+					.author(true, lastName, firstName);
+		
+		return pubMedQueryBuilder.build();
+	}
+	
+	@Override
+	protected String buildNameQuery(String lastName, String firstName, Identity identity, LocalDate startDate,
+			LocalDate endDate) {
+		PubMedQueryBuilder pubMedQueryBuilder = 
+				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
+					.author(true, lastName, firstName)
+					.dateRange(true, startDate, endDate);
+		
+		return pubMedQueryBuilder.build();
 	}
 }

@@ -51,7 +51,7 @@ public class PubmedESearchHandler extends DefaultHandler {
 		try {
 			SAXParserFactory.newInstance().newSAXParser().parse(inputStream, webEnvHandler);
 		} catch (Exception e) {
-			slf4jLogger.error("Error in executeESearchQuery", e);
+			slf4jLogger.error("Error in executeESearchQuery. url=[" + eSearchUrl + "]", e);
 		}
 		return webEnvHandler;
 	}

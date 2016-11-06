@@ -1,6 +1,8 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -8,9 +10,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -32,8 +34,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import reciter.database.mongo.model.Identity;
-import reciter.database.mongo.model.PubMedAlias;
-import reciter.model.author.AuthorName;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.xml.parser.pubmed.PubmedXmlQuery;
@@ -75,65 +75,25 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
 
-	protected abstract String getStrategySpecificQuerySuffix(Identity identity);
+	protected abstract List<PubMedQuery> buildQuery(Identity identity);
+	protected abstract List<PubMedQuery> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate);
 
-	protected List<PubMedQuery> constructPubMedQueryList(Identity identity) {
-		return constructPubMedQueryList(identity, true, "AND");
+	@Override
+	public Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
+		List<PubMedQuery> pubMedQueries = buildQuery(identity, startDate, endDate);
+		return retrievePubMedArticles(identity, pubMedQueries);
 	}
 	
-	protected List<PubMedQuery> constructPubMedQueryList(Identity identity, boolean includeName, String concatenator){
-		String strategySpecificQuery = getStrategySpecificQuerySuffix(identity);
-
-		if (strategySpecificQuery != null) {
-			List<PubMedQuery> pubMedQueries = new ArrayList<PubMedQuery>();
-
-			String lastName = identity.getAuthorName().getLastName();
-			String firstName = identity.getAuthorName().getFirstName();
-			String firstInitial = identity.getAuthorName().getFirstInitial();
-
-			PubMedQuery pubMedQuery = new PubMedQuery();
-			
-			if (includeName) {
-				pubMedQuery.setLenientQuery(new PubMedQueryResult(lastName + " " + firstInitial + concatenator + strategySpecificQuery));
-				pubMedQuery.setStrictQuery(new PubMedQueryResult(lastName + " " + firstName + concatenator + strategySpecificQuery));
-			} else {
-				pubMedQuery.setLenientQuery(new PubMedQueryResult(strategySpecificQuery));
-				pubMedQuery.setStrictQuery(new PubMedQueryResult(strategySpecificQuery));
-			}
-			pubMedQueries.add(pubMedQuery);
-
-			// Construct the same queries based on the alias as well to download those PubMed articles
-			// that uses the alias name.
-			for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
-				
-				AuthorName alias = pubMedAlias.getAuthorName();
-				String aliasLastName = alias.getLastName();
-				String aliasFirstInitial = alias.getFirstInitial();
-				String aliasFirstName = alias.getFirstName();
-
-				PubMedQuery aliasPubMedQuery = new PubMedQuery();
-				if (includeName) {
-					aliasPubMedQuery.setLenientQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstInitial + concatenator + strategySpecificQuery));
-					aliasPubMedQuery.setStrictQuery(new PubMedQueryResult(aliasLastName + " " + aliasFirstName + concatenator + strategySpecificQuery));
-				} else {
-					aliasPubMedQuery.setLenientQuery(new PubMedQueryResult(strategySpecificQuery));
-					aliasPubMedQuery.setStrictQuery(new PubMedQueryResult(strategySpecificQuery));
-				}
-				pubMedQueries.add(aliasPubMedQuery);
-			}
-			return pubMedQueries;
-		} else {
-			return Collections.emptyList();
-		}
-	}
-
+	@Override
 	public Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException {
+		List<PubMedQuery> pubMedQueries = buildQuery(identity);
+		return retrievePubMedArticles(identity, pubMedQueries);
+	}
+	
+	private Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity, List<PubMedQuery> pubMedQueries) throws IOException {
 
 		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
 		
-		// Construct initial relaxed query.
-		List<PubMedQuery> pubMedQueries = constructPubMedQueryList(identity);
-
 		for (PubMedQuery pubMedQuery : pubMedQueries) {
 
 			String encodedInitialQuery = URLEncoder.encode(pubMedQuery.getLenientQuery().getQuery(), "UTF-8");
@@ -408,11 +368,17 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
 		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
 		PubmedESearchHandler pubmedESearchHandler = new PubmedESearchHandler();
-		InputStream esearchStream = new URL(fullUrl).openStream();
+//		InputStream esearchStream = new URL(fullUrl).openStream();
+		
+		File file = new File("C:\\Users\\Jie\\git\\ReCiter\\src\\main\\resources\\test.xml");
+		FileInputStream fis = new FileInputStream(file);
+		
+		InputStream esearchStream = fis;
+		
 		try {
 			SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
 		} catch (SAXException | ParserConfigurationException e) {
-			slf4jLogger.error("Error parsing XML file for query=[" + query + "].", e);
+			slf4jLogger.error("Error parsing XML file for query=[" + query + "], full url=[" + fullUrl + "]", e);
 		}
 		return pubmedESearchHandler;
 	}

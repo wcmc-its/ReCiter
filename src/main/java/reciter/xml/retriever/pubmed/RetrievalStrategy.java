@@ -1,6 +1,7 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -35,4 +36,13 @@ public interface RetrievalStrategy {
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
 	Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException;
+	
+	/**
+	 * Retrieve the articles for this identity restricted by the start date and end date.
+	 * 
+	 * @param identity
+	 * 
+	 * @return Unique map of PMID to of PubMed articles for this identity.
+	 */
+	Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException;
 }

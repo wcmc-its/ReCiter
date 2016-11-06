@@ -1,13 +1,14 @@
 package reciter.xml.retriever.pubmed;
 
-import java.util.List;
+import java.time.LocalDate;
 
 import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.Identity;
+import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
 
 @Component("firstNameInitialRetrievalStrategy")
-public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy {
+public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
 	private static final String retrievalStrategyName = "FirstNameInitialRetrievalStrategy";
 
@@ -17,12 +18,27 @@ public class FirstNameInitialRetrievalStrategy extends AbstractRetrievalStrategy
 	}
 
 	@Override
-	protected String getStrategySpecificQuerySuffix(Identity identity) {
-		return "[au]";
+	protected String getStrategySpecificKeyword(Identity identity) {
+		return null;
+	}
+
+	@Override
+	protected String buildNameQuery(String lastName, String firstName, Identity identity) {
+		PubMedQueryBuilder pubMedQueryBuilder = 
+				new PubMedQueryBuilder()
+					.author(true, lastName, firstName);
+		
+		return pubMedQueryBuilder.build();
 	}
 	
 	@Override
-	protected List<PubMedQuery> constructPubMedQueryList(Identity identity) {
-		return constructPubMedQueryList(identity, true, "");
+	protected String buildNameQuery(String lastName, String firstName, Identity identity, LocalDate startDate,
+			LocalDate endDate) {
+		PubMedQueryBuilder pubMedQueryBuilder = 
+				new PubMedQueryBuilder()
+					.author(true, lastName, firstName)
+					.dateRange(true, startDate, endDate);
+		
+		return pubMedQueryBuilder.build();
 	}
 }
