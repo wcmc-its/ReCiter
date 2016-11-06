@@ -1,13 +1,13 @@
 package reciter.client;
 
-import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RetrieveArticle {
 
 	public static void main(String[] args) {
 		
-		ReCiterRetrievalEngine engine;
-		
+		List<String> list = new ArrayList<String>();
 		
 	}
 
