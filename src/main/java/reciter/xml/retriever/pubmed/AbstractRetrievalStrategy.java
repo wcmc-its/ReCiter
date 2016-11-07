@@ -1,8 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -368,12 +366,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
 		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
 		PubmedESearchHandler pubmedESearchHandler = new PubmedESearchHandler();
-//		InputStream esearchStream = new URL(fullUrl).openStream();
-		
-		File file = new File("C:\\Users\\Jie\\git\\ReCiter\\src\\main\\resources\\test.xml");
-		FileInputStream fis = new FileInputStream(file);
-		
-		InputStream esearchStream = fis;
+		InputStream esearchStream = new URL(fullUrl).openStream();
 		
 		try {
 			SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);

@@ -74,8 +74,8 @@ public class PubmedXmlQuery {
 	 */
 	private String retMode = "xml";
 	
-	protected static final String ESEARCH_BASE_URL = "http://www.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
-	protected static final String EFETCH_BASE_URL = "http://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
+	protected static final String ESEARCH_BASE_URL = "https://www.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
+	protected static final String EFETCH_BASE_URL = "https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
 	
 	public PubmedXmlQuery() {}
 	
