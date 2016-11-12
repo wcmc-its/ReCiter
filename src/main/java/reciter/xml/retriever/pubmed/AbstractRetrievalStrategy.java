@@ -85,12 +85,17 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	@Override
 	public Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException {
 		List<PubMedQuery> pubMedQueries = buildQuery(identity);
+		for (PubMedQuery pubMedQuery : pubMedQueries) {
+			slf4jLogger.info(pubMedQuery.toString());
+		}
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
 	
 	private Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity, List<PubMedQuery> pubMedQueries) throws IOException {
 
 		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
+		
+		slf4jLogger.info("Query size: " + pubMedQueries.size());
 		
 		for (PubMedQuery pubMedQuery : pubMedQueries) {
 

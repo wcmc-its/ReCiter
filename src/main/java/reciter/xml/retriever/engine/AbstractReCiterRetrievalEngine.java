@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +25,6 @@ import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
 
 @Component("abstractReCiterRetrievalEngine")
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
-
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractReCiterRetrievalEngine.class);
 
 	@Autowired
 	protected PubMedService pubMedService;

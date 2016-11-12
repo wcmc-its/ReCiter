@@ -31,6 +31,11 @@ public class PubMedQuery {
 		this.strictQuery = strictQuery;
 	}
 	
+	@Override
+	public String toString() {
+		return "PubMedQuery [lenientQuery=" + lenientQuery + ", strictQuery=" + strictQuery + "]";
+	}
+
 	/**
 	 * PubMed Query builder class for constructing a PubMed query.
 	 */

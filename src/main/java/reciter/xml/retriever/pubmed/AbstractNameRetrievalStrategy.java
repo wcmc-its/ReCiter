@@ -4,11 +4,16 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.model.PubMedAlias;
 import reciter.model.author.AuthorName;
 
 public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStrategy {
+
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractNameRetrievalStrategy.class);
 
 	protected abstract String buildNameQuery(String lastName, String firstName, Identity identity);
 	protected abstract String buildNameQuery(String lastName, String firstName, Identity identity, LocalDate startDate, LocalDate endDate);
@@ -26,6 +31,8 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 		pubMedQuery.setLenientQuery(new PubMedQueryResult(buildNameQuery(lastName, firstInitial, identity)));
 		pubMedQuery.setStrictQuery(new PubMedQueryResult(buildNameQuery(lastName, firstName, identity)));
 
+		pubMedQueries.add(pubMedQuery);
+		
 		for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
 
 			AuthorName alias = pubMedAlias.getAuthorName();
@@ -38,7 +45,10 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 			aliasPubMedQuery.setStrictQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstName, identity)));
 			pubMedQueries.add(aliasPubMedQuery);
 		}
-
+		
+		for (PubMedQuery query : pubMedQueries) {
+			slf4jLogger.info(query.toString());
+		}
 		return pubMedQueries;
 	}
 
@@ -54,6 +64,8 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 		pubMedQuery.setLenientQuery(new PubMedQueryResult(buildNameQuery(lastName, firstInitial, identity, startDate, endDate)));
 		pubMedQuery.setStrictQuery(new PubMedQueryResult(buildNameQuery(lastName, firstName, identity, startDate, endDate)));
 
+		pubMedQueries.add(pubMedQuery);
+		
 		for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
 
 			AuthorName alias = pubMedAlias.getAuthorName();

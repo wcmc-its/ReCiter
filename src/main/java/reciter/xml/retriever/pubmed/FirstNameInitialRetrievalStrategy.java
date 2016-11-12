@@ -2,6 +2,8 @@ package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.Identity;
@@ -11,6 +13,7 @@ import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
 public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
 	private static final String retrievalStrategyName = "FirstNameInitialRetrievalStrategy";
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(FirstNameInitialRetrievalStrategy.class);
 
 	@Override
 	public String getRetrievalStrategyName() {
@@ -28,7 +31,9 @@ public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStra
 				new PubMedQueryBuilder()
 					.author(true, lastName, firstName);
 		
-		return pubMedQueryBuilder.build();
+		String query = pubMedQueryBuilder.build();
+		slf4jLogger.info(retrievalStrategyName + " produced query=[" + query + "]");
+		return query;
 	}
 	
 	@Override

@@ -5,6 +5,11 @@ public class PubMedQueryResult {
 	private String query;
 	private int numResult;
 	
+	@Override
+	public String toString() {
+		return "PubMedQueryResult [query=" + query + ", numResult=" + numResult + "]";
+	}
+
 	public PubMedQueryResult(String query) {
 		this.query = query;
 	}
