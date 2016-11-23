@@ -213,4 +213,23 @@ public class AnalysisObject {
 	public void setEducationScore(double educationScore) {
 		this.educationScore = educationScore;
 	}
+	@Override
+	public String toString() {
+		return "AnalysisObject [status=" + status + ", cwid=" + cwid + ", targetName=" + targetName
+				+ ", pubmedSearchQuery=" + pubmedSearchQuery + ", pmid=" + pmid + ", articleTitle=" + articleTitle
+				+ ", fullJournalTitle=" + fullJournalTitle + ", publicationYear=" + publicationYear
+				+ ", scopusTargetAuthorAffiliation=" + scopusTargetAuthorAffiliation + ", scopusCoAuthorAffiliation="
+				+ scopusCoAuthorAffiliation + ", pubmedTargetAuthorAffiliation=" + pubmedTargetAuthorAffiliation
+				+ ", pubmedCoAuthorAffiliation=" + pubmedCoAuthorAffiliation + ", articleKeywords=" + articleKeywords
+				+ ", isClusterOriginator=" + isClusterOriginator + ", clusterArticleAssignedTo="
+				+ clusterArticleAssignedTo + ", countArticlesInAssignedCluster=" + countArticlesInAssignedCluster
+				+ ", isClusterSelectedInPhaseTwoMatching=" + isClusterSelectedInPhaseTwoMatching
+				+ ", emailStrategyScore=" + emailStrategyScore + ", departmentStrategyScore=" + departmentStrategyScore
+				+ ", knownCoinvestigatorScore=" + knownCoinvestigatorScore + ", affiliationScore=" + affiliationScore
+				+ ", scopusStrategyScore=" + scopusStrategyScore + ", coauthorStrategyScore=" + coauthorStrategyScore
+				+ ", journalStrategyScore=" + journalStrategyScore + ", citizenshipStrategyScore="
+				+ citizenshipStrategyScore + ", bachelorsYearDiscrepancyScore=" + bachelorsYearDiscrepancyScore
+				+ ", doctoralYearDiscrepancyScore=" + doctoralYearDiscrepancyScore + ", isArticleTitleStartWithBracket="
+				+ isArticleTitleStartWithBracket + ", educationScore=" + educationScore + "]";
+	}
 }

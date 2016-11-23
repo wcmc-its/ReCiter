@@ -1,6 +1,10 @@
 package reciter.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -170,5 +178,28 @@ public class ReCiterController {
 		pubMedArticleFeature.setFeatures(features);
 		pubMedArticleFeatureService.save(pubMedArticleFeature);
 		return features;
+	}
+	
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/reciter/download/log", method = RequestMethod.GET)
+	@ResponseBody
+	public void downloadLog(final HttpServletRequest request, final HttpServletResponse response) {
+
+        File file = new File("logs/reciter.log");
+        try (InputStream fileInputStream = new FileInputStream(file);
+                OutputStream output = response.getOutputStream();) {
+
+            response.reset();
+
+            response.setContentType("application/octet-stream");
+            response.setContentLength((int) (file.length()));
+
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
+
+            IOUtils.copyLarge(fileInputStream, output);
+            output.flush();
+        } catch (IOException e) {
+            slf4jLogger.error(e.getMessage(), e);
+        }
 	}
 }
