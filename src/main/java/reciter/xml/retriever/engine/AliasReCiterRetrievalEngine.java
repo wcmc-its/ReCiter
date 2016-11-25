@@ -1,6 +1,9 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,6 +54,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			}
 
 			identity.setPubMedAlias(pubMedAliases);
+			identity.setDateInitialRun(LocalDateTime.now(Clock.systemUTC()));
+			identity.setDateLastRun(LocalDateTime.now(Clock.systemUTC()));
 			identityService.updatePubMedAlias(identity);
 			
 			uniquePmids.addAll(emailPubMedArticles.keySet());

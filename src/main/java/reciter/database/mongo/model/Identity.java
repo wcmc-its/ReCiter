@@ -1,5 +1,7 @@
 package reciter.database.mongo.model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -20,12 +22,14 @@ public class Identity {
 	private List<Long> knownPmids; // known pmids.
 	private List<String> boardCertifications; // board certifications
 	private String citizenship; // citizenship
-	private Education bachelor;
-	private Education masters;
-	private Education doctoral;
-	private List<Grant> grants;
-	private List<String> keywords;
-	private List<PubMedAlias> pubMedAlias;
+	private Education bachelor; // bachelor degree
+	private Education masters; // masters degree
+	private Education doctoral; // doctoral degree
+	private List<Grant> grants; // grants
+	private List<String> keywords; // keywords
+	private List<PubMedAlias> pubMedAlias; // name alias from PubMed
+	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
+	private LocalDateTime dateLastRun; // the date of the most recent retrieval
 	
 	public String getCwid() {
 		return cwid;
@@ -128,5 +132,17 @@ public class Identity {
 	}
 	public void setPubMedAlias(List<PubMedAlias> pubMedAlias) {
 		this.pubMedAlias = pubMedAlias;
+	}
+	public LocalDateTime getDateInitialRun() {
+		return dateInitialRun;
+	}
+	public void setDateInitialRun(LocalDateTime dateInitialRun) {
+		this.dateInitialRun = dateInitialRun;
+	}
+	public LocalDateTime getDateLastRun() {
+		return dateLastRun;
+	}
+	public void setDateLastRun(LocalDateTime dateLastRun) {
+		this.dateLastRun = dateLastRun;
 	}
 }
