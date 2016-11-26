@@ -1,5 +1,6 @@
 package reciter.algorithm.evidence.targetauthor.name.strategy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.database.mongo.model.Identity;
+import reciter.engine.erroranalysis.AnalysisObjectAuthor;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.author.AuthorName;
@@ -58,6 +60,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 
+		List<AnalysisObjectAuthor> analysisObjectAuthors = new ArrayList<AnalysisObjectAuthor>();
+		
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
 		boolean foundMatchingAuthor = false; // found matching author with the same last name and first and middle initial as target author.
@@ -76,6 +80,9 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
 
+				AnalysisObjectAuthor analysisObjectAuthor = new AnalysisObjectAuthor();
+				analysisObjectAuthor.setAuthor(author);
+				
 				// Update author with the correct author.
 				if (isMultipleAuthorsWithSameLastNameAsTargetAuthor) {
 					author = getCorrectAuthor(reCiterArticle, identity);
@@ -91,13 +98,15 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 					// Check whether last name matches.
 					if (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(lastName),  ReCiterStringUtil.deAccent(targetAuthorLastName))) {
-
+						analysisObjectAuthor.setLastNameMatchTargetAuthor(true);
+						
 						firstNameFieldVar = firstName;
 						middleNameFieldVar = middleName;
 
 						// Check if first name is a full name (not an initial).
 						if (firstName.length() > 1 && targetAuthorFirstName.length() > 1) {
-
+							analysisObjectAuthor.setFirstNameFullName(true);
+							
 							// First name doesn't match! Should remove the article from the selected cluster.
 							if (!StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName)) {
 
@@ -118,10 +127,12 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 												if (middleNameInitial.length() > 0) {
 													boolean isMatch = StringUtils.equalsIgnoreCase(aliasMiddleNameInitial, middleNameInitial);
 													if (isMatch) {
+														analysisObjectAuthor.setAliasNameMatch(true);
 														shouldRemove = false;
 														break;
 													}
 												} else {
+													analysisObjectAuthor.setAliasNameMatch(true);
 													shouldRemove = false;
 													break;
 												}
@@ -136,6 +147,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									String articleAuthorFirstNameDashRemoved = firstName.replace("-", " ");
 									String targetAuthorFirstNameDashRemoved = targetAuthorFirstName.replace("-", " ");
 									if (StringUtils.equalsIgnoreCase(targetAuthorFirstNameDashRemoved, articleAuthorFirstNameDashRemoved)) {
+										analysisObjectAuthor.setFirstNameDashRemovedMatch(true);
 										shouldRemove = false;
 									}
 								}
@@ -149,6 +161,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 										String combineWithDash = firstPartInitial + "-" + secondPartInitial;
 
 										if (StringUtils.equalsIgnoreCase(firstName, combineWithDash)) {
+											analysisObjectAuthor.setFirstInitialDashRemovedMatch(true);
 											shouldRemove = false;
 										}
 									}
@@ -159,6 +172,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									if (targetAuthorFirstName.contains("-")) {
 										String targetAuthorFirstNameDashRemoved = targetAuthorFirstName.replace("-", "");
 										if (StringUtils.equalsIgnoreCase(targetAuthorFirstNameDashRemoved, firstName)) {
+											analysisObjectAuthor.setFirstNameDashAddedMatch(true);
 											shouldRemove = false;
 										}
 									}
@@ -174,6 +188,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 											String secondPartInitial = targetAuthorFirstNameArr[1].substring(0, 1);
 											String combineWithDash = firstPartInitial + "-" + secondPartInitial;
 											if (StringUtils.equalsIgnoreCase(combineWithDash, firstName)) {
+												analysisObjectAuthor.setFirstNameDashInitialMatch(true);
 												shouldRemove = false;
 											}
 										}
@@ -186,6 +201,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									if (firstName.length() == 2) {
 										if (StringUtils.equalsIgnoreCase(firstNameInitial, targetAuthorFirstNameInitial) &&
 												StringUtils.equalsIgnoreCase(middleNameInitial, targetAuthorMiddleNameInitial)) {
+											analysisObjectAuthor.setFirstInitialMiddleInitialConcatenatedMatch(true);
 											shouldRemove = false;
 										}
 									}
@@ -200,6 +216,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								if (shouldRemove && reCiterArticle.getAffiliationScore() > 0) {
 									int levenshteinDistance = ReCiterStringUtil.levenshteinDistance(firstName, targetAuthorFirstName);
 									if (levenshteinDistance <= 1) {
+										analysisObjectAuthor.setLevenshteinDistanceMatch(true);
 										shouldRemove = false;
 									}
 								}
@@ -212,6 +229,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 										String targetAuthorFirstName5Chars = targetAuthorFirstName.substring(0, 5);
 										String articleAuthorFirstName5Chars = firstName.substring(0, 5);
 										if (StringUtils.equalsIgnoreCase(targetAuthorFirstName5Chars, articleAuthorFirstName5Chars)) {
+											analysisObjectAuthor.setFirstThreeCharAndAffiliationScoreMatch(true);
 											shouldRemove = false;
 										}
 									}
@@ -221,6 +239,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								if (shouldRemove) {
 									String targetAuthorFirstNameMiddleNameCombined = targetAuthorFirstName + targetAuthorMiddleName;
 									if (StringUtils.equalsIgnoreCase(targetAuthorFirstNameMiddleNameCombined, firstName)) {
+										analysisObjectAuthor.setTargetAuthorFirstAndMiddleNameConcatenatedMatch(true);
 										shouldRemove = false;
 									}
 								}
@@ -232,6 +251,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									if (firstNameArray.length > 1) {
 										firstName = firstNameArray[0];
 										if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName)) {
+											analysisObjectAuthor.setFirstPartOfNameMatch(true);
 											shouldRemove = false;
 										}
 									}
@@ -254,6 +274,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 											}
 
 											if (StringUtils.equalsIgnoreCase(authorMiddleNameConcatenated, targetAuthorMiddleNameConcatenated)) {
+												analysisObjectAuthor.setCheckMiddleNameMatch(true);
 												shouldRemove = false;
 											}
 										}
@@ -289,6 +310,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 											// in db is "J David Warren", check middle initial.
 											if (middleName.length() > 0) {
 												if (!StringUtils.equalsIgnoreCase(middleNameInitial, targetAuthorMiddleNameInitial)) {
+													analysisObjectAuthor.setScopusFirstNameMatch(true);
 													shouldRemove = true;
 												}
 											}
@@ -296,6 +318,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 							} else {
+								analysisObjectAuthor.setFirstNameMatch(true);
+								
 								// Handle the case where there are multiple authors with the same last name.
 								foundAuthorWithSameFirstName = true;
 
@@ -308,6 +332,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									if (!StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) && reCiterArticle.getAffiliationScore() == 0) {
 										shouldRemove = true;
 										foundAuthorWithSameFirstName = false; // middle name differs.
+										analysisObjectAuthor.setMultipleAuthorMatchButMiddleNameDiffer(true);
 									}
 								}
 							}
@@ -318,6 +343,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							if (!StringUtils.equalsIgnoreCase(firstNameInitial, targetAuthorFirstNameInitial)) {
 								if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
 									if (!StringUtils.equalsIgnoreCase(middleNameInitial, targetAuthorMiddleNameInitial)) {
+										analysisObjectAuthor.setInitialInCorrectOrder(true);
 										shouldRemove = true;
 									}
 								}
@@ -328,6 +354,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							// Remove this article because middle name exist in article, but not in rc_identity.
 							if (middleName.length() > 0 && targetAuthorMiddleName.length() == 0) {
 								if (!StringUtils.equalsIgnoreCase(middleName, targetAuthorMiddleName) && reCiterArticle.getAffiliationScore() == 0) {
+									analysisObjectAuthor.setMiddleNameExistInArticleButNotInDb(true);
 									shouldRemove = true;
 								}
 							}
@@ -339,6 +366,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
 
 								if (!StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) && reCiterArticle.getAffiliationScore() == 0) {
+									analysisObjectAuthor.setMiddleNameMatch(true);
 									shouldRemove = true;
 								}
 							}
@@ -350,6 +378,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								String firstNameMiddleName = firstName + " " + middleName;
 								String targetAuthorFirstNameRemovedPeriod = identity.getAuthorName().getFirstName().replace(".", "");
 								if (StringUtils.equalsIgnoreCase(firstNameMiddleName, targetAuthorFirstNameRemovedPeriod)) {
+									analysisObjectAuthor.setRemovePeriodMatch(true);
 									shouldRemove = false;
 								}
 							}
@@ -359,6 +388,10 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 			}
 		}
 
+		reCiterArticle.setShouldRemoveValue(shouldRemove);
+		reCiterArticle.setFoundAuthorWithSameFirstNameValue(foundAuthorWithSameFirstName);
+		reCiterArticle.setFoundMatchingAuthorValue(foundMatchingAuthor);
+		
 		if ((shouldRemove && !foundAuthorWithSameFirstName) || !foundMatchingAuthor) {
 			slf4jLogger.info("Removed article id=[" + reCiterArticle.getArticleId() + "] with cwid=[" + 
 					identity.getCwid() + "] and name in article=[" + firstNameFieldVar + ", " + middleNameFieldVar + "]" +

@@ -55,6 +55,10 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	 */
 	private List<ReCiterArticleGrant> grantList;
 	
+	private boolean shouldRemoveValue;
+	private boolean foundAuthorWithSameFirstNameValue;
+	private boolean foundMatchingAuthorValue;
+	
 	/**
 	 * Text containing how it's clustered.
 	 */
@@ -376,4 +380,22 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.doctoralYearDiscrepancy = doctoralYearDiscrepancy;
 	}
 
+	public boolean isShouldRemoveValue() {
+		return shouldRemoveValue;
+	}
+	public void setShouldRemoveValue(boolean shouldRemoveValue) {
+		this.shouldRemoveValue = shouldRemoveValue;
+	}
+	public boolean isFoundAuthorWithSameFirstNameValue() {
+		return foundAuthorWithSameFirstNameValue;
+	}
+	public void setFoundAuthorWithSameFirstNameValue(boolean foundAuthorWithSameFirstNameValue) {
+		this.foundAuthorWithSameFirstNameValue = foundAuthorWithSameFirstNameValue;
+	}
+	public boolean isFoundMatchingAuthorValue() {
+		return foundMatchingAuthorValue;
+	}
+	public void setFoundMatchingAuthorValue(boolean foundMatchingAuthorValue) {
+		this.foundMatchingAuthorValue = foundMatchingAuthorValue;
+	}
 }

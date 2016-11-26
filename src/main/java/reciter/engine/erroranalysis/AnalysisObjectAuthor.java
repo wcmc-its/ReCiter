@@ -6,7 +6,7 @@ public class AnalysisObjectAuthor {
 	
 	private ReCiterAuthor author;
 	private boolean lastNameMatchTargetAuthor;
-	private boolean isFirstNameFullName;
+	private boolean isFirstNameFullName; // first name in the article has length > 0 and target author's first name's length > 0
 	private boolean isFirstNameMatch;
 	private boolean isAliasNameMatch;
 	private boolean isFirstNameDashRemovedMatch;
