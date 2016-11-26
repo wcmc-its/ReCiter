@@ -153,8 +153,8 @@ public class ReCiterController {
 			}
 			reCiterEngine.setMeshTermCache(meshTermCache);
 		}
-		
 		Analysis analysis = reCiterEngine.run(identity, reCiterArticles);
+		analysis.setESearchResults(eSearchResults);
 		slf4jLogger.info(analysis.toString());
 		return analysis;
 	}

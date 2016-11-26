@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
+import reciter.database.mongo.model.ESearchResult;
 import reciter.model.article.ReCiterArticle;
 
 /**
@@ -43,6 +44,8 @@ public class Analysis {
 
 	private double precision;
 	private double recall;
+	
+	private List<ESearchResult> eSearchResults;
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
 
@@ -397,6 +400,14 @@ public class Analysis {
 				+ trueNegativeJournalCount + ", falsePositiveJournalCount=" + falsePositiveJournalCount
 				+ ", falseNegativeJournalCount=" + falseNegativeJournalCount + ", analysisObjectList="
 				+ analysisObjectList + ", precision=" + precision + ", recall=" + recall + "]";
+	}
+
+	public List<ESearchResult> getESearchResults() {
+		return eSearchResults;
+	}
+
+	public void setESearchResults(List<ESearchResult> eSearchResults) {
+		this.eSearchResults = eSearchResults;
 	}
 	
 	
