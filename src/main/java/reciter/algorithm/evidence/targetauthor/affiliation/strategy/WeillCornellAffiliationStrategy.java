@@ -1,5 +1,6 @@
 package reciter.algorithm.evidence.targetauthor.affiliation.strategy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +47,9 @@ public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrateg
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation().getAffiliationName();
-				if (containsWeillCornell(affiliation)) {
+				List<String> affiliationsMatches = containsWeillCornell(affiliation);
+				if (affiliationsMatches.size() > 0) {
+					reCiterArticle.setFrequentInstitutionalCollaborators(affiliationsMatches);
 					variantName = affiliation;
 					return true;
 				}
@@ -55,14 +58,38 @@ public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrateg
 		return false;
 	}
 	
-	protected boolean containsWeillCornell(String affiliation) {
-		return 	StringUtils.containsIgnoreCase(affiliation, "weill cornell") || 
-				StringUtils.containsIgnoreCase(affiliation, "weill-cornell") || 
-				StringUtils.containsIgnoreCase(affiliation, "weill medical") || 
-				StringUtils.containsIgnoreCase(affiliation, "cornell medical center") || 
-				StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center") ||
-				StringUtils.containsIgnoreCase(affiliation, "Sloan-Kettering") ||
-				StringUtils.containsIgnoreCase(affiliation, "Sloan Kettering");
+	protected List<String> containsWeillCornell(String affiliation) {
+		List<String> affiliationsMatches = new ArrayList<String>();
+		
+		if (StringUtils.containsIgnoreCase(affiliation, "weill cornell")) {
+			affiliationsMatches.add("weill cornell");
+		}
+		
+		if (StringUtils.containsIgnoreCase(affiliation, "weill-cornell")) {
+			affiliationsMatches.add("weill-cornell");
+		}
+		
+		if (StringUtils.containsIgnoreCase(affiliation, "weill medical")) {
+			affiliationsMatches.add("weill medical");
+		}
+		
+		if (StringUtils.containsIgnoreCase(affiliation, "cornell medical center")) {
+			affiliationsMatches.add("cornell medical center");
+		}
+		
+		if (StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center")) {
+			affiliationsMatches.add("Memorial Sloan-Kettering Cancer Center");
+		}
+		
+		if (StringUtils.containsIgnoreCase(affiliation, "Sloan-Kettering")) {
+			affiliationsMatches.add("Sloan-Kettering");
+		}
+		
+		if (StringUtils.containsIgnoreCase(affiliation, "Sloan Kettering")) {
+			affiliationsMatches.add("Sloan Kettering");
+		}
+		
+		return affiliationsMatches;
 	}
 
 	@Override

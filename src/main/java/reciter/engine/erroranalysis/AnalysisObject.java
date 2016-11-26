@@ -58,6 +58,8 @@ public class AnalysisObject {
 	
 	private List<String> departments;
 	private List<AnalysisObjectAuthor> analysisObjectAuthors;
+	private List<String> frequentInstitutionalCollaborators;
+	private List<ReCiterAuthor> knownRelationships;
 	
 	public StatusEnum getStatus() {
 		return status;
@@ -301,5 +303,17 @@ public class AnalysisObject {
 	}
 	public void setAnalysisObjectAuthors(List<AnalysisObjectAuthor> analysisObjectAuthors) {
 		this.analysisObjectAuthors = analysisObjectAuthors;
+	}
+	public List<String> getFrequentInstitutionalCollaborators() {
+		return frequentInstitutionalCollaborators;
+	}
+	public void setFrequentInstitutionalCollaborators(List<String> frequentInstitutionalCollaborators) {
+		this.frequentInstitutionalCollaborators = frequentInstitutionalCollaborators;
+	}
+	public List<ReCiterAuthor> getKnownRelationships() {
+		return knownRelationships;
+	}
+	public void setKnownRelationships(List<ReCiterAuthor> knownRelationships) {
+		this.knownRelationships = knownRelationships;
 	}
 }

@@ -88,6 +88,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private List<ReCiterArticleMeshHeading> meshHeadings;
 
 	private List<ReCiterAuthor> knownRelationships = new ArrayList<ReCiterAuthor>();
+	private List<String> frequentInstitutionalCollaborators;
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -398,5 +399,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setKnownRelationships(List<ReCiterAuthor> knownRelationships) {
 		this.knownRelationships = knownRelationships;
+	}
+
+	public List<String> getFrequentInstitutionalCollaborators() {
+		return frequentInstitutionalCollaborators;
+	}
+
+	public void setFrequentInstitutionalCollaborators(List<String> frequentInstitutionalCollaborators) {
+		this.frequentInstitutionalCollaborators = frequentInstitutionalCollaborators;
 	}
 }
