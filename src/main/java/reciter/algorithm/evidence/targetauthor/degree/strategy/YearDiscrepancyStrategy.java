@@ -72,6 +72,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 			if (degreeType.equals(DegreeType.BACHELORS)) {
 				if (identity.getBachelor().getDegreeYear() != 0) {
 					difference = year - identity.getBachelor().getDegreeYear();
+					reCiterArticle.setBachelorsYearDiscrepancy(difference);
 					if (difference < 1) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 								+ " [Bachelors Degree Difference=" + difference + "]");
@@ -83,6 +84,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 				if (identity.getDoctoral().getDegreeYear() != 0) {
 					int doctoral = identity.getDoctoral().getDegreeYear();
 					difference = year - doctoral;
+					reCiterArticle.setDoctoralYearDiscrepancy(difference);
 					if (doctoral < 1998) {
 						if (difference < -6) {
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 

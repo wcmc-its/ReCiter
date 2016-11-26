@@ -48,6 +48,9 @@ public class AnalysisObject {
 	private boolean isArticleTitleStartWithBracket;
 	private double educationScore;
 	
+	private double bachelorsYearDiscrepancy;
+	private double doctoralYearDiscrepancy;
+	
 	// Date of retrieval
 	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
 	private LocalDateTime dateLastRun; // the date of the most recent retrieval
@@ -278,5 +281,17 @@ public class AnalysisObject {
 	}
 	public void setTargetAuthorKnownAffiliations(List<String> targetAuthorKnownAffiliations) {
 		this.targetAuthorKnownAffiliations = targetAuthorKnownAffiliations;
+	}
+	public double getBachelorsYearDiscrepancy() {
+		return bachelorsYearDiscrepancy;
+	}
+	public void setBachelorsYearDiscrepancy(double bachelorsYearDiscrepancy) {
+		this.bachelorsYearDiscrepancy = bachelorsYearDiscrepancy;
+	}
+	public double getDoctoralYearDiscrepancy() {
+		return doctoralYearDiscrepancy;
+	}
+	public void setDoctoralYearDiscrepancy(double doctoralYearDiscrepancy) {
+		this.doctoralYearDiscrepancy = doctoralYearDiscrepancy;
 	}
 }

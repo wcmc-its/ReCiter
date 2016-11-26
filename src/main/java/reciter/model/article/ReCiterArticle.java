@@ -73,6 +73,8 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double internshipAndResidenceStrategyScore;
 	private double bachelorsYearDiscrepancyScore;
 	private double doctoralYearDiscrepancyScore;
+	private double bachelorsYearDiscrepancy;
+	private double doctoralYearDiscrepancy;
 	private boolean isArticleTitleStartWithBracket;
 	private double educationStrategyScore;
 	private int goldStandard;
@@ -344,6 +346,22 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setMeshHeadings(List<ReCiterArticleMeshHeading> meshHeadings) {
 		this.meshHeadings = meshHeadings;
+	}
+
+	public double getBachelorsYearDiscrepancy() {
+		return bachelorsYearDiscrepancy;
+	}
+
+	public void setBachelorsYearDiscrepancy(double bachelorsYearDiscrepancy) {
+		this.bachelorsYearDiscrepancy = bachelorsYearDiscrepancy;
+	}
+
+	public double getDoctoralYearDiscrepancy() {
+		return doctoralYearDiscrepancy;
+	}
+
+	public void setDoctoralYearDiscrepancy(double doctoralYearDiscrepancy) {
+		this.doctoralYearDiscrepancy = doctoralYearDiscrepancy;
 	}
 
 }

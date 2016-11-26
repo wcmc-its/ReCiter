@@ -161,6 +161,8 @@ public class AnalysisTranslator {
 		analysisObject.setTargetAuthorKnownEmails(identity.getEmails());
 		analysisObject.setTargetAuthorKnownNameAliases(identity.getAliases());
 		analysisObject.setTargetAuthorKnownAffiliations(identity.getAffiliations());
+		analysisObject.setBachelorsYearDiscrepancy(reCiterArticle.getBachelorsYearDiscrepancy());
+		analysisObject.setDoctoralYearDiscrepancy(reCiterArticle.getDoctoralYearDiscrepancy());
 		return analysisObject;
 	}
 }
