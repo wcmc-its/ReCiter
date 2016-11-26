@@ -96,7 +96,6 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 						middleNameFieldVar = middleName;
 
 						// Check if first name is a full name (not an initial).
-
 						if (firstName.length() > 1 && targetAuthorFirstName.length() > 1) {
 
 							// First name doesn't match! Should remove the article from the selected cluster.
@@ -218,6 +217,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 
+								// Check if target author's first name + middle name = article's first name
 								if (shouldRemove) {
 									String targetAuthorFirstNameMiddleNameCombined = targetAuthorFirstName + targetAuthorMiddleName;
 									if (StringUtils.equalsIgnoreCase(targetAuthorFirstNameMiddleNameCombined, firstName)) {

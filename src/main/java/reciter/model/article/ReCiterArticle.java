@@ -3,6 +3,7 @@ package reciter.model.article;
 import java.util.List;
 import java.util.Set;
 
+import reciter.model.author.ReCiterAuthor;
 import reciter.model.completeness.ArticleCompleteness;
 import reciter.model.completeness.ReCiterCompleteness;
 import reciter.model.scopus.ScopusArticle;
@@ -80,6 +81,17 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private int goldStandard;
 	private Set<Integer> commentsCorrectionsPmids;
 	private List<ReCiterArticleMeshHeading> meshHeadings;
+	
+	/**
+	 * Fields calculated in RemoveByNameStrategy.
+	 * @author Jie
+	 *
+	 */
+	public static class RemoveByNameFields {
+		private boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor;
+		private ReCiterAuthor correctAuthor;
+	}
+	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
 	 * @param articleID

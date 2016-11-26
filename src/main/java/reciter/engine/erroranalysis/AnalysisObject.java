@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import reciter.model.author.AuthorName;
+import reciter.model.author.ReCiterAuthor;
 
 public class AnalysisObject {
 
@@ -56,6 +57,7 @@ public class AnalysisObject {
 	private LocalDateTime dateLastRun; // the date of the most recent retrieval
 	
 	private List<String> departments;
+	private List<AnalysisObjectAuthor> analysisObjectAuthors;
 	
 	public StatusEnum getStatus() {
 		return status;
@@ -293,5 +295,11 @@ public class AnalysisObject {
 	}
 	public void setDoctoralYearDiscrepancy(double doctoralYearDiscrepancy) {
 		this.doctoralYearDiscrepancy = doctoralYearDiscrepancy;
+	}
+	public List<AnalysisObjectAuthor> getAnalysisObjectAuthors() {
+		return analysisObjectAuthors;
+	}
+	public void setAnalysisObjectAuthors(List<AnalysisObjectAuthor> analysisObjectAuthors) {
+		this.analysisObjectAuthors = analysisObjectAuthors;
 	}
 }
