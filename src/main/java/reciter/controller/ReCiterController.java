@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,6 +100,18 @@ public class ReCiterController {
 		Identity identity = identityService.findByCwid(cwid);
 		try {
 			aliasReCiterRetrievalEngine.retrieve(identity);
+		} catch (IOException e) {
+			slf4jLogger.error("Unable to retrieve articles for cwid=[" + cwid + "]", e);
+		}
+	}
+	
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/reciter/retrieve/article/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveArticlesByDateRange(@RequestParam(value="cwid") String cwid, LocalDate startDate, LocalDate endDate) {
+		Identity identity = identityService.findByCwid(cwid);
+		try {
+			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identity, startDate, endDate);
 		} catch (IOException e) {
 			slf4jLogger.error("Unable to retrieve articles for cwid=[" + cwid + "]", e);
 		}

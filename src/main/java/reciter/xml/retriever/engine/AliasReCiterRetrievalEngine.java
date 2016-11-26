@@ -94,6 +94,71 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		return uniquePmids;
 	}
 	
+	@Override
+	public Set<Long> retrieveArticlesByDateRange(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
+		Set<Long> uniquePmids = new HashSet<Long>();
+		
+		String cwid = identity.getCwid();
+		
+		// Retrieve by email.
+		Map<Long, PubMedArticle> emailPubMedArticles = emailRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+		
+		if (emailPubMedArticles.size() > 0) {
+			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, emailPubMedArticles.values());
+
+			slf4jLogger.info("Found " + aliasSet.size() + " new alias for cwid=[" + cwid + "]");
+			 
+			// Update alias.
+			List<PubMedAlias> pubMedAliases = new ArrayList<PubMedAlias>();
+			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
+				PubMedAlias pubMedAlias = new PubMedAlias();
+				pubMedAlias.setAuthorName(entry.getValue());
+				pubMedAlias.setPmid(entry.getKey());
+				slf4jLogger.info("new alias for cwid=[" + identity.getCwid() + "], alias=[" + entry.getValue() + "] from pmid=[" + entry.getKey() + "]");
+				pubMedAliases.add(pubMedAlias);
+			}
+
+			identity.setPubMedAlias(pubMedAliases);
+			identity.setDateInitialRun(LocalDateTime.now(Clock.systemUTC()));
+			identity.setDateLastRun(LocalDateTime.now(Clock.systemUTC()));
+			identityService.updatePubMedAlias(identity);
+			
+			uniquePmids.addAll(emailPubMedArticles.keySet());
+		}
+		
+		// TODO parallelize by putting save in a separate thread.
+		savePubMedArticles(emailPubMedArticles.values(), cwid, emailRetrievalStrategy.getRetrievalStrategyName());
+		
+		Map<Long, PubMedArticle> r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+		if (r1.size() > 0) {
+			savePubMedArticles(r1.values(), cwid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName());
+			uniquePmids.addAll(r1.keySet());
+		} else {
+			Map<Long, PubMedArticle> r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r2.values(), cwid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName());
+			uniquePmids.addAll(r2.keySet());
+			
+			Map<Long, PubMedArticle> r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r3.values(), cwid, affiliationRetrievalStrategy.getRetrievalStrategyName());
+			uniquePmids.addAll(r3.keySet());
+			
+			Map<Long, PubMedArticle> r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r4.values(), cwid, departmentRetrievalStrategy.getRetrievalStrategyName());
+			uniquePmids.addAll(r4.keySet());
+			
+			Map<Long, PubMedArticle> r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r5.values(), cwid, grantRetrievalStrategy.getRetrievalStrategyName());
+			uniquePmids.addAll(r5.keySet());
+		}
+		
+		notifier.sendNotification(identity.getCwid());
+		
+		List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
+		scopusService.save(scopusArticles);
+		
+		return uniquePmids;
+	}
+	
 	private Map<Long, AuthorName> calculatePotentialAlias(Identity identity, Collection<PubMedArticle> emailPubMedArticles) {
 		Map<Long, AuthorName> aliasSet = new HashMap<Long, AuthorName>();
 		for (PubMedArticle pubMedArticle : emailPubMedArticles) {
