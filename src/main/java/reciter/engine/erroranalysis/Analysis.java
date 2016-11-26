@@ -47,6 +47,8 @@ public class Analysis {
 	private double recall;
 	
 	private List<ESearchResult> eSearchResults;
+	private Map<Long, Map<String, Long>> clusterIdToMeshCount;
+	
 	private Identity identity;
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
@@ -418,6 +420,14 @@ public class Analysis {
 
 	public void setIdentity(Identity identity) {
 		this.identity = identity;
+	}
+
+	public Map<Long, Map<String, Long>> getClusterIdToMeshCount() {
+		return clusterIdToMeshCount;
+	}
+
+	public void setClusterIdToMeshCount(Map<Long, Map<String, Long>> clusterIdToMeshCount) {
+		this.clusterIdToMeshCount = clusterIdToMeshCount;
 	}
 	
 	

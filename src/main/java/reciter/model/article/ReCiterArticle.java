@@ -83,6 +83,9 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double doctoralYearDiscrepancy;
 	private boolean isArticleTitleStartWithBracket;
 	private double educationStrategyScore;
+	private double meshMajorStrategyScore;
+	private Set<String> overlappingMeSHMajorNegativeArticles;
+	
 	private int goldStandard;
 	private Set<Integer> commentsCorrectionsPmids;
 	private List<ReCiterArticleMeshHeading> meshHeadings;
@@ -407,5 +410,21 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setFrequentInstitutionalCollaborators(List<String> frequentInstitutionalCollaborators) {
 		this.frequentInstitutionalCollaborators = frequentInstitutionalCollaborators;
+	}
+
+	public double getMeshMajorStrategyScore() {
+		return meshMajorStrategyScore;
+	}
+
+	public void setMeshMajorStrategyScore(double meshMajorStrategyScore) {
+		this.meshMajorStrategyScore = meshMajorStrategyScore;
+	}
+
+	public Set<String> getOverlappingMeSHMajorNegativeArticles() {
+		return overlappingMeSHMajorNegativeArticles;
+	}
+
+	public void setOverlappingMeSHMajorNegativeArticles(Set<String> overlappingMeSHMajorNegativeArticles) {
+		this.overlappingMeSHMajorNegativeArticles = overlappingMeSHMajorNegativeArticles;
 	}
 }

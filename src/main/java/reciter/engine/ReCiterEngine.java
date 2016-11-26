@@ -1,6 +1,7 @@
 package reciter.engine;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAff
 import reciter.database.mongo.model.Identity;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleMeshHeading;
 
 @Component("reCiterEngine")
 public class ReCiterEngine implements Engine {
@@ -122,6 +124,27 @@ public class ReCiterEngine implements Engine {
 			slf4jLogger.info(reCiterArticle.getArticleId() + ": " + reCiterArticle.getClusterInfo());
 		}
 		
+		// add mesh major to analysis
+		Map<Long, Map<String, Long>> clusterIdToMeshCount = new HashMap<Long, Map<String, Long>>();
+		for (long id : clusterSelector.getSelectedClusterIds()) {
+			Map<String, Long> meshCount = new HashMap<String, Long>();
+			for (ReCiterArticle reCiterArticle : clusterer.getClusters().get(id).getArticleCluster()) {
+				List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
+				for (ReCiterArticleMeshHeading meshHeading : meshHeadings) {
+					String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
+					if (MeshMajorStrategy.isMeshMajor(meshHeading)) { // check if this is a mesh major. (i.e., An article A may say mesh
+						if (!meshCount.containsKey(descriptorName)) {
+							meshCount.put(descriptorName, 1L);
+						} else {
+							long count = meshCount.get(descriptorName);
+							meshCount.put(descriptorName, ++count);
+						}
+					}
+				}
+			}
+			clusterIdToMeshCount.put(id, meshCount);
+		}
+		analysis.setClusterIdToMeshCount(clusterIdToMeshCount);
 		return analysis;
 	}
 

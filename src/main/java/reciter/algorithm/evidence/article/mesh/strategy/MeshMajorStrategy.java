@@ -57,7 +57,7 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 
 		boolean isAuthorNameMatch = matchAuthorName(reCiterArticle, identity);
-
+		double score = 0;
 		if (isAuthorNameMatch) {
 			List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
 			for (ReCiterArticleMeshHeading meshHeading : meshHeadings) {
@@ -67,7 +67,8 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 					if (generatedMeshMajors.contains(descriptorName)) {
 						slf4jLogger.info("Moved reCiterArticle=[" + reCiterArticle.getArticleId() + "] to 'yes` pile using "
 								+ "mesh=[" + descriptorName + "] gold standard=[" + reCiterArticle.getGoldStandard() + "]");
-						return 1;
+						reCiterArticle.getOverlappingMeSHMajorNegativeArticles().add(descriptorName);
+						score += 1;
 					}
 				} else {
 					slf4jLogger.info("reCiterArticle=[" + reCiterArticle.getArticleId() + "] " + descriptorName + " is not a mesh major.");
@@ -76,8 +77,8 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 		} else {
 			slf4jLogger.info("reCiterArticle=[" + reCiterArticle.getArticleId() + "] author name doesn't match.");
 		}
-
-		return 0;
+		reCiterArticle.setMeshMajorStrategyScore(score);
+		return score;
 	}
 
 	/**
@@ -150,7 +151,7 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 * @param meshHeading
 	 * @return
 	 */
-	private boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
+	public static boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
 		// Easy case:
 		if (meshHeading.getDescriptorName().getMajorTopicYN() == ReCiterCitationYNEnum.Y)
 			return true;

@@ -2,6 +2,7 @@ package reciter.engine.erroranalysis;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import reciter.model.author.AuthorName;
 import reciter.model.author.ReCiterAuthor;
@@ -61,6 +62,28 @@ public class AnalysisObject {
 	private List<String> frequentInstitutionalCollaborators;
 	private List<ReCiterAuthor> knownRelationships;
 	
+	private double meshMajorStrategyScore;
+	private Set<String> overlappingMeSHMajorNegativeArticles;
+	private long clusterId;
+	
+	public double getMeshMajorStrategyScore() {
+		return meshMajorStrategyScore;
+	}
+	public void setMeshMajorStrategyScore(double meshMajorStrategyScore) {
+		this.meshMajorStrategyScore = meshMajorStrategyScore;
+	}
+	public Set<String> getOverlappingMeSHMajorNegativeArticles() {
+		return overlappingMeSHMajorNegativeArticles;
+	}
+	public void setOverlappingMeSHMajorNegativeArticles(Set<String> overlappingMeSHMajorNegativeArticles) {
+		this.overlappingMeSHMajorNegativeArticles = overlappingMeSHMajorNegativeArticles;
+	}
+	public long getClusterId() {
+		return clusterId;
+	}
+	public void setClusterId(long clusterId) {
+		this.clusterId = clusterId;
+	}
 	public StatusEnum getStatus() {
 		return status;
 	}

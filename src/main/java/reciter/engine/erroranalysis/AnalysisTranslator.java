@@ -166,6 +166,10 @@ public class AnalysisTranslator {
 		
 		analysisObject.setFrequentInstitutionalCollaborators(reCiterArticle.getFrequentInstitutionalCollaborators());
 		analysisObject.setKnownRelationships(reCiterArticle.getKnownRelationships());
+		
+		analysisObject.setClusterId(clusterId);
+		analysisObject.setMeshMajorStrategyScore(reCiterArticle.getMeshMajorStrategyScore());
+		analysisObject.setOverlappingMeSHMajorNegativeArticles(reCiterArticle.getOverlappingMeSHMajorNegativeArticles());
 		return analysisObject;
 	}
 }
