@@ -1,5 +1,6 @@
 package reciter.model.article;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -85,16 +86,8 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private int goldStandard;
 	private Set<Integer> commentsCorrectionsPmids;
 	private List<ReCiterArticleMeshHeading> meshHeadings;
-	
-	/**
-	 * Fields calculated in RemoveByNameStrategy.
-	 * @author Jie
-	 *
-	 */
-	public static class RemoveByNameFields {
-		private boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor;
-		private ReCiterAuthor correctAuthor;
-	}
+
+	private List<ReCiterAuthor> knownRelationships = new ArrayList<ReCiterAuthor>();
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -397,5 +390,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	}
 	public void setFoundMatchingAuthorValue(boolean foundMatchingAuthorValue) {
 		this.foundMatchingAuthorValue = foundMatchingAuthorValue;
+	}
+
+	public List<ReCiterAuthor> getKnownRelationships() {
+		return knownRelationships;
+	}
+
+	public void setKnownRelationships(List<ReCiterAuthor> knownRelationships) {
+		this.knownRelationships = knownRelationships;
 	}
 }

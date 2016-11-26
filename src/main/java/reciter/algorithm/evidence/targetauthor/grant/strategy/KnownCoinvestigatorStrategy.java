@@ -23,6 +23,7 @@ public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 				if (!author.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName())) {
 					for (AuthorName authorName : authorNames) {
 						if (authorName.isFullNameMatch(author.getAuthorName())) {
+							reCiterArticle.getKnownRelationships().add(author);
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known co-investigator match: " + 
 									authorName + "] ");
 							score += 1;
