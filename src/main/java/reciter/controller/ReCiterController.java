@@ -155,6 +155,8 @@ public class ReCiterController {
 		}
 		Analysis analysis = reCiterEngine.run(identity, reCiterArticles);
 		analysis.setESearchResults(eSearchResults);
+		analysis.setIdentity(identity);
+		
 		slf4jLogger.info(analysis.toString());
 		return analysis;
 	}

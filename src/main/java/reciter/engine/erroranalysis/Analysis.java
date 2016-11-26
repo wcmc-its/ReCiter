@@ -15,6 +15,7 @@ import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.database.mongo.model.ESearchResult;
+import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 
 /**
@@ -46,6 +47,7 @@ public class Analysis {
 	private double recall;
 	
 	private List<ESearchResult> eSearchResults;
+	private Identity identity;
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
 
@@ -408,6 +410,14 @@ public class Analysis {
 
 	public void setESearchResults(List<ESearchResult> eSearchResults) {
 		this.eSearchResults = eSearchResults;
+	}
+
+	public Identity getIdentity() {
+		return identity;
+	}
+
+	public void setIdentity(Identity identity) {
+		this.identity = identity;
 	}
 	
 	
