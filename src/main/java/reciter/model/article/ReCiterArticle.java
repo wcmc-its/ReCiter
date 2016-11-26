@@ -1,6 +1,7 @@
 package reciter.model.article;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -84,14 +85,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private boolean isArticleTitleStartWithBracket;
 	private double educationStrategyScore;
 	private double meshMajorStrategyScore;
-	private Set<String> overlappingMeSHMajorNegativeArticles;
+	private Set<String> overlappingMeSHMajorNegativeArticles = new HashSet<String>();
 	
 	private int goldStandard;
-	private Set<Integer> commentsCorrectionsPmids;
-	private List<ReCiterArticleMeshHeading> meshHeadings;
+	private Set<Integer> commentsCorrectionsPmids = new HashSet<Integer>();
+	private List<ReCiterArticleMeshHeading> meshHeadings = new ArrayList<ReCiterArticleMeshHeading>();
 
 	private List<ReCiterAuthor> knownRelationships = new ArrayList<ReCiterAuthor>();
-	private List<String> frequentInstitutionalCollaborators;
+	private List<String> frequentInstitutionalCollaborators = new ArrayList<String>();
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
