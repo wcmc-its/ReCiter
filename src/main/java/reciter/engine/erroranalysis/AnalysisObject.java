@@ -1,5 +1,7 @@
 package reciter.engine.erroranalysis;
 
+import java.time.LocalDateTime;
+
 public class AnalysisObject {
 
 	// Information regarding the article and target author.
@@ -35,6 +37,10 @@ public class AnalysisObject {
 	private double doctoralYearDiscrepancyScore;
 	private boolean isArticleTitleStartWithBracket;
 	private double educationScore;
+	
+	// Date of retrieval
+	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
+	private LocalDateTime dateLastRun; // the date of the most recent retrieval
 	
 	public StatusEnum getStatus() {
 		return status;
@@ -231,5 +237,17 @@ public class AnalysisObject {
 				+ citizenshipStrategyScore + ", bachelorsYearDiscrepancyScore=" + bachelorsYearDiscrepancyScore
 				+ ", doctoralYearDiscrepancyScore=" + doctoralYearDiscrepancyScore + ", isArticleTitleStartWithBracket="
 				+ isArticleTitleStartWithBracket + ", educationScore=" + educationScore + "]";
+	}
+	public LocalDateTime getDateInitialRun() {
+		return dateInitialRun;
+	}
+	public void setDateInitialRun(LocalDateTime dateInitialRun) {
+		this.dateInitialRun = dateInitialRun;
+	}
+	public LocalDateTime getDateLastRun() {
+		return dateLastRun;
+	}
+	public void setDateLastRun(LocalDateTime dateLastRun) {
+		this.dateLastRun = dateLastRun;
 	}
 }

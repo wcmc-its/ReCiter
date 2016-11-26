@@ -152,6 +152,8 @@ public class AnalysisTranslator {
 		analysisObject.setArticleTitleStartWithBracket(reCiterArticle.isArticleTitleStartWithBracket());
 		analysisObject.setEducationScore(reCiterArticle.getEducationStrategyScore());
 
+		analysisObject.setDateInitialRun(identity.getDateInitialRun());
+		analysisObject.setDateLastRun(identity.getDateLastRun());
 		return analysisObject;
 	}
 }
