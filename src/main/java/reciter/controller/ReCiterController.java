@@ -106,7 +106,7 @@ public class ReCiterController {
 	}
 	
 	@CrossOrigin(origins = "http://localhost:9000")
-	@RequestMapping(value = "/reciter/retrieve/article/by/cwid", method = RequestMethod.GET)
+	@RequestMapping(value = "/reciter/retrieve/article/by/cwid/date", method = RequestMethod.GET)
 	@ResponseBody
 	public void retrieveArticlesByDateRange(@RequestParam(value="cwid") String cwid, LocalDate startDate, LocalDate endDate) {
 		Identity identity = identityService.findByCwid(cwid);
@@ -126,7 +126,7 @@ public class ReCiterController {
 		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
 		Set<Long> pmids = new HashSet<Long>();
 		for (ESearchResult eSearchResult : eSearchResults) {
-			pmids.addAll(eSearchResult.geteSearchPmid().getPmids());
+			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
 		}
 		List<Long> pmidList = new ArrayList<Long>(pmids);
 		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmidList);
@@ -167,7 +167,7 @@ public class ReCiterController {
 		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
 		Set<Long> pmids = new HashSet<Long>();
 		for (ESearchResult eSearchResult : eSearchResults) {
-			pmids.addAll(eSearchResult.geteSearchPmid().getPmids());
+			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
 		}
 		List<Long> pmidList = new ArrayList<Long>(pmids);
 		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmidList);

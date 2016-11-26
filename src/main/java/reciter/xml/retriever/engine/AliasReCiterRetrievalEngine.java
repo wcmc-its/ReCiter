@@ -23,6 +23,7 @@ import reciter.model.converter.PubMedConverter;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
@@ -36,7 +37,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		String cwid = identity.getCwid();
 		
 		// Retrieve by email.
-		Map<Long, PubMedArticle> emailPubMedArticles = emailRetrievalStrategy.retrievePubMedArticles(identity);
+		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity);
+		Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
 		
 		if (emailPubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, emailPubMedArticles.values());
@@ -62,28 +64,28 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}
 		
 		// TODO parallelize by putting save in a separate thread.
-		savePubMedArticles(emailPubMedArticles.values(), cwid, emailRetrievalStrategy.getRetrievalStrategyName());
+		savePubMedArticles(emailPubMedArticles.values(), cwid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
 		
-		Map<Long, PubMedArticle> r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity);
-		if (r1.size() > 0) {
-			savePubMedArticles(r1.values(), cwid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r1.keySet());
+		RetrievalResult r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity);
+		if (r1.getPubMedArticles().size() > 0) {
+			savePubMedArticles(r1.getPubMedArticles().values(), cwid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults());
+			uniquePmids.addAll(r1.getPubMedArticles().keySet());
 		} else {
-			Map<Long, PubMedArticle> r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity);
-			savePubMedArticles(r2.values(), cwid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r2.keySet());
+			RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity);
+			savePubMedArticles(r2.getPubMedArticles().values(), cwid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
+			uniquePmids.addAll(r2.getPubMedArticles().keySet());
 			
-			Map<Long, PubMedArticle> r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity);
-			savePubMedArticles(r3.values(), cwid, affiliationRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r3.keySet());
+			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity);
+			savePubMedArticles(r3.getPubMedArticles().values(), cwid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults());
+			uniquePmids.addAll(r3.getPubMedArticles().keySet());
 			
-			Map<Long, PubMedArticle> r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity);
-			savePubMedArticles(r4.values(), cwid, departmentRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r4.keySet());
+			RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity);
+			savePubMedArticles(r4.getPubMedArticles().values(), cwid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
+			uniquePmids.addAll(r4.getPubMedArticles().keySet());
 			
-			Map<Long, PubMedArticle> r5 = grantRetrievalStrategy.retrievePubMedArticles(identity);
-			savePubMedArticles(r5.values(), cwid, grantRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r5.keySet());
+			RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity);
+			savePubMedArticles(r5.getPubMedArticles().values(), cwid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
+			uniquePmids.addAll(r5.getPubMedArticles().keySet());
 		}
 		
 		notifier.sendNotification(identity.getCwid());
@@ -101,7 +103,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		String cwid = identity.getCwid();
 		
 		// Retrieve by email.
-		Map<Long, PubMedArticle> emailPubMedArticles = emailRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+		Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
 		
 		if (emailPubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, emailPubMedArticles.values());
@@ -127,28 +130,28 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}
 		
 		// TODO parallelize by putting save in a separate thread.
-		savePubMedArticles(emailPubMedArticles.values(), cwid, emailRetrievalStrategy.getRetrievalStrategyName());
+		savePubMedArticles(emailPubMedArticles.values(), cwid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
 		
-		Map<Long, PubMedArticle> r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
-		if (r1.size() > 0) {
-			savePubMedArticles(r1.values(), cwid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r1.keySet());
+		RetrievalResult r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+		if (r1.getPubMedArticles().size() > 0) {
+			savePubMedArticles(r1.getPubMedArticles().values(), cwid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults());
+			uniquePmids.addAll(r1.getPubMedArticles().keySet());
 		} else {
-			Map<Long, PubMedArticle> r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
-			savePubMedArticles(r2.values(), cwid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r2.keySet());
+			RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r2.getPubMedArticles().values(), cwid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
+			uniquePmids.addAll(r2.getPubMedArticles().keySet());
 			
-			Map<Long, PubMedArticle> r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
-			savePubMedArticles(r3.values(), cwid, affiliationRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r3.keySet());
+			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r3.getPubMedArticles().values(), cwid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults());
+			uniquePmids.addAll(r3.getPubMedArticles().keySet());
 			
-			Map<Long, PubMedArticle> r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
-			savePubMedArticles(r4.values(), cwid, departmentRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r4.keySet());
+			RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r4.getPubMedArticles().values(), cwid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
+			uniquePmids.addAll(r4.getPubMedArticles().keySet());
 			
-			Map<Long, PubMedArticle> r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
-			savePubMedArticles(r5.values(), cwid, grantRetrievalStrategy.getRetrievalStrategyName());
-			uniquePmids.addAll(r5.keySet());
+			RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, startDate, endDate);
+			savePubMedArticles(r5.getPubMedArticles().values(), cwid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
+			uniquePmids.addAll(r5.getPubMedArticles().keySet());
 		}
 		
 		notifier.sendNotification(identity.getCwid());

@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import reciter.database.mongo.model.Identity;
-import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 public interface RetrievalStrategy {
 	
@@ -35,7 +34,7 @@ public interface RetrievalStrategy {
 	 * 
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
-	Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException;
+	RetrievalResult retrievePubMedArticles(Identity identity) throws IOException;
 	
 	/**
 	 * Retrieve the articles for this identity restricted by the start date and end date.
@@ -44,5 +43,5 @@ public interface RetrievalStrategy {
 	 * 
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
-	Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException;
+	RetrievalResult retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException;
 }

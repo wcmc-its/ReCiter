@@ -47,6 +47,21 @@ import reciter.xml.retriever.pubmed.json.EsearchResultJsonDeserializer;
 @Configurable
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
+	public static class RetrievalResult {
+		private final Map<Long, PubMedArticle> pubMedArticles;
+		private final List<PubMedQueryResult> pubMedQueryResults;
+		public RetrievalResult(Map<Long, PubMedArticle> pubMedArticles, List<PubMedQueryResult> pubMedQueryResults) {
+			this.pubMedArticles = pubMedArticles;
+			this.pubMedQueryResults = pubMedQueryResults;
+		}
+		public Map<Long, PubMedArticle> getPubMedArticles() {
+			return pubMedArticles;
+		}
+		public List<PubMedQueryResult> getPubMedQueryResults() {
+			return pubMedQueryResults;
+		}
+	}
+	
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractRetrievalStrategy.class);
 
 	/**
@@ -77,13 +92,13 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	protected abstract List<PubMedQuery> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate);
 
 	@Override
-	public Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
+	public RetrievalResult retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
 		List<PubMedQuery> pubMedQueries = buildQuery(identity, startDate, endDate);
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
 	
 	@Override
-	public Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity) throws IOException {
+	public RetrievalResult retrievePubMedArticles(Identity identity) throws IOException {
 		List<PubMedQuery> pubMedQueries = buildQuery(identity);
 		for (PubMedQuery pubMedQuery : pubMedQueries) {
 			slf4jLogger.info(pubMedQuery.toString());
@@ -91,14 +106,15 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
 	
-	private Map<Long, PubMedArticle> retrievePubMedArticles(Identity identity, List<PubMedQuery> pubMedQueries) throws IOException {
+	private RetrievalResult retrievePubMedArticles(Identity identity, List<PubMedQuery> pubMedQueries) throws IOException {
 
 		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
 		
 		slf4jLogger.info("Query size: " + pubMedQueries.size());
+		List<PubMedQueryResult> pubMedQueryResults = new ArrayList<PubMedQueryResult>();
 		
 		for (PubMedQuery pubMedQuery : pubMedQueries) {
-
+			
 			String encodedInitialQuery = URLEncoder.encode(pubMedQuery.getLenientQuery().getQuery(), "UTF-8");
 			PubmedESearchHandler handler = getPubmedESearchHandler(encodedInitialQuery);
 
@@ -123,6 +139,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 							pubMedArticles.put(pmid, pubMedArticle);
 						}
 					}
+					pubMedQuery.getStrictQuery().setUsed(true);
 				}
 			} else {
 				List<PubMedArticle> result = retrievePubMed(identity, encodedInitialQuery, handler.getCount());
@@ -132,11 +149,16 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 						pubMedArticles.put(pmid, pubMedArticle);
 					}
 				}
+				pubMedQuery.getLenientQuery().setUsed(true);
 			}
+			
+			pubMedQueryResults.add(pubMedQuery.getLenientQuery());
+			pubMedQueryResults.add(pubMedQuery.getStrictQuery());
 		}
 		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getCwid() 
 			+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
-		return pubMedArticles;
+		
+		return new RetrievalResult(pubMedArticles, pubMedQueryResults);
 	}
 	
 	/**

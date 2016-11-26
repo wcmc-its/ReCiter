@@ -1,5 +1,6 @@
 package reciter.xml.retriever.engine;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +23,7 @@ import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
 import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
+import reciter.xml.retriever.pubmed.PubMedQueryResult;
 
 @Component("abstractReCiterRetrievalEngine")
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
@@ -64,7 +66,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	 * @param pubMedArticles
 	 * @param cwid
 	 */
-	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String cwid, String retrievalStrategyName) {
+	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String cwid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults) {
 		// Save the articles.
 		pubMedService.save(pubMedArticles);
 
@@ -73,7 +75,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
-		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now());
-		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid));
+		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now(Clock.systemUTC()));
+		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
 	}
 }

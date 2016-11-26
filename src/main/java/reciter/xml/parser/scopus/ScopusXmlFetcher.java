@@ -97,7 +97,7 @@ public class ScopusXmlFetcher extends AbstractXmlFetcher {
 		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
 		
 		for (ESearchResult eSearchResult : eSearchResults) {
-			List<Long> pmids = eSearchResult.geteSearchPmid().getPmids();
+			List<Long> pmids = eSearchResult.getESearchPmid().getPmids();
 			for (long pmid : pmids) {
 				ScopusXmlFetcherRunnable scopusRunnable = new ScopusXmlFetcherRunnable(cwid, pmid);
 				executor.execute(scopusRunnable);
