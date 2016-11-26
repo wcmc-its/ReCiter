@@ -154,6 +154,13 @@ public class AnalysisTranslator {
 
 		analysisObject.setDateInitialRun(identity.getDateInitialRun());
 		analysisObject.setDateLastRun(identity.getDateLastRun());
+		
+		analysisObject.setTargetAuthorYearBachelorsDegree(identity.getBachelor().getDegreeYear());
+		analysisObject.setTargetAuthorYearTerminalDegree(identity.getDoctoral().getDegreeYear());
+		analysisObject.setDepartments(identity.getDepartments());
+		analysisObject.setTargetAuthorKnownEmails(identity.getEmails());
+		analysisObject.setTargetAuthorKnownNameAliases(identity.getAliases());
+		analysisObject.setTargetAuthorKnownAffiliations(identity.getAffiliations());
 		return analysisObject;
 	}
 }

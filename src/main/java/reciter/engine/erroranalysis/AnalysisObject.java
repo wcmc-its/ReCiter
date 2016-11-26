@@ -1,6 +1,9 @@
 package reciter.engine.erroranalysis;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import reciter.model.author.AuthorName;
 
 public class AnalysisObject {
 
@@ -24,6 +27,13 @@ public class AnalysisObject {
 	private int countArticlesInAssignedCluster;
 	private boolean isClusterSelectedInPhaseTwoMatching;
 	
+	private int targetAuthorYearTerminalDegree;
+	private int targetAuthorYearBachelorsDegree;
+	
+	private List<String> targetAuthorKnownEmails;
+	private List<AuthorName> targetAuthorKnownNameAliases;
+	private List<String> targetAuthorKnownAffiliations;
+	
 	// Scores.
 	private double emailStrategyScore;
 	private double departmentStrategyScore;
@@ -41,6 +51,8 @@ public class AnalysisObject {
 	// Date of retrieval
 	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
 	private LocalDateTime dateLastRun; // the date of the most recent retrieval
+	
+	private List<String> departments;
 	
 	public StatusEnum getStatus() {
 		return status;
@@ -219,25 +231,6 @@ public class AnalysisObject {
 	public void setEducationScore(double educationScore) {
 		this.educationScore = educationScore;
 	}
-	@Override
-	public String toString() {
-		return "AnalysisObject [status=" + status + ", cwid=" + cwid + ", targetName=" + targetName
-				+ ", pubmedSearchQuery=" + pubmedSearchQuery + ", pmid=" + pmid + ", articleTitle=" + articleTitle
-				+ ", fullJournalTitle=" + fullJournalTitle + ", publicationYear=" + publicationYear
-				+ ", scopusTargetAuthorAffiliation=" + scopusTargetAuthorAffiliation + ", scopusCoAuthorAffiliation="
-				+ scopusCoAuthorAffiliation + ", pubmedTargetAuthorAffiliation=" + pubmedTargetAuthorAffiliation
-				+ ", pubmedCoAuthorAffiliation=" + pubmedCoAuthorAffiliation + ", articleKeywords=" + articleKeywords
-				+ ", isClusterOriginator=" + isClusterOriginator + ", clusterArticleAssignedTo="
-				+ clusterArticleAssignedTo + ", countArticlesInAssignedCluster=" + countArticlesInAssignedCluster
-				+ ", isClusterSelectedInPhaseTwoMatching=" + isClusterSelectedInPhaseTwoMatching
-				+ ", emailStrategyScore=" + emailStrategyScore + ", departmentStrategyScore=" + departmentStrategyScore
-				+ ", knownCoinvestigatorScore=" + knownCoinvestigatorScore + ", affiliationScore=" + affiliationScore
-				+ ", scopusStrategyScore=" + scopusStrategyScore + ", coauthorStrategyScore=" + coauthorStrategyScore
-				+ ", journalStrategyScore=" + journalStrategyScore + ", citizenshipStrategyScore="
-				+ citizenshipStrategyScore + ", bachelorsYearDiscrepancyScore=" + bachelorsYearDiscrepancyScore
-				+ ", doctoralYearDiscrepancyScore=" + doctoralYearDiscrepancyScore + ", isArticleTitleStartWithBracket="
-				+ isArticleTitleStartWithBracket + ", educationScore=" + educationScore + "]";
-	}
 	public LocalDateTime getDateInitialRun() {
 		return dateInitialRun;
 	}
@@ -249,5 +242,41 @@ public class AnalysisObject {
 	}
 	public void setDateLastRun(LocalDateTime dateLastRun) {
 		this.dateLastRun = dateLastRun;
+	}
+	public int getTargetAuthorYearTerminalDegree() {
+		return targetAuthorYearTerminalDegree;
+	}
+	public void setTargetAuthorYearTerminalDegree(int targetAuthorYearTerminalDegree) {
+		this.targetAuthorYearTerminalDegree = targetAuthorYearTerminalDegree;
+	}
+	public int getTargetAuthorYearBachelorsDegree() {
+		return targetAuthorYearBachelorsDegree;
+	}
+	public void setTargetAuthorYearBachelorsDegree(int targetAuthorYearBachelorsDegree) {
+		this.targetAuthorYearBachelorsDegree = targetAuthorYearBachelorsDegree;
+	}
+	public List<String> getDepartments() {
+		return departments;
+	}
+	public void setDepartments(List<String> departments) {
+		this.departments = departments;
+	}
+	public List<String> getTargetAuthorKnownEmails() {
+		return targetAuthorKnownEmails;
+	}
+	public void setTargetAuthorKnownEmails(List<String> targetAuthorKnownEmails) {
+		this.targetAuthorKnownEmails = targetAuthorKnownEmails;
+	}
+	public List<AuthorName> getTargetAuthorKnownNameAliases() {
+		return targetAuthorKnownNameAliases;
+	}
+	public void setTargetAuthorKnownNameAliases(List<AuthorName> targetAuthorKnownNameAliases) {
+		this.targetAuthorKnownNameAliases = targetAuthorKnownNameAliases;
+	}
+	public List<String> getTargetAuthorKnownAffiliations() {
+		return targetAuthorKnownAffiliations;
+	}
+	public void setTargetAuthorKnownAffiliations(List<String> targetAuthorKnownAffiliations) {
+		this.targetAuthorKnownAffiliations = targetAuthorKnownAffiliations;
 	}
 }
