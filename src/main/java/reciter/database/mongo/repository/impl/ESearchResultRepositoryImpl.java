@@ -1,5 +1,11 @@
 package reciter.database.mongo.repository.impl;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -29,8 +35,14 @@ public class ESearchResultRepositoryImpl implements ESearchResultRepositoryCusto
 	@Override
 	public WriteResult update(String cwid, ESearchPmid eSearchPmid) {
 		
+		// use java.util.Date until MongoDB driver supports LocalDateTime codec
+		Instant instant = eSearchPmid.getRetrievalDate().atZone(ZoneOffset.UTC).toInstant();
+		Date date = Date.from(instant);
+		
 		BasicDBObject query = new BasicDBObject("cwid", cwid).append("eSearchPmid.retrievalStrategyName", eSearchPmid.getRetrievalStrategyName());
-		BasicDBObject update = new BasicDBObject("$set", new BasicDBObject("eSearchPmid.pmids", eSearchPmid.getPmids()));
+		BasicDBObject update = new BasicDBObject("$set", 
+				new BasicDBObject("eSearchPmid.pmids", eSearchPmid.getPmids())
+				.append("eSearchPmid.retrievalDate", date));
 		
 		WriteResult writeResult = mongoTemplate.getCollection("esearchresult").update(query, update, true, false);
 		return writeResult;
