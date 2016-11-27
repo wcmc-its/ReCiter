@@ -11,4 +11,8 @@ public interface ESearchResultService {
 	List<ESearchResult> findByCwid(String cwid);
 
 	boolean pushESearchResult(ESearchResult eSearchResult);
+
+	void update(ESearchResult eSearchResult);
+	
+	boolean existByCwidAndRetrievalStrategyName(String cwid, String eSearchPmidretrievalStrategyName);
 }

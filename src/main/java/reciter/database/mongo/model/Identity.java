@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import reciter.model.author.AuthorName;
@@ -11,6 +12,8 @@ import reciter.model.author.AuthorName;
 @Document(collection = "identity")
 public class Identity {
 
+	@Id
+	private String id;
 	private String cwid; // cwid of the user
 	private AuthorName authorName; // name of the user
 	private List<AuthorName> aliases; // aliases

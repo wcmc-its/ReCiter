@@ -2,11 +2,14 @@ package reciter.database.mongo.model;
 
 import java.util.List;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "goldstandard")
 public class GoldStandard {
 	
+	@Id
+	private String id;
 	private String cwid;
 	private List<Long> pmids;
 	

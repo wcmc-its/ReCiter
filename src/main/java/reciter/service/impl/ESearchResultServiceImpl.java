@@ -19,6 +19,11 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 	public void save(ESearchResult eSearchResult) {
 		eSearchResultRepository.save(eSearchResult);
 	}
+	
+	@Override
+	public void update(ESearchResult eSearchResult) {
+		eSearchResultRepository.update(eSearchResult.getCwid(), eSearchResult.getESearchPmid());
+	}
 
 	@Override
 	public List<ESearchResult> findByCwid(String cwid) {
@@ -28,6 +33,12 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 	@Override
 	public boolean pushESearchResult(ESearchResult eSearchResult) {
 		return eSearchResultRepository.pushESearchResult(eSearchResult);
+	}
+
+	@Override
+	public boolean existByCwidAndRetrievalStrategyName(String cwid,
+			String eSearchPmidretrievalStrategyName) {
+		return eSearchResultRepository.existByCwidAndRetrievalStrategyName(cwid, eSearchPmidretrievalStrategyName);
 	}
 	
 //	@Override

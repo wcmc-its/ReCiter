@@ -2,6 +2,7 @@ package reciter.database.mongo.model;
 
 import java.util.List;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
@@ -9,6 +10,8 @@ import reciter.xml.retriever.pubmed.PubMedQueryResult;
 @Document(collection = "esearchresult")
 public class ESearchResult {
 
+	@Id
+	private String id;
 	private String cwid;
 	private ESearchPmid eSearchPmid;
 	private List<PubMedQueryResult> pubMedQueryResults;
