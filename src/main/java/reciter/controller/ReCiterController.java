@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +22,7 @@ import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,6 +55,8 @@ public class ReCiterController {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterController.class);
 
+	private final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	
 	@Autowired
 	private ESearchResultService eSearchResultService;
 
@@ -108,10 +113,23 @@ public class ReCiterController {
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/retrieve/article/by/cwid/date", method = RequestMethod.GET)
 	@ResponseBody
-	public void retrieveArticlesByDateRange(@RequestParam(value="cwid") String cwid, LocalDate startDate, LocalDate endDate) {
+	public void retrieveArticlesByDateRange(@RequestParam(value="cwid") String cwid, 
+			@RequestParam(value="startDate") String startDate,
+			@RequestParam(value="endDate") String endDate) {
+		
+		LocalDate startLocalDate = null;
+		LocalDate endLocalDate = null;
+		try {
+			startLocalDate = LocalDate.parse(startDate, DATE_FORMAT);
+			endLocalDate = LocalDate.parse(endDate, DATE_FORMAT);
+		} catch (DateTimeParseException e) {
+			slf4jLogger.error("Error parsing dates. Please use date format yyyy-MM-dd", e);
+			return;
+		}
+		
 		Identity identity = identityService.findByCwid(cwid);
 		try {
-			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identity, startDate, endDate);
+			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identity, startLocalDate, endLocalDate);
 		} catch (IOException e) {
 			slf4jLogger.error("Unable to retrieve articles for cwid=[" + cwid + "]", e);
 		}

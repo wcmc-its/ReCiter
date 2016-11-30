@@ -84,7 +84,7 @@ public class PubMedQuery {
 				parts.add(strategyQuery);
 			}
 			
-			return StringUtils.join(parts, " AND");
+			return StringUtils.join(parts, " AND ");
 		}
 	}
 }

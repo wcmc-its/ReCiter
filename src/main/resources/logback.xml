@@ -7,7 +7,7 @@
 </appender>
 
 <logger name="org.springframework.data.mongodb">
-    <level value="TRACE" />
+    <level value="WARN" />
 </logger>
 
 <root>
