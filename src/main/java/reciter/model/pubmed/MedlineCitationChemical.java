@@ -5,4 +5,5 @@ public class MedlineCitationChemical {
 	private String nameOfSubstance;
 	private String nameOfSubstanceUI;
 	
+	public MedlineCitationChemical() {}
 }

@@ -6,6 +6,8 @@ public class MedlineCitationDate {
 	private String month;
 	private String day;
 	
+	public MedlineCitationDate() {}
+	
 	public String getYear() {
 		return year;
 	}

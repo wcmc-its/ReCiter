@@ -25,6 +25,8 @@ public class MedlineCitation {
 		OLDMEDLINE
 	}
 	
+	public MedlineCitation() {}
+	
 	private MedlineCitationPMID medlineCitationPMID;
 	private MedlineCitationOwner medlineCitationOwner;
 	private MedlineCitationStatus medlineCitationStatus;

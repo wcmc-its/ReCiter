@@ -10,7 +10,9 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +28,8 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import org.xml.sax.SAXException;
 
 import com.google.gson.Gson;
@@ -61,7 +65,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			return pubMedQueryResults;
 		}
 	}
-	
+
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractRetrievalStrategy.class);
 
 	/**
@@ -96,7 +100,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		List<PubMedQuery> pubMedQueries = buildQuery(identity, startDate, endDate);
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
-	
+
 	@Override
 	public RetrievalResult retrievePubMedArticles(Identity identity) throws IOException {
 		List<PubMedQuery> pubMedQueries = buildQuery(identity);
@@ -105,30 +109,30 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
-	
+
 	private RetrievalResult retrievePubMedArticles(Identity identity, List<PubMedQuery> pubMedQueries) throws IOException {
 
 		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
-		
+
 		slf4jLogger.info("Query size: " + pubMedQueries.size());
 		List<PubMedQueryResult> pubMedQueryResults = new ArrayList<PubMedQueryResult>();
-		
+
 		for (PubMedQuery pubMedQuery : pubMedQueries) {
-			
+
 			String encodedInitialQuery = URLEncoder.encode(pubMedQuery.getLenientQuery().getQuery(), "UTF-8");
 			PubmedESearchHandler handler = getPubmedESearchHandler(encodedInitialQuery);
 
 			// check number of PubMed results returned by initial query.
 			// If it's greater than the threshold, query using the strict query.
 			pubMedQuery.getLenientQuery().setNumResult(handler.getCount());
-			
+
 			if (handler.getCount() > DEFAULT_THRESHOLD) {
 				String constructedStrictQuery = pubMedQuery.getStrictQuery().getQuery();
 				String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
 				PubmedESearchHandler strictSearchHandler = getPubmedESearchHandler(strictQuery);
-				
+
 				pubMedQuery.getStrictQuery().setNumResult(strictSearchHandler.getCount());
-				
+
 				// only retrieve articles if number is less than threshold, otherwise the article download
 				// may take too long
 				if (strictSearchHandler.getCount() <= DEFAULT_THRESHOLD) {
@@ -151,16 +155,43 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				}
 				pubMedQuery.getLenientQuery().setUsed(true);
 			}
-			
+
 			pubMedQueryResults.add(pubMedQuery.getLenientQuery());
 			pubMedQueryResults.add(pubMedQuery.getStrictQuery());
 		}
 		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getCwid() 
-			+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
-		
+		+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
+
 		return new RetrievalResult(pubMedArticles, pubMedQueryResults);
 	}
-	
+
+	private static final String nodeUrlBegin = "https://reciter-pubmed-retrieval-";
+	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
+	private static final int nodeSize = 2;
+
+	/**
+	 * Randomly select a node.
+	 * @return
+	 */
+	private String loadBalance() {
+		int nodeSelected = (int) ( Math.random() * nodeSize + 1);
+		return nodeUrlBegin + nodeSelected + nodeUrlEnd;
+	}
+
+	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery, int numberOfPubmedArticles) {
+		String nodeUrl = loadBalance();
+		nodeUrl += "query=" + pubMedQuery + "&numberOfPubmedArticles=" + numberOfPubmedArticles;
+		RestTemplate restTemplate = new RestTemplate();
+		try {
+			ResponseEntity<PubMedArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
+			PubMedArticle[] pubMedArticles = responseEntity.getBody();
+			return Arrays.asList(pubMedArticles);
+		} catch (Exception e) {
+			slf4jLogger.error("Unable to retrieve via external REST api.", e);
+			return Collections.emptyList();
+		}
+	}
+
 	/**
 	 * Initializes and starts threads that handles the retrieval process. Partition the number of articles
 	 * into manageable pieces and ask each thread to handle one partition.
@@ -172,69 +203,75 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 */
 	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
 
-		int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
-		ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);
+		List<PubMedArticle> results = retrievePubMedViaRest(pubMedQuery, numberOfPubmedArticles);
 
-		// Get the count (number of publications for this query).
-		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
-		pubmedXmlQuery.setTerm(pubMedQuery);
+		if (results.isEmpty()) {
 
-		// The number of articles will be less than 10,000. Set retMax equal to minimum of number of articles needed to be
-		// retrieved divided by the number of available processors and 10,000.
-		// If number of articles is less than 4, use number of articles as retmax.
-		pubmedXmlQuery.setRetMax(Math.min(Math.max(numberOfPubmedArticles / Math.max(numAvailableProcessors, 1), numberOfPubmedArticles)
-				, PubmedXmlQuery.DEFAULT_RETMAX));
-		slf4jLogger.info("numAvailableProcessors=[" + numAvailableProcessors + "] retMax=[" 
-				+ pubmedXmlQuery.getRetMax() + "], pubMedQuery=[" + pubMedQuery + "], "
-				+ "numberOfPubmedArticles=[" + numberOfPubmedArticles + "].");
+			int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
+			ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);
 
-		// Retrieve the publications retMax records at one time and store to disk.
-		int currentRetStart = 0;
+			// Get the count (number of publications for this query).
+			PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery();
+			pubmedXmlQuery.setTerm(pubMedQuery);
 
-		// Number of partitions that we need to finish retrieving all XML.
-		int numSteps = (int) Math.ceil((double)numberOfPubmedArticles / pubmedXmlQuery.getRetMax()); 
+			// The number of articles will be less than 10,000. Set retMax equal to minimum of number of articles needed to be
+			// retrieved divided by the number of available processors and 10,000.
+			// If number of articles is less than 4, use number of articles as retmax.
+			pubmedXmlQuery.setRetMax(Math.min(Math.max(numberOfPubmedArticles / Math.max(numAvailableProcessors, 1), numberOfPubmedArticles)
+					, PubmedXmlQuery.DEFAULT_RETMAX));
+			slf4jLogger.info("numAvailableProcessors=[" + numAvailableProcessors + "] retMax=[" 
+					+ pubmedXmlQuery.getRetMax() + "], pubMedQuery=[" + pubMedQuery + "], "
+					+ "numberOfPubmedArticles=[" + numberOfPubmedArticles + "].");
 
-		List<Callable<List<PubMedArticle>>> callables = new ArrayList<Callable<List<PubMedArticle>>>();
+			// Retrieve the publications retMax records at one time and store to disk.
+			int currentRetStart = 0;
 
-		// Use the retstart value to iteratively fetch all XMLs.
-		for (int i = 0; i < numSteps; i++) {
-			// Get webenv value.
-			pubmedXmlQuery.setRetStart(currentRetStart);
-			String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
+			// Number of partitions that we need to finish retrieving all XML.
+			int numSteps = (int) Math.ceil((double)numberOfPubmedArticles / pubmedXmlQuery.getRetMax()); 
 
-			pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
+			List<Callable<List<PubMedArticle>>> callables = new ArrayList<Callable<List<PubMedArticle>>>();
 
-			// Use the webenv value to retrieve xml.
-			String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
-			slf4jLogger.info("eFetchUrl=[" + eFetchUrl + "].");
-			PubMedUriParserCallable pubMedUriParserCallable = new PubMedUriParserCallable(new PubmedEFetchHandler(), eFetchUrl);
-			callables.add(pubMedUriParserCallable);
+			// Use the retstart value to iteratively fetch all XMLs.
+			for (int i = 0; i < numSteps; i++) {
+				// Get webenv value.
+				pubmedXmlQuery.setRetStart(currentRetStart);
+				String eSearchUrl = pubmedXmlQuery.buildESearchQuery();
 
-			// Update the retstart value.
-			currentRetStart += pubmedXmlQuery.getRetMax();
-			pubmedXmlQuery.setRetStart(currentRetStart);
+				pubmedXmlQuery.setWevEnv(PubmedESearchHandler.executeESearchQuery(eSearchUrl).getWebEnv());
+
+				// Use the webenv value to retrieve xml.
+				String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
+				slf4jLogger.info("eFetchUrl=[" + eFetchUrl + "].");
+				PubMedUriParserCallable pubMedUriParserCallable = new PubMedUriParserCallable(new PubmedEFetchHandler(), eFetchUrl);
+				callables.add(pubMedUriParserCallable);
+
+				// Update the retstart value.
+				currentRetStart += pubmedXmlQuery.getRetMax();
+				pubmedXmlQuery.setRetStart(currentRetStart);
+			}
+
+			List<List<PubMedArticle>> list = new ArrayList<List<PubMedArticle>>();
+
+			try {
+				executor.invokeAll(callables)
+				.stream()
+				.map(future -> {
+					try {
+						return future.get();
+					}
+					catch (Exception e) {
+						throw new IllegalStateException(e);
+					}
+				}).forEach(list::add);
+			} catch (InterruptedException e) {
+				slf4jLogger.error("Unable to invoke callable.", e);
+			}
+
+			list.forEach(results::addAll);
+			return results;
+		} else {
+			return Collections.emptyList();
 		}
-
-		List<List<PubMedArticle>> list = new ArrayList<List<PubMedArticle>>();
-
-		try {
-			executor.invokeAll(callables)
-			.stream()
-			.map(future -> {
-				try {
-					return future.get();
-				}
-				catch (Exception e) {
-					throw new IllegalStateException(e);
-				}
-			}).forEach(list::add);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("Unable to invoke callable.", e);
-		}
-
-		List<PubMedArticle> results = new ArrayList<PubMedArticle>();
-		list.forEach(results::addAll);
-		return results;
 	}
 
 	@Override
@@ -394,7 +431,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
 		PubmedESearchHandler pubmedESearchHandler = new PubmedESearchHandler();
 		InputStream esearchStream = new URL(fullUrl).openStream();
-		
+
 		try {
 			SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
 		} catch (SAXException | ParserConfigurationException e) {

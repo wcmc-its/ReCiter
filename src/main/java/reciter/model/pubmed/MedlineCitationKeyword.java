@@ -10,4 +10,6 @@ public class MedlineCitationKeyword {
 	public void setKeyword(String keyword) {
 		this.keyword = keyword;
 	}
+	
+	public MedlineCitationKeyword() {}
 }

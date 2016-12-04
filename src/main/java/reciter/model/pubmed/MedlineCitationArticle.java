@@ -28,6 +28,8 @@ public class MedlineCitationArticle {
 	private	MedlineCitationSubset citationSubset;
 	private List<MedlineCitationGrant> grantList;
 	
+	public MedlineCitationArticle() {}
+	
 	public String getArticleTitle() {
 		return articleTitle;
 	}

@@ -20,4 +20,6 @@ public class MedlineCitationKeywordList {
 	public void setKeywordList(List<MedlineCitationKeyword> keywordList) {
 		this.keywordList = keywordList;
 	}
+	
+	public MedlineCitationKeywordList() {}
 }

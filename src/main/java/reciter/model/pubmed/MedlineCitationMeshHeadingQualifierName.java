@@ -5,6 +5,8 @@ public class MedlineCitationMeshHeadingQualifierName {
 	private String qualifierNameUI;
 	private String qualifierName;
 	
+	public MedlineCitationMeshHeadingQualifierName() {}
+	
 	public MedlineCitationYNEnum getMajorTopicYN() {
 		return majorTopicYN;
 	}

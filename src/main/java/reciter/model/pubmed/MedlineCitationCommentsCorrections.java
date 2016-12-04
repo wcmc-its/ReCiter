@@ -6,6 +6,9 @@ public class MedlineCitationCommentsCorrections {
 	private String refSource;
 	private String pmidVersion;
 	private String pmid;
+	
+	public MedlineCitationCommentsCorrections() {}
+	
 	public String getRefType() {
 		return refType;
 	}

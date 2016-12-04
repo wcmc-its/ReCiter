@@ -6,4 +6,6 @@ public class MedlineCitationArticleAbstract {
 
 	private List<MedlineCitationArticleAbstractText> abstractTextList;
 	private String copyrightInformation;
+	
+	public MedlineCitationArticleAbstract() {}
 }

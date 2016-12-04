@@ -7,6 +7,8 @@ public class MedlineCitationGrant {
 	private String agency;
 	private String country;
 	
+	public MedlineCitationGrant() {}
+	
 	public String getGrantID() {
 		return grantID;
 	}

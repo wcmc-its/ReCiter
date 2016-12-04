@@ -6,6 +6,8 @@ public class MedlineCitationMeshHeadingDescriptorName {
 	private String descriptorName;
 	private String descriptorNameUI;
 	
+	public MedlineCitationMeshHeadingDescriptorName() {}
+	
 	public String getDescriptorNameString() {
 		return descriptorName;
 	}

@@ -18,5 +18,7 @@ public class MedlineCitationJournalIssue {
 	public void setPubDate(MedlineCitationDate pubDate) {
 		this.pubDate = pubDate;
 	}
+	
+	public MedlineCitationJournalIssue() {}
 		
 }

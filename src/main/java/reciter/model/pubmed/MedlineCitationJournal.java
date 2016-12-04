@@ -7,6 +7,8 @@ public class MedlineCitationJournal {
 	private String title;
 	private String isoAbbreviation;
 	
+	public MedlineCitationJournal() {}
+	
 	public String getJournalTitle() {
 		return title;
 	}

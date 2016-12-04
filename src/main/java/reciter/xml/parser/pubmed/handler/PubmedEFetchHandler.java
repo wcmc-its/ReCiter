@@ -304,7 +304,9 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		// PMID
 		if (bMedlineCitation && bPMID) {
 			long pmid = Long.valueOf(chars.toString());
-			pubmedArticle.getMedlineCitation().setMedlineCitationPMID(new MedlineCitationPMID(pmid));
+			MedlineCitationPMID medlineCitationPMID = new MedlineCitationPMID();
+			medlineCitationPMID.setPmid(pmid);
+			pubmedArticle.getMedlineCitation().setMedlineCitationPMID(medlineCitationPMID);
 			bPMID = false;
 			bMedlineCitation = false;
 		}

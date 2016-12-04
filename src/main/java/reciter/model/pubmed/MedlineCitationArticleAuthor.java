@@ -10,6 +10,8 @@ public class MedlineCitationArticleAuthor {
 	private String affiliation;
 	private String language;
 	
+	public MedlineCitationArticleAuthor() {}
+	
 	public String getLastName() {
 		return lastName;
 	}

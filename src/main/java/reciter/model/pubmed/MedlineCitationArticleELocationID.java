@@ -10,4 +10,6 @@ public class MedlineCitationArticleELocationID {
 	private EIdType eIdType;
 	private MedlineCitationYNEnum validYN;
 	private String eLocationId;
+	
+	public MedlineCitationArticleELocationID() {}
 }

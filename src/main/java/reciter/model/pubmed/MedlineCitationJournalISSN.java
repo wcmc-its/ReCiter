@@ -10,4 +10,6 @@ public class MedlineCitationJournalISSN {
 	
 	private IssnType issnType;
 	private String issn;
+	
+	public MedlineCitationJournalISSN() {}
 }

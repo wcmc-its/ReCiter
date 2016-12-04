@@ -6,4 +6,6 @@ public class MedlineCitationJournalInfo {
 	private String nlmUniqueID;
 	private String issnLinking;
 	
+	public MedlineCitationJournalInfo() {}
+	
 }
