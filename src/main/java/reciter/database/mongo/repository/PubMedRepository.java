@@ -10,6 +10,6 @@ import reciter.model.pubmed.PubMedArticle;
 public interface PubMedRepository extends MongoRepository<PubMedArticle, String>, PubMedRepositoryCustom {
 	
 //	@Query(value = "{ 'medlineCitation.medlineCitationPMID.pmid': { $exists: true, $in: ?0 } }", fields = "{ 'medlineCitation.medlineCitationPMID.pmid' : 1 }")
-	@Query(value = "{ 'medlineCitation.medlineCitationPMID.pmid': { $exists: true, $in: ?0 } }")
+	@Query(value = "{ 'pubMedArticle.medlineCitation.medlineCitationPMID.pmid': { $exists: true, $in: ?0 } }")
     List<PubMedArticle> findByMedlineCitationMedlineCitationPMIDPmid(List<Long> pmids);
 }

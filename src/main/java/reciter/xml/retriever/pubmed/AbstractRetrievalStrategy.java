@@ -132,7 +132,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				// only retrieve articles if number is less than threshold, otherwise the article download
 				// may take too long
 				if (strictSearchHandler.getCount() <= DEFAULT_THRESHOLD) {
-					List<PubMedArticle> result = retrievePubMed(identity, constructedStrictQuery, strictSearchHandler.getCount());
+					List<PubMedArticle> result = retrievePubMed(constructedStrictQuery, strictSearchHandler.getCount());
 					for (PubMedArticle pubMedArticle : result) {
 						long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
 						if (!pubMedArticles.containsKey(pmid)) {
@@ -142,7 +142,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 					pubMedQuery.getStrictQuery().setUsed(true);
 				}
 			} else {
-				List<PubMedArticle> result = retrievePubMed(identity, encodedInitialQuery, handler.getCount());
+				List<PubMedArticle> result = retrievePubMed(encodedInitialQuery, handler.getCount());
 				for (PubMedArticle pubMedArticle : result) {
 					long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
 					if (!pubMedArticles.containsKey(pmid)) {
@@ -170,7 +170,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	 * @param cwid
 	 * @param count
 	 */
-	public List<PubMedArticle> retrievePubMed(Identity identity, String pubMedQuery, int numberOfPubmedArticles)  {
+	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
 
 		int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
 		ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);

@@ -34,7 +34,7 @@ public class PubMedServiceImpl implements PubMedService {
 	}
 	
 	@Override
-	public void save(Collection<PubMedArticle> pubMedArticles) {		
+	public void save(Collection<PubMedArticle> pubMedArticles) {
 		pubMedRepository.save(pubMedArticles);
 	}
 
