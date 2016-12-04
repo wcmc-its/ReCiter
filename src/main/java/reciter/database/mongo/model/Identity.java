@@ -2,6 +2,7 @@ package reciter.database.mongo.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -131,7 +132,11 @@ public class Identity {
 		this.keywords = keywords;
 	}
 	public List<PubMedAlias> getPubMedAlias() {
-		return pubMedAlias;
+		if (pubMedAlias == null) {
+			return Collections.emptyList();
+		} else {
+			return pubMedAlias;
+		}
 	}
 	public void setPubMedAlias(List<PubMedAlias> pubMedAlias) {
 		this.pubMedAlias = pubMedAlias;
