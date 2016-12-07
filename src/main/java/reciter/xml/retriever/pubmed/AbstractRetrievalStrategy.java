@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Configurable;
@@ -169,13 +170,22 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
 	private static final int nodeSize = 2;
 
+	private static final String scopusNodeUrlBegin = "https://reciter-pubmed-retrieval-";
+	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids?";
+	private static final int scopusNodeSize = 3;
+
 	/**
 	 * Randomly select a node.
 	 * @return
 	 */
 	private String loadBalance() {
-		int nodeSelected = (int) ( Math.random() * nodeSize + 1);
+		int nodeSelected = (int) (Math.random() * nodeSize + 1);
 		return nodeUrlBegin + nodeSelected + nodeUrlEnd;
+	}
+
+	private String loadBalanceScopus() {
+		int nodeSelected = (int) (Math.random() * scopusNodeSize + 1);
+		return scopusNodeUrlBegin + nodeSelected + scopusNodeUrlEnd;
 	}
 
 	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery, int numberOfPubmedArticles) {
@@ -191,6 +201,23 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			return Collections.emptyList();
 		}
 	}
+
+	private List<ScopusArticle> retrieveScopusViaRest(Collection<Long> pmids) {
+		String nodeUrl = loadBalanceScopus();
+		String query = StringUtils.join(pmids, ",");
+		nodeUrl += query;
+		RestTemplate restTemplate = new RestTemplate();
+		try {
+			ResponseEntity<ScopusArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl, ScopusArticle[].class);
+			ScopusArticle[] scopusArticles = responseEntity.getBody();
+			return Arrays.asList(scopusArticles);
+		} catch (Exception e) {
+			slf4jLogger.error("Unable to retrieve via external REST api.", e);
+			return Collections.emptyList();
+		}
+	}
+	
+	// @Document(collection = "pubmedarticle") @Document(collection = "scopusarticle")
 
 	/**
 	 * Initializes and starts threads that handles the retrieval process. Partition the number of articles
@@ -276,64 +303,70 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	@Override
 	public List<ScopusArticle> retrieveScopus(Collection<Long> pmids) {
-		StringBuffer sb = new StringBuffer();
-		List<String> pmidQueries = new ArrayList<String>();
-		int i = 0;
-		Iterator<Long> itr = pmids.iterator();
-		while (itr.hasNext()) {
-			long pmid = itr.next();
-			if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != pmids.size() - 1)) {
-				sb.append("pmid(");
-				sb.append(pmid);
-				sb.append(")+OR+");
-			} else {
-				sb.append("pmid(");
-				sb.append(pmid);
-				sb.append(")");
-			}
-			if (i != 0 && i % SCOPUS_DEFAULT_THRESHOLD == 0) {
-				pmidQueries.add(sb.toString());
-				sb = new StringBuffer();
-			}
-			i++;
-		}
-		// add the remaining pmids
-		String remaining = sb.toString();
-		if (!remaining.isEmpty()) {
-			pmidQueries.add(remaining);
-		}
-
-		List<Callable<List<ScopusArticle>>> callables = new ArrayList<Callable<List<ScopusArticle>>>();
-
-		for (String query : pmidQueries) {
-			ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(query, SCOPUS_MAX_THRESHOLD).build();
-			String scopusUrl = scopusXmlQuery.getQueryUrl();
-			ScopusUriParserCallable scopusUriParserCallable = new ScopusUriParserCallable(new ScopusXmlHandler(), scopusUrl);
-			callables.add(scopusUriParserCallable);
-		}
-
-		List<List<ScopusArticle>> list = new ArrayList<List<ScopusArticle>>();
-
-		int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
-		ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);
-
-		try {
-			executor.invokeAll(callables)
-			.stream()
-			.map(future -> {
-				try {
-					return future.get();
-				}
-				catch (Exception e) {
-					throw new IllegalStateException(e);
-				}
-			}).forEach(list::add);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("Unable to invoke callable.", e);
-		}
 
 		List<ScopusArticle> results = new ArrayList<ScopusArticle>();
-		list.forEach(results::addAll);
+		results = retrieveScopusViaRest(pmids);
+
+		if (results.isEmpty()) {
+
+			StringBuffer sb = new StringBuffer();
+			List<String> pmidQueries = new ArrayList<String>();
+			int i = 0;
+			Iterator<Long> itr = pmids.iterator();
+			while (itr.hasNext()) {
+				long pmid = itr.next();
+				if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != pmids.size() - 1)) {
+					sb.append("pmid(");
+					sb.append(pmid);
+					sb.append(")+OR+");
+				} else {
+					sb.append("pmid(");
+					sb.append(pmid);
+					sb.append(")");
+				}
+				if (i != 0 && i % SCOPUS_DEFAULT_THRESHOLD == 0) {
+					pmidQueries.add(sb.toString());
+					sb = new StringBuffer();
+				}
+				i++;
+			}
+			// add the remaining pmids
+			String remaining = sb.toString();
+			if (!remaining.isEmpty()) {
+				pmidQueries.add(remaining);
+			}
+
+			List<Callable<List<ScopusArticle>>> callables = new ArrayList<Callable<List<ScopusArticle>>>();
+
+			for (String query : pmidQueries) {
+				ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(query, SCOPUS_MAX_THRESHOLD).build();
+				String scopusUrl = scopusXmlQuery.getQueryUrl();
+				ScopusUriParserCallable scopusUriParserCallable = new ScopusUriParserCallable(new ScopusXmlHandler(), scopusUrl);
+				callables.add(scopusUriParserCallable);
+			}
+
+			List<List<ScopusArticle>> list = new ArrayList<List<ScopusArticle>>();
+
+			int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
+			ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);
+
+			try {
+				executor.invokeAll(callables)
+				.stream()
+				.map(future -> {
+					try {
+						return future.get();
+					}
+					catch (Exception e) {
+						throw new IllegalStateException(e);
+					}
+				}).forEach(list::add);
+			} catch (InterruptedException e) {
+				slf4jLogger.error("Unable to invoke callable.", e);
+			}
+
+			list.forEach(results::addAll);
+		}
 		return results;
 	}
 

@@ -1,9 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>ReCiter</groupId>
-	<artifactId>ReCiter</artifactId>
+	<groupId>edu.wcmc.reciter</groupId>
+	<artifactId>reciter</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<name>ReCiter</name>
+	<description>ReCiter</description>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<resources>
@@ -105,7 +107,29 @@
 			<artifactId>stomp-websocket</artifactId>
 			<version>2.3.3</version>
 		</dependency>
+		<dependency>
+			<groupId>edu.wcmc.reciter</groupId>
+			<artifactId>reciter-pubmed-model</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.wcmc.reciter</groupId>
+			<artifactId>reciter-scopus-model</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>wcmc-its</id>
+			<name>ReCiter-Maven-Repository</name>
+			<url>https://github.com/wcmc-its/ReCiter-Maven-Repository/raw/master/snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 
 	<properties>
 		<!-- The main class to start by executing java -jar -->
