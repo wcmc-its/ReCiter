@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import reciter.database.mongo.model.Identity;
 import reciter.database.mongo.repository.IdentityRepository;
@@ -27,6 +28,11 @@ public class IdentityServiceImpl implements IdentityService {
 		return identityRepository.save(identity);
 	}
 	
+	@Override
+	public void delete(Identity identity) {
+		identityRepository.deleteIdentityByCwid(identity.getCwid());
+	}
+
 	@Override
 	public Identity findByCwid(String cwid) {
 		return identityRepository.findByCwid(cwid);

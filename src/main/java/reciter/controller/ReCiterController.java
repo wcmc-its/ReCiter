@@ -85,6 +85,14 @@ public class ReCiterController {
 	@Autowired
 	private PubMedArticleFeatureService pubMedArticleFeatureService;
 	
+	@RequestMapping(value = "/reciter/save", method = RequestMethod.GET)
+	@ResponseBody
+	public void saveIdentity() {
+		Identity identity = new Identity();
+		identity.setCwid("test");
+		identityService.delete(identity);
+	}
+	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/esearchresult/by/cwid", method = RequestMethod.GET)
 	@ResponseBody

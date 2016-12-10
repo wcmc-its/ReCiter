@@ -11,4 +11,6 @@ public interface IdentityRepository extends MongoRepository<Identity, String>, I
 	Identity findByCwid(String cwid);
 	
     List<Identity> findByCwidRegex(String cwid);
+    
+    void deleteIdentityByCwid(String cwid);
 }

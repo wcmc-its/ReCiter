@@ -10,4 +10,5 @@ public interface IdentityService {
 	Identity findByCwid(String cwid);
 	List<Identity> findByCwidRegex(String search);
 	void updatePubMedAlias(Identity identity);
+	void delete(Identity identity);
 }
