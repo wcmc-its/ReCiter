@@ -34,6 +34,8 @@ public class Identity {
 	private List<PubMedAlias> pubMedAlias; // name alias from PubMed
 	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
 	private LocalDateTime dateLastRun; // the date of the most recent retrieval
+	private String personType; // type of person: i.e., academic, academic-faculty, etc...
+	private String program; // program the person is in.
 	
 	public String getCwid() {
 		return cwid;
@@ -152,5 +154,17 @@ public class Identity {
 	}
 	public void setDateLastRun(LocalDateTime dateLastRun) {
 		this.dateLastRun = dateLastRun;
+	}
+	public String getPersonType() {
+		return personType;
+	}
+	public void setPersonType(String personType) {
+		this.personType = personType;
+	}
+	public String getProgram() {
+		return program;
+	}
+	public void setProgram(String program) {
+		this.program = program;
 	}
 }

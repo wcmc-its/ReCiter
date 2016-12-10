@@ -39,6 +39,7 @@ import reciter.engine.Engine;
 import reciter.engine.Feature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.author.AuthorName;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
@@ -90,7 +91,12 @@ public class ReCiterController {
 	public void saveIdentity() {
 		Identity identity = new Identity();
 		identity.setCwid("test");
-		identityService.delete(identity);
+		AuthorName authorName = new AuthorName();
+		authorName.setFirstName("Jie");
+		authorName.setLastName("Lin");
+		authorName.setMiddleName("none");
+		identity.setAuthorName(authorName);
+		identityService.save(identity);
 	}
 	
 	@CrossOrigin(origins = "http://localhost:9000")
