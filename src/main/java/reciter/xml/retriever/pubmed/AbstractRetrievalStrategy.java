@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Configurable;
@@ -168,7 +169,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
 	private static final int nodeSize = 2;
 
-	private static final String scopusNodeUrlBegin = "https://reciter-pubmed-retrieval-";
+	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
 	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
 	private static final int scopusNodeSize = 3;
 
@@ -183,8 +184,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	private String loadBalanceScopus() {
 		int nodeSelected = (int) (Math.random() * scopusNodeSize + 1);
-//		return scopusNodeUrlBegin + 3 + scopusNodeUrlEnd;
-		return "http://localhost:8090/reciter/retrieve/scopus/by/pmids/{pmids}";
+		return scopusNodeUrlBegin + 3 + scopusNodeUrlEnd;
 	}
 
 	private class Response<T> {
@@ -211,6 +211,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		nodeUrl += "query=" + pubMedQuery + "&numberOfPubmedArticles=" + numberOfPubmedArticles;
 		RestTemplate restTemplate = new RestTemplate();
 		try {
+			slf4jLogger.info("Sending web request: " + nodeUrl);
 			ResponseEntity<PubMedArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
 			PubMedArticle[] pubMedArticles = responseEntity.getBody();
 			return new Response<List<PubMedArticle>>(false, Arrays.asList(pubMedArticles));
@@ -224,18 +225,45 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		if (pmids.isEmpty()) {
 			return new Response<List<ScopusArticle>>(false, null);
 		}
-		String nodeUrl = loadBalanceScopus();
-		Map<String, Collection<Long>> parameter = new HashMap<>();
-		parameter.put("pmids", pmids);
-		RestTemplate restTemplate = new RestTemplate();
-		try {
-			ResponseEntity<ScopusArticle[]> responseEntity = restTemplate.postForEntity(nodeUrl, parameter, ScopusArticle[].class);
-			ScopusArticle[] scopusArticles = responseEntity.getBody();
-			return new Response<List<ScopusArticle>>(false, Arrays.asList(scopusArticles));
-		} catch (Exception e) {
-			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
-			return new Response<List<ScopusArticle>>(true, null);
+		String nodeUrl = loadBalanceScopus() + "?pmids=";
+		StringBuffer sb = new StringBuffer();
+		List<String> pmidQueries = new ArrayList<String>();
+		int i = 0;
+		Iterator<Long> itr = pmids.iterator();
+		while (itr.hasNext()) {
+			long pmid = itr.next();
+			if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != pmids.size() - 1)) {
+				sb.append(pmid);
+				sb.append(",");
+			} else {
+				sb.append(pmid);
+			}
+			if (i != 0 && i % SCOPUS_DEFAULT_THRESHOLD == 0) {
+				pmidQueries.add(sb.toString());
+				sb = new StringBuffer();
+			}
+			i++;
 		}
+		// add the remaining pmids
+		String remaining = sb.toString();
+		if (!remaining.isEmpty()) {
+			pmidQueries.add(remaining);
+		}
+		List<ScopusArticle> scopusArticlesResult = new ArrayList<ScopusArticle>();
+		for (String pmidQuery : pmidQueries) {
+			RestTemplate restTemplate = new RestTemplate();
+			try {
+				slf4jLogger.info("Sending web request: " + nodeUrl + pmidQuery);
+				ResponseEntity<ScopusArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl + pmidQuery, ScopusArticle[].class);
+				ScopusArticle[] scopusArticles = responseEntity.getBody();
+				scopusArticlesResult.addAll(Arrays.asList(scopusArticles));
+				slf4jLogger.info("Retrieved scopusArticles size=[" + scopusArticles.length + "]");
+			} catch (Exception e) {
+				slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + pmidQuery + "]", e);
+				return new Response<List<ScopusArticle>>(true, null);
+			}
+		}
+		return new Response<List<ScopusArticle>>(false, scopusArticlesResult);
 	}
 	
 	// @Document(collection = "pubmedarticle") @Document(collection = "scopusarticle")

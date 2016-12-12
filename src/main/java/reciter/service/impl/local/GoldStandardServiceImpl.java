@@ -1,4 +1,4 @@
-package reciter.service.impl;
+package reciter.service.impl.local;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

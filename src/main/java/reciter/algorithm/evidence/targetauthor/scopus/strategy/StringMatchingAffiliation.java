@@ -60,7 +60,7 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 		if (scopusArticle != null) {
 			for (Author scopusAuthor : scopusArticle.getAuthors()) {
 				if (StringUtils.equalsIgnoreCase(scopusAuthor.getSurname(), identity.getAuthorName().getLastName())) {
-					Set<Integer> afidSet = scopusAuthor.getAfidSet();
+					Set<Integer> afidSet = scopusAuthor.getAfids();
 					for (int afid : afidSet) {
 						for (Affiliation affiliation : scopusArticle.getAffiliations()) {
 							if (affiliation.getAfid() == afid) {

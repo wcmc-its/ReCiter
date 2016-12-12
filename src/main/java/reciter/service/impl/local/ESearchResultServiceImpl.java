@@ -1,4 +1,4 @@
-package reciter.service.impl;
+package reciter.service.impl.local;
 
 import java.util.List;
 

@@ -22,14 +22,13 @@ import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.RestTemplate;
 
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.Identity;
@@ -39,7 +38,6 @@ import reciter.engine.Engine;
 import reciter.engine.Feature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.AuthorName;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
@@ -63,6 +61,7 @@ public class ReCiterController {
 	private ESearchResultService eSearchResultService;
 
 	@Autowired
+	@Qualifier("pubMedServiceWs")
 	private PubMedService pubMedService;
 	
 	@Autowired
@@ -75,6 +74,7 @@ public class ReCiterController {
 	private IdentityService identityService;
 	
 	@Autowired
+	@Qualifier("scopusServiceWs")
 	private ScopusService scopusService;
 	
 	@Autowired
@@ -89,14 +89,18 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/save", method = RequestMethod.GET)
 	@ResponseBody
 	public void saveIdentity() {
-		Identity identity = new Identity();
-		identity.setCwid("test");
-		AuthorName authorName = new AuthorName();
-		authorName.setFirstName("Jie");
-		authorName.setLastName("Lin");
-		authorName.setMiddleName("none");
-		identity.setAuthorName(authorName);
-		identityService.save(identity);
+//		Identity identity = new Identity();
+//		identity.setCwid("test");
+//		AuthorName authorName = new AuthorName();
+//		authorName.setFirstName("Jie");
+//		authorName.setLastName("Lin");
+//		authorName.setMiddleName("none");
+//		identity.setAuthorName(authorName);
+//		identityService.save(identity);
+		List<Long> pmids = new ArrayList<Long>();
+		pmids.add(23455597L);
+		List<ScopusArticle> pubMedArticles = scopusService.findByPubmedId(pmids);
+		slf4jLogger.info("Retrieved: " + pubMedArticles.size());
 	}
 	
 	@CrossOrigin(origins = "http://localhost:9000")
@@ -162,7 +166,7 @@ public class ReCiterController {
 			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
 		}
 		List<Long> pmidList = new ArrayList<Long>(pmids);
-		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmidList);
+		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(pmidList);
 		List<ScopusArticle> scopusArticles = scopusService.findByPubmedId(pmidList);
 		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
 		for (ScopusArticle scopusArticle : scopusArticles) {
@@ -205,7 +209,7 @@ public class ReCiterController {
 			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
 		}
 		List<Long> pmidList = new ArrayList<Long>(pmids);
-		List<PubMedArticle> pubMedArticles = pubMedService.findByMedlineCitationMedlineCitationPMIDPmid(pmidList);
+		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(pmidList);
 		List<ScopusArticle> scopusArticles = scopusService.findByPubmedId(pmidList);
 		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
 		for (ScopusArticle scopusArticle : scopusArticles) {

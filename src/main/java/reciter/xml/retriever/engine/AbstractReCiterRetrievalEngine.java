@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.ESearchPmid;
@@ -29,12 +30,14 @@ import reciter.xml.retriever.pubmed.PubMedQueryResult;
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
 
 	@Autowired
+	@Qualifier("pubMedServiceWs")
 	protected PubMedService pubMedService;
 
 	@Autowired
 	protected ESearchResultService eSearchResultService;
 
 	@Autowired
+	@Qualifier("scopusServiceWs")
 	protected ScopusService scopusService;
 
 	@Autowired
@@ -68,7 +71,8 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	 */
 	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String cwid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults) {
 		// Save the articles.
-		pubMedService.save(pubMedArticles);
+		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
+		pubMedService.save(pubMedArticleList);
 
 		// Save the search result.
 		List<Long> pmids = new ArrayList<Long>();
