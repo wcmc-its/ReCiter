@@ -71,6 +71,7 @@ public class ReCiterController {
 	private Engine reCiterEngine;
 	
 	@Autowired
+	@Qualifier("identityServiceWs")
 	private IdentityService identityService;
 	
 	@Autowired
@@ -86,23 +87,6 @@ public class ReCiterController {
 	@Autowired
 	private PubMedArticleFeatureService pubMedArticleFeatureService;
 	
-	@RequestMapping(value = "/reciter/save", method = RequestMethod.GET)
-	@ResponseBody
-	public void saveIdentity() {
-//		Identity identity = new Identity();
-//		identity.setCwid("test");
-//		AuthorName authorName = new AuthorName();
-//		authorName.setFirstName("Jie");
-//		authorName.setLastName("Lin");
-//		authorName.setMiddleName("none");
-//		identity.setAuthorName(authorName);
-//		identityService.save(identity);
-		List<Long> pmids = new ArrayList<Long>();
-		pmids.add(23455597L);
-		List<ScopusArticle> pubMedArticles = scopusService.findByPubmedId(pmids);
-		slf4jLogger.info("Retrieved: " + pubMedArticles.size());
-	}
-	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/esearchresult/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
@@ -117,6 +101,17 @@ public class ReCiterController {
 		return identityService.findByCwidRegex(search);
 	}
 
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/reciter/save/identities", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveArticles() {
+		Identity identity = new Identity();
+		identity.setCwid("test");
+		List<Identity> identities = new ArrayList<>();
+		identities.add(identity);
+		identityService.save(identities);
+	}
+	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/reciter/retrieve/article/by/cwid", method = RequestMethod.GET)
 	@ResponseBody

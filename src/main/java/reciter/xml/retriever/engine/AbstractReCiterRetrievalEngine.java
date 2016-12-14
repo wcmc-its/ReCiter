@@ -41,6 +41,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	protected ScopusService scopusService;
 
 	@Autowired
+	@Qualifier("identityServiceWs")
 	protected IdentityService identityService;
 
 	@Autowired

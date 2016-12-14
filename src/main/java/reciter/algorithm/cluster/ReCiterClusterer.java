@@ -12,7 +12,6 @@ import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
 import reciter.algorithm.cluster.clusteringstrategy.article.NameMatchingClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.database.mongo.model.Identity;
-import reciter.database.rethinkdb.algo.RealtimeAlgoLogger;
 import reciter.model.article.ReCiterArticle;
 
 public class ReCiterClusterer extends AbstractClusterer {
@@ -39,8 +38,6 @@ public class ReCiterClusterer extends AbstractClusterer {
 	 */
 	@Override
 	public void cluster() {
-		RealtimeAlgoLogger.getInstance().insert("Running ReCiter for: [" + identity.getCwid() + "] "
-				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		slf4jLogger.info("Running ReCiter for: [" + identity.getCwid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		clusters = clusteringStrategy.cluster(reCiterArticles);
