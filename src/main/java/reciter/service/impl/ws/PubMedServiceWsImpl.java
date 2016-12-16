@@ -28,6 +28,7 @@ public class PubMedServiceWsImpl implements PubMedService {
 		slf4jLogger.info("Sending web request with " + pubMedArticles.size() + " PubMed articles. url=" + requestUri);
 		restTemplate.put(requestUri, pubMedArticles);
 	}
+	
 	// /reciter/find/pubmed/articles/pmids
 	@Override
 	public List<PubMedArticle> findByPmids(List<Long> pmids) {
