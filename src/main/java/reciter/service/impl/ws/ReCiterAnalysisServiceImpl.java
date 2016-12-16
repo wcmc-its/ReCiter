@@ -63,19 +63,7 @@ public class ReCiterAnalysisServiceImpl implements ReCiterAnalysisService {
 		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(pmidList);
 		List<ScopusArticle> scopusArticles = scopusService.findByPubmedId(pmidList);
 		
-		RestTemplate restTemplate = new RestTemplate();
-		String requestUri = uri + "/reciter/run/analysis/";
-		slf4jLogger.info("Sending web request with " + pubMedArticles.size() + " PubMed articles. url=" + requestUri);
+		return null;
 		
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-//      Iterator<PubMedArticle> itr = pubMedArticles.iterator();
-//      PubMedArticle p = itr.next();
-        HttpEntity<List<PubMedArticle>> entity = new HttpEntity<List<PubMedArticle>>(pubMedArticles, headers);
-        ResponseEntity<HttpStatus> response = restTemplate.exchange(requestUri, HttpMethod.PUT, entity, HttpStatus.class);
-        // check the response, e.g. Location header,  Status, and body
-        slf4jLogger.info("responseBody: " + response.getBody());
-//      restTemplate.put(url, p, PubMedArticle.class);
-		restTemplate(requestUri, identity, pubMedArticles, scopusArticles);
 	}
 }
