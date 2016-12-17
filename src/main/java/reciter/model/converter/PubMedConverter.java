@@ -1,6 +1,6 @@
 package reciter.model.converter;
 
-import reciter.model.author.AuthorName;
+import reciter.model.identity.AuthorName;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 
 public class PubMedConverter {

@@ -1,14 +1,15 @@
 package reciter.service;
 
+import java.util.Collection;
 import java.util.List;
 
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 
 public interface IdentityService {
-	void save(List<Identity> identities);
-	Identity save(Identity identity);
-	Identity findByCwid(String cwid);
-	List<Identity> findByCwidRegex(String search);
-	void updatePubMedAlias(Identity identity);
-	void delete(Identity identity);
+
+	void save(Collection<Identity> identities);
+	
+	void save(Identity identity);
+	
+	List<Identity> findByCwids(List<String> cwids);
 }

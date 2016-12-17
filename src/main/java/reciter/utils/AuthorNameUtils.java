@@ -7,9 +7,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import reciter.model.author.AuthorName;
-import reciter.model.author.TargetAuthor;
 import reciter.model.converter.PubMedConverter;
+import reciter.model.identity.AuthorName;
+import reciter.model.identity.Identity;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 
@@ -68,7 +68,7 @@ public class AuthorNameUtils {
 	// of the target author and the aforementioned author do not match, then that author's first name is likely
 	// an alternate name of the target author.
 	public static Map<Long, List<AuthorName>> extractAlternateNamesFromPubMedArticlesRetrievedByEmail(
-			List<PubMedArticle> pubMedArticles, TargetAuthor targetAuthor) {
+			List<PubMedArticle> pubMedArticles, Identity targetAuthor) {
 		Map<Long, List<AuthorName>> map = new HashMap<Long, List<AuthorName>>(); // PMID to alternate author name.
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			List<MedlineCitationArticleAuthor> authorList = pubMedArticle.getMedlineCitation().getArticle().getAuthorList();
@@ -79,8 +79,8 @@ public class AuthorNameUtils {
 				for (MedlineCitationArticleAuthor medlineCitationArticleAuthor : authorList) {
 					AuthorName authorName = PubMedConverter.extractAuthorName(medlineCitationArticleAuthor);
 					if (authorName != null) {
-						System.out.println("Comparing: " + authorName + ", " + targetAuthor.getAuthorName());
-						boolean isFullNameMatch = AuthorNameUtils.isFullNameMatch(authorName, targetAuthor.getAuthorName());
+						System.out.println("Comparing: " + authorName + ", " + targetAuthor.getPrimaryName());
+						boolean isFullNameMatch = AuthorNameUtils.isFullNameMatch(authorName, targetAuthor.getPrimaryName());
 						System.out.println("is full name match=[" + isFullNameMatch + "]");
 						if (isFullNameMatch) {
 							System.out.println("Found full name match author: " + authorName);
@@ -88,7 +88,7 @@ public class AuthorNameUtils {
 							break; // Go to the next article.
 						} else {
 							boolean isLastNameAndFirstInitialMatch = AuthorNameUtils.isLastNameAndFirstInitialMatch
-									(authorName, targetAuthor.getAuthorName());
+									(authorName, targetAuthor.getPrimaryName());
 							if (isLastNameAndFirstInitialMatch) {
 								System.out.println("Adding likely alternative name=[" + authorName + "]");
 								likelyAlternativeNameList.add(authorName);

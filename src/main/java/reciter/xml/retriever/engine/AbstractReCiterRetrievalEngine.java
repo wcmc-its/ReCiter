@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
-import reciter.engine.notification.Notifier;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
@@ -43,9 +42,6 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	@Autowired
 	@Qualifier("identityServiceWs")
 	protected IdentityService identityService;
-
-	@Autowired
-	protected Notifier notifier;
 	
 	@Autowired
 	protected AffiliationInDbRetrievalStrategy affiliationInDbRetrievalStrategy;

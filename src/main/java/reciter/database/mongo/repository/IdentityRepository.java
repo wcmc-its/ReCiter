@@ -1,16 +1,9 @@
 package reciter.database.mongo.repository;
 
-import java.util.List;
-
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import reciter.database.mongo.model.Identity;
+import reciter.database.mongo.model.IdentityMongo;
 
-public interface IdentityRepository extends MongoRepository<Identity, String>, IdentityRepositoryCustom {
+public interface IdentityRepository extends MongoRepository<IdentityMongo, String> {
 
-	Identity findByCwid(String cwid);
-	
-    List<Identity> findByCwidRegex(String cwid);
-    
-    void deleteIdentityByCwid(String cwid);
 }

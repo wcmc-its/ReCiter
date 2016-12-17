@@ -16,10 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import reciter.database.mongo.model.Identity;
-import reciter.database.mongo.model.PubMedAlias;
-import reciter.model.author.AuthorName;
 import reciter.model.converter.PubMedConverter;
+import reciter.model.identity.AuthorName;
+import reciter.model.identity.Identity;
+import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
@@ -58,7 +58,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setPubMedAlias(pubMedAliases);
 			identity.setDateInitialRun(LocalDateTime.now(Clock.systemUTC()));
 			identity.setDateLastRun(LocalDateTime.now(Clock.systemUTC()));
-			identityService.updatePubMedAlias(identity);
+			identityService.save(identity);
 			
 			uniquePmids.addAll(emailPubMedArticles.keySet());
 		}
@@ -87,8 +87,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(r5.getPubMedArticles().values(), cwid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
 			uniquePmids.addAll(r5.getPubMedArticles().keySet());
 		}
-		
-		notifier.sendNotification(identity.getCwid());
 		
 		List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		scopusService.save(scopusArticles);
@@ -124,7 +122,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setPubMedAlias(pubMedAliases);
 			identity.setDateInitialRun(LocalDateTime.now(Clock.systemUTC()));
 			identity.setDateLastRun(LocalDateTime.now(Clock.systemUTC()));
-			identityService.updatePubMedAlias(identity);
+			identityService.save(identity);
 			
 			uniquePmids.addAll(emailPubMedArticles.keySet());
 		}
@@ -154,8 +152,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			uniquePmids.addAll(r5.getPubMedArticles().keySet());
 		}
 		
-		notifier.sendNotification(identity.getCwid());
-		
 		List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		scopusService.save(scopusArticles);
 		
@@ -171,19 +167,19 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					for (String email : identity.getEmails()) {
 						if (affiliation.contains(email)) {
 							// possibility of an alias:
-							if (author.getLastName().equals(identity.getAuthorName().getLastName())) {
+							if (author.getLastName().equals(identity.getPrimaryName().getLastName())) {
 								// sanity check: last name matches
 								AuthorName alias = PubMedConverter.extractAuthorName(author);
-								if (!alias.getFirstInitial().equals(identity.getAuthorName().getFirstInitial())) {
+								if (!alias.getFirstInitial().equals(identity.getPrimaryName().getFirstInitial())) {
 									// check if the same first initial is already added to the set.
 									if (aliasSet.isEmpty()) {
 										aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-										slf4jLogger.info(identity.getCwid() + ": " + identity.getAuthorName() + ": (Empty set) Adding alias: " + alias);
+										slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Empty set) Adding alias: " + alias);
 									} else {
 										for (AuthorName aliasAuthorName : aliasSet.values()) {
 											if (!aliasAuthorName.getFirstInitial().equals(alias.getFirstInitial())) {
 												aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-												slf4jLogger.info(identity.getCwid() + ": " + identity.getAuthorName() + ": (Different first initial) Adding alias: " + alias);
+												slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Different first initial) Adding alias: " + alias);
 												break;
 											} else {
 												String firstNameInSet = aliasAuthorName.getFirstName();
@@ -193,7 +189,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 												if (firstNameInSet.length() < currentFirstName.length()) {
 													aliasSet.remove(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 													aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-													slf4jLogger.info(identity.getCwid() + ": " + identity.getAuthorName() + ": (Prefer longer first name) Adding alias: " + alias);
+													slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Prefer longer first name) Adding alias: " + alias);
 													break;
 												}
 											}

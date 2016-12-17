@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 import reciter.model.scopus.ScopusArticle;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 

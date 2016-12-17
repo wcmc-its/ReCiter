@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Set;
 
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 
 public interface ReCiterRetrievalEngine {
 

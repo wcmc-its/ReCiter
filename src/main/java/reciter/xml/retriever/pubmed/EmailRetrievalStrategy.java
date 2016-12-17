@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
 
 /**
