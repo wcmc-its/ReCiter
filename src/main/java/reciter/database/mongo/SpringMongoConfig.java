@@ -1,4 +1,4 @@
-package reciter.controller;
+package reciter.database.mongo;
 
 import java.util.ArrayList;
 import java.util.List;
