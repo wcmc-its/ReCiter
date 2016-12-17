@@ -69,7 +69,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				identity.setPrimaryName(primaryName);
 
 				// get alternative names for Author Name
-				List<AuthorName> alternateNames = searchAlternateNames(identity.getCwid(), primaryName);
+				List<AuthorName> alternateNames = new ArrayList<>(searchAlternateNames(identity.getCwid(), primaryName));
 				identity.setAlternateNames(alternateNames);
 
 				// get email, including data from WOOFA(Personal Email) and Enterprise Directory
@@ -81,8 +81,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				}
 
 				// email from ED with all other ou
-				List<String> emailsFromEnterpriseDirectory = searchEmails(identity.getCwid());
-				uniqueEmails.addAll(emailsFromEnterpriseDirectory);
+				uniqueEmails.addAll(searchEmails(identity.getCwid()));
 
 				// emails from WOOFA
 				List<String> emailsFromWoofa = oracleIdentityDao.getPersonalEmailFromOfa(identity.getCwid());
@@ -123,9 +122,9 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		return identity;
 	}
 
-	private List<AuthorName> searchAlternateNames(String cwid, AuthorName primaryName) {
+	private Set<AuthorName> searchAlternateNames(String cwid, AuthorName primaryName) {
 
-		List<AuthorName> alternateNames = new ArrayList<AuthorName>();
+		Set<AuthorName> alternateNames = new HashSet<AuthorName>();
 		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + cwid + "))";
 		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=sors,dc=weill,dc=cornell,dc=edu");
 		for (SearchResultEntry entry : results) {
@@ -140,10 +139,10 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		return alternateNames;
 	}
 
-	private List<String> searchEmails(String cwid) {
+	private Set<String> searchEmails(String cwid) {
 		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + cwid + "))";
 		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=sors,dc=weill,dc=cornell,dc=edu");
-		List<String> emails = new ArrayList<>();
+		Set<String> emails = new HashSet<>();
 		if (results != null) {
 			for (SearchResultEntry entry : results) {
 				if (entry.getAttributeValue("mail") != null && !entry.getAttributeValue("mail").isEmpty()) {
@@ -154,8 +153,8 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		return emails;
 	}
 
-	private List<String> getProgramsForStudents(String cwid) {
-		List<String> departments = new ArrayList<>();
+	private Set<String> getProgramsForStudents(String cwid) {
+		Set<String> departments = new HashSet<>();
 		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + cwid + "))";
 		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=students,ou=sors,dc=weill,dc=cornell,dc=edu");
 		for (SearchResultEntry entry : results) {
