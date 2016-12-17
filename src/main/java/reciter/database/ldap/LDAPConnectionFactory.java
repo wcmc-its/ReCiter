@@ -35,7 +35,6 @@ public class LDAPConnectionFactory {
 		try {
 			SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
 			connection = new LDAPConnection(sslUtil.createSSLSocketFactory());
-			slf4jLogger.info("ldapHostname: " + ldapHostname);
 			connection.connect(ldapHostname, ldapPort);
 			connection.bind(ldapBindDn, ldapBindPassword);
 			

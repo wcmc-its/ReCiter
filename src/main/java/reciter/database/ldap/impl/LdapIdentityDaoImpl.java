@@ -56,9 +56,9 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 			SearchResultEntry entry = results.get(0);
 			if(entry.getAttributeValue("weillCornellEduCWID") != null) {
 				identity = new Identity();
-
 				// get cwid and primary title
 				identity.setCwid(entry.getAttributeValue("weillCornellEduCWID"));
+				slf4jLogger.info("cwid retrieved is: " + identity.getCwid());
 				identity.setTitle(entry.getAttributeValue("weillCornellEduPrimaryTitle"));
 
 				// get primary name which is taken from people OU.
@@ -97,8 +97,13 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 					departments.add(deptAttributeValue);
 				}
 
-				// person type 'students': get the program as well and map to departments
+				// get person type code
 				String personTypeCode = entry.getAttributeValue("weillCornellEduPersonTypeCode");
+				if (personTypeCode != null && !personTypeCode.isEmpty()) {
+					identity.setPersonType(personTypeCode);
+				}
+				
+				// person type 'students': get the program as well and map to departments
 				if ("student-phd-weill".equals(personTypeCode) || "student-md-phd-tri-i".equals(personTypeCode)) {
 					departments.addAll(getProgramsForStudents(identity.getCwid()));
 				}
