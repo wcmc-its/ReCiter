@@ -39,7 +39,6 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		List<SearchResultEntry> results = search(ldapFilter);
 		for (SearchResultEntry entry : results) {
 			if(entry.getAttributeValue("weillCornellEduCWID") != null) {
-				// TODO create identity information
 				slf4jLogger.info(entry.getAttributeValue("weillCornellEduCWID") + " " + 
 						entry.getAttributeValue("weillCornellEduPrimaryTitle") + " " + entry.getAttributeValue("sn"));
 			}
