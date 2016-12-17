@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.model.identity.Identity;
@@ -21,11 +22,9 @@ public class LdapIdentityController {
 	@Autowired
 	private LdapIdentityService ldapIdentityService;
 	
-	@RequestMapping(value = "/reciter/ldap/get/active/identities", method = RequestMethod.GET)
+	@RequestMapping(value = "/reciter/ldap/get/identity/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
-	public String getActiveIdentity() {
-		List<Identity> identities = ldapIdentityService.getActiveIdentity();
-		slf4jLogger.info("size=[" + identities.size() + "]");
-		return "Success";
+	public Identity getIdentity(@RequestParam String cwid) {
+		return ldapIdentityService.getIdentity(cwid);
 	}
 }

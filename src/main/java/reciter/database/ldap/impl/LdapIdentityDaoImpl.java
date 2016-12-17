@@ -35,21 +35,27 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 	@Value("${ldap.base.dn}")
 	private String ldapbaseDn;
 
-	@Value("${ldap.filter}")
-	private String ldapFilter;
-
 	@Autowired
 	private LDAPConnectionFactory lDAPConnectionFactory;
 
 	@Autowired
 	private OracleIdentityDao oracleIdentityDao;
 
-	public List<Identity> getActiveIdentity() {
-		List<Identity> identities = new ArrayList<>();
-		List<SearchResultEntry> results = search(ldapFilter);
-		for (SearchResultEntry entry : results) {
+	@Override
+	public Identity getIdentity(String cwid) {
+		Identity identity = null;
+		List<SearchResultEntry> results = search("(&(objectClass=eduPerson)"
+				+ "(|(weillCornellEduPersonTypeCode=academic)"
+				+ "(weillCornellEduPersonTypeCode=student-phd-weill)"
+				+ "(weillCornellEduPersonTypeCode=student-md-phd-tri-i))"
+				+ "(!(weillCornellEduDepartment=Other))"
+				+ "(!(weillCornellEduDepartment=NOT APPLICABLE))"
+				+ "(!(weillCornellEduDepartment=NA - NA))(weillCornellEduCWID=" + cwid + "))");
+		
+		if (results.size() == 1) {
+			SearchResultEntry entry = results.get(0);
 			if(entry.getAttributeValue("weillCornellEduCWID") != null) {
-				Identity identity = new Identity();
+				identity = new Identity();
 
 				// get cwid and primary title
 				identity.setCwid(entry.getAttributeValue("weillCornellEduCWID"));
@@ -112,11 +118,9 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				education.setBachelorYear(bachelorDegreeYear);
 				education.setDoctoralYear(doctoralDegreeYear);
 				identity.setDegreeYear(education);
-				
-				identities.add(identity);
 			}
 		}
-		return identities;
+		return identity;
 	}
 
 	private List<AuthorName> searchAlternateNames(String cwid, AuthorName primaryName) {

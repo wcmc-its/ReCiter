@@ -1,7 +1,5 @@
 package reciter.service.ldap.impl;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +14,7 @@ public class LdapIdentityServiceImpl implements LdapIdentityService {
 	private LdapIdentityDao ldapIdentityDao;
 
 	@Override
-	public List<Identity> getActiveIdentity() {
-		return ldapIdentityDao.getActiveIdentity();
+	public Identity getIdentity(String cwid) {
+		return ldapIdentityDao.getIdentity(cwid);
 	}
 }
