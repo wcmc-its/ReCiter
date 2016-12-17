@@ -16,13 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import reciter.model.converter.PubMedConverter;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.utils.PubMedConverter;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 @Component("aliasReCiterRetrievalEngine")

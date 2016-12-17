@@ -1,4 +1,4 @@
-package reciter.service.impl;
+package reciter.service.mongo.impl;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.repository.ESearchResultRepository;
-import reciter.service.ESearchResultService;
+import reciter.service.mongo.ESearchResultService;
 
 @Service("eSearchResultService")
 public class ESearchResultServiceImpl implements ESearchResultService {

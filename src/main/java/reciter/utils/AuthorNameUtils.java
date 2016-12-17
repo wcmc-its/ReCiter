@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import reciter.model.converter.PubMedConverter;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;

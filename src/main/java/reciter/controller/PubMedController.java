@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.PubMedService;
+import reciter.service.mongo.PubMedService;
 
 @Controller
 public class PubMedController {

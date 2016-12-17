@@ -1,4 +1,4 @@
-package reciter.service.impl;
+package reciter.service.mongo.impl;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.TrainingData;
 import reciter.database.mongo.repository.TrainingDataRepository;
-import reciter.service.TrainingDataService;
+import reciter.service.mongo.TrainingDataService;
 
 @Service("trainingDataService")
 public class TrainingDataServiceImpl implements TrainingDataService {

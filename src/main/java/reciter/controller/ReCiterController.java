@@ -43,13 +43,13 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
-import reciter.service.ESearchResultService;
-import reciter.service.IdentityService;
-import reciter.service.MeshTermService;
-import reciter.service.PubMedArticleFeatureService;
-import reciter.service.PubMedService;
-import reciter.service.ScopusService;
-import reciter.service.TrainingDataService;
+import reciter.service.mongo.ESearchResultService;
+import reciter.service.mongo.IdentityService;
+import reciter.service.mongo.MeshTermService;
+import reciter.service.mongo.PubMedArticleFeatureService;
+import reciter.service.mongo.PubMedService;
+import reciter.service.mongo.ScopusService;
+import reciter.service.mongo.TrainingDataService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Controller
@@ -67,9 +67,6 @@ public class ReCiterController {
 	
 	@Autowired
 	private ReCiterRetrievalEngine aliasReCiterRetrievalEngine;
-	
-	@Autowired
-	private Engine reCiterEngine;
 	
 	@Autowired
 	private IdentityService identityService;

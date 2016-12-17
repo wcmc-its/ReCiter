@@ -1,4 +1,4 @@
-package reciter.service.impl;
+package reciter.service.mongo.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import reciter.database.mongo.model.IdentityMongo;
 import reciter.database.mongo.repository.IdentityRepository;
 import reciter.model.identity.Identity;
-import reciter.service.IdentityService;
+import reciter.service.mongo.IdentityService;
 
 @Service("identityService")
 public class IdentityServiceImpl implements IdentityService {

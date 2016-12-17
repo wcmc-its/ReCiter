@@ -1,11 +1,11 @@
-package reciter.service.impl;
+package reciter.service.mongo.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.database.mongo.repository.PubMedArticleFeatureRepository;
-import reciter.service.PubMedArticleFeatureService;
+import reciter.service.mongo.PubMedArticleFeatureService;
 
 @Service("pubMedArticleFeatureService")
 public class PubMedArticleFeatureServiceImpl implements PubMedArticleFeatureService {

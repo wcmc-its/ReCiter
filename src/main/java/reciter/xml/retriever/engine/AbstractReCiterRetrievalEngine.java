@@ -7,16 +7,15 @@ import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.ESearchResultService;
-import reciter.service.IdentityService;
-import reciter.service.PubMedService;
-import reciter.service.ScopusService;
+import reciter.service.mongo.ESearchResultService;
+import reciter.service.mongo.IdentityService;
+import reciter.service.mongo.PubMedService;
+import reciter.service.mongo.ScopusService;
 import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
 import reciter.xml.retriever.pubmed.AffiliationRetrievalStrategy;
 import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
@@ -29,18 +28,15 @@ import reciter.xml.retriever.pubmed.PubMedQueryResult;
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
 
 	@Autowired
-	@Qualifier("pubMedServiceWs")
 	protected PubMedService pubMedService;
 
 	@Autowired
 	protected ESearchResultService eSearchResultService;
 
 	@Autowired
-	@Qualifier("scopusServiceWs")
 	protected ScopusService scopusService;
 
 	@Autowired
-	@Qualifier("identityServiceWs")
 	protected IdentityService identityService;
 	
 	@Autowired

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.model.scopus.ScopusArticle;
-import reciter.service.ScopusService;
+import reciter.service.mongo.ScopusService;
 
 @Controller
 public class ScopusController {

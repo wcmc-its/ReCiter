@@ -1,4 +1,4 @@
-package reciter.service;
+package reciter.service.mongo;
 
 import reciter.database.mongo.model.GoldStandard;
 

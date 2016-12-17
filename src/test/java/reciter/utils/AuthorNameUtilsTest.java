@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import reciter.model.converter.PubMedConverter;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.MedlineCitation;

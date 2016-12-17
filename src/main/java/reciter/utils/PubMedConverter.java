@@ -1,4 +1,4 @@
-package reciter.model.converter;
+package reciter.utils;
 
 import reciter.model.identity.AuthorName;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;

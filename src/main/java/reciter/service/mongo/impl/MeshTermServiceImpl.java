@@ -1,4 +1,4 @@
-package reciter.service.impl;
+package reciter.service.mongo.impl;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.MeshTerm;
 import reciter.database.mongo.repository.MeshTermRepository;
-import reciter.service.MeshTermService;
+import reciter.service.mongo.MeshTermService;
 
 @Service("meshTermService")
 public class MeshTermServiceImpl implements MeshTermService {

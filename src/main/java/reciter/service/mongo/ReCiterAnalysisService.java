@@ -1,4 +1,4 @@
-package reciter.service;
+package reciter.service.mongo;
 
 import reciter.engine.erroranalysis.Analysis;
 

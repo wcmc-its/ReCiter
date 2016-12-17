@@ -1,11 +1,11 @@
-package reciter.service.impl;
+package reciter.service.mongo.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.GoldStandard;
 import reciter.database.mongo.repository.GoldStandardRepository;
-import reciter.service.GoldStandardService;
+import reciter.service.mongo.GoldStandardService;
 
 @Service("goldStandardService")
 public class GoldStandardServiceImpl implements GoldStandardService {

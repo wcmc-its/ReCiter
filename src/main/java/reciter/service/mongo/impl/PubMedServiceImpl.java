@@ -1,4 +1,4 @@
-package reciter.service.impl;
+package reciter.service.mongo.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import reciter.database.mongo.model.PubMedArticleMongo;
 import reciter.database.mongo.repository.PubMedRepository;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.PubMedService;
+import reciter.service.mongo.PubMedService;
 
 @Service("pubMedService")
 public class PubMedServiceImpl implements PubMedService {
