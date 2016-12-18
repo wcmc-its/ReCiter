@@ -27,6 +27,8 @@ import org.xml.sax.SAXException;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.pubmed.retriever.PubMedArticleRetriever;
+import reciter.scopus.retriever.ScopusArticleRetriever;
 
 @Configurable
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
@@ -186,13 +188,14 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 
 	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
-		return retrievePubMedViaRest(pubMedQuery, numberOfPubmedArticles);
+		PubMedArticleRetriever pubMedArticleRetriever = new PubMedArticleRetriever();
+		return pubMedArticleRetriever.retrievePubMed(pubMedQuery, numberOfPubmedArticles);
 	}
 
 	@Override
 	public List<ScopusArticle> retrieveScopus(Collection<Long> pmids) {
-		Response<List<ScopusArticle>> response = retrieveScopusViaRest(pmids);
-		return response.getResponse();
+		ScopusArticleRetriever scopusArticleRetriever = new ScopusArticleRetriever();
+		return scopusArticleRetriever.retrieveScopus(new ArrayList<>(pmids));
 	}
 
 	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws IOException {
