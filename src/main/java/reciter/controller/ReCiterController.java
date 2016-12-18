@@ -1,55 +1,41 @@
 package reciter.controller;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import reciter.Cwids;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.model.MeshTerm;
-import reciter.database.mongo.model.PubMedArticleFeature;
+import reciter.database.mongo.model.GoldStandard;
 import reciter.engine.Engine;
 import reciter.engine.EngineParameters;
-import reciter.engine.Feature;
 import reciter.engine.ReCiterEngine;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.model.scopus.ScopusArticle;
+import reciter.service.mongo.AnalysisService;
 import reciter.service.mongo.ESearchResultService;
+import reciter.service.mongo.GoldStandardService;
 import reciter.service.mongo.IdentityService;
 import reciter.service.mongo.MeshTermService;
 import reciter.service.mongo.PubMedArticleFeatureService;
 import reciter.service.mongo.PubMedService;
 import reciter.service.mongo.ScopusService;
-import reciter.service.mongo.TrainingDataService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Controller
@@ -58,27 +44,104 @@ public class ReCiterController {
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterController.class);
 
 	private final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-	
+
 	@Autowired
 	private ESearchResultService eSearchResultService;
 
 	@Autowired
 	private PubMedService pubMedService;
-	
+
 	@Autowired
 	private ReCiterRetrievalEngine aliasReCiterRetrievalEngine;
-	
+
 	@Autowired
 	private IdentityService identityService;
-	
+
 	@Autowired
 	private ScopusService scopusService;
-	
+
 	@Autowired
 	private MeshTermService meshTermService;
-	
+
 	@Autowired
 	private PubMedArticleFeatureService pubMedArticleFeatureService;
-	
 
+	@Autowired
+	private GoldStandardService goldStandardService;
+	
+	@Autowired
+	private AnalysisService analysisService;
+
+	@RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveArticles() {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		int i = 0;
+		List<Identity> identities = new ArrayList<>();
+		for (String cwid : Cwids.cwids) {
+			slf4jLogger.info("Starting retrieval for : " + i + ", " + cwid);
+			i++;
+			Identity identity = identityService.findByCwid(cwid);
+			identities.add(identity);
+		}
+		try {
+			aliasReCiterRetrievalEngine.retrieve(identities);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		slf4jLogger.info("elapsed time: " + estimatedTime);
+	}
+
+	@RequestMapping(value = "/reciter/all/analysis/", method = RequestMethod.GET)
+	@ResponseBody
+	public String runAllAnalysis() {
+		for (String cwid : Cwids.cwids) {
+			runAnalysis(cwid);
+		}
+		return "Success";
+	}
+	
+	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
+
+		Identity identity = identityService.findByCwid(cwid);
+		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
+		Set<Long> pmids = new HashSet<Long>();
+		for (ESearchResult eSearchResult : eSearchResults) {
+			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
+		}
+		List<Long> pmidList = new ArrayList<Long>(pmids);
+		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(pmidList);
+		//		List<ScopusArticle> scopusArticles = scopusService.findByPubmedId(pmidList);
+		//		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
+		//		for (ScopusArticle scopusArticle : scopusArticles) {
+		//			map.put(scopusArticle.getPubmedId(), scopusArticle);
+		//		}
+		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		for (PubMedArticle pubMedArticle : pubMedArticles) {
+			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+			//			if (map.containsKey(pmid)) {
+			//				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
+			//			} else {
+			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+			//			}
+		}
+		EngineParameters parameters = new EngineParameters();
+		parameters.setIdentity(identity);
+		parameters.setPubMedArticles(pubMedArticles);
+		parameters.setScopusArticles(Collections.emptyList());
+
+		GoldStandard goldStandard = goldStandardService.findByCwid(cwid);
+		parameters.setKnownPmids(goldStandard.getKnownPmids());
+		Engine engine = new ReCiterEngine();
+		Analysis analysis = engine.run(parameters);
+
+		slf4jLogger.info(analysis.toString());
+		analysisService.save(analysis, cwid);
+		return analysis;
+	}
 }

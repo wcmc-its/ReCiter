@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +32,40 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
 
+	private class AsyncRetrievalEngine extends Thread {
+
+		private final Identity identity;
+		
+		public AsyncRetrievalEngine(Identity identity) {
+			this.identity = identity;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				retrieveData(identity);
+			} catch (IOException e) {
+				slf4jLogger.error("Unabled to retrieve. " + identity.getCwid(), e);
+			}
+		}
+	}
+	
 	@Override
-	public Set<Long> retrieve(Identity identity) throws IOException {
+	public void retrieve(List<Identity> identities) throws IOException {
+		ExecutorService executorService = Executors.newFixedThreadPool(5);
+		for (Identity identity : identities) {
+			executorService.execute(new AsyncRetrievalEngine(identity));
+		}
+		executorService.shutdown();
+	}
+	
+	@Override
+	public void retrieve(Identity identity) throws IOException {
+		AsyncRetrievalEngine engine = new AsyncRetrievalEngine(identity);
+		engine.run();
+	}
+	
+	private Set<Long> retrieveData(Identity identity) throws IOException {
 		Set<Long> uniquePmids = new HashSet<Long>();
 		
 		String cwid = identity.getCwid();
@@ -90,12 +124,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		scopusService.save(scopusArticles);
-		
+		slf4jLogger.info("Finished retrieval for cwid: " + identity.getCwid());
 		return uniquePmids;
 	}
 	
 	@Override
-	public Set<Long> retrieveArticlesByDateRange(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
+	public void retrieveArticlesByDateRange(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
 		Set<Long> uniquePmids = new HashSet<Long>();
 		
 		String cwid = identity.getCwid();
@@ -155,7 +189,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		scopusService.save(scopusArticles);
 		
-		return uniquePmids;
+//		return uniquePmids;
 	}
 	
 	private Map<Long, AuthorName> calculatePotentialAlias(Identity identity, Collection<PubMedArticle> emailPubMedArticles) {
@@ -205,4 +239,5 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}
 		return aliasSet;
 	}
+
 }

@@ -46,4 +46,5 @@ public class LdapIdentityController {
 		}
 		return "OK";
 	}
+	
 }

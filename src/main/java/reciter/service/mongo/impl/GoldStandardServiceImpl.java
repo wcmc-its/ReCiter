@@ -17,6 +17,9 @@ public class GoldStandardServiceImpl implements GoldStandardService {
 	public void save(GoldStandard goldStandard) {
 		goldStandardRepository.save(goldStandard);
 	}
-	
-	
+
+	@Override
+	public GoldStandard findByCwid(String cwid) {
+		return goldStandardRepository.findOne(cwid);
+	}
 }

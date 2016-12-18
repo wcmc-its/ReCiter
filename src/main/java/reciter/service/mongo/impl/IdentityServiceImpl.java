@@ -48,4 +48,10 @@ public class IdentityServiceImpl implements IdentityService {
 		}
 		return identities;
 	}
+
+	@Override
+	public Identity findByCwid(String cwid) {
+		IdentityMongo identityMongo = identityRepository.findOne(cwid);
+		return identityMongo.getIdentity();
+	}
 }

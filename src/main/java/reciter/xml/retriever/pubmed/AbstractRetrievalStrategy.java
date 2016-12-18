@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +30,14 @@ import reciter.model.scopus.ScopusArticle;
 
 @Configurable
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
+
+	private static final String nodeUrlBegin = "https://reciter-pubmed-retrieval-";
+	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
+	private static final int nodeSize = 7;
+
+	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
+	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
+	private static final int scopusNodeSize = 3;
 
 	public static class RetrievalResult {
 		private final Map<Long, PubMedArticle> pubMedArticles;
@@ -126,6 +135,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				}
 			} else {
 				List<PubMedArticle> result = retrievePubMed(encodedInitialQuery, handler.getCount());
+				slf4jLogger.info("result=[" + result + "]");
 				for (PubMedArticle pubMedArticle : result) {
 					long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
 					if (!pubMedArticles.containsKey(pmid)) {
@@ -144,14 +154,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return new RetrievalResult(pubMedArticles, pubMedQueryResults);
 	}
 
-	private static final String nodeUrlBegin = "https://reciter-pubmed-retrieval-";
-	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
-	private static final int nodeSize = 2;
-
-	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
-	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
-	private static final int scopusNodeSize = 3;
-
 	/**
 	 * Randomly select a node.
 	 * @return
@@ -169,7 +171,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private class Response<T> {
 		private final boolean shouldRetrieve;
 		private final T response;
-		
+
 		public Response(boolean shouldRetrieve, T response) {
 			this.shouldRetrieve = shouldRetrieve;
 			this.response = response;
@@ -181,11 +183,10 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			return response;
 		}
 	}
-	
+
 
 	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
-		Response<List<PubMedArticle>> response = retrievePubMedViaRest(pubMedQuery, numberOfPubmedArticles);
-		return response.getResponse();
+		return retrievePubMedViaRest(pubMedQuery, numberOfPubmedArticles);
 	}
 
 	@Override
@@ -193,7 +194,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		Response<List<ScopusArticle>> response = retrieveScopusViaRest(pmids);
 		return response.getResponse();
 	}
-	
+
 	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws IOException {
 		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
 		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
@@ -207,23 +208,29 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		return pubmedESearchHandler;
 	}
-	
-	private Response<List<PubMedArticle>> retrievePubMedViaRest(String pubMedQuery, int numberOfPubmedArticles) {
+
+	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery, int numberOfPubmedArticles) {
 		if (numberOfPubmedArticles == 0) {
-			return new Response<List<PubMedArticle>>(false, null);
+			return Collections.emptyList();
 		}
 		String nodeUrl = loadBalance();
 		nodeUrl += "query=" + pubMedQuery + "&numberOfPubmedArticles=" + numberOfPubmedArticles;
 		RestTemplate restTemplate = new RestTemplate();
-		try {
-			slf4jLogger.info("Sending web request: " + nodeUrl);
-			ResponseEntity<PubMedArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
-			PubMedArticle[] pubMedArticles = responseEntity.getBody();
-			return new Response<List<PubMedArticle>>(false, Arrays.asList(pubMedArticles));
-		} catch (Exception e) {
-			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
-			return new Response<List<PubMedArticle>>(true, null);
+		slf4jLogger.info("Sending web request: " + nodeUrl);
+		int currentTry = 1;
+		boolean success = false;
+		ResponseEntity<PubMedArticle[]> responseEntity = null;
+		while (currentTry <= 5 && !success) {
+			try {
+				responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
+				success = true;
+			} catch (Exception e) {
+				slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "], retrying: " + currentTry, e);
+				currentTry++;
+			}
 		}
+		PubMedArticle[] pubMedArticles = responseEntity.getBody();
+		return Arrays.asList(pubMedArticles);
 	}
 
 	private Response<List<ScopusArticle>> retrieveScopusViaRest(Collection<Long> pmids) {

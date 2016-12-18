@@ -10,19 +10,18 @@ public class GoldStandard {
 	
 	@Id
 	private String id;
-	private String cwid;
-	private List<Long> pmids;
+	private List<Long> knownPmids;
 	
-	public String getCwid() {
-		return cwid;
+	public String getId() {
+		return id;
 	}
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setId(String id) {
+		this.id = id;
 	}
-	public List<Long> getPmids() {
-		return pmids;
+	public List<Long> getKnownPmids() {
+		return knownPmids;
 	}
-	public void setPmids(List<Long> pmids) {
-		this.pmids = pmids;
+	public void setKnownPmids(List<Long> knownPmids) {
+		this.knownPmids = knownPmids;
 	}
 }

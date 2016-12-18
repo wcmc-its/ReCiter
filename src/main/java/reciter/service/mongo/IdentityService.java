@@ -12,4 +12,6 @@ public interface IdentityService {
 	void save(Identity identity);
 	
 	List<Identity> findByCwids(List<String> cwids);
+	
+	Identity findByCwid(String cwid);
 }
