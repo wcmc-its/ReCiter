@@ -5,7 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,10 +108,9 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 
 	@Override
 	public List<String> getInstitutions(String cwid) {
-		List<String> affiliations = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
-			return affiliations;
+			return Collections.emptyList();
 		}
 		ResultSet rs = null;
 		PreparedStatement pst = null;
@@ -129,7 +131,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
                 + "join OFA_DB.INSTITUTE i on i.institute_PK = d.institute_FK "
                 + "left join OFA_DB.DEGREE_NAME n on n.DEGREE_NAME_PK = d.degree_name_fk " 
                 + "where cwid is not null and cwid <> '0' and cwid = ?";
-
+		Set<String> distinctInstitutions = new HashSet<String>();
 		try {
 			pst = connection.prepareStatement(sql);
 			pst.setString(1, cwid);
@@ -137,7 +139,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 			pst.setString(3, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
-				affiliations.add(rs.getString(2));
+				distinctInstitutions.add(rs.getString(2));
 			}
 		} catch(SQLException e) {
 			slf4jLogger.error("Exception occured in query=" + sql, e);
@@ -151,7 +153,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				slf4jLogger.error("Unabled to close connection to Oracle DB.", e);
 			}
 		}
-		return affiliations;
+		return new ArrayList<>(distinctInstitutions);
 	}
 
 	@Override
