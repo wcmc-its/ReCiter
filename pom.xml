@@ -83,4 +83,16 @@
 			<version>12.1.0.1</version>
 		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>wcmc-its</id>
+			<name>ReCiter-Maven-Repository</name>
+			<url>https://github.com/wcmc-its/ReCiter-Maven-Repository/raw/master/snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 </project>
