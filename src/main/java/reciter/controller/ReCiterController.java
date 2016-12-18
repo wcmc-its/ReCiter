@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -28,6 +30,7 @@ import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.model.scopus.ScopusArticle;
 import reciter.service.mongo.AnalysisService;
 import reciter.service.mongo.ESearchResultService;
 import reciter.service.mongo.GoldStandardService;
@@ -68,7 +71,7 @@ public class ReCiterController {
 
 	@Autowired
 	private GoldStandardService goldStandardService;
-	
+
 	@Autowired
 	private AnalysisService analysisService;
 
@@ -103,33 +106,51 @@ public class ReCiterController {
 		}
 		return "Success";
 	}
-	
+
 	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
 	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
 
+		// find identity
 		Identity identity = identityService.findByCwid(cwid);
+		
+		// find search results for this identity
 		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
-		Set<Long> pmids = new HashSet<Long>();
+		Set<Long> pmids = new HashSet<>();
 		for (ESearchResult eSearchResult : eSearchResults) {
 			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
 		}
-		List<Long> pmidList = new ArrayList<Long>(pmids);
-		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(pmidList);
-		//		List<ScopusArticle> scopusArticles = scopusService.findByPubmedId(pmidList);
-		//		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
-		//		for (ScopusArticle scopusArticle : scopusArticles) {
-		//			map.put(scopusArticle.getPubmedId(), scopusArticle);
-		//		}
-		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		
+		// create a list of pmids to pass to search
+		List<Long> pmidList = new ArrayList<>(pmids);
+		List<Long> filtered = new ArrayList<>();
+		for (long pmid : pmidList) {
+			if (pmid <= 27090613) {
+				filtered.add(pmid);
+			}
+ 		}
+		
+		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
+		List<ScopusArticle> scopusArticles = scopusService.findByPmids(filtered);
+		
+		// create temporary map to retrieve Scopus articles by PMID (at the stage below)
+		Map<Long, ScopusArticle> map = new HashMap<>();
+		for (ScopusArticle scopusArticle : scopusArticles) {
+			map.put(scopusArticle.getPubmedId(), scopusArticle);
+		}
+		
+		// combine PubMed and Scopus articles into a list of ReCiterArticle
+		List<ReCiterArticle> reCiterArticles = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
-			//			if (map.containsKey(pmid)) {
-			//				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
-			//			} else {
-			reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
-			//			}
+			if (map.containsKey(pmid)) {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
+			} else {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+			}
 		}
+		
+		// calculate precision and recall
 		EngineParameters parameters = new EngineParameters();
 		parameters.setIdentity(identity);
 		parameters.setPubMedArticles(pubMedArticles);
