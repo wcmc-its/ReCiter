@@ -14,7 +14,7 @@ public class Identity {
 	private String title; // title of the person
 	private List<String> institutions; // institutions
 	private Education degreeYear; // degreeYear
-	private String personType; // type of person: i.e., academic, academic-faculty, etc...
+	private List<String> personTypes; // type of person: i.e., academic, academic-faculty, etc...
 	private String program; // program the person is in.
 	private List<String> boardCertifications; // board certifications
 	private String citizenship; // citizenship
@@ -98,12 +98,12 @@ public class Identity {
 		this.degreeYear = degreeYear;
 	}
 
-	public String getPersonType() {
-		return personType;
+	public List<String> getPersonTypes() {
+		return personTypes;
 	}
 
-	public void setPersonType(String personType) {
-		this.personType = personType;
+	public void setPersonTypes(List<String> personTypes) {
+		this.personTypes = personTypes;
 	}
 
 	public String getProgram() {

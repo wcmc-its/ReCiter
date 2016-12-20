@@ -3,7 +3,6 @@ package reciter.database.ldap.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -100,10 +99,14 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				}
 
 				// get person type code
-				String personTypeCode = entry.getAttributeValue("weillCornellEduPersonTypeCode");
-				if (personTypeCode != null && !personTypeCode.isEmpty()) {
-					identity.setPersonType(personTypeCode);
+				String[] personTypeCode = entry.getAttributeValues("weillCornellEduPersonTypeCode");
+				List<String> personTypes = new ArrayList<>();
+				if (personTypeCode != null && personTypeCode.length != 0) {
+					for (String personType : personTypeCode) {
+						personTypes.add(personType);
+					}
 				}
+				identity.setPersonTypes(personTypes);
 				
 				// person type 'students': get the program as well and map to departments
 				if ("student-phd-weill".equals(personTypeCode) || "student-md-phd-tri-i".equals(personTypeCode)) {
@@ -130,9 +133,19 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				identity.setGrants(grants);
 				
 				//List of relationship name from ED
-				List<String> relationshipCwid = oracleIdentityDao.getRelationship(identity.getCwid());
-				List<KnownRelationship> relationships = new ArrayList<>(getRelationshipNamefromEd(identity.getPersonType(), relationshipCwid));
-				identity.setKnownRelationships(relationships);
+				List<String> knownRelationshipCwids = oracleIdentityDao.getRelationshipCwids(identity.getCwid());
+				List<KnownRelationship> knownRelationships = new ArrayList<>();
+				for (String relationshipCwid : knownRelationshipCwids) {
+					AuthorName authorName = searchByCwid(relationshipCwid);
+					if (authorName != null) {
+						KnownRelationship knownRelationship = new KnownRelationship();
+						knownRelationship.setCwid(relationshipCwid);
+						knownRelationship.setName(authorName);
+						knownRelationship.setType("co-investigator");
+						knownRelationships.add(knownRelationship);
+					}
+				}
+				identity.setKnownRelationships(knownRelationships);
 			}
 		}
 		return identity;
@@ -182,28 +195,25 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 
 	}
 	
-	private Set<KnownRelationship> getRelationshipNamefromEd(String personTypeCode, List<String> relationships) {
-		Set<KnownRelationship> knownRelationships = new HashSet<>();
-		Iterator<String> it = relationships.iterator();
-		while(it.hasNext()) {
-			String filter = "(&(objectClass=eduPerson)"
-						  + "(weillCornellEduCWID=" + it.next() + "))";
-			List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=people,dc=weill,dc=cornell,dc=edu");
-			for (SearchResultEntry entry : results) {
-				if(entry.getAttributeValue("weillCornellEduCWID") != null && !entry.getAttributeValue("weillCornellEduCWID").isEmpty()) {
-					KnownRelationship relationship = new KnownRelationship();
-					relationship.setName(new AuthorName(entry.getAttributeValue("givenName"),
-														entry.getAttributeValue("weillCornellEduMiddleName"),
-														entry.getAttributeValue("sn").replace("- M.D.", "")));
-						relationship.setType("co-investigator");
-					
-					knownRelationships.add(relationship);
-				}
+	/**
+	 * Search LDAP to retrieve name for a given cwid.
+	 * 
+	 * @param cwid
+	 * 
+	 * @return AuthorName if found, otherwise null.
+	 */
+	private AuthorName searchByCwid(String cwid) {
+		String filter = "(&(objectClass=eduPerson)" + "(weillCornellEduCWID=" + cwid + "))";
+		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=people,dc=weill,dc=cornell,dc=edu");
+		if (results != null && !results.isEmpty()) {
+			SearchResultEntry entry = results.get(0);
+			if(entry.getAttributeValue("weillCornellEduCWID") != null && !entry.getAttributeValue("weillCornellEduCWID").isEmpty()) {
+				return new AuthorName(entry.getAttributeValue("givenName"),
+						entry.getAttributeValue("weillCornellEduMiddleName"),
+						entry.getAttributeValue("sn").replace("- M.D.", ""));
 			}
 		}
-		return knownRelationships;
-		
-		
+		return null;
 	}
 
 	/**

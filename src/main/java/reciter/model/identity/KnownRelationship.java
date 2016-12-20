@@ -2,9 +2,16 @@ package reciter.model.identity;
 
 public class KnownRelationship {
 
+	private String cwid;
 	private AuthorName name;
 	private String type;
 	
+	public String getCwid() {
+		return cwid;
+	}
+	public void setCwid(String cwid) {
+		this.cwid = cwid;
+	}
 	public AuthorName getName() {
 		return name;
 	}

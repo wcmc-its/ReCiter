@@ -15,10 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
 import reciter.database.oracle.OracleConnectionFactory;
 import reciter.database.oracle.OracleIdentityDao;
-import reciter.model.identity.Grant;
 
 @Repository("oracleIdentityDao")
 public class OracleIdentityDaoImpl implements OracleIdentityDao {
@@ -227,8 +225,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 			}
 		} catch(SQLException e) {
 			slf4jLogger.error("Exception occured in query=" + sql, e);
-		}
-		finally {
+		} finally {
 			try {
 				rs.close();
 				pst.close();
@@ -241,7 +238,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getRelationship(String cwid) {
+	public List<String> getRelationshipCwids(String cwid) {
 		
 		List<String> relationships = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
@@ -271,8 +268,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 			}
 		} catch(SQLException e) {
 			slf4jLogger.error("Exception occured in query=" + sql, e);
-		}
-		finally {
+		} finally {
 			try {
 				rs.close();
 				pst.close();
