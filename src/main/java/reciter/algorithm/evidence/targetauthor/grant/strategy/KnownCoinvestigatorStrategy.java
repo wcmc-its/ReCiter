@@ -8,21 +8,21 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.model.identity.KnownRelationship;
 
 public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double score = 0;
-//		List<AuthorName> authorNames = identity.getGrantCoauthors();
-		List<AuthorName> authorNames = identity.getKnownRelationships();
+		List<KnownRelationship> relationships = identity.getKnownRelationships();
 
-		if (authorNames != null) {
+		if (relationships != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				// do not match target author's name
 				if (!author.getAuthorName().firstInitialLastNameMatch(identity.getPrimaryName())) {
-					for (AuthorName authorName : authorNames) {
-						if (authorName.isFullNameMatch(author.getAuthorName())) {
+					for (KnownRelationship authorName : relationships) {
+						if (authorName.getName().isFullNameMatch(author.getAuthorName())) {
 							reCiterArticle.getKnownRelationships().add(author);
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known co-investigator match: " + 
 									authorName + "] ");
@@ -48,14 +48,14 @@ public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
 		int score = 0;
-		List<AuthorName> authorNames = identity.getKnownRelationships();
+		List<KnownRelationship> relationships = identity.getKnownRelationships();
 
-		if (authorNames != null) {
+		if (relationships != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				// do not match target author's name
 				if (!author.getAuthorName().firstInitialLastNameMatch(identity.getPrimaryName())) {
-					for (AuthorName authorName : authorNames) {
-						if (authorName.isFullNameMatch(author.getAuthorName())) {
+					for (KnownRelationship authorName : relationships) {
+						if (authorName.getName().isFullNameMatch(author.getAuthorName())) {
 							score += 1;
 						}
 					}

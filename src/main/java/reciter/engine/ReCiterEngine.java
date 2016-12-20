@@ -45,12 +45,30 @@ public class ReCiterEngine implements Engine {
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngine.class);
 	
 	@Override
-	public List<Feature> generateFeature(Identity identity, List<ReCiterArticle> reCiterArticleList) {
+	public List<Feature> generateFeature(EngineParameters parameters) {
 		
-		Analysis.assignGoldStandard(reCiterArticleList, identity.getKnownPmids());
+		Identity identity = parameters.getIdentity();
+		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
+		List<ScopusArticle> scopusArticles = parameters.getScopusArticles();
+		
+		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
+		for (ScopusArticle scopusArticle : scopusArticles) {
+			map.put(scopusArticle.getPubmedId(), scopusArticle);
+		}
+		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		for (PubMedArticle pubMedArticle : pubMedArticles) {
+			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+			if (map.containsKey(pmid)) {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
+			} else {
+				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+			}
+		}
+		
+		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids());
 		
 		List<Feature> features = new ArrayList<Feature>();
-		for (ReCiterArticle reCiterArticle : reCiterArticleList) {
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			Feature feature = new Feature();
 			feature.setPmid(reCiterArticle.getArticleId());
 			feature.setIsGoldStandard(reCiterArticle.getGoldStandard());

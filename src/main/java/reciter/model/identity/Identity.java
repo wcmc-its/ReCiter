@@ -1,7 +1,6 @@
 package reciter.model.identity;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 public class Identity {
@@ -10,14 +9,13 @@ public class Identity {
 	private AuthorName primaryName; // primary name of the user
 	private List<AuthorName> alternateNames; // aliases
 	private List<String> emails; // list of emails
-	private List<AuthorName> knownRelationships; // known relationships
+	private List<KnownRelationship> knownRelationships; // known relationships
 	private List<String> departments; // list of department
 	private String title; // title of the person
 	private List<String> institutions; // institutions
 	private Education degreeYear; // degreeYear
 	private String personType; // type of person: i.e., academic, academic-faculty, etc...
 	private String program; // program the person is in.
-	private List<Long> knownPmids; // known pmids.
 	private List<String> boardCertifications; // board certifications
 	private String citizenship; // citizenship
 	private List<Grant> grants; // grants
@@ -60,11 +58,11 @@ public class Identity {
 		this.emails = emails;
 	}
 
-	public List<AuthorName> getKnownRelationships() {
+	public List<KnownRelationship> getKnownRelationships() {
 		return knownRelationships;
 	}
 
-	public void setKnownRelationships(List<AuthorName> knownRelationships) {
+	public void setKnownRelationships(List<KnownRelationship> knownRelationships) {
 		this.knownRelationships = knownRelationships;
 	}
 
@@ -116,14 +114,6 @@ public class Identity {
 		this.program = program;
 	}
 
-	public List<Long> getKnownPmids() {
-		return knownPmids;
-	}
-
-	public void setKnownPmids(List<Long> knownPmids) {
-		this.knownPmids = knownPmids;
-	}
-
 	public List<String> getBoardCertifications() {
 		return boardCertifications;
 	}
@@ -157,9 +147,6 @@ public class Identity {
 	}
 
 	public List<PubMedAlias> getPubMedAlias() {
-		if (pubMedAlias == null) {
-			return Collections.emptyList();
-		}
 		return pubMedAlias;
 	}
 
@@ -182,5 +169,4 @@ public class Identity {
 	public void setDateLastRun(LocalDateTime dateLastRun) {
 		this.dateLastRun = dateLastRun;
 	}
-	
 }
