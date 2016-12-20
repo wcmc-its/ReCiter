@@ -187,9 +187,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		Iterator<String> it = relationships.iterator();
 		while(it.hasNext()) {
 			String filter = "(&(objectClass=eduPerson)"
-					+ "(|(weillCornellEduPersonTypeCode=academic)"
-					+ "(weillCornellEduPersonTypeCode=student-phd-weill)"
-					+ "(weillCornellEduPersonTypeCode=student-md-phd-tri-i))(weillCornellEduCWID=" + it.next() + "))";
+						  + "(weillCornellEduCWID=" + it.next() + "))";
 			List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=people,dc=weill,dc=cornell,dc=edu");
 			for (SearchResultEntry entry : results) {
 				if(entry.getAttributeValue("weillCornellEduCWID") != null && !entry.getAttributeValue("weillCornellEduCWID").isEmpty()) {
@@ -197,11 +195,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 					relationship.setName(new AuthorName(entry.getAttributeValue("givenName"),
 														entry.getAttributeValue("weillCornellEduMiddleName"),
 														entry.getAttributeValue("sn").replace("- M.D.", "")));
-					
-					if(entry.getAttributeValue("weillCornellEduPersonTypeCode").equals("academic"))
 						relationship.setType("co-investigator");
-					else
-						relationship.setType("advisor");
 					
 					knownRelationships.add(relationship);
 				}
