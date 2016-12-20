@@ -3,6 +3,7 @@ package reciter.database.ldap.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -26,6 +27,7 @@ import reciter.database.oracle.OracleIdentityDao;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Education;
 import reciter.model.identity.Identity;
+import reciter.model.identity.KnownRelationship;
 
 @Repository("ldapIdentityDao")
 public class LdapIdentityDaoImpl implements LdapIdentityDao {
@@ -65,7 +67,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				AuthorName primaryName = new AuthorName(
 						entry.getAttributeValue("givenName"),
 						entry.getAttributeValue("weillCornellEduMiddleName"),
-						entry.getAttributeValue("sn"));
+						entry.getAttributeValue("sn").replace("- M.D.", "")); //Added fix for some surnames having degree in their surnames - M.D.
 				identity.setPrimaryName(primaryName);
 
 				// get alternative names for Author Name
@@ -122,6 +124,15 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				education.setBachelorYear(bachelorDegreeYear);
 				education.setDoctoralYear(doctoralDegreeYear);
 				identity.setDegreeYear(education);
+				
+				//List of grants
+				List<String> grants = oracleIdentityDao.getGrants(identity.getCwid());
+				identity.setGrants(grants);
+				
+				//List of relationship name from ED
+				List<String> relationshipCwid = oracleIdentityDao.getRelationship(identity.getCwid());
+				List<KnownRelationship> relationships = new ArrayList<>(getRelationshipNamefromEd(identity.getPersonType(), relationshipCwid));
+				identity.setKnownRelationships(relationships);
 			}
 		}
 		return identity;
@@ -136,7 +147,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 			AuthorName authorName = new AuthorName(
 					entry.getAttributeValue("givenName"),
 					entry.getAttributeValue("weillCornellEduMiddleName"),
-					entry.getAttributeValue("sn"));
+					entry.getAttributeValue("sn").replace("- M.D.", "")); //Added fix for some surnames having degree in their surnames - M.D.
 			if (!primaryName.equals(authorName)) {
 				alternateNames.add(authorName);
 			}
@@ -169,6 +180,36 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		}
 		return departments;
 
+	}
+	
+	private Set<KnownRelationship> getRelationshipNamefromEd(String personTypeCode, List<String> relationships) {
+		Set<KnownRelationship> knownRelationships = new HashSet<>();
+		Iterator<String> it = relationships.iterator();
+		while(it.hasNext()) {
+			String filter = "(&(objectClass=eduPerson)"
+					+ "(|(weillCornellEduPersonTypeCode=academic)"
+					+ "(weillCornellEduPersonTypeCode=student-phd-weill)"
+					+ "(weillCornellEduPersonTypeCode=student-md-phd-tri-i))(weillCornellEduCWID=" + it.next() + "))";
+			List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=people,dc=weill,dc=cornell,dc=edu");
+			for (SearchResultEntry entry : results) {
+				if(entry.getAttributeValue("weillCornellEduCWID") != null && !entry.getAttributeValue("weillCornellEduCWID").isEmpty()) {
+					KnownRelationship relationship = new KnownRelationship();
+					relationship.setName(new AuthorName(entry.getAttributeValue("givenName"),
+														entry.getAttributeValue("weillCornellEduMiddleName"),
+														entry.getAttributeValue("sn").replace("- M.D.", "")));
+					
+					if(entry.getAttributeValue("weillCornellEduPersonTypeCode").equals("academic"))
+						relationship.setType("co-investigator");
+					else
+						relationship.setType("advisor");
+					
+					knownRelationships.add(relationship);
+				}
+			}
+		}
+		return knownRelationships;
+		
+		
 	}
 
 	/**

@@ -15,8 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
 import reciter.database.oracle.OracleConnectionFactory;
 import reciter.database.oracle.OracleIdentityDao;
+import reciter.model.identity.Grant;
 
 @Repository("oracleIdentityDao")
 public class OracleIdentityDaoImpl implements OracleIdentityDao {
@@ -199,6 +201,87 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 			}
 		}
 		return emails;
+	}
+
+	@Override
+	public List<String> getGrants(String cwid) {
+		
+		List<String> grants = new ArrayList<String>();
+		Connection connection = oracleConnectionFactory.createConnection();
+		if (connection == null) {
+			return grants;
+		}
+		ResultSet rs = null;
+		PreparedStatement pst = null;
+		String sql = "select distinct cwid, " 
+				   + "substr(substr(replace(sponsor_award_number,'  ',' '),1,INSTR(replace(sponsor_award_number,'  ',' '),'-')-1),7,8) AS awardNumber "
+				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO "
+				   + "where sponsor_type_code = '0' and "
+				   + "substr(sponsor_award_number,2,1) = ' ' and cwid = ?";
+		try {
+			pst = connection.prepareStatement(sql);
+			pst.setString(1, cwid);
+			rs = pst.executeQuery();
+			while(rs.next()) {
+				grants.add(rs.getString(2));
+			}
+		} catch(SQLException e) {
+			slf4jLogger.error("Exception occured in query=" + sql, e);
+		}
+		finally {
+			try {
+				rs.close();
+				pst.close();
+				connection.close();;
+			} catch(SQLException e) {
+				slf4jLogger.error("Unabled to close connection to Oracle DB.", e);
+			}
+		}
+		return grants;
+	}
+
+	@Override
+	public List<String> getRelationship(String cwid) {
+		
+		List<String> relationships = new ArrayList<String>();
+		Connection connection = oracleConnectionFactory.createConnection();
+		if (connection == null) {
+			return relationships;
+		}
+		ResultSet rs = null;
+		PreparedStatement pst = null;
+		String sql = "select distinct cwid AS targetCWID, C2.relationshipCWID "
+				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO C1 "
+				   + "left join (select distinct " 
+				   + "cwid AS relationshipCWID, " 
+				   + "award_number AS awardNumber2 "
+				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO "
+				   + "where  award_number not in ('003152-001','005927-001') "
+				   + ")  C2 "
+				   + "on award_number = C2.awardNumber2 " 
+				   + "where relationshipCWID is not null "
+				   + "and relationshipCWID <> cwid " 
+				   + "and award_number not in ('003152-001','005927-001') and cwid = ?";
+		try {
+			pst = connection.prepareStatement(sql);
+			pst.setString(1, cwid);
+			rs = pst.executeQuery();
+			while(rs.next()) {
+				relationships.add(rs.getString(2));
+			}
+		} catch(SQLException e) {
+			slf4jLogger.error("Exception occured in query=" + sql, e);
+		}
+		finally {
+			try {
+				rs.close();
+				pst.close();
+				connection.close();;
+			} catch(SQLException e) {
+				slf4jLogger.error("Unabled to close connection to Oracle DB.", e);
+			}
+		}
+		return relationships;
 	}
 
 }
