@@ -18,7 +18,7 @@ public class Identity {
 	private String program; // program the person is in.
 	private List<String> boardCertifications; // board certifications
 	private String citizenship; // citizenship
-	private List<Grant> grants; // grants
+	private List<String> grants; // grants
 	private List<String> keywords; // keywords
 	private List<PubMedAlias> pubMedAlias; // name alias from PubMed
 	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
@@ -130,11 +130,11 @@ public class Identity {
 		this.citizenship = citizenship;
 	}
 
-	public List<Grant> getGrants() {
+	public List<String> getGrants() {
 		return grants;
 	}
 
-	public void setGrants(List<Grant> grants) {
+	public void setGrants(List<String> grants) {
 		this.grants = grants;
 	}
 
