@@ -24,4 +24,8 @@ public class KnownRelationship {
 	public void setType(String type) {
 		this.type = type;
 	}
+	@Override
+	public String toString() {
+		return "KnownRelationship [cwid=" + cwid + ", name=" + name + ", type=" + type + "]";
+	}
 }

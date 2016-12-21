@@ -28,6 +28,7 @@ import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.pubmed.retriever.PubMedArticleRetriever;
+import reciter.pubmed.xmlparser.PubmedESearchHandler;
 import reciter.scopus.retriever.ScopusArticleRetriever;
 
 @Configurable

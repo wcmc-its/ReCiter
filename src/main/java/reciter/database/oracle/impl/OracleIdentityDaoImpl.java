@@ -221,7 +221,10 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 			pst.setString(1, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
-				grants.add(rs.getString(2));
+				String grantId = rs.getString(2);
+				if (grantId != null) {
+					grants.add(rs.getString(2));
+				}
 			}
 		} catch(SQLException e) {
 			slf4jLogger.error("Exception occured in query=" + sql, e);

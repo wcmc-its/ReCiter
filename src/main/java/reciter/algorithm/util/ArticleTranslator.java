@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
+import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleKeywords;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
@@ -19,6 +20,7 @@ import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.identity.AuthorName;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.MedlineCitationCommentsCorrections;
+import reciter.model.pubmed.MedlineCitationGrant;
 import reciter.model.pubmed.MedlineCitationKeyword;
 import reciter.model.pubmed.MedlineCitationKeywordList;
 import reciter.model.pubmed.MedlineCitationMeshHeading;
@@ -201,11 +203,20 @@ public class ArticleTranslator {
 		}
 		reCiterArticle.setScopusArticle(scopusArticle);
 
-		//		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlineCitation().getArticle().getGrantList();
-
-		//		for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
-		//			
-		//		}
+		// Grant lists
+		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlineCitation().getArticle().getGrantList();
+		List<ReCiterArticleGrant> reCiterArticleGrants = new ArrayList<>();
+		if (medlineCitationGrants != null) {
+			for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
+				ReCiterArticleGrant reCiterArticleGrant = new ReCiterArticleGrant();
+				reCiterArticleGrant.setAcronym(medlineCitationGrant.getAcronym());
+				reCiterArticleGrant.setAgency(medlineCitationGrant.getAgency());
+				reCiterArticleGrant.setCountry(medlineCitationGrant.getCountry());
+				reCiterArticleGrant.setGrantID(medlineCitationGrant.getGrantID());
+				reCiterArticleGrants.add(reCiterArticleGrant);
+			}
+		}
+		reCiterArticle.setGrantList(reCiterArticleGrants);
 
 		// translate the CommentsCorrections.
 

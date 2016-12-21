@@ -1,4 +1,4 @@
-package reciter.algorithm.evidence.targetauthor.grant.strategy;
+package reciter.algorithm.evidence.targetauthor.knownrelationship.strategy;
 
 import java.util.List;
 
@@ -6,11 +6,10 @@ import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.KnownRelationship;
 
-public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
+public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
@@ -24,8 +23,7 @@ public class KnownCoinvestigatorStrategy extends AbstractTargetAuthorStrategy {
 					for (KnownRelationship authorName : relationships) {
 						if (authorName.getName().isFullNameMatch(author.getAuthorName())) {
 							reCiterArticle.getKnownRelationships().add(author);
-							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known co-investigator match: " + 
-									authorName + "] ");
+							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known relationship match: " +  authorName + "] ");
 							score += 1;
 						}
 					}

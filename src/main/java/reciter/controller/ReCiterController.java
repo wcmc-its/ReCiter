@@ -97,6 +97,25 @@ public class ReCiterController {
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 	}
+	
+	@RequestMapping(value = "/reciter/retrieve/articles/by/cwid", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveArticles(@RequestParam(value="cwid") String cwid) {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		int i = 0;
+		List<Identity> identities = new ArrayList<>();
+		slf4jLogger.info("Starting retrieval for : " + i + ", " + cwid);
+		Identity identity = identityService.findByCwid(cwid);
+		identities.add(identity);
+		try {
+			aliasReCiterRetrievalEngine.retrieve(identities);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		slf4jLogger.info("elapsed time: " + estimatedTime);
+	}
 
 	@RequestMapping(value = "/reciter/all/analysis/", method = RequestMethod.GET)
 	@ResponseBody
