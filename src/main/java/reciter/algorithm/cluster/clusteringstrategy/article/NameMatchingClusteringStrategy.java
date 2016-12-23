@@ -1,9 +1,11 @@
 package reciter.algorithm.cluster.clusteringstrategy.article;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -28,7 +30,53 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 //		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
 		this.identity = identity;
 	}
+	
+	public Map<Long, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles, Set<Long> seedPmids) {
+		
+		// Reset ReCiterCluster's static id counter to 0, so that subsequent calls
+		// to cluster method has ReCiterCluster id starts with 0.
+		ReCiterCluster.getClusterIDCounter().set(0);
+		Map<Long, ReCiterCluster> clusters = new HashMap<Long, ReCiterCluster>();
+		ReCiterCluster firstCluster = new ReCiterCluster();
+		clusters.put(firstCluster.getClusterID(), firstCluster);
+		
+		List<ReCiterArticle> remainingArticles = new ArrayList<>();
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if (seedPmids.contains(reCiterArticle.getArticleId())) {
+				firstCluster.add(reCiterArticle);
+			} else {
+				remainingArticles.add(reCiterArticle);
+			}
+		}
+		
+		for (ReCiterArticle article : remainingArticles) {
+			boolean foundCluster = false;
+			for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
+		        ReCiterCluster reCiterCluster = entry.getValue();
+		        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 
+		          boolean isSimilar = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
+		          double citationReferenceScore = ((ReCiterArticleStrategyContext) citationStrategyContext).executeStrategy(article, reCiterArticle);
+		          
+		          if (isSimilar || citationReferenceScore == 1) {
+		            clusters.get(entry.getKey()).add(article);
+		            foundCluster = true;
+		            break;
+		          }
+		        }
+		        if (foundCluster) break;
+			}
+			if (!foundCluster) {
+				// create its own cluster.
+				ReCiterCluster newReCiterCluster = new ReCiterCluster();
+				newReCiterCluster.setClusterOriginator(article.getArticleId());
+				newReCiterCluster.add(article);
+				clusters.put(newReCiterCluster.getClusterID(), newReCiterCluster);
+			}
+		}
+		return clusters;
+	}
+	
 	/**
 	 * Select the first article from the list. Iterate through the remaining
 	 * articles and assign article based on target author name match.
@@ -43,6 +91,8 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		Map<Long, ReCiterCluster> clusters = new HashMap<Long, ReCiterCluster>();
 		boolean isFirstArticleSelected = false;
 		
+		ReCiterCluster firstCluster = new ReCiterCluster();
+		
 		for (ReCiterArticle article : reCiterArticles) {
 			if (!isFirstArticleSelected) {
 				// Select first article.
@@ -52,7 +102,6 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 				}  else {
 					return clusters;
 				}
-				ReCiterCluster firstCluster = new ReCiterCluster();
 				firstCluster.setClusterOriginator(firstArticle.getArticleId());
 				firstCluster.add(firstArticle);
 				clusters.put(firstCluster.getClusterID(), firstCluster);

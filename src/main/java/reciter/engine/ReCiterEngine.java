@@ -2,8 +2,10 @@ package reciter.engine;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +114,24 @@ public class ReCiterEngine implements Engine {
 
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);
-		clusterer.cluster();
+		int seedSize = ((Double) (parameters.getKnownPmids().size() * 1.0)).intValue();
+		Set<Long> initialSeed = new HashSet<Long>();
+		slf4jLogger.info("Initial seed size=[" + seedSize + "].");
+		int taken = 0;
+		for (long pmid : parameters.getKnownPmids()) {
+			if (taken < seedSize) {
+				initialSeed.add(pmid);
+			} else {
+				break;
+			}
+			taken++;
+		}
+		
+		if (!initialSeed.isEmpty()) {
+			clusterer.cluster(initialSeed);
+		} else {
+			clusterer.cluster();
+		}
 		slf4jLogger.info("Phase 1 Clustering result");
 		slf4jLogger.info(clusterer.toString());
 

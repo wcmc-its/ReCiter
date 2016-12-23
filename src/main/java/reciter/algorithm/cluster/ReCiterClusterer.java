@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,14 @@ public class ReCiterClusterer extends AbstractClusterer {
 		slf4jLogger.info("Running ReCiter for: [" + identity.getCwid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		clusters = clusteringStrategy.cluster(reCiterArticles);
+	}
+	
+
+	@Override
+	public void cluster(Set<Long> seedPmids) {
+		slf4jLogger.info("Running ReCiter for: [" + identity.getCwid() + "] "
+				+ "Number of articles to be clustered:" + reCiterArticles.size() + " initial seeds=" + seedPmids);
+		clusters = clusteringStrategy.cluster(reCiterArticles, seedPmids);
 	}
 	
 	@Override

@@ -2,6 +2,7 @@ package reciter.algorithm.cluster;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.model.article.ReCiterArticle;
@@ -17,6 +18,8 @@ import reciter.model.identity.Identity;
 public interface Clusterer {
 	
 	void cluster();
+	
+	void cluster(Set<Long> seedPmids);
 	
 	Identity getIdentity();
 	
