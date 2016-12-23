@@ -13,4 +13,7 @@ public interface ReCiterRetrievalEngine {
 	void retrieveArticlesByDateRange(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException;
 	
 	void retrieve(List<Identity> identities) throws IOException;
+	
+	void retrieveArticlesByDateRange(List<Identity> identities, LocalDate startDate, LocalDate endDate) throws IOException;
+	
 }

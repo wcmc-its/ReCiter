@@ -138,7 +138,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				}
 			} else {
 				List<PubMedArticle> result = retrievePubMed(encodedInitialQuery, handler.getCount());
-				slf4jLogger.info("result=[" + result + "]");
 				for (PubMedArticle pubMedArticle : result) {
 					long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
 					if (!pubMedArticles.containsKey(pmid)) {

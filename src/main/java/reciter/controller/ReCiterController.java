@@ -1,6 +1,7 @@
 package reciter.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -99,6 +100,51 @@ public class ReCiterController {
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 	}
 	
+	@RequestMapping(value = "/reciter/retrieve/articles/by/date/", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveArticlesByDateRange() {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		int i = 0;
+		List<Identity> identities = new ArrayList<>();
+		for (String cwid : Cwids.cwids) {
+			slf4jLogger.info("Starting retrieval for : " + i + ", " + cwid);
+			i++;
+			Identity identity = identityService.findByCwid(cwid);
+			identities.add(identity);
+		}
+		LocalDate initial = LocalDate.now();
+		LocalDate startDate = initial.withDayOfMonth(1);
+		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
+		try {
+			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, startDate, endDate);
+		} catch (IOException e) {
+			slf4jLogger.error("Failed to retrieve articles.", e);
+		}
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		slf4jLogger.info("elapsed time: " + estimatedTime);
+	}
+	
+	@RequestMapping(value = "/reciter/retrieve/articles/by/cwid/and/date/", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveArticlesByDate(@RequestParam(value="cwid") String cwid) {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		int i = 0;
+		slf4jLogger.info("Starting retrieval for : " + i + ", " + cwid);
+		Identity identity = identityService.findByCwid(cwid);
+		LocalDate initial = LocalDate.now();
+		LocalDate startDate = initial.withDayOfMonth(1);
+		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
+		try {
+			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identity, startDate, endDate);
+		} catch (IOException e) {
+			slf4jLogger.error("Failed to retrieve articles.", e);
+		}
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		slf4jLogger.info("elapsed time: " + estimatedTime);
+	}
+	
 	@RequestMapping(value = "/reciter/retrieve/articles/by/cwid", method = RequestMethod.GET)
 	@ResponseBody
 	public void retrieveArticles(@RequestParam(value="cwid") String cwid) {
@@ -112,7 +158,7 @@ public class ReCiterController {
 		try {
 			aliasReCiterRetrievalEngine.retrieve(identities);
 		} catch (IOException e) {
-			e.printStackTrace();
+			slf4jLogger.error("Failed to retrieve articles.", e);
 		}
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);

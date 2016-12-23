@@ -146,6 +146,8 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 					}
 				}
 				identity.setKnownRelationships(knownRelationships);
+				
+				identity.setPubMedAlias(Collections.emptyList());
 			}
 		}
 		return identity;

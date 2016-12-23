@@ -1,6 +1,7 @@
 package reciter.model.identity;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 public class Identity {
@@ -147,7 +148,11 @@ public class Identity {
 	}
 
 	public List<PubMedAlias> getPubMedAlias() {
-		return pubMedAlias;
+		if (pubMedAlias != null) {
+			return pubMedAlias;
+		} else {
+			return Collections.emptyList();
+		}
 	}
 
 	public void setPubMedAlias(List<PubMedAlias> pubMedAlias) {
