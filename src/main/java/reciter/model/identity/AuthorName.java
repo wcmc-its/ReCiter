@@ -99,6 +99,10 @@ public class AuthorName {
 	public boolean firstInitialLastNameMatch(AuthorName name) {
 		return name.getFirstInitial().equals(firstInitial) && name.getLastName().equals(lastName);
 	}
+	
+	public boolean firstInitialMiddleInitialLastNameMatch(AuthorName name) {
+		return name.getFirstInitial().equals(firstInitial) && name.getMiddleInitial().equals(middleInitial) && name.getLastName().equals(lastName);
+	}
 
 //	public double nameSimilarityScore(AuthorName name) {
 //		NameMatchHeuristic[] pattern = match(name);

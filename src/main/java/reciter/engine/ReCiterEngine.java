@@ -13,30 +13,17 @@ import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.algorithm.cluster.targetauthor.ReCiterClusterSelector;
 import reciter.algorithm.evidence.StrategyContext;
-import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
-import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
-import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
-import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
 import reciter.algorithm.evidence.article.mesh.MeshMajorStrategyContext;
 import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
-import reciter.algorithm.evidence.targetauthor.citizenship.CitizenshipStrategyContext;
-import reciter.algorithm.evidence.targetauthor.citizenship.strategy.CitizenshipStrategy;
-import reciter.algorithm.evidence.targetauthor.degree.DegreeStrategyContext;
-import reciter.algorithm.evidence.targetauthor.degree.strategy.DegreeType;
-import reciter.algorithm.evidence.targetauthor.degree.strategy.YearDiscrepancyStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
 import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchStrategy;
-import reciter.algorithm.evidence.targetauthor.internship.InternshipAndResidenceStrategyContext;
-import reciter.algorithm.evidence.targetauthor.internship.strategy.InternshipAndResidenceStrategy;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.KnownRelationshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownRelationshipStrategy;
-import reciter.algorithm.evidence.targetauthor.name.NameStrategyContext;
-import reciter.algorithm.evidence.targetauthor.name.strategy.NameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
 import reciter.algorithm.util.ArticleTranslator;
@@ -141,10 +128,8 @@ public class ReCiterEngine implements Engine {
 			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
 		}
 		
-		if (EngineParameters.getMeshCountMap() != null) {
-			StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles, EngineParameters.getMeshCountMap()));
-			clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
-		}
+		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles, EngineParameters.getMeshCountMap()));
+		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, parameters.getKnownPmids());
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Analysis for cwid=[" + identity.getCwid() + "]");

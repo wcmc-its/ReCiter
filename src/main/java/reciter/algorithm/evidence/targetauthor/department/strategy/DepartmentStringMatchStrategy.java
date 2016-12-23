@@ -40,7 +40,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 				//				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
-				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(
+				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(reCiterArticle.getArticleId(), reCiterArticle.getGoldStandard(),
 						reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
 
 				boolean isFirstNameInitialMatch = 
@@ -107,16 +107,25 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		return false;
 	}
 
-	private boolean departmentMatchStrictAndFillInAffiliationIfNotPresent(List<ReCiterAuthor> authors, 
+	private boolean departmentMatchStrictAndFillInAffiliationIfNotPresent(long pmid, int goldStandard, List<ReCiterAuthor> authors, 
 			ReCiterAuthor reCiterAuthor, Identity identity) {
 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation() != null) {
 			String affiliation = reCiterAuthor.getAffiliation();
 			extractedDept = extractDepartment(affiliation);
-
+			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "].");
 			for (String department : identity.getDepartments()) {
 				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
 					return true;
+				} else if (StringUtils.containsIgnoreCase(extractedDept, department) && !StringUtils.containsIgnoreCase(extractedDept, "medicine")) {
+					// check for substring match - only when the extracted department is not "medicine" because
+					// it too common.
+					if (reCiterAuthor.getAuthorName().firstInitialMiddleInitialLastNameMatch(identity.getPrimaryName())) {
+						slf4jLogger.info("Extracted department=[" + extractedDept + "] contains identity's department=[" + department + "] "
+								+ "for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "]. And first initial, middle initial and last names match. "
+										+ "gold standard=[" + goldStandard + "]");
+						return true;
+					}
 				}
 			}
 
@@ -211,7 +220,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
-				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(
+				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(reCiterArticle.getArticleId(), reCiterArticle.getGoldStandard(),
 						reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
 
 				boolean isFirstNameInitialMatch = 

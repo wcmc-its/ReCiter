@@ -23,6 +23,7 @@ import reciter.Cwids;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.GoldStandard;
+import reciter.database.mongo.model.MeshTerm;
 import reciter.engine.Engine;
 import reciter.engine.EngineParameters;
 import reciter.engine.ReCiterEngine;
@@ -174,6 +175,16 @@ public class ReCiterController {
 		parameters.setIdentity(identity);
 		parameters.setPubMedArticles(pubMedArticles);
 		parameters.setScopusArticles(Collections.emptyList());
+		
+		if (EngineParameters.getMeshCountMap() == null) {
+			List<MeshTerm> meshTerms = meshTermService.findAll();
+			slf4jLogger.info("Found " + meshTerms.size() + " mesh terms");
+			Map<String, Long> meshCountMap = new HashMap<>();
+			for (MeshTerm meshTerm : meshTerms) {
+				meshCountMap.put(meshTerm.getMesh(), meshTerm.getCount());
+			}
+			EngineParameters.setMeshCountMap(meshCountMap);
+		}
 
 		GoldStandard goldStandard = goldStandardService.findByCwid(cwid);
 		parameters.setKnownPmids(goldStandard.getKnownPmids());
