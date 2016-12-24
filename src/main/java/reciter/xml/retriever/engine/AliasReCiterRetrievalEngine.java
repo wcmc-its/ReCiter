@@ -16,14 +16,17 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import reciter.database.mongo.model.ESearchResult;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.service.mongo.ESearchResultService;
 import reciter.utils.PubMedConverter;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
@@ -32,31 +35,16 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
 
-	private class AsyncRetrievalEngine extends Thread {
-
-		private final Identity identity;
-		
-		public AsyncRetrievalEngine(Identity identity) {
-			this.identity = identity;
-		}
-		
-		@Override
-		public void run() {
-			try {
-				retrieveData(identity);
-			} catch (IOException e) {
-				slf4jLogger.error("Unabled to retrieve. " + identity.getCwid(), e);
-			}
-		}
-	}
+	@Autowired
+	private ESearchResultService eSearchResultService;
 	
-	private class AsyncDateRangeRetrievalEngine extends Thread {
+	private class AsyncRetrievalEngine extends Thread {
 
 		private final Identity identity;
 		private final LocalDate startDate;
 		private final LocalDate endDate;
 		
-		public AsyncDateRangeRetrievalEngine(Identity identity, LocalDate startDate, LocalDate endDate) {
+		public AsyncRetrievalEngine(Identity identity, LocalDate startDate, LocalDate endDate) {
 			this.identity = identity;
 			this.startDate = startDate;
 			this.endDate = endDate;
@@ -65,36 +53,28 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		@Override
 		public void run() {
 			try {
-				retrieveDataByDateRange(identity, startDate, endDate);
+				List<ESearchResult> results = eSearchResultService.findByCwid(identity.getCwid());
+				if (results.isEmpty()) {
+					slf4jLogger.info("Starting full retrieval for cwid=[" + identity.getCwid() + "].");
+					retrieveData(identity);
+				} else {
+					slf4jLogger.info("Starting date range retrieval for cwid=[" + identity.getCwid() + "] startDate=[" 
+							+ startDate + " endDate=[" + endDate + "].");
+					retrieveDataByDateRange(identity, startDate, endDate);
+				}
 			} catch (IOException e) {
 				slf4jLogger.error("Unabled to retrieve. " + identity.getCwid(), e);
 			}
 		}
 	}
-	
-	@Override
-	public void retrieve(List<Identity> identities) throws IOException {
-		ExecutorService executorService = Executors.newFixedThreadPool(5);
-		for (Identity identity : identities) {
-			executorService.execute(new AsyncRetrievalEngine(identity));
-		}
-		executorService.shutdown();
-	}
-	
 
 	@Override
 	public void retrieveArticlesByDateRange(List<Identity> identities, LocalDate startDate, LocalDate endDate) throws IOException {
 		ExecutorService executorService = Executors.newFixedThreadPool(5);
 		for (Identity identity : identities) {
-			executorService.execute(new AsyncDateRangeRetrievalEngine(identity, startDate, endDate));
+			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate));
 		}
 		executorService.shutdown();
-	}
-	
-	@Override
-	public void retrieve(Identity identity) throws IOException {
-		AsyncRetrievalEngine engine = new AsyncRetrievalEngine(identity);
-		engine.run();
 	}
 	
 	private Set<Long> retrieveData(Identity identity) throws IOException {
@@ -268,13 +248,5 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			}
 		}
 		return aliasSet;
-	}
-
-
-	@Override
-	public void retrieveArticlesByDateRange(Identity identity, LocalDate startDate, LocalDate endDate)
-			throws IOException {
-		AsyncDateRangeRetrievalEngine engine = new AsyncDateRangeRetrievalEngine(identity, startDate, endDate);
-		engine.run();
 	}
 }
