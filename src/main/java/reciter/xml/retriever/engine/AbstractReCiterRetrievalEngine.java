@@ -73,11 +73,11 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
 		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now(Clock.systemUTC()));
-		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(cwid, eSearchPmid.getRetrievalStrategyName());
-		if (exist) {
-			eSearchResultService.update(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
-		} else {
-			eSearchResultService.save(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
-		}
+//		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(cwid, eSearchPmid.getRetrievalStrategyName());
+//		if (exist) {
+//			eSearchResultService.update(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
+//		} else {
+		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
+//		}
 	}
 }

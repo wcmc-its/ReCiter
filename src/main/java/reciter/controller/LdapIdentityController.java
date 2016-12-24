@@ -34,6 +34,8 @@ public class LdapIdentityController {
 	@RequestMapping(value = "/reciter/ldap/retrieve/test", method = RequestMethod.GET)
 	@ResponseBody
 	public String retrieveTest() {
+		long start = System.currentTimeMillis();
+		slf4jLogger.info("Started retrieval at: " + start);
 		for (String cwid : Cwids.cwids) {
 			slf4jLogger.info("Starting retrieval for : " + cwid);
 			Identity identity = ldapIdentityService.getIdentity(cwid);
@@ -44,6 +46,8 @@ public class LdapIdentityController {
 			}
 			identityService.save(identity);
 		}
+		long end = System.currentTimeMillis();
+		slf4jLogger.info("End retrieval at: " + end + ". Time elapsed=[" + (end - start) + "] ms");
 		return "OK";
 	}
 	
