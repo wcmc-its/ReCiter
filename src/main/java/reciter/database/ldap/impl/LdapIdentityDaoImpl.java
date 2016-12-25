@@ -197,6 +197,41 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 
 	}
 	
+	private void getRelationship(String cwid) {
+		String filter = "| ldapsearch domain=ED search='(&(objectClass=eduPerson)"
+				+ "(|(weillCornellEduPersonTypeCode=academic-faculty-weillfulltime)"
+				+ "(weillCornellEduPersonTypeCode=academic-faculty-weillparttime)"
+				+ "(weillCornellEduPersonTypeCode=student-phd-*)"
+				+ "(weillCornellEduPersonTypeCode=student-md-phd-tri-i)))' attrs='weillCornellEduCWID' "
+				+ "| fields weillCornellEduCWID "
+				+ "| join weillCornellEduCWID type=inner ["
+				+ "| ldapsearch domain=ED search='(&(ou=employees)"
+				+ "(objectClass=weillCornellEduSORRecord))' "
+				+ "attrs='weillCornellEduCWID,weillCornellEduPrimaryDepartment,weillCornellEduPrimaryDepartmentCode' "
+				+ "| fields weillCornellEduCWID,weillCornellEduPrimaryDepartment,weillCornellEduPrimaryDepartmentCode] "
+				+ "| rename weillCornellEduCWID as targetCWID "
+				+ "| join weillCornellEduPrimaryDepartmentCode type=inner ["
+				+ "| ldapsearch domain=ED search='(&(ou=employees)(objectClass=weillCornellEduSORRecord))' "
+				+ "attrs='weillCornellEduPrimaryDepartmentCode,weillCornellEduCWID' "
+				+ "| stats dc(weillCornellEduCWID) AS count by weillCornellEduPrimaryDepartmentCode "
+				+ "| where count < 90] "
+				+ "| join weillCornellEduPrimaryDepartmentCode type=left max=0 ["
+				+ "| ldapsearch domain=ED search='(&(ou=employees)(objectClass=weillCornellEduSORRecord))' "
+				+ "attrs='weillCornellEduPrimaryDepartmentCode,weillCornellEduCWID,sn,givenName' "
+				+ "| rename weillCornellEduCWID AS relationshipCWID "
+				+ "| fields relationshipCWID, weillCornellEduPrimaryDepartmentCode, sn, givenName] "
+				+ "| fields - _* "
+				+ "| fields  targetCWID, relationshipCWID, sn, givenName, count, "
+				+ "weillCornellEduPrimaryDepartmentCode, weillCornellEduPrimaryDepartment "
+				+ "| where targetCWID != relationshipCWID";
+		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=students,ou=sors,dc=weill,dc=cornell,dc=edu");
+		for (SearchResultEntry entry : results) {
+			if(entry.getAttributeValue("firstname") != null && !entry.getAttributeValue("firstname").isEmpty()) {
+				
+			}
+		}
+	}
+	
 	/**
 	 * Search LDAP to retrieve name for a given cwid.
 	 * 

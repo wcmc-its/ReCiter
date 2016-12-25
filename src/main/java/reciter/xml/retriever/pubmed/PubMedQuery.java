@@ -3,6 +3,7 @@ package reciter.xml.retriever.pubmed;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -50,12 +51,17 @@ public class PubMedQuery {
 		
 		private String strategyQuery;
 		
+		private List<Long> pmids;
 		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 		
 		public PubMedQueryBuilder() {}
 		
 		public PubMedQueryBuilder(String strategyQuery) {
 			this.strategyQuery = strategyQuery;
+		}
+		
+		public PubMedQueryBuilder(List<Long> pmids) {
+			this.pmids = pmids;
 		}
 		
 		public PubMedQueryBuilder author(boolean isAuthorRequired, String lastName, String firstName) {
@@ -85,6 +91,43 @@ public class PubMedQuery {
 			}
 			
 			return StringUtils.join(parts, " AND ");
+		}
+		
+		private String buildPmid(List<Long> pmids) {
+			List<String> pmidsUid = new ArrayList<>();
+			for (long pmid : pmids) {
+				pmidsUid.add(pmid + "[uid]");
+			}
+			return StringUtils.join(pmidsUid, " OR ");
+		}
+		
+		private static final int THRESHOLD = 25;
+		
+		public List<String> buildPmids() {
+			if (pmids.size() == 1) {
+				List<String> list = new ArrayList<>(1);
+				list.add(pmids.get(0) + "[uid]");
+				return list;
+			}
+			List<Long> partPmids = new ArrayList<>();
+			List<String> queries = new ArrayList<>();
+			int i = 1;
+			Iterator<Long> itr = pmids.iterator();
+			while (itr.hasNext()) {
+				long pmid = itr.next();
+				partPmids.add(pmid);
+				if (i % THRESHOLD == 0) {
+					queries.add(buildPmid(partPmids));
+					partPmids.clear();
+				}
+				i++;
+			}
+			if (!partPmids.isEmpty()) {
+				queries.add(buildPmid(partPmids));
+			}
+			System.out.println(queries.size());
+			System.out.println(queries);
+			return queries;
 		}
 	}
 }
