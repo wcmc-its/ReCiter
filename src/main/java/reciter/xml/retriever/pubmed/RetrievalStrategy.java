@@ -44,4 +44,13 @@ public interface RetrievalStrategy {
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
 	RetrievalResult retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException;
+	
+	/**
+	 * Retrieve the articles for list of pmids.
+	 * 
+	 * @param pmids
+	 * 
+	 * @return Unique map of PMID to of PubMed articles for this identity.
+	 */
+	RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException;
 }

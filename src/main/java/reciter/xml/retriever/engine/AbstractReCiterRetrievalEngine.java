@@ -21,6 +21,7 @@ import reciter.xml.retriever.pubmed.AffiliationRetrievalStrategy;
 import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
 import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
+import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
 
@@ -53,6 +54,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	
 	@Autowired
 	protected FirstNameInitialRetrievalStrategy firstNameInitialRetrievalStrategy;
+	
+	@Autowired
+	protected GoldStandardRetrievalStrategy goldStandardRetrievalStrategy;
 	
 	@Autowired
 	protected GrantRetrievalStrategy grantRetrievalStrategy;

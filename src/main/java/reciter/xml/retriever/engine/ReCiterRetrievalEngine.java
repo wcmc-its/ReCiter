@@ -10,4 +10,5 @@ public interface ReCiterRetrievalEngine {
 
 	void retrieveArticlesByDateRange(List<Identity> identities, LocalDate startDate, LocalDate endDate) throws IOException;
 	
+	void retrieveByPmids(String cwid, List<Long> pmids) throws IOException;
 }

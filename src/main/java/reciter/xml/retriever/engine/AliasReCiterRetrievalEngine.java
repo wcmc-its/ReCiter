@@ -249,4 +249,17 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}
 		return aliasSet;
 	}
+
+	@Override
+	public void retrieveByPmids(String cwid, List<Long> pmids) throws IOException {
+		if (!pmids.isEmpty()) {
+			RetrievalResult result = goldStandardRetrievalStrategy.retrievePubMedArticles(pmids);
+			if (result.getPubMedArticles().size() > 0) {
+				savePubMedArticles(result.getPubMedArticles().values(), cwid, 
+						goldStandardRetrievalStrategy.getRetrievalStrategyName(), result.getPubMedQueryResults());
+			}
+			List<ScopusArticle> scopusArticles = goldStandardRetrievalStrategy.retrieveScopus(pmids);
+			scopusService.save(scopusArticles);
+		}
+	}
 }

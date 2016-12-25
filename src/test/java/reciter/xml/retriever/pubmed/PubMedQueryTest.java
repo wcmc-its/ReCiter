@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -16,8 +17,8 @@ public class PubMedQueryTest {
 		List<Long> pmids = new ArrayList<>(1);
 		pmids.add(1L);
 		PubMedQueryBuilder p = new PubMedQueryBuilder(pmids);
-		List<String> queries = p.buildPmids();
-		assertEquals("1[uid]", queries.get(0));
+		Map<String, Integer> queries = p.buildPmids();
+		assertEquals(new Integer(1), queries.get("1[uid]"));
 	}
 	
 	@Test
@@ -27,7 +28,7 @@ public class PubMedQueryTest {
 		pmids.add(2L);
 		pmids.add(3L);
 		PubMedQueryBuilder p = new PubMedQueryBuilder(pmids);
-		List<String> queries = p.buildPmids();
-		assertEquals("1[uid] OR 2[uid] OR 3[uid]", queries.get(0));
+		Map<String, Integer> queries = p.buildPmids();
+		assertEquals(new Integer(3), queries.get("1[uid] OR 2[uid] OR 3[uid]"));
 	}
 }

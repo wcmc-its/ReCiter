@@ -3,8 +3,10 @@ package reciter.xml.retriever.pubmed;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -103,31 +105,29 @@ public class PubMedQuery {
 		
 		private static final int THRESHOLD = 25;
 		
-		public List<String> buildPmids() {
+		public Map<String, Integer> buildPmids() {
 			if (pmids.size() == 1) {
-				List<String> list = new ArrayList<>(1);
-				list.add(pmids.get(0) + "[uid]");
-				return list;
+				Map<String, Integer> map = new HashMap<>();
+				map.put(pmids.get(0) + "[uid]", 1);
+				return map;
 			}
+			Map<String, Integer> map = new HashMap<>();
 			List<Long> partPmids = new ArrayList<>();
-			List<String> queries = new ArrayList<>();
 			int i = 1;
 			Iterator<Long> itr = pmids.iterator();
 			while (itr.hasNext()) {
 				long pmid = itr.next();
 				partPmids.add(pmid);
 				if (i % THRESHOLD == 0) {
-					queries.add(buildPmid(partPmids));
+					map.put(buildPmid(partPmids), THRESHOLD);
 					partPmids.clear();
 				}
 				i++;
 			}
 			if (!partPmids.isEmpty()) {
-				queries.add(buildPmid(partPmids));
+				map.put(buildPmid(partPmids), partPmids.size());
 			}
-			System.out.println(queries.size());
-			System.out.println(queries);
-			return queries;
+			return map;
 		}
 	}
 }

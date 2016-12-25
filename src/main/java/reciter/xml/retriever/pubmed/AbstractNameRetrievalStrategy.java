@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
+import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStrategy {
 
@@ -80,5 +82,10 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 		}
 
 		return pubMedQueries;
+	}
+	
+	@Override
+	public RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException {
+		throw new UnsupportedOperationException("Does not support retrieval by pmids.");
 	}
 }
