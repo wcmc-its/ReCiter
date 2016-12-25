@@ -77,6 +77,24 @@ public class ReCiterController {
 	@Autowired
 	private AnalysisService analysisService;
 
+	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveGoldStandard() {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		
+		for (String cwid : Cwids.cwids) {
+			GoldStandard goldStandard = goldStandardService.findByCwid(cwid);
+			try {
+				aliasReCiterRetrievalEngine.retrieveByPmids(goldStandard.getId(), goldStandard.getKnownPmids());
+			} catch (IOException e) {
+				slf4jLogger.info("Failed to retrieve articles.", e);
+			}
+		}
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		slf4jLogger.info("elapsed time: " + estimatedTime);
+	}
+	
 	@RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET)
 	@ResponseBody
 	public void retrieveArticles() {
