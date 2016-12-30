@@ -77,4 +77,4 @@ NumberLong(26116571),
 NumberLong(26728717)
 ]}}});
 
-
+db.recitercluster.find();

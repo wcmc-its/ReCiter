@@ -197,7 +197,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 
 	}
 	
-	private void getRelationship(String cwid) {
+	private void getHrRelationship(String cwid) {
 		String filter = "| ldapsearch domain=ED search='(&(objectClass=eduPerson)"
 				+ "(|(weillCornellEduPersonTypeCode=academic-faculty-weillfulltime)"
 				+ "(weillCornellEduPersonTypeCode=academic-faculty-weillparttime)"

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
+import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.algorithm.cluster.targetauthor.ReCiterClusterSelector;
 import reciter.algorithm.evidence.StrategyContext;
@@ -90,7 +91,7 @@ public class ReCiterEngine implements Engine {
 	}
 	
 	@Override
-	public Analysis run(EngineParameters parameters) {
+	public EngineOutput run(EngineParameters parameters) {
 		
 		Identity identity = parameters.getIdentity();
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
@@ -153,13 +154,10 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Analysis for cwid=[" + identity.getCwid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
-//		totalPrecision += analysis.getPrecision();
 		slf4jLogger.info("Recall=" + analysis.getRecall());
-//		totalRecall += analysis.getRecall();
 
 		double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2;
 		slf4jLogger.info("Accuracy=" + accuracy);
-//		totalAccuracy += accuracy;
 
 		slf4jLogger.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
 		slf4jLogger.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
@@ -192,6 +190,13 @@ public class ReCiterEngine implements Engine {
 			clusterIdToMeshCount.put(id, meshCount);
 		}
 //		analysis.setClusterIdToMeshCount(clusterIdToMeshCount);
-		return analysis;
+		EngineOutput engineOutput = new EngineOutput();
+		engineOutput.setAnalysis(analysis);
+		List<ReCiterCluster> reCiterClusters = new ArrayList<>();
+		for (ReCiterCluster cluster : clusterer.getClusters().values()) {
+			reCiterClusters.add(cluster);
+		}
+		engineOutput.setReCiterClusters(reCiterClusters);
+		return engineOutput;
 	}
 }

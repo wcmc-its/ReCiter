@@ -39,15 +39,6 @@ public class Analysis {
 	private List<Long> falseNegativeList = new ArrayList<Long>();
 	
 	public Analysis() {}
-	
-	@Override
-	public String toString() {
-		return "Analysis [precision=" + precision + ", recall=" + recall + ", truePos=" + truePos + ", trueNeg="
-				+ trueNeg + ", falseNeg=" + falseNeg + ", falsePos=" + falsePos + ", goldStandardSize="
-				+ goldStandardSize + ", selectedClusterSize=" + selectedClusterSize + ", truePositiveList="
-				+ truePositiveList + ", trueNegativeList=" + trueNegativeList + ", falsePositiveList="
-				+ falsePositiveList + ", falseNegativeList=" + falseNegativeList + "]";
-	}
 
 	/**
 	 * Assign gold standard to each ReCiterArticle.
@@ -249,4 +240,14 @@ public class Analysis {
 	public void setRecall(double recall) {
 		this.recall = recall;
 	}
+	
+	@Override
+	public String toString() {
+		return "Analysis [precision=" + precision + ", recall=" + recall + ", truePos=" + truePos + ", trueNeg="
+				+ trueNeg + ", falseNeg=" + falseNeg + ", falsePos=" + falsePos + ", goldStandardSize="
+				+ goldStandardSize + ", selectedClusterSize=" + selectedClusterSize + ", truePositiveList="
+				+ truePositiveList + ", trueNegativeList=" + trueNegativeList + ", falsePositiveList="
+				+ falsePositiveList + ", falseNegativeList=" + falseNegativeList + "]";
+	}
+	
 }

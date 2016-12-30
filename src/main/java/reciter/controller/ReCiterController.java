@@ -26,6 +26,7 @@ import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.GoldStandard;
 import reciter.database.mongo.model.MeshTerm;
 import reciter.engine.Engine;
+import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
 import reciter.engine.ReCiterEngine;
 import reciter.engine.erroranalysis.Analysis;
@@ -40,6 +41,7 @@ import reciter.service.mongo.IdentityService;
 import reciter.service.mongo.MeshTermService;
 import reciter.service.mongo.PubMedArticleFeatureService;
 import reciter.service.mongo.PubMedService;
+import reciter.service.mongo.ReCiterClusterService;
 import reciter.service.mongo.ScopusService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
@@ -76,6 +78,9 @@ public class ReCiterController {
 
 	@Autowired
 	private AnalysisService analysisService;
+	
+	@Autowired
+	private ReCiterClusterService reCiterClusterService;
 
 	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
 	@ResponseBody
@@ -188,10 +193,12 @@ public class ReCiterController {
 		GoldStandard goldStandard = goldStandardService.findByCwid(cwid);
 		parameters.setKnownPmids(goldStandard.getKnownPmids());
 		Engine engine = new ReCiterEngine();
-		Analysis analysis = engine.run(parameters);
+		EngineOutput engineOutput = engine.run(parameters);
 
-		slf4jLogger.info(analysis.toString());
-		analysisService.save(analysis, cwid);
-		return analysis;
+		slf4jLogger.info(engineOutput.getAnalysis().toString());
+		analysisService.save(engineOutput.getAnalysis(), cwid);
+		reCiterClusterService.save(engineOutput.getReCiterClusters(), cwid);
+		
+		return engineOutput.getAnalysis();
 	}
 }
