@@ -53,4 +53,12 @@ public interface RetrievalStrategy {
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
 	RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException;
+
+	/**
+	 * Retrieve Scopus articles based on list of doi strings.
+	 * 
+	 * @param dois
+	 * @return
+	 */
+	List<ScopusArticle> retrieveScopusDoi(Collection<String> dois);
 }

@@ -194,8 +194,14 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	@Override
 	public List<ScopusArticle> retrieveScopus(Collection<Long> pmids) {
-		ScopusArticleRetriever scopusArticleRetriever = new ScopusArticleRetriever();
-		return scopusArticleRetriever.retrieveScopus(new ArrayList<>(pmids));
+		ScopusArticleRetriever<Long> scopusArticleRetriever = new ScopusArticleRetriever<Long>();
+		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.PMID_MODIFIER, new ArrayList<Long>(pmids));
+	}
+	
+	@Override
+	public List<ScopusArticle> retrieveScopusDoi(Collection<String> dois) {
+		ScopusArticleRetriever<String> scopusArticleRetriever = new ScopusArticleRetriever<String>();
+		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.DOI_MODIFIER, new ArrayList<String>(dois));
 	}
 
 	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws IOException {

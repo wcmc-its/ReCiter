@@ -37,6 +37,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 	private boolean bAffiliationCountry;
 
 	private boolean bPubmedId;
+	private boolean bDoi;
 
 	private boolean bAuthor;
 	private boolean bAuthid;
@@ -55,7 +56,8 @@ public class ScopusXmlHandler extends DefaultHandler {
 	private Map<Integer, Affiliation> affiliations = new HashMap<Integer, Affiliation>();
 
 	private long pubmedId;
-
+	private String doi;
+	
 	private int seq;
 	private long authid;
 	private String authname;
@@ -69,6 +71,9 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+		if (qName.equalsIgnoreCase("prism:doi")) {
+			bDoi = true;
+		}
 		// <affiliation>
 		if (qName.equalsIgnoreCase("affiliation")) {
 			bAffiliation = true;
@@ -135,7 +140,9 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
-
+		if (bDoi) {
+			doi = new String(ch, start, length);
+		}
 		if (bAffiliation) {
 			if (bAfid) {
 				afid = Integer.parseInt(new String(ch, start, length));
@@ -185,7 +192,9 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-
+		if (qName.equalsIgnoreCase("prism:doi")) {
+			bDoi = false;
+		}
 		if (qName.equalsIgnoreCase("affiliation") && bAffiliation) {
 			if (afid != 0) {
 				affiliations.put(afid, new Affiliation(afid, affilname, affiliationCity, affiliationCountry));
@@ -259,6 +268,10 @@ public class ScopusXmlHandler extends DefaultHandler {
 					authorList.add(author);
 				}
 				scopusArticle = new ScopusArticle(pubmedId, affiliationList, authorList);
+				if (doi != null) {
+					scopusArticle.setDoi(doi);
+					doi = null;
+				}
 				scopusArticles.add(scopusArticle);
 				// TODO refactor
 				scopusArticle = null;

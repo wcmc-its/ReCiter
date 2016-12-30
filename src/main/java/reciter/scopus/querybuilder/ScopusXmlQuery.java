@@ -33,7 +33,7 @@ public class ScopusXmlQuery {
 		
 		// Optional parameters - initialized to default values.
 		private int count;
-		private String field = "pubmed-id,affiliation,author,afid";
+		private String field = "pubmed-id,doi,affiliation,author,afid";
 		private int start = 0;
 		private String view = "COMPLETE";
 		private String httpAccept = "application/xml";
@@ -80,8 +80,6 @@ public class ScopusXmlQuery {
 			sb.append(start);
 			sb.append("&view=");
 			sb.append(view);
-//			sb.append("&apikey=");
-//			sb.append(ScopusXmlQuery.API_KEY);
 			sb.append("&httpAccept=");
 			sb.append(httpAccept);
 			queryUrl = sb.toString();
@@ -136,10 +134,6 @@ public class ScopusXmlQuery {
 	public static String getScopusUrlPrefix() {
 		return SCOPUS_URL_PREFIX;
 	}
-
-//	public static String getApiKey() {
-//		return API_KEY;
-//	}
 
 	public String getQueryUrl() {
 		return queryUrl;

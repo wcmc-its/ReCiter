@@ -19,6 +19,7 @@ import java.util.List;
 public class ScopusArticle {
 	
 	private long pubmedId;
+	private String doi;
 	private List<Affiliation> affiliations;
 	private List<Author> authors;
 	
@@ -37,6 +38,14 @@ public class ScopusArticle {
 	public void setPubmedId(long pubmedId) {
 		this.pubmedId = pubmedId;
 	}
+	
+	public String getDoi() {
+		return doi;
+	}
+
+	public void setDoi(String doi) {
+		this.doi = doi;
+	}
 
 	public List<Affiliation> getAffiliations() {
 		return affiliations;
@@ -53,4 +62,5 @@ public class ScopusArticle {
 	public void setAuthors(List<Author> authors) {
 		this.authors = authors;
 	}
+
 }

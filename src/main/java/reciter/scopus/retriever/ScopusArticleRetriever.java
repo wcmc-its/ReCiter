@@ -15,7 +15,7 @@ import reciter.scopus.callable.ScopusUriParserCallable;
 import reciter.scopus.querybuilder.ScopusXmlQuery;
 import reciter.scopus.xmlparser.ScopusXmlHandler;
 
-public class ScopusArticleRetriever {
+public class ScopusArticleRetriever<T> {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(ScopusArticleRetriever.class);
 
@@ -28,25 +28,42 @@ public class ScopusArticleRetriever {
 	 * Scopus retrieval max threshold.
 	 */
 	protected static final int SCOPUS_MAX_THRESHOLD = 25;
+	
+	/**
+	 * Scopus pmid modifier
+	 */
+	public static final String PMID_MODIFIER = "pmid";
+	
+	/**
+	 * Scopus doi modifier
+	 */
+	public static final String DOI_MODIFIER = "doi";
 
-	public List<ScopusArticle> retrieveScopus(List<Long> pmids) {
+	/**
+	 * Modifier options: "pmid" or "doi".
+	 * 
+	 * @param queryModifier
+	 * @param queryParams
+	 * @return
+	 */
+	public List<ScopusArticle> retrieveScopus(String queryModifier, List<T> queryParams) {
 
 		List<String> pmidQueries = new ArrayList<String>();
-		if (pmids.size() == 1) {
-			pmidQueries.add("pmid(" + pmids + ")");
+		if (queryParams.size() == 1) {
+			pmidQueries.add("pmid(" + queryParams + ")");
 		} else {
 			StringBuffer sb = new StringBuffer();
 			int i = 0;
-			Iterator<Long> itr = pmids.iterator();
+			Iterator<T> itr = queryParams.iterator();
 			while (itr.hasNext()) {
-				long pmid = itr.next();
-				if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != pmids.size() - 1)) {
-					sb.append("pmid(");
-					sb.append(pmid);
+				T param = itr.next();
+				if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != queryParams.size() - 1)) {
+					sb.append(queryModifier + "(");
+					sb.append(param);
 					sb.append(")+OR+");
 				} else {
-					sb.append("pmid(");
-					sb.append(pmid);
+					sb.append(queryModifier + "(");
+					sb.append(param);
 					sb.append(")");
 				}
 				if (i != 0 && i % SCOPUS_DEFAULT_THRESHOLD == 0) {

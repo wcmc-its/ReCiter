@@ -54,4 +54,10 @@ public class MedlineCitationArticle {
 	public void setGrantList(List<MedlineCitationGrant> grantList) {
 		this.grantList = grantList;
 	}
+	public MedlineCitationArticleELocationID geteLocationID() {
+		return eLocationID;
+	}
+	public void seteLocationID(MedlineCitationArticleELocationID eLocationID) {
+		this.eLocationID = eLocationID;
+	}
 }

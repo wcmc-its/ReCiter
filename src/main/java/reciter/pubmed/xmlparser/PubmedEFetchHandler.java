@@ -10,6 +10,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import reciter.model.pubmed.MedlineCitation;
 import reciter.model.pubmed.MedlineCitationArticle;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
+import reciter.model.pubmed.MedlineCitationArticleELocationID;
 import reciter.model.pubmed.MedlineCitationCommentsCorrections;
 import reciter.model.pubmed.MedlineCitationDate;
 import reciter.model.pubmed.MedlineCitationGrant;
@@ -156,6 +157,11 @@ public class PubmedEFetchHandler extends DefaultHandler {
 
 		if (qName.equalsIgnoreCase("ArticleTitle")) {
 			bArticleTitle = true;
+		}
+		
+		if (qName.equalsIgnoreCase("ELocationID")) {
+			pubmedArticle.getMedlineCitation().getArticle().seteLocationID(new MedlineCitationArticleELocationID());
+			bELocationID = true;
 		}
 
 		if (qName.equalsIgnoreCase("Journal")) {
@@ -314,6 +320,12 @@ public class PubmedEFetchHandler extends DefaultHandler {
 			String articleTitle = chars.toString();
 			pubmedArticle.getMedlineCitation().getArticle().setArticleTitle(articleTitle); // set the title of the Article.
 			bArticleTitle = false;
+		}
+		
+		if (bELocationID) {
+			String eLocationId = chars.toString();
+			pubmedArticle.getMedlineCitation().getArticle().geteLocationID().seteLocationId(eLocationId);
+			bELocationID = false;
 		}
 
 		// Author last name.
@@ -490,6 +502,10 @@ public class PubmedEFetchHandler extends DefaultHandler {
 		}
 
 		if (bArticle && bArticleTitle) {
+			chars.append(ch, start, length);
+		}
+		
+		if (bELocationID) {
 			chars.append(ch, start, length);
 		}
 

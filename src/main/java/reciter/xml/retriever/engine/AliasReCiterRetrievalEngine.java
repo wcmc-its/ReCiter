@@ -53,6 +53,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		@Override
 		public void run() {
 			try {
+				// If the eSearchResult collection doesn't contain any information regarding this person,
+				// then we'd want to perform a full retrieval because this will be first time that ReCiter
+				// retrieve PubMed and Scopus articles for this person.
 				List<ESearchResult> results = eSearchResultService.findByCwid(identity.getCwid());
 				if (results.isEmpty()) {
 					slf4jLogger.info("Starting full retrieval for cwid=[" + identity.getCwid() + "].");
@@ -84,10 +87,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity);
-		Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
+		Map<Long, PubMedArticle> pubMedArticles = retrievalResult.getPubMedArticles();
 		
-		if (emailPubMedArticles.size() > 0) {
-			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, emailPubMedArticles.values());
+		if (pubMedArticles.size() > 0) {
+			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for cwid=[" + cwid + "]");
 			 
@@ -106,36 +109,78 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateLastRun(LocalDateTime.now(Clock.systemUTC()));
 			identityService.save(identity);
 			
-			uniquePmids.addAll(emailPubMedArticles.keySet());
+			uniquePmids.addAll(pubMedArticles.keySet());
 		}
 		
 		// TODO parallelize by putting save in a separate thread.
-		savePubMedArticles(emailPubMedArticles.values(), cwid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
+		savePubMedArticles(pubMedArticles.values(), cwid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
 		
 		RetrievalResult r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity);
 		if (r1.getPubMedArticles().size() > 0) {
+			pubMedArticles.putAll(r1.getPubMedArticles());
 			savePubMedArticles(r1.getPubMedArticles().values(), cwid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults());
 			uniquePmids.addAll(r1.getPubMedArticles().keySet());
 		} else {
 			RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity);
+			pubMedArticles.putAll(r2.getPubMedArticles());
 			savePubMedArticles(r2.getPubMedArticles().values(), cwid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
 			uniquePmids.addAll(r2.getPubMedArticles().keySet());
 			
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity);
+			pubMedArticles.putAll(r3.getPubMedArticles());
 			savePubMedArticles(r3.getPubMedArticles().values(), cwid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults());
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
 			
 			RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity);
+			pubMedArticles.putAll(r4.getPubMedArticles());
 			savePubMedArticles(r4.getPubMedArticles().values(), cwid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
 			uniquePmids.addAll(r4.getPubMedArticles().keySet());
 			
 			RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity);
+			pubMedArticles.putAll(r5.getPubMedArticles());
 			savePubMedArticles(r5.getPubMedArticles().values(), cwid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
 			uniquePmids.addAll(r5.getPubMedArticles().keySet());
 		}
 		
 		List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		scopusService.save(scopusArticles);
+		
+		// Look up the remaining Scopus articles by DOI.
+		List<Long> notFoundPmids = new ArrayList<>();
+		Set<Long> foundPmids = new HashSet<>();
+		for (ScopusArticle scopusArticle : scopusArticles) {
+			foundPmids.add(scopusArticle.getPubmedId());
+		}
+		// Find the pmids that were not found by using pmid query to Scopus.
+		for (long pmid : uniquePmids) {
+			if (!foundPmids.contains(pmid)) {
+				notFoundPmids.add(pmid);
+			}
+		}
+		List<String> dois = new ArrayList<>();
+		Map<String, Long> doiToPmid = new HashMap<>();
+		for (long pmid : notFoundPmids) {
+			PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
+			if (pubMedArticle.getMedlineCitation().getArticle().geteLocationID() != null && 
+					pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId() != null) {
+				String doi = pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId();
+				dois.add(doi);
+				doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, so this mapping to manually insert pmid.
+			}
+		}
+		List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
+		
+		List<Long> pmidsByDoi = new ArrayList<>();
+		for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
+			// manually insert PMID information.
+			if (scopusArticle.getDoi() != null) {
+				scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi()));
+			}
+			pmidsByDoi.add(scopusArticle.getPubmedId());
+		}
+		slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for cwid=[" + cwid + "]");
+		scopusService.save(scopusArticlesByDoi);
+		
 		slf4jLogger.info("Finished retrieval for cwid: " + identity.getCwid());
 		return uniquePmids;
 	}
