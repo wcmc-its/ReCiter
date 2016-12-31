@@ -17,6 +17,9 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
+import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
+import reciter.algorithm.evidence.article.citation.strategy.CoCitationStrategy;
 import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
@@ -140,6 +143,10 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	
 	private StrategyContext grantStrategyContext;
 	
+	private StrategyContext citationStrategyContext;
+	
+	private StrategyContext coCitationStrategyContext;
+	
 	private List<StrategyContext> strategyContexts;
 
 	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
@@ -160,6 +167,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
 		grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
+		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
+		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
 		
 		int numArticles = 0;
 		for (ReCiterCluster reCiterCluster : clusters.values()) {
@@ -183,6 +192,8 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		strategyContexts.add(citizenshipStrategyContext);
 		//		strategyContexts.add(educationStrategyContext);
 		strategyContexts.add(grantStrategyContext);
+		strategyContexts.add(citationStrategyContext);
+		strategyContexts.add(coCitationStrategyContext);
 		strategyContexts.add(articleSizeStrategyContext);
 
 		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);

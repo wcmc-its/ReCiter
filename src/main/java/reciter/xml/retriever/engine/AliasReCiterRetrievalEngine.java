@@ -5,7 +5,6 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,11 +22,10 @@ import reciter.database.mongo.model.ESearchResult;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
-import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.mongo.ESearchResultService;
-import reciter.utils.PubMedConverter;
+import reciter.utils.AuthorNameUtils;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 @Component("aliasReCiterRetrievalEngine")
@@ -90,7 +88,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Map<Long, PubMedArticle> pubMedArticles = retrievalResult.getPubMedArticles();
 		
 		if (pubMedArticles.size() > 0) {
-			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, pubMedArticles.values());
+			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for cwid=[" + cwid + "]");
 			 
@@ -195,7 +193,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
 		
 		if (emailPubMedArticles.size() > 0) {
-			Map<Long, AuthorName> aliasSet = calculatePotentialAlias(identity, emailPubMedArticles.values());
+			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, emailPubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for cwid=[" + cwid + "]");
 			 
@@ -247,53 +245,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		slf4jLogger.info("Finished retrieval for cwid: " + identity.getCwid());
 	}
 	
-	private Map<Long, AuthorName> calculatePotentialAlias(Identity identity, Collection<PubMedArticle> emailPubMedArticles) {
-		Map<Long, AuthorName> aliasSet = new HashMap<Long, AuthorName>();
-		for (PubMedArticle pubMedArticle : emailPubMedArticles) {
-			for (MedlineCitationArticleAuthor author : pubMedArticle.getMedlineCitation().getArticle().getAuthorList()) {
-				String affiliation = author.getAffiliation();
-				if (affiliation != null) {
-					for (String email : identity.getEmails()) {
-						if (affiliation.contains(email)) {
-							// possibility of an alias:
-							if (author.getLastName().equals(identity.getPrimaryName().getLastName())) {
-								// sanity check: last name matches
-								AuthorName alias = PubMedConverter.extractAuthorName(author);
-								if (!alias.getFirstInitial().equals(identity.getPrimaryName().getFirstInitial())) {
-									// check if the same first initial is already added to the set.
-									if (aliasSet.isEmpty()) {
-										aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-										slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Empty set) Adding alias: " + alias);
-									} else {
-										for (AuthorName aliasAuthorName : aliasSet.values()) {
-											if (!aliasAuthorName.getFirstInitial().equals(alias.getFirstInitial())) {
-												aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-												slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Different first initial) Adding alias: " + alias);
-												break;
-											} else {
-												String firstNameInSet = aliasAuthorName.getFirstName();
-												String currentFirstName = alias.getFirstName();
-												// prefer the name with the longer first name: i.e., prefer 'Clay' over 'C.'
-												// so remove the 'C.' and add the 'Clay'
-												if (firstNameInSet.length() < currentFirstName.length()) {
-													aliasSet.remove(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
-													aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-													slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Prefer longer first name) Adding alias: " + alias);
-													break;
-												}
-											}
-										}
-									}
-								}
-							}
-							break;
-						}
-					}
-				}
-			}
-		}
-		return aliasSet;
-	}
+	
 
 	@Override
 	public void retrieveByPmids(String cwid, List<Long> pmids) throws IOException {

@@ -5,8 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.annotation.Transient;
+
 import reciter.model.article.completeness.ArticleCompleteness;
 import reciter.model.article.completeness.ReCiterCompleteness;
+import reciter.model.identity.AuthorName;
 import reciter.model.scopus.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
@@ -44,11 +47,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	/**
 	 * Complete score strategy.
 	 */
+	@Transient
 	private ArticleCompleteness articleCompleteness;
 	
 	/**
 	 * Scopus Article.
 	 */
+	@Transient
 	private ScopusArticle scopusArticle;
 	
 	/**
@@ -63,6 +68,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	/**
 	 * Text containing how it's clustered.
 	 */
+	@Transient
 	private String clusterInfo = "";
 	
 	private double emailStrategyScore;
@@ -87,11 +93,33 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private Set<String> overlappingMeSHMajorNegativeArticles = new HashSet<String>();
 	
 	private int goldStandard;
-	private Set<Integer> commentsCorrectionsPmids = new HashSet<Integer>();
+	private Set<Long> commentsCorrectionsPmids = new HashSet<>();
 	private List<ReCiterArticleMeshHeading> meshHeadings = new ArrayList<ReCiterArticleMeshHeading>();
 
 	private List<ReCiterAuthor> knownRelationships = new ArrayList<ReCiterAuthor>();
 	private List<String> frequentInstitutionalCollaborators = new ArrayList<String>();
+	
+	private List<Long> citations = new ArrayList<>();
+	private AuthorName matchingName;
+	
+	private List<CoCitation> coCitation = new ArrayList<>();
+	
+	public static class CoCitation {
+		private long pmid;
+		private List<Long> pmids;
+		public long getPmid() {
+			return pmid;
+		}
+		public void setPmid(long pmid) {
+			this.pmid = pmid;
+		}
+		public List<Long> getPmids() {
+			return pmids;
+		}
+		public void setPmids(List<Long> pmids) {
+			this.pmids = pmids;
+		}
+	}
 	
 	/**
 	 * Default Completeness Score Calculation: ReCiterCompleteness
@@ -345,11 +373,11 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.educationStrategyScore = educationStrategyScore;
 	}
 
-	public Set<Integer> getCommentsCorrectionsPmids() {
+	public Set<Long> getCommentsCorrectionsPmids() {
 		return commentsCorrectionsPmids;
 	}
 
-	public void setCommentsCorrectionsPmids(Set<Integer> commentsCorrectionsPmids) {
+	public void setCommentsCorrectionsPmids(Set<Long> commentsCorrectionsPmids) {
 		this.commentsCorrectionsPmids = commentsCorrectionsPmids;
 	}
 
@@ -426,5 +454,29 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setOverlappingMeSHMajorNegativeArticles(Set<String> overlappingMeSHMajorNegativeArticles) {
 		this.overlappingMeSHMajorNegativeArticles = overlappingMeSHMajorNegativeArticles;
+	}
+
+	public AuthorName getMatchingName() {
+		return matchingName;
+	}
+
+	public void setMatchingName(AuthorName matchingName) {
+		this.matchingName = matchingName;
+	}
+
+	public List<Long> getCitations() {
+		return citations;
+	}
+
+	public void setCitations(List<Long> citations) {
+		this.citations = citations;
+	}
+
+	public List<CoCitation> getCoCitation() {
+		return coCitation;
+	}
+
+	public void setCoCitation(List<CoCitation> coCitation) {
+		this.coCitation = coCitation;
 	}
 }

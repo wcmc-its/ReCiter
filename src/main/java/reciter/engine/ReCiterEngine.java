@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.cluster.model.ReCiterCluster.MeshTermCount;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.algorithm.cluster.targetauthor.ReCiterClusterSelector;
 import reciter.algorithm.evidence.StrategyContext;
@@ -170,10 +171,10 @@ public class ReCiterEngine implements Engine {
 		}
 		
 		// add mesh major to analysis
-		Map<Long, Map<String, Long>> clusterIdToMeshCount = new HashMap<Long, Map<String, Long>>();
-		for (long id : clusterSelector.getSelectedClusterIds()) {
-			Map<String, Long> meshCount = new HashMap<String, Long>();
-			for (ReCiterArticle reCiterArticle : clusterer.getClusters().get(id).getArticleCluster()) {
+		// for each cluster, count the number of MeSH terms
+		for (ReCiterCluster cluster : clusterer.getClusters().values()) {
+			Map<String, Long> meshCount = new HashMap<>();
+			for (ReCiterArticle reCiterArticle : cluster.getArticleCluster()) {
 				List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
 				for (ReCiterArticleMeshHeading meshHeading : meshHeadings) {
 					String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
@@ -187,9 +188,16 @@ public class ReCiterEngine implements Engine {
 					}
 				}
 			}
-			clusterIdToMeshCount.put(id, meshCount);
+			List<MeshTermCount> meshTermCounts = new ArrayList<>(meshCount.size());
+			for (Map.Entry<String, Long> entry : meshCount.entrySet()) {
+				MeshTermCount meshTermCount = new MeshTermCount();
+				meshTermCount.setMesh(entry.getKey());
+				meshTermCount.setCount(entry.getValue());
+				meshTermCounts.add(meshTermCount);
+			}
+			cluster.setMeshTermCounts(meshTermCounts);
 		}
-//		analysis.setClusterIdToMeshCount(clusterIdToMeshCount);
+		
 		EngineOutput engineOutput = new EngineOutput();
 		engineOutput.setAnalysis(analysis);
 		List<ReCiterCluster> reCiterClusters = new ArrayList<>();

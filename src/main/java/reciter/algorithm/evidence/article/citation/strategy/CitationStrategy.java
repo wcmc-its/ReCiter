@@ -25,6 +25,7 @@ public class CitationStrategy extends AbstractReCiterArticleStrategy {
 			reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[article " + reCiterArticle.getArticleId() + 
 					"(" + reCiterArticle.getGoldStandard() + ")" + 
 					" references article " + otherReCiterArticle.getArticleId() + "(" + otherReCiterArticle.getGoldStandard() + ")]");
+			reCiterArticle.getCitations().add(otherReCiterArticle.getArticleId());
 			return 1;
 		}
 		return 0;

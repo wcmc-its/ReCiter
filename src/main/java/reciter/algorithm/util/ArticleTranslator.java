@@ -221,10 +221,10 @@ public class ArticleTranslator {
 		// translate the CommentsCorrections.
 
 		if (pubmedArticle.getMedlineCitation().getCommentsCorrectionsList() != null) {
-			Set<Integer> commentsCorrectionsPmids = new HashSet<Integer>();
+			Set<Long> commentsCorrectionsPmids = new HashSet<>();
 			List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlineCitation().getCommentsCorrectionsList();
 			for (MedlineCitationCommentsCorrections medlineCitationCommentsCorrections : commentsCorrectionsList) {
-				commentsCorrectionsPmids.add(Integer.parseInt(medlineCitationCommentsCorrections.getPmid()));
+				commentsCorrectionsPmids.add(Long.parseLong(medlineCitationCommentsCorrections.getPmid()));
 			}
 			reCiterArticle.setCommentsCorrectionsPmids(commentsCorrectionsPmids);
 		}

@@ -1,11 +1,14 @@
 package reciter.utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
@@ -13,6 +16,8 @@ import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.PubMedArticle;
 
 public class AuthorNameUtils {
+
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(AuthorNameUtils.class);
 
 	/**
 	 * Check whether two author names match on first name, middle name and
@@ -101,5 +106,53 @@ public class AuthorNameUtils {
 			}
 		}
 		return map;
+	}
+	
+	public static Map<Long, AuthorName> calculatePotentialAlias(Identity identity, Collection<PubMedArticle> emailPubMedArticles) {
+		Map<Long, AuthorName> aliasSet = new HashMap<Long, AuthorName>();
+		for (PubMedArticle pubMedArticle : emailPubMedArticles) {
+			for (MedlineCitationArticleAuthor author : pubMedArticle.getMedlineCitation().getArticle().getAuthorList()) {
+				String affiliation = author.getAffiliation();
+				if (affiliation != null) {
+					for (String email : identity.getEmails()) {
+						if (affiliation.contains(email)) {
+							// possibility of an alias:
+							if (author.getLastName().equals(identity.getPrimaryName().getLastName())) {
+								// sanity check: last name matches
+								AuthorName alias = PubMedConverter.extractAuthorName(author);
+								if (!alias.getFirstInitial().equals(identity.getPrimaryName().getFirstInitial())) {
+									// check if the same first initial is already added to the set.
+									if (aliasSet.isEmpty()) {
+										aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
+										slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Empty set) Adding alias: " + alias);
+									} else {
+										for (AuthorName aliasAuthorName : aliasSet.values()) {
+											if (!aliasAuthorName.getFirstInitial().equals(alias.getFirstInitial())) {
+												aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
+												slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Different first initial) Adding alias: " + alias);
+												break;
+											} else {
+												String firstNameInSet = aliasAuthorName.getFirstName();
+												String currentFirstName = alias.getFirstName();
+												// prefer the name with the longer first name: i.e., prefer 'Clay' over 'C.'
+												// so remove the 'C.' and add the 'Clay'
+												if (firstNameInSet.length() < currentFirstName.length()) {
+													aliasSet.remove(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+													aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
+													slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Prefer longer first name) Adding alias: " + alias);
+													break;
+												}
+											}
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+		return aliasSet;
 	}
 }

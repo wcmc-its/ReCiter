@@ -3,6 +3,7 @@ package reciter.algorithm.cluster.model;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,6 +42,28 @@ public class ReCiterCluster {
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterCluster.class);	
 
 	private String clusterInfo = "";
+	
+	public static class MeshTermCount {
+		private String mesh;
+		private long count;
+		
+		public MeshTermCount() {}
+		
+		public String getMesh() {
+			return mesh;
+		}
+		public void setMesh(String mesh) {
+			this.mesh = mesh;
+		}
+		public long getCount() {
+			return count;
+		}
+		public void setCount(long count) {
+			this.count = count;
+		}
+	}
+	
+	private List<MeshTermCount> meshTermCounts;
 	
 	/**
 	 * Returns a list of pmids of articles in this cluster.
@@ -185,4 +208,13 @@ public class ReCiterCluster {
 	public void setClusterInfo(String clusterInfo) {
 		this.clusterInfo = clusterInfo;
 	}
+
+	public List<MeshTermCount> getMeshTermCounts() {
+		return meshTermCounts;
+	}
+
+	public void setMeshTermCounts(List<MeshTermCount> meshTermCounts) {
+		this.meshTermCounts = meshTermCounts;
+	}
+
 }
