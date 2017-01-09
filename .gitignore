@@ -70,10 +70,8 @@ local.properties
 # PDT-specific
 .buildpath
 
-# Do not include the data directory
-src/main/resources/data/csv_output/*
-src/main/resources/data/pubmed/*
-src/main/resources/data/scopus/*
+# application.properties
+src/main/resources/application.properties
 
 # Do not any log files.
 reciter.log
