@@ -1,3 +1,5 @@
+use reciter;
+
 /* find average precision and recall in analysis */
 db.analysis.aggregate([
 {
@@ -44,7 +46,7 @@ db.identity.count();
 db.identity.find();
 
 /* Find identity whose cwid is 'aas2004' */
-db.identity.find({"_id": "wcb2001"});
+db.identity.find({"_id": "rgcryst"});
 
 /* Find pubmed article with PMID 18341570 */
 db.pubmedarticle.find({"_id": 18341570});
@@ -78,3 +80,11 @@ NumberLong(26728717)
 ]}}});
 
 db.recitercluster.find();
+
+db.recitercluster.find({"_id": "rgcryst"});
+
+db.recitercluster.find({"$and" : [
+  {"reCiterClusters.articleCluster.meshMajorStrategyScore": {"$gt" : 0.0}}, 
+  {"_id" : "aas2004"}
+ ]
+});
