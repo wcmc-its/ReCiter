@@ -7,15 +7,16 @@ ReCiter is a system for disambiguating author names in publication metadata. The
 See the wikis [ReCiter wikis](https://github.com/wcmc-its/ReCiter/wiki) for an introduction to ReCiter.
 
 ## Getting Started
+Latest getting started instructions are in the wiki linked above.
 
-1. Install [jdk 8](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html) or higher.
+<!--1. Install [jdk 8](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html) or higher.
 2. Import project into Eclipse, Intellij or your favorite IDE.
 3. Clone the project into your local workspace by `git clone https://github.com/wcmc-its/ReCiter.git`.
 4. Install the latest version of [MongoDB](https://www.mongodb.com/download-center).
 
 More work needs to be done on the following:
 5. Create a script to download data from PubMed and Scopus into MongoDB.
-
+-->
 ## Getting Help
 
 Please email Jie Lin (jie265@gmail.com). We use the GitHub issues for tracking bugs and feature requests.
