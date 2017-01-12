@@ -24,6 +24,40 @@ The ReCiter system can handle search for you in one go, quickly and accurately.
 ## How do I use ReCiter? 
 We are currently working on a GUI front end for ReCiter.  
 
+As of this moment, ReCiter provides a JSON data feed for all searches and inquiries against its database.
+
+We support two methods of working with ReCiter:
+
+* **stand-alone**, for users only, and
+* **with Eclipse IDE** for those who want to help develop ReCiter or read its source code.
+
+### Installation as Stand-Alone:
+#### Prerequisites: 
+1. Java version 8+
+2. Spring Boot framework.
+
+## WE NEED TO : 
+* explain how to install Maven and Spring-Boot and what they are.
+* explain java install
+* directions for Windows ( install bash? or instructs for win shell ) 
+Try installing on a 'naive computer'
+
+**ALSO System requirements.**
+
+
+1. Open a bash terminal.
+2. Navigate to an installation directory of your choosing.
+3. Clone the source with: ```git clone https://github.com/wcmc-its/ReCiter.git```
+4. Enter the cloned directory with: ```cd ReCiter```
+5. 
+
+
+
+
+
+
+
+
 
 
 Currently, all requests create a JSON formatted data set which you can use for any 
