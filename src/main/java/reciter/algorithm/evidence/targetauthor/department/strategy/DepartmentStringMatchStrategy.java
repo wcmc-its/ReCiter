@@ -9,12 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.AuthorName;
-import reciter.model.author.ReCiterAuthor;
-import reciter.model.author.TargetAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.AuthorName;
+import reciter.model.identity.Identity;
 
 /**
  * 
@@ -41,15 +40,15 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 				//				boolean isDepartmentMatch = departmentMatchStrict(author, targetAuthor);
-				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(
+				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(reCiterArticle.getArticleId(), reCiterArticle.getGoldStandard(),
 						reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
 
 				boolean isFirstNameInitialMatch = 
-						author.getAuthorName().getFirstInitial().equalsIgnoreCase(identity.getAuthorName().getFirstInitial());
+						author.getAuthorName().getFirstInitial().equalsIgnoreCase(identity.getPrimaryName().getFirstInitial());
 
 				boolean isFirstNameInitialMatchFromEmailFetched = false;
-				if (identity.getAliases() != null) {
-					for (AuthorName authorName : identity.getAliases()) {
+				if (identity.getAlternateNames() != null) {
+					for (AuthorName authorName : identity.getAlternateNames()) {
 						if (StringUtils.equalsIgnoreCase(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
 								StringUtils.equalsIgnoreCase(authorName.getLastName(), author.getAuthorName().getLastName())) {
 							isFirstNameInitialMatchFromEmailFetched = true;
@@ -61,7 +60,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 				if ((isDepartmentMatch && isFirstNameInitialMatch) || (isDepartmentMatch && isFirstNameInitialMatchFromEmailFetched)) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
 							" [department and first name initial matches: " + extractedDept + 
-							", first name initial: " + identity.getAuthorName().getFirstInitial() + "]");
+							", first name initial: " + identity.getPrimaryName().getFirstInitial() + "]");
 					slf4jLogger.info("Department and first name initial matches. "
 							+ "PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
 							"] Is Gold=[" + isGoldStandard + "]");
@@ -93,34 +92,40 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	 * (Github issue: https://github.com/wcmc-its/ReCiter/issues/79)
 	 * @return True if the department of the ReCiterAuthor and TargetAuthor match.
 	 */
-	private boolean departmentMatch(ReCiterAuthor reCiterAuthor, TargetAuthor targetAuthor) {
+	private boolean departmentMatch(ReCiterAuthor reCiterAuthor, Identity targetAuthor) {
 
-		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
-			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
+		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation() != null) {
+			String affiliation = reCiterAuthor.getAffiliation();
 			String extractedDept = extractDepartment(affiliation);
-			String targetAuthorDept = targetAuthor.getDepartment();
-			String targetAuthorOtherDept = targetAuthor.getOtherDepartment();
-			if (StringUtils.containsIgnoreCase(extractedDept, targetAuthorDept) || 
-					StringUtils.containsIgnoreCase(extractedDept, targetAuthorOtherDept) ||
-					StringUtils.containsIgnoreCase(targetAuthorDept, extractedDept) || 
-					StringUtils.containsIgnoreCase(targetAuthorOtherDept, extractedDept)) {
-
-				return true;
+			List<String> targetAuthorDepts = targetAuthor.getDepartments();
+			for (String dept : targetAuthorDepts) {
+				if (StringUtils.containsIgnoreCase(extractedDept, dept)) {
+					return true;
+				}
 			}
 		}
 		return false;
 	}
 
-	private boolean departmentMatchStrictAndFillInAffiliationIfNotPresent(List<ReCiterAuthor> authors, 
+	private boolean departmentMatchStrictAndFillInAffiliationIfNotPresent(long pmid, int goldStandard, List<ReCiterAuthor> authors, 
 			ReCiterAuthor reCiterAuthor, Identity identity) {
 
-		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
-			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
+		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation() != null) {
+			String affiliation = reCiterAuthor.getAffiliation();
 			extractedDept = extractDepartment(affiliation);
-
+			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "].");
 			for (String department : identity.getDepartments()) {
 				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
 					return true;
+				} else if (StringUtils.containsIgnoreCase(extractedDept, department) && !StringUtils.containsIgnoreCase(extractedDept, "medicine")) {
+					// check for substring match - only when the extracted department is not "medicine" because
+					// it too common.
+					if (reCiterAuthor.getAuthorName().firstInitialMiddleInitialLastNameMatch(identity.getPrimaryName())) {
+						slf4jLogger.info("Extracted department=[" + extractedDept + "] contains identity's department=[" + department + "] "
+								+ "for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "]. And first initial, middle initial and last names match. "
+										+ "gold standard=[" + goldStandard + "]");
+						return true;
+					}
 				}
 			}
 
@@ -136,9 +141,9 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		} else {
 			// get affiliation from one of the other authors.
 			for (ReCiterAuthor author : authors) {
-				if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null 
-						&& author.getAffiliation().getAffiliationName().length() > 0) {
-					String affiliation = author.getAffiliation().getAffiliationName();
+				if (author.getAffiliation() != null && author.getAffiliation() != null 
+						&& author.getAffiliation().length() > 0) {
+					String affiliation = author.getAffiliation();
 					extractedDept = extractDepartment(affiliation);
 
 					for (String department : identity.getDepartments()) {
@@ -169,8 +174,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		//			return true;
 		//		}
 
-		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation().getAffiliationName() != null) {
-			String affiliation = reCiterAuthor.getAffiliation().getAffiliationName();
+		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation() != null) {
+			String affiliation = reCiterAuthor.getAffiliation();
 			extractedDept = extractDepartment(affiliation);
 			//			if (extractedDept.length() > 0) {
 			//				departments.add(extractedDept);
@@ -215,15 +220,15 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
-				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(
+				boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(reCiterArticle.getArticleId(), reCiterArticle.getGoldStandard(),
 						reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
 
 				boolean isFirstNameInitialMatch = 
-						author.getAuthorName().getFirstInitial().equalsIgnoreCase(identity.getAuthorName().getFirstInitial());
+						author.getAuthorName().getFirstInitial().equalsIgnoreCase(identity.getPrimaryName().getFirstInitial());
 
 				boolean isFirstNameInitialMatchFromEmailFetched = false;
-				if (identity.getAliases() != null) {
-					for (AuthorName authorName : identity.getAliases()) {
+				if (identity.getAlternateNames() != null) {
+					for (AuthorName authorName : identity.getAlternateNames()) {
 						if (StringUtils.equalsIgnoreCase(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
 								StringUtils.equalsIgnoreCase(authorName.getLastName(), author.getAuthorName().getLastName())) {
 							isFirstNameInitialMatchFromEmailFetched = true;

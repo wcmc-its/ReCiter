@@ -3,7 +3,7 @@ package reciter.algorithm.evidence.cluster.clustersize;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.cluster.RemoveClusterStrategy;
 import reciter.algorithm.evidence.cluster.RemoveClusterStrategyContext;
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 
 public class ClusterSizeStrategyContext implements RemoveClusterStrategyContext {
 

@@ -1,6 +1,6 @@
 package reciter.engine.erroranalysis;
 
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
 
 public class AnalysisObjectAuthor {
 	

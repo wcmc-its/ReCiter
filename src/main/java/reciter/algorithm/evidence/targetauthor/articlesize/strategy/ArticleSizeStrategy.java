@@ -3,11 +3,11 @@ package reciter.algorithm.evidence.targetauthor.articlesize.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 
@@ -37,9 +37,9 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 				String firstName = author.getAuthorName().getFirstName();
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 
-				String targetAuthorFirstName = identity.getAuthorName().getFirstName();
-				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = identity.getAuthorName().getLastName();
+				String targetAuthorFirstName = identity.getPrimaryName().getFirstName();
+				String targetAuthorMiddleInitial = identity.getPrimaryName().getMiddleInitial();
+				String targetAuthorLastName = identity.getPrimaryName().getLastName();
 
 				if (lastName.equals(targetAuthorLastName)) {
 					if ((targetAuthorFirstName.equalsIgnoreCase(firstName) || 

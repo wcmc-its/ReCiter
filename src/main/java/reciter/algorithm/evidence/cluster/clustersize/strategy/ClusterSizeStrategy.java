@@ -2,8 +2,8 @@ package reciter.algorithm.evidence.cluster.clustersize.strategy;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.cluster.AbstractRemoveClusterStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.identity.Identity;
 
 public class ClusterSizeStrategy extends AbstractRemoveClusterStrategy {
 

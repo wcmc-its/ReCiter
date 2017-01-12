@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -7,7 +8,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
+import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
 
 /**
@@ -87,5 +89,10 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 		pubMedQueries.add(pubMedQuery);
 
 		return pubMedQueries;
+	}
+	
+	@Override
+	public RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException {
+		throw new UnsupportedOperationException("Does not support retrieval by pmids.");
 	}
 }

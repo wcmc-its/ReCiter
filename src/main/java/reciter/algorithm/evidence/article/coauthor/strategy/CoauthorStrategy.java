@@ -3,9 +3,9 @@ package reciter.algorithm.evidence.article.coauthor.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 
@@ -44,8 +44,8 @@ public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 			for (ReCiterAuthor authorB : otherReCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 				// Only check authors except for the target author (because target author always matches)
-				if (!authorA.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName()) &&
-					!authorB.getAuthorName().firstInitialLastNameMatch(identity.getAuthorName()) &&
+				if (!authorA.getAuthorName().firstInitialLastNameMatch(identity.getPrimaryName()) &&
+					!authorB.getAuthorName().firstInitialLastNameMatch(identity.getPrimaryName()) &&
 					 authorA.getAuthorName().isFullNameMatch(authorB.getAuthorName())) {
 
 					++numCoauthorMatches;

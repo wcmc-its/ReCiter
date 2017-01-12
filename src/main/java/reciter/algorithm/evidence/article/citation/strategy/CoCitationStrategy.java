@@ -1,11 +1,13 @@
 package reciter.algorithm.evidence.article.citation.strategy;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticle.CoCitation;
 
 public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
 
@@ -16,11 +18,11 @@ public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
 
 	private double checkCoCitationReference(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
 		int count = 0;
-		Set<Integer> sharedPmids = new HashSet<Integer>();
+		Set<Long> sharedPmids = new HashSet<>();
 		if (reCiterArticle.getCommentsCorrectionsPmids() != null && otherReCiterArticle.getCommentsCorrectionsPmids() != null) {
 
-			Set<Integer> pmids = reCiterArticle.getCommentsCorrectionsPmids();
-			for (int pmid : pmids) {
+			Set<Long> pmids = reCiterArticle.getCommentsCorrectionsPmids();
+			for (long pmid : pmids) {
 				if (otherReCiterArticle.getCommentsCorrectionsPmids().contains(pmid)) {
 					count++;
 					sharedPmids.add(pmid);
@@ -32,6 +34,14 @@ public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
 				"[article " + reCiterArticle.getArticleId() + "(" + reCiterArticle.getGoldStandard() + ") " +
 				" and article " + otherReCiterArticle.getArticleId() + "(" + otherReCiterArticle.getGoldStandard() + ")" + 
 				" share " + count + " references and those are + " + sharedPmids + "], ");
+		
+		if (count > 0) {
+			CoCitation coCitation = new CoCitation();
+			coCitation.setPmid(reCiterArticle.getArticleId());
+			coCitation.setPmids(new ArrayList<>(sharedPmids));
+			reCiterArticle.getCoCitation().add(coCitation);
+			otherReCiterArticle.getCoCitation().add(coCitation);
+		}
 		return count;
 	}
 

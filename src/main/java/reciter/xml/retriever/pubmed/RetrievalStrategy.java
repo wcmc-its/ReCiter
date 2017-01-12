@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 import reciter.model.scopus.ScopusArticle;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
@@ -44,4 +44,21 @@ public interface RetrievalStrategy {
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
 	RetrievalResult retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException;
+	
+	/**
+	 * Retrieve the articles for list of pmids.
+	 * 
+	 * @param pmids
+	 * 
+	 * @return Unique map of PMID to of PubMed articles for this identity.
+	 */
+	RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException;
+
+	/**
+	 * Retrieve Scopus articles based on list of doi strings.
+	 * 
+	 * @param dois
+	 * @return
+	 */
+	List<ScopusArticle> retrieveScopusDoi(Collection<String> dois);
 }

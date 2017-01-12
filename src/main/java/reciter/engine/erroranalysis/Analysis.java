@@ -1,7 +1,6 @@
 package reciter.engine.erroranalysis;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
-import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
 
 /**
@@ -25,6 +22,11 @@ import reciter.model.article.ReCiterArticle;
  */
 public class Analysis {
 
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
+
+	private double precision;
+	private double recall;
+	
 	private int truePos;
 	private int trueNeg;
 	private int falseNeg;
@@ -36,23 +38,6 @@ public class Analysis {
 	private List<Long> falsePositiveList = new ArrayList<Long>();
 	private List<Long> falseNegativeList = new ArrayList<Long>();
 	
-	private Map<String, Integer> truePositiveJournalCount = new HashMap<String, Integer>();
-	private Map<String, Integer> trueNegativeJournalCount = new HashMap<String, Integer>();
-	private Map<String, Integer> falsePositiveJournalCount = new HashMap<String, Integer>();
-	private Map<String, Integer> falseNegativeJournalCount = new HashMap<String, Integer>();
-	
-	private List<AnalysisObject> analysisObjectList = new ArrayList<AnalysisObject>();
-
-	private double precision;
-	private double recall;
-	
-	private List<ESearchResult> eSearchResults;
-	private Map<Long, Map<String, Long>> clusterIdToMeshCount;
-	
-	private Identity identity;
-	
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
-
 	public Analysis() {}
 
 	/**
@@ -73,43 +58,6 @@ public class Analysis {
 			}
 		}
 	}
-	
-	/**
-	 * Single Selection.
-	 * @param finalCluster
-	 * @param selection
-	 * @param cwid
-	 * @return
-	 */
-	public static Analysis performAnalysis(Map<Integer, ReCiterCluster> finalCluster, int selection, List<Long> goldStandardPmids) {
-		Analysis analysis = new Analysis();
-		slf4jLogger.info("Gold Standard: " + goldStandardPmids);
-
-		analysis.setGoldStandardSize(goldStandardPmids.size());
-		analysis.setSelectedClusterSize(finalCluster.get(selection).getArticleCluster().size());
-		int numTruePos = 0;
-
-		// get number of true positives.
-
-
-		for (ReCiterArticle reCiterArticle : finalCluster.get(selection).getArticleCluster()) {
-			long pmid = reCiterArticle.getArticleId();
-//			StatusEnum statusEnum;
-			if (goldStandardPmids.contains(pmid)) {
-				numTruePos++;
-//				statusEnum = StatusEnum.TRUE_POSITIVE;
-			} else {
-				analysis.falsePositiveList.add(pmid);
-//				statusEnum = StatusEnum.FALSE_POSITIVE;
-			}
-
-			//			AnalysisObject analysisObject = AnalysisTranslator.translate(reCiterArticle, statusEnum, cwid, targetAuthor, isClusterOriginator)
-		}
-		analysis.setTruePos(numTruePos);
-
-
-		return analysis;
-	}
 
 	/**
 	 * List of selections.
@@ -119,17 +67,6 @@ public class Analysis {
 	 * @return
 	 */
 	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, List<Long> goldStandardPmids) {
-		
-//		AnalysisReCiterCluster analyisReCiterCluster = new AnalysisReCiterCluster();
-//	    Map<String, Integer> authorCount = 
-//	    		analyisReCiterCluster.getTargetAuthorNameCounts(
-//	    				reCiterClusterer.getReCiterArticles(), 
-//	    				reCiterClusterer.getTargetAuthor());
-//	    
-//	    for (Entry<String, Integer> entry : authorCount.entrySet()) {
-//	      slf4jLogger.info(entry.getKey() + ": " + entry.getValue());
-//	    }
-//	    slf4jLogger.info("Number of different author names: " + authorCount.size());
 	    
 		Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 		Set<Long> selection = clusterSelector.getSelectedClusterIds();
@@ -149,16 +86,6 @@ public class Analysis {
 		}
 
 		analysis.setSelectedClusterSize(articleList.size());
-//		int numTruePos = 0;
-//		// get number of true positives.
-//		for (ReCiterArticle reCiterArticle : articleList) {
-//			int pmid = reCiterArticle.getArticleId();
-//			if (goldStandardPmids.contains(Integer.toString(pmid))) {
-//				numTruePos++;
-//			} else {
-//				analysis.falsePositiveList.add(pmid);
-//			}
-//		}
 
 		for (Entry<Long, ReCiterCluster> entry : finalCluster.entrySet()) {
 			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
@@ -166,58 +93,19 @@ public class Analysis {
 				StatusEnum statusEnum;
 				if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
 					analysis.getTruePositiveList().add(pmid);
-					
-					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
-						if (!analysis.getTruePositiveJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
-							analysis.getTruePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
-						} else {
-							int count = analysis.getTruePositiveJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
-							analysis.getTruePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
-						}
-					}
 					statusEnum = StatusEnum.TRUE_POSITIVE;
 				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(pmid)) {
 					
 					analysis.getFalsePositiveList().add(pmid);
 					statusEnum = StatusEnum.FALSE_POSITIVE;
-//					slf4jLogger.info("year diff [False Positive]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
-					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
-						if (!analysis.getFalsePositiveJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
-							analysis.getFalsePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
-						} else {
-							int count = analysis.getFalsePositiveJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
-							analysis.getFalsePositiveJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
-						}
-					}
 					
 				} else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
 					analysis.getFalseNegativeList().add(pmid);
 					statusEnum = StatusEnum.FALSE_NEGATIVE;
-//					slf4jLogger.info("year diff [False Negative]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
-					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
-						if (!analysis.getFalseNegativeJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
-							analysis.getFalseNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
-						} else {
-							int count = analysis.getFalseNegativeJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
-							analysis.getFalseNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
-						}
-					}
 					
 				} else {
 					analysis.getTrueNegativeList().add(pmid);
 					statusEnum = StatusEnum.TRUE_NEGATIVE;
-//					slf4jLogger.info("year diff [True Negative]: " + reCiterArticle.getArticleId() + ": " + reCiterClusterer.computeYearDiscrepancy(
-//							reCiterArticle, reCiterClusterer.getTargetAuthor()));
-					if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null) {
-						if (!analysis.getTrueNegativeJournalCount().containsKey(reCiterArticle.getJournal().getJournalTitle())) {
-							analysis.getTrueNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), 1);
-						} else {
-							int count = analysis.getTrueNegativeJournalCount().get(reCiterArticle.getJournal().getJournalTitle());
-							analysis.getTrueNegativeJournalCount().put(reCiterArticle.getJournal().getJournalTitle(), ++count);
-						}
-					}
 				}
 
 				boolean isClusterOriginator = false;
@@ -241,7 +129,6 @@ public class Analysis {
 						entry.getValue().getArticleCluster().size(), 
 						isArticleSelected);
 				
-				analysis.getAnalysisObjectList().add(analysisObject);
 			}
 		}
 
@@ -298,14 +185,6 @@ public class Analysis {
 		this.falsePositiveList = falsePositiveList;
 	}
 
-	public List<AnalysisObject> getAnalysisObjectList() {
-		return analysisObjectList;
-	}
-
-	public void setAnalysisObjectList(List<AnalysisObject> analysisObjectList) {
-		this.analysisObjectList = analysisObjectList;
-	}
-
 	public List<Long> getFalseNegativeList() {
 		return falseNegativeList;
 	}
@@ -354,38 +233,6 @@ public class Analysis {
 		this.trueNegativeList = trueNegativeList;
 	}
 
-	public Map<String, Integer> getTruePositiveJournalCount() {
-		return truePositiveJournalCount;
-	}
-
-	public void setTruePositiveJournalCount(Map<String, Integer> truePositiveJournalCount) {
-		this.truePositiveJournalCount = truePositiveJournalCount;
-	}
-
-	public Map<String, Integer> getTrueNegativeJournalCount() {
-		return trueNegativeJournalCount;
-	}
-
-	public void setTrueNegativeJournalCount(Map<String, Integer> trueNegativeJournalCount) {
-		this.trueNegativeJournalCount = trueNegativeJournalCount;
-	}
-
-	public Map<String, Integer> getFalsePositiveJournalCount() {
-		return falsePositiveJournalCount;
-	}
-
-	public void setFalsePositiveJournalCount(Map<String, Integer> falsePositiveJournalCount) {
-		this.falsePositiveJournalCount = falsePositiveJournalCount;
-	}
-
-	public Map<String, Integer> getFalseNegativeJournalCount() {
-		return falseNegativeJournalCount;
-	}
-
-	public void setFalseNegativeJournalCount(Map<String, Integer> falseNegativeJournalCount) {
-		this.falseNegativeJournalCount = falseNegativeJournalCount;
-	}
-
 	public void setPrecision(double precision) {
 		this.precision = precision;
 	}
@@ -393,42 +240,14 @@ public class Analysis {
 	public void setRecall(double recall) {
 		this.recall = recall;
 	}
-
+	
 	@Override
 	public String toString() {
-		return "Analysis [truePos=" + truePos + ", trueNeg=" + trueNeg + ", falseNeg=" + falseNeg + ", falsePos="
-				+ falsePos + ", goldStandardSize=" + goldStandardSize + ", selectedClusterSize=" + selectedClusterSize
-				+ ", truePositiveList=" + truePositiveList + ", trueNegativeList=" + trueNegativeList
-				+ ", falsePositiveList=" + falsePositiveList + ", falseNegativeList=" + falseNegativeList
-				+ ", truePositiveJournalCount=" + truePositiveJournalCount + ", trueNegativeJournalCount="
-				+ trueNegativeJournalCount + ", falsePositiveJournalCount=" + falsePositiveJournalCount
-				+ ", falseNegativeJournalCount=" + falseNegativeJournalCount + ", analysisObjectList="
-				+ analysisObjectList + ", precision=" + precision + ", recall=" + recall + "]";
+		return "Analysis [precision=" + precision + ", recall=" + recall + ", truePos=" + truePos + ", trueNeg="
+				+ trueNeg + ", falseNeg=" + falseNeg + ", falsePos=" + falsePos + ", goldStandardSize="
+				+ goldStandardSize + ", selectedClusterSize=" + selectedClusterSize + ", truePositiveList="
+				+ truePositiveList + ", trueNegativeList=" + trueNegativeList + ", falsePositiveList="
+				+ falsePositiveList + ", falseNegativeList=" + falseNegativeList + "]";
 	}
-
-	public List<ESearchResult> getESearchResults() {
-		return eSearchResults;
-	}
-
-	public void setESearchResults(List<ESearchResult> eSearchResults) {
-		this.eSearchResults = eSearchResults;
-	}
-
-	public Identity getIdentity() {
-		return identity;
-	}
-
-	public void setIdentity(Identity identity) {
-		this.identity = identity;
-	}
-
-	public Map<Long, Map<String, Long>> getClusterIdToMeshCount() {
-		return clusterIdToMeshCount;
-	}
-
-	public void setClusterIdToMeshCount(Map<Long, Map<String, Long>> clusterIdToMeshCount) {
-		this.clusterIdToMeshCount = clusterIdToMeshCount;
-	}
-	
 	
 }

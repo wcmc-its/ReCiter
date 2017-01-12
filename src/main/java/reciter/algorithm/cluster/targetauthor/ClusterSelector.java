@@ -5,7 +5,7 @@ import java.util.Set;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 
 public interface ClusterSelector {
 

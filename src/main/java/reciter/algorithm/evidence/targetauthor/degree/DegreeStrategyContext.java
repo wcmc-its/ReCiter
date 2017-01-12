@@ -4,8 +4,8 @@ import java.util.List;
 
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategy;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.identity.Identity;
 
 public class DegreeStrategyContext implements RemoveReCiterArticleStrategyContext {
 	private final RemoveReCiterArticleStrategy strategy;

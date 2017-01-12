@@ -17,6 +17,9 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
+import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
+import reciter.algorithm.evidence.article.citation.strategy.CoCitationStrategy;
 import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
@@ -41,14 +44,16 @@ import reciter.algorithm.evidence.targetauthor.education.strategy.EducationStrat
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
 import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
-import reciter.algorithm.evidence.targetauthor.grant.strategy.KnownCoinvestigatorStrategy;
+import reciter.algorithm.evidence.targetauthor.grant.strategy.GrantStrategy;
+import reciter.algorithm.evidence.targetauthor.knownrelationship.KnownRelationshipStrategyContext;
+import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownRelationshipStrategy;
 import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 public class ReCiterClusterSelector extends AbstractClusterSelector {
 
@@ -69,7 +74,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	/**
 	 * Known co-investigator strategy context.
 	 */
-	private StrategyContext grantCoauthorStrategyContext;
+	private StrategyContext knownRelationshipsStrategyContext;
 
 	/**
 	 * Affiliation strategy context.
@@ -135,7 +140,13 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
-	//	
+	
+	private StrategyContext grantStrategyContext;
+	
+	private StrategyContext citationStrategyContext;
+	
+	private StrategyContext coCitationStrategyContext;
+	
 	private List<StrategyContext> strategyContexts;
 
 	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
@@ -145,7 +156,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		// Strategies that select clusters that are similar to the target author.
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 		departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
-		grantCoauthorStrategyContext = new GrantStrategyContext(new KnownCoinvestigatorStrategy());
+		knownRelationshipsStrategyContext = new KnownRelationshipStrategyContext(new KnownRelationshipStrategy());
 		affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
 
 		// Using the following strategy contexts in sequence to reassign individual articles
@@ -155,6 +166,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		journalStrategyContext = new JournalStrategyContext(new JournalStrategy(identity));
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
 		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
+		grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
+		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
+		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
 		
 		int numArticles = 0;
 		for (ReCiterCluster reCiterCluster : clusters.values()) {
@@ -164,7 +178,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 		// TODO: getBoardCertificationScore(map);
 
-		// bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
+		bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 		// articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
 		removeByNameStrategyContext = new RemoveByNameStrategyContext(new RemoveByNameStrategy());
@@ -177,6 +191,9 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		strategyContexts.add(journalStrategyContext);
 		strategyContexts.add(citizenshipStrategyContext);
 		//		strategyContexts.add(educationStrategyContext);
+		strategyContexts.add(grantStrategyContext);
+		strategyContexts.add(citationStrategyContext);
+		strategyContexts.add(coCitationStrategyContext);
 		strategyContexts.add(articleSizeStrategyContext);
 
 		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
@@ -186,7 +203,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		strategyContexts.add(emailStrategyContext);
-		//		strategyContexts.add(affiliationStrategyContext);
+//		strategyContexts.add(affiliationStrategyContext);
 
 		// https://github.com/wcmc-its/ReCiter/issues/136
 		strategyContexts.add(clusterSizeStrategyContext);
@@ -238,7 +255,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 				selectedClusterIds.add(clusterId);
 			}
 
-			double knownCoinvestigatorStrategyScore = ((TargetAuthorStrategyContext) grantCoauthorStrategyContext).executeStrategy(reCiterArticles, identity);
+			double knownCoinvestigatorStrategyScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
 			if (knownCoinvestigatorStrategyScore > 0) {
 				selectedClusterIds.add(clusterId);
 			}
@@ -258,10 +275,10 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 					for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 						boolean isMiddleNameMatch = StringUtils.equalsIgnoreCase(
-								reCiterAuthor.getAuthorName().getMiddleInitial(), identity.getAuthorName().getMiddleInitial());
+								reCiterAuthor.getAuthorName().getMiddleInitial(), identity.getPrimaryName().getMiddleInitial());
 
 						boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
-								reCiterAuthor.getAuthorName().getFirstName(), identity.getAuthorName().getFirstName());
+								reCiterAuthor.getAuthorName().getFirstName(), identity.getPrimaryName().getFirstName());
 
 						if (isMiddleNameMatch && isFirstNameMatch) {
 							selectedClusterIds.add(entry.getKey());
@@ -296,7 +313,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			Map<Long, ReCiterCluster> clusters, 
 			Identity identity) {
 
-		// Map of cluster ids to ReCiterarticle objects. Keep tracks of the new cluster ids that these
+		// Map of cluster ids to ReCiterArticle objects. Keep tracks of the new cluster ids that these
 		// ReCiterArticle objects will be placed at the end of the below loop.
 		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Long, List<ReCiterArticle>>();
 

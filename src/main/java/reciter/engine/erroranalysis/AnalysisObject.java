@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import reciter.model.author.AuthorName;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.AuthorName;
 
 public class AnalysisObject {
 
@@ -56,7 +56,6 @@ public class AnalysisObject {
 	// Date of retrieval
 	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
 	private LocalDateTime dateLastRun; // the date of the most recent retrieval
-	
 	private List<String> departments;
 	private List<AnalysisObjectAuthor> analysisObjectAuthors;
 	private List<String> frequentInstitutionalCollaborators;
@@ -338,5 +337,35 @@ public class AnalysisObject {
 	}
 	public void setKnownRelationships(List<ReCiterAuthor> knownRelationships) {
 		this.knownRelationships = knownRelationships;
+	}
+	
+	@Override
+	public String toString() {
+		return "AnalysisObject [status=" + status + ", cwid=" + cwid + ", targetName=" + targetName
+				+ ", pubmedSearchQuery=" + pubmedSearchQuery + ", pmid=" + pmid + ", articleTitle=" + articleTitle
+				+ ", fullJournalTitle=" + fullJournalTitle + ", publicationYear=" + publicationYear
+				+ ", scopusTargetAuthorAffiliation=" + scopusTargetAuthorAffiliation + ", scopusCoAuthorAffiliation="
+				+ scopusCoAuthorAffiliation + ", pubmedTargetAuthorAffiliation=" + pubmedTargetAuthorAffiliation
+				+ ", pubmedCoAuthorAffiliation=" + pubmedCoAuthorAffiliation + ", articleKeywords=" + articleKeywords
+				+ ", isClusterOriginator=" + isClusterOriginator + ", clusterArticleAssignedTo="
+				+ clusterArticleAssignedTo + ", countArticlesInAssignedCluster=" + countArticlesInAssignedCluster
+				+ ", isClusterSelectedInPhaseTwoMatching=" + isClusterSelectedInPhaseTwoMatching
+				+ ", targetAuthorYearTerminalDegree=" + targetAuthorYearTerminalDegree
+				+ ", targetAuthorYearBachelorsDegree=" + targetAuthorYearBachelorsDegree + ", targetAuthorKnownEmails="
+				+ targetAuthorKnownEmails + ", targetAuthorKnownNameAliases=" + targetAuthorKnownNameAliases
+				+ ", targetAuthorKnownAffiliations=" + targetAuthorKnownAffiliations + ", emailStrategyScore="
+				+ emailStrategyScore + ", departmentStrategyScore=" + departmentStrategyScore
+				+ ", knownCoinvestigatorScore=" + knownCoinvestigatorScore + ", affiliationScore=" + affiliationScore
+				+ ", scopusStrategyScore=" + scopusStrategyScore + ", coauthorStrategyScore=" + coauthorStrategyScore
+				+ ", journalStrategyScore=" + journalStrategyScore + ", citizenshipStrategyScore="
+				+ citizenshipStrategyScore + ", bachelorsYearDiscrepancyScore=" + bachelorsYearDiscrepancyScore
+				+ ", doctoralYearDiscrepancyScore=" + doctoralYearDiscrepancyScore + ", isArticleTitleStartWithBracket="
+				+ isArticleTitleStartWithBracket + ", educationScore=" + educationScore + ", bachelorsYearDiscrepancy="
+				+ bachelorsYearDiscrepancy + ", doctoralYearDiscrepancy=" + doctoralYearDiscrepancy
+				+ ", dateInitialRun=" + dateInitialRun + ", dateLastRun=" + dateLastRun + ", departments=" + departments
+				+ ", analysisObjectAuthors=" + analysisObjectAuthors + ", frequentInstitutionalCollaborators="
+				+ frequentInstitutionalCollaborators + ", knownRelationships=" + knownRelationships
+				+ ", meshMajorStrategyScore=" + meshMajorStrategyScore + ", overlappingMeSHMajorNegativeArticles="
+				+ overlappingMeSHMajorNegativeArticles + ", clusterId=" + clusterId + "]";
 	}
 }

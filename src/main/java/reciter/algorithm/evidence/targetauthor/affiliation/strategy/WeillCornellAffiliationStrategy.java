@@ -6,10 +6,10 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrategy {
 
@@ -46,7 +46,7 @@ public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrateg
 	protected boolean containsWeillCornell(ReCiterArticle reCiterArticle) {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null) {
-				String affiliation = author.getAffiliation().getAffiliationName();
+				String affiliation = author.getAffiliation();
 				List<String> affiliationsMatches = containsWeillCornell(affiliation);
 				if (affiliationsMatches.size() > 0) {
 					reCiterArticle.setFrequentInstitutionalCollaborators(affiliationsMatches);

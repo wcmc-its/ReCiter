@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,9 +8,10 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.database.mongo.model.Identity;
-import reciter.database.mongo.model.PubMedAlias;
-import reciter.model.author.AuthorName;
+import reciter.model.identity.AuthorName;
+import reciter.model.identity.Identity;
+import reciter.model.identity.PubMedAlias;
+import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStrategy {
 
@@ -23,9 +25,9 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 	protected List<PubMedQuery> buildQuery(Identity identity) {
 		List<PubMedQuery> pubMedQueries = new ArrayList<PubMedQuery>();
 
-		String lastName = identity.getAuthorName().getLastName();
-		String firstName = identity.getAuthorName().getFirstName();
-		String firstInitial = identity.getAuthorName().getFirstInitial();
+		String lastName = identity.getPrimaryName().getLastName();
+		String firstName = identity.getPrimaryName().getFirstName();
+		String firstInitial = identity.getPrimaryName().getFirstInitial();
 
 		PubMedQuery pubMedQuery = new PubMedQuery();
 		pubMedQuery.setLenientQuery(new PubMedQueryResult(buildNameQuery(lastName, firstInitial, identity)));
@@ -56,9 +58,9 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 	protected List<PubMedQuery> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate) {
 		List<PubMedQuery> pubMedQueries = new ArrayList<PubMedQuery>();
 
-		String lastName = identity.getAuthorName().getLastName();
-		String firstName = identity.getAuthorName().getFirstName();
-		String firstInitial = identity.getAuthorName().getFirstInitial();
+		String lastName = identity.getPrimaryName().getLastName();
+		String firstName = identity.getPrimaryName().getFirstName();
+		String firstInitial = identity.getPrimaryName().getFirstInitial();
 
 		PubMedQuery pubMedQuery = new PubMedQuery();
 		pubMedQuery.setLenientQuery(new PubMedQueryResult(buildNameQuery(lastName, firstInitial, identity, startDate, endDate)));
@@ -80,5 +82,10 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 		}
 
 		return pubMedQueries;
+	}
+	
+	@Override
+	public RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException {
+		throw new UnsupportedOperationException("Does not support retrieval by pmids.");
 	}
 }

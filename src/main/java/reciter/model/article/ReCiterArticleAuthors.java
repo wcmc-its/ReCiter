@@ -3,8 +3,6 @@ package reciter.model.article;
 import java.util.ArrayList;
 import java.util.List;
 
-import reciter.model.author.ReCiterAuthor;
-
 public class ReCiterArticleAuthors {
 
 	/**

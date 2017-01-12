@@ -5,13 +5,12 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
+import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.AuthorEducation;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 import reciter.model.scopus.ScopusArticle;
-import reciter.utils.ReCiterStringUtil;
 
 public class EducationStrategy extends AbstractTargetAuthorStrategy {
 
@@ -43,12 +42,12 @@ public class EducationStrategy extends AbstractTargetAuthorStrategy {
 		for (ReCiterAuthor author : authors) {
 			String lastName = author.getAuthorName().getLastName();
 			if (lastName != null) {
-				if (StringUtils.equalsIgnoreCase(identity.getAuthorName().getLastName(), lastName)) {
+				if (StringUtils.equalsIgnoreCase(identity.getPrimaryName().getLastName(), lastName)) {
 					String authorEducationConcatenation = null;
 //					if (identity.getEducations() != null) {
 //						authorEducationConcatenation = concatenateAuthorEducationFields(identity.getEducations());
 //					}
-					String affiliation = author.getAffiliation().getAffiliationName();
+					String affiliation = author.getAffiliation();
 					if (affiliation != null && authorEducationConcatenation != null) {
 						numWordsOverlap += ReCiterStringUtil.computeNumberOfOverlapTokens(authorEducationConcatenation, affiliation);
 					}
@@ -110,46 +109,46 @@ public class EducationStrategy extends AbstractTargetAuthorStrategy {
 		return numWordsOverlap;
 	}
 	
-	private String concatenateAuthorEducationFields(List<AuthorEducation> authorEducations) {
-		String authorEducationConcatenation = null;
-		if (authorEducations != null) {
-			for (AuthorEducation authorEducation : authorEducations) {
-				String institution = authorEducation.getInstitution();
-				String degreeYear = Integer.toString(authorEducation.getDegreeYear());
-				String degreeField = authorEducation.getDegreeField();
-				String instLoc = authorEducation.getInstLoc();
-				String instAbbr = authorEducation.getInstAbbr();
-				
-				
-				StringBuilder sb = new StringBuilder();
-				if (institution != null) {
-					sb.append(institution);
-					sb.append(" ");
-				}
-				
-				if (degreeYear != null && !"0".equals(degreeYear)) {
-					sb.append(degreeYear);
-					sb.append(" ");
-				}
-				
-				if (degreeField != null) {
-					sb.append(degreeField);
-					sb.append(" ");
-				}
-				
-				if (instLoc != null) {
-					sb.append(instLoc);
-					sb.append(" ");
-				}
-				
-				if (instAbbr != null) {
-					sb.append(instAbbr);
-				}
-				authorEducationConcatenation = sb.toString();
-			}
-		}
-		return authorEducationConcatenation;
-	}
+//	private String concatenateAuthorEducationFields(List<Education> authorEducations) {
+//		String authorEducationConcatenation = null;
+//		if (authorEducations != null) {
+//			for (Education authorEducation : authorEducations) {
+//				String institution = authorEducation.getInstitution();
+//				String degreeYear = Integer.toString(authorEducation.getDegreeYear());
+//				String degreeField = authorEducation.getDegreeField();
+//				String instLoc = authorEducation.getInstLoc();
+//				String instAbbr = authorEducation.getInstAbbr();
+//				
+//				
+//				StringBuilder sb = new StringBuilder();
+//				if (institution != null) {
+//					sb.append(institution);
+//					sb.append(" ");
+//				}
+//				
+//				if (degreeYear != null && !"0".equals(degreeYear)) {
+//					sb.append(degreeYear);
+//					sb.append(" ");
+//				}
+//				
+//				if (degreeField != null) {
+//					sb.append(degreeField);
+//					sb.append(" ");
+//				}
+//				
+//				if (instLoc != null) {
+//					sb.append(instLoc);
+//					sb.append(" ");
+//				}
+//				
+//				if (instAbbr != null) {
+//					sb.append(instAbbr);
+//				}
+//				authorEducationConcatenation = sb.toString();
+//			}
+//		}
+//		return authorEducationConcatenation;
+//	}
 
 	@Override
 	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {

@@ -6,10 +6,10 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
@@ -29,8 +29,8 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double score = 0;
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
-				String affiliation = author.getAffiliation().getAffiliationName();
+			if (author.getAffiliation() != null && author.getAffiliation() != null) {
+				String affiliation = author.getAffiliation();
 				
 				for (String suffix : emailSuffixes) {
 					String email = identity.getCwid() + suffix;
@@ -69,8 +69,8 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if (author.getAffiliation() != null && author.getAffiliation().getAffiliationName() != null) {
-				String affiliation = author.getAffiliation().getAffiliationName();
+			if (author.getAffiliation() != null && author.getAffiliation() != null) {
+				String affiliation = author.getAffiliation();
 				if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[0])) {
 					feature.setMedCornellEdu(1);
 				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[1])) {

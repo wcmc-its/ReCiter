@@ -4,11 +4,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.database.mongo.model.Identity;
+import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
-import reciter.model.author.ReCiterAuthor;
-import reciter.utils.ReCiterStringUtil;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrategy {
 
@@ -22,10 +22,10 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 				String lastName = author.getAuthorName().getLastName();
 
-				String targetAuthorFirstName = identity.getAuthorName().getFirstName();
-				String targetAuthorFirstNameInitial = identity.getAuthorName().getFirstInitial();
-				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = identity.getAuthorName().getLastName();
+				String targetAuthorFirstName = identity.getPrimaryName().getFirstName();
+				String targetAuthorFirstNameInitial = identity.getPrimaryName().getFirstInitial();
+				String targetAuthorMiddleInitial = identity.getPrimaryName().getMiddleInitial();
+				String targetAuthorLastName = identity.getPrimaryName().getLastName();
 
 				// Case: ses9022, Last name = 'Somersan Karakaya', PMID = 11673488, last name = 'Somersan'.
 				// Split last name and check if each individual parts match the last name from article.
@@ -117,9 +117,9 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 				String lastName = author.getAuthorName().getLastName();
 
-				String targetAuthorFirstInitial = identity.getAuthorName().getFirstInitial();
-				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = identity.getAuthorName().getLastName();
+				String targetAuthorFirstInitial = identity.getPrimaryName().getFirstInitial();
+				String targetAuthorMiddleInitial = identity.getPrimaryName().getMiddleInitial();
+				String targetAuthorLastName = identity.getPrimaryName().getLastName();
 
 				if (StringUtils.equalsIgnoreCase(firstInitial, targetAuthorFirstInitial) &&
 						StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) &&

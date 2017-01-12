@@ -5,11 +5,11 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 public class NameStrategy extends AbstractTargetAuthorStrategy {
 
@@ -24,9 +24,9 @@ public class NameStrategy extends AbstractTargetAuthorStrategy {
 				String middleInitial = author.getAuthorName().getMiddleInitial();
 				String lastName = author.getAuthorName().getLastName();
 				
-				String targetAuthorFirstName = identity.getAuthorName().getFirstName();
-				String targetAuthorMiddleInitial = identity.getAuthorName().getMiddleInitial();
-				String targetAuthorLastName = identity.getAuthorName().getLastName();
+				String targetAuthorFirstName = identity.getPrimaryName().getFirstName();
+				String targetAuthorMiddleInitial = identity.getPrimaryName().getMiddleInitial();
+				String targetAuthorLastName = identity.getPrimaryName().getLastName();
 				
 				if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) &&
 					StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) &&

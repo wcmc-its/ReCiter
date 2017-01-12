@@ -1,11 +1,10 @@
 package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import reciter.database.mongo.model.Identity;
+import reciter.model.identity.Identity;
 import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
 
 @Component("affiliationInDbRetrievalStrategy")
@@ -19,8 +18,8 @@ public class AffiliationInDbRetrievalStrategy extends AbstractNameRetrievalStrat
 	}
 
 	protected String getStrategySpecificKeyword(Identity identity) {
-		if (identity.getAffiliations() != null && !identity.getAffiliations().isEmpty()) {
-			return identity.getAffiliations().get(0);
+		if (identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
+			return identity.getInstitutions().get(0);
 		} else {
 			return null;
 		}

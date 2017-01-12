@@ -3,8 +3,8 @@ package reciter.algorithm.evidence.article.title.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.identity.Identity;
 
 /**
  * Discount matches when a publication is not in English.

@@ -3,9 +3,9 @@ package reciter.algorithm.evidence.targetauthor.affiliation.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.identity.Identity;
 
 public class AffiliationStrategy extends AbstractTargetAuthorStrategy {
 

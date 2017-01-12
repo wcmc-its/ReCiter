@@ -6,10 +6,10 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 import reciter.model.scopus.Affiliation;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
@@ -29,7 +29,7 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 					boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
-							reCiterAuthor.getAuthorName().getFirstInitial(), identity.getAuthorName().getFirstInitial());
+							reCiterAuthor.getAuthorName().getFirstInitial(), identity.getPrimaryName().getFirstInitial());
 
 					if (isFirstNameMatch) {
 						score += 1;
@@ -59,7 +59,7 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 	public boolean containsWeillCornellFromScopus(ScopusArticle scopusArticle, Identity identity) {
 		if (scopusArticle != null) {
 			for (Author scopusAuthor : scopusArticle.getAuthors()) {
-				if (StringUtils.equalsIgnoreCase(scopusAuthor.getSurname(), identity.getAuthorName().getLastName())) {
+				if (StringUtils.equalsIgnoreCase(scopusAuthor.getSurname(), identity.getPrimaryName().getLastName())) {
 					Set<Integer> afidSet = scopusAuthor.getAfids();
 					for (int afid : afidSet) {
 						for (Affiliation affiliation : scopusArticle.getAffiliations()) {
@@ -88,7 +88,7 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 	protected boolean containsWeillCornell(ReCiterArticle reCiterArticle) {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null) {
-				String affiliation = author.getAffiliation().getAffiliationName();
+				String affiliation = author.getAffiliation();
 				if (containsWeillCornell(affiliation)) {
 					return true;
 				}
@@ -118,7 +118,7 @@ public class StringMatchingAffiliation extends AbstractTargetAuthorStrategy {
 				for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 
 					boolean isFirstNameMatch = StringUtils.equalsIgnoreCase(
-							reCiterAuthor.getAuthorName().getFirstInitial(), identity.getAuthorName().getFirstInitial());
+							reCiterAuthor.getAuthorName().getFirstInitial(), identity.getPrimaryName().getFirstInitial());
 
 					if (isFirstNameMatch) {
 						feature.setContainsWeillCornellFromScopus(1);

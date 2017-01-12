@@ -5,10 +5,10 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 import reciter.model.scopus.ScopusArticle;
 
 public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
@@ -23,11 +23,11 @@ public class CitizenshipStrategy extends AbstractTargetAuthorStrategy {
 		boolean isCitizenShipMatchFromPubmed = false;
 		boolean isFirstNameMatch = false;
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if (StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstName(), identity.getAuthorName().getFirstName())) {
+			if (StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstName(), identity.getPrimaryName().getFirstName())) {
 				isFirstNameMatch = true;
 				
 				if (author.getAffiliation() != null) {
-					String affiliation = author.getAffiliation().getAffiliationName();
+					String affiliation = author.getAffiliation();
 					isCitizenShipMatchFromPubmed = isCitizenshipFromPubmed(affiliation, identity);
 				}
 			}

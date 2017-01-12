@@ -3,8 +3,8 @@ package reciter.algorithm.evidence.targetauthor.degree.strategy;
 import java.util.List;
 
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.identity.Identity;
 
 /**
  * Year-based matching for TargetAuthor (Phase II)
@@ -70,8 +70,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 			double difference;
 
 			if (degreeType.equals(DegreeType.BACHELORS)) {
-				if (identity.getBachelor().getDegreeYear() != 0) {
-					difference = year - identity.getBachelor().getDegreeYear();
+				if (identity.getDegreeYear().getBachelorYear() != 0) {
+					difference = year - identity.getDegreeYear().getBachelorYear();
 					reCiterArticle.setBachelorsYearDiscrepancy(difference);
 					if (difference < 1) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
@@ -81,8 +81,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 					}
 				}
 			} else if (degreeType.equals(DegreeType.DOCTORAL)) {
-				if (identity.getDoctoral().getDegreeYear() != 0) {
-					int doctoral = identity.getDoctoral().getDegreeYear();
+				if (identity.getDegreeYear().getDoctoralYear() != 0) {
+					int doctoral = identity.getDegreeYear().getDoctoralYear();
 					difference = year - doctoral;
 					reCiterArticle.setDoctoralYearDiscrepancy(difference);
 					if (doctoral < 1998) {

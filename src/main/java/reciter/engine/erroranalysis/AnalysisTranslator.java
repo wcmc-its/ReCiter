@@ -4,9 +4,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import reciter.database.mongo.model.Identity;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.author.ReCiterAuthor;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 import reciter.model.scopus.Affiliation;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
@@ -27,9 +27,9 @@ public class AnalysisTranslator {
 		analysisObject.setStatus(status);
 		analysisObject.setCwid(cwid);
 		analysisObject.setTargetName(
-				identity.getAuthorName().getFirstName() + " " + 
-						identity.getAuthorName().getMiddleName() + " " + 
-						identity.getAuthorName().getLastName());
+				identity.getPrimaryName().getFirstName() + " " + 
+						identity.getPrimaryName().getMiddleName() + " " + 
+						identity.getPrimaryName().getLastName());
 		
 //		analysisObject.setPubmedSearchQuery(identity.getPubmedSearchQuery());
 		analysisObject.setPmid(reCiterArticle.getArticleId());
@@ -48,9 +48,9 @@ public class AnalysisTranslator {
 			for (Author scopusAuthor : scopusArticle.getAuthors()) {
 				String scopusAuthorFirstName = scopusAuthor.getGivenName();
 				String scopusAuthorLastName = scopusAuthor.getSurname();
-				String targetAuthorLastName = identity.getAuthorName().getLastName();
+				String targetAuthorLastName = identity.getPrimaryName().getLastName();
 				if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, targetAuthorLastName)) {
-					String targetAuthorFirstInitial = identity.getAuthorName().getFirstInitial();
+					String targetAuthorFirstInitial = identity.getPrimaryName().getFirstInitial();
 					if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
 						if (scopusAuthorFirstName.substring(0, 1).equals(targetAuthorFirstInitial)) {
 
@@ -104,9 +104,9 @@ public class AnalysisTranslator {
 		}
 
 		for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if (reCiterAuthor.getAuthorName().getLastName().equalsIgnoreCase(identity.getAuthorName().getLastName())) {
+			if (reCiterAuthor.getAuthorName().getLastName().equalsIgnoreCase(identity.getPrimaryName().getLastName())) {
 				if (reCiterAuthor.getAffiliation() != null) {
-					pubmedTargetAuthorAffiliation.append(reCiterAuthor.getAffiliation().getAffiliationName());
+					pubmedTargetAuthorAffiliation.append(reCiterAuthor.getAffiliation());
 				}
 			} else {
 				if (reCiterAuthor.getAffiliation() != null) {
@@ -114,7 +114,7 @@ public class AnalysisTranslator {
 							reCiterAuthor.getAuthorName().getFirstName() + " " +
 							reCiterAuthor.getAuthorName().getMiddleName() + " " +
 							reCiterAuthor.getAuthorName().getLastName() + "=" +
-							reCiterAuthor.getAffiliation().getAffiliationName() + "]"
+							reCiterAuthor.getAffiliation() + "]"
 							);
 				} else {
 					pubmedCoAuthorAffiliation.append("[" +
@@ -155,12 +155,12 @@ public class AnalysisTranslator {
 		analysisObject.setDateInitialRun(identity.getDateInitialRun());
 		analysisObject.setDateLastRun(identity.getDateLastRun());
 		
-		analysisObject.setTargetAuthorYearBachelorsDegree(identity.getBachelor().getDegreeYear());
-		analysisObject.setTargetAuthorYearTerminalDegree(identity.getDoctoral().getDegreeYear());
+		analysisObject.setTargetAuthorYearBachelorsDegree(identity.getDegreeYear().getBachelorYear());
+		analysisObject.setTargetAuthorYearTerminalDegree(identity.getDegreeYear().getDoctoralYear());
 		analysisObject.setDepartments(identity.getDepartments());
 		analysisObject.setTargetAuthorKnownEmails(identity.getEmails());
-		analysisObject.setTargetAuthorKnownNameAliases(identity.getAliases());
-		analysisObject.setTargetAuthorKnownAffiliations(identity.getAffiliations());
+		analysisObject.setTargetAuthorKnownNameAliases(identity.getAlternateNames());
+		analysisObject.setTargetAuthorKnownAffiliations(identity.getInstitutions());
 		analysisObject.setBachelorsYearDiscrepancy(reCiterArticle.getBachelorsYearDiscrepancy());
 		analysisObject.setDoctoralYearDiscrepancy(reCiterArticle.getDoctoralYearDiscrepancy());
 		

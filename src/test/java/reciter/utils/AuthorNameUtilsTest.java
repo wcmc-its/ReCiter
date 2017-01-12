@@ -8,9 +8,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import reciter.model.author.AuthorName;
-import reciter.model.author.TargetAuthor;
-import reciter.model.converter.PubMedConverter;
+import reciter.model.identity.AuthorName;
+import reciter.model.identity.Identity;
 import reciter.model.pubmed.MedlineCitation;
 import reciter.model.pubmed.MedlineCitationArticle;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
@@ -56,7 +55,8 @@ public class AuthorNameUtilsTest {
 		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author2);
 		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author3);
 		
-		TargetAuthor targetAuthor = new TargetAuthor(new AuthorName("John", "M", "Smith"), null);
+		Identity targetAuthor = new Identity();
+		targetAuthor.setPrimaryName(new AuthorName("John", "M", "Smith"));
 		Map<Long, List<AuthorName>> map = AuthorNameUtils.extractAlternateNamesFromPubMedArticlesRetrievedByEmail(pubMedArticles, targetAuthor);
 		assertEquals(0, map.size());
 	}
@@ -91,7 +91,8 @@ public class AuthorNameUtilsTest {
 		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author2);
 		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author3);
 		
-		TargetAuthor targetAuthor = new TargetAuthor(new AuthorName("John", "M", "Smith"), null);
+		Identity targetAuthor = new Identity();
+		targetAuthor.setPrimaryName(new AuthorName("John", "M", "Smith"));
 		Map<Long, List<AuthorName>> map = AuthorNameUtils.extractAlternateNamesFromPubMedArticlesRetrievedByEmail(pubMedArticles, targetAuthor);
 		assertEquals(1, map.size());
 		List<AuthorName> authorNames = map.get(1L);
@@ -129,7 +130,8 @@ public class AuthorNameUtilsTest {
 		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author2);
 		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author3);
 		
-		TargetAuthor targetAuthor = new TargetAuthor(new AuthorName("John", "M", "Smith"), null);
+		Identity targetAuthor = new Identity();
+		targetAuthor.setPrimaryName(new AuthorName("John", "M", "Smith"));
 		Map<Long, List<AuthorName>> map = AuthorNameUtils.extractAlternateNamesFromPubMedArticlesRetrievedByEmail(pubMedArticles, targetAuthor);
 		assertEquals(0, map.size());
 	}

@@ -3,7 +3,10 @@ package reciter.xml.retriever.pubmed;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -50,12 +53,17 @@ public class PubMedQuery {
 		
 		private String strategyQuery;
 		
+		private List<Long> pmids;
 		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 		
 		public PubMedQueryBuilder() {}
 		
 		public PubMedQueryBuilder(String strategyQuery) {
 			this.strategyQuery = strategyQuery;
+		}
+		
+		public PubMedQueryBuilder(List<Long> pmids) {
+			this.pmids = pmids;
 		}
 		
 		public PubMedQueryBuilder author(boolean isAuthorRequired, String lastName, String firstName) {
@@ -85,6 +93,41 @@ public class PubMedQuery {
 			}
 			
 			return StringUtils.join(parts, " AND ");
+		}
+		
+		private String buildPmid(List<Long> pmids) {
+			List<String> pmidsUid = new ArrayList<>();
+			for (long pmid : pmids) {
+				pmidsUid.add(pmid + "[uid]");
+			}
+			return StringUtils.join(pmidsUid, " OR ");
+		}
+		
+		private static final int THRESHOLD = 25;
+		
+		public Map<String, Integer> buildPmids() {
+			if (pmids.size() == 1) {
+				Map<String, Integer> map = new HashMap<>();
+				map.put(pmids.get(0) + "[uid]", 1);
+				return map;
+			}
+			Map<String, Integer> map = new HashMap<>();
+			List<Long> partPmids = new ArrayList<>();
+			int i = 1;
+			Iterator<Long> itr = pmids.iterator();
+			while (itr.hasNext()) {
+				long pmid = itr.next();
+				partPmids.add(pmid);
+				if (i % THRESHOLD == 0) {
+					map.put(buildPmid(partPmids), THRESHOLD);
+					partPmids.clear();
+				}
+				i++;
+			}
+			if (!partPmids.isEmpty()) {
+				map.put(buildPmid(partPmids), partPmids.size());
+			}
+			return map;
 		}
 	}
 }

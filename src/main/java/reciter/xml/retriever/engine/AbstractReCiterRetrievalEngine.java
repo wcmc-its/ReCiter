@@ -7,22 +7,21 @@ import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.ESearchPmid;
 import reciter.database.mongo.model.ESearchResult;
-import reciter.engine.notification.Notifier;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.ESearchResultService;
-import reciter.service.IdentityService;
-import reciter.service.PubMedService;
-import reciter.service.ScopusService;
+import reciter.service.mongo.ESearchResultService;
+import reciter.service.mongo.IdentityService;
+import reciter.service.mongo.PubMedService;
+import reciter.service.mongo.ScopusService;
 import reciter.xml.retriever.pubmed.AffiliationInDbRetrievalStrategy;
 import reciter.xml.retriever.pubmed.AffiliationRetrievalStrategy;
 import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
 import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
+import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
 
@@ -30,22 +29,16 @@ import reciter.xml.retriever.pubmed.PubMedQueryResult;
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
 
 	@Autowired
-	@Qualifier("pubMedServiceWs")
 	protected PubMedService pubMedService;
 
 	@Autowired
 	protected ESearchResultService eSearchResultService;
 
 	@Autowired
-	@Qualifier("scopusServiceWs")
 	protected ScopusService scopusService;
 
 	@Autowired
-	@Qualifier("identityServiceWs")
 	protected IdentityService identityService;
-
-	@Autowired
-	protected Notifier notifier;
 	
 	@Autowired
 	protected AffiliationInDbRetrievalStrategy affiliationInDbRetrievalStrategy;
@@ -61,6 +54,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	
 	@Autowired
 	protected FirstNameInitialRetrievalStrategy firstNameInitialRetrievalStrategy;
+	
+	@Autowired
+	protected GoldStandardRetrievalStrategy goldStandardRetrievalStrategy;
 	
 	@Autowired
 	protected GrantRetrievalStrategy grantRetrievalStrategy;
@@ -81,11 +77,11 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
 		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now(Clock.systemUTC()));
-		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(cwid, eSearchPmid.getRetrievalStrategyName());
-		if (exist) {
-			eSearchResultService.update(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
-		} else {
-			eSearchResultService.save(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
-		}
+//		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(cwid, eSearchPmid.getRetrievalStrategyName());
+//		if (exist) {
+//			eSearchResultService.update(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
+//		} else {
+		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
+//		}
 	}
 }

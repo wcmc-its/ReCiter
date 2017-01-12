@@ -10,12 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.database.mongo.model.Identity;
 import reciter.engine.Feature;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterCitationYNEnum;
 import reciter.model.article.ReCiterMeshHeadingQualifierName;
+import reciter.model.identity.Identity;
 
 /**
  * https://github.com/wcmc-its/ReCiter/issues/131
@@ -142,9 +142,9 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 * <p>
 	 * MeSH major parsing
 	 * <p>
-	 * Easy: no subheading (e.g., for 23919362, “Contracts" is MeSH major)
+	 * Easy: no subheading (e.g., for 23919362, ï¿½Contracts" is MeSH major)
 	 * <p>
-	 * Single subheading (e.g., for 21740463, "Cold Temperature” is MeSH major)
+	 * Single subheading (e.g., for 21740463, "Cold Temperatureï¿½ is MeSH major)
 	 * <p>
 	 * Harder: Multiple subheadings modifying the same MeSH term. (e.g., for 6358887, "Aspirin" is mesh major even 
 	 * though there are cases where aspirin is not listed as MeSH major.)
