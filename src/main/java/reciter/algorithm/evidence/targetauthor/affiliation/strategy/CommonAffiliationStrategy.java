@@ -11,7 +11,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
-public class WeillCornellAffiliationStrategy extends AbstractTargetAuthorStrategy {
+public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 
 	private String variantName;
 	
