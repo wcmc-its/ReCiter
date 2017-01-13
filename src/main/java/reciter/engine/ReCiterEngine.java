@@ -21,7 +21,7 @@ import reciter.algorithm.evidence.article.mesh.MeshMajorStrategyContext;
 import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
-import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
+import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
@@ -80,7 +80,7 @@ public class ReCiterEngine implements Engine {
 			TargetAuthorStrategyContext grantCoauthorStrategyContext = new KnownRelationshipStrategyContext(new KnownRelationshipStrategy());
 			grantCoauthorStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			
-			TargetAuthorStrategyContext affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
+			TargetAuthorStrategyContext affiliationStrategyContext = new AffiliationStrategyContext(new CommonAffiliationStrategy());
 			affiliationStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			
 			TargetAuthorStrategyContext scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());

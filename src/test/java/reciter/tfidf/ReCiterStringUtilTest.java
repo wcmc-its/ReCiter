@@ -64,28 +64,28 @@ public class ReCiterStringUtilTest {
 	
 	@Test
 	public void testDeAccent1() {
-		String s = "å";
+		String s = "Ã¥";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
 		assertEquals("equal", "a", deAccentedS);
 	}
 	
 	@Test
 	public void testDeAccent2() {
-		String s = "Ibáñez";
+		String s = "IbÃ¡Ã±ez";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
 		assertEquals("equal", "Ibanez", deAccentedS);
 	}
 	
 	@Test
 	public void testDeAccent3() {
-		String s = "Guzmán";
+		String s = "GuzmÃ¡n";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
 		assertEquals("equal", "Guzman", deAccentedS);
 	}
 	
 	@Test
 	public void testDeAccent4() {
-		String s = "ö";
+		String s = "Ã¶";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
 		assertEquals("equal", "o", deAccentedS);
 	}

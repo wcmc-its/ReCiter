@@ -29,7 +29,7 @@ import reciter.algorithm.evidence.cluster.clustersize.ClusterSizeStrategyContext
 import reciter.algorithm.evidence.cluster.clustersize.strategy.ClusterSizeStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
-import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
+import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
 import reciter.algorithm.evidence.targetauthor.articlesize.ArticleSizeStrategyContext;
 import reciter.algorithm.evidence.targetauthor.articlesize.strategy.ArticleSizeStrategy;
 import reciter.algorithm.evidence.targetauthor.citizenship.CitizenshipStrategyContext;
@@ -157,7 +157,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 		departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
 		knownRelationshipsStrategyContext = new KnownRelationshipStrategyContext(new KnownRelationshipStrategy());
-		affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
+		affiliationStrategyContext = new AffiliationStrategyContext(new CommonAffiliationStrategy());
 
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.

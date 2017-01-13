@@ -1,3 +1,4 @@
+<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
 <project name="ReCiter" default="install" basedir=".">
     <property name="install.dir" value="${basedir}/install"/>
     <property name="scripts.dir" value="${basedir}/src/main/resources/scripts"/>
