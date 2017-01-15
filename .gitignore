@@ -54,10 +54,13 @@ tmp/**/*
 *.swp
 *~.nib
 local.properties
-# .classpath
+.classpath
+.project
 .settings/
 .loadpath
 /src/main/resources/rebel.xml
+build.xml
+
 # External tool builders
 .externalToolBuilders/
  
