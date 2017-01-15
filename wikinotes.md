@@ -1,10 +1,29 @@
-## Why use ReCiter? 
-The purpose of ReCiter is to enable rapid and accurate searching for articles by specific authors.
+## Why Should My Institution Use ReCiter? 
+The purpose of ReCiter is to enable rapid and accurate and complete searching for articles by specific authors who are members of your institution. 
 
-We feel that our method of doing this can save time and money over the more manual approaches currently used to do this.  
+ReCiter does this by combining publication data from PubMed and Scopus with the data you provide about your institution's own authors.
 
-ReCiter does this by filtering an author name search with additional data such as: 
-	
+With the more complete and efficient seaches enabled by combining this data, your institution can be made more productive and save money.
+
+ReCiter's accuracy has been measured at over 95% for current full-time faculty at Weill Cornell Medicine.
+
+## How Can My Institution Use ReCiter? 
+* Currently, we expect every institution to run its own copy of ReCiter.  
+* ReCiter is currently an open source application stack.
+* Your staff will need to install the application.  
+* Your staff will need to populate your own system with data about your authors.
+
+## Who Has Access to the Data? 
+* Data from PubMed about published articles is already publicly available.
+* Each institution can set its own access rules for personnel information that is used by ReCiter to perform its searches.
+* Your ReCiter enhanced searches will be restricted to authors whose data you have populated into ReCiter.
+
+## What if I want to use ReCiter To Search For Authors' Work From Other Institutions? 
+* The decision to share informations about staff authors resides with those authors and the institutions using ReCiter.
+* We would encourage institutions and their staff to consider sharing some or all of their author data for the purposes of ReCiter searches.
+* In the future we plan to enhance ReCiter to facilitate this type of data sharing
+
+## What Additional Data About Authors Does ReCiter Use? 
 * name variants (such as nicknames, name changes, spelling irregularities, etc) 
 * current and former institutional affiliation and department
 * e-mail addresses
@@ -13,15 +32,28 @@ ReCiter does this by filtering an author name search with additional data such a
 * co-authorship 
 * journal publication patterns
 
-ReCiter's accuracy has been measured at over 95% for current full-time faculty at Weill Cornell Medicine.
+## A Use Case: 
+**You wish to search for articles by Andrew Schwartz (not his real name! ) who currently works at Harvard, but used to work at Union County Community College.**
 
-For example:  Suppose you wish to search for articles by Andrew Schwartz ( not his real name!) who currently works at Harvard, but used to work at Union County Community College.  
+* The PubMed interface will retrieve over 3,500 results when searching for "A Schwartz" as an author.
+* **Most of these are NOT from the A Schwartz we are looking for!**
+	*  It will show results for all people who are named "A. Schwartz".  
+	*  You *could* filter the search by Harvard University, but then would have to search again for works written for other institutions.  
+	* You would also *have to research A. Schwartz* to identify those past affiliations.
+		* LinkedIn anyone? 
 
-The PubMed interface will retrieve over 3,500 results when searching for "A Schwartz" as an author because it will show results for all people who are named "A. Schwartz".  If you want results for *our* A. Schwartz, you *could* filter the search by Harvard University, but then would have to search again for works written for other institutions.  Additionally, you would have to research A. Schwartz to identify those past affiliations.
+### The ReCiter system can handle that search for you in one go, quickly and accurately.
 
-The ReCiter system can handle search for you in one go, quickly and accurately.
 
-## How do I use ReCiter? 
+
+************************
+
+<br><br><br><br><br><br><br>
+
+
+
+
+
 We are currently working on a GUI front end for ReCiter.  
 
 As of this moment, ReCiter provides a JSON data feed for all searches and inquiries against its database.
