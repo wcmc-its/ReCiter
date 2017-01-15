@@ -1,13 +1,16 @@
 # ReCiter
 
-ReCiter is a system for disambiguating author names in publication metadata. The algorithm is described in [Johnson et al. (2014)](https://www.ncbi.nlm.nih.gov/pubmed/24694772). The first functioning version of the algorithm was implemented by Steve Johnson in object-oriented perl, was designed to operate on raw Medline data, and wrote text files as output. The purpose of this project is to engineer an updated version of ReCiter, which will ingest data, assign scores to indicate the likelihood a given publication was authored by a person, and allow users to maintain accurate publication lists. The scoring method will employ the same basic approach as described in the 2014 paper, but will be generalized to operate on any bibliographic database; will read and write to database files; and will leverage institution data in novel ways to boost the system's accuracy..
+ReCiter is a system for disambiguating author names in publication metadata. The algorithm is described in [Johnson et al. (2014)](https://www.ncbi.nlm.nih.gov/pubmed/24694772). The first functioning version of the algorithm was implemented by Steve Johnson in object-oriented perl, was designed to operate on raw Medline data, and wrote text files as output. This updated version of ReCiter is generalized to operate on data from PubMed, and (optionally) from Scopus. ReCiter uses the same core algorithm as the previous version, but with significant revisions and updates, including new strategies to improve recall by accounting for variations in names, as well as strategies that improve accuracy by leveraging new types of data for disambiguation.
+
+This version of ReCiter is a Representational state transfer (RESTful) web service that communicates with a local database. It may be run on a regular basis to keep publication data accurate and up-to-date.
 
 ## Introduction
 
-See the wikis [ReCiter wikis](https://github.com/wcmc-its/ReCiter/wiki) for an introduction to ReCiter.
+See the wiki [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki) for an introduction to ReCiter.
 
 ## Getting Started
-Latest getting started instructions are in the wiki linked above.
+
+Instructions for getting started are in the wiki [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki).
 
 <!--1. Install [jdk 8](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html) or higher.
 2. Import project into Eclipse, Intellij or your favorite IDE.
@@ -19,13 +22,7 @@ More work needs to be done on the following:
 -->
 ## Getting Help
 
-Please email Jie Lin (jie265@gmail.com). We use the GitHub issues for tracking bugs and feature requests.
-
-- If it turns out that you may have found a bug, please [open an issue](#opening-issues)
-
-## Opening Issues
-
-If you encounter a bug with ReCiter, we'd love to hear it. Please contact Jie Lin (jie265@gmail.com).
+For help with ReCiter please email Jie Lin (jie265@gmail.com). You may expect a response within one to two business days. We use GitHub issues to track bugs and feature requests. If you find a bug, please contact Jie Lin or feel free to [open an issue](#opening-issues)
 
 ## Contributing
 
