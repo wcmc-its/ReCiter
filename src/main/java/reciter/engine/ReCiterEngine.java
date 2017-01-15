@@ -153,7 +153,7 @@ public class ReCiterEngine implements Engine {
 		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, parameters.getKnownPmids());
 		slf4jLogger.info(clusterer.toString());
-		slf4jLogger.info("Analysis for cwid=[" + identity.getCwid() + "]");
+		slf4jLogger.info("Analysis for uid=[" + identity.getUid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 		slf4jLogger.info("Recall=" + analysis.getRecall());
 

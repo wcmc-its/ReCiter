@@ -9,14 +9,14 @@ import reciter.engine.erroranalysis.Analysis;
 public class AnalysisMongo {
 	
 	@Id
-	private String cwid;
+	private String uid;
 	private Analysis analysis;
 	
-	public String getCwid() {
-		return cwid;
+	public String getUid() {
+		return uid;
 	}
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 	public Analysis getAnalysis() {
 		return analysis;

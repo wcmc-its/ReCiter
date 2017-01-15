@@ -8,11 +8,11 @@ public interface ESearchResultService {
 
 	void save(ESearchResult eSearchResult);
 
-	List<ESearchResult> findByCwid(String cwid);
+	List<ESearchResult> findByUid(String uid);
 
 	boolean pushESearchResult(ESearchResult eSearchResult);
 
 	void update(ESearchResult eSearchResult);
 	
-	boolean existByCwidAndRetrievalStrategyName(String cwid, String eSearchPmidretrievalStrategyName);
+	boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName);
 }

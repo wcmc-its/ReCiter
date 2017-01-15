@@ -8,7 +8,7 @@ import reciter.service.mongo.ReCiterArticleService;
 public class ReCiterArticleServiceImpl implements ReCiterArticleService {
 
 	@Override
-	public List<ReCiterArticle> retrieve(String cwid) {
+	public List<ReCiterArticle> retrieve(String uid) {
 		// TODO Auto-generated method stub
 		return null;
 	}

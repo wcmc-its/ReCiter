@@ -19,7 +19,7 @@ public class GoldStandardServiceImpl implements GoldStandardService {
 	}
 
 	@Override
-	public GoldStandard findByCwid(String cwid) {
-		return goldStandardRepository.findOne(cwid);
+	public GoldStandard findByUid(String uid) {
+		return goldStandardRepository.findOne(uid);
 	}
 }

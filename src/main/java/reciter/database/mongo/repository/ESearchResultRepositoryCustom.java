@@ -9,7 +9,7 @@ public interface ESearchResultRepositoryCustom {
 
 	boolean pushESearchResult(ESearchResult eSearchResult);
 
-	WriteResult update(String cwid, ESearchPmid eSearchPmid);
+	WriteResult update(String uid, ESearchPmid eSearchPmid);
 
-	boolean existByCwidAndRetrievalStrategyName(String cwid, String retrievalStrategyName);
+	boolean existByUidAndRetrievalStrategyName(String uid, String retrievalStrategyName);
 }

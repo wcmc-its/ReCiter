@@ -4,10 +4,10 @@ import java.util.List;
 
 public interface OracleIdentityDao {
 
-	int getBachelorDegreeYear(String cwid);
-	int getDoctoralYear(String cwid);
-	List<String> getInstitutions(String cwid);
-	List<String> getPersonalEmailFromOfa(String cwid);
-	List<String> getGrants(String cwid);
-	List<String> getRelationshipCwids(String cwid);
+	int getBachelorDegreeYear(String uid);
+	int getDoctoralYear(String uid);
+	List<String> getInstitutions(String uid);
+	List<String> getPersonalEmailFromOfa(String uid);
+	List<String> getGrants(String uid);
+	List<String> getRelationshipCwids(String uid);
 }

@@ -2,15 +2,15 @@ package reciter.model.identity;
 
 public class KnownRelationship {
 
-	private String cwid;
+	private String uid;
 	private AuthorName name;
 	private String type;
 	
-	public String getCwid() {
-		return cwid;
+	public String getUid() {
+		return uid;
 	}
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 	public AuthorName getName() {
 		return name;
@@ -26,6 +26,6 @@ public class KnownRelationship {
 	}
 	@Override
 	public String toString() {
-		return "KnownRelationship [cwid=" + cwid + ", name=" + name + ", type=" + type + "]";
+		return "KnownRelationship [uid=" + uid + ", name=" + name + ", type=" + type + "]";
 	}
 }

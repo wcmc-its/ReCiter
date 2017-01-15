@@ -39,7 +39,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 	 */
 	@Override
 	public void cluster() {
-		slf4jLogger.info("Running ReCiter for: [" + identity.getCwid() + "] "
+		slf4jLogger.info("Running ReCiter for: [" + identity.getUid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		clusters = clusteringStrategy.cluster(reCiterArticles);
 	}
@@ -47,7 +47,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 
 	@Override
 	public void cluster(Set<Long> seedPmids) {
-		slf4jLogger.info("Running ReCiter for: [" + identity.getCwid() + "] "
+		slf4jLogger.info("Running ReCiter for: [" + identity.getUid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size() + " initial seeds=" + seedPmids);
 		clusters = clusteringStrategy.cluster(reCiterArticles, seedPmids);
 	}

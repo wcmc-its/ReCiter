@@ -64,9 +64,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	/**
 	 * Save the PubMed articles and the ESearch results.
 	 * @param pubMedArticles
-	 * @param cwid
+	 * @param uid
 	 */
-	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String cwid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults) {
+	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults) {
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
 		pubMedService.save(pubMedArticleList);
@@ -77,11 +77,11 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
 		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now(Clock.systemUTC()));
-//		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(cwid, eSearchPmid.getRetrievalStrategyName());
+//		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(uid, eSearchPmid.getRetrievalStrategyName());
 //		if (exist) {
-//			eSearchResultService.update(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
+//			eSearchResultService.update(new ESearchResult(uid, eSearchPmid, pubMedQueryResults));
 //		} else {
-		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
+		eSearchResultService.save(new ESearchResult(uid, eSearchPmid, pubMedQueryResults));
 //		}
 	}
 }

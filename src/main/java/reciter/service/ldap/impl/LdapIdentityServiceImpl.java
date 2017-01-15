@@ -14,7 +14,7 @@ public class LdapIdentityServiceImpl implements LdapIdentityService {
 	private LdapIdentityDao ldapIdentityDao;
 
 	@Override
-	public Identity getIdentity(String cwid) {
-		return ldapIdentityDao.getIdentity(cwid);
+	public Identity getIdentity(String uid) {
+		return ldapIdentityDao.getIdentity(uid);
 	}
 }

@@ -113,7 +113,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation() != null) {
 			String affiliation = reCiterAuthor.getAffiliation();
 			extractedDept = extractDepartment(affiliation);
-			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "].");
+			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getUid() + "] in pmid=[" + pmid + "].");
 			for (String department : identity.getDepartments()) {
 				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
 					return true;
@@ -122,7 +122,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 					// it too common.
 					if (reCiterAuthor.getAuthorName().firstInitialMiddleInitialLastNameMatch(identity.getPrimaryName())) {
 						slf4jLogger.info("Extracted department=[" + extractedDept + "] contains identity's department=[" + department + "] "
-								+ "for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "]. And first initial, middle initial and last names match. "
+								+ "for author=[" + identity.getUid() + "] in pmid=[" + pmid + "]. And first initial, middle initial and last names match. "
 										+ "gold standard=[" + goldStandard + "]");
 						return true;
 					}

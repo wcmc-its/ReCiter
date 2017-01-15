@@ -124,12 +124,12 @@ public class AuthorNameUtils {
 									// check if the same first initial is already added to the set.
 									if (aliasSet.isEmpty()) {
 										aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-										slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Empty set) Adding alias: " + alias);
+										slf4jLogger.info(identity.getUid() + ": " + identity.getPrimaryName() + ": (Empty set) Adding alias: " + alias);
 									} else {
 										for (AuthorName aliasAuthorName : aliasSet.values()) {
 											if (!aliasAuthorName.getFirstInitial().equals(alias.getFirstInitial())) {
 												aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-												slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Different first initial) Adding alias: " + alias);
+												slf4jLogger.info(identity.getUid() + ": " + identity.getPrimaryName() + ": (Different first initial) Adding alias: " + alias);
 												break;
 											} else {
 												String firstNameInSet = aliasAuthorName.getFirstName();
@@ -139,7 +139,7 @@ public class AuthorNameUtils {
 												if (firstNameInSet.length() < currentFirstName.length()) {
 													aliasSet.remove(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 													aliasSet.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), alias);
-													slf4jLogger.info(identity.getCwid() + ": " + identity.getPrimaryName() + ": (Prefer longer first name) Adding alias: " + alias);
+													slf4jLogger.info(identity.getUid() + ": " + identity.getPrimaryName() + ": (Prefer longer first name) Adding alias: " + alias);
 													break;
 												}
 											}

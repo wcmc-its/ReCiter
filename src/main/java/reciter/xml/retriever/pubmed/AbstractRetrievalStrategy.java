@@ -150,7 +150,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			pubMedQueryResults.add(pubMedQuery.getLenientQuery());
 			pubMedQueryResults.add(pubMedQuery.getStrictQuery());
 		}
-		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getCwid() 
+		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getUid() 
 		+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
 
 		return new RetrievalResult(pubMedArticles, pubMedQueryResults);

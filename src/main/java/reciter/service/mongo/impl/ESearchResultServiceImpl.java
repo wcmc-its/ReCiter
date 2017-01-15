@@ -22,12 +22,12 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 	
 	@Override
 	public void update(ESearchResult eSearchResult) {
-		eSearchResultRepository.update(eSearchResult.getCwid(), eSearchResult.getESearchPmid());
+		eSearchResultRepository.update(eSearchResult.getUid(), eSearchResult.getESearchPmid());
 	}
 
 	@Override
-	public List<ESearchResult> findByCwid(String cwid) {
-		return eSearchResultRepository.findByCwid(cwid);
+	public List<ESearchResult> findByUid(String uid) {
+		return eSearchResultRepository.findByUid(uid);
 	}
 	
 	@Override
@@ -36,15 +36,15 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 	}
 
 	@Override
-	public boolean existByCwidAndRetrievalStrategyName(String cwid,
+	public boolean existByUidAndRetrievalStrategyName(String uid,
 			String eSearchPmidretrievalStrategyName) {
-		return eSearchResultRepository.existByCwidAndRetrievalStrategyName(cwid, eSearchPmidretrievalStrategyName);
+		return eSearchResultRepository.existByUidAndRetrievalStrategyName(uid, eSearchPmidretrievalStrategyName);
 	}
 	
 //	@Override
-//	public void insertESearchResult(String cwid, List<String> pmids) {
+//	public void insertESearchResult(String uid, List<String> pmids) {
 //		ESearchResultRepository eSearchResultDao = new ESearchResultDataAccessImpl();
-//		Document doc = new Document("cwid", cwid).append("pmids", pmids);
+//		Document doc = new Document("uid", uid).append("pmids", pmids);
 //		eSearchResultDao.insertESearchResult(doc);
 //	}
 

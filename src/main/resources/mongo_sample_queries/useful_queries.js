@@ -10,21 +10,21 @@ db.analysis.aggregate([
 ]);
 
 db.meshterm.find();
-/* List all cwids */
+/* List all uids */
 db.analysis.find({"_id": "rbaergen"});
 
 db.analysis.count();
 
-/* Find all cwids whose precision is less than 0.1 */
+/* Find all uids whose precision is less than 0.1 */
 db.analysis.find({"analysis.precision": {"$lt" : 0.1}});
 
-/* Find all cwids whose recall is less than 0.1 */
+/* Find all uids whose recall is less than 0.1 */
 db.analysis.find({"analysis.recall": {"$lt" : 0.1}});
 
 /* Find all gold standard */
 db.goldstandard.find();
 
-/* Find all gold standard for a given cwid */
+/* Find all gold standard for a given uid */
 db.goldstandard.find({"_id" : "rak2007"});
 
 /* Add pmid 26976629 to gold standard for 'cnathan' */
@@ -36,7 +36,7 @@ db.goldstandard.update({"_id": "cnathan"}, {$pull: {"knownPmids": [26976629]}});
 /* Remove from gold standard for 'cnathan' an erroneous pmid NumberLong(26976629) */
 db.goldstandard.update({"_id": "cnathan"}, {$pull: {"knownPmids": NumberLong(26976629)}});
 
-/* Find if PMID exist in this cwid */
+/* Find if PMID exist in this uid */
 db.goldstandard.find({"_id": "rgcryst", "knownPmids": {$in: [NumberLong(26927796)]}});
 
 /* Total number of documents in this identity collection */
@@ -45,17 +45,17 @@ db.identity.count();
 /* Find all identies */
 db.identity.find();
 
-/* Find identity whose cwid is 'aas2004' */
+/* Find identity whose uid is 'aas2004' */
 db.identity.find({"_id": "rgcryst"});
 
 /* Find pubmed article with PMID 18341570 */
 db.pubmedarticle.find({"_id": 18341570});
 
-/* Find the PubMed search strategies for cwid 'amb9023' */
-db.esearchresult.find({"cwid": "wcb2001"});
+/* Find the PubMed search strategies for uid 'amb9023' */
+db.esearchresult.find({"uid": "wcb2001"});
 
-/* Delete the esearch result where the cwid is 'rbaergen' */
-db.esearchresult.deleteMany({"cwid": "rbaergen"});
+/* Delete the esearch result where the uid is 'rbaergen' */
+db.esearchresult.deleteMany({"uid": "rbaergen"});
 
 /** Updating gold standard for rak2007 */
 db.goldstandard.update({"_id": "rgcryst"}, {$addToSet: {"knownPmids": {$each: [

@@ -24,7 +24,7 @@ public class IdentityServiceImpl implements IdentityService {
 		List<IdentityMongo> identityMongos = new ArrayList<>();
 		for (Identity identity : identities) {
 			IdentityMongo identityMongo = new IdentityMongo();
-			identityMongo.setId(identity.getCwid());
+			identityMongo.setId(identity.getUid());
 			identityMongo.setIdentity(identity);
 			identityMongos.add(identityMongo);
 		}
@@ -34,15 +34,15 @@ public class IdentityServiceImpl implements IdentityService {
 	@Override
 	public void save(Identity identity) {
 		IdentityMongo identityMongo = new IdentityMongo();
-		identityMongo.setId(identity.getCwid());
+		identityMongo.setId(identity.getUid());
 		identityMongo.setIdentity(identity);
 		identityRepository.save(identityMongo);
 	}
 
 	@Override
-	public List<Identity> findByCwids(List<String> cwids) {
-		Iterator<IdentityMongo> iterator = identityRepository.findAll(cwids).iterator();
-		List<Identity> identities = new ArrayList<>(cwids.size());
+	public List<Identity> findByUids(List<String> uids) {
+		Iterator<IdentityMongo> iterator = identityRepository.findAll(uids).iterator();
+		List<Identity> identities = new ArrayList<>(uids.size());
 		while (iterator.hasNext()) {
 			identities.add(iterator.next().getIdentity());
 		}
@@ -50,8 +50,8 @@ public class IdentityServiceImpl implements IdentityService {
 	}
 
 	@Override
-	public Identity findByCwid(String cwid) {
-		IdentityMongo identityMongo = identityRepository.findOne(cwid);
+	public Identity findByUid(String uid) {
+		IdentityMongo identityMongo = identityRepository.findOne(uid);
 		return identityMongo.getIdentity();
 	}
 }

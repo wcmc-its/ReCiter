@@ -27,7 +27,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	private OracleConnectionFactory oracleConnectionFactory;
 
 	@Override
-	public int getBachelorDegreeYear(String cwid) {
+	public int getBachelorDegreeYear(String uid) {
 		int year = 0;
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
@@ -37,19 +37,19 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		PreparedStatement pst = null;
 		String sql = "select degree_year from OFA_DB.PERSON p1 "
 				+ "inner join "
-				+ "(select cwid, degree_year from ofa_db.degree d "
+				+ "(select uid, degree_year from ofa_db.degree d "
 				+ "join OFA_DB.FACORE fac on fac.facore_pk = d.facore_fk "
 				+ "join OFA_DB.PERSON p on p.PERSON_PK = fac.FACORE_PK "
 				+ "join OFA_DB.INSTITUTE i on i.institute_PK = d.institute_FK "
 				+ "left join OFA_DB.DEGREE_NAME n on n.DEGREE_NAME_PK = d.degree_name_fk "
-				+ "where p.cwid is not NULL and terminal_degree <> 'Yes' and doctoral_degree is null "
+				+ "where p.uid is not NULL and terminal_degree <> 'Yes' and doctoral_degree is null "
 				+ "and md = 'F' and mdphd ='F' and do_degree = 'F' and n.OTHER_PROFESSORIAL = 'F' "
 				+ "and degree not like 'M%' and degree not like 'Pharm%' and degree not like 'Sc%' "
 				+ "order by degree_year asc) p2 "
-				+ "on p2.cwid = p1.cwid and p1.cwid = ?";
+				+ "on p2.uid = p1.uid and p1.uid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, cwid);
+			pst.setString(1, uid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				year = rs.getInt(1);
@@ -70,7 +70,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public int getDoctoralYear(String cwid) {
+	public int getDoctoralYear(String uid) {
 		int year = 0;
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
@@ -83,10 +83,10 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				+ "join OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK "
 				+ "join OFA_DB.INSTITUTE i on i.institute_PK = d.institute_FK "
 				+ "left join OFA_DB.DEGREE_NAME n on n.DEGREE_NAME_PK = d.degree_name_fk "
-				+ "where p.cwid is not NULL and cwid <> '0' and terminal_degree = 'Yes' and p.cwid = ?";
+				+ "where p.uid is not NULL and uid <> '0' and terminal_degree = 'Yes' and p.uid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, cwid);
+			pst.setString(1, uid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				year = rs.getInt(1);
@@ -107,36 +107,36 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getInstitutions(String cwid) {
+	public List<String> getInstitutions(String uid) {
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
 			return Collections.emptyList();
 		}
 		ResultSet rs = null;
 		PreparedStatement pst = null;
-		String sql = "SELECT cwid, ai.INSTITUTION, 'Academic-PrimaryAffiliation' from OFA_DB.FACORE fac "
+		String sql = "SELECT uid, ai.INSTITUTION, 'Academic-PrimaryAffiliation' from OFA_DB.FACORE fac "
 				+ "JOIN OFA_DB.AFFIL_INSTITUTE ai ON ai.affil_institute_pk = fac.affil_institute_FK "
-                + "JOIN OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK where cwid is not null and cwid <> '0' and cwid = ?"
+                + "JOIN OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK where uid is not null and uid <> '0' and uid = ?"
                 + "union "
-                + "SELECT p.cwid, ai.INSTITUTION, 'Academic-AppointingInstitution' FROM OFA_DB.FACORE fac "
+                + "SELECT p.uid, ai.INSTITUTION, 'Academic-AppointingInstitution' FROM OFA_DB.FACORE fac "
                 + "JOIN OFA_DB.APPOINTMENT a ON fac.facore_PK = a.facore_fk "
                 + "JOIN OFA_DB.AFFIL_INSTITUTE ai ON ai.affil_institute_pk = a.affil_institute_FK "
                 + "JOIN OFA_DB.AFFIL_INSTITUTE ai ON ai.affil_institute_pk = fac.affil_institute_FK "
                 + "JOIN OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK "
-                + "where cwid is not null and cwid <> '0' and cwid = ?"
+                + "where uid is not null and uid <> '0' and uid = ?"
                 + "union "
-                + "SELECT cwid, institution, 'Academic-Degree' from ofa_db.degree d "
+                + "SELECT uid, institution, 'Academic-Degree' from ofa_db.degree d "
                 + "join OFA_DB.FACORE fac on fac.facore_pk = d.facore_fk "
                 + "join OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK " 
                 + "join OFA_DB.INSTITUTE i on i.institute_PK = d.institute_FK "
                 + "left join OFA_DB.DEGREE_NAME n on n.DEGREE_NAME_PK = d.degree_name_fk " 
-                + "where cwid is not null and cwid <> '0' and cwid = ?";
+                + "where uid is not null and uid <> '0' and uid = ?";
 		Set<String> distinctInstitutions = new HashSet<String>();
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, cwid);
-			pst.setString(2, cwid);
-			pst.setString(3, cwid);
+			pst.setString(1, uid);
+			pst.setString(2, uid);
+			pst.setString(3, uid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				distinctInstitutions.add(rs.getString(2));
@@ -157,7 +157,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getPersonalEmailFromOfa(String cwid) {
+	public List<String> getPersonalEmailFromOfa(String uid) {
 		List<String> emails = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
@@ -166,22 +166,22 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		ResultSet rs = null;
 		PreparedStatement pst = null;
 		String sql = "select email from "
-				+ "(select distinct p.cwid, substr(private_email,1,INSTR(private_email,',')-1) as email "
+				+ "(select distinct p.uid, substr(private_email,1,INSTR(private_email,',')-1) as email "
 				+ "FROM OFA_DB.PERSON p where p.private_email like '%,%' "
 				+ "UNION "
-				+ "select distinct p.cwid, substr(email,1,INSTR(email,',')-1) AS email from OFA_DB.PERSON p "
+				+ "select distinct p.uid, substr(email,1,INSTR(email,',')-1) AS email from OFA_DB.PERSON p "
 				+ "where p.email like '%,%' "
 				+ "UNION "
-				+ "select distinct p.cwid, "
+				+ "select distinct p.uid, "
 				+ "substr(replace(p.private_email,' ',''),1 + INSTR(replace(p.private_email,' ',''),',')) "
 				+ "as email from OFA_DB.PERSON p where p.private_email like '%,%' "
 				+ "UNION "
-				+ "select distinct p.cwid, "
+				+ "select distinct p.uid, "
 				+ "substr(replace(p.email,' ',''),1 + INSTR(replace(p.email,' ',''),',')) as email from OFA_DB.PERSON p "
 				+ "where p.email like '%,%') where email like '%@%' and email like '%.%' and CWID = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, cwid);
+			pst.setString(1, uid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				emails.add(rs.getString(1));
@@ -202,7 +202,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getGrants(String cwid) {
+	public List<String> getGrants(String uid) {
 		
 		List<String> grants = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
@@ -211,14 +211,14 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		}
 		ResultSet rs = null;
 		PreparedStatement pst = null;
-		String sql = "select distinct cwid, " 
+		String sql = "select distinct uid, " 
 				   + "substr(substr(replace(sponsor_award_number,'  ',' '),1,INSTR(replace(sponsor_award_number,'  ',' '),'-')-1),7,8) AS awardNumber "
 				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO "
 				   + "where sponsor_type_code = '0' and "
-				   + "substr(sponsor_award_number,2,1) = ' ' and cwid = ?";
+				   + "substr(sponsor_award_number,2,1) = ' ' and uid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, cwid);
+			pst.setString(1, uid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				String grantId = rs.getString(2);
@@ -241,7 +241,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getRelationshipCwids(String cwid) {
+	public List<String> getRelationshipCwids(String uid) {
 		
 		List<String> relationships = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
@@ -250,21 +250,21 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		}
 		ResultSet rs = null;
 		PreparedStatement pst = null;
-		String sql = "select distinct cwid AS targetCWID, C2.relationshipCWID "
+		String sql = "select distinct uid AS targetCWID, C2.relationshipCWID "
 				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO C1 "
 				   + "left join (select distinct " 
-				   + "cwid AS relationshipCWID, " 
+				   + "uid AS relationshipCWID, " 
 				   + "award_number AS awardNumber2 "
 				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO "
 				   + "where  award_number not in ('003152-001','005927-001') "
 				   + ")  C2 "
 				   + "on award_number = C2.awardNumber2 " 
 				   + "where relationshipCWID is not null "
-				   + "and relationshipCWID <> cwid " 
-				   + "and award_number not in ('003152-001','005927-001') and cwid = ?";
+				   + "and relationshipCWID <> uid " 
+				   + "and award_number not in ('003152-001','005927-001') and uid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, cwid);
+			pst.setString(1, uid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				relationships.add(rs.getString(2));

@@ -6,7 +6,7 @@ public class AnalysisConstants {
 
 	// Information Retrieval constants.
 	public static final String STATUS = "Status";
-	public static final String CWID = "cwid";
+	public static final String UID = "uid";
 	public static final String TARGET_NAME = "Target Name";
 	public static final String PUBMED_SEARCH_QUERY = "PubMed Search Query";
 	

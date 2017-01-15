@@ -1,8 +1,8 @@
 package reciter;
 
-public class Cwids {
+public class Uids {
 
-	public static String[] cwids = {
+	public static String[] uids = {
 			"aas2004",
 			"ajo9001",
 			"als7001",

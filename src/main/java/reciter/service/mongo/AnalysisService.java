@@ -4,5 +4,5 @@ import reciter.engine.erroranalysis.Analysis;
 
 public interface AnalysisService {
 
-	void save(Analysis analysis, String cwid);
+	void save(Analysis analysis, String uid);
 }

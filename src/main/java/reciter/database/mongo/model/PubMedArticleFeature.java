@@ -12,14 +12,14 @@ public class PubMedArticleFeature {
 
 	@Id
 	private String id;
-	private String cwid;
+	private String uid;
 	private List<Feature> features;
 	
-	public String getCwid() {
-		return cwid;
+	public String getUid() {
+		return uid;
 	}
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 	public List<Feature> getFeatures() {
 		return features;

@@ -217,8 +217,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								// author's first name, if the distance <= 1 and affiliation score is greater than 0, 
 								// un-do the removal operation.
 								// Cases:
-								// 1. Removed article id=[19061285] with cwid=[nkaltork] and name in article=[Nassar] In gold standard=[1]
-								// 2. Removed article id=[18343782] with cwid=[nkaltork] and name in article=[Nassar] In gold standard=[1]
+								// 1. Removed article id=[19061285] with uid=[nkaltork] and name in article=[Nassar] In gold standard=[1]
+								// 2. Removed article id=[18343782] with uid=[nkaltork] and name in article=[Nassar] In gold standard=[1]
 								if (shouldRemove && reCiterArticle.getAffiliationScore() > 0) {
 									int levenshteinDistance = ReCiterStringUtil.levenshteinDistance(firstName, targetAuthorFirstName);
 									if (levenshteinDistance <= 1) {
@@ -230,7 +230,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 								// Check the first three characters of each of the first names and compare affiliation score.
 								// Case:
-								// 1. Removed article id=[19101229] with cwid=[mszulc] and name in article=[Massimo] In gold standard=[1]
+								// 1. Removed article id=[19101229] with uid=[mszulc] and name in article=[Massimo] In gold standard=[1]
 								if (shouldRemove && reCiterArticle.getAffiliationScore() > 0) {
 									if (targetAuthorFirstName.length() > 5 && firstName.length() > 5) {
 										String targetAuthorFirstName5Chars = targetAuthorFirstName.substring(0, 5);
@@ -309,7 +309,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 //								}
 
 								if (shouldRemove) {
-									// Case pmid = 10651632, first name in article is Clay (from Scopus), name in db is w. clay. cwid = wcb2001.
+									// Case pmid = 10651632, first name in article is Clay (from Scopus), name in db is w. clay. uid = wcb2001.
 									// Match Clay to w. clay.
 									String[] targetAuthorFirstNameParts = targetAuthorFirstName.split("\\s+");
 									if (targetAuthorFirstNameParts.length > 1) {
@@ -319,7 +319,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 											StringUtils.equalsIgnoreCase(firstName, secondPart)) {
 											shouldRemove = false;
 											
-											// Case: 26336036, name in article is David K Warren, cwid = jdw2003, name
+											// Case: 26336036, name in article is David K Warren, uid = jdw2003, name
 											// in db is "J David Warren", check middle initial.
 											if (middleName.length() > 0) {
 												if (!StringUtils.equalsIgnoreCase(middleNameInitial, targetAuthorMiddleNameInitial)) {
@@ -338,7 +338,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								// Handle the case where there are multiple authors with the same last name.
 								foundAuthorWithSameFirstName = true;
 
-								// case: pmid=23045697, cwid = mlg2007
+								// case: pmid=23045697, uid = mlg2007
 								// First name, last name matches, but middle name and affiliation doesn't match. Mark for removal.
 								if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
 									String middleInitial = author.getAuthorName().getMiddleInitial();
@@ -390,7 +390,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								}
 							}
 
-							// case: pmid=11467038, cwid = ajmarcus
+							// case: pmid=11467038, uid = ajmarcus
 							// Middle name doesn't match. Mark for removal.
 							if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
 								String middleInitial = author.getAuthorName().getMiddleInitial();
@@ -404,7 +404,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								}
 							}
 
-							// case: pmid=17943945, cwid = wcb2001
+							// case: pmid=17943945, uid = wcb2001
 							// Name in article: W Clay Bracken, name in rc_identity = W. clay Bracken
 							// Name in article becomes firstname = W, middle initial = Clay.
 							if (shouldRemove) {
@@ -429,8 +429,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 		reCiterArticle.setFoundMatchingAuthorValue(foundMatchingAuthor);
 		
 		if ((shouldRemove && !foundAuthorWithSameFirstName) || !foundMatchingAuthor) {
-			slf4jLogger.info("Removed article id=[" + reCiterArticle.getArticleId() + "] with cwid=[" + 
-					identity.getCwid() + "] and name in article=[" + firstNameFieldVar + ", " + middleNameFieldVar + "]" +
+			slf4jLogger.info("Removed article id=[" + reCiterArticle.getArticleId() + "] with uid=[" + 
+					identity.getUid() + "] and name in article=[" + firstNameFieldVar + ", " + middleNameFieldVar + "]" +
 					" In gold standard=[" + reCiterArticle.getGoldStandard() + "]");
 			return 1;
 		} else {

@@ -33,7 +33,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				String affiliation = author.getAffiliation();
 				
 				for (String suffix : emailSuffixes) {
-					String email = identity.getCwid() + suffix;
+					String email = identity.getUid() + suffix;
 					if (StringUtils.containsIgnoreCase(affiliation, email)) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
 						score += 1;
@@ -71,13 +71,13 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null && author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation();
-				if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[0])) {
+				if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[0])) {
 					feature.setMedCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[1])) {
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[1])) {
 					feature.setMailMedCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[2])) {
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[2])) {
 					feature.setWeillCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[3])) {
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[3])) {
 					feature.setNypOrg(1);
 				}
 			}

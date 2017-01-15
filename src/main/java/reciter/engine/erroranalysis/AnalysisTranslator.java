@@ -16,7 +16,7 @@ public class AnalysisTranslator {
 	public static AnalysisObject translate(
 			ReCiterArticle reCiterArticle,
 			StatusEnum status,
-			String cwid,
+			String uid,
 			Identity identity,
 			boolean isClusterOriginator,
 			long clusterId,
@@ -25,7 +25,7 @@ public class AnalysisTranslator {
 
 		AnalysisObject analysisObject = new AnalysisObject();
 		analysisObject.setStatus(status);
-		analysisObject.setCwid(cwid);
+		analysisObject.setUid(uid);
 		analysisObject.setTargetName(
 				identity.getPrimaryName().getFirstName() + " " + 
 						identity.getPrimaryName().getMiddleName() + " " + 

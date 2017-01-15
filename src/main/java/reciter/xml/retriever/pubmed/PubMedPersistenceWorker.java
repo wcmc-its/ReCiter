@@ -20,23 +20,23 @@ public class PubMedPersistenceWorker implements Runnable {
 
 	private final String url;
 	private final String commonDirectory;
-	private final String cwid;
+	private final String uid;
 	private final String xmlFileName;
 	
-	public PubMedPersistenceWorker(String url, String commonDirectory, String cwid, String xmlFileName) {
+	public PubMedPersistenceWorker(String url, String commonDirectory, String uid, String xmlFileName) {
 		this.url = url;
 		this.commonDirectory = commonDirectory;
-		this.cwid = cwid;
+		this.uid = uid;
 		this.xmlFileName = xmlFileName;
 	}
 	
 	@Override
 	public void run() {
 		try {
-			slf4jLogger.info("persisting PubMed articles for cwid=[" + cwid + "].");
-			persist(url, commonDirectory, cwid, xmlFileName);
+			slf4jLogger.info("persisting PubMed articles for uid=[" + uid + "].");
+			persist(url, commonDirectory, uid, xmlFileName);
 		} catch (IOException e) {
-			slf4jLogger.error("Error persisting PubMed XML file for cwid=[" + cwid + "].", e);
+			slf4jLogger.error("Error persisting PubMed XML file for uid=[" + uid + "].", e);
 		}
 	}
 	
@@ -46,22 +46,22 @@ public class PubMedPersistenceWorker implements Runnable {
 	 * 
 	 * @param url URL
 	 * @param commonDirectory directory path.
-	 * @param cwid directory name.
+	 * @param uid directory name.
 	 * @param xmlFileName file name.
 	 * @throws IOException 
 	 * @throws MalformedURLException 
 	 * @throws UnsupportedEncodingException 
 	 */
-	public void persist(String url, String commonDirectory, String cwid, String xmlFileName) 
+	public void persist(String url, String commonDirectory, String uid, String xmlFileName) 
 			throws UnsupportedEncodingException, MalformedURLException, IOException {
 
-		File dir = new File(commonDirectory + cwid);
+		File dir = new File(commonDirectory + uid);
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
 
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
-		String outputFileName = commonDirectory + cwid + "/" + xmlFileName + ".xml";
+		String outputFileName = commonDirectory + uid + "/" + xmlFileName + ".xml";
 		BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileName), "UTF-8"));
 
 		String inputLine;

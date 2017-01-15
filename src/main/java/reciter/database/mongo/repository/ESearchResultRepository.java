@@ -8,5 +8,5 @@ import reciter.database.mongo.model.ESearchResult;
 
 public interface ESearchResultRepository extends MongoRepository<ESearchResult, String>, ESearchResultRepositoryCustom {
 
-	List<ESearchResult> findByCwid(String cwid);
+	List<ESearchResult> findByUid(String uid);
 }

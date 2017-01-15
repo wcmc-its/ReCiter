@@ -43,7 +43,7 @@ public class Analysis {
 	/**
 	 * Assign gold standard to each ReCiterArticle.
 	 * @param reCiterArticles
-	 * @param cwid
+	 * @param uid
 	 */
 	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> pmids) {
 		Set<Long> pmidSet = new HashSet<Long>();
@@ -63,14 +63,14 @@ public class Analysis {
 	 * List of selections.
 	 * @param finalCluster
 	 * @param selection
-	 * @param cwid
+	 * @param uid
 	 * @return
 	 */
 	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, List<Long> goldStandardPmids) {
 	    
 		Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 		Set<Long> selection = clusterSelector.getSelectedClusterIds();
-		String cwid = reCiterClusterer.getIdentity().getCwid();
+		String uid = reCiterClusterer.getIdentity().getUid();
 		
 		Analysis analysis = new Analysis();
 		slf4jLogger.info("Gold Standard [" + goldStandardPmids.size() + "]: " + goldStandardPmids);
@@ -122,7 +122,7 @@ public class Analysis {
 				AnalysisObject analysisObject = AnalysisTranslator.translate(
 						reCiterArticle, 
 						statusEnum, 
-						cwid, 
+						uid, 
 						reCiterClusterer.getIdentity(), 
 						isClusterOriginator, 
 						entry.getValue().getClusterID(), 

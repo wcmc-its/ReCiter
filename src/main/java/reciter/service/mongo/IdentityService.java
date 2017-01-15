@@ -11,7 +11,7 @@ public interface IdentityService {
 	
 	void save(Identity identity);
 	
-	List<Identity> findByCwids(List<String> cwids);
+	List<Identity> findByUids(List<String> uids);
 	
-	Identity findByCwid(String cwid);
+	Identity findByUid(String uid);
 }

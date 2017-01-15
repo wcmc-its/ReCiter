@@ -11,14 +11,14 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 public class ReCiterClusterMongo {
 
 	@Id
-	private String cwid;
+	private String uid;
 	private List<ReCiterCluster> reCiterClusters;
 	
-	public String getCwid() {
-		return cwid;
+	public String getUid() {
+		return uid;
 	}
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 	public List<ReCiterCluster> getReCiterClusters() {
 		return reCiterClusters;

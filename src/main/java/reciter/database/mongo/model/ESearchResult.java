@@ -12,21 +12,21 @@ public class ESearchResult {
 
 	@Id
 	private String id;
-	private String cwid;
+	private String uid;
 	private ESearchPmid eSearchPmid;
 	private List<PubMedQueryResult> pubMedQueryResults;
 	
-	public ESearchResult(String cwid, ESearchPmid eSearchPmid, List<PubMedQueryResult> pubMedQueryResults) {
-		this.cwid = cwid;
+	public ESearchResult(String uid, ESearchPmid eSearchPmid, List<PubMedQueryResult> pubMedQueryResults) {
+		this.uid = uid;
 		this.eSearchPmid = eSearchPmid;
 		this.pubMedQueryResults = pubMedQueryResults;
 	}
 	
-	public String getCwid() {
-		return cwid;
+	public String getUid() {
+		return uid;
 	}
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 	public ESearchPmid getESearchPmid() {
 		return eSearchPmid;

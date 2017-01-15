@@ -15,9 +15,9 @@ public class AnalysisServiceImpl implements AnalysisService {
 	private AnalysisRepository analysisRepository;
 	
 	@Override
-	public void save(Analysis analysis, String cwid) {
+	public void save(Analysis analysis, String uid) {
 		AnalysisMongo analysisMongo = new AnalysisMongo();
-		analysisMongo.setCwid(cwid);
+		analysisMongo.setUid(uid);
 		analysisMongo.setAnalysis(analysis);
 		analysisRepository.save(analysisMongo);
 	}

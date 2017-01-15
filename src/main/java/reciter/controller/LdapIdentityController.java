@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import reciter.Cwids;
+import reciter.Uids;
 import reciter.model.identity.Identity;
 import reciter.service.ldap.LdapIdentityService;
 import reciter.service.mongo.IdentityService;
@@ -25,10 +25,10 @@ public class LdapIdentityController {
 	@Autowired
 	private IdentityService identityService;
 	
-	@RequestMapping(value = "/reciter/ldap/get/identity/by/cwid", method = RequestMethod.GET)
+	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
 	@ResponseBody
-	public Identity getIdentity(@RequestParam String cwid) {
-		return ldapIdentityService.getIdentity(cwid);
+	public Identity getIdentity(@RequestParam String uid) {
+		return ldapIdentityService.getIdentity(uid);
 	}
 	
 	@RequestMapping(value = "/reciter/ldap/retrieve/test", method = RequestMethod.GET)
@@ -36,13 +36,13 @@ public class LdapIdentityController {
 	public String retrieveTest() {
 		long start = System.currentTimeMillis();
 		slf4jLogger.info("Started retrieval at: " + start);
-		for (String cwid : Cwids.cwids) {
-			slf4jLogger.info("Starting retrieval for : " + cwid);
-			Identity identity = ldapIdentityService.getIdentity(cwid);
+		for (String uid : Uids.uids) {
+			slf4jLogger.info("Starting retrieval for : " + uid);
+			Identity identity = ldapIdentityService.getIdentity(uid);
 			if (identity == null) {
-				slf4jLogger.info("Cwid doesn't exist: " + cwid);
+				slf4jLogger.info("uid doesn't exist: " + uid);
 			} else {
-				slf4jLogger.info("Finished retrieval for : " + identity.getCwid());
+				slf4jLogger.info("Finished retrieval for : " + identity.getUid());
 			}
 			identityService.save(identity);
 		}

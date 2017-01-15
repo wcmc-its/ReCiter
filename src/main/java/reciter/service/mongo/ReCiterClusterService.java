@@ -6,5 +6,5 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 
 public interface ReCiterClusterService {
 
-	void save(List<ReCiterCluster> reCiterClusters, String cwid);
+	void save(List<ReCiterCluster> reCiterClusters, String uid);
 }

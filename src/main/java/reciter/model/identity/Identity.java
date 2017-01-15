@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Identity {
 
-	private String cwid; // cwid of the user
+	private String uid; // uid of the user
 	private AuthorName primaryName; // primary name of the user
 	private List<AuthorName> alternateNames; // aliases
 	private List<String> emails; // list of emails
@@ -27,12 +27,12 @@ public class Identity {
 	
 	public Identity() {}
 
-	public String getCwid() {
-		return cwid;
+	public String getUid() {
+		return uid;
 	}
 
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 
 	public AuthorName getPrimaryName() {

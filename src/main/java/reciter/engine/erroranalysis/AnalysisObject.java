@@ -11,7 +11,7 @@ public class AnalysisObject {
 
 	// Information regarding the article and target author.
 	private StatusEnum status;
-	private String cwid;
+	private String uid;
 	private String targetName;
 	private String pubmedSearchQuery;
 	private long pmid;
@@ -89,11 +89,11 @@ public class AnalysisObject {
 	public void setStatus(StatusEnum status) {
 		this.status = status;
 	}
-	public String getCwid() {
-		return cwid;
+	public String getUid() {
+		return uid;
 	}
-	public void setCwid(String cwid) {
-		this.cwid = cwid;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 	public String getTargetName() {
 		return targetName;
@@ -341,7 +341,7 @@ public class AnalysisObject {
 	
 	@Override
 	public String toString() {
-		return "AnalysisObject [status=" + status + ", cwid=" + cwid + ", targetName=" + targetName
+		return "AnalysisObject [status=" + status + ", uid=" + uid + ", targetName=" + targetName
 				+ ", pubmedSearchQuery=" + pubmedSearchQuery + ", pmid=" + pmid + ", articleTitle=" + articleTitle
 				+ ", fullJournalTitle=" + fullJournalTitle + ", publicationYear=" + publicationYear
 				+ ", scopusTargetAuthorAffiliation=" + scopusTargetAuthorAffiliation + ", scopusCoAuthorAffiliation="

@@ -10,14 +10,14 @@ public class TrainingData {
 	
 	@Id
 	private String id;
-	private List<String> cwids;
+	private List<String> uids;
 
-	public List<String> getCwids() {
-		return cwids;
+	public List<String> getUid() {
+		return uids;
 	}
 
-	public void setCwids(List<String> cwids) {
-		this.cwids = cwids;
+	public void setUid(List<String> uids) {
+		this.uids = uids;
 	}
 	
 }

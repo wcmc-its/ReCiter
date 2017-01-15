@@ -25,7 +25,7 @@ public class PubMedArticleRetriever {
 	 * 
 	 * @param query
 	 * @param commonLocation
-	 * @param cwid
+	 * @param uid
 	 * @param count
 	 */
 	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {

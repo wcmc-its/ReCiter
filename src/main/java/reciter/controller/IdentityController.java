@@ -30,10 +30,10 @@ public class IdentityController {
 		identityService.save(identities);
 	}
 	
-	@RequestMapping(value = "/reciter/find/identity/by/cwids/", method = RequestMethod.GET)
+	@RequestMapping(value = "/reciter/find/identity/by/uids/", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Identity> findByCwids(@RequestParam List<String> cwids) {
-		slf4jLogger.info("calling findByCwids with size of cwids=" + cwids);
-		return identityService.findByCwids(cwids);
+	public List<Identity> findByUids(@RequestParam List<String> uids) {
+		slf4jLogger.info("calling findByUid with size of uids=" + uids);
+		return identityService.findByUids(uids);
 	}
 }

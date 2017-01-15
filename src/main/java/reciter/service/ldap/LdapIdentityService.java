@@ -4,5 +4,5 @@ import reciter.model.identity.Identity;
 
 public interface LdapIdentityService {
 
-	Identity getIdentity(String cwid);
+	Identity getIdentity(String uid);
 }

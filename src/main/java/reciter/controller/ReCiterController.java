@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import reciter.Cwids;
+import reciter.Uids;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.GoldStandard;
@@ -88,8 +88,8 @@ public class ReCiterController {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
 		
-		for (String cwid : Cwids.cwids) {
-			GoldStandard goldStandard = goldStandardService.findByCwid(cwid);
+		for (String uid : Uids.uids) {
+			GoldStandard goldStandard = goldStandardService.findByUid(uid);
 			try {
 				aliasReCiterRetrievalEngine.retrieveByPmids(goldStandard.getId(), goldStandard.getKnownPmids());
 			} catch (IOException e) {
@@ -109,8 +109,8 @@ public class ReCiterController {
 		LocalDate initial = LocalDate.now();
 		LocalDate startDate = initial.withDayOfMonth(1);
 		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
-		for (String cwid : Cwids.cwids) {
-			Identity identity = identityService.findByCwid(cwid);
+		for (String uid : Uids.uids) {
+			Identity identity = identityService.findByUid(uid);
 			identities.add(identity);
 		}
 		try {
@@ -125,21 +125,21 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/all/analysis/", method = RequestMethod.GET)
 	@ResponseBody
 	public String runAllAnalysis() {
-		for (String cwid : Cwids.cwids) {
-			runAnalysis(cwid);
+		for (String uid : Uids.uids) {
+			runAnalysis(uid);
 		}
 		return "Success";
 	}
 
-	@RequestMapping(value = "/reciter/analysis/by/cwid", method = RequestMethod.GET)
+	@RequestMapping(value = "/reciter/analysis/by/uid", method = RequestMethod.GET)
 	@ResponseBody
-	public Analysis runAnalysis(@RequestParam(value="cwid") String cwid) {
+	public Analysis runAnalysis(@RequestParam(value="uid") String uid) {
 
 		// find identity
-		Identity identity = identityService.findByCwid(cwid);
+		Identity identity = identityService.findByUid(uid);
 		
 		// find search results for this identity
-		List<ESearchResult> eSearchResults = eSearchResultService.findByCwid(cwid);
+		List<ESearchResult> eSearchResults = eSearchResultService.findByUid(uid);
 		Set<Long> pmids = new HashSet<>();
 		for (ESearchResult eSearchResult : eSearchResults) {
 			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
@@ -190,14 +190,14 @@ public class ReCiterController {
 			EngineParameters.setMeshCountMap(meshCountMap);
 		}
 
-		GoldStandard goldStandard = goldStandardService.findByCwid(cwid);
+		GoldStandard goldStandard = goldStandardService.findByUid(uid);
 		parameters.setKnownPmids(goldStandard.getKnownPmids());
 		Engine engine = new ReCiterEngine();
 		EngineOutput engineOutput = engine.run(parameters);
 
 		slf4jLogger.info(engineOutput.getAnalysis().toString());
-		analysisService.save(engineOutput.getAnalysis(), cwid);
-		reCiterClusterService.save(engineOutput.getReCiterClusters(), cwid);
+		analysisService.save(engineOutput.getAnalysis(), uid);
+		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
 		
 		return engineOutput.getAnalysis();
 	}

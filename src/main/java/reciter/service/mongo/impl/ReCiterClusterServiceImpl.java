@@ -17,9 +17,9 @@ public class ReCiterClusterServiceImpl implements ReCiterClusterService {
 	private ReCiterClusterRepository reCiterClusterRepository;
 	
 	@Override
-	public void save(List<ReCiterCluster> reCiterClusters, String cwid) {
+	public void save(List<ReCiterCluster> reCiterClusters, String uid) {
 		ReCiterClusterMongo reCiterClusterMongo = new ReCiterClusterMongo();
-		reCiterClusterMongo.setCwid(cwid);
+		reCiterClusterMongo.setUid(uid);
 		reCiterClusterMongo.setReCiterClusters(reCiterClusters);
 		reCiterClusterRepository.save(reCiterClusterMongo);
 	}
