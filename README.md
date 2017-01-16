@@ -27,3 +27,5 @@ For help with ReCiter please email Jie Lin (jie265@gmail.com). You may expect a 
 ## Contributing
 
 For more information about contributing, please contact Paul Albert (paa2013@med.cornell.edu) or Michael Bales (meb7002@med.cornell.edu).
+
+## License
