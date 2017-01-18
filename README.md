@@ -6,11 +6,11 @@ This version of ReCiter is a Representational state transfer (RESTful) web servi
 
 ## Introduction
 
-See the wiki [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki/ReCiter-Wiki) for an introduction to ReCiter.
+See the [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki/ReCiter-Wiki) for an introduction to ReCiter.
 
 ## Getting Started
 
-Instructions for getting started are in the wiki [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki/ReCiter-Wiki).
+Instructions for getting started are in the [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki/ReCiter-Wiki).
 
 <!--1. Install [jdk 8](http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html) or higher.
 2. Import project into Eclipse, Intellij or your favorite IDE.
