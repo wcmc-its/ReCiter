@@ -37,16 +37,16 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		PreparedStatement pst = null;
 		String sql = "select degree_year from OFA_DB.PERSON p1 "
 				+ "inner join "
-				+ "(select uid, degree_year from ofa_db.degree d "
+				+ "(select cwid, degree_year from ofa_db.degree d "
 				+ "join OFA_DB.FACORE fac on fac.facore_pk = d.facore_fk "
 				+ "join OFA_DB.PERSON p on p.PERSON_PK = fac.FACORE_PK "
 				+ "join OFA_DB.INSTITUTE i on i.institute_PK = d.institute_FK "
 				+ "left join OFA_DB.DEGREE_NAME n on n.DEGREE_NAME_PK = d.degree_name_fk "
-				+ "where p.uid is not NULL and terminal_degree <> 'Yes' and doctoral_degree is null "
+				+ "where p.cwid is not NULL and terminal_degree <> 'Yes' and doctoral_degree is null "
 				+ "and md = 'F' and mdphd ='F' and do_degree = 'F' and n.OTHER_PROFESSORIAL = 'F' "
 				+ "and degree not like 'M%' and degree not like 'Pharm%' and degree not like 'Sc%' "
 				+ "order by degree_year asc) p2 "
-				+ "on p2.uid = p1.uid and p1.uid = ?";
+				+ "on p2.cwid = p1.cwid and p1.cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
 			pst.setString(1, uid);
@@ -83,7 +83,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				+ "join OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK "
 				+ "join OFA_DB.INSTITUTE i on i.institute_PK = d.institute_FK "
 				+ "left join OFA_DB.DEGREE_NAME n on n.DEGREE_NAME_PK = d.degree_name_fk "
-				+ "where p.uid is not NULL and uid <> '0' and terminal_degree = 'Yes' and p.uid = ?";
+				+ "where p.cwid is not NULL and cwid <> '0' and terminal_degree = 'Yes' and p.cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
 			pst.setString(1, uid);
@@ -114,23 +114,23 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		}
 		ResultSet rs = null;
 		PreparedStatement pst = null;
-		String sql = "SELECT uid, ai.INSTITUTION, 'Academic-PrimaryAffiliation' from OFA_DB.FACORE fac "
+		String sql = "SELECT cwid, ai.INSTITUTION, 'Academic-PrimaryAffiliation' from OFA_DB.FACORE fac "
 				+ "JOIN OFA_DB.AFFIL_INSTITUTE ai ON ai.affil_institute_pk = fac.affil_institute_FK "
-                + "JOIN OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK where uid is not null and uid <> '0' and uid = ?"
+                + "JOIN OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK where cwid is not null and cwid <> '0' and cwid = ?"
                 + "union "
-                + "SELECT p.uid, ai.INSTITUTION, 'Academic-AppointingInstitution' FROM OFA_DB.FACORE fac "
+                + "SELECT p.cwid, ai.INSTITUTION, 'Academic-AppointingInstitution' FROM OFA_DB.FACORE fac "
                 + "JOIN OFA_DB.APPOINTMENT a ON fac.facore_PK = a.facore_fk "
                 + "JOIN OFA_DB.AFFIL_INSTITUTE ai ON ai.affil_institute_pk = a.affil_institute_FK "
                 + "JOIN OFA_DB.AFFIL_INSTITUTE ai ON ai.affil_institute_pk = fac.affil_institute_FK "
                 + "JOIN OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK "
-                + "where uid is not null and uid <> '0' and uid = ?"
+                + "where cwid is not null and cwid <> '0' and cwid = ?"
                 + "union "
-                + "SELECT uid, institution, 'Academic-Degree' from ofa_db.degree d "
+                + "SELECT cwid, institution, 'Academic-Degree' from ofa_db.degree d "
                 + "join OFA_DB.FACORE fac on fac.facore_pk = d.facore_fk "
                 + "join OFA_DB.PERSON p ON p.PERSON_PK = fac.FACORE_PK " 
                 + "join OFA_DB.INSTITUTE i on i.institute_PK = d.institute_FK "
                 + "left join OFA_DB.DEGREE_NAME n on n.DEGREE_NAME_PK = d.degree_name_fk " 
-                + "where uid is not null and uid <> '0' and uid = ?";
+                + "where cwid is not null and cwid <> '0' and cwid = ?";
 		Set<String> distinctInstitutions = new HashSet<String>();
 		try {
 			pst = connection.prepareStatement(sql);
@@ -166,17 +166,17 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		ResultSet rs = null;
 		PreparedStatement pst = null;
 		String sql = "select email from "
-				+ "(select distinct p.uid, substr(private_email,1,INSTR(private_email,',')-1) as email "
+				+ "(select distinct p.cwid, substr(private_email,1,INSTR(private_email,',')-1) as email "
 				+ "FROM OFA_DB.PERSON p where p.private_email like '%,%' "
 				+ "UNION "
-				+ "select distinct p.uid, substr(email,1,INSTR(email,',')-1) AS email from OFA_DB.PERSON p "
+				+ "select distinct p.cwid, substr(email,1,INSTR(email,',')-1) AS email from OFA_DB.PERSON p "
 				+ "where p.email like '%,%' "
 				+ "UNION "
-				+ "select distinct p.uid, "
+				+ "select distinct p.cwid, "
 				+ "substr(replace(p.private_email,' ',''),1 + INSTR(replace(p.private_email,' ',''),',')) "
 				+ "as email from OFA_DB.PERSON p where p.private_email like '%,%' "
 				+ "UNION "
-				+ "select distinct p.uid, "
+				+ "select distinct p.cwid, "
 				+ "substr(replace(p.email,' ',''),1 + INSTR(replace(p.email,' ',''),',')) as email from OFA_DB.PERSON p "
 				+ "where p.email like '%,%') where email like '%@%' and email like '%.%' and CWID = ?";
 		try {
@@ -211,11 +211,11 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		}
 		ResultSet rs = null;
 		PreparedStatement pst = null;
-		String sql = "select distinct uid, " 
+		String sql = "select distinct cwid, " 
 				   + "substr(substr(replace(sponsor_award_number,'  ',' '),1,INSTR(replace(sponsor_award_number,'  ',' '),'-')-1),7,8) AS awardNumber "
 				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO "
 				   + "where sponsor_type_code = '0' and "
-				   + "substr(sponsor_award_number,2,1) = ' ' and uid = ?";
+				   + "substr(sponsor_award_number,2,1) = ' ' and cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
 			pst.setString(1, uid);
@@ -250,18 +250,18 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		}
 		ResultSet rs = null;
 		PreparedStatement pst = null;
-		String sql = "select distinct uid AS targetCWID, C2.relationshipCWID "
+		String sql = "select distinct cwid AS targetCWID, C2.relationshipCWID "
 				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO C1 "
 				   + "left join (select distinct " 
-				   + "uid AS relationshipCWID, " 
+				   + "cwid AS relationshipCWID, " 
 				   + "award_number AS awardNumber2 "
 				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO "
 				   + "where  award_number not in ('003152-001','005927-001') "
 				   + ")  C2 "
 				   + "on award_number = C2.awardNumber2 " 
 				   + "where relationshipCWID is not null "
-				   + "and relationshipCWID <> uid " 
-				   + "and award_number not in ('003152-001','005927-001') and uid = ?";
+				   + "and relationshipCWID <> cwid " 
+				   + "and award_number not in ('003152-001','005927-001') and cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
 			pst.setString(1, uid);
