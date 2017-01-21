@@ -23,8 +23,8 @@ public class ScopusUriParserCallable implements Callable<List<ScopusArticle>> {
     private static final Logger slf4jLogger = LoggerFactory.getLogger(ScopusUriParserCallable.class);
     
     // Scopus institutions and API key
-    private static final String INST_TOKEN = "";
-    private static final String API_KEY = "";
+    private static final String INST_TOKEN = System.getProperty("inst_token");
+    private static final String API_KEY = System.getProperty("api_key");
     
     private final ScopusXmlHandler xmlHandler;
     private final String uri;
