@@ -112,7 +112,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 								shouldRemove = true;
 
-								// Check rc_identity_directory. If any of the alias' first name matches the
+								// Check db identity_directory. If any of the alias' first name matches the
 								// article author's first name, un-do the operation (removal from the selected cluster).
 								// So this article should still be in the selected cluster.
 
@@ -142,7 +142,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 								}
 
 								// Check first name with dashes removed. (Case: "Juan-miguel" in article and "Juan Miguel"
-								// in rc_identity).
+								// in db identity).
 								if (shouldRemove) {
 									String articleAuthorFirstNameDashRemoved = firstName.replace("-", " ");
 									String targetAuthorFirstNameDashRemoved = targetAuthorFirstName.replace("-", " ");
@@ -153,7 +153,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 
-								// Case: "J-m" in article, and "Juan Miguel" in rc_identity.
+								// Case: "J-m" in article, and "Juan Miguel" in db identity.
 								if (shouldRemove) {
 									String[] targetAuthorFirstNameArr = targetAuthorFirstName.split("\\s+");
 									if (targetAuthorFirstNameArr.length == 2) {
@@ -169,7 +169,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 
-								// Case: "Bisen" in article and "Bi-Sen" in rc_identity. Remove dash from "Bi-Sen".
+								// Case: "Bisen" in article and "Bi-Sen" in db identity. Remove dash from "Bi-Sen".
 								if (shouldRemove) {
 									if (targetAuthorFirstName.contains("-")) {
 										String targetAuthorFirstNameDashRemoved = targetAuthorFirstName.replace("-", "");
@@ -181,7 +181,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 									}
 								}
 
-								// Case: "B-s" in article and "Bi-Sen" in rc_identity.
+								// Case: "B-s" in article and "Bi-Sen" in db identity.
 								if (shouldRemove) {
 									if (targetAuthorFirstName.contains("-") && firstName.contains("-")) {
 										String[] targetAuthorFirstNameArr = targetAuthorFirstName.split("-");
@@ -370,7 +370,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							
 							// check middle name.
 							// Case: False Positive List: [2]: [12814220, 21740463] for Anna Bender.
-							// Remove this article because middle name exist in article, but not in rc_identity.
+							// Remove this article because middle name exist in article, but not in db identity.
 							if (middleName.length() > 0 && targetAuthorMiddleName.length() == 0) {
 								boolean foundEqualMiddleInitialInAlternateNames = false;
 								for (AuthorName alternateNames : identity.getAlternateNames()) {
@@ -405,7 +405,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							}
 
 							// case: pmid=17943945, uid = wcb2001
-							// Name in article: W Clay Bracken, name in rc_identity = W. clay Bracken
+							// Name in article: W Clay Bracken, name in db identity = W. clay Bracken
 							// Name in article becomes firstname = W, middle initial = Clay.
 							if (shouldRemove) {
 								String firstNameMiddleName = firstName + " " + middleName;

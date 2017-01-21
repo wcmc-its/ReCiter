@@ -9,6 +9,12 @@ import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticle.CoCitation;
 
+/**
+ * Cites: A (positive) and B (candidate article)
+ * CitedBy:
+ * @author Jie
+ *
+ */
 public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override

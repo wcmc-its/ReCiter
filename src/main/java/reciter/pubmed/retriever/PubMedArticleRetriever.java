@@ -67,7 +67,7 @@ public class PubMedArticleRetriever {
 			slf4jLogger.info("eFetchUrl=[" + eFetchUrl + "].");
 			PubMedUriParserCallable pubMedUriParserCallable = new PubMedUriParserCallable(new PubmedEFetchHandler(), eFetchUrl);
 			callables.add(pubMedUriParserCallable);
-
+ 
 			// Update the retstart value.
 			currentRetStart += pubmedXmlQuery.getRetMax();
 			pubmedXmlQuery.setRetStart(currentRetStart);

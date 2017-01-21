@@ -29,7 +29,7 @@ import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchSt
 import reciter.algorithm.evidence.targetauthor.knownrelationship.KnownRelationshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownRelationshipStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
-import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
+import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
@@ -83,7 +83,7 @@ public class ReCiterEngine implements Engine {
 			TargetAuthorStrategyContext affiliationStrategyContext = new AffiliationStrategyContext(new CommonAffiliationStrategy());
 			affiliationStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			
-			TargetAuthorStrategyContext scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
+			TargetAuthorStrategyContext scopusStrategyContext = new ScopusStrategyContext(new ScopusCommonAffiliation());
 			scopusStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			
 			features.add(feature);

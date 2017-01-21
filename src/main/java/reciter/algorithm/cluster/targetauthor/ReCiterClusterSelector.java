@@ -50,7 +50,7 @@ import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownR
 import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
-import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
+import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
@@ -85,7 +85,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	/**
 	 * Scopus strategy context.
 	 */
-	private StrategyContext scopusStrategyContext;
+	private StrategyContext scopusCommonAffiliationStrategyContext;
 
 	/**
 	 * Coauthor strategy context.
@@ -161,11 +161,11 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
-		scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
+		scopusCommonAffiliationStrategyContext = new ScopusStrategyContext(new ScopusCommonAffiliation());
 		coauthorStrategyContext = new CoauthorStrategyContext(new CoauthorStrategy(identity));
 		journalStrategyContext = new JournalStrategyContext(new JournalStrategy(identity));
 		citizenshipStrategyContext = new CitizenshipStrategyContext(new CitizenshipStrategy());
-		educationStrategyContext = new EducationStrategyContext(new EducationStrategy());
+		educationStrategyContext = new EducationStrategyContext(new EducationStrategy()); // check this one.
 		grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
 		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
 		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
@@ -186,10 +186,10 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		clusterSizeStrategyContext = new ClusterSizeStrategyContext(new ClusterSizeStrategy());
 
 		strategyContexts = new ArrayList<StrategyContext>();
-		strategyContexts.add(scopusStrategyContext);
+		strategyContexts.add(scopusCommonAffiliationStrategyContext);
 		strategyContexts.add(coauthorStrategyContext);
 		strategyContexts.add(journalStrategyContext);
-		strategyContexts.add(citizenshipStrategyContext);
+		//		strategyContexts.add(citizenshipStrategyContext);
 		//		strategyContexts.add(educationStrategyContext);
 		strategyContexts.add(grantStrategyContext);
 		strategyContexts.add(citationStrategyContext);
