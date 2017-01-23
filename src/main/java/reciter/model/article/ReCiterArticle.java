@@ -5,11 +5,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
 
 import reciter.model.article.completeness.ArticleCompleteness;
 import reciter.model.article.completeness.ReCiterCompleteness;
 import reciter.model.identity.AuthorName;
+import reciter.model.identity.Identity;
 import reciter.model.scopus.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
@@ -103,6 +105,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private AuthorName matchingName;
 	
 	private List<CoCitation> coCitation = new ArrayList<>();
+	private ReCiterAuthor correctAuthor;
 	
 	public static class CoCitation {
 		private long pmid;
@@ -128,6 +131,23 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public ReCiterArticle(long articleId) {
 		this.articleId = articleId;
 		this.setArticleCompleteness(new ReCiterCompleteness());
+	}
+	
+	public void setCorrectAuthor(Identity identity) {
+		String targetAuthorLastName = identity.getPrimaryName().getLastName();
+		ReCiterArticleAuthors authors = getArticleCoAuthors();
+		if (authors != null) {
+			for (ReCiterAuthor author : authors.getAuthors()) {
+				String lastName = author.getAuthorName().getLastName();
+				if (StringUtils.equalsIgnoreCase(targetAuthorLastName, lastName)) {
+					String firstInitial = author.getAuthorName().getFirstInitial();
+					if (StringUtils.equalsIgnoreCase(firstInitial, identity.getPrimaryName().getFirstInitial())) {
+						this.correctAuthor = author;
+						break;
+					}
+				}
+			}
+		}
 	}
 	
 	@Override
