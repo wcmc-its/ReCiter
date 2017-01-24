@@ -31,6 +31,10 @@ public class LdapIdentityController {
 		return ldapIdentityService.getIdentity(uid);
 	}
 	
+	/**
+	 * Retrieve identity information for all uids in Uids.java
+	 * @return
+	 */
 	@RequestMapping(value = "/reciter/ldap/retrieve/test", method = RequestMethod.GET)
 	@ResponseBody
 	public String retrieveTest() {

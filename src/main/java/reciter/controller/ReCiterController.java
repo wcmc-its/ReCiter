@@ -100,6 +100,9 @@ public class ReCiterController {
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 	}
 	
+	/**
+	 * Retrieve all articles in Uids.java.
+	 */
 	@RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET)
 	@ResponseBody
 	public void retrieveArticles() {
@@ -122,6 +125,10 @@ public class ReCiterController {
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 	}
 
+	/**
+	 * Run analysis for all uids in Uids.java.
+	 * @return
+	 */
 	@RequestMapping(value = "/reciter/all/analysis/", method = RequestMethod.GET)
 	@ResponseBody
 	public String runAllAnalysis() {
