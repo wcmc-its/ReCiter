@@ -45,7 +45,7 @@ db.identity.count();
 /* Find all identities */
 db.identity.find();
 
-/* Find identity whose uid is 'aas2004' */
+/* Find identity whose uid is 'rgcryst' */
 db.identity.find({"_id": "rgcryst"});
 
 /* Find pubmed article with PMID 18341570 */
