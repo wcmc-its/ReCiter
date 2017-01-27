@@ -42,7 +42,7 @@ db.goldstandard.find({"_id": "rgcryst", "knownPmids": {$in: [NumberLong(26927796
 /* Total number of documents in this identity collection */
 db.identity.count();
 
-/* Find all identies */
+/* Find all identities */
 db.identity.find();
 
 /* Find identity whose uid is 'aas2004' */
