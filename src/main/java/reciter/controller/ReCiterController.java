@@ -14,6 +14,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -85,6 +86,9 @@ public class ReCiterController {
 	
 	@Autowired
 	private StrategyParameters strategyParameters;
+	
+	@Value("${use.scopus.articles}")
+	private boolean useScopusArticles;
 
 	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
 	@ResponseBody
@@ -170,8 +174,11 @@ public class ReCiterController {
 		
 		// create temporary map to retrieve Scopus articles by PMID (at the stage below)
 		Map<Long, ScopusArticle> map = new HashMap<>();
-		for (ScopusArticle scopusArticle : scopusArticles) {
-			map.put(scopusArticle.getPubmedId(), scopusArticle);
+		
+		if (useScopusArticles) {
+			for (ScopusArticle scopusArticle : scopusArticles) {
+				map.put(scopusArticle.getPubmedId(), scopusArticle);
+			}
 		}
 		
 		// combine PubMed and Scopus articles into a list of ReCiterArticle
