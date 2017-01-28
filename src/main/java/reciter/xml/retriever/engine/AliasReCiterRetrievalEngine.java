@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import reciter.database.mongo.model.ESearchResult;
@@ -33,6 +34,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
 
+	@Value("${use.scopus.articles}")
+	private boolean useScopusArticles;
+	
 	@Autowired
 	private ESearchResultService eSearchResultService;
 	
@@ -140,44 +144,46 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			uniquePmids.addAll(r5.getPubMedArticles().keySet());
 		}
 		
-		List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
-		scopusService.save(scopusArticles);
-		
-		// Look up the remaining Scopus articles by DOI.
-		List<Long> notFoundPmids = new ArrayList<>();
-		Set<Long> foundPmids = new HashSet<>();
-		for (ScopusArticle scopusArticle : scopusArticles) {
-			foundPmids.add(scopusArticle.getPubmedId());
-		}
-		// Find the pmids that were not found by using pmid query to Scopus.
-		for (long pmid : uniquePmids) {
-			if (!foundPmids.contains(pmid)) {
-				notFoundPmids.add(pmid);
+		if (useScopusArticles) {
+			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
+			scopusService.save(scopusArticles);
+
+			// Look up the remaining Scopus articles by DOI.
+			List<Long> notFoundPmids = new ArrayList<>();
+			Set<Long> foundPmids = new HashSet<>();
+			for (ScopusArticle scopusArticle : scopusArticles) {
+				foundPmids.add(scopusArticle.getPubmedId());
 			}
-		}
-		List<String> dois = new ArrayList<>();
-		Map<String, Long> doiToPmid = new HashMap<>();
-		for (long pmid : notFoundPmids) {
-			PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
-			if (pubMedArticle.getMedlineCitation().getArticle().geteLocationID() != null && 
-					pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId() != null) {
-				String doi = pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId();
-				dois.add(doi);
-				doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, so this mapping to manually insert pmid.
+			// Find the pmids that were not found by using pmid query to Scopus.
+			for (long pmid : uniquePmids) {
+				if (!foundPmids.contains(pmid)) {
+					notFoundPmids.add(pmid);
+				}
 			}
-		}
-		List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
-		
-		List<Long> pmidsByDoi = new ArrayList<>();
-		for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
-			// manually insert PMID information.
-			if (scopusArticle.getDoi() != null) {
-				scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi()));
+			List<String> dois = new ArrayList<>();
+			Map<String, Long> doiToPmid = new HashMap<>();
+			for (long pmid : notFoundPmids) {
+				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
+				if (pubMedArticle.getMedlineCitation().getArticle().geteLocationID() != null && 
+						pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId() != null) {
+					String doi = pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId();
+					dois.add(doi);
+					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, so this mapping to manually insert pmid.
+				}
 			}
-			pmidsByDoi.add(scopusArticle.getPubmedId());
+			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
+
+			List<Long> pmidsByDoi = new ArrayList<>();
+			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
+				// manually insert PMID information.
+				if (scopusArticle.getDoi() != null) {
+					scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi()));
+				}
+				pmidsByDoi.add(scopusArticle.getPubmedId());
+			}
+			slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
+			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
-		scopusService.save(scopusArticlesByDoi);
 		
 		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
 		return uniquePmids;
