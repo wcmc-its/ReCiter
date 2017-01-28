@@ -12,6 +12,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
@@ -51,6 +52,7 @@ import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
+import reciter.engine.StrategyParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
@@ -150,9 +152,13 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	private List<StrategyContext> strategyContexts;
 
 	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
+	
+	private StrategyParameters strategyParameters;
 
-	public ReCiterClusterSelector(Map<Long, ReCiterCluster> clusters, Identity identity) {
+	public ReCiterClusterSelector(Map<Long, ReCiterCluster> clusters, Identity identity, StrategyParameters strategyParameters) {
 
+		this.strategyParameters = strategyParameters;
+		
 		// Strategies that select clusters that are similar to the target author.
 		emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 		departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
@@ -186,27 +192,64 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		clusterSizeStrategyContext = new ClusterSizeStrategyContext(new ClusterSizeStrategy());
 
 		strategyContexts = new ArrayList<StrategyContext>();
-		strategyContexts.add(scopusCommonAffiliationStrategyContext);
-		strategyContexts.add(coauthorStrategyContext);
-		strategyContexts.add(journalStrategyContext);
-		//		strategyContexts.add(citizenshipStrategyContext);
-		//		strategyContexts.add(educationStrategyContext);
-		strategyContexts.add(grantStrategyContext);
-		strategyContexts.add(citationStrategyContext);
-		strategyContexts.add(coCitationStrategyContext);
-		strategyContexts.add(articleSizeStrategyContext);
+		
+		if (strategyParameters.isScopusCommonAffiliation()) {
+			strategyContexts.add(scopusCommonAffiliationStrategyContext);
+		}
+		
+		if (strategyParameters.isCoauthor()) {
+			strategyContexts.add(coauthorStrategyContext);
+		}
+		
+		if (strategyParameters.isJournal()) {
+			strategyContexts.add(journalStrategyContext);
+		}
+		
+		if (strategyParameters.isCitizenship()) {
+			strategyContexts.add(citizenshipStrategyContext);
+		}
+		
+		if (strategyParameters.isEducation()) {
+			strategyContexts.add(educationStrategyContext);
+		}	
+		
+		if (strategyParameters.isGrant()) {
+			strategyContexts.add(grantStrategyContext);
+		}
+		
+		if (strategyParameters.isCitation()) {
+			strategyContexts.add(citationStrategyContext);
+		}
+		
+		if (strategyParameters.isCoCitation()) {
+			strategyContexts.add(coCitationStrategyContext);
+		}
+		
+		if (strategyParameters.isArticleSize()) {
+			strategyContexts.add(articleSizeStrategyContext);
+		}
 
-		strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
-		strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
+		if (strategyParameters.isBachelorsYearDiscrepancy()) {
+			strategyContexts.add(bachelorsYearDiscrepancyStrategyContext);
+		}
+		
+		if (strategyParameters.isDoctoralYearDiscrepancy()) {
+			strategyContexts.add(doctoralYearDiscrepancyStrategyContext);
+		}
+		
 		//		strategyContexts.add(articleTitleInEnglishStrategyContext);
-		strategyContexts.add(removeByNameStrategyContext);
+		
+		if (strategyParameters.isRemoveByName()) {
+			strategyContexts.add(removeByNameStrategyContext);
+		}
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		strategyContexts.add(emailStrategyContext);
-//		strategyContexts.add(affiliationStrategyContext);
 
 		// https://github.com/wcmc-its/ReCiter/issues/136
-		strategyContexts.add(clusterSizeStrategyContext);
+		if (strategyParameters.isClusterSize()) {
+			strategyContexts.add(clusterSizeStrategyContext);
+		}
 	}
 
 	public void runStrategy(StrategyContext strategyContext, List<ReCiterArticle> reCiterArticles, Identity identity) {
@@ -245,24 +288,32 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			long clusterId = entry.getKey();
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
 
-			double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
-			if (emailStrategyScore > 0) {
-				selectedClusterIds.add(clusterId);
+			if (strategyParameters.isEmail()) {
+				double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
+				if (emailStrategyScore > 0) {
+					selectedClusterIds.add(clusterId);
+				}
 			}
 
-			double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
-			if (departmentStrategyScore > 0) {
-				selectedClusterIds.add(clusterId);
+			if (strategyParameters.isDepartment()) {
+				double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+				if (departmentStrategyScore > 0) {
+					selectedClusterIds.add(clusterId);
+				}
 			}
 
-			double knownCoinvestigatorStrategyScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
-			if (knownCoinvestigatorStrategyScore > 0) {
-				selectedClusterIds.add(clusterId);
+			if (strategyParameters.isKnownRelationship()) {
+				double knownRelationshipScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+				if (knownRelationshipScore > 0) {
+					selectedClusterIds.add(clusterId);
+				}
 			}
 
-			double affiliationScore = ((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
-			if (affiliationScore > 0) {
-				selectedClusterIds.add(clusterId);
+			if (strategyParameters.isAffiliation()) {
+				double affiliationScore = ((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
+				if (affiliationScore > 0) {
+					selectedClusterIds.add(clusterId);
+				}
 			}
 		}
 		this.selectedClusterIds = selectedClusterIds;

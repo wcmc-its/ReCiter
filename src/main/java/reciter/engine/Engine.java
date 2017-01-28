@@ -2,11 +2,9 @@ package reciter.engine;
 
 import java.util.List;
 
-import reciter.engine.erroranalysis.Analysis;
-
 public interface Engine {
 
-	EngineOutput run(EngineParameters parameters);
+	EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters);
 
 	List<Feature> generateFeature(EngineParameters parameters);
 }

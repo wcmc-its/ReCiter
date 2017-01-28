@@ -29,6 +29,7 @@ import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
 import reciter.engine.ReCiterEngine;
+import reciter.engine.StrategyParameters;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
@@ -81,6 +82,9 @@ public class ReCiterController {
 	
 	@Autowired
 	private ReCiterClusterService reCiterClusterService;
+	
+	@Autowired
+	private StrategyParameters strategyParameters;
 
 	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
 	@ResponseBody
@@ -200,7 +204,7 @@ public class ReCiterController {
 		GoldStandard goldStandard = goldStandardService.findByUid(uid);
 		parameters.setKnownPmids(goldStandard.getKnownPmids());
 		Engine engine = new ReCiterEngine();
-		EngineOutput engineOutput = engine.run(parameters);
+		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
 
 		slf4jLogger.info(engineOutput.getAnalysis().toString());
 		analysisService.save(engineOutput.getAnalysis(), uid);

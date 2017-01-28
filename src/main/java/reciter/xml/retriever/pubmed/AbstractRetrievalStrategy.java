@@ -186,7 +186,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 	}
 
-
 	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
 		PubMedArticleRetriever pubMedArticleRetriever = new PubMedArticleRetriever();
 		return pubMedArticleRetriever.retrievePubMed(pubMedQuery, numberOfPubmedArticles);
@@ -218,25 +217,15 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return pubmedESearchHandler;
 	}
 
-	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery, int numberOfPubmedArticles) {
-		if (numberOfPubmedArticles == 0) {
-			return Collections.emptyList();
-		}
+	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery) {
 		String nodeUrl = loadBalance();
-		nodeUrl += "query=" + pubMedQuery + "&numberOfPubmedArticles=" + numberOfPubmedArticles;
 		RestTemplate restTemplate = new RestTemplate();
 		slf4jLogger.info("Sending web request: " + nodeUrl);
-		int currentTry = 1;
-		boolean success = false;
 		ResponseEntity<PubMedArticle[]> responseEntity = null;
-		while (currentTry <= 5 && !success) {
-			try {
-				responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
-				success = true;
-			} catch (Exception e) {
-				slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "], retrying: " + currentTry, e);
-				currentTry++;
-			}
+		try {
+			responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
+		} catch (Exception e) {
+			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
 		}
 		PubMedArticle[] pubMedArticles = responseEntity.getBody();
 		return Arrays.asList(pubMedArticles);

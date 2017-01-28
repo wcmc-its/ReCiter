@@ -95,7 +95,7 @@ public class ReCiterEngine implements Engine {
 	}
 	
 	@Override
-	public EngineOutput run(EngineParameters parameters) {
+	public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters) {
 		
 		Identity identity = parameters.getIdentity();
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
@@ -141,7 +141,7 @@ public class ReCiterEngine implements Engine {
 		slf4jLogger.info(clusterer.toString());
 
 		// Perform Phase 2 clusters selection.
-		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity);
+		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity, strategyParameters);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), identity);
 
 		// Perform Mesh Heading recall improvement.
