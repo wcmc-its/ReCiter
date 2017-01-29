@@ -106,6 +106,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	
 	private List<CoCitation> coCitation = new ArrayList<>();
 	private ReCiterAuthor correctAuthor;
+	private int correctAuthorRank;
 	
 	public static class CoCitation {
 		private long pmid;
@@ -134,10 +135,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	}
 	
 	public void setCorrectAuthor(Identity identity) {
+		int rank = 0;
 		String targetAuthorLastName = identity.getPrimaryName().getLastName();
 		ReCiterArticleAuthors authors = getArticleCoAuthors();
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
+				rank++;
 				String lastName = author.getAuthorName().getLastName();
 				if (StringUtils.equalsIgnoreCase(targetAuthorLastName, lastName)) {
 					String firstInitial = author.getAuthorName().getFirstInitial();
@@ -148,6 +151,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 				}
 			}
 		}
+		this.correctAuthorRank = rank;
 	}
 	
 	@Override
@@ -506,5 +510,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setCorrectAuthor(ReCiterAuthor correctAuthor) {
 		this.correctAuthor = correctAuthor;
+	}
+
+	public int getCorrectAuthorRank() {
+		return correctAuthorRank;
+	}
+
+	public void setCorrectAuthorRank(int correctAuthorRank) {
+		this.correctAuthorRank = correctAuthorRank;
 	}
 }
