@@ -107,6 +107,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private List<CoCitation> coCitation = new ArrayList<>();
 	private ReCiterAuthor correctAuthor;
 	private int correctAuthorRank;
+	private int numAuthors;
 	
 	public static class CoCitation {
 		private long pmid;
@@ -152,6 +153,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 			}
 		}
 		this.correctAuthorRank = rank;
+		this.numAuthors = authors.getNumberOfAuthors();
 	}
 	
 	@Override
@@ -518,5 +520,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setCorrectAuthorRank(int correctAuthorRank) {
 		this.correctAuthorRank = correctAuthorRank;
+	}
+
+	public int getNumAuthors() {
+		return numAuthors;
+	}
+
+	public void setNumAuthors(int numAuthors) {
+		this.numAuthors = numAuthors;
 	}
 }
