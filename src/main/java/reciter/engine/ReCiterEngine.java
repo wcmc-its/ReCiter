@@ -3,6 +3,7 @@ package reciter.engine;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -202,6 +203,31 @@ public class ReCiterEngine implements Engine {
 				meshTermCounts.add(meshTermCount);
 			}
 			cluster.setMeshTermCounts(meshTermCounts);
+		}
+
+		// Evidence - Gold standard is used to refine judgment of ReCiter
+		if (strategyParameters.isUseGoldStandardEvidence()) {
+			Set<Long> selectedClusterIds = clusterSelector.getSelectedClusterIds();
+			List<ReCiterArticle> goldStandardArticles = new ArrayList<>();
+			for (ReCiterCluster cluster : clusterer.getClusters().values()) {
+				if (selectedClusterIds.contains(cluster.getClusterID())) {
+					Iterator<ReCiterArticle> itr = cluster.getArticleCluster().iterator();
+					while (itr.hasNext()) {
+						ReCiterArticle reCiterArticle = itr.next();
+						if (reCiterArticle.getGoldStandard() == 0) {
+							goldStandardArticles.add(reCiterArticle);
+						}
+						itr.remove();
+					}
+				}
+			}
+			if (!goldStandardArticles.isEmpty()) {
+				ReCiterCluster rejectedCluster = new ReCiterCluster();
+				for (ReCiterArticle reject : goldStandardArticles) {
+					rejectedCluster.add(reject);
+				}
+				clusterer.getClusters().put(rejectedCluster.getClusterID(), rejectedCluster);
+			}
 		}
 		
 		EngineOutput engineOutput = new EngineOutput();

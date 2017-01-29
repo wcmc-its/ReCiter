@@ -59,6 +59,9 @@ public class StrategyParameters {
 	
 	@Value("${strategy.mesh.major}")
 	private boolean isMeshMajor;
+	
+	@Value("${use.gold.standard.evidence}")
+	private boolean useGoldStandardEvidence;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -202,5 +205,13 @@ public class StrategyParameters {
 
 	public void setMeshMajor(boolean isMeshMajor) {
 		this.isMeshMajor = isMeshMajor;
+	}
+
+	public boolean isUseGoldStandardEvidence() {
+		return useGoldStandardEvidence;
+	}
+
+	public void setUseGoldStandardEvidence(boolean useGoldStandardEvidence) {
+		this.useGoldStandardEvidence = useGoldStandardEvidence;
 	}
 }

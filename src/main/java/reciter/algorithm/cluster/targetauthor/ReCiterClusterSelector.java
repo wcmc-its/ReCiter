@@ -559,6 +559,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		}
 	}
 
+	@Override
 	public Set<Long> getSelectedClusterIds() {
 		return selectedClusterIds;
 	}

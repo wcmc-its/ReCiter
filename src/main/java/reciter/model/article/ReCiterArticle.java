@@ -499,4 +499,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setCoCitation(List<CoCitation> coCitation) {
 		this.coCitation = coCitation;
 	}
+
+	public ReCiterAuthor getCorrectAuthor() {
+		return correctAuthor;
+	}
+
+	public void setCorrectAuthor(ReCiterAuthor correctAuthor) {
+		this.correctAuthor = correctAuthor;
+	}
 }
