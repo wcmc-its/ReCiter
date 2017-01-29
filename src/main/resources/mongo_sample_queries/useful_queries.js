@@ -27,7 +27,7 @@ db.identity.find({"_id": "rgcryst"});
 db.goldstandard.find();
 
 /* Get a list of all PMIDs in the gold standard for a given UID */
-db.goldstandard.find({"_id" : "rak2007"});
+db.goldstandard.find({"_id" : "ccole"});
 
 /** Updating gold standard for rak2007 */
 db.goldstandard.update({"_id": "rgcryst"}, {$addToSet: {"knownPmids": {$each: [
@@ -62,6 +62,22 @@ db.goldstandard.update({"_id": "cnathan"}, {$pull: {"knownPmids": NumberLong(269
 
 /* Find if PMID exist in this uid */
 db.goldstandard.find({"_id": "rgcryst", "knownPmids": {$in: [NumberLong(26927796)]}});
+
+/* Add a new gold standard */
+db.goldstandard.insertOne(
+	{
+		"_id": "ccole",
+		"knownPmids" : [
+        	NumberLong(17238381),
+			NumberLong(18999229),
+			NumberLong(20478738),
+			NumberLong(22465355),
+			NumberLong(22874398),
+			NumberLong(23578816),
+			NumberLong(15360861)
+        ]
+	}
+);
 
 /* Working with analysis results */
 
