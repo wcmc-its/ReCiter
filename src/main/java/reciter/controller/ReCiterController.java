@@ -29,6 +29,7 @@ import reciter.database.mongo.model.MeshTerm;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
+import reciter.engine.Feature;
 import reciter.engine.ReCiterEngine;
 import reciter.engine.StrategyParameters;
 import reciter.engine.erroranalysis.Analysis;
@@ -80,13 +81,13 @@ public class ReCiterController {
 
 	@Autowired
 	private AnalysisService analysisService;
-	
+
 	@Autowired
 	private ReCiterClusterService reCiterClusterService;
-	
+
 	@Autowired
 	private StrategyParameters strategyParameters;
-	
+
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
 
@@ -95,7 +96,7 @@ public class ReCiterController {
 	public void retrieveGoldStandard() {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
-		
+
 		for (String uid : Uids.uids) {
 			GoldStandard goldStandard = goldStandardService.findByUid(uid);
 			try {
@@ -107,7 +108,7 @@ public class ReCiterController {
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 	}
-	
+
 	/**
 	 * Retrieve all articles in Uids.java.
 	 */
@@ -146,20 +147,40 @@ public class ReCiterController {
 		return "Success";
 	}
 
+	@RequestMapping(value = "/reciter/feature/by/uid", method = RequestMethod.GET)
+	@ResponseBody
+	public List<Feature> generateFeatures(@RequestParam(value="uid") String uid) {
+		EngineParameters parameters = initializeEngineParameters(uid);
+		Engine engine = new ReCiterEngine();
+		return engine.generateFeature(parameters);
+	}
+
 	@RequestMapping(value = "/reciter/analysis/by/uid", method = RequestMethod.GET)
 	@ResponseBody
 	public Analysis runAnalysis(@RequestParam(value="uid") String uid) {
 
+		EngineParameters parameters = initializeEngineParameters(uid);
+		Engine engine = new ReCiterEngine();
+		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
+
+		slf4jLogger.info(engineOutput.getAnalysis().toString());
+		analysisService.save(engineOutput.getAnalysis(), uid);
+		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
+
+		return engineOutput.getAnalysis();
+	}
+
+	private EngineParameters initializeEngineParameters(String uid) {
 		// find identity
 		Identity identity = identityService.findByUid(uid);
-		
+
 		// find search results for this identity
 		List<ESearchResult> eSearchResults = eSearchResultService.findByUid(uid);
 		Set<Long> pmids = new HashSet<>();
 		for (ESearchResult eSearchResult : eSearchResults) {
 			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
 		}
-		
+
 		// create a list of pmids to pass to search
 		List<Long> pmidList = new ArrayList<>(pmids);
 		List<Long> filtered = new ArrayList<>();
@@ -167,20 +188,20 @@ public class ReCiterController {
 			if (pmid <= 27090613) {
 				filtered.add(pmid);
 			}
- 		}
-		
+		}
+
 		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
 		List<ScopusArticle> scopusArticles = scopusService.findByPmids(filtered);
-		
+
 		// create temporary map to retrieve Scopus articles by PMID (at the stage below)
 		Map<Long, ScopusArticle> map = new HashMap<>();
-		
+
 		if (useScopusArticles) {
 			for (ScopusArticle scopusArticle : scopusArticles) {
 				map.put(scopusArticle.getPubmedId(), scopusArticle);
 			}
 		}
-		
+
 		// combine PubMed and Scopus articles into a list of ReCiterArticle
 		List<ReCiterArticle> reCiterArticles = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
@@ -191,13 +212,13 @@ public class ReCiterController {
 				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
 			}
 		}
-		
+
 		// calculate precision and recall
 		EngineParameters parameters = new EngineParameters();
 		parameters.setIdentity(identity);
 		parameters.setPubMedArticles(pubMedArticles);
 		parameters.setScopusArticles(Collections.emptyList());
-		
+
 		if (EngineParameters.getMeshCountMap() == null) {
 			List<MeshTerm> meshTerms = meshTermService.findAll();
 			slf4jLogger.info("Found " + meshTerms.size() + " mesh terms");
@@ -210,13 +231,6 @@ public class ReCiterController {
 
 		GoldStandard goldStandard = goldStandardService.findByUid(uid);
 		parameters.setKnownPmids(goldStandard.getKnownPmids());
-		Engine engine = new ReCiterEngine();
-		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
-
-		slf4jLogger.info(engineOutput.getAnalysis().toString());
-		analysisService.save(engineOutput.getAnalysis(), uid);
-		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
-		
-		return engineOutput.getAnalysis();
+		return parameters;
 	}
 }

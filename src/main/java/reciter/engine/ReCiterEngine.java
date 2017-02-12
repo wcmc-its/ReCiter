@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +34,7 @@ import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffil
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleMeshHeading;
-import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
