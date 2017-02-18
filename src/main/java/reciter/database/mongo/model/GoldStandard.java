@@ -11,6 +11,7 @@ public class GoldStandard {
 	@Id
 	private String id;
 	private List<Long> knownPmids;
+	private List<Long> rejectedPmids;
 	
 	public String getId() {
 		return id;
@@ -23,5 +24,11 @@ public class GoldStandard {
 	}
 	public void setKnownPmids(List<Long> knownPmids) {
 		this.knownPmids = knownPmids;
+	}
+	public List<Long> getRejectedPmids() {
+		return rejectedPmids;
+	}
+	public void setRejectedPmids(List<Long> rejectedPmids) {
+		this.rejectedPmids = rejectedPmids;
 	}
 }

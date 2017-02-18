@@ -26,6 +26,7 @@ import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.GoldStandard;
 import reciter.database.mongo.model.MeshTerm;
+import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
@@ -147,6 +148,22 @@ public class ReCiterController {
 		return "Success";
 	}
 
+	@RequestMapping(value = "/reciter/all/feature/", method = RequestMethod.GET)
+	@ResponseBody
+	public String generateAllFeatures() {
+		for (String uid : Uids.uids) {
+			runAnalysis(uid);
+			EngineParameters parameters = initializeEngineParameters(uid);
+			Engine engine = new ReCiterEngine();
+			List<Feature> features = engine.generateFeature(parameters);
+			PubMedArticleFeature articleFeatures = new PubMedArticleFeature();
+			articleFeatures.setUid(uid);
+			articleFeatures.setFeatures(features);
+			pubMedArticleFeatureService.save(articleFeatures);
+		}
+		return "Success";
+	}
+	
 	@RequestMapping(value = "/reciter/feature/by/uid", method = RequestMethod.GET)
 	@ResponseBody
 	public List<Feature> generateFeatures(@RequestParam(value="uid") String uid) {

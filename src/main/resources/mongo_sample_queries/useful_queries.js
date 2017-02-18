@@ -110,7 +110,7 @@ db.analysis.count();
 
 db.recitercluster.find();
 
-db.recitercluster.find({"_id": "rgcryst"});
+db.recitercluster.find({"_id": "ccole"});
 
 db.recitercluster.find({"$and" : [
   {"reCiterClusters.articleCluster.meshMajorStrategyScore": {"$gt" : 0.0}}, 

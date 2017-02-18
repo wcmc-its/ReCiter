@@ -62,6 +62,9 @@ public class StrategyParameters {
 	
 	@Value("${use.gold.standard.evidence}")
 	private boolean useGoldStandardEvidence;
+	
+	@Value("${use.rejected.evidence}")
+	private boolean useRejectedEvidence;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -213,5 +216,13 @@ public class StrategyParameters {
 
 	public void setUseGoldStandardEvidence(boolean useGoldStandardEvidence) {
 		this.useGoldStandardEvidence = useGoldStandardEvidence;
+	}
+	
+	public boolean isUseRejectedEvidence() {
+		return useRejectedEvidence;
+	}
+
+	public void setUseRejectedEvidence(boolean useRejectedEvidence) {
+		this.useRejectedEvidence = useRejectedEvidence;
 	}
 }

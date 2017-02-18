@@ -61,7 +61,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			}
 			reCiterArticle.setKnownCoinvestigatorScore(score);
 		}
-		feature.setNumKnownCoinvestigators(score);
+		feature.setNumKnownRelationships(score);
 	}
 
 }

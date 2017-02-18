@@ -8,7 +8,7 @@ public class Feature {
 	private int weillCornellEdu;
 	private int nypOrg;
 	private int departmentMatch;
-	private int numKnownCoinvestigators;
+	private int numKnownRelationships;
 	private int weillCornellAffiliation;
 	private int containsWeillCornellFromScopus;
 	private int isGoldStandard;
@@ -49,11 +49,11 @@ public class Feature {
 	public void setDepartmentMatch(int departmentMatch) {
 		this.departmentMatch = departmentMatch;
 	}
-	public int getNumKnownCoinvestigators() {
-		return numKnownCoinvestigators;
+	public int getNumKnownRelationships() {
+		return numKnownRelationships;
 	}
-	public void setNumKnownCoinvestigators(int numKnownCoinvestigators) {
-		this.numKnownCoinvestigators = numKnownCoinvestigators;
+	public void setNumKnownRelationships(int numKnownRelationships) {
+		this.numKnownRelationships = numKnownRelationships;
 	}
 	public int getWeillCornellAffiliation() {
 		return weillCornellAffiliation;

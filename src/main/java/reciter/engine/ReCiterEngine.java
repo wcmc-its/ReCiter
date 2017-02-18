@@ -117,24 +117,25 @@ public class ReCiterEngine implements Engine {
 
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);
-		int seedSize = ((Double) (parameters.getKnownPmids().size() * 1.0)).intValue();
-		Set<Long> initialSeed = new HashSet<Long>();
-		slf4jLogger.info("Initial seed size=[" + seedSize + "].");
-		int taken = 0;
-		for (long pmid : parameters.getKnownPmids()) {
-			if (taken < seedSize) {
-				initialSeed.add(pmid);
-			} else {
-				break;
-			}
-			taken++;
-		}
+//		int seedSize = ((Double) (parameters.getKnownPmids().size() * 1.0)).intValue();
+//		Set<Long> initialSeed = new HashSet<Long>();
+//		slf4jLogger.info("Initial seed size=[" + seedSize + "].");
+//		int taken = 0;
+//		for (long pmid : parameters.getKnownPmids()) {
+//			if (taken < seedSize) {
+//				initialSeed.add(pmid);
+//			} else {
+//				break;
+//			}
+//			taken++;
+//		}
 		
-		if (!initialSeed.isEmpty()) {
-			clusterer.cluster(initialSeed);
-		} else {
-			clusterer.cluster();
-		}
+//		if (!initialSeed.isEmpty()) {
+//			clusterer.cluster(initialSeed);
+//		} else {
+//			clusterer.cluster();
+//		}
+		clusterer.cluster();
 		slf4jLogger.info("Phase 1 Clustering result");
 		slf4jLogger.info(clusterer.toString());
 
