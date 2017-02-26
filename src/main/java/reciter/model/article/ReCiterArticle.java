@@ -94,7 +94,9 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double bachelorsYearDiscrepancyScore;
 	private double doctoralYearDiscrepancyScore;
 	private double bachelorsYearDiscrepancy;
+	private String publishedPriorAcademicDegreeBachelors;
 	private double doctoralYearDiscrepancy;
+	private String publishedPriorAcademicDegreeDoctoral;
 	private boolean isArticleTitleStartWithBracket;
 	private double educationStrategyScore;
 	private double meshMajorStrategyScore;
@@ -115,6 +117,71 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private int correctAuthorRank;
 	private int numAuthors;
 	
+	private StringBuffer meshMajorInfo;
+	private StringBuffer citesInfo;
+	private StringBuffer citedByInfo;
+	private StringBuffer coCitationInfo;
+	private StringBuffer journalTitleInfo;
+	
+	public StringBuffer getMeshMajorInfo() {
+		if (meshMajorInfo == null) {
+			meshMajorInfo = new StringBuffer();
+		}
+		return meshMajorInfo;
+	}
+
+	public void setMeshMajorInfo(StringBuffer meshMajorInfo) {
+		this.meshMajorInfo = meshMajorInfo;
+	}
+
+	public StringBuffer getCitesInfo() {
+		if (citesInfo == null) {
+			citesInfo = new StringBuffer();
+		}
+		return citesInfo;
+	}
+
+	public void setCitesInfo(StringBuffer citesInfo) {
+		this.citesInfo = citesInfo;
+	}
+
+	public StringBuffer getCitedByInfo() {
+		if (citedByInfo == null) {
+			citedByInfo = new StringBuffer();
+		}
+		return citedByInfo;
+	}
+
+	public void setCitedByInfo(StringBuffer citedByInfo) {
+		this.citedByInfo = citedByInfo;
+	}
+
+	public StringBuffer getCoCitationInfo() {
+		if (coCitationInfo == null) {
+			coCitationInfo = new StringBuffer();
+		}
+		return coCitationInfo;
+	}
+
+	public void setCoCitationInfo(StringBuffer coCitationInfo) {
+		this.coCitationInfo = coCitationInfo;
+	}
+
+	public StringBuffer getJournalTitleInfo() {
+		if (journalTitleInfo == null) {
+			journalTitleInfo = new StringBuffer();
+		}
+		return journalTitleInfo;
+	}
+
+	public void setJournalTitleInfo(StringBuffer journalTitleInfo) {
+		this.journalTitleInfo = journalTitleInfo;
+	}
+
+	public void setEducationStrategyScore(double educationStrategyScore) {
+		this.educationStrategyScore = educationStrategyScore;
+	}
+
 	public static class CoCitation {
 		private long pmid;
 		private List<Long> pmids;
@@ -566,5 +633,21 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setMatchingEmails(List<String> matchingEmails) {
 		this.matchingEmails = matchingEmails;
+	}
+
+	public String getPublishedPriorAcademicDegreeBachelors() {
+		return publishedPriorAcademicDegreeBachelors;
+	}
+
+	public void setPublishedPriorAcademicDegreeBachelors(String publishedPriorAcademicDegreeBachelors) {
+		this.publishedPriorAcademicDegreeBachelors = publishedPriorAcademicDegreeBachelors;
+	}
+
+	public String getPublishedPriorAcademicDegreeDoctoral() {
+		return publishedPriorAcademicDegreeDoctoral;
+	}
+
+	public void setPublishedPriorAcademicDegreeDoctoral(String publishedPriorAcademicDegreeDoctoral) {
+		this.publishedPriorAcademicDegreeDoctoral = publishedPriorAcademicDegreeDoctoral;
 	}
 }

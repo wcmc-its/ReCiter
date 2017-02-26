@@ -26,6 +26,8 @@ public class CitationStrategy extends AbstractReCiterArticleStrategy {
 					"(" + reCiterArticle.getGoldStandard() + ")" + 
 					" references article " + otherReCiterArticle.getArticleId() + "(" + otherReCiterArticle.getGoldStandard() + ")]");
 			reCiterArticle.getCitations().add(otherReCiterArticle.getArticleId());
+			reCiterArticle.getCitesInfo().append("This article cites another article with PMID of " + otherReCiterArticle.getArticleId() + ". ");
+			otherReCiterArticle.getCitedByInfo().append("This article is cited by another article with PMID of " + reCiterArticle.getArticleId() + ". ");
 			return 1;
 		}
 		return 0;

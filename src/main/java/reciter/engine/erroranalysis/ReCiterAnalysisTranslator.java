@@ -8,6 +8,7 @@ import reciter.engine.erroranalysis.ReCiterAnalysis.ReCiterAnalysisArticle;
 import reciter.engine.erroranalysis.ReCiterAnalysis.ReCiterAnalysisArticle.Citation;
 import reciter.engine.erroranalysis.ReCiterAnalysis.ReCiterAnalysisArticle.Citation.Journal;
 import reciter.engine.erroranalysis.ReCiterAnalysis.ReCiterAnalysisArticle.PositiveEvidence;
+import reciter.engine.erroranalysis.ReCiterAnalysis.ReCiterAnalysisArticle.PositiveEvidence.ClusteredWithOtherMatchingArticle;
 import reciter.model.article.ReCiterArticle;
 
 public class ReCiterAnalysisTranslator {
@@ -48,6 +49,17 @@ public class ReCiterAnalysisTranslator {
 				// TODO matchingInstitutionFrequentCollaborator
 				positiveEvidence.setMatchingGrantIDs(reCiterArticle.getMatchingGrantList());
 				positiveEvidence.setMatchingEmails(reCiterArticle.getMatchingEmails());
+				positiveEvidence.setPublishedPriorAcademicDegreeBachelors(reCiterArticle.getPublishedPriorAcademicDegreeBachelors());
+				positiveEvidence.setPublishedPriorAcademicDegreeDoctoral(reCiterArticle.getPublishedPriorAcademicDegreeDoctoral());
+				
+				ClusteredWithOtherMatchingArticle clusteredWithOtherMatchingArticle = new ClusteredWithOtherMatchingArticle();
+				positiveEvidence.setClusteredWithOtherMatchingArticle(clusteredWithOtherMatchingArticle);
+				
+				clusteredWithOtherMatchingArticle.setMeshMajor(reCiterArticle.getMeshMajorInfo().toString());
+				clusteredWithOtherMatchingArticle.setCites(reCiterArticle.getCitesInfo().toString());
+				clusteredWithOtherMatchingArticle.setCitedBy(reCiterArticle.getCitedByInfo().toString());
+				clusteredWithOtherMatchingArticle.setCoCitation(reCiterArticle.getCoCitationInfo().toString());
+				clusteredWithOtherMatchingArticle.setJournalTitle(reCiterArticle.getJournalTitleInfo().toString());
 			}
 		}
 		return reCiterAnalysis;

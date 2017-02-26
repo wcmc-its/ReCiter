@@ -77,6 +77,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 								+ " [Bachelors Degree Difference=" + difference + "]");
 						reCiterArticle.setBachelorsYearDiscrepancyScore(1);
+						reCiterArticle.setPublishedPriorAcademicDegreeBachelors("Target Author bachelors graduation year: " +
+								identity.getDegreeYear().getBachelorYear() + " publication date: " + year + ". Diff="+ difference);
 						return 1;
 					}
 				}
@@ -90,6 +92,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 									+ " [Doctoral Degree Difference (<1988) =" + difference + "]");
 							reCiterArticle.setDoctoralYearDiscrepancyScore(1);
+							reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("(Case doctoral < 1998) Target Author doctoral graduation year: " +
+									identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
 							return 1;
 						}
 					} else {
@@ -97,6 +101,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 									+ " [Doctoral Degree Difference (>=1998) =" + difference + "]");
 							reCiterArticle.setDoctoralYearDiscrepancyScore(1);
+							reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("Target Author doctoral graduation year: " +
+									identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
 							return 1;
 						}
 					}

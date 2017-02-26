@@ -34,6 +34,9 @@ public class JournalStrategy extends AbstractReCiterArticleStrategy {
 								otherAuthor.getAuthorName().getFirstName(), identity.getPrimaryName().getFirstName());
 						
 						if (isOtherFirstNameMatch) {
+							reCiterArticle.getJournalTitleInfo().append("This article is published in the same journal, \"" + 
+									reCiterArticle.getJournal().getJournalTitle() + "\" as the clustered article " +
+									otherReCiterArticle.getArticleId());
 							score += 1;
 						}
 					}

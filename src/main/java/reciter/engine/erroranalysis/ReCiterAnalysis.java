@@ -150,8 +150,48 @@ public class ReCiterAnalysis {
 			private String matchingInstitutionFrequentCollaborator;
 			private List<ReCiterArticleGrant> matchingGrantIDs;
 			private List<String> matchingEmails;
-			private String publishedPriorAcademicDegree;
-			private String clusteredWithOtherMatchingArticles;
+			private String publishedPriorAcademicDegreeBachelors;
+			private String publishedPriorAcademicDegreeDoctoral;
+			private ClusteredWithOtherMatchingArticle clusteredWithOtherMatchingArticle;
+			
+			public static class ClusteredWithOtherMatchingArticle {
+				private String meshMajor;
+				private String cites;
+				private String citedBy;
+				private String coCitation;
+				private String journalTitle;
+				
+				public String getMeshMajor() {
+					return meshMajor;
+				}
+				public void setMeshMajor(String meshMajor) {
+					this.meshMajor = meshMajor;
+				}
+				public String getCites() {
+					return cites;
+				}
+				public void setCites(String cites) {
+					this.cites = cites;
+				}
+				public String getCitedBy() {
+					return citedBy;
+				}
+				public void setCitedBy(String citedBy) {
+					this.citedBy = citedBy;
+				}
+				public String getCoCitation() {
+					return coCitation;
+				}
+				public void setCoCitation(String coCitation) {
+					this.coCitation = coCitation;
+				}
+				public String getJournalTitle() {
+					return journalTitle;
+				}
+				public void setJournalTitle(String journalTitle) {
+					this.journalTitle = journalTitle;
+				}
+			}
 			
 			public ReCiterAuthor getMatchingNameVariant() {
 				return matchingNameVariant;
@@ -195,17 +235,23 @@ public class ReCiterAnalysis {
 			public void setMatchingEmails(List<String> matchingEmail) {
 				this.matchingEmails = matchingEmail;
 			}
-			public String getPublishedPriorAcademicDegree() {
-				return publishedPriorAcademicDegree;
+			public String getPublishedPriorAcademicDegreeBachelors() {
+				return publishedPriorAcademicDegreeBachelors;
 			}
-			public void setPublishedPriorAcademicDegree(String publishedPriorAcademicDegree) {
-				this.publishedPriorAcademicDegree = publishedPriorAcademicDegree;
+			public void setPublishedPriorAcademicDegreeBachelors(String publishedPriorAcademicDegreeBachelors) {
+				this.publishedPriorAcademicDegreeBachelors = publishedPriorAcademicDegreeBachelors;
 			}
-			public String getClusteredWithOtherMatchingArticles() {
-				return clusteredWithOtherMatchingArticles;
+			public String getPublishedPriorAcademicDegreeDoctoral() {
+				return publishedPriorAcademicDegreeDoctoral;
 			}
-			public void setClusteredWithOtherMatchingArticles(String clusteredWithOtherMatchingArticles) {
-				this.clusteredWithOtherMatchingArticles = clusteredWithOtherMatchingArticles;
+			public void setPublishedPriorAcademicDegreeDoctoral(String publishedPriorAcademicDegreeDoctoral) {
+				this.publishedPriorAcademicDegreeDoctoral = publishedPriorAcademicDegreeDoctoral;
+			}
+			public ClusteredWithOtherMatchingArticle getClusteredWithOtherMatchingArticle() {
+				return clusteredWithOtherMatchingArticle;
+			}
+			public void setClusteredWithOtherMatchingArticle(ClusteredWithOtherMatchingArticle clusteredWithOtherMatchingArticle) {
+				this.clusteredWithOtherMatchingArticle = clusteredWithOtherMatchingArticle;
 			}
 		}
 	}

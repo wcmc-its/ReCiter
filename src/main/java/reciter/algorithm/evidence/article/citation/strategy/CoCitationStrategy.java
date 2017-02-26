@@ -41,6 +41,8 @@ public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
 				" and article " + otherReCiterArticle.getArticleId() + "(" + otherReCiterArticle.getGoldStandard() + ")" + 
 				" share " + count + " references and those are + " + sharedPmids + "], ");
 		
+		reCiterArticle.getCoCitationInfo().append("This article and clustered article with PMID of " + otherReCiterArticle.getArticleId() +
+				" both cites articles " + sharedPmids);
 		if (count > 0) {
 			CoCitation coCitation = new CoCitation();
 			coCitation.setPmid(reCiterArticle.getArticleId());
