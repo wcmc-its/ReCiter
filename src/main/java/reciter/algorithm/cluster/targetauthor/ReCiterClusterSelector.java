@@ -20,7 +20,7 @@ import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
 import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
-import reciter.algorithm.evidence.article.citation.strategy.CoCitationStrategy;
+import reciter.algorithm.evidence.article.citation.strategy.InverseCoCitationStrategy;
 import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
@@ -174,7 +174,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		educationStrategyContext = new EducationStrategyContext(new EducationStrategy()); // check this one.
 		grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
 		citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
-		coCitationStrategyContext = new CitationStrategyContext(new CoCitationStrategy());
+		coCitationStrategyContext = new CitationStrategyContext(new InverseCoCitationStrategy());
 		
 		int numArticles = 0;
 		for (ReCiterCluster reCiterCluster : clusters.values()) {

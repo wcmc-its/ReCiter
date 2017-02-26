@@ -52,7 +52,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				+ "(!(weillCornellEduDepartment=Other))"
 				+ "(!(weillCornellEduDepartment=NOT APPLICABLE))"
 				+ "(!(weillCornellEduDepartment=NA - NA))(weillCornellEduCWID=" + uid + "))");
-		
+		slf4jLogger.info("ldap results=" + results);
 		if (results.size() == 1) {
 			SearchResultEntry entry = results.get(0);
 			if(entry.getAttributeValue("weillCornellEduCWID") != null) {

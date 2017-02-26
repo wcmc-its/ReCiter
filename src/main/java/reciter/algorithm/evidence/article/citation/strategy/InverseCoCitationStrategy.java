@@ -15,14 +15,14 @@ import reciter.model.article.ReCiterArticle.CoCitation;
  * @author Jie
  *
  */
-public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
+public class InverseCoCitationStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
-		return checkCoCitationReference(reCiterArticle, otherReCiterArticle);
+		return checkInverseCoCitationReference(reCiterArticle, otherReCiterArticle);
 	}
 
-	private double checkCoCitationReference(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
+	private double checkInverseCoCitationReference(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
 		int count = 0;
 		Set<Long> sharedPmids = new HashSet<>();
 		if (reCiterArticle.getCommentsCorrectionsPmids() != null && otherReCiterArticle.getCommentsCorrectionsPmids() != null) {
@@ -41,8 +41,10 @@ public class CoCitationStrategy extends AbstractReCiterArticleStrategy {
 				" and article " + otherReCiterArticle.getArticleId() + "(" + otherReCiterArticle.getGoldStandard() + ")" + 
 				" share " + count + " references and those are + " + sharedPmids + "], ");
 		
-		reCiterArticle.getCoCitationInfo().append("This article and clustered article with PMID of " + otherReCiterArticle.getArticleId() +
-				" both cites articles " + sharedPmids);
+		if (!sharedPmids.isEmpty()) {
+			reCiterArticle.getCoCitationInfo().append("This article and clustered article with PMID of " + otherReCiterArticle.getArticleId() +
+					" both cites articles " + sharedPmids);
+		}
 		if (count > 0) {
 			CoCitation coCitation = new CoCitation();
 			coCitation.setPmid(reCiterArticle.getArticleId());

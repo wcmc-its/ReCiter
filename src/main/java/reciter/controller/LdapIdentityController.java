@@ -28,7 +28,13 @@ public class LdapIdentityController {
 	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
 	@ResponseBody
 	public Identity getIdentity(@RequestParam String uid) {
-		return ldapIdentityService.getIdentity(uid);
+		Identity identity = ldapIdentityService.getIdentity(uid);
+		if (identity != null) {
+			identityService.save(identity);
+		} else {
+			slf4jLogger.info("uid doesn't exist: " + uid);
+		}
+		return identity;
 	}
 	
 	/**
