@@ -25,6 +25,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 							reCiterArticle.getKnownRelationships().add(author);
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known relationship match: " +  authorName + "] ");
 							score += 1;
+							reCiterArticle.getKnownRelationship().add(authorName);
 						}
 					}
 				}

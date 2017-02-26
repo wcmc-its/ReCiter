@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.Uids;
+import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.model.GoldStandard;
@@ -34,6 +35,8 @@ import reciter.engine.Feature;
 import reciter.engine.ReCiterEngine;
 import reciter.engine.StrategyParameters;
 import reciter.engine.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.ReCiterAnalysis;
+import reciter.engine.erroranalysis.ReCiterAnalysisTranslator;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
@@ -185,6 +188,22 @@ public class ReCiterController {
 		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
 
 		return engineOutput.getAnalysis();
+	}
+	
+	@RequestMapping(value = "/reciter/analysis/web/by/uid", method = RequestMethod.GET)
+	@ResponseBody
+	public ReCiterAnalysis runReCiterAnalysis(@RequestParam(value="uid") String uid) {
+		EngineParameters parameters = initializeEngineParameters(uid);
+		Engine engine = new ReCiterEngine();
+		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
+
+		slf4jLogger.info(engineOutput.getAnalysis().toString());
+		analysisService.save(engineOutput.getAnalysis(), uid);
+		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
+
+		Analysis analysis = engineOutput.getAnalysis();
+		List<ReCiterCluster> reCiterClusters = engineOutput.getReCiterClusters();
+		return ReCiterAnalysisTranslator.convert(uid, analysis, reCiterClusters);
 	}
 
 	private EngineParameters initializeEngineParameters(String uid) {

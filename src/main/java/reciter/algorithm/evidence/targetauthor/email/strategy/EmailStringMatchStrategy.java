@@ -36,6 +36,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 					String email = identity.getUid() + suffix;
 					if (StringUtils.containsIgnoreCase(affiliation, email)) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
+						reCiterArticle.getMatchingEmails().add(email);
 						score += 1;
 					}
 				}
@@ -45,6 +46,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				for (String email : identity.getEmails()) {
 					if (affiliation.contains(email)) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + email + "]");
+						reCiterArticle.getMatchingEmails().add(email);
 						score += 1;
 					}
 				}

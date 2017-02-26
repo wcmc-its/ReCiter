@@ -12,6 +12,7 @@ import reciter.model.article.completeness.ArticleCompleteness;
 import reciter.model.article.completeness.ReCiterCompleteness;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.model.identity.KnownRelationship;
 import reciter.model.scopus.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
@@ -62,6 +63,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	 * Grant List.
 	 */
 	private List<ReCiterArticleGrant> grantList;
+	private List<ReCiterArticleGrant> matchingGrantList = new ArrayList<>(0);
 	
 	private boolean shouldRemoveValue;
 	private boolean foundAuthorWithSameFirstNameValue;
@@ -74,8 +76,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private String clusterInfo = "";
 	
 	private double emailStrategyScore;
+	private List<String> matchingEmails = new ArrayList<>(0);
 	private double departmentStrategyScore;
+	private String matchingDepartment;
+	
 	private double knownCoinvestigatorScore;
+	private List<KnownRelationship> knownRelationship = new ArrayList<>(0);
 	private double affiliationScore;
 	private double scopusStrategyScore;
 	private double coauthorStrategyScore;
@@ -528,5 +534,37 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setNumAuthors(int numAuthors) {
 		this.numAuthors = numAuthors;
+	}
+
+	public String getMatchingDepartment() {
+		return matchingDepartment;
+	}
+
+	public void setMatchingDepartment(String matchingDepartment) {
+		this.matchingDepartment = matchingDepartment;
+	}
+
+	public List<KnownRelationship> getKnownRelationship() {
+		return knownRelationship;
+	}
+
+	public void setKnownRelationship(List<KnownRelationship> knownRelationship) {
+		this.knownRelationship = knownRelationship;
+	}
+	
+	public List<ReCiterArticleGrant> getMatchingGrantList() {
+		return matchingGrantList;
+	}
+
+	public void setMatchingGrantList(List<ReCiterArticleGrant> matchingGrantList) {
+		this.matchingGrantList = matchingGrantList;
+	}
+
+	public List<String> getMatchingEmails() {
+		return matchingEmails;
+	}
+
+	public void setMatchingEmails(List<String> matchingEmails) {
+		this.matchingEmails = matchingEmails;
 	}
 }

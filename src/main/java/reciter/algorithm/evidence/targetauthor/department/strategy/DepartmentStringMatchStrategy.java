@@ -65,6 +65,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 							+ "PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
 							"] Is Gold=[" + isGoldStandard + "]");
 					score = 1;
+					reCiterArticle.setMatchingDepartment(extractedDept);
 					break;
 				}
 			}

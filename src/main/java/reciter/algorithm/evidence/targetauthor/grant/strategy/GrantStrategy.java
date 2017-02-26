@@ -18,6 +18,7 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 				if (grant.getGrantID() != null && grant.getGrantID().contains(knownGrantIds)) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [known grant ids match=" + knownGrantIds + "], ");
 					score += 1;
+					reCiterArticle.getMatchingGrantList().add(grant);
 				}
 			}
 		}
