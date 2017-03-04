@@ -1,7 +1,9 @@
 package reciter.engine.erroranalysis;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.engine.erroranalysis.ReCiterAnalysis.ReCiterAnalysisArticle;
@@ -13,13 +15,17 @@ import reciter.model.article.ReCiterArticle;
 
 public class ReCiterAnalysisTranslator {
 
-	public static ReCiterAnalysis convert(String uid, Analysis analysis, List<ReCiterCluster> reCiterClusters) {
+	public static ReCiterAnalysis convert(String uid, List<Long> goldStandard, Analysis analysis, List<ReCiterCluster> reCiterClusters) {
 		ReCiterAnalysis reCiterAnalysis = new ReCiterAnalysis();
 		reCiterAnalysis.setCwid(uid);
 		List<ReCiterAnalysisArticle> reCiterAnalysisArticles = new ArrayList<>();
 		reCiterAnalysis.setReCiterAnalysisArticles(reCiterAnalysisArticles);
+		Set<Long> goldStandardNotRetrieved = new HashSet<>(goldStandard);
 		for (ReCiterCluster cluster : reCiterClusters) {
 			for (ReCiterArticle reCiterArticle : cluster.getArticleCluster()) {
+				if (goldStandardNotRetrieved.contains(reCiterArticle.getArticleId())) {
+					goldStandardNotRetrieved.remove(reCiterArticle.getArticleId());
+				}
 				ReCiterAnalysisArticle article = new ReCiterAnalysisArticle();
 				reCiterAnalysisArticles.add(article);
 				article.setPmid(reCiterArticle.getArticleId());
@@ -62,6 +68,7 @@ public class ReCiterAnalysisTranslator {
 				clusteredWithOtherMatchingArticle.setJournalTitle(reCiterArticle.getJournalTitleInfo().toString());
 			}
 		}
+		reCiterAnalysis.setNotRetrievedGoldStandards(new ArrayList<>(goldStandardNotRetrieved));
 		return reCiterAnalysis;
 	}
 }

@@ -203,7 +203,7 @@ public class ReCiterController {
 
 		Analysis analysis = engineOutput.getAnalysis();
 		List<ReCiterCluster> reCiterClusters = engineOutput.getReCiterClusters();
-		return ReCiterAnalysisTranslator.convert(uid, analysis, reCiterClusters);
+		return ReCiterAnalysisTranslator.convert(uid, parameters.getKnownPmids(), analysis, reCiterClusters);
 	}
 
 	private EngineParameters initializeEngineParameters(String uid) {
