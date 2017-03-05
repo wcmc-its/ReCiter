@@ -66,9 +66,39 @@ public class ReCiterAnalysisTranslator {
 				clusteredWithOtherMatchingArticle.setCitedBy(reCiterArticle.getCitedByInfo().toString());
 				clusteredWithOtherMatchingArticle.setCoCitation(reCiterArticle.getCoCitationInfo().toString());
 				clusteredWithOtherMatchingArticle.setJournalTitle(reCiterArticle.getJournalTitleInfo().toString());
+				
+				// set score:
+				/* +10 for email match
+				 * +2 for full exact name match (firstName, middle initial, lastName)
+				 * +1 for abbreviated name match (firstInitial, middle initial, lastName)
+				 * +1 for every other type of evidence... Count each instance of department, institutional affiliation, 
+				 * common collaborator, known relationship, etc. separately as an additional point. */
+				int score = 0;
+				if (reCiterArticle.getEmailStrategyScore() > 0) {
+					score += 10;
+				}
+				if (reCiterArticle.getCorrectAuthor() != null) {
+					score += 2;
+				}
+				// TODO: +1 for abbreviated name match.
+				
+				// +1 for other types of evidence
+				score += reCiterArticle.getAffiliationScore() 
+						+ reCiterArticle.getBoardCertificationStrategyScore()
+						+ reCiterArticle.getCitizenshipStrategyScore()
+						+ reCiterArticle.getCoauthorStrategyScore()
+						+ reCiterArticle.getDepartmentStrategyScore()
+						+ reCiterArticle.getEducationStrategyScore()
+						+ reCiterArticle.getInternshipAndResidenceStrategyScore()
+						+ reCiterArticle.getJournalStrategyScore()
+						+ reCiterArticle.getKnownCoinvestigatorScore()
+						+ reCiterArticle.getMeshMajorStrategyScore()
+						+ reCiterArticle.getScopusStrategyScore();
+				article.setScore(score);
 			}
 		}
 		reCiterAnalysis.setNotRetrievedGoldStandards(new ArrayList<>(goldStandardNotRetrieved));
+		
 		return reCiterAnalysis;
 	}
 }

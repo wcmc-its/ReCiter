@@ -35,6 +35,7 @@ public class ReCiterAnalysis {
 	public static class ReCiterAnalysisArticle {
 		private long pmid;
 		private Citation citation;
+		private int score;
 		
 		public static class Citation {
 			private int pubDate;
@@ -144,6 +145,14 @@ public class ReCiterAnalysis {
 
 		public void setPositiveEvidence(PositiveEvidence positiveEvidence) {
 			this.positiveEvidence = positiveEvidence;
+		}
+
+		public int getScore() {
+			return score;
+		}
+
+		public void setScore(int score) {
+			this.score = score;
 		}
 
 		private String userAssertion;
