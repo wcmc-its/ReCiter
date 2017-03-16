@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *******************************************************************************/
 use reciter;
 
 /* Viewing data */
@@ -27,38 +45,21 @@ db.identity.find({"_id": "rgcryst"});
 db.goldstandard.find();
 
 /* Get a list of all PMIDs in the gold standard for a given UID */
-db.goldstandard.find({"_id" : "ccole"});
+db.goldstandard.find({"_id" : "rgcryst"});
 
 /** Updating gold standard for rak2007 */
 db.goldstandard.update({"_id": "rgcryst"}, {$addToSet: {"knownPmids": {$each: [
-NumberLong(26771416),
-NumberLong(27007171),
-NumberLong(26161876),
-NumberLong(26822727),
-NumberLong(26927796),
-NumberLong(26490036),
-NumberLong(26674646),
-NumberLong(26541521),
-NumberLong(24191907),
-NumberLong(24548017),
-NumberLong(24649839),
-NumberLong(25144894),
-NumberLong(25238276),
-NumberLong(25758611),
-NumberLong(25270115),
-NumberLong(26026937),
-NumberLong(26116571),
-NumberLong(26728717)
+NumberLong(11946695)
 ]}}});
 
 /* Add pmid 26976629 to gold standard for 'cnathan' */
 db.goldstandard.update({"_id": "mlg2007"}, {$addToSet: {"knownPmids": NumberLong(26898884)}});
 
 /* Remove from gold standard for 'cnathan' an erroneous array [26976629] */
-db.goldstandard.update({"_id": "cnathan"}, {$pull: {"knownPmids": [26976629]}});
+db.goldstandard.update({"_id": "rgcryst"}, {$pull: {"knownPmids": [18492313]}});
 
 /* Remove from gold standard for 'cnathan' an erroneous pmid NumberLong(26976629) */
-db.goldstandard.update({"_id": "cnathan"}, {$pull: {"knownPmids": NumberLong(26976629)}});
+db.goldstandard.update({"_id": "rgcryst"}, {$pull: {"knownPmids": NumberLong(18492313)}});
 
 /* Find if PMID exist in this uid */
 db.goldstandard.find({"_id": "rgcryst", "knownPmids": {$in: [NumberLong(26927796)]}});
