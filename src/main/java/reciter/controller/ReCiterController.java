@@ -137,6 +137,29 @@ public class ReCiterController {
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 	}
+	
+	/**
+	 * Retrieve all articles in Uids.java.
+	 */
+	@RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET)
+	@ResponseBody
+	public void retrieveArticlesByUid(String uid) {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		List<Identity> identities = new ArrayList<>();
+		LocalDate initial = LocalDate.now();
+		LocalDate startDate = initial.withDayOfMonth(1);
+		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
+		Identity identity = identityService.findByUid(uid);
+		identities.add(identity);
+		try {
+			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, startDate, endDate);
+		} catch (IOException e) {
+			slf4jLogger.info("Failed to retrieve articles.", e);
+		}
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		slf4jLogger.info("elapsed time: " + estimatedTime);
+	}
 
 	/**
 	 * Run analysis for all uids in Uids.java.
