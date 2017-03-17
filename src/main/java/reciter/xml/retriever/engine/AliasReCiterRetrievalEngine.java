@@ -184,18 +184,20 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
 				if (pubMedArticle.getMedlineCitation().getArticle().geteLocationID() != null && 
 						pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId() != null) {
-					String doi = pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId();
+					String doi = pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
 					dois.add(doi);
-					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, so this mapping to manually insert pmid.
+					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
 				}
 			}
 			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
-
 			List<Long> pmidsByDoi = new ArrayList<>();
 			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
 				// manually insert PMID information.
 				if (scopusArticle.getDoi() != null) {
-					scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi()));
+					// Need to lowercase doi here because of null pointer exception.
+					// PMID: 28221372
+					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112
+					scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
 				}
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}

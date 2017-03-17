@@ -41,6 +41,9 @@ import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
+import reciter.algorithm.evidence.targetauthor.degree.DegreeStrategyContext;
+import reciter.algorithm.evidence.targetauthor.degree.strategy.DegreeType;
+import reciter.algorithm.evidence.targetauthor.degree.strategy.YearDiscrepancyStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
@@ -171,6 +174,12 @@ public class ReCiterEngine implements Engine {
 		
 		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles, EngineParameters.getMeshCountMap()));
 		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
+		
+		StrategyContext bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
+		StrategyContext doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+		clusterSelector.handleStrategyContext(bachelorsYearDiscrepancyStrategyContext, clusterer.getClusters(), identity);
+		clusterSelector.handleStrategyContext(doctoralYearDiscrepancyStrategyContext, clusterer.getClusters(), identity);
+		
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, parameters.getKnownPmids());
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Analysis for uid=[" + identity.getUid() + "]");

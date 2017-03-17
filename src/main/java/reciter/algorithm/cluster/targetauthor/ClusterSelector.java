@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.model.identity.Identity;
 
@@ -32,4 +33,6 @@ public interface ClusterSelector {
 	Set<Long> getSelectedClusterIds();
 	
 	void handleNonSelectedClusters(TargetAuthorStrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, Identity identity);
+	
+	void handleStrategyContext(StrategyContext strategyContext, Map<Long, ReCiterCluster> clusters, Identity identity);
 }
