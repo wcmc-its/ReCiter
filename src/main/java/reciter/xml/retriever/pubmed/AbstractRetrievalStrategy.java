@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
@@ -150,7 +168,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			pubMedQueryResults.add(pubMedQuery.getLenientQuery());
 			pubMedQueryResults.add(pubMedQuery.getStrictQuery());
 		}
-		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getCwid() 
+		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getUid() 
 		+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
 
 		return new RetrievalResult(pubMedArticles, pubMedQueryResults);
@@ -186,7 +204,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 	}
 
-
 	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
 		PubMedArticleRetriever pubMedArticleRetriever = new PubMedArticleRetriever();
 		return pubMedArticleRetriever.retrievePubMed(pubMedQuery, numberOfPubmedArticles);
@@ -218,25 +235,15 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return pubmedESearchHandler;
 	}
 
-	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery, int numberOfPubmedArticles) {
-		if (numberOfPubmedArticles == 0) {
-			return Collections.emptyList();
-		}
+	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery) {
 		String nodeUrl = loadBalance();
-		nodeUrl += "query=" + pubMedQuery + "&numberOfPubmedArticles=" + numberOfPubmedArticles;
 		RestTemplate restTemplate = new RestTemplate();
 		slf4jLogger.info("Sending web request: " + nodeUrl);
-		int currentTry = 1;
-		boolean success = false;
 		ResponseEntity<PubMedArticle[]> responseEntity = null;
-		while (currentTry <= 5 && !success) {
-			try {
-				responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
-				success = true;
-			} catch (Exception e) {
-				slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "], retrying: " + currentTry, e);
-				currentTry++;
-			}
+		try {
+			responseEntity = restTemplate.getForEntity(nodeUrl, PubMedArticle[].class);
+		} catch (Exception e) {
+			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
 		}
 		PubMedArticle[] pubMedArticles = responseEntity.getBody();
 		return Arrays.asList(pubMedArticles);

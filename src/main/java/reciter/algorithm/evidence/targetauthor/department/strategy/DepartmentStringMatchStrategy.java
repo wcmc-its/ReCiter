@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.department.strategy;
 
 import java.util.List;
@@ -65,6 +83,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 							+ "PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
 							"] Is Gold=[" + isGoldStandard + "]");
 					score = 1;
+					reCiterArticle.setMatchingDepartment(extractedDept);
 					break;
 				}
 			}
@@ -113,7 +132,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation() != null) {
 			String affiliation = reCiterAuthor.getAffiliation();
 			extractedDept = extractDepartment(affiliation);
-			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "].");
+			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getUid() + "] in pmid=[" + pmid + "].");
 			for (String department : identity.getDepartments()) {
 				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
 					return true;
@@ -122,7 +141,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 					// it too common.
 					if (reCiterAuthor.getAuthorName().firstInitialMiddleInitialLastNameMatch(identity.getPrimaryName())) {
 						slf4jLogger.info("Extracted department=[" + extractedDept + "] contains identity's department=[" + department + "] "
-								+ "for author=[" + identity.getCwid() + "] in pmid=[" + pmid + "]. And first initial, middle initial and last names match. "
+								+ "for author=[" + identity.getUid() + "] in pmid=[" + pmid + "]. And first initial, middle initial and last names match. "
 										+ "gold standard=[" + goldStandard + "]");
 						return true;
 					}

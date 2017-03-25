@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *******************************************************************************/
 package reciter.database.ldap.impl;
 
 import java.util.ArrayList;
@@ -43,7 +61,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 	private OracleIdentityDao oracleIdentityDao;
 
 	@Override
-	public Identity getIdentity(String cwid) {
+	public Identity getIdentity(String uid) {
 		Identity identity = null;
 		List<SearchResultEntry> results = search("(&(objectClass=eduPerson)"
 				+ "(|(weillCornellEduPersonTypeCode=academic)"
@@ -51,15 +69,15 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				+ "(weillCornellEduPersonTypeCode=student-md-phd-tri-i))"
 				+ "(!(weillCornellEduDepartment=Other))"
 				+ "(!(weillCornellEduDepartment=NOT APPLICABLE))"
-				+ "(!(weillCornellEduDepartment=NA - NA))(weillCornellEduCWID=" + cwid + "))");
-		
+				+ "(!(weillCornellEduDepartment=NA - NA))(weillCornellEduCWID=" + uid + "))");
+		slf4jLogger.info("ldap results=" + results);
 		if (results.size() == 1) {
 			SearchResultEntry entry = results.get(0);
 			if(entry.getAttributeValue("weillCornellEduCWID") != null) {
 				identity = new Identity();
-				// get cwid and primary title
-				identity.setCwid(entry.getAttributeValue("weillCornellEduCWID"));
-				slf4jLogger.info("cwid retrieved is: " + identity.getCwid());
+				// get uid and primary title
+				identity.setUid(entry.getAttributeValue("weillCornellEduCWID"));
+				slf4jLogger.info("uid retrieved is: " + identity.getUid());
 				identity.setTitle(entry.getAttributeValue("weillCornellEduPrimaryTitle"));
 
 				// get primary name which is taken from people OU.
@@ -70,7 +88,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				identity.setPrimaryName(primaryName);
 
 				// get alternative names for Author Name
-				List<AuthorName> alternateNames = new ArrayList<>(searchAlternateNames(identity.getCwid(), primaryName));
+				List<AuthorName> alternateNames = new ArrayList<>(searchAlternateNames(identity.getUid(), primaryName));
 				identity.setAlternateNames(alternateNames);
 
 				// get email, including data from WOOFA(Personal Email) and Enterprise Directory
@@ -82,10 +100,10 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				}
 
 				// email from ED with all other ou
-				uniqueEmails.addAll(searchEmails(identity.getCwid()));
+				uniqueEmails.addAll(searchEmails(identity.getUid()));
 
 				// emails from WOOFA
-				List<String> emailsFromWoofa = oracleIdentityDao.getPersonalEmailFromOfa(identity.getCwid());
+				List<String> emailsFromWoofa = oracleIdentityDao.getPersonalEmailFromOfa(identity.getUid());
 				uniqueEmails.addAll(emailsFromWoofa);
 
 				List<String> emails = new ArrayList<>(uniqueEmails);
@@ -110,18 +128,18 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				
 				// person type 'students': get the program as well and map to departments
 				if ("student-phd-weill".equals(personTypeCode) || "student-md-phd-tri-i".equals(personTypeCode)) {
-					departments.addAll(getProgramsForStudents(identity.getCwid()));
+					departments.addAll(getProgramsForStudents(identity.getUid()));
 				}
 
 				identity.setDepartments(new ArrayList<>(departments));
 				
 				// get list of affiliations
-				List<String> institutions = oracleIdentityDao.getInstitutions(identity.getCwid());
+				List<String> institutions = oracleIdentityDao.getInstitutions(identity.getUid());
 				identity.setInstitutions(institutions);
 
 				// year of Bachelor Degree
-				int bachelorDegreeYear = oracleIdentityDao.getBachelorDegreeYear(identity.getCwid());
-				int doctoralDegreeYear = oracleIdentityDao.getDoctoralYear(identity.getCwid());
+				int bachelorDegreeYear = oracleIdentityDao.getBachelorDegreeYear(identity.getUid());
+				int doctoralDegreeYear = oracleIdentityDao.getDoctoralYear(identity.getUid());
 				
 				Education education = new Education();
 				education.setBachelorYear(bachelorDegreeYear);
@@ -129,17 +147,17 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 				identity.setDegreeYear(education);
 				
 				//List of grants
-				List<String> grants = oracleIdentityDao.getGrants(identity.getCwid());
+				List<String> grants = oracleIdentityDao.getGrants(identity.getUid());
 				identity.setGrants(grants);
 				
 				//List of relationship name from ED
-				List<String> knownRelationshipCwids = oracleIdentityDao.getRelationshipCwids(identity.getCwid());
+				List<String> knownRelationshipCwids = oracleIdentityDao.getRelationshipCwids(identity.getUid());
 				List<KnownRelationship> knownRelationships = new ArrayList<>();
 				for (String relationshipCwid : knownRelationshipCwids) {
 					AuthorName authorName = searchByCwid(relationshipCwid);
 					if (authorName != null) {
 						KnownRelationship knownRelationship = new KnownRelationship();
-						knownRelationship.setCwid(relationshipCwid);
+						knownRelationship.setUid(relationshipCwid);
 						knownRelationship.setName(authorName);
 						knownRelationship.setType("co-investigator");
 						knownRelationships.add(knownRelationship);
@@ -153,10 +171,10 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		return identity;
 	}
 
-	private Set<AuthorName> searchAlternateNames(String cwid, AuthorName primaryName) {
+	private Set<AuthorName> searchAlternateNames(String uid, AuthorName primaryName) {
 
 		Set<AuthorName> alternateNames = new HashSet<AuthorName>();
-		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + cwid + "))";
+		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + uid + "))";
 		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=sors,dc=weill,dc=cornell,dc=edu");
 		for (SearchResultEntry entry : results) {
 			AuthorName authorName = new AuthorName(
@@ -170,8 +188,8 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		return alternateNames;
 	}
 
-	private Set<String> searchEmails(String cwid) {
-		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + cwid + "))";
+	private Set<String> searchEmails(String uid) {
+		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + uid + "))";
 		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=sors,dc=weill,dc=cornell,dc=edu");
 		Set<String> emails = new HashSet<>();
 		if (results != null) {
@@ -184,9 +202,9 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 		return emails;
 	}
 
-	private Set<String> getProgramsForStudents(String cwid) {
+	private Set<String> getProgramsForStudents(String uid) {
 		Set<String> departments = new HashSet<>();
-		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + cwid + "))";
+		String filter = "(&(objectClass=weillCornellEduSORRecord)(weillCornellEduCWID=" + uid + "))";
 		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=students,ou=sors,dc=weill,dc=cornell,dc=edu");
 		for (SearchResultEntry entry : results) {
 			if(entry.getAttributeValue("weillCornellEduProgram") != null && !entry.getAttributeValue("weillCornellEduProgram").isEmpty()) {
@@ -197,7 +215,7 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 
 	}
 	
-	private void getHrRelationship(String cwid) {
+	private void getHrRelationship(String uid) {
 		String filter = "| ldapsearch domain=ED search='(&(objectClass=eduPerson)"
 				+ "(|(weillCornellEduPersonTypeCode=academic-faculty-weillfulltime)"
 				+ "(weillCornellEduPersonTypeCode=academic-faculty-weillparttime)"
@@ -233,14 +251,14 @@ public class LdapIdentityDaoImpl implements LdapIdentityDao {
 	}
 	
 	/**
-	 * Search LDAP to retrieve name for a given cwid.
+	 * Search LDAP to retrieve name for a given uid.
 	 * 
-	 * @param cwid
+	 * @param uid
 	 * 
 	 * @return AuthorName if found, otherwise null.
 	 */
-	private AuthorName searchByCwid(String cwid) {
-		String filter = "(&(objectClass=eduPerson)" + "(weillCornellEduCWID=" + cwid + "))";
+	private AuthorName searchByCwid(String uid) {
+		String filter = "(&(objectClass=eduPerson)" + "(weillCornellEduCWID=" + uid + "))";
 		List<SearchResultEntry> results = searchWithBaseDN(filter, "ou=people,dc=weill,dc=cornell,dc=edu");
 		if (results != null && !results.isEmpty()) {
 			SearchResultEntry entry = results.get(0);

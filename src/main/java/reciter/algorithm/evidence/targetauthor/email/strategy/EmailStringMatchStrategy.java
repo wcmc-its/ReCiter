@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.email.strategy;
 
 import java.util.Arrays;
@@ -33,9 +51,10 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				String affiliation = author.getAffiliation();
 				
 				for (String suffix : emailSuffixes) {
-					String email = identity.getCwid() + suffix;
+					String email = identity.getUid() + suffix;
 					if (StringUtils.containsIgnoreCase(affiliation, email)) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
+						reCiterArticle.getMatchingEmails().add(email);
 						score += 1;
 					}
 				}
@@ -45,6 +64,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				for (String email : identity.getEmails()) {
 					if (affiliation.contains(email)) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + email + "]");
+						reCiterArticle.getMatchingEmails().add(email);
 						score += 1;
 					}
 				}
@@ -71,13 +91,13 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null && author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation();
-				if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[0])) {
+				if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[0])) {
 					feature.setMedCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[1])) {
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[1])) {
 					feature.setMailMedCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[2])) {
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[2])) {
 					feature.setWeillCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getCwid() + defaultSuffixes[3])) {
+				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[3])) {
 					feature.setNypOrg(1);
 				}
 			}
