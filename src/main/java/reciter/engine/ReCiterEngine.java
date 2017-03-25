@@ -1,27 +1,8 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *******************************************************************************/
 package reciter.engine;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,10 +21,7 @@ import reciter.algorithm.evidence.article.mesh.MeshMajorStrategyContext;
 import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
-import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
-import reciter.algorithm.evidence.targetauthor.degree.DegreeStrategyContext;
-import reciter.algorithm.evidence.targetauthor.degree.strategy.DegreeType;
-import reciter.algorithm.evidence.targetauthor.degree.strategy.YearDiscrepancyStrategy;
+import reciter.algorithm.evidence.targetauthor.affiliation.strategy.WeillCornellAffiliationStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
@@ -51,7 +29,7 @@ import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchSt
 import reciter.algorithm.evidence.targetauthor.knownrelationship.KnownRelationshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownRelationshipStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
-import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
+import reciter.algorithm.evidence.targetauthor.scopus.strategy.StringMatchingAffiliation;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
@@ -102,10 +80,10 @@ public class ReCiterEngine implements Engine {
 			TargetAuthorStrategyContext grantCoauthorStrategyContext = new KnownRelationshipStrategyContext(new KnownRelationshipStrategy());
 			grantCoauthorStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			
-			TargetAuthorStrategyContext affiliationStrategyContext = new AffiliationStrategyContext(new CommonAffiliationStrategy());
+			TargetAuthorStrategyContext affiliationStrategyContext = new AffiliationStrategyContext(new WeillCornellAffiliationStrategy());
 			affiliationStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			
-			TargetAuthorStrategyContext scopusStrategyContext = new ScopusStrategyContext(new ScopusCommonAffiliation());
+			TargetAuthorStrategyContext scopusStrategyContext = new ScopusStrategyContext(new StringMatchingAffiliation());
 			scopusStrategyContext.populateFeature(reCiterArticle, identity, feature);
 			
 			features.add(feature);
@@ -114,7 +92,7 @@ public class ReCiterEngine implements Engine {
 	}
 	
 	@Override
-	public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters) {
+	public EngineOutput run(EngineParameters parameters) {
 		
 		Identity identity = parameters.getIdentity();
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
@@ -138,30 +116,29 @@ public class ReCiterEngine implements Engine {
 
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);
-//		int seedSize = ((Double) (parameters.getKnownPmids().size() * 1.0)).intValue();
-//		Set<Long> initialSeed = new HashSet<Long>();
-//		slf4jLogger.info("Initial seed size=[" + seedSize + "].");
-//		int taken = 0;
-//		for (long pmid : parameters.getKnownPmids()) {
-//			if (taken < seedSize) {
-//				initialSeed.add(pmid);
-//			} else {
-//				break;
-//			}
-//			taken++;
-//		}
+		int seedSize = ((Double) (parameters.getKnownPmids().size() * 1.0)).intValue();
+		Set<Long> initialSeed = new HashSet<Long>();
+		slf4jLogger.info("Initial seed size=[" + seedSize + "].");
+		int taken = 0;
+		for (long pmid : parameters.getKnownPmids()) {
+			if (taken < seedSize) {
+				initialSeed.add(pmid);
+			} else {
+				break;
+			}
+			taken++;
+		}
 		
-//		if (!initialSeed.isEmpty()) {
-//			clusterer.cluster(initialSeed);
-//		} else {
-//			clusterer.cluster();
-//		}
-		clusterer.cluster();
+		if (!initialSeed.isEmpty()) {
+			clusterer.cluster(initialSeed);
+		} else {
+			clusterer.cluster();
+		}
 		slf4jLogger.info("Phase 1 Clustering result");
 		slf4jLogger.info(clusterer.toString());
 
 		// Perform Phase 2 clusters selection.
-		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity, strategyParameters);
+		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), identity);
 
 		// Perform Mesh Heading recall improvement.
@@ -174,15 +151,9 @@ public class ReCiterEngine implements Engine {
 		
 		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles, EngineParameters.getMeshCountMap()));
 		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
-		
-		StrategyContext bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
-		StrategyContext doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
-		clusterSelector.handleStrategyContext(bachelorsYearDiscrepancyStrategyContext, clusterer.getClusters(), identity);
-		clusterSelector.handleStrategyContext(doctoralYearDiscrepancyStrategyContext, clusterer.getClusters(), identity);
-		
 		Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, parameters.getKnownPmids());
 		slf4jLogger.info(clusterer.toString());
-		slf4jLogger.info("Analysis for uid=[" + identity.getUid() + "]");
+		slf4jLogger.info("Analysis for cwid=[" + identity.getCwid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
 		slf4jLogger.info("Recall=" + analysis.getRecall());
 
@@ -204,9 +175,6 @@ public class ReCiterEngine implements Engine {
 		for (ReCiterCluster cluster : clusterer.getClusters().values()) {
 			Map<String, Long> meshCount = new HashMap<>();
 			for (ReCiterArticle reCiterArticle : cluster.getArticleCluster()) {
-				// calculate correct author.
-				reCiterArticle.setCorrectAuthor(identity);
-				
 				List<ReCiterArticleMeshHeading> meshHeadings = reCiterArticle.getMeshHeadings();
 				for (ReCiterArticleMeshHeading meshHeading : meshHeadings) {
 					String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
@@ -229,31 +197,6 @@ public class ReCiterEngine implements Engine {
 			}
 			cluster.setMeshTermCounts(meshTermCounts);
 		}
-
-		// Evidence - Gold standard is used to refine judgment of ReCiter
-		if (strategyParameters.isUseGoldStandardEvidence()) {
-			Set<Long> selectedClusterIds = clusterSelector.getSelectedClusterIds();
-			List<ReCiterArticle> goldStandardArticles = new ArrayList<>();
-			for (ReCiterCluster cluster : clusterer.getClusters().values()) {
-				if (selectedClusterIds.contains(cluster.getClusterID())) {
-					Iterator<ReCiterArticle> itr = cluster.getArticleCluster().iterator();
-					while (itr.hasNext()) {
-						ReCiterArticle reCiterArticle = itr.next();
-						if (reCiterArticle.getGoldStandard() == 0) {
-							goldStandardArticles.add(reCiterArticle);
-						}
-						itr.remove();
-					}
-				}
-			}
-			if (!goldStandardArticles.isEmpty()) {
-				ReCiterCluster rejectedCluster = new ReCiterCluster();
-				for (ReCiterArticle reject : goldStandardArticles) {
-					rejectedCluster.add(reject);
-				}
-				clusterer.getClusters().put(rejectedCluster.getClusterID(), rejectedCluster);
-			}
-		}
 		
 		EngineOutput engineOutput = new EngineOutput();
 		engineOutput.setAnalysis(analysis);
@@ -264,5 +207,4 @@ public class ReCiterEngine implements Engine {
 		engineOutput.setReCiterClusters(reCiterClusters);
 		return engineOutput;
 	}
-	
 }

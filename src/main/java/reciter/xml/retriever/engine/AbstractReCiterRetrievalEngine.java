@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *******************************************************************************/
 package reciter.xml.retriever.engine;
 
 import java.time.Clock;
@@ -82,9 +64,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	/**
 	 * Save the PubMed articles and the ESearch results.
 	 * @param pubMedArticles
-	 * @param uid
+	 * @param cwid
 	 */
-	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults) {
+	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String cwid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults) {
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
 		pubMedService.save(pubMedArticleList);
@@ -95,11 +77,11 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
 		}
 		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now(Clock.systemUTC()));
-//		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(uid, eSearchPmid.getRetrievalStrategyName());
+//		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(cwid, eSearchPmid.getRetrievalStrategyName());
 //		if (exist) {
-//			eSearchResultService.update(new ESearchResult(uid, eSearchPmid, pubMedQueryResults));
+//			eSearchResultService.update(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
 //		} else {
-		eSearchResultService.save(new ESearchResult(uid, eSearchPmid, pubMedQueryResults));
+		eSearchResultService.save(new ESearchResult(cwid, eSearchPmid, pubMedQueryResults));
 //		}
 	}
 }

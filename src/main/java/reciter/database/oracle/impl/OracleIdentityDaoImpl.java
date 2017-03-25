@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *******************************************************************************/
 package reciter.database.oracle.impl;
 
 import java.sql.Connection;
@@ -45,7 +27,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	private OracleConnectionFactory oracleConnectionFactory;
 
 	@Override
-	public int getBachelorDegreeYear(String uid) {
+	public int getBachelorDegreeYear(String cwid) {
 		int year = 0;
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
@@ -67,7 +49,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				+ "on p2.cwid = p1.cwid and p1.cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, uid);
+			pst.setString(1, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				year = rs.getInt(1);
@@ -88,7 +70,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public int getDoctoralYear(String uid) {
+	public int getDoctoralYear(String cwid) {
 		int year = 0;
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
@@ -104,7 +86,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				+ "where p.cwid is not NULL and cwid <> '0' and terminal_degree = 'Yes' and p.cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, uid);
+			pst.setString(1, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				year = rs.getInt(1);
@@ -125,7 +107,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getInstitutions(String uid) {
+	public List<String> getInstitutions(String cwid) {
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
 			return Collections.emptyList();
@@ -152,9 +134,9 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 		Set<String> distinctInstitutions = new HashSet<String>();
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, uid);
-			pst.setString(2, uid);
-			pst.setString(3, uid);
+			pst.setString(1, cwid);
+			pst.setString(2, cwid);
+			pst.setString(3, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				distinctInstitutions.add(rs.getString(2));
@@ -175,7 +157,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getPersonalEmailFromOfa(String uid) {
+	public List<String> getPersonalEmailFromOfa(String cwid) {
 		List<String> emails = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
 		if (connection == null) {
@@ -199,7 +181,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				+ "where p.email like '%,%') where email like '%@%' and email like '%.%' and CWID = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, uid);
+			pst.setString(1, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				emails.add(rs.getString(1));
@@ -220,7 +202,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getGrants(String uid) {
+	public List<String> getGrants(String cwid) {
 		
 		List<String> grants = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
@@ -236,7 +218,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				   + "substr(sponsor_award_number,2,1) = ' ' and cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, uid);
+			pst.setString(1, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				String grantId = rs.getString(2);
@@ -259,7 +241,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 	}
 
 	@Override
-	public List<String> getRelationshipCwids(String uid) {
+	public List<String> getRelationshipCwids(String cwid) {
 		
 		List<String> relationships = new ArrayList<String>();
 		Connection connection = oracleConnectionFactory.createConnection();
@@ -282,7 +264,7 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				   + "and award_number not in ('003152-001','005927-001') and cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
-			pst.setString(1, uid);
+			pst.setString(1, cwid);
 			rs = pst.executeQuery();
 			while(rs.next()) {
 				relationships.add(rs.getString(2));

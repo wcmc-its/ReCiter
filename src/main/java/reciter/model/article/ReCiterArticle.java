@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *******************************************************************************/
 package reciter.model.article;
 
 import java.util.ArrayList;
@@ -23,14 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
 
 import reciter.model.article.completeness.ArticleCompleteness;
 import reciter.model.article.completeness.ReCiterCompleteness;
 import reciter.model.identity.AuthorName;
-import reciter.model.identity.Identity;
-import reciter.model.identity.KnownRelationship;
 import reciter.model.scopus.ScopusArticle;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
@@ -81,7 +60,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	 * Grant List.
 	 */
 	private List<ReCiterArticleGrant> grantList;
-	private List<ReCiterArticleGrant> matchingGrantList = new ArrayList<>(0);
 	
 	private boolean shouldRemoveValue;
 	private boolean foundAuthorWithSameFirstNameValue;
@@ -94,12 +72,8 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private String clusterInfo = "";
 	
 	private double emailStrategyScore;
-	private List<String> matchingEmails = new ArrayList<>(0);
 	private double departmentStrategyScore;
-	private String matchingDepartment;
-	
 	private double knownCoinvestigatorScore;
-	private List<KnownRelationship> knownRelationship = new ArrayList<>(0);
 	private double affiliationScore;
 	private double scopusStrategyScore;
 	private double coauthorStrategyScore;
@@ -112,9 +86,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private double bachelorsYearDiscrepancyScore;
 	private double doctoralYearDiscrepancyScore;
 	private double bachelorsYearDiscrepancy;
-	private String publishedPriorAcademicDegreeBachelors;
 	private double doctoralYearDiscrepancy;
-	private String publishedPriorAcademicDegreeDoctoral;
 	private boolean isArticleTitleStartWithBracket;
 	private double educationStrategyScore;
 	private double meshMajorStrategyScore;
@@ -131,75 +103,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private AuthorName matchingName;
 	
 	private List<CoCitation> coCitation = new ArrayList<>();
-	private ReCiterAuthor correctAuthor;
-	private int correctAuthorRank;
-	private int numAuthors;
 	
-	private StringBuffer meshMajorInfo;
-	private StringBuffer citesInfo;
-	private StringBuffer citedByInfo;
-	private StringBuffer coCitationInfo;
-	private StringBuffer journalTitleInfo;
-	
-	public StringBuffer getMeshMajorInfo() {
-		if (meshMajorInfo == null) {
-			meshMajorInfo = new StringBuffer();
-		}
-		return meshMajorInfo;
-	}
-
-	public void setMeshMajorInfo(StringBuffer meshMajorInfo) {
-		this.meshMajorInfo = meshMajorInfo;
-	}
-
-	public StringBuffer getCitesInfo() {
-		if (citesInfo == null) {
-			citesInfo = new StringBuffer();
-		}
-		return citesInfo;
-	}
-
-	public void setCitesInfo(StringBuffer citesInfo) {
-		this.citesInfo = citesInfo;
-	}
-
-	public StringBuffer getCitedByInfo() {
-		if (citedByInfo == null) {
-			citedByInfo = new StringBuffer();
-		}
-		return citedByInfo;
-	}
-
-	public void setCitedByInfo(StringBuffer citedByInfo) {
-		this.citedByInfo = citedByInfo;
-	}
-
-	public StringBuffer getCoCitationInfo() {
-		if (coCitationInfo == null) {
-			coCitationInfo = new StringBuffer();
-		}
-		return coCitationInfo;
-	}
-
-	public void setCoCitationInfo(StringBuffer coCitationInfo) {
-		this.coCitationInfo = coCitationInfo;
-	}
-
-	public StringBuffer getJournalTitleInfo() {
-		if (journalTitleInfo == null) {
-			journalTitleInfo = new StringBuffer();
-		}
-		return journalTitleInfo;
-	}
-
-	public void setJournalTitleInfo(StringBuffer journalTitleInfo) {
-		this.journalTitleInfo = journalTitleInfo;
-	}
-
-	public void setEducationStrategyScore(double educationStrategyScore) {
-		this.educationStrategyScore = educationStrategyScore;
-	}
-
 	public static class CoCitation {
 		private long pmid;
 		private List<Long> pmids;
@@ -224,27 +128,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public ReCiterArticle(long articleId) {
 		this.articleId = articleId;
 		this.setArticleCompleteness(new ReCiterCompleteness());
-	}
-	
-	public void setCorrectAuthor(Identity identity) {
-		int rank = 0;
-		String targetAuthorLastName = identity.getPrimaryName().getLastName();
-		ReCiterArticleAuthors authors = getArticleCoAuthors();
-		if (authors != null) {
-			for (ReCiterAuthor author : authors.getAuthors()) {
-				rank++;
-				String lastName = author.getAuthorName().getLastName();
-				if (StringUtils.equalsIgnoreCase(targetAuthorLastName, lastName)) {
-					String firstInitial = author.getAuthorName().getFirstInitial();
-					if (StringUtils.equalsIgnoreCase(firstInitial, identity.getPrimaryName().getFirstInitial())) {
-						this.correctAuthor = author;
-						break;
-					}
-				}
-			}
-		}
-		this.correctAuthorRank = rank;
-		this.numAuthors = authors.getNumberOfAuthors();
 	}
 	
 	@Override
@@ -595,77 +478,5 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setCoCitation(List<CoCitation> coCitation) {
 		this.coCitation = coCitation;
-	}
-
-	public ReCiterAuthor getCorrectAuthor() {
-		return correctAuthor;
-	}
-
-	public void setCorrectAuthor(ReCiterAuthor correctAuthor) {
-		this.correctAuthor = correctAuthor;
-	}
-
-	public int getCorrectAuthorRank() {
-		return correctAuthorRank;
-	}
-
-	public void setCorrectAuthorRank(int correctAuthorRank) {
-		this.correctAuthorRank = correctAuthorRank;
-	}
-
-	public int getNumAuthors() {
-		return numAuthors;
-	}
-
-	public void setNumAuthors(int numAuthors) {
-		this.numAuthors = numAuthors;
-	}
-
-	public String getMatchingDepartment() {
-		return matchingDepartment;
-	}
-
-	public void setMatchingDepartment(String matchingDepartment) {
-		this.matchingDepartment = matchingDepartment;
-	}
-
-	public List<KnownRelationship> getKnownRelationship() {
-		return knownRelationship;
-	}
-
-	public void setKnownRelationship(List<KnownRelationship> knownRelationship) {
-		this.knownRelationship = knownRelationship;
-	}
-	
-	public List<ReCiterArticleGrant> getMatchingGrantList() {
-		return matchingGrantList;
-	}
-
-	public void setMatchingGrantList(List<ReCiterArticleGrant> matchingGrantList) {
-		this.matchingGrantList = matchingGrantList;
-	}
-
-	public List<String> getMatchingEmails() {
-		return matchingEmails;
-	}
-
-	public void setMatchingEmails(List<String> matchingEmails) {
-		this.matchingEmails = matchingEmails;
-	}
-
-	public String getPublishedPriorAcademicDegreeBachelors() {
-		return publishedPriorAcademicDegreeBachelors;
-	}
-
-	public void setPublishedPriorAcademicDegreeBachelors(String publishedPriorAcademicDegreeBachelors) {
-		this.publishedPriorAcademicDegreeBachelors = publishedPriorAcademicDegreeBachelors;
-	}
-
-	public String getPublishedPriorAcademicDegreeDoctoral() {
-		return publishedPriorAcademicDegreeDoctoral;
-	}
-
-	public void setPublishedPriorAcademicDegreeDoctoral(String publishedPriorAcademicDegreeDoctoral) {
-		this.publishedPriorAcademicDegreeDoctoral = publishedPriorAcademicDegreeDoctoral;
 	}
 }

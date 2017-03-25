@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *******************************************************************************/
 use reciter;
 
 /* Viewing data */
@@ -24,13 +6,13 @@ use reciter;
 db.identity.count();
 
 /* View all available data for a given UID */
-db.identity.find({"_id": "rgcryst"});
+db.identity.find({"_id": "yok2006"});
 
 /* Find pubmed article with PMID 18341570 */
 db.pubmedarticle.find({"_id": 18341570});
 
 /* Find the PubMed search strategies for uid 'amb9023' */
-db.esearchresult.find({"uid": "wcb2001"});
+db.esearchresult.find({"uid": "yok2006"});
 
 /* Find all identities */
 db.identity.find();
@@ -45,21 +27,24 @@ db.identity.find({"_id": "rgcryst"});
 db.goldstandard.find();
 
 /* Get a list of all PMIDs in the gold standard for a given UID */
-db.goldstandard.find({"_id" : "rgcryst"});
+db.goldstandard.find({"_id" : "dwf2001"});
+
+
 
 /** Updating gold standard for rak2007 */
-db.goldstandard.update({"_id": "rgcryst"}, {$addToSet: {"knownPmids": {$each: [
-NumberLong(11946695)
+db.goldstandard.update({"_id": "tdn2001"}, {$addToSet: {"knownPmids": {$each: [
+NumberLong(9814529),
+NumberLong(9814530)
 ]}}});
 
 /* Add pmid 26976629 to gold standard for 'cnathan' */
 db.goldstandard.update({"_id": "mlg2007"}, {$addToSet: {"knownPmids": NumberLong(26898884)}});
 
 /* Remove from gold standard for 'cnathan' an erroneous array [26976629] */
-db.goldstandard.update({"_id": "rgcryst"}, {$pull: {"knownPmids": [18492313]}});
+db.goldstandard.update({"_id": "cnathan"}, {$pull: {"knownPmids": [26976629]}});
 
 /* Remove from gold standard for 'cnathan' an erroneous pmid NumberLong(26976629) */
-db.goldstandard.update({"_id": "rgcryst"}, {$pull: {"knownPmids": NumberLong(18492313)}});
+db.goldstandard.update({"_id": "cnathan"}, {$pull: {"knownPmids": NumberLong(26976629)}});
 
 /* Find if PMID exist in this uid */
 db.goldstandard.find({"_id": "rgcryst", "knownPmids": {$in: [NumberLong(26927796)]}});
@@ -67,15 +52,12 @@ db.goldstandard.find({"_id": "rgcryst", "knownPmids": {$in: [NumberLong(26927796
 /* Add a new gold standard */
 db.goldstandard.insertOne(
 	{
-		"_id": "ccole",
+		"_id": "yok2006",
 		"knownPmids" : [
-        	NumberLong(17238381),
-			NumberLong(18999229),
-			NumberLong(20478738),
-			NumberLong(22465355),
-			NumberLong(22874398),
-			NumberLong(23578816),
-			NumberLong(15360861)
+        	NumberLong(21249174),
+            NumberLong(23561054),
+NumberLong(20165523),
+NumberLong(26084472)
         ]
 	}
 );
@@ -103,7 +85,7 @@ db.analysis.find({"analysis.recall": {"$lt" : 0.1}});
 /* Additional query examples */
 
 /* Delete the esearch result where the uid is 'rbaergen' */
-db.esearchresult.deleteMany({"uid": "rbaergen"});
+db.esearchresult.deleteMany({"uid": "tdn2001"});
 
 db.meshterm.find();
 

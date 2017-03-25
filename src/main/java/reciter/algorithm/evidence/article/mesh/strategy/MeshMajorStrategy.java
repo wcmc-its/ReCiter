@@ -1,24 +1,5 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *******************************************************************************/
 package reciter.algorithm.evidence.article.mesh.strategy;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +25,6 @@ import reciter.model.identity.Identity;
  */
 public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 
-	private Map<String, List<Long>> meshMajorToPmid;
 	private Set<String> generatedMeshMajors;
 	private Map<String, Long> meshFrequency;
 	private final double threshold = 0.4;
@@ -54,7 +34,6 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 
 	public MeshMajorStrategy(List<ReCiterArticle> selectedReCiterArticles, Map<String, Long> meshTermCache) {
 		this.meshTermCache = meshTermCache;
-		meshMajorToPmid = new HashMap<>();
 		meshFrequency = buildMeshFrequency(selectedReCiterArticles);
 		generatedMeshMajors = buildGeneratedMesh(meshFrequency, threshold);
 	}
@@ -88,8 +67,6 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 					if (generatedMeshMajors.contains(descriptorName)) {
 						slf4jLogger.info("Moved reCiterArticle=[" + reCiterArticle.getArticleId() + "] to 'yes` pile using "
 								+ "mesh=[" + descriptorName + "] gold standard=[" + reCiterArticle.getGoldStandard() + "]");
-						reCiterArticle.getMeshMajorInfo().append("This article shares MeSH major term of '" + descriptorName 
-								+ "' with an article with PMIDs=" + meshMajorToPmid.get(descriptorName));
 						reCiterArticle.getOverlappingMeSHMajorNegativeArticles().add(descriptorName);
 						score += 1;
 					}
@@ -117,15 +94,6 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 				if (isMeshMajor(meshHeading)) { // check if it's a mesh heading.
 
 					String descriptorName = meshHeading.getDescriptorName().getDescriptorName();
-					
-					// create a descriptorName to list of PMIDS map.
-					if (!meshMajorToPmid.containsKey(descriptorName)) {
-						List<Long> pmids = new ArrayList<>();
-						pmids.add(reCiterArticle.getArticleId());
-						meshMajorToPmid.put(descriptorName, pmids);
-					} else {
-						meshMajorToPmid.get(descriptorName).add(reCiterArticle.getArticleId());
-					}
 					if (!map.containsKey(descriptorName)) {
 						map.put(descriptorName, 1L);
 					} else {
