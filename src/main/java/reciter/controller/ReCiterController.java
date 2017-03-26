@@ -63,6 +63,7 @@ import reciter.service.mongo.AnalysisService;
 import reciter.service.mongo.ESearchResultService;
 import reciter.service.mongo.GoldStandardService;
 import reciter.service.mongo.IdentityService;
+import reciter.service.mongo.InstitutionAfidService;
 import reciter.service.mongo.MeshTermService;
 import reciter.service.mongo.PubMedArticleFeatureService;
 import reciter.service.mongo.PubMedService;
@@ -109,10 +110,19 @@ public class ReCiterController {
 
 	@Autowired
 	private StrategyParameters strategyParameters;
+	
+	@Autowired
+	private InstitutionAfidService institutionAfidService;
 
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
 
+	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
+	@ResponseBody
+	public List<Integer> retrieveAfids(String institution) {
+		return institutionAfidService.getAfidByInstitution(institution);
+	}
+	
 	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
 	@ResponseBody
 	public void retrieveGoldStandard() {
