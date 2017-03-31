@@ -315,9 +315,17 @@ public class ReCiterController {
 			}
 			EngineParameters.setMeshCountMap(meshCountMap);
 		}
+		
+		if (EngineParameters.getAfiliationNameToAfidMap() == null) {
+			
+		}
 
 		GoldStandard goldStandard = goldStandardService.findByUid(uid);
-		parameters.setKnownPmids(goldStandard.getKnownPmids());
+		if (goldStandard == null) {
+			parameters.setKnownPmids(new ArrayList<>());
+		} else {
+			parameters.setKnownPmids(goldStandard.getKnownPmids());
+		}
 		return parameters;
 	}
 }
