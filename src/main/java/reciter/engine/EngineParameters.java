@@ -32,6 +32,7 @@ public class EngineParameters {
 	private List<ScopusArticle> scopusArticles;
 	private List<Long> knownPmids;
 	private static Map<String, Long> meshCountMap;
+	private static Map<String, List<String>> afiliationNameToAfidMap;
 	
 	public Identity getIdentity() {
 		return identity;
@@ -62,5 +63,11 @@ public class EngineParameters {
 	}
 	public void setKnownPmids(List<Long> knownPmids) {
 		this.knownPmids = knownPmids;
+	}
+	public static Map<String, List<String>> getAfiliationNameToAfidMap() {
+		return afiliationNameToAfidMap;
+	}
+	public static void setAfiliationNameToAfidMap(Map<String, List<String>> afiliationNameToAfidMap) {
+		EngineParameters.afiliationNameToAfidMap = afiliationNameToAfidMap;
 	}
 }
