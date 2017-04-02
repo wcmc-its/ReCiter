@@ -54,10 +54,7 @@ public class ReCiterCluster {
 	 */
 	private long clusterOriginator;
 	
-	/**
-	 * Logger.
-	 */
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterCluster.class);	
+	private boolean isSelected;
 
 	private String clusterInfo = "";
 	
@@ -233,6 +230,14 @@ public class ReCiterCluster {
 
 	public void setMeshTermCounts(List<MeshTermCount> meshTermCounts) {
 		this.meshTermCounts = meshTermCounts;
+	}
+
+	public boolean isSelected() {
+		return isSelected;
+	}
+
+	public void setSelected(boolean isSelected) {
+		this.isSelected = isSelected;
 	}
 
 }

@@ -259,6 +259,10 @@ public class ReCiterEngine implements Engine {
 		engineOutput.setAnalysis(analysis);
 		List<ReCiterCluster> reCiterClusters = new ArrayList<>();
 		for (ReCiterCluster cluster : clusterer.getClusters().values()) {
+			// set cluster's selected field to true if this cluster has been selected.
+			if (clusterSelector.getSelectedClusterIds().contains(cluster.getClusterID())) {
+				cluster.setSelected(true);
+			}
 			reCiterClusters.add(cluster);
 		}
 		engineOutput.setReCiterClusters(reCiterClusters);

@@ -27,6 +27,7 @@ import reciter.model.identity.KnownRelationship;
 public class ReCiterAnalysis {
 	private String cwid;
 	private List<Long> notRetrievedGoldStandards;
+	private int numSuggestedArticles;
 	private List<ReCiterAnalysisArticle> reCiterAnalysisArticles;
 	
 	public String getCwid() {
@@ -48,6 +49,13 @@ public class ReCiterAnalysis {
 	}
 	public void setNotRetrievedGoldStandards(List<Long> notRetrievedGoldStandards) {
 		this.notRetrievedGoldStandards = notRetrievedGoldStandards;
+	}
+
+	public int getNumSuggestedArticles() {
+		return numSuggestedArticles;
+	}
+	public void setNumSuggestedArticles(int numSuggestedArticles) {
+		this.numSuggestedArticles = numSuggestedArticles;
 	}
 
 	public static class ReCiterAnalysisArticle {

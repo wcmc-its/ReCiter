@@ -44,78 +44,81 @@ public class ReCiterAnalysisTranslator {
 				if (goldStandardNotRetrieved.contains(reCiterArticle.getArticleId())) {
 					goldStandardNotRetrieved.remove(reCiterArticle.getArticleId());
 				}
-				ReCiterAnalysisArticle article = new ReCiterAnalysisArticle();
-				reCiterAnalysisArticles.add(article);
-				article.setPmid(reCiterArticle.getArticleId());
-				Citation citation = new Citation();
-				article.setCitation(citation);
-				citation.setPubDate(reCiterArticle.getJournal().getJournalIssuePubDateYear());
-				citation.setAuthorList(reCiterArticle.getArticleCoAuthors().getAuthors());
-				citation.setVolume(reCiterArticle.getJournal().getJournalTitle());
-				Journal journal = new Journal();
-				citation.setJournal(journal);
-				journal.setVerbose(reCiterArticle.getJournal().getIsoAbbreviation());
-				journal.setMedlineTA(reCiterArticle.getJournal().getJournalTitle());
-				
-				if (reCiterArticle.getScopusArticle() != null && reCiterArticle.getScopusArticle().getDoi() != null) {
-					citation.setDoi(reCiterArticle.getScopusArticle().getDoi());
+				if (reCiterArticle.getGoldStandard() == 1 && cluster.isSelected()) { // https://github.com/wcmc-its/ReCiter/issues/156
+					ReCiterAnalysisArticle article = new ReCiterAnalysisArticle();
+					reCiterAnalysisArticles.add(article);
+					article.setPmid(reCiterArticle.getArticleId());
+					Citation citation = new Citation();
+					article.setCitation(citation);
+					citation.setPubDate(reCiterArticle.getJournal().getJournalIssuePubDateYear());
+					citation.setAuthorList(reCiterArticle.getArticleCoAuthors().getAuthors());
+					citation.setVolume(reCiterArticle.getJournal().getJournalTitle());
+					Journal journal = new Journal();
+					citation.setJournal(journal);
+					journal.setVerbose(reCiterArticle.getJournal().getIsoAbbreviation());
+					journal.setMedlineTA(reCiterArticle.getJournal().getJournalTitle());
+
+					if (reCiterArticle.getScopusArticle() != null && reCiterArticle.getScopusArticle().getDoi() != null) {
+						citation.setDoi(reCiterArticle.getScopusArticle().getDoi());
+					}
+
+					article.setUserAssertion(null);
+
+					PositiveEvidence positiveEvidence = new PositiveEvidence();
+					article.setPositiveEvidence(positiveEvidence);
+
+					positiveEvidence.setMatchingNameVariant(reCiterArticle.getCorrectAuthor());
+					positiveEvidence.setMatchingDepartment(reCiterArticle.getMatchingDepartment());
+					positiveEvidence.setMatchingRelationships(reCiterArticle.getKnownRelationship());
+					positiveEvidence.setMatchingInstitutionTargetAuthors(reCiterArticle.getFrequentInstitutionalCollaborators());
+					// TODO matchingInstitutionFrequentCollaborator
+					positiveEvidence.setMatchingGrantIDs(reCiterArticle.getMatchingGrantList());
+					positiveEvidence.setMatchingEmails(reCiterArticle.getMatchingEmails());
+					positiveEvidence.setPublishedPriorAcademicDegreeBachelors(reCiterArticle.getPublishedPriorAcademicDegreeBachelors());
+					positiveEvidence.setPublishedPriorAcademicDegreeDoctoral(reCiterArticle.getPublishedPriorAcademicDegreeDoctoral());
+
+					ClusteredWithOtherMatchingArticle clusteredWithOtherMatchingArticle = new ClusteredWithOtherMatchingArticle();
+					positiveEvidence.setClusteredWithOtherMatchingArticle(clusteredWithOtherMatchingArticle);
+
+					clusteredWithOtherMatchingArticle.setMeshMajor(reCiterArticle.getMeshMajorInfo().toString());
+					clusteredWithOtherMatchingArticle.setCites(reCiterArticle.getCitesInfo().toString());
+					clusteredWithOtherMatchingArticle.setCitedBy(reCiterArticle.getCitedByInfo().toString());
+					clusteredWithOtherMatchingArticle.setCoCitation(reCiterArticle.getCoCitationInfo().toString());
+					clusteredWithOtherMatchingArticle.setJournalTitle(reCiterArticle.getJournalTitleInfo().toString());
+
+					// set score:
+					/* +10 for email match
+					 * +2 for full exact name match (firstName, middle initial, lastName)
+					 * +1 for abbreviated name match (firstInitial, middle initial, lastName)
+					 * +1 for every other type of evidence... Count each instance of department, institutional affiliation, 
+					 * common collaborator, known relationship, etc. separately as an additional point. */
+					int score = 0;
+					if (reCiterArticle.getEmailStrategyScore() > 0) {
+						score += 10;
+					}
+					if (reCiterArticle.getCorrectAuthor() != null) {
+						score += 2;
+					}
+					// TODO: +1 for abbreviated name match.
+
+					// +1 for other types of evidence
+					score += reCiterArticle.getAffiliationScore() 
+							+ reCiterArticle.getBoardCertificationStrategyScore()
+							+ reCiterArticle.getCitizenshipStrategyScore()
+							+ reCiterArticle.getCoauthorStrategyScore()
+							+ reCiterArticle.getDepartmentStrategyScore()
+							+ reCiterArticle.getEducationStrategyScore()
+							+ reCiterArticle.getInternshipAndResidenceStrategyScore()
+							+ reCiterArticle.getJournalStrategyScore()
+							+ reCiterArticle.getKnownCoinvestigatorScore()
+							+ reCiterArticle.getMeshMajorStrategyScore()
+							+ reCiterArticle.getScopusStrategyScore();
+					article.setScore(score);
 				}
-				
-				article.setUserAssertion(null);
-				
-				PositiveEvidence positiveEvidence = new PositiveEvidence();
-				article.setPositiveEvidence(positiveEvidence);
-				
-				positiveEvidence.setMatchingNameVariant(reCiterArticle.getCorrectAuthor());
-				positiveEvidence.setMatchingDepartment(reCiterArticle.getMatchingDepartment());
-				positiveEvidence.setMatchingRelationships(reCiterArticle.getKnownRelationship());
-				positiveEvidence.setMatchingInstitutionTargetAuthors(reCiterArticle.getFrequentInstitutionalCollaborators());
-				// TODO matchingInstitutionFrequentCollaborator
-				positiveEvidence.setMatchingGrantIDs(reCiterArticle.getMatchingGrantList());
-				positiveEvidence.setMatchingEmails(reCiterArticle.getMatchingEmails());
-				positiveEvidence.setPublishedPriorAcademicDegreeBachelors(reCiterArticle.getPublishedPriorAcademicDegreeBachelors());
-				positiveEvidence.setPublishedPriorAcademicDegreeDoctoral(reCiterArticle.getPublishedPriorAcademicDegreeDoctoral());
-				
-				ClusteredWithOtherMatchingArticle clusteredWithOtherMatchingArticle = new ClusteredWithOtherMatchingArticle();
-				positiveEvidence.setClusteredWithOtherMatchingArticle(clusteredWithOtherMatchingArticle);
-				
-				clusteredWithOtherMatchingArticle.setMeshMajor(reCiterArticle.getMeshMajorInfo().toString());
-				clusteredWithOtherMatchingArticle.setCites(reCiterArticle.getCitesInfo().toString());
-				clusteredWithOtherMatchingArticle.setCitedBy(reCiterArticle.getCitedByInfo().toString());
-				clusteredWithOtherMatchingArticle.setCoCitation(reCiterArticle.getCoCitationInfo().toString());
-				clusteredWithOtherMatchingArticle.setJournalTitle(reCiterArticle.getJournalTitleInfo().toString());
-				
-				// set score:
-				/* +10 for email match
-				 * +2 for full exact name match (firstName, middle initial, lastName)
-				 * +1 for abbreviated name match (firstInitial, middle initial, lastName)
-				 * +1 for every other type of evidence... Count each instance of department, institutional affiliation, 
-				 * common collaborator, known relationship, etc. separately as an additional point. */
-				int score = 0;
-				if (reCiterArticle.getEmailStrategyScore() > 0) {
-					score += 10;
-				}
-				if (reCiterArticle.getCorrectAuthor() != null) {
-					score += 2;
-				}
-				// TODO: +1 for abbreviated name match.
-				
-				// +1 for other types of evidence
-				score += reCiterArticle.getAffiliationScore() 
-						+ reCiterArticle.getBoardCertificationStrategyScore()
-						+ reCiterArticle.getCitizenshipStrategyScore()
-						+ reCiterArticle.getCoauthorStrategyScore()
-						+ reCiterArticle.getDepartmentStrategyScore()
-						+ reCiterArticle.getEducationStrategyScore()
-						+ reCiterArticle.getInternshipAndResidenceStrategyScore()
-						+ reCiterArticle.getJournalStrategyScore()
-						+ reCiterArticle.getKnownCoinvestigatorScore()
-						+ reCiterArticle.getMeshMajorStrategyScore()
-						+ reCiterArticle.getScopusStrategyScore();
-				article.setScore(score);
 			}
 		}
 		reCiterAnalysis.setNotRetrievedGoldStandards(new ArrayList<>(goldStandardNotRetrieved));
+		reCiterAnalysis.setNumSuggestedArticles(reCiterAnalysisArticles.size());
 		
 		return reCiterAnalysis;
 	}
