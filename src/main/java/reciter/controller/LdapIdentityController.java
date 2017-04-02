@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.Uids;
@@ -42,18 +41,6 @@ public class LdapIdentityController {
 	
 	@Autowired
 	private IdentityService identityService;
-	
-	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
-	@ResponseBody
-	public Identity getIdentity(@RequestParam String uid) {
-		Identity identity = ldapIdentityService.getIdentity(uid);
-		if (identity != null) {
-			identityService.save(identity);
-		} else {
-			slf4jLogger.info("uid doesn't exist: " + uid);
-		}
-		return identity;
-	}
 	
 	/**
 	 * Retrieve identity information for all uids in Uids.java

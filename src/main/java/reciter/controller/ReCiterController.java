@@ -59,6 +59,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.service.ldap.LdapIdentityService;
 import reciter.service.mongo.AnalysisService;
 import reciter.service.mongo.ESearchResultService;
 import reciter.service.mongo.GoldStandardService;
@@ -113,10 +114,38 @@ public class ReCiterController {
 	
 	@Autowired
 	private InstitutionAfidService institutionAfidService;
+	
+	@Autowired
+	private LdapIdentityService ldapIdentityService;
 
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
 
+	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
+	@ResponseBody
+	public Identity getIdentity(@RequestParam String uid) {
+		Identity identity = ldapIdentityService.getIdentity(uid);
+		if (identity != null) {
+			identityService.save(identity);
+		} else {
+			slf4jLogger.info("uid doesn't exist: " + uid);
+		}
+		return identity;
+	}
+	
+	@RequestMapping(value = "/reciter/retrieval/and/analysis/by/uid", method = RequestMethod.GET)
+	@ResponseBody
+	public ReCiterAnalysis runRetrievalAndAnalysisByUid(String uid) {
+		getIdentity(uid);
+		retrieveArticlesByUid(uid);
+		try {
+			Thread.currentThread().join();
+		} catch (InterruptedException e) {
+			slf4jLogger.info("Thread interrupted");
+		}
+		return runReCiterAnalysis(uid);
+	}
+	
 	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
 	@ResponseBody
 	public List<Integer> retrieveAfids(String institution) {
