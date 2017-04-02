@@ -44,7 +44,7 @@ public class ReCiterAnalysisTranslator {
 				if (goldStandardNotRetrieved.contains(reCiterArticle.getArticleId())) {
 					goldStandardNotRetrieved.remove(reCiterArticle.getArticleId());
 				}
-				if (reCiterArticle.getGoldStandard() == 1 && cluster.isSelected()) { // https://github.com/wcmc-its/ReCiter/issues/156
+				if (reCiterArticle.getGoldStandard() == 1 || cluster.isSelected()) { // https://github.com/wcmc-its/ReCiter/issues/156
 					ReCiterAnalysisArticle article = new ReCiterAnalysisArticle();
 					reCiterAnalysisArticles.add(article);
 					article.setPmid(reCiterArticle.getArticleId());
