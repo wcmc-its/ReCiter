@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,12 +93,19 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 
 	@Override
-	public void retrieveArticlesByDateRange(List<Identity> identities, LocalDate startDate, LocalDate endDate) throws IOException {
+	public boolean retrieveArticlesByDateRange(List<Identity> identities, LocalDate startDate, LocalDate endDate) throws IOException {
 		ExecutorService executorService = Executors.newFixedThreadPool(5);
 		for (Identity identity : identities) {
 			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate));
 		}
 		executorService.shutdown();
+		try {
+			executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			slf4jLogger.error("Thread interrupted while waiting for retrieval to finish.");
+			return false;
+		}
+		return true;
 	}
 	
 	private Set<Long> retrieveData(Identity identity) throws IOException {

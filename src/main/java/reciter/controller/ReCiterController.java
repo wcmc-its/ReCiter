@@ -136,14 +136,19 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/retrieval/and/analysis/by/uid", method = RequestMethod.GET)
 	@ResponseBody
 	public ReCiterAnalysis runRetrievalAndAnalysisByUid(String uid) {
-		getIdentity(uid);
-		retrieveArticlesByUid(uid);
+		Identity identity = getIdentity(uid);
+		List<Identity> identities = new ArrayList<>();
+		LocalDate initial = LocalDate.now();
+		LocalDate startDate = initial.withDayOfMonth(1);
+		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
+		boolean result = false;
+		identities.add(identity);
 		try {
-			Thread.currentThread().join();
-		} catch (InterruptedException e) {
-			slf4jLogger.info("Thread interrupted");
+			result = aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, startDate, endDate);
+		} catch (IOException e) {
+			slf4jLogger.info("Failed to retrieve articles.", e);
 		}
-		return runReCiterAnalysis(uid);
+		return result ? runReCiterAnalysis(uid) : null;
 	}
 	
 	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
