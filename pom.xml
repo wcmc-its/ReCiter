@@ -78,5 +78,12 @@
 			<artifactId>unboundid-ldapsdk</artifactId>
 			<version>3.2.0</version>
 		</dependency>
+		<dependency>
+    		<groupId>com.hynnet</groupId>
+    		<artifactId>oracle-driver-ojdbc</artifactId>
+    		<version>12.1.0.2</version>
+    		<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 </project>
