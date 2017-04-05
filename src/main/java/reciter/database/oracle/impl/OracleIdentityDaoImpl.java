@@ -215,7 +215,8 @@ public class OracleIdentityDaoImpl implements OracleIdentityDao {
 				   + "substr(substr(replace(sponsor_award_number,'  ',' '),1,INSTR(replace(sponsor_award_number,'  ',' '),'-')-1),7,8) AS awardNumber "
 				   + "from coeus_reports_user_1.V_ALL_AWARD_CO_INV_VIVO "
 				   + "where sponsor_type_code = '0' and "
-				   + "substr(sponsor_award_number,2,1) = ' ' and cwid = ?";
+				   + "substr(sponsor_award_number,2,1) = ' ' and cwid is not null "
+				   + "and length(substr(substr(replace(sponsor_award_number,'  ',' '),1,INSTR(replace(sponsor_award_number,'  ',' '),'-')-1),7,8)) = 8 and cwid = ?";
 		try {
 			pst = connection.prepareStatement(sql);
 			pst.setString(1, cwid);
