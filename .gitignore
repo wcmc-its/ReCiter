@@ -125,3 +125,7 @@ crashlytics-build.properties
 fabric.properties
 
 reciter.iml
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

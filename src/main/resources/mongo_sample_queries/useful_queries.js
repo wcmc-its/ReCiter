@@ -118,3 +118,10 @@ db.recitercluster.find({"$and" : [
   {"_id" : "aas2004"}
  ]
 });
+
+db.createCollection("institutionafid");
+// import as csv file.
+db.institutionafid.find();
+db.institutionafid.find({"institution": "University of London (United Kingdom)"});
+
+db.scopusarticle.find();
