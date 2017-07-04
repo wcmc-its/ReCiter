@@ -18,8 +18,13 @@
  *******************************************************************************/
 package reciter.model.pubmed;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class MedlineCitation {
 	
 	private enum MedlineCitationOwner {
@@ -42,10 +47,8 @@ public class MedlineCitation {
 		MEDLINE,
 		OLDMEDLINE
 	}
-	
-	public MedlineCitation() {}
-	
-	private MedlineCitationPMID medlineCitationPMID;
+
+	private MedlineCitationPMID medlinecitationpmid;
 	private MedlineCitationOwner medlineCitationOwner;
 	private MedlineCitationStatus medlineCitationStatus;
 	private MedlineCitationVersionDate medlineCitationVersionDate;
@@ -59,53 +62,4 @@ public class MedlineCitation {
 	private List<MedlineCitationMeshHeading> meshHeadingList;
 	private MedlineCitationKeywordList keywordList;
 	private List<MedlineCitationCommentsCorrections> commentsCorrectionsList;
-	
-	public MedlineCitationPMID getMedlineCitationPMID() {
-		return medlineCitationPMID;
-	}
-	public void setMedlineCitationPMID(MedlineCitationPMID medlineCitationPMID) {
-		this.medlineCitationPMID = medlineCitationPMID;
-	}
-	public MedlineCitationArticle getArticle() {
-		return article;
-	}
-	public void setArticle(MedlineCitationArticle article) {
-		this.article = article;
-	}
-	public List<MedlineCitationMeshHeading> getMeshHeadingList() {
-		return meshHeadingList;
-	}
-	public void setMeshHeadingList(List<MedlineCitationMeshHeading> meshHeadingList) {
-		this.meshHeadingList = meshHeadingList;
-	}
-	public MedlineCitationKeywordList getKeywordList() {
-		return keywordList;
-	}
-	public void setKeywordList(MedlineCitationKeywordList keywordList) {
-		this.keywordList = keywordList;
-	}
-	public MedlineCitationDate getDateCreated() {
-		return dateCreated;
-	}
-	public void setDateCreated(MedlineCitationDate dateCreated) {
-		this.dateCreated = dateCreated;
-	}
-	public MedlineCitationDate getDateCompleted() {
-		return dateCompleted;
-	}
-	public void setDateCompleted(MedlineCitationDate dateCompleted) {
-		this.dateCompleted = dateCompleted;
-	}
-	public MedlineCitationDate getDateRevised() {
-		return dateRevised;
-	}
-	public void setDateRevised(MedlineCitationDate dateRevised) {
-		this.dateRevised = dateRevised;
-	}
-	public List<MedlineCitationCommentsCorrections> getCommentsCorrectionsList() {
-		return commentsCorrectionsList;
-	}
-	public void setCommentsCorrectionsList(List<MedlineCitationCommentsCorrections> commentsCorrectionsList) {
-		this.commentsCorrectionsList = commentsCorrectionsList;
-	}
 }

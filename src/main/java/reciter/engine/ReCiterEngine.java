@@ -77,7 +77,7 @@ public class ReCiterEngine implements Engine {
 		}
 		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+			long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 			if (map.containsKey(pmid)) {
 				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
 			} else {
@@ -126,7 +126,7 @@ public class ReCiterEngine implements Engine {
 		}
 		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+			long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 			if (map.containsKey(pmid)) {
 				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
 			} else {

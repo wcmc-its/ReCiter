@@ -92,7 +92,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		// Save the search result.
 		List<Long> pmids = new ArrayList<Long>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			pmids.add(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
 		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now(Clock.systemUTC()));
 //		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(uid, eSearchPmid.getRetrievalStrategyName());

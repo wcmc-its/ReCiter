@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,11 +36,12 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
+@Slf4j
+@Getter
+@Setter
 public class ReCiterClusterer extends AbstractClusterer {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterClusterer.class);
-	
-	private List<ReCiterArticle> reCiterArticles;
+			private List<ReCiterArticle> reCiterArticles;
 	private Identity identity;
 	private Map<Long, ReCiterCluster> clusters;
 	private ClusteringStrategy clusteringStrategy;
@@ -57,7 +61,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 	 */
 	@Override
 	public void cluster() {
-		slf4jLogger.info("Running ReCiter for: [" + identity.getUid() + "] "
+		log.info("Running ReCiter for: [" + identity.getUid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		clusters = clusteringStrategy.cluster(reCiterArticles);
 	}
@@ -65,7 +69,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 
 	@Override
 	public void cluster(Set<Long> seedPmids) {
-		slf4jLogger.info("Running ReCiter for: [" + identity.getUid() + "] "
+		log.info("Running ReCiter for: [" + identity.getUid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size() + " initial seeds=" + seedPmids);
 		clusters = clusteringStrategy.cluster(reCiterArticles, seedPmids);
 	}
@@ -81,26 +85,5 @@ public class ReCiterClusterer extends AbstractClusterer {
 			}
 		}
 		return sb.toString();
-	}
-
-	@Override
-	public Map<Long, ReCiterCluster> getClusters() {
-		return clusters;
-	}
-
-	public List<ReCiterArticle> getReCiterArticles() {
-		return reCiterArticles;
-	}
-
-	public void setReCiterArticles(List<ReCiterArticle> reCiterArticles) {
-		this.reCiterArticles = reCiterArticles;
-	}
-
-	public Identity getIdentity() {
-		return identity;
-	}
-
-	public void setIdentity(Identity identity) {
-		this.identity = identity;
 	}
 }

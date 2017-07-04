@@ -106,42 +106,35 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		// to cluster method has ReCiterCluster id starts with 0.
 		ReCiterCluster.getClusterIDCounter().set(0);
 		
-		Map<Long, ReCiterCluster> clusters = new HashMap<Long, ReCiterCluster>();
-		boolean isFirstArticleSelected = false;
+		Map<Long, ReCiterCluster> clusters = new HashMap<>();
+		final boolean isFirstArticleSelected = false;
 		
 		ReCiterCluster firstCluster = new ReCiterCluster();
-		
-		for (ReCiterArticle article : reCiterArticles) {
+
+		reCiterArticles.forEach(article -> {
 			if (!isFirstArticleSelected) {
 				// Select first article.
-				ReCiterArticle firstArticle = null;
-				if (reCiterArticles != null && reCiterArticles.size() > 0) {
-					firstArticle = reCiterArticles.get(0);
-				}  else {
-					return clusters;
-				}
-				firstCluster.setClusterOriginator(firstArticle.getArticleId());
-				firstCluster.add(firstArticle);
+				firstCluster.setClusterOriginator(article.getArticleId());
+				firstCluster.add(article);
 				clusters.put(firstCluster.getClusterID(), firstCluster);
-				isFirstArticleSelected = true;
 			} else {
 				// Assign subsequent articles to a cluster.
 				boolean foundCluster = false;
 				for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
-			        ReCiterCluster reCiterCluster = entry.getValue();
-			        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
+					ReCiterCluster reCiterCluster = entry.getValue();
+					for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 
-			          boolean isSimilar = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
-			          double citationReferenceScore = ((ReCiterArticleStrategyContext) citationStrategyContext).executeStrategy(article, reCiterArticle);
+						boolean isSimilar = isTargetAuthorNameAndJournalMatch(article, reCiterArticle);
+						double citationReferenceScore = ((ReCiterArticleStrategyContext) citationStrategyContext).executeStrategy(article, reCiterArticle);
 //			          double coCitationReferenceScore = ((ReCiterArticleStrategyContext) coCitationStrategyContext).executeStrategy(article, reCiterArticle);
-			          
-			          if (isSimilar || citationReferenceScore == 1) {
-			            clusters.get(entry.getKey()).add(article);
-			            foundCluster = true;
-			            break;
-			          }
-			        }
-			        if (foundCluster) break;
+
+						if (isSimilar || citationReferenceScore == 1) {
+							clusters.get(entry.getKey()).add(article);
+							foundCluster = true;
+							break;
+						}
+					}
+					if (foundCluster) break;
 				}
 				if (!foundCluster) {
 					// create its own cluster.
@@ -151,7 +144,7 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 					clusters.put(newReCiterCluster.getClusterID(), newReCiterCluster);
 				}
 			}
-		}
+		});
 		return clusters;
 	}
 	

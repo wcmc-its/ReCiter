@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -147,7 +146,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				if (strictSearchHandler.getCount() <= DEFAULT_THRESHOLD) {
 					List<PubMedArticle> result = retrievePubMed(constructedStrictQuery, strictSearchHandler.getCount());
 					for (PubMedArticle pubMedArticle : result) {
-						long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+						long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 						if (!pubMedArticles.containsKey(pmid)) {
 							pubMedArticles.put(pmid, pubMedArticle);
 						}
@@ -157,7 +156,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			} else {
 				List<PubMedArticle> result = retrievePubMed(encodedInitialQuery, handler.getCount());
 				for (PubMedArticle pubMedArticle : result) {
-					long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+					long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 					if (!pubMedArticles.containsKey(pmid)) {
 						pubMedArticles.put(pmid, pubMedArticle);
 					}

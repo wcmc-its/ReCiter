@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,18 +34,12 @@ import reciter.pubmed.querybuilder.PubmedXmlQuery;
 import reciter.pubmed.xmlparser.PubmedEFetchHandler;
 import reciter.pubmed.xmlparser.PubmedESearchHandler;
 
+@Slf4j
 public class PubMedArticleRetriever {
-
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(PubMedArticleRetriever.class);
 
 	/**
 	 * Initializes and starts threads that handles the retrieval process. Partition the number of articles
 	 * into manageable pieces and ask each thread to handle one partition.
-	 * 
-	 * @param query
-	 * @param commonLocation
-	 * @param uid
-	 * @param count
 	 */
 	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
 
@@ -60,7 +55,7 @@ public class PubMedArticleRetriever {
 		// If number of articles is less than 4, use number of articles as retmax.
 		pubmedXmlQuery.setRetMax(Math.min(Math.max(numberOfPubmedArticles / Math.max(numAvailableProcessors, 1), numberOfPubmedArticles)
 				, PubmedXmlQuery.DEFAULT_RETMAX));
-		slf4jLogger.info("numAvailableProcessors=[" + numAvailableProcessors + "] retMax=[" 
+		log.info("numAvailableProcessors=[" + numAvailableProcessors + "] retMax=["
 				+ pubmedXmlQuery.getRetMax() + "], pubMedQuery=[" + pubMedQuery + "], "
 				+ "numberOfPubmedArticles=[" + numberOfPubmedArticles + "].");
 
@@ -70,7 +65,7 @@ public class PubMedArticleRetriever {
 		// Number of partitions that we need to finish retrieving all XML.
 		int numSteps = (int) Math.ceil((double)numberOfPubmedArticles / pubmedXmlQuery.getRetMax()); 
 
-		List<Callable<List<PubMedArticle>>> callables = new ArrayList<Callable<List<PubMedArticle>>>();
+		List<Callable<List<PubMedArticle>>> callables = new ArrayList<>();
 
 		// Use the retstart value to iteratively fetch all XMLs.
 		for (int i = 0; i < numSteps; i++) {
@@ -82,7 +77,7 @@ public class PubMedArticleRetriever {
 
 			// Use the webenv value to retrieve xml.
 			String eFetchUrl = pubmedXmlQuery.buildEFetchQuery();
-			slf4jLogger.info("eFetchUrl=[" + eFetchUrl + "].");
+			log.info("eFetchUrl=[" + eFetchUrl + "].");
 			PubMedUriParserCallable pubMedUriParserCallable = new PubMedUriParserCallable(new PubmedEFetchHandler(), eFetchUrl);
 			callables.add(pubMedUriParserCallable);
  
@@ -91,7 +86,7 @@ public class PubMedArticleRetriever {
 			pubmedXmlQuery.setRetStart(currentRetStart);
 		}
 
-		List<List<PubMedArticle>> list = new ArrayList<List<PubMedArticle>>();
+		List<List<PubMedArticle>> list = new ArrayList<>();
 
 		try {
 			executor.invokeAll(callables)
@@ -105,10 +100,10 @@ public class PubMedArticleRetriever {
 				}
 			}).forEach(list::add);
 		} catch (InterruptedException e) {
-			slf4jLogger.error("Unable to invoke callable.", e);
+			log.error("Unable to invoke callable.", e);
 		}
 
-		List<PubMedArticle> results = new ArrayList<PubMedArticle>();
+		List<PubMedArticle> results = new ArrayList<>();
 		list.forEach(results::addAll);
 		return results;
 	}

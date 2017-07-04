@@ -326,7 +326,7 @@ public class ReCiterController {
 		// combine PubMed and Scopus articles into a list of ReCiterArticle
 		List<ReCiterArticle> reCiterArticles = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			long pmid = pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+			long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 			if (map.containsKey(pmid)) {
 				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
 			} else {

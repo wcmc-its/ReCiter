@@ -42,7 +42,7 @@ public class PubMedServiceImpl implements PubMedService {
 		List<PubMedArticleMongo> pubMedArticleMongos = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			PubMedArticleMongo pubMedArticleMongo = new PubMedArticleMongo();
-			pubMedArticleMongo.setId(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid());
+			pubMedArticleMongo.setId(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 			pubMedArticleMongo.setPubMedArticle(pubMedArticle);
 			pubMedArticleMongos.add(pubMedArticleMongo);
 		}
@@ -57,5 +57,10 @@ public class PubMedServiceImpl implements PubMedService {
 			pubMedArticles.add(iterator.next().getPubMedArticle());
 		}
 		return pubMedArticles;
+	}
+
+	@Override
+	public PubMedArticle findByPmid(long pmid) {
+		return pubMedRepository.findOne(pmid).getPubMedArticle();
 	}
 }

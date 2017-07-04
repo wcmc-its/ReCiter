@@ -65,7 +65,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 					URLEncoder.encode(entry.getKey(), "UTF-8"), entry.getValue());
 			
 			for (PubMedArticle pubMedArticle : results) {
-				pubMedArticles.put(pubMedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid(), pubMedArticle);
+				pubMedArticles.put(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid(), pubMedArticle);
 			}
 			PubMedQueryResult pubMedQueryResult = new PubMedQueryResult(entry.getKey());
 			pubMedQueryResult.setUsed(true);

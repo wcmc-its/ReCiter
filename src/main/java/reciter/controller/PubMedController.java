@@ -18,40 +18,87 @@
  *******************************************************************************/
 package reciter.controller;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.bohnman.squiggly.Squiggly;
+import com.github.bohnman.squiggly.util.SquigglyUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.mongo.PubMedService;
 
-@Controller
+import javax.xml.ws.WebServiceException;
+
+@Slf4j
+@RestController
+@RequestMapping("/pubmed")
 public class PubMedController {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(PubMedController.class);
+    @Autowired
+    private PubMedService pubMedService;
 
-	@Autowired
-	private PubMedService pubMedService;
-	
-	@RequestMapping(value = "/reciter/save/pubmed/articles/", method = RequestMethod.PUT)
-	@ResponseBody
-	public void savePubMedArticles(@RequestBody List<PubMedArticle> pubMedArticles) {
-		slf4jLogger.info("calling savePubMedArticles with numberOfPubmedArticles=" + pubMedArticles.size());
-		pubMedService.save(pubMedArticles);
-	}
-	
-	@RequestMapping(value = "/reciter/find/pubmed/articles/pmids/", method = RequestMethod.GET)
-	@ResponseBody
-	public List<PubMedArticle> findByPmids(@RequestParam List<Long> pmids) {
-		slf4jLogger.info("calling findByPmids with size of pmids=" + pmids);
-		return pubMedService.findByPmids(pmids);
-	}
+    @RequestMapping(value = "/save/pubmed/articles/", method = RequestMethod.PUT)
+    @ResponseBody
+    public void savePubMedArticles(@RequestBody List<PubMedArticle> pubMedArticles) {
+        log.info("calling savePubMedArticles with numberOfPubmedArticles=" + pubMedArticles.size());
+        pubMedService.save(pubMedArticles);
+    }
+
+    @RequestMapping(value = "/find/pubmed/articles/pmids/", method = RequestMethod.GET)
+    @ResponseBody
+    public List<PubMedArticle> findByPmids(@RequestParam List<Long> pmids) {
+        log.info("calling findByPmids with size of pmids=" + pmids);
+        return pubMedService.findByPmids(pmids);
+    }
+
+    @RequestMapping(value = "/pmid/{pmid}", method = RequestMethod.GET)
+    @ResponseBody
+    public String pubMedArticle(@PathVariable long pmid, @RequestParam(value="fields", required=false) String fields) {
+        log.info("pmid=" + pmid);
+        PubMedArticle pubMedArticle = pubMedService.findByPmid(pmid);
+        if (pubMedArticle == null) {
+            log.error("Unable to find.");
+            throw new WebServiceException("Unable to find PubMedArticle with pmid=" + pmid);
+        }
+        log.info("Id: " + pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
+//        return pubMedArticle;
+        StringTokenizer st = new StringTokenizer(fields, ",");
+        Set<String> filterProps = new HashSet<String>();
+        while(st.hasMoreTokens()) {
+            String token = st.nextToken();
+            log.info("token: " + token);
+            filterProps.add(token);
+        }
+//        SquigglyPropertyFilter propertyFilter = new SquigglyPropertyFilter("medlineCitation[medlineCitationPMID]");
+////        ObjectMapper mapper = new ObjectMapper();
+//        FilterProvider filterProvider = new SimpleFilterProvider().addFilter("squigglyFilter",
+//                SimpleBeanPropertyFilter.filterOutAllExcept(filterProps));
+//
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        objectMapper.setFilterProvider(filterProvider);
+//        objectMapper.addMixIn(Object.class, SquigglyPropertyFilterMixin.class);
+//        System.out.println(SquigglyUtils.stringify(objectMapper, pubMedArticle));
+//        return SquigglyUtils.stringify(objectMapper, pubMedArticle);
+        ObjectMapper objectMapper = Squiggly.init(new ObjectMapper(), fields);
+//        Issue object = new Issue();         // replace this with your object/collection/map here
+        System.out.println(SquigglyUtils.stringify(objectMapper, pubMedArticle));
+        return SquigglyUtils.stringify(objectMapper, pubMedArticle);
+//        try
+//        {
+//            String json = mapper.writer(filters).writeValueAsString(pubMedArticle);
+//            return json;
+//        }
+//        catch(IOException are)
+//        {
+//            are.printStackTrace();
+//            return are.getMessage();
+//        }
+//        return new PartialResponse(pubMedArticle, "pubMedData");
+    }
 }

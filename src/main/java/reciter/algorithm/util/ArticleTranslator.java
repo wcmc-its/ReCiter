@@ -63,20 +63,20 @@ public class ArticleTranslator {
 	public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle) {
 
 		// PMID
-		long pmid = pubmedArticle.getMedlineCitation().getMedlineCitationPMID().getPmid();
+		long pmid = pubmedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 		ReCiterArticle reCiterArticle = new ReCiterArticle(pmid);
 
 		// Article title
-		String articleTitle = pubmedArticle.getMedlineCitation().getArticle().getArticleTitle();
+		String articleTitle = pubmedArticle.getMedlinecitation().getArticle().getArticleTitle();
 
 		// Journal Title
-		String journalTitle = pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalTitle();
+		String journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalTitle();
 
 		// Translating Journal Issue PubDate Year.
-		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlineCitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
+		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
 
 		// Co-authors
-		List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlineCitation().getArticle().getAuthorList();
+		List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlinecitation().getArticle().getAuthorList();
 
 		// Translating Co-Authors
 		ReCiterArticleAuthors reCiterCoAuthors = new ReCiterArticleAuthors();
@@ -115,7 +115,7 @@ public class ArticleTranslator {
 			}
 		}
 
-		MedlineCitationKeywordList keywordList = pubmedArticle.getMedlineCitation().getKeywordList();
+		MedlineCitationKeywordList keywordList = pubmedArticle.getMedlinecitation().getKeywordList();
 
 		// Translating Keywords.
 		ReCiterArticleKeywords articleKeywords = new ReCiterArticleKeywords();
@@ -125,7 +125,7 @@ public class ArticleTranslator {
 			}
 		}
 
-		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlineCitation().getMeshHeadingList();
+		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlinecitation().getMeshHeadingList();
 		List<ReCiterArticleMeshHeading> reCiterArticleMeshHeadings = new ArrayList<ReCiterArticleMeshHeading>();
 		if (meshList != null) {
 			// Translating Mesh
@@ -176,7 +176,7 @@ public class ArticleTranslator {
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
 		reCiterArticle.setArticleKeywords(articleKeywords);
 		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
-		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlineCitation().getArticle().getJournal().getIsoAbbreviation());
+		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation());
 		reCiterArticle.setMeshHeadings(reCiterArticleMeshHeadings);
 		
 		// Update PubMed's authors' first name from Scopus Article. Logic is as follows:
@@ -222,7 +222,7 @@ public class ArticleTranslator {
 		reCiterArticle.setScopusArticle(scopusArticle);
 
 		// Grant lists
-		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlineCitation().getArticle().getGrantList();
+		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlinecitation().getArticle().getGrantList();
 		List<ReCiterArticleGrant> reCiterArticleGrants = new ArrayList<>();
 		if (medlineCitationGrants != null) {
 			for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
@@ -238,9 +238,9 @@ public class ArticleTranslator {
 
 		// translate the CommentsCorrections.
 
-		if (pubmedArticle.getMedlineCitation().getCommentsCorrectionsList() != null) {
+		if (pubmedArticle.getMedlinecitation().getCommentsCorrectionsList() != null) {
 			Set<Long> commentsCorrectionsPmids = new HashSet<>();
-			List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlineCitation().getCommentsCorrectionsList();
+			List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlinecitation().getCommentsCorrectionsList();
 			for (MedlineCitationCommentsCorrections medlineCitationCommentsCorrections : commentsCorrectionsList) {
 				commentsCorrectionsPmids.add(Long.parseLong(medlineCitationCommentsCorrections.getPmid()));
 			}

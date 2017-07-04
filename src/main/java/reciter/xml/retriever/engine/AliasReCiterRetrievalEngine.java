@@ -190,9 +190,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			Map<String, Long> doiToPmid = new HashMap<>();
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
-				if (pubMedArticle.getMedlineCitation().getArticle().geteLocationID() != null && 
-						pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId() != null) {
-					String doi = pubMedArticle.getMedlineCitation().getArticle().geteLocationID().geteLocationId().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
+				if (pubMedArticle.getMedlinecitation().getArticle().geteLocationID() != null &&
+						pubMedArticle.getMedlinecitation().getArticle().geteLocationID().geteLocationId() != null) {
+					String doi = pubMedArticle.getMedlinecitation().getArticle().geteLocationID().geteLocationId().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
 					dois.add(doi);
 					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
 				}

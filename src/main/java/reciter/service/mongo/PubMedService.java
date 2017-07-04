@@ -28,4 +28,6 @@ public interface PubMedService {
 	void save(Collection<PubMedArticle> pubMedArticles);
 	
 	List<PubMedArticle> findByPmids(List<Long> pmids);
+	
+	PubMedArticle findByPmid(long pmid);
 }

@@ -53,10 +53,10 @@ public class AuthorNameUtilsTest {
 		List<PubMedArticle> pubMedArticles = new ArrayList<>();
 		PubMedArticle pubMedArticle = new PubMedArticle();
 		pubMedArticles.add(pubMedArticle);
-		pubMedArticle.setMedlineCitation(new MedlineCitation());
-		pubMedArticle.getMedlineCitation().setMedlineCitationPMID(new MedlineCitationPMID(1L));
-		pubMedArticle.getMedlineCitation().setArticle(new MedlineCitationArticle());
-		pubMedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<>());
+		pubMedArticle.setMedlinecitation(new MedlineCitation());
+		pubMedArticle.getMedlinecitation().setMedlinecitationpmid(new MedlineCitationPMID(1L));
+		pubMedArticle.getMedlinecitation().setArticle(new MedlineCitationArticle());
+		pubMedArticle.getMedlinecitation().getArticle().setAuthorList(new ArrayList<>());
 		MedlineCitationArticleAuthor author1 = new MedlineCitationArticleAuthor();
 		author1.setForeName("John M");
 		author1.setInitials("JM");
@@ -69,9 +69,9 @@ public class AuthorNameUtilsTest {
 		author3.setForeName("Jorge M");
 		author3.setInitials("JM");
 		author3.setLastName("Smith");
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author1);
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author2);
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author3);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author1);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author2);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author3);
 		
 		Identity targetAuthor = new Identity();
 		targetAuthor.setPrimaryName(new AuthorName("John", "M", "Smith"));
@@ -89,10 +89,10 @@ public class AuthorNameUtilsTest {
 		List<PubMedArticle> pubMedArticles = new ArrayList<>();
 		PubMedArticle pubMedArticle = new PubMedArticle();
 		pubMedArticles.add(pubMedArticle);
-		pubMedArticle.setMedlineCitation(new MedlineCitation());
-		pubMedArticle.getMedlineCitation().setMedlineCitationPMID(new MedlineCitationPMID(1L));
-		pubMedArticle.getMedlineCitation().setArticle(new MedlineCitationArticle());
-		pubMedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<>());
+		pubMedArticle.setMedlinecitation(new MedlineCitation());
+		pubMedArticle.getMedlinecitation().setMedlinecitationpmid(new MedlineCitationPMID(1L));
+		pubMedArticle.getMedlinecitation().setArticle(new MedlineCitationArticle());
+		pubMedArticle.getMedlinecitation().getArticle().setAuthorList(new ArrayList<>());
 		MedlineCitationArticleAuthor author1 = new MedlineCitationArticleAuthor();
 		author1.setForeName("George W");
 		author1.setInitials("GW");
@@ -105,9 +105,9 @@ public class AuthorNameUtilsTest {
 		author3.setForeName("Jorge M");
 		author3.setInitials("JM");
 		author3.setLastName("Smith");
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author1);
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author2);
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author3);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author1);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author2);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author3);
 		
 		Identity targetAuthor = new Identity();
 		targetAuthor.setPrimaryName(new AuthorName("John", "M", "Smith"));
@@ -128,10 +128,10 @@ public class AuthorNameUtilsTest {
 		List<PubMedArticle> pubMedArticles = new ArrayList<>();
 		PubMedArticle pubMedArticle = new PubMedArticle();
 		pubMedArticles.add(pubMedArticle);
-		pubMedArticle.setMedlineCitation(new MedlineCitation());
-		pubMedArticle.getMedlineCitation().setMedlineCitationPMID(new MedlineCitationPMID(1L));
-		pubMedArticle.getMedlineCitation().setArticle(new MedlineCitationArticle());
-		pubMedArticle.getMedlineCitation().getArticle().setAuthorList(new ArrayList<>());
+		pubMedArticle.setMedlinecitation(new MedlineCitation());
+		pubMedArticle.getMedlinecitation().setMedlinecitationpmid(new MedlineCitationPMID(1L));
+		pubMedArticle.getMedlinecitation().setArticle(new MedlineCitationArticle());
+		pubMedArticle.getMedlinecitation().getArticle().setAuthorList(new ArrayList<>());
 		MedlineCitationArticleAuthor author1 = new MedlineCitationArticleAuthor();
 		author1.setForeName("George W");
 		author1.setInitials("GW");
@@ -144,9 +144,9 @@ public class AuthorNameUtilsTest {
 		author3.setForeName("Jorge M");
 		author3.setInitials("JM");
 		author3.setLastName("Wells");
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author1);
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author2);
-		pubMedArticle.getMedlineCitation().getArticle().getAuthorList().add(author3);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author1);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author2);
+		pubMedArticle.getMedlinecitation().getArticle().getAuthorList().add(author3);
 		
 		Identity targetAuthor = new Identity();
 		targetAuthor.setPrimaryName(new AuthorName("John", "M", "Smith"));
