@@ -88,9 +88,20 @@
             <scope>provided</scope>
         </dependency>
 		<dependency>
-			<groupId>com.github.bohnman</groupId>
-			<artifactId>squiggly-filter-jackson</artifactId>
-			<version>1.3.4</version>
+			<groupId>edu.wcmc.reciter</groupId>
+			<artifactId>reciter-pubmed-model</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
     </dependencies>
+	<repositories>
+		<repository>
+			<id>wcmc-its</id>
+			<name>ReCiter-Maven-Repository</name>
+			<url>https://github.com/wcmc-its/ReCiter-Maven-Repository/raw/master/snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 </project>
