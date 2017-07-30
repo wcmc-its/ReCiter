@@ -67,23 +67,23 @@ public class ArticleTranslator {
 		ReCiterArticle reCiterArticle = new ReCiterArticle(pmid);
 
 		// Article title
-		String articleTitle = pubmedArticle.getMedlinecitation().getArticle().getArticleTitle();
+		String articleTitle = pubmedArticle.getMedlinecitation().getArticle().getArticletitle();
 
 		// Journal Title
-		String journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalTitle();
+		String journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getTitle();
 
 		// Translating Journal Issue PubDate Year.
-		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalIssue().getPubDate().getYear());
+		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear());
 
 		// Co-authors
-		List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlinecitation().getArticle().getAuthorList();
+		List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlinecitation().getArticle().getAuthorlist();
 
 		// Translating Co-Authors
 		ReCiterArticleAuthors reCiterCoAuthors = new ReCiterArticleAuthors();
 		if (coAuthors != null) {
 			for (MedlineCitationArticleAuthor author : coAuthors) {
-				String lastName = author.getLastName();
-				String foreName = author.getForeName();
+				String lastName = author.getLastname();
+				String foreName = author.getForename();
 				String initials = author.getInitials();
 				String firstName = null;
 				String middleName = null;
@@ -115,28 +115,28 @@ public class ArticleTranslator {
 			}
 		}
 
-		MedlineCitationKeywordList keywordList = pubmedArticle.getMedlinecitation().getKeywordList();
+		MedlineCitationKeywordList keywordList = pubmedArticle.getMedlinecitation().getKeywordlist();
 
 		// Translating Keywords.
 		ReCiterArticleKeywords articleKeywords = new ReCiterArticleKeywords();
 		if (keywordList != null) {
-			for (MedlineCitationKeyword keyword : keywordList.getKeywordList()) {
+			for (MedlineCitationKeyword keyword : keywordList.getKeywordlist()) {
 				articleKeywords.addKeyword(keyword.getKeyword());
 			}
 		}
 
-		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlinecitation().getMeshHeadingList();
-		List<ReCiterArticleMeshHeading> reCiterArticleMeshHeadings = new ArrayList<ReCiterArticleMeshHeading>();
+		List<MedlineCitationMeshHeading> meshList = pubmedArticle.getMedlinecitation().getMeshheadinglist();
+		List<ReCiterArticleMeshHeading> reCiterArticleMeshHeadings = new ArrayList<>();
 		if (meshList != null) {
 			// Translating Mesh
 			for (MedlineCitationMeshHeading medlineCitationMeshHeading : meshList) {
-				String descriptorNameString = medlineCitationMeshHeading.getDescriptorName().getDescriptorNameString();
-				MedlineCitationYNEnum meshMajorTopicYN = medlineCitationMeshHeading.getDescriptorName().getMajorTopicYN();
+				String descriptorNameString = medlineCitationMeshHeading.getDescriptorname().getDescriptorname();
+				MedlineCitationYNEnum meshMajorTopicYN = medlineCitationMeshHeading.getDescriptorname().getMajortopicyn();
 				List<MedlineCitationMeshHeadingQualifierName> medlineCitationMeshHeadingQualifierNames = 
-						medlineCitationMeshHeading.getQualifierNameList();
+						medlineCitationMeshHeading.getQualifiernamelist();
 				
 				List<ReCiterMeshHeadingQualifierName> reCiterMeshHeadingQualifierNames = 
-						new ArrayList<ReCiterMeshHeadingQualifierName>(medlineCitationMeshHeadingQualifierNames.size());
+						new ArrayList<>(medlineCitationMeshHeadingQualifierNames.size());
 				
 				// Set descriptor name and major topic.
 				ReCiterArticleMeshHeading reCiterArticleMeshHeading = new ReCiterArticleMeshHeading();
@@ -154,10 +154,10 @@ public class ArticleTranslator {
 				// For each qualifier, set name and major topic.
 				for (MedlineCitationMeshHeadingQualifierName medlineCitationMeshHeadingQualifierName : medlineCitationMeshHeadingQualifierNames) {
 					ReCiterMeshHeadingQualifierName reCiterMeshHeadingQualifierName = new ReCiterMeshHeadingQualifierName();
-					reCiterMeshHeadingQualifierName.setQualifierName(medlineCitationMeshHeadingQualifierName.getQualifierName());
+					reCiterMeshHeadingQualifierName.setQualifierName(medlineCitationMeshHeadingQualifierName.getQualifiername());
 					
 					ReCiterCitationYNEnum e;
-					if (medlineCitationMeshHeadingQualifierName.getMajorTopicYN() == MedlineCitationYNEnum.Y) {
+					if (medlineCitationMeshHeadingQualifierName.getMajortopicyn() == MedlineCitationYNEnum.Y) {
 						e = ReCiterCitationYNEnum.Y;
 					} else {
 						e = ReCiterCitationYNEnum.N;
@@ -222,7 +222,7 @@ public class ArticleTranslator {
 		reCiterArticle.setScopusArticle(scopusArticle);
 
 		// Grant lists
-		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlinecitation().getArticle().getGrantList();
+		List<MedlineCitationGrant> medlineCitationGrants = pubmedArticle.getMedlinecitation().getArticle().getGrantlist();
 		List<ReCiterArticleGrant> reCiterArticleGrants = new ArrayList<>();
 		if (medlineCitationGrants != null) {
 			for (MedlineCitationGrant medlineCitationGrant : medlineCitationGrants) {
@@ -230,7 +230,7 @@ public class ArticleTranslator {
 				reCiterArticleGrant.setAcronym(medlineCitationGrant.getAcronym());
 				reCiterArticleGrant.setAgency(medlineCitationGrant.getAgency());
 				reCiterArticleGrant.setCountry(medlineCitationGrant.getCountry());
-				reCiterArticleGrant.setGrantID(medlineCitationGrant.getGrantID());
+				reCiterArticleGrant.setGrantID(medlineCitationGrant.getGrantid());
 				reCiterArticleGrants.add(reCiterArticleGrant);
 			}
 		}
@@ -238,9 +238,9 @@ public class ArticleTranslator {
 
 		// translate the CommentsCorrections.
 
-		if (pubmedArticle.getMedlinecitation().getCommentsCorrectionsList() != null) {
+		if (pubmedArticle.getMedlinecitation().getCommentscorrectionslist() != null) {
 			Set<Long> commentsCorrectionsPmids = new HashSet<>();
-			List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlinecitation().getCommentsCorrectionsList();
+			List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlinecitation().getCommentscorrectionslist();
 			for (MedlineCitationCommentsCorrections medlineCitationCommentsCorrections : commentsCorrectionsList) {
 				commentsCorrectionsPmids.add(Long.parseLong(medlineCitationCommentsCorrections.getPmid()));
 			}

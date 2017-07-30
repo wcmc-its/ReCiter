@@ -23,7 +23,7 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 
 import reciter.model.identity.Identity;
-import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
+import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("grantRetrievalStrategy")
 public class GrantRetrievalStrategy extends AbstractNameRetrievalStrategy {

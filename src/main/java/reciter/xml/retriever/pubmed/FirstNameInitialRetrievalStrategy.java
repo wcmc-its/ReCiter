@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import reciter.model.identity.Identity;
-import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
+import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("firstNameInitialRetrievalStrategy")
 public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStrategy {

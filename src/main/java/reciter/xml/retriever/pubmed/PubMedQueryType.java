@@ -28,7 +28,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class PubMedQuery {
+public class PubMedQueryType {
 	
 	// Query that tends to return more results than the strict query.
 	private PubMedQueryResult lenientQuery;
@@ -54,7 +54,7 @@ public class PubMedQuery {
 	
 	@Override
 	public String toString() {
-		return "PubMedQuery [lenientQuery=" + lenientQuery + ", strictQuery=" + strictQuery + "]";
+		return "PubMedQueryType [lenientQuery=" + lenientQuery + ", strictQuery=" + strictQuery + "]";
 	}
 
 	/**

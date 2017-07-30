@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.pubmed.retriever.PubMedArticleRetriever;
-import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
+import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("goldStandardRetrievalStrategy")
 public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
@@ -43,12 +43,12 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected List<PubMedQuery> buildQuery(Identity identity) {
+	protected List<PubMedQueryType> buildQuery(Identity identity) {
 		throw new UnsupportedOperationException("Does not support retrieval.");
 	}
 
 	@Override
-	protected List<PubMedQuery> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate) {
 		throw new UnsupportedOperationException("Does not support retrieval.");
 	}
 

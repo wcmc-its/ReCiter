@@ -18,20 +18,22 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
+import reciter.pubmed.retriever.PubMedQuery;
+
 public class PubMedQueryResult {
 
-	private String query;
+	private PubMedQuery query;
 	private int numResult;
 	private boolean isUsed;
 
-	public PubMedQueryResult(String query) {
+	public PubMedQueryResult(PubMedQuery query) {
 		this.query = query;
 	}
 
-	public String getQuery() {
+	public PubMedQuery getQuery() {
 		return query;
 	}
-	public void setQuery(String query) {
+	public void setQuery(PubMedQuery query) {
 		this.query = query;
 	}
 	public int getNumResult() {

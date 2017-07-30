@@ -34,13 +34,13 @@ public class PubMedConverter {
 	 * @return
 	 */
 	public static AuthorName extractAuthorName(MedlineCitationArticleAuthor medlineCitationArticleAuthor) {
-		String lastName = medlineCitationArticleAuthor.getLastName();
+		String lastName = medlineCitationArticleAuthor.getLastname();
 
 		if (lastName == null) {
 			return null;
 		}
 		
-		String foreName = medlineCitationArticleAuthor.getForeName();
+		String foreName = medlineCitationArticleAuthor.getForename();
 		String initials = medlineCitationArticleAuthor.getInitials();
 
 		String firstName = null;

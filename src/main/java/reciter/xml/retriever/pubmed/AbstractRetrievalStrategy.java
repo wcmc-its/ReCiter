@@ -19,9 +19,6 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,21 +28,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import org.xml.sax.SAXException;
 
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.pubmed.retriever.PubMedArticleRetriever;
-import reciter.pubmed.xmlparser.PubmedESearchHandler;
+import reciter.pubmed.retriever.PubMedQuery;
 import reciter.scopus.retriever.ScopusArticleRetriever;
 
 @Configurable
@@ -100,72 +93,73 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
 
-	protected abstract List<PubMedQuery> buildQuery(Identity identity);
-	protected abstract List<PubMedQuery> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate);
+	protected abstract List<PubMedQueryType> buildQuery(Identity identity);
+	protected abstract List<PubMedQueryType> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate);
 
 	@Override
 	public RetrievalResult retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
-		List<PubMedQuery> pubMedQueries = buildQuery(identity, startDate, endDate);
+		List<PubMedQueryType> pubMedQueries = buildQuery(identity, startDate, endDate);
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
 
 	@Override
 	public RetrievalResult retrievePubMedArticles(Identity identity) throws IOException {
-		List<PubMedQuery> pubMedQueries = buildQuery(identity);
-		for (PubMedQuery pubMedQuery : pubMedQueries) {
-			slf4jLogger.info(pubMedQuery.toString());
+		List<PubMedQueryType> pubMedQueries = buildQuery(identity);
+		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
+			slf4jLogger.info(pubMedQueryType.toString());
 		}
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
 
-	private RetrievalResult retrievePubMedArticles(Identity identity, List<PubMedQuery> pubMedQueries) throws IOException {
+	private RetrievalResult retrievePubMedArticles(Identity identity, List<PubMedQueryType> pubMedQueries) throws IOException {
 
 		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
 
 		slf4jLogger.info("Query size: " + pubMedQueries.size());
 		List<PubMedQueryResult> pubMedQueryResults = new ArrayList<PubMedQueryResult>();
 
-		for (PubMedQuery pubMedQuery : pubMedQueries) {
-
-			String encodedInitialQuery = URLEncoder.encode(pubMedQuery.getLenientQuery().getQuery(), "UTF-8");
-			PubmedESearchHandler handler = getPubmedESearchHandler(encodedInitialQuery);
+		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
+			slf4jLogger.info("Constructed lenient query {}", pubMedQueryType.getLenientQuery().getQuery());
+			PubMedQuery encodedInitialQuery = pubMedQueryType.getLenientQuery().getQuery();
+			int handler = getNumberOfResults(encodedInitialQuery);
 
 			// check number of PubMed results returned by initial query.
 			// If it's greater than the threshold, query using the strict query.
-			pubMedQuery.getLenientQuery().setNumResult(handler.getCount());
+			pubMedQueryType.getLenientQuery().setNumResult(handler);
 
-			if (handler.getCount() > DEFAULT_THRESHOLD) {
-				String constructedStrictQuery = pubMedQuery.getStrictQuery().getQuery();
-				String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
-				PubmedESearchHandler strictSearchHandler = getPubmedESearchHandler(strictQuery);
+			if (handler > DEFAULT_THRESHOLD) {
+				PubMedQuery constructedStrictQuery = pubMedQueryType.getStrictQuery().getQuery();
+//				slf4jLogger.info("Constructed strict query {}", constructedStrictQuery);
+//				String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
+				int strictSearchHandler = getNumberOfResults(constructedStrictQuery);
 
-				pubMedQuery.getStrictQuery().setNumResult(strictSearchHandler.getCount());
+				pubMedQueryType.getStrictQuery().setNumResult(strictSearchHandler);
 
 				// only retrieve articles if number is less than threshold, otherwise the article download
 				// may take too long
-				if (strictSearchHandler.getCount() <= DEFAULT_THRESHOLD) {
-					List<PubMedArticle> result = retrievePubMed(constructedStrictQuery, strictSearchHandler.getCount());
+				if (strictSearchHandler <= DEFAULT_THRESHOLD) {
+					List<PubMedArticle> result = retrievePubMed(constructedStrictQuery, strictSearchHandler);
 					for (PubMedArticle pubMedArticle : result) {
 						long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 						if (!pubMedArticles.containsKey(pmid)) {
 							pubMedArticles.put(pmid, pubMedArticle);
 						}
 					}
-					pubMedQuery.getStrictQuery().setUsed(true);
+					pubMedQueryType.getStrictQuery().setUsed(true);
 				}
 			} else {
-				List<PubMedArticle> result = retrievePubMed(encodedInitialQuery, handler.getCount());
+				List<PubMedArticle> result = retrievePubMed(encodedInitialQuery, handler);
 				for (PubMedArticle pubMedArticle : result) {
 					long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 					if (!pubMedArticles.containsKey(pmid)) {
 						pubMedArticles.put(pmid, pubMedArticle);
 					}
 				}
-				pubMedQuery.getLenientQuery().setUsed(true);
+				pubMedQueryType.getLenientQuery().setUsed(true);
 			}
 
-			pubMedQueryResults.add(pubMedQuery.getLenientQuery());
-			pubMedQueryResults.add(pubMedQuery.getStrictQuery());
+			pubMedQueryResults.add(pubMedQueryType.getLenientQuery());
+			pubMedQueryResults.add(pubMedQueryType.getStrictQuery());
 		}
 		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getUid() 
 		+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
@@ -203,7 +197,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 	}
 
-	public List<PubMedArticle> retrievePubMed(String pubMedQuery, int numberOfPubmedArticles)  {
+	public List<PubMedArticle> retrievePubMed(PubMedQuery pubMedQuery, int numberOfPubmedArticles)  {
 		PubMedArticleRetriever pubMedArticleRetriever = new PubMedArticleRetriever();
 		return pubMedArticleRetriever.retrievePubMed(pubMedQuery, numberOfPubmedArticles);
 	}
@@ -220,18 +214,19 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.DOI_MODIFIER, new ArrayList<String>(dois));
 	}
 
-	protected PubmedESearchHandler getPubmedESearchHandler(String query) throws IOException {
-		PubmedXmlQuery pubmedXmlQuery = new PubmedXmlQuery(query);
-		String fullUrl = pubmedXmlQuery.buildESearchQuery(); // build eSearch query.
-		PubmedESearchHandler pubmedESearchHandler = new PubmedESearchHandler();
-		InputStream esearchStream = new URL(fullUrl).openStream();
-
+	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
+		String nodeUrl = "http://localhost:5000/query-number-pubmed-articles/";
+		RestTemplate restTemplate = new RestTemplate();
+		slf4jLogger.info("Sending web request: " + nodeUrl);
+		ResponseEntity<Integer> responseEntity = null;
 		try {
-			SAXParserFactory.newInstance().newSAXParser().parse(esearchStream, pubmedESearchHandler);
-		} catch (SAXException | ParserConfigurationException e) {
-			slf4jLogger.error("Error parsing XML file for query=[" + query + "], full url=[" + fullUrl + "]", e);
+			responseEntity = restTemplate.postForEntity(nodeUrl, pubMedQueryType, Integer.class);
+		} catch (Exception e) {
+			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
 		}
-		return pubmedESearchHandler;
+		int results = responseEntity.getBody();
+		slf4jLogger.info("Returned results: " + results);
+		return results;
 	}
 
 	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery) {

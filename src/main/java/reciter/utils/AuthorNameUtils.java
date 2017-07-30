@@ -93,7 +93,7 @@ public class AuthorNameUtils {
 			List<PubMedArticle> pubMedArticles, Identity targetAuthor) {
 		Map<Long, List<AuthorName>> map = new HashMap<Long, List<AuthorName>>(); // PMID to alternate author name.
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			List<MedlineCitationArticleAuthor> authorList = pubMedArticle.getMedlinecitation().getArticle().getAuthorList();
+			List<MedlineCitationArticleAuthor> authorList = pubMedArticle.getMedlinecitation().getArticle().getAuthorlist();
 			
 			boolean foundAuthorWithFullNameMatch = false;
 			List<AuthorName> likelyAlternativeNameList = new ArrayList<AuthorName>();
@@ -129,13 +129,13 @@ public class AuthorNameUtils {
 	public static Map<Long, AuthorName> calculatePotentialAlias(Identity identity, Collection<PubMedArticle> emailPubMedArticles) {
 		Map<Long, AuthorName> aliasSet = new HashMap<Long, AuthorName>();
 		for (PubMedArticle pubMedArticle : emailPubMedArticles) {
-			for (MedlineCitationArticleAuthor author : pubMedArticle.getMedlinecitation().getArticle().getAuthorList()) {
+			for (MedlineCitationArticleAuthor author : pubMedArticle.getMedlinecitation().getArticle().getAuthorlist()) {
 				String affiliation = author.getAffiliation();
 				if (affiliation != null) {
 					for (String email : identity.getEmails()) {
 						if (affiliation.contains(email)) {
 							// possibility of an alias:
-							if (author.getLastName().equals(identity.getPrimaryName().getLastName())) {
+							if (author.getLastname().equals(identity.getPrimaryName().getLastName())) {
 								// sanity check: last name matches
 								AuthorName alias = PubMedConverter.extractAuthorName(author);
 								if (!alias.getFirstInitial().equals(identity.getPrimaryName().getFirstInitial())) {

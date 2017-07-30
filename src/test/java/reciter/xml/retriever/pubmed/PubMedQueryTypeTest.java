@@ -26,9 +26,9 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import reciter.xml.retriever.pubmed.PubMedQuery.PubMedQueryBuilder;
+import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
-public class PubMedQueryTest {
+public class PubMedQueryTypeTest {
 
 	@Test
 	public void testBuildPmidsSingle() {
