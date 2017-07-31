@@ -24,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import reciter.model.pubmed.PubMedArticle;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -35,15 +36,20 @@ public class PubMedArticleRetriever {
      * into manageable pieces and ask each thread to handle one partition.
      */
     public List<PubMedArticle> retrievePubMed(PubMedQuery pubMedQuery, int numberOfPubmedArticles) {
+        if (numberOfPubmedArticles == 0) {
+            return Collections.emptyList();
+        }
         String nodeUrl = "http://localhost:5000/pubmed/query-complex/";
         RestTemplate restTemplate = new RestTemplate();
-        log.info("Sending web request: " + nodeUrl);
+        log.info("Sending web request: for query: " + pubMedQuery + ":" + nodeUrl);
         ResponseEntity<PubMedArticle[]> responseEntity = null;
-        PubMedQuery p = PubMedQuery.builder().author("test").end(new Date()).start(new Date()).build();
         try {
-            responseEntity = restTemplate.postForEntity(nodeUrl, p, PubMedArticle[].class);
+            responseEntity = restTemplate.postForEntity(nodeUrl, pubMedQuery, PubMedArticle[].class);
         } catch (Exception e) {
             log.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
+        }
+        if (responseEntity == null) {
+            return Collections.emptyList();
         }
         PubMedArticle[] pubMedArticles = responseEntity.getBody();
         return Arrays.asList(pubMedArticles);

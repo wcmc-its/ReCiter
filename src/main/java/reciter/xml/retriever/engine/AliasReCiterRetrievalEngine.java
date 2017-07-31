@@ -22,12 +22,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -62,10 +57,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	private class AsyncRetrievalEngine extends Thread {
 
 		private final Identity identity;
-		private final LocalDate startDate;
-		private final LocalDate endDate;
+		private final Date startDate;
+		private final Date endDate;
 		
-		public AsyncRetrievalEngine(Identity identity, LocalDate startDate, LocalDate endDate) {
+		public AsyncRetrievalEngine(Identity identity, Date startDate, Date endDate) {
 			this.identity = identity;
 			this.startDate = startDate;
 			this.endDate = endDate;
@@ -93,7 +88,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 
 	@Override
-	public boolean retrieveArticlesByDateRange(List<Identity> identities, LocalDate startDate, LocalDate endDate) throws IOException {
+	public boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate) throws IOException {
 		ExecutorService executorService = Executors.newFixedThreadPool(5);
 		for (Identity identity : identities) {
 			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate));
@@ -217,7 +212,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		return uniquePmids;
 	}
 	
-	public void retrieveDataByDateRange(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
+	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate) throws IOException {
 		Set<Long> uniquePmids = new HashSet<Long>();
 		
 		String uid = identity.getUid();

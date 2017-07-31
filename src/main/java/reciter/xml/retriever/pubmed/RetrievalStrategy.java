@@ -21,6 +21,7 @@ package reciter.xml.retriever.pubmed;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import reciter.model.identity.Identity;
@@ -61,7 +62,7 @@ public interface RetrievalStrategy {
 	 * 
 	 * @return Unique map of PMID to of PubMed articles for this identity.
 	 */
-	RetrievalResult retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException;
+	RetrievalResult retrievePubMedArticles(Identity identity, Date startDate, Date endDate) throws IOException;
 	
 	/**
 	 * Retrieve the articles for list of pmids.

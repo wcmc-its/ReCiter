@@ -19,10 +19,12 @@
 package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 import org.springframework.stereotype.Component;
 
 import reciter.model.identity.Identity;
+import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("departmentRetrievalStrategy")
@@ -45,7 +47,7 @@ public class DepartmentRetrievalStrategy extends AbstractNameRetrievalStrategy {
 	}
 
 	@Override
-	protected String buildNameQuery(String lastName, String firstName, Identity identity) {
+	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
 					.author(true, lastName, firstName);
@@ -54,8 +56,8 @@ public class DepartmentRetrievalStrategy extends AbstractNameRetrievalStrategy {
 	}
 	
 	@Override
-	protected String buildNameQuery(String lastName, String firstName, Identity identity, LocalDate startDate,
-			LocalDate endDate) {
+	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate,
+			Date endDate) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
 					.author(true, lastName, firstName)

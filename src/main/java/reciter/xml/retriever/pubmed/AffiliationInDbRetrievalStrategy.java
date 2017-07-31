@@ -19,6 +19,7 @@
 package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 import org.springframework.stereotype.Component;
 
@@ -54,8 +55,8 @@ public class AffiliationInDbRetrievalStrategy extends AbstractNameRetrievalStrat
 	}
 
 	@Override
-	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, LocalDate startDate,
-			LocalDate endDate) {
+	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate,
+			Date endDate) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
 					.author(true, lastName, firstName)

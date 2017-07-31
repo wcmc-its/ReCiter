@@ -19,6 +19,7 @@
 package reciter.controller;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -144,7 +145,7 @@ public class ReCiterController {
 		boolean result = false;
 		identities.add(identity);
 		try {
-			result = aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, startDate, endDate);
+			result = aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
 		} catch (IOException e) {
 			slf4jLogger.info("Failed to retrieve articles.", e);
 		}
@@ -192,7 +193,7 @@ public class ReCiterController {
 			identities.add(identity);
 		}
 		try {
-			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, startDate, endDate);
+			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
 		} catch (IOException e) {
 			slf4jLogger.info("Failed to retrieve articles.", e);
 		}
@@ -215,7 +216,7 @@ public class ReCiterController {
 		Identity identity = identityService.findByUid(uid);
 		identities.add(identity);
 		try {
-			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, startDate, endDate);
+			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
 		} catch (IOException e) {
 			slf4jLogger.info("Failed to retrieve articles.", e);
 		}

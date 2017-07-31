@@ -21,12 +21,14 @@ package reciter.xml.retriever.pubmed;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import reciter.model.identity.Identity;
+import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 /**
@@ -82,7 +84,7 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity));
-		String emailQuery = pubMedQueryBuilder.build();
+		PubMedQuery emailQuery = pubMedQueryBuilder.build();
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
@@ -93,12 +95,12 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity))
 				.dateRange(true, startDate, endDate);
-		String emailQuery = pubMedQueryBuilder.build();
+		PubMedQuery emailQuery = pubMedQueryBuilder.build();
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));

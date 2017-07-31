@@ -20,13 +20,10 @@ package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
+import reciter.pubmed.retriever.PubMedQuery;
 
 public class PubMedQueryType {
 	
@@ -64,15 +61,15 @@ public class PubMedQueryType {
 		private String lastName;
 		private String firstName;
 		private boolean isAuthorRequired;
-		
-		private LocalDate startDate;
-		private LocalDate endDate;
+
+		// TODO update to LocalDate
+		private Date startDate;
+		private Date endDate;
 		private boolean isDateRangeRequired;
 		
 		private String strategyQuery;
 		
 		private List<Long> pmids;
-		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 		
 		public PubMedQueryBuilder() {}
 		
@@ -91,61 +88,62 @@ public class PubMedQueryType {
 			return this;
 		}
 		
-		public PubMedQueryBuilder dateRange(boolean isDateRangeRequired, LocalDate startDate, LocalDate endDate) {
+		public PubMedQueryBuilder dateRange(boolean isDateRangeRequired, Date startDate, Date endDate) {
 			this.isDateRangeRequired = isDateRangeRequired;
 			this.startDate = startDate;
 			this.endDate = endDate;
 			return this;
 		}
 		
-		public String build() {
-			List<String> parts = new ArrayList<String>();
+		public PubMedQuery build() {
+			PubMedQuery p = PubMedQuery.builder().build();
 			if (isAuthorRequired) {
-				parts.add(lastName + " " + firstName + " [au]");
+				p.setAuthor(lastName + " " + firstName);
 			}
 			if (isDateRangeRequired) {
-				parts.add(startDate.format(formatter) + ":" + endDate.format(formatter) + "[DP]");
+				p.setStart(startDate);
+				p.setEnd(endDate);
 			}
 			if (strategyQuery != null && !strategyQuery.isEmpty()) {
-				parts.add(strategyQuery);
+				p.setStrategyQuery(strategyQuery);
 			}
-			
-			return StringUtils.join(parts, " AND ");
+			return p;
 		}
 		
-		private String buildPmid(List<Long> pmids) {
+		private PubMedQuery buildPmid(List<Long> pmids) {
 			List<String> pmidsUid = new ArrayList<>();
 			for (long pmid : pmids) {
 				pmidsUid.add(pmid + "[uid]");
 			}
-			return StringUtils.join(pmidsUid, " OR ");
+			PubMedQuery p =  PubMedQuery.builder().strategyQuery(StringUtils.join(pmidsUid, " OR ")).build();
+			return p;
 		}
 		
-		private static final int THRESHOLD = 25;
-		
-		public Map<String, Integer> buildPmids() {
-			if (pmids.size() == 1) {
-				Map<String, Integer> map = new HashMap<>();
-				map.put(pmids.get(0) + "[uid]", 1);
-				return map;
-			}
-			Map<String, Integer> map = new HashMap<>();
-			List<Long> partPmids = new ArrayList<>();
-			int i = 1;
-			Iterator<Long> itr = pmids.iterator();
-			while (itr.hasNext()) {
-				long pmid = itr.next();
-				partPmids.add(pmid);
-				if (i % THRESHOLD == 0) {
-					map.put(buildPmid(partPmids), THRESHOLD);
-					partPmids.clear();
-				}
-				i++;
-			}
-			if (!partPmids.isEmpty()) {
-				map.put(buildPmid(partPmids), partPmids.size());
-			}
-			return map;
-		}
+//		private static final int THRESHOLD = 25;
+//
+//		public Map<String, Integer> buildPmids() {
+//			if (pmids.size() == 1) {
+//				Map<String, Integer> map = new HashMap<>();
+//				map.put(pmids.get(0) + "[uid]", 1);
+//				return map;
+//			}
+//			Map<String, Integer> map = new HashMap<>();
+//			List<Long> partPmids = new ArrayList<>();
+//			int i = 1;
+//			Iterator<Long> itr = pmids.iterator();
+//			while (itr.hasNext()) {
+//				long pmid = itr.next();
+//				partPmids.add(pmid);
+//				if (i % THRESHOLD == 0) {
+//					map.put(buildPmid(partPmids), THRESHOLD);
+//					partPmids.clear();
+//				}
+//				i++;
+//			}
+//			if (!partPmids.isEmpty()) {
+//				map.put(buildPmid(partPmids), partPmids.size());
+//			}
+//			return map;
+//		}
 	}
 }

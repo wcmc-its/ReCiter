@@ -19,12 +19,14 @@
 package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import reciter.model.identity.Identity;
+import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("firstNameInitialRetrievalStrategy")
@@ -44,19 +46,19 @@ public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStra
 	}
 
 	@Override
-	protected String buildNameQuery(String lastName, String firstName, Identity identity) {
+	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder()
 					.author(true, lastName, firstName);
 		
-		String query = pubMedQueryBuilder.build();
+		PubMedQuery query = pubMedQueryBuilder.build();
 		slf4jLogger.info(retrievalStrategyName + " produced query=[" + query + "]");
 		return query;
 	}
 	
 	@Override
-	protected String buildNameQuery(String lastName, String firstName, Identity identity, LocalDate startDate,
-			LocalDate endDate) {
+	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate,
+			Date endDate) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder()
 					.author(true, lastName, firstName)

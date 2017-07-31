@@ -20,13 +20,7 @@ package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,10 +88,10 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	}
 
 	protected abstract List<PubMedQueryType> buildQuery(Identity identity);
-	protected abstract List<PubMedQueryType> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate);
+	protected abstract List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate);
 
 	@Override
-	public RetrievalResult retrievePubMedArticles(Identity identity, LocalDate startDate, LocalDate endDate) throws IOException {
+	public RetrievalResult retrievePubMedArticles(Identity identity, Date startDate, Date endDate) throws IOException {
 		List<PubMedQueryType> pubMedQueries = buildQuery(identity, startDate, endDate);
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}
@@ -215,17 +209,21 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	}
 
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
-		String nodeUrl = "http://localhost:5000/query-number-pubmed-articles/";
+		String nodeUrl = "http://localhost:5000/pubmed/query-number-pubmed-articles/";
 		RestTemplate restTemplate = new RestTemplate();
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<Integer> responseEntity = null;
+		slf4jLogger.info("PubMedQuery: " + pubMedQueryType);
 		try {
 			responseEntity = restTemplate.postForEntity(nodeUrl, pubMedQueryType, Integer.class);
 		} catch (Exception e) {
 			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
 		}
+		if (responseEntity == null) {
+			return 0;
+		}
 		int results = responseEntity.getBody();
-		slf4jLogger.info("Returned results: " + results);
+		slf4jLogger.info("Returned results for query:" + pubMedQueryType + ":" + results);
 		return results;
 	}
 

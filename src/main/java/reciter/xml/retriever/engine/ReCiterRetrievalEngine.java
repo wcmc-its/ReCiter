@@ -20,13 +20,14 @@ package reciter.xml.retriever.engine;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 import reciter.model.identity.Identity;
 
 public interface ReCiterRetrievalEngine {
 
-	boolean retrieveArticlesByDateRange(List<Identity> identities, LocalDate startDate, LocalDate endDate) throws IOException;
+	boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate) throws IOException;
 	
 	void retrieveByPmids(String uid, List<Long> pmids) throws IOException;
 }

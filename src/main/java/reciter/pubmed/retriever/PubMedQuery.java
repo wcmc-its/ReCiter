@@ -3,6 +3,8 @@ package reciter.pubmed.retriever;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.SimpleDateFormat;
@@ -11,6 +13,8 @@ import java.util.Date;
 import java.util.List;
 
 @Builder
+@Getter
+@Setter
 public class PubMedQuery {
     private static SimpleDateFormat dt = new SimpleDateFormat("yyyy/MM/dd");
 

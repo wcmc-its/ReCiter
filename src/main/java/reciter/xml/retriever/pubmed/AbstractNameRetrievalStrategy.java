@@ -21,6 +21,7 @@ package reciter.xml.retriever.pubmed;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -29,13 +30,14 @@ import org.slf4j.LoggerFactory;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
+import reciter.pubmed.retriever.PubMedQuery;
 
 public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractNameRetrievalStrategy.class);
 
-	protected abstract String buildNameQuery(String lastName, String firstName, Identity identity);
-	protected abstract String buildNameQuery(String lastName, String firstName, Identity identity, LocalDate startDate, LocalDate endDate);
+	protected abstract PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity);
+	protected abstract PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate, Date endDate);
 	protected abstract String getStrategySpecificKeyword(Identity identity);
 	
 	@Override
@@ -73,7 +75,7 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, LocalDate startDate, LocalDate endDate) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		String lastName = identity.getPrimaryName().getLastName();

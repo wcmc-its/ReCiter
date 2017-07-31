@@ -99,7 +99,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 //		if (exist) {
 //			eSearchResultService.update(new ESearchResult(uid, eSearchPmid, pubMedQueryResults));
 //		} else {
-		eSearchResultService.save(new ESearchResult(uid, eSearchPmid, pubMedQueryResults));
+		eSearchResultService.save(new ESearchResult(uid, eSearchPmid));
 //		}
 	}
 }

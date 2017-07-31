@@ -32,12 +32,12 @@ public class ESearchResult {
 	private String id;
 	private String uid;
 	private ESearchPmid eSearchPmid;
-	private List<PubMedQueryResult> pubMedQueryResults;
+//	private List<PubMedQueryResult> pubMedQueryResults;
 	
-	public ESearchResult(String uid, ESearchPmid eSearchPmid, List<PubMedQueryResult> pubMedQueryResults) {
+	public ESearchResult(String uid, ESearchPmid eSearchPmid) {
 		this.uid = uid;
 		this.eSearchPmid = eSearchPmid;
-		this.pubMedQueryResults = pubMedQueryResults;
+//		this.pubMedQueryResults = pubMedQueryResults;
 	}
 	
 	public String getUid() {
@@ -52,11 +52,11 @@ public class ESearchResult {
 	public void setESearchPmid(ESearchPmid eSearchPmid) {
 		this.eSearchPmid = eSearchPmid;
 	}
-	public List<PubMedQueryResult> getPubMedQueryResults() {
-		return pubMedQueryResults;
-	}
-	public void setPubMedQueryResults(List<PubMedQueryResult> pubMedQueryResults) {
-		this.pubMedQueryResults = pubMedQueryResults;
-	}
+//	public List<PubMedQueryResult> getPubMedQueryResults() {
+//		return pubMedQueryResults;
+//	}
+//	public void setPubMedQueryResults(List<PubMedQueryResult> pubMedQueryResults) {
+//		this.pubMedQueryResults = pubMedQueryResults;
+//	}
 
 }
