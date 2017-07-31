@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -194,7 +195,7 @@ public class ReCiterController {
 	 */
 	@RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET)
 	@ResponseBody
-	public void retrieveArticles() {
+	public ResponseEntity retrieveArticles() {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
 		List<Identity> identities = new ArrayList<>();
@@ -212,6 +213,7 @@ public class ReCiterController {
 		}
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
+		return ResponseEntity.ok().build();
 	}
 	
 	/**
@@ -219,7 +221,7 @@ public class ReCiterController {
 	 */
 	@RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET)
 	@ResponseBody
-	public void retrieveArticlesByUid(String uid) {
+	public ResponseEntity retrieveArticlesByUid(String uid) {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
 		List<Identity> identities = new ArrayList<>();
@@ -232,9 +234,11 @@ public class ReCiterController {
 			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
 		} catch (IOException e) {
 			slf4jLogger.info("Failed to retrieve articles.", e);
+			return ResponseEntity.notFound().build();
 		}
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
+		return ResponseEntity.ok().build();
 	}
 
 	/**

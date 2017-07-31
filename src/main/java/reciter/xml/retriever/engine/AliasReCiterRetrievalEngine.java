@@ -72,15 +72,16 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				// If the eSearchResult collection doesn't contain any information regarding this person,
 				// then we'd want to perform a full retrieval because this will be first time that ReCiter
 				// retrieve PubMed and Scopus articles for this person.
-				List<ESearchResult> results = eSearchResultService.findByUid(identity.getUid());
-				if (results.isEmpty()) {
+//				List<ESearchResult> results = eSearchResultService.findByUid(identity.getUid());
+//				if (results.isEmpty()) {
 					slf4jLogger.info("Starting full retrieval for uid=[" + identity.getUid() + "].");
 					retrieveData(identity);
-				} else {
-					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=[" 
-							+ startDate + " endDate=[" + endDate + "].");
-					retrieveDataByDateRange(identity, startDate, endDate);
-				}
+//				}
+//				} else {
+//					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=["
+//							+ startDate + " endDate=[" + endDate + "].");
+//					retrieveDataByDateRange(identity, startDate, endDate);
+//				}
 			} catch (IOException e) {
 				slf4jLogger.error("Unabled to retrieve. " + identity.getUid(), e);
 			}
