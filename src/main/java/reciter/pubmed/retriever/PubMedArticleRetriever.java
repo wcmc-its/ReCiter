@@ -31,6 +31,8 @@ import java.util.List;
 @Slf4j
 public class PubMedArticleRetriever {
 
+    private static final String PUBMED_SERVICE = System.getProperty("pubmed_service");
+
     /**
      * Initializes and starts threads that handles the retrieval process. Partition the number of articles
      * into manageable pieces and ask each thread to handle one partition.
@@ -39,7 +41,7 @@ public class PubMedArticleRetriever {
         if (numberOfPubmedArticles == 0) {
             return Collections.emptyList();
         }
-        String nodeUrl = "http://localhost:5000/pubmed/query-complex/";
+        String nodeUrl = PUBMED_SERVICE + "/pubmed/query-complex/";
         RestTemplate restTemplate = new RestTemplate();
         log.info("Sending web request: for query: " + pubMedQuery + ":" + nodeUrl);
         ResponseEntity<PubMedArticle[]> responseEntity = null;

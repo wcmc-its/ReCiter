@@ -208,8 +208,10 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.DOI_MODIFIER, new ArrayList<String>(dois));
 	}
 
+	private static final String PUBMED_SERVICE = System.getProperty("pubmed_service");
+
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
-		String nodeUrl = "http://localhost:5000/pubmed/query-number-pubmed-articles/";
+		String nodeUrl = PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
 		RestTemplate restTemplate = new RestTemplate();
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<Integer> responseEntity = null;
