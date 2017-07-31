@@ -31,7 +31,7 @@ import java.util.List;
 @Slf4j
 public class PubMedArticleRetriever {
 
-    private static final String PUBMED_SERVICE = System.getProperty("pubmed_service");
+    private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
 
     /**
      * Initializes and starts threads that handles the retrieval process. Partition the number of articles

@@ -208,7 +208,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.DOI_MODIFIER, new ArrayList<String>(dois));
 	}
 
-	private static final String PUBMED_SERVICE = System.getProperty("pubmed_service");
+	private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
 
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
 		String nodeUrl = PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
