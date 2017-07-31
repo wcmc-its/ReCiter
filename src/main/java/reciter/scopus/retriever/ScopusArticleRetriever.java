@@ -68,7 +68,7 @@ public class ScopusArticleRetriever<T> {
 
 		List<String> pmidQueries = new ArrayList<String>();
 		if (queryParams.size() == 1) {
-			pmidQueries.add("pmid(" + queryParams + ")");
+			pmidQueries.add("pmid(" + queryParams.get(0) + ")");
 		} else {
 			StringBuffer sb = new StringBuffer();
 			int i = 0;
