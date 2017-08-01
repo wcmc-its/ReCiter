@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -199,6 +200,22 @@ public class ReCiterController {
 		}
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
+	}
+
+	@RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		GoldStandard goldStandard = goldStandardService.findByUid(uid);
+		return ResponseEntity.ok(goldStandard);
+	}
+
+	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseEntity<GoldStandard> updateGoldStandard(@RequestBody GoldStandard goldStandard) {
+		goldStandardService.save(goldStandard);
+		return ResponseEntity.ok(goldStandard);
 	}
 
 	/**
