@@ -19,6 +19,7 @@
 package reciter.engine.erroranalysis;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -72,8 +73,8 @@ public class AnalysisObject {
 	private double doctoralYearDiscrepancy;
 	
 	// Date of retrieval
-	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
-	private LocalDateTime dateLastRun; // the date of the most recent retrieval
+	private Date dateInitialRun; // the date of the first time that ReCiter perform the retrieval
+	private Date dateLastRun; // the date of the most recent retrieval
 	private List<String> departments;
 	private List<AnalysisObjectAuthor> analysisObjectAuthors;
 	private List<String> frequentInstitutionalCollaborators;
@@ -278,16 +279,16 @@ public class AnalysisObject {
 	public void setEducationScore(double educationScore) {
 		this.educationScore = educationScore;
 	}
-	public LocalDateTime getDateInitialRun() {
+	public Date getDateInitialRun() {
 		return dateInitialRun;
 	}
-	public void setDateInitialRun(LocalDateTime dateInitialRun) {
+	public void setDateInitialRun(Date dateInitialRun) {
 		this.dateInitialRun = dateInitialRun;
 	}
-	public LocalDateTime getDateLastRun() {
+	public Date getDateLastRun() {
 		return dateLastRun;
 	}
-	public void setDateLastRun(LocalDateTime dateLastRun) {
+	public void setDateLastRun(Date dateLastRun) {
 		this.dateLastRun = dateLastRun;
 	}
 	public int getTargetAuthorYearTerminalDegree() {

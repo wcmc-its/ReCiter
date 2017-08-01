@@ -20,6 +20,7 @@ package reciter.model.identity;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class Identity {
@@ -40,8 +41,8 @@ public class Identity {
 	private List<String> grants; // grants
 	private List<String> keywords; // keywords
 	private List<PubMedAlias> pubMedAlias; // name alias from PubMed
-	private LocalDateTime dateInitialRun; // the date of the first time that ReCiter perform the retrieval
-	private LocalDateTime dateLastRun; // the date of the most recent retrieval
+	private Date dateInitialRun; // the date of the first time that ReCiter perform the retrieval
+	private Date dateLastRun; // the date of the most recent retrieval
 	
 	public Identity() {}
 
@@ -177,19 +178,19 @@ public class Identity {
 		this.pubMedAlias = pubMedAlias;
 	}
 
-	public LocalDateTime getDateInitialRun() {
+	public Date getDateInitialRun() {
 		return dateInitialRun;
 	}
 
-	public void setDateInitialRun(LocalDateTime dateInitialRun) {
+	public void setDateInitialRun(Date dateInitialRun) {
 		this.dateInitialRun = dateInitialRun;
 	}
 
-	public LocalDateTime getDateLastRun() {
+	public Date getDateLastRun() {
 		return dateLastRun;
 	}
 
-	public void setDateLastRun(LocalDateTime dateLastRun) {
+	public void setDateLastRun(Date dateLastRun) {
 		this.dateLastRun = dateLastRun;
 	}
 }

@@ -36,10 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import reciter.Uids;
 import reciter.algorithm.cluster.model.ReCiterCluster;
@@ -122,6 +119,20 @@ public class ReCiterController {
 
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
+
+	@RequestMapping(value = "/reciter/identity/", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseEntity addIdentity(@RequestBody Identity identity) {
+		slf4jLogger.info("Inserting: " + identity);
+		identityService.save(identity);
+		return ResponseEntity.ok().build();
+	}
+
+	@RequestMapping(value = "/reciter/identity/{uid}", method = RequestMethod.GET)
+	@ResponseBody
+	public Identity getIdentityByUid(@PathVariable String uid) {
+		return identityService.findByUid(uid);
+	}
 
 	@RequestMapping(value = "/reciter/ldap/get/all/identity/", method = RequestMethod.GET)
 	@ResponseBody
@@ -288,7 +299,8 @@ public class ReCiterController {
 
 		slf4jLogger.info(engineOutput.getAnalysis().toString());
 		analysisService.save(engineOutput.getAnalysis(), uid);
-		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
+		// TODO uncomment
+//		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
 
 		return engineOutput.getAnalysis();
 	}

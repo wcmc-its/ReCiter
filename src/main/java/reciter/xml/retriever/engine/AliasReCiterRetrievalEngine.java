@@ -129,8 +129,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			}
 
 			identity.setPubMedAlias(pubMedAliases);
-			identity.setDateInitialRun(LocalDateTime.now(Clock.systemUTC()));
-			identity.setDateLastRun(LocalDateTime.now(Clock.systemUTC()));
+			Date date = new Date();
+			identity.setDateInitialRun(date);
+			identity.setDateLastRun(date);
 			identityService.save(identity);
 			
 			uniquePmids.addAll(pubMedArticles.keySet());
@@ -238,8 +239,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			}
 
 			identity.setPubMedAlias(pubMedAliases);
-			identity.setDateInitialRun(LocalDateTime.now(Clock.systemUTC()));
-			identity.setDateLastRun(LocalDateTime.now(Clock.systemUTC()));
+			// TODO convert to localdate
+			Date now = new Date();
+			identity.setDateInitialRun(now);
+			identity.setDateLastRun(now);
 			identityService.save(identity);
 			
 			uniquePmids.addAll(emailPubMedArticles.keySet());
