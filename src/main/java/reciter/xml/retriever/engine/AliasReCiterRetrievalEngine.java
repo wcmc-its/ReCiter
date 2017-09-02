@@ -19,9 +19,6 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,13 +30,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import reciter.database.mongo.model.ESearchResult;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
-import reciter.service.mongo.ESearchResultService;
+import reciter.service.ESearchResultService;
 import reciter.utils.AuthorNameUtils;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 

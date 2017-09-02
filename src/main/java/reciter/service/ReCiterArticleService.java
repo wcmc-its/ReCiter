@@ -16,21 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
 import java.util.List;
 
-import reciter.database.mongo.model.ESearchResult;
+import reciter.model.article.ReCiterArticle;
 
-public interface ESearchResultService {
+public interface ReCiterArticleService {
 
-	void save(ESearchResult eSearchResult);
-
-	List<ESearchResult> findByUid(String uid);
-
-	boolean pushESearchResult(ESearchResult eSearchResult);
-
-	void update(ESearchResult eSearchResult);
-	
-	boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName);
+	List<ReCiterArticle> retrieve(String uid);
 }

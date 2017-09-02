@@ -16,13 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
+import java.util.Collection;
 import java.util.List;
 
-import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.model.identity.Identity;
 
-public interface ReCiterClusterService {
+public interface IdentityService {
 
-	void save(List<ReCiterCluster> reCiterClusters, String uid);
+	void save(Collection<Identity> identities);
+	
+	void save(Identity identity);
+	
+	List<Identity> findByUids(List<String> uids);
+	
+	Identity findByUid(String uid);
 }

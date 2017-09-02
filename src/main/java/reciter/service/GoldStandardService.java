@@ -16,13 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import java.util.List;
+import reciter.database.mongo.model.GoldStandard;
 
-import reciter.database.mongo.model.TrainingData;
+public interface GoldStandardService {
 
-public interface TrainingDataService {
-
-	List<TrainingData> findAll();
+	void save(GoldStandard goldStandard);
+	GoldStandard findByUid(String uid);
 }

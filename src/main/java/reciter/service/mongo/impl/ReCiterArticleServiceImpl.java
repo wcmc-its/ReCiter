@@ -21,7 +21,7 @@ package reciter.service.mongo.impl;
 import java.util.List;
 
 import reciter.model.article.ReCiterArticle;
-import reciter.service.mongo.ReCiterArticleService;
+import reciter.service.ReCiterArticleService;
 
 public class ReCiterArticleServiceImpl implements ReCiterArticleService {
 

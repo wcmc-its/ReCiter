@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import reciter.engine.erroranalysis.Analysis;
+import reciter.database.mongo.model.PubMedArticleFeature;
 
-public interface AnalysisService {
+public interface PubMedArticleFeatureService {
 
-	void save(Analysis analysis, String uid);
+	void save(PubMedArticleFeature pubMedArticleFeature);
 }

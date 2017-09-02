@@ -16,11 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import reciter.database.mongo.model.PubMedArticleFeature;
+import java.util.Collection;
+import java.util.List;
 
-public interface PubMedArticleFeatureService {
+import reciter.model.pubmed.PubMedArticle;
 
-	void save(PubMedArticleFeature pubMedArticleFeature);
+public interface PubMedService {
+
+	void save(Collection<PubMedArticle> pubMedArticles);
+	
+	List<PubMedArticle> findByPmids(List<Long> pmids);
+	
+	PubMedArticle findByPmid(long pmid);
 }

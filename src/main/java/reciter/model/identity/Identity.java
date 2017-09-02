@@ -18,11 +18,13 @@
  *******************************************************************************/
 package reciter.model.identity;
 
-import java.time.LocalDateTime;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+@DynamoDBDocument
 public class Identity {
 
 	private String uid; // uid of the user

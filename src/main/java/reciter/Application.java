@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter;
 
+import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,7 +31,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
-@EnableMongoRepositories("reciter.database.mongo")
+//@EnableMongoRepositories("reciter.database.mongo")
+@EnableDynamoDBRepositories("reciter.database.dynamodb")
 @ComponentScan("reciter")
 public class Application {
 

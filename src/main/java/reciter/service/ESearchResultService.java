@@ -16,11 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import reciter.engine.erroranalysis.Analysis;
+import java.util.List;
 
-public interface ReCiterAnalysisService {
+import reciter.database.mongo.model.ESearchResult;
 
-	Analysis runAnalysis(String uid);
+public interface ESearchResultService {
+
+	void save(ESearchResult eSearchResult);
+
+	List<ESearchResult> findByUid(String uid);
+
+	boolean pushESearchResult(ESearchResult eSearchResult);
+
+	void update(ESearchResult eSearchResult);
+	
+	boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName);
 }

@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 import reciter.database.mongo.model.PubMedArticleMongo;
 import reciter.database.mongo.repository.PubMedRepository;
 import reciter.model.pubmed.PubMedArticle;
-import reciter.service.mongo.PubMedService;
+import reciter.service.PubMedService;
 
 @Service("pubMedService")
 public class PubMedServiceImpl implements PubMedService {

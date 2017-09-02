@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.MeshTerm;
 import reciter.database.mongo.repository.MeshTermRepository;
-import reciter.service.mongo.MeshTermService;
+import reciter.service.MeshTermService;
 
 @Service("meshTermService")
 public class MeshTermServiceImpl implements MeshTermService {

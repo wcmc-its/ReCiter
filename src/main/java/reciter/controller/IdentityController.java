@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.model.identity.Identity;
-import reciter.service.mongo.IdentityService;
+import reciter.service.IdentityService;
 
 @Controller
 public class IdentityController {

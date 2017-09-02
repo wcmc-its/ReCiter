@@ -16,12 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import reciter.database.mongo.model.GoldStandard;
+import java.util.List;
 
-public interface GoldStandardService {
+import reciter.database.mongo.model.MeshTerm;
 
-	void save(GoldStandard goldStandard);
-	GoldStandard findByUid(String uid);
+public interface MeshTermService {
+
+	void save(List<MeshTerm> meshTerms);
+
+	List<MeshTerm> findAll();
 }

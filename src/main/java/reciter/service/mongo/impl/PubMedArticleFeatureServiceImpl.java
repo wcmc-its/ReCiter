@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.database.mongo.repository.PubMedArticleFeatureRepository;
-import reciter.service.mongo.PubMedArticleFeatureService;
+import reciter.service.PubMedArticleFeatureService;
 
 @Service("pubMedArticleFeatureService")
 public class PubMedArticleFeatureServiceImpl implements PubMedArticleFeatureService {

@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.GoldStandard;
 import reciter.database.mongo.repository.GoldStandardRepository;
-import reciter.service.mongo.GoldStandardService;
+import reciter.service.GoldStandardService;
 
 @Service("goldStandardService")
 public class GoldStandardServiceImpl implements GoldStandardService {

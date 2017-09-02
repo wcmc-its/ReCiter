@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reciter.model.scopus.ScopusArticle;
-import reciter.service.mongo.ScopusService;
+import reciter.service.ScopusService;
 
 @Controller
 public class ScopusController {

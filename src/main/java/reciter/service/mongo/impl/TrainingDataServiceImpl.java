@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.TrainingData;
 import reciter.database.mongo.repository.TrainingDataRepository;
-import reciter.service.mongo.TrainingDataService;
+import reciter.service.TrainingDataService;
 
 @Service("trainingDataService")
 public class TrainingDataServiceImpl implements TrainingDataService {

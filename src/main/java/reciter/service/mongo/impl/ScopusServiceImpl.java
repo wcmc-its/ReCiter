@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 import reciter.database.mongo.model.ScopusArticleMongo;
 import reciter.database.mongo.repository.ScopusRepository;
 import reciter.model.scopus.ScopusArticle;
-import reciter.service.mongo.ScopusService;
+import reciter.service.ScopusService;
 
 @Service("scopusService")
 public class ScopusServiceImpl implements ScopusService {

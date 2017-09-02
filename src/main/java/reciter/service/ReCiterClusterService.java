@@ -16,18 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import java.util.Collection;
 import java.util.List;
 
-import reciter.model.pubmed.PubMedArticle;
+import reciter.algorithm.cluster.model.ReCiterCluster;
 
-public interface PubMedService {
+public interface ReCiterClusterService {
 
-	void save(Collection<PubMedArticle> pubMedArticles);
-	
-	List<PubMedArticle> findByPmids(List<Long> pmids);
-	
-	PubMedArticle findByPmid(long pmid);
+	void save(List<ReCiterCluster> reCiterClusters, String uid);
 }

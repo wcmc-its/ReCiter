@@ -16,20 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import java.util.Collection;
-import java.util.List;
+import reciter.engine.erroranalysis.Analysis;
 
-import reciter.model.identity.Identity;
+public interface ReCiterAnalysisService {
 
-public interface IdentityService {
-
-	void save(Collection<Identity> identities);
-	
-	void save(Identity identity);
-	
-	List<Identity> findByUids(List<String> uids);
-	
-	Identity findByUid(String uid);
+	Analysis runAnalysis(String uid);
 }

@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.ESearchResult;
 import reciter.database.mongo.repository.ESearchResultRepository;
-import reciter.service.mongo.ESearchResultService;
+import reciter.service.ESearchResultService;
 
 @Service("eSearchResultService")
 public class ESearchResultServiceImpl implements ESearchResultService {

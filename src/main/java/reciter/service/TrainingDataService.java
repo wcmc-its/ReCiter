@@ -16,16 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service.mongo;
+package reciter.service;
 
-import java.util.Collection;
 import java.util.List;
 
-import reciter.model.scopus.ScopusArticle;
+import reciter.database.mongo.model.TrainingData;
 
-public interface ScopusService {
+public interface TrainingDataService {
 
-	void save(Collection<ScopusArticle> pubMedArticles);
-	
-	List<ScopusArticle> findByPmids(List<Long> pmids);
+	List<TrainingData> findAll();
 }

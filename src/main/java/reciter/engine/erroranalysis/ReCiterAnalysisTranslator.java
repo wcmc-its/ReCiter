@@ -52,6 +52,7 @@ public class ReCiterAnalysisTranslator {
 					article.setCitation(citation);
 					citation.setPubDate(reCiterArticle.getJournal().getJournalIssuePubDateYear());
 					citation.setAuthorList(reCiterArticle.getArticleCoAuthors().getAuthors());
+					// TODO Volume is set incorrectly - investigate whether if this is a correct mapping
 					citation.setVolume(reCiterArticle.getJournal().getJournalTitle());
 					Journal journal = new Journal();
 					citation.setJournal(journal);

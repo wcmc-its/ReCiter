@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import reciter.database.mongo.model.InstitutionAfid;
 import reciter.database.mongo.repository.InstitutionAfidRepository;
-import reciter.service.mongo.InstitutionAfidService;
+import reciter.service.InstitutionAfidService;
 
 @Service("institutionAfidService")
 public class InstitutionAfidServiceImpl implements InstitutionAfidService {
