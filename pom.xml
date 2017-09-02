@@ -40,6 +40,17 @@
 		<artifactId>spring-boot-starter-parent</artifactId>
         <version>1.5.3.RELEASE</version>
 	</parent>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.data</groupId>
+				<artifactId>spring-data-releasetrain</artifactId>
+				<version>Hopper-SR10</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
 		<dependency>
@@ -97,6 +108,16 @@
 			<groupId>com.hynnet</groupId>
 			<artifactId>oracle-driver-ojdbc6</artifactId>
 			<version>12.1.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-dynamodb</artifactId>
+			<version>1.11.34</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.derjust</groupId>
+			<artifactId>spring-data-dynamodb</artifactId>
+			<version>4.3.1</version>
 		</dependency>
 	</dependencies>
 	<repositories>
