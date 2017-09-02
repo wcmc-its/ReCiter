@@ -71,11 +71,11 @@ public class ReCiterEngine implements Engine {
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
 		List<ScopusArticle> scopusArticles = parameters.getScopusArticles();
 		
-		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
+		Map<Long, ScopusArticle> map = new HashMap<>();
 		for (ScopusArticle scopusArticle : scopusArticles) {
 			map.put(scopusArticle.getPubmedId(), scopusArticle);
 		}
-		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		List<ReCiterArticle> reCiterArticles = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 			if (map.containsKey(pmid)) {
@@ -87,7 +87,7 @@ public class ReCiterEngine implements Engine {
 		
 		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids());
 		
-		List<Feature> features = new ArrayList<Feature>();
+		List<Feature> features = new ArrayList<>();
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			Feature feature = new Feature();
 			feature.setPmid(reCiterArticle.getArticleId());
@@ -120,11 +120,11 @@ public class ReCiterEngine implements Engine {
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
 		List<ScopusArticle> scopusArticles = parameters.getScopusArticles();
 		
-		Map<Long, ScopusArticle> map = new HashMap<Long, ScopusArticle>();
+		Map<Long, ScopusArticle> map = new HashMap<>();
 		for (ScopusArticle scopusArticle : scopusArticles) {
 			map.put(scopusArticle.getPubmedId(), scopusArticle);
 		}
-		List<ReCiterArticle> reCiterArticles = new ArrayList<ReCiterArticle>();
+		List<ReCiterArticle> reCiterArticles = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 			if (map.containsKey(pmid)) {
@@ -166,7 +166,7 @@ public class ReCiterEngine implements Engine {
 
 		// Perform Mesh Heading recall improvement.
 		// Use MeSH major to improve recall after phase two (https://github.com/wcmc-its/ReCiter/issues/131)
-		List<ReCiterArticle> selectedArticles = new ArrayList<ReCiterArticle>();
+		List<ReCiterArticle> selectedArticles = new ArrayList<>();
 
 		for (long id : clusterSelector.getSelectedClusterIds()) {
 			selectedArticles.addAll(clusterer.getClusters().get(id).getArticleCluster());
