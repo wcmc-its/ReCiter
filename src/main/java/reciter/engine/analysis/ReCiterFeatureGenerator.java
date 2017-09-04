@@ -4,10 +4,9 @@ import lombok.Data;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
-import reciter.engine.erroranalysis.AnalysisObject;
-import reciter.engine.erroranalysis.AnalysisTranslator;
-import reciter.engine.erroranalysis.StatusEnum;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleAuthors;
+import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
 import java.util.ArrayList;
@@ -103,6 +102,49 @@ public class ReCiterFeatureGenerator {
                             reCiterArticle.getInternshipAndResidenceStrategyScore() +
                             reCiterArticle.getNameStrategyScore()); // score
             reCiterArticleFeature.setUserAssertion(false); // userAssertion TODO get from DB
+
+            // PubDate
+            reCiterArticleFeature.setPubDate(reCiterArticle.getPubDate());
+
+            // journal title
+            reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
+
+            // journal title ISO Abbreviation
+            reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal().getIsoAbbreviation());
+
+            // article title
+            reCiterArticleFeature.setArticleTitle(reCiterArticle.getArticleTitle());
+
+            // author list
+            List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
+            for (ReCiterAuthor reCiterArticleAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+                ReCiterArticleAuthorFeature reCiterArticleAuthorFeature = new ReCiterArticleAuthorFeature();
+                // rank
+
+                // lastname
+                reCiterArticleAuthorFeature.setLastName(reCiterArticleAuthor.getAuthorName().getLastName());
+                // first name
+                reCiterArticleAuthorFeature.setFirstName(reCiterArticleAuthor.getAuthorName().getFirstName());
+                // initials
+                reCiterArticleAuthorFeature.setInitials(reCiterArticleAuthor.getAuthorName().getFirstInitial());
+                // affiliation
+
+                ReCiterArticleAffiliationFeature reCiterArticleAffiliationFeature =
+                        new ReCiterArticleAffiliationFeature();
+
+                // affiliation from PubMed
+                reCiterArticleAffiliationFeature.setAffiliationPubmed(reCiterArticleAuthor.getAffiliation());
+
+                // affiliation from Scopus
+                reCiterArticleAffiliationFeature.setAffiliationScopus(reCiterArticleAuthor.getAffiliation());
+
+                // affiliation Scopus id
+
+                // isTargetAuthor
+
+                reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
+            }
+            reCiterArticleFeature.setReCiterArticleAuthorFeatures(reCiterArticleAuthorFeatures);
 
             // Affiliation Evidence
 

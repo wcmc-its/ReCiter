@@ -18,10 +18,7 @@
  *******************************************************************************/
 package reciter.model.article;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
@@ -140,6 +137,16 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private StringBuffer citedByInfo;
 	private StringBuffer coCitationInfo;
 	private StringBuffer journalTitleInfo;
+
+	private Date pubDate;
+
+	public Date getPubDate() {
+		return pubDate;
+	}
+
+	public void setPubDate(Date pubDate) {
+		this.pubDate = pubDate;
+	}
 	
 	public StringBuffer getMeshMajorInfo() {
 		if (meshMajorInfo == null) {

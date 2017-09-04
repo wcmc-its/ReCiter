@@ -18,13 +18,11 @@
  *******************************************************************************/
 package reciter.algorithm.util;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import org.joda.time.LocalDate;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleGrant;
@@ -36,15 +34,7 @@ import reciter.model.article.ReCiterJournal;
 import reciter.model.article.ReCiterMeshHeadingDescriptorName;
 import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.identity.AuthorName;
-import reciter.model.pubmed.MedlineCitationArticleAuthor;
-import reciter.model.pubmed.MedlineCitationCommentsCorrections;
-import reciter.model.pubmed.MedlineCitationGrant;
-import reciter.model.pubmed.MedlineCitationKeyword;
-import reciter.model.pubmed.MedlineCitationKeywordList;
-import reciter.model.pubmed.MedlineCitationMeshHeading;
-import reciter.model.pubmed.MedlineCitationMeshHeadingQualifierName;
-import reciter.model.pubmed.MedlineCitationYNEnum;
-import reciter.model.pubmed.PubMedArticle;
+import reciter.model.pubmed.*;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
 
@@ -178,6 +168,15 @@ public class ArticleTranslator {
 		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
 		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation());
 		reCiterArticle.setMeshHeadings(reCiterArticleMeshHeadings);
+
+		// Use PubMed Article date as the publication date (pubdate)
+		// TODO optimize date (single date across ReCiter files) (Tech Debt)
+		MedlineCitationDate medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getArticledate();
+		LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
+				Integer.parseInt(medlineCitationDate.getMonth()),
+				Integer.parseInt(medlineCitationDate.getDay()));
+		Date date = localDate.toDate();
+		reCiterArticle.setPubDate(date);
 		
 		// Update PubMed's authors' first name from Scopus Article. Logic is as follows:
 		// 1. First compare last name if match:
