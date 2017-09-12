@@ -23,6 +23,9 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
 
+import reciter.engine.analysis.evidence.AffiliationEvidence;
+import reciter.engine.analysis.evidence.GrantEvidence;
+import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.model.article.completeness.ArticleCompleteness;
 import reciter.model.article.completeness.ReCiterCompleteness;
 import reciter.model.identity.AuthorName;
@@ -115,14 +118,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private boolean isArticleTitleStartWithBracket;
 	private double educationStrategyScore;
 	private double meshMajorStrategyScore;
-	private Set<String> overlappingMeSHMajorNegativeArticles = new HashSet<String>();
+	private Set<String> overlappingMeSHMajorNegativeArticles = new HashSet<>();
 	
 	private int goldStandard;
 	private Set<Long> commentsCorrectionsPmids = new HashSet<>();
-	private List<ReCiterArticleMeshHeading> meshHeadings = new ArrayList<ReCiterArticleMeshHeading>();
+	private List<ReCiterArticleMeshHeading> meshHeadings = new ArrayList<>();
 
-	private List<ReCiterAuthor> knownRelationships = new ArrayList<ReCiterAuthor>();
-	private List<String> frequentInstitutionalCollaborators = new ArrayList<String>();
+	private List<ReCiterAuthor> knownRelationships = new ArrayList<>();
+	private List<String> frequentInstitutionalCollaborators = new ArrayList<>();
 	
 	private List<Long> citations = new ArrayList<>();
 	private AuthorName matchingName;
@@ -139,6 +142,36 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private StringBuffer journalTitleInfo;
 
 	private Date pubDate;
+
+	private AffiliationEvidence affiliationEvidence;
+	private GrantEvidence grantEvidence;
+
+	private RelationshipEvidence relationshipEvidence;
+
+	public RelationshipEvidence getRelationshipEvidence() {
+		return relationshipEvidence;
+	}
+
+	public void setRelationshipEvidence(RelationshipEvidence relationshipEvidence) {
+		this.relationshipEvidence = relationshipEvidence;
+	}
+
+	public GrantEvidence getGrantEvidence() {
+		return grantEvidence;
+	}
+
+	public void setGrantEvidence(GrantEvidence grantEvidence) {
+		this.grantEvidence = grantEvidence;
+	}
+
+
+	public AffiliationEvidence getAffiliationEvidence() {
+		return affiliationEvidence;
+	}
+
+	public void setAffiliationEvidence(AffiliationEvidence affiliationEvidence) {
+		this.affiliationEvidence = affiliationEvidence;
+	}
 
 	public Date getPubDate() {
 		return pubDate;

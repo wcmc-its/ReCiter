@@ -4,6 +4,8 @@ import lombok.Data;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
+import reciter.engine.analysis.evidence.PositiveEvidence;
+import reciter.engine.erroranalysis.ReCiterAnalysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
@@ -146,14 +148,18 @@ public class ReCiterFeatureGenerator {
             }
             reCiterArticleFeature.setReCiterArticleAuthorFeatures(reCiterArticleAuthorFeatures);
 
+            PositiveEvidence positiveEvidence = new PositiveEvidence();
+            reCiterArticleFeature.setPositiveEvidence(positiveEvidence);
             // Affiliation Evidence
+            positiveEvidence.setAffiliationEvidence(reCiterArticle.getAffiliationEvidence());
 
-
-            // AuthorName Evidence
+            // AuthorName Evidence (the most complete author name in the article)
 
             // Grant Evidence
+            positiveEvidence.setGrantEvidence(reCiterArticle.getGrantEvidence());
 
             // Relationship Evidence
+
 
             // Education Year Evidence
 

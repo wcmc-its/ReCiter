@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.AffiliationEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
@@ -38,7 +39,14 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 		double score = 0;
 		if (containsWeillCornell(reCiterArticle)) {
 			reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[contains weill cornell and its variant:" + variantName + "]");
+			AffiliationEvidence affiliationEvidence = new AffiliationEvidence();
+			affiliationEvidence.setInstitutionalAffiliation(variantName);
+//			affiliationEvidence.setEmail();
+//			affiliationEvidence.setDepartment();
+//			affiliationEvidence.setArticleAffiliation();
+			reCiterArticle.setAffiliationEvidence(new AffiliationEvidence());
 			score = 1;
+
 		}
 		reCiterArticle.setAffiliationScore(score);
 		return score;

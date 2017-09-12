@@ -22,6 +22,7 @@ import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.GrantEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.identity.Identity;
@@ -35,6 +36,9 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 			for (String knownGrantIds : identity.getGrants()) {
 				if (grant.getGrantID() != null && grant.getGrantID().contains(knownGrantIds)) {
 					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [known grant ids match=" + knownGrantIds + "], ");
+					GrantEvidence grantEvidence = new GrantEvidence();
+					grantEvidence.setArticleGrant(knownGrantIds);
+//					grantEvidence.setInstitutionGrant();
 					score += 1;
 					reCiterArticle.getMatchingGrantList().add(grant);
 				}
