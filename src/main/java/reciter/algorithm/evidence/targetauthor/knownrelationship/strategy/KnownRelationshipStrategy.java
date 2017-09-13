@@ -18,10 +18,12 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.knownrelationship.strategy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
@@ -33,7 +35,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double score = 0;
 		List<KnownRelationship> relationships = identity.getKnownRelationships();
-
+		List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
 		if (relationships != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				// do not match target author's name
@@ -44,12 +46,16 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known relationship match: " +  authorName + "] ");
 							score += 1;
 							reCiterArticle.getKnownRelationship().add(authorName);
+							RelationshipEvidence relationshipEvidence = new RelationshipEvidence();
+							relationshipEvidence.setRelationshipName(authorName.getName().toString());
+//							relationshipEvidence.setRelationshipTypes();
 						}
 					}
 				}
 			}
 			reCiterArticle.setKnownCoinvestigatorScore(score);
 		}
+		reCiterArticle.setRelationshipEvidence(relationshipEvidences);
 		return score;
 	}
 

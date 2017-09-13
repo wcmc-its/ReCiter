@@ -159,9 +159,10 @@ public class ReCiterFeatureGenerator {
             positiveEvidence.setGrantEvidence(reCiterArticle.getGrantEvidence());
 
             // Relationship Evidence
-
+            positiveEvidence.setRelationshipEvidences(reCiterArticle.getRelationshipEvidence());
 
             // Education Year Evidence
+            
 
             // Clustering Evidence
         }

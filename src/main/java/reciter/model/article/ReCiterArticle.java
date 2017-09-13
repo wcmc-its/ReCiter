@@ -146,14 +146,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private AffiliationEvidence affiliationEvidence;
 	private GrantEvidence grantEvidence;
 
-	private RelationshipEvidence relationshipEvidence;
+	private List<RelationshipEvidence> relationshipEvidences;
 
-	public RelationshipEvidence getRelationshipEvidence() {
-		return relationshipEvidence;
+	public List<RelationshipEvidence> getRelationshipEvidence() {
+		return relationshipEvidences;
 	}
 
-	public void setRelationshipEvidence(RelationshipEvidence relationshipEvidence) {
-		this.relationshipEvidence = relationshipEvidence;
+	public void setRelationshipEvidence(List<RelationshipEvidence> relationshipEvidences) {
+		this.relationshipEvidences = relationshipEvidences;
 	}
 
 	public GrantEvidence getGrantEvidence() {
