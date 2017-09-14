@@ -162,7 +162,7 @@ public class ReCiterFeatureGenerator {
             positiveEvidence.setRelationshipEvidences(reCiterArticle.getRelationshipEvidence());
 
             // Education Year Evidence
-            
+            positiveEvidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
 
             // Clustering Evidence
         }

@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
 
 import reciter.engine.analysis.evidence.AffiliationEvidence;
+import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.GrantEvidence;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.model.article.completeness.ArticleCompleteness;
@@ -147,6 +148,16 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	private GrantEvidence grantEvidence;
 
 	private List<RelationshipEvidence> relationshipEvidences;
+
+	public EducationYearEvidence getEducationYearEvidence() {
+		return educationYearEvidence;
+	}
+
+	public void setEducationYearEvidence(EducationYearEvidence educationYearEvidence) {
+		this.educationYearEvidence = educationYearEvidence;
+	}
+
+	private EducationYearEvidence educationYearEvidence;
 
 	public List<RelationshipEvidence> getRelationshipEvidence() {
 		return relationshipEvidences;

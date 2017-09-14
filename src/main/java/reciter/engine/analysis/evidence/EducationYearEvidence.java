@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class EducationYearEvidence {
-    private String discrepancyDegreeYearBachelor;
-    private String discrepancyDegreeYearTerminal;
+    private int discrepancyDegreeYearBachelor;
+    private int discrepancyDegreeYearTerminal;
 }
