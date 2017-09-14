@@ -102,6 +102,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						if (reCiterArticle.getEducationYearEvidence() == null) {
 							EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
 							educationYearEvidence.setDiscrepancyDegreeYearBachelor(difference);
+						} else {
+							reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearBachelor(difference);
 						}
 						return 1;
 					}
@@ -121,6 +123,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 							if (reCiterArticle.getEducationYearEvidence() == null) {
 								EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
 								educationYearEvidence.setDiscrepancyDegreeYearTerminal(difference);
+							} else {
+								reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearTerminal(difference);
 							}
 							return 1;
 						}
@@ -134,6 +138,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 							if (reCiterArticle.getEducationYearEvidence() == null) {
 								EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
 								educationYearEvidence.setDiscrepancyDegreeYearTerminal(difference);
+							} else {
+								reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearTerminal(difference);
 							}
 							return 1;
 						}
