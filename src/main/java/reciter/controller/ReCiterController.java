@@ -51,6 +51,7 @@ import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.ReCiterEngine;
 import reciter.engine.StrategyParameters;
+import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.engine.erroranalysis.ReCiterAnalysis;
 import reciter.engine.erroranalysis.ReCiterAnalysisTranslator;
@@ -319,6 +320,15 @@ public class ReCiterController {
 //		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
 
 		return engineOutput.getAnalysis();
+	}
+
+	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET)
+	@ResponseBody
+	public ReCiterFeature runFeatureGenerator(@RequestParam(value="uid") String uid) {
+		EngineParameters parameters = initializeEngineParameters(uid);
+		Engine engine = new ReCiterEngine();
+		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
+		return engineOutput.getReCiterFeature();
 	}
 	
 	@RequestMapping(value = "/reciter/analysis/web/by/uid", method = RequestMethod.GET)
