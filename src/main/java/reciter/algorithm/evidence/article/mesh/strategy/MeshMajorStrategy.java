@@ -91,6 +91,7 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 						reCiterArticle.getMeshMajorInfo().append("This article shares MeSH major term of '" + descriptorName 
 								+ "' with an article with PMIDs=" + meshMajorToPmid.get(descriptorName));
 						reCiterArticle.getOverlappingMeSHMajorNegativeArticles().add(descriptorName);
+						reCiterArticle.getClusteringEvidence().getMeshMajors().add(descriptorName);
 						score += 1;
 					}
 				} else {

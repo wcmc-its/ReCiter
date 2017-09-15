@@ -169,7 +169,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
         this.clusteringEvidence = clusteringEvidence;
     }
 
-    private ClusteringEvidence clusteringEvidence;
+    private ClusteringEvidence clusteringEvidence = new ClusteringEvidence();
 
     public EducationYearEvidence getEducationYearEvidence() {
         return educationYearEvidence;
