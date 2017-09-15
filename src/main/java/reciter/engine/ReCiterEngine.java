@@ -53,6 +53,8 @@ import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownR
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
 import reciter.algorithm.util.ArticleTranslator;
+import reciter.engine.analysis.ReCiterFeature;
+import reciter.engine.analysis.ReCiterFeatureGenerator;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
@@ -266,6 +268,9 @@ public class ReCiterEngine implements Engine {
 			reCiterClusters.add(cluster);
 		}
 		engineOutput.setReCiterClusters(reCiterClusters);
+		ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
+		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures("test", clusterer, clusterSelector, parameters.getKnownPmids());
+		engineOutput.setReCiterFeature(reCiterFeature);
 		return engineOutput;
 	}
 	

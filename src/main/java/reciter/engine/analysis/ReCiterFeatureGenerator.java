@@ -165,6 +165,7 @@ public class ReCiterFeatureGenerator {
             positiveEvidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
 
             // Clustering Evidence
+            positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
         }
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures);
 
