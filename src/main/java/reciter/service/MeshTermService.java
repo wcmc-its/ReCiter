@@ -18,9 +18,9 @@
  *******************************************************************************/
 package reciter.service;
 
-import java.util.List;
+import reciter.database.dynamodb.model.MeshTerm;
 
-import reciter.database.mongo.model.MeshTerm;
+import java.util.List;
 
 public interface MeshTermService {
 

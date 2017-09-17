@@ -26,8 +26,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import reciter.database.mongo.model.PubMedArticleMongo;
-import reciter.database.mongo.repository.PubMedRepository;
+import reciter.database.dynamodb.repository.PubMedArticleRepository;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.PubMedService;
 
@@ -35,15 +34,16 @@ import reciter.service.PubMedService;
 public class PubMedServiceImpl implements PubMedService {
 
 	@Autowired
-	private PubMedRepository pubMedRepository;
+	private PubMedArticleRepository pubMedRepository;
 
 	@Override
 	public void save(Collection<PubMedArticle> pubMedArticles) {
-		List<PubMedArticleMongo> pubMedArticleMongos = new ArrayList<>();
+		List<reciter.database.dynamodb.model.PubMedArticle> pubMedArticleMongos = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			PubMedArticleMongo pubMedArticleMongo = new PubMedArticleMongo();
-			pubMedArticleMongo.setId(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
-			pubMedArticleMongo.setPubMedArticle(pubMedArticle);
+			reciter.database.dynamodb.model.PubMedArticle pubMedArticleMongo = new reciter.database.dynamodb.model.PubMedArticle(
+					pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid(),
+					pubMedArticle
+			);
 			pubMedArticleMongos.add(pubMedArticleMongo);
 		}
 		pubMedRepository.save(pubMedArticleMongos);
@@ -51,16 +51,16 @@ public class PubMedServiceImpl implements PubMedService {
 
 	@Override
 	public List<PubMedArticle> findByPmids(List<Long> pmids) {
-		Iterator<PubMedArticleMongo> iterator = pubMedRepository.findAll(pmids).iterator();
+		Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAll(pmids).iterator();
 		List<PubMedArticle> pubMedArticles = new ArrayList<>(pmids.size());
 		while (iterator.hasNext()) {
-			pubMedArticles.add(iterator.next().getPubMedArticle());
+			pubMedArticles.add(iterator.next().getPubmedArticle());
 		}
 		return pubMedArticles;
 	}
 
 	@Override
 	public PubMedArticle findByPmid(long pmid) {
-		return pubMedRepository.findOne(pmid).getPubMedArticle();
+		return pubMedRepository.findOne(pmid).getPubmedArticle();
 	}
 }

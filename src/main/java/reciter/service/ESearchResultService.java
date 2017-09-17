@@ -18,9 +18,9 @@
  *******************************************************************************/
 package reciter.service;
 
-import java.util.List;
+import reciter.database.dynamodb.model.ESearchResult;
 
-import reciter.database.mongo.model.ESearchResult;
+import java.util.List;
 
 public interface ESearchResultService {
 

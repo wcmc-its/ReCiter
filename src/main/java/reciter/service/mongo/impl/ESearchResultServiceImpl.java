@@ -23,8 +23,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.repository.ESearchResultRepository;
+import reciter.database.dynamodb.model.ESearchResult;
+import reciter.database.dynamodb.repository.ESearchResultRepository;
+
 import reciter.service.ESearchResultService;
 
 @Service("eSearchResultService")
@@ -40,23 +41,27 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 	
 	@Override
 	public void update(ESearchResult eSearchResult) {
-		eSearchResultRepository.update(eSearchResult.getUid(), eSearchResult.getESearchPmid());
+//		eSearchResultRepository.update(eSearchResult.getUid(), eSearchResult.getESearchPmid());
+		throw new UnsupportedOperationException("implement...");
 	}
 
 	@Override
 	public List<ESearchResult> findByUid(String uid) {
-		return eSearchResultRepository.findByUid(uid);
+//		return eSearchResultRepository.findByUid(uid);
+		throw new UnsupportedOperationException("implement...");
 	}
 	
 	@Override
 	public boolean pushESearchResult(ESearchResult eSearchResult) {
-		return eSearchResultRepository.pushESearchResult(eSearchResult);
+//		return eSearchResultRepository.pushESearchResult(eSearchResult);
+		throw new UnsupportedOperationException("implement...");
 	}
 
 	@Override
 	public boolean existByUidAndRetrievalStrategyName(String uid,
 			String eSearchPmidretrievalStrategyName) {
-		return eSearchResultRepository.existByUidAndRetrievalStrategyName(uid, eSearchPmidretrievalStrategyName);
+//		return eSearchResultRepository.existByUidAndRetrievalStrategyName(uid, eSearchPmidretrievalStrategyName);
+		throw new UnsupportedOperationException("implement...");
 	}
 	
 //	@Override

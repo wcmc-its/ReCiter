@@ -18,13 +18,14 @@
  *******************************************************************************/
 package reciter.service.mongo.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import reciter.database.mongo.model.MeshTerm;
-import reciter.database.mongo.repository.MeshTermRepository;
+import reciter.database.dynamodb.model.MeshTerm;
+import reciter.database.dynamodb.repository.MeshTermRepository;
 import reciter.service.MeshTermService;
 
 @Service("meshTermService")
@@ -40,6 +41,8 @@ public class MeshTermServiceImpl implements MeshTermService {
 	
 	@Override
 	public List<MeshTerm> findAll() {
-		return meshTermRepository.findAll();
+		List<MeshTerm> meshTerms = new ArrayList<>();
+		meshTermRepository.findAll().forEach(e -> meshTerms.add(e));
+		return meshTerms;
 	}
 }
