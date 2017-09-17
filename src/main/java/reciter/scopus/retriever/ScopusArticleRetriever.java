@@ -37,6 +37,8 @@ public class ScopusArticleRetriever<T> {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(ScopusArticleRetriever.class);
 
+	private static ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 10);
+
 	/**
 	 * Scopus retrieval threshold.
 	 */
@@ -97,7 +99,7 @@ public class ScopusArticleRetriever<T> {
 			}
 		}
 
-		List<Callable<List<ScopusArticle>>> callables = new ArrayList<Callable<List<ScopusArticle>>>();
+		List<Callable<List<ScopusArticle>>> callables = new ArrayList<>();
 
 		for (String query : pmidQueries) {
 			ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(query, SCOPUS_MAX_THRESHOLD).build();
@@ -107,9 +109,6 @@ public class ScopusArticleRetriever<T> {
 		}
 
 		List<List<ScopusArticle>> list = new ArrayList<List<ScopusArticle>>();
-
-		int numAvailableProcessors = Runtime.getRuntime().availableProcessors();
-		ExecutorService executor = Executors.newFixedThreadPool(numAvailableProcessors);
 
 		try {
 			executor.invokeAll(callables)

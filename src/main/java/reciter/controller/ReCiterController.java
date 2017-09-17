@@ -137,7 +137,7 @@ public class ReCiterController {
 
 	@RequestMapping(value = "/reciter/ldap/get/all/identity/", method = RequestMethod.GET)
 	@ResponseBody
-	public void getAllIdentity() {
+	public String getAllIdentity() {
 		for (String uid : Uids.uids) {
 			Identity identity = ldapIdentityService.getIdentity(uid);
 			if (identity != null) {
@@ -146,6 +146,7 @@ public class ReCiterController {
 				slf4jLogger.info("uid doesn't exist: " + uid);
 			}
 		}
+		return "done";
 	}
 
 	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
