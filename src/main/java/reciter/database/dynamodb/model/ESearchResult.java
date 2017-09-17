@@ -1,5 +1,7 @@
 package reciter.database.dynamodb.model;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +11,16 @@ import lombok.Data;
 @AllArgsConstructor
 public class ESearchResult {
 
-    private String id;
     private String uid;
-    private reciter.database.mongo.model.ESearchPmid eSearchPmid;
+    private ESearchPmid eSearchPmid;
+
+    @DynamoDBHashKey(attributeName = "uid")
+    public String getUid() {
+        return uid;
+    }
+
+    @DynamoDBAttribute(attributeName = "esearchpmid")
+    public ESearchPmid getESearchPmid() {
+        return eSearchPmid;
+    }
 }

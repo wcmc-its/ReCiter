@@ -41,9 +41,9 @@ import org.springframework.web.bind.annotation.*;
 import reciter.Uids;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.util.ArticleTranslator;
-import reciter.database.mongo.model.ESearchResult;
-import reciter.database.mongo.model.GoldStandard;
-import reciter.database.mongo.model.MeshTerm;
+import reciter.database.dynamodb.model.ESearchResult;
+import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.model.MeshTerm;
 import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
@@ -193,7 +193,7 @@ public class ReCiterController {
 		for (String uid : Uids.uids) {
 			GoldStandard goldStandard = goldStandardService.findByUid(uid);
 			try {
-				aliasReCiterRetrievalEngine.retrieveByPmids(goldStandard.getId(), goldStandard.getKnownPmids());
+				aliasReCiterRetrievalEngine.retrieveByPmids(goldStandard.getUid(), goldStandard.getKnownPmids());
 			} catch (IOException e) {
 				slf4jLogger.info("Failed to retrieve articles.", e);
 			}

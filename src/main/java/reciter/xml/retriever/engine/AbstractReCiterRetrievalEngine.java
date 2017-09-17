@@ -18,17 +18,16 @@
  *******************************************************************************/
 package reciter.xml.retriever.engine;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import reciter.database.mongo.model.ESearchPmid;
-import reciter.database.mongo.model.ESearchResult;
+import reciter.database.dynamodb.model.ESearchPmid;
+import reciter.database.dynamodb.model.ESearchResult;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
@@ -94,7 +93,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
-		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, LocalDateTime.now(Clock.systemUTC()));
+		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date());
 //		boolean exist = eSearchResultService.existByCwidAndRetrievalStrategyName(uid, eSearchPmid.getRetrievalStrategyName());
 //		if (exist) {
 //			eSearchResultService.update(new ESearchResult(uid, eSearchPmid, pubMedQueryResults));
