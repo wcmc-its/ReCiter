@@ -59,6 +59,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.service.ldap.LdapIdentityService;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
@@ -210,6 +211,17 @@ public class ReCiterController {
 		slf4jLogger.info("Start time is: " + startTime);
 		GoldStandard goldStandard = goldStandardService.findByUid(uid);
 		return ResponseEntity.ok(goldStandard);
+	}
+
+	@RequestMapping(value = "/reciter/scopusarticle/{pmid}", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseEntity<List<ScopusArticle>> retrieveScopusArticleByPmid(@PathVariable String pmid) {
+		List<Long> pmids = new ArrayList<>();
+		pmids.add(Long.parseLong(pmid));
+		ScopusArticleRetriever<Long> scopusArticleRetriever = new ScopusArticleRetriever<>();
+		List<ScopusArticle> scopusArticles =
+				scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.PMID_MODIFIER, new ArrayList<>(pmids));
+		return ResponseEntity.ok(scopusArticles);
 	}
 
 	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)

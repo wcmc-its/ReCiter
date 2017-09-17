@@ -18,115 +18,73 @@
  *******************************************************************************/
 package reciter.scopus.retriever;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import reciter.model.scopus.ScopusArticle;
-import reciter.scopus.callable.ScopusUriParserCallable;
-import reciter.scopus.querybuilder.ScopusXmlQuery;
-import reciter.scopus.xmlparser.ScopusXmlHandler;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+@Slf4j
 public class ScopusArticleRetriever<T> {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(ScopusArticleRetriever.class);
+    /**
+     * Scopus pmid modifier
+     */
+    public static final String PMID_MODIFIER = "pmid";
 
-	private static ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 10);
+    /**
+     * Scopus doi modifier
+     */
+    public static final String DOI_MODIFIER = "doi";
 
-	/**
-	 * Scopus retrieval threshold.
-	 */
-	protected static final int SCOPUS_DEFAULT_THRESHOLD = 24;
+    private static final String SCOPUS_SERVICE = System.getenv("SCOPUS_SERVICE");
 
-	/**
-	 * Scopus retrieval max threshold.
-	 */
-	protected static final int SCOPUS_MAX_THRESHOLD = 25;
-	
-	/**
-	 * Scopus pmid modifier
-	 */
-	public static final String PMID_MODIFIER = "pmid";
-	
-	/**
-	 * Scopus doi modifier
-	 */
-	public static final String DOI_MODIFIER = "doi";
-
-	/**
-	 * Modifier options: "pmid" or "doi".
-	 * 
-	 * @param queryModifier
-	 * @param queryParams
-	 * @return
-	 */
-	public List<ScopusArticle> retrieveScopus(String queryModifier, List<T> queryParams) {
-
-		List<String> pmidQueries = new ArrayList<String>();
-		if (queryParams.size() == 1) {
-			pmidQueries.add("pmid(" + queryParams.get(0) + ")");
-		} else {
-			StringBuffer sb = new StringBuffer();
-			int i = 0;
-			Iterator<T> itr = queryParams.iterator();
-			while (itr.hasNext()) {
-				T param = itr.next();
-				if (i == 0 || (i % SCOPUS_DEFAULT_THRESHOLD != 0 && i != queryParams.size() - 1)) {
-					sb.append(queryModifier + "(");
-					sb.append(param);
-					sb.append(")+OR+");
-				} else {
-					sb.append(queryModifier + "(");
-					sb.append(param);
-					sb.append(")");
-				}
-				if (i != 0 && i % SCOPUS_DEFAULT_THRESHOLD == 0) {
-					pmidQueries.add(sb.toString());
-					sb = new StringBuffer();
-				}
-				i++;
-			}
-			// add the remaining pmids
-			String remaining = sb.toString();
-			if (!remaining.isEmpty()) {
-				pmidQueries.add(remaining);
-			}
-		}
-
-		List<Callable<List<ScopusArticle>>> callables = new ArrayList<>();
-
-		for (String query : pmidQueries) {
-			ScopusXmlQuery scopusXmlQuery = new ScopusXmlQuery.ScopusXmlQueryBuilder(query, SCOPUS_MAX_THRESHOLD).build();
-			String scopusUrl = scopusXmlQuery.getQueryUrl();
-			ScopusUriParserCallable scopusUriParserCallable = new ScopusUriParserCallable(new ScopusXmlHandler(), scopusUrl);
-			callables.add(scopusUriParserCallable);
-		}
-
-		List<List<ScopusArticle>> list = new ArrayList<List<ScopusArticle>>();
-
-		try {
-			executor.invokeAll(callables)
-			.stream()
-			.map(future -> {
-				try {
-					return future.get();
-				}
-				catch (Exception e) {
-					throw new IllegalStateException(e);
-				}
-			}).forEach(list::add);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("Unable to invoke callable.", e);
-		}
-
-		List<ScopusArticle> results = new ArrayList<ScopusArticle>();
-		list.forEach(results::addAll);
-		return results;
-	}
+    /**
+     * Modifier options: "pmid" or "doi".
+     *
+     * @param queryModifier
+     * @param queryParams
+     * @return
+     */
+    public List<ScopusArticle> retrieveScopus(String queryModifier, List<T> queryParams) {
+        if (queryParams.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (PMID_MODIFIER.equals(queryModifier)) {
+            String nodeUrl = SCOPUS_SERVICE + "/query/";
+            RestTemplate restTemplate = new RestTemplate();
+            log.info("Sending web request for query " + queryParams + " modifier:" + queryModifier + ":" + nodeUrl);
+            List<Long> pmidList = new ArrayList<>();
+            for (T t : queryParams) {
+                pmidList.add((Long) t);
+            }
+            ResponseEntity<List<ScopusArticle>> responseEntity = null;
+            Pmids pmids = new Pmids(pmidList);
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Object> requestEntity = new HttpEntity<>(pmids,headers);
+                responseEntity =
+                        restTemplate.exchange(nodeUrl, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<List<ScopusArticle>>() {});
+            } catch (Exception e) {
+                log.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
+            }
+            if (responseEntity == null) {
+                return Collections.emptyList();
+            }
+            List<ScopusArticle> scopusArticles = responseEntity.getBody();
+            return scopusArticles;
+        } else {
+            throw new UnsupportedOperationException("Scopus queryModifier: " + queryModifier + " is unsupported");
+        }
+    }
 }
