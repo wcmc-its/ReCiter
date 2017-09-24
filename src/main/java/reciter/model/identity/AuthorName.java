@@ -190,7 +190,7 @@ public class AuthorName {
 				lastName.equals(name.getLastName());
 	}
 
-	public boolean isFullName() {
+	public boolean isFirstNameAndMiddleNameNonEmpty() {
 		return firstName.length() > 1 || middleName.length() > 1;
 	}
 
@@ -273,27 +273,35 @@ public class AuthorName {
 		this.middleName = capitalize(middleName.trim().toLowerCase());
 		this.middleInitial = middleName.length() > 0 ? middleName.substring(0, 1) : "";
 	}
-	
+
 	public String getFirstName() {
 		return firstName;
 	}
-	
+
 	public String getFirstInitial() {
 		return firstInitial;
 	}
-	
+
 	public String getMiddleName() {
 		return middleName;
 	}
-	
+
 	public String getMiddleInitial() {
 		return middleInitial;
 	}
-	
+
 	public String getLastName() {
 		return lastName;
 	}
-	
+
+	public void setFirstInitial(String firstInitial) {
+		this.firstInitial = firstInitial;
+	}
+
+	public void setMiddleInitial(String middleInitial) {
+		this.middleInitial = middleInitial;
+	}
+
 	public void setLastName(String lastName) {
 		if (lastName == null) throw new IllegalArgumentException("last name should not be null.");
 		this.lastName = capitalize(lastName.trim().toLowerCase());

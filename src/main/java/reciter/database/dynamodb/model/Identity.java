@@ -4,14 +4,14 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 @DynamoDBTable(tableName = "Identity")
-@Data
 @AllArgsConstructor
 public class Identity {
-    private final String uid;
-    private final reciter.model.identity.Identity identity;
+    private String uid;
+    private reciter.model.identity.Identity identity;
+
+    public Identity() {}
 
     @DynamoDBHashKey(attributeName = "uid")
     public String getUid() {
@@ -21,5 +21,13 @@ public class Identity {
     @DynamoDBAttribute(attributeName = "identity")
     public reciter.model.identity.Identity getIdentity() {
         return identity;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public void setIdentity(reciter.model.identity.Identity identity) {
+        this.identity = identity;
     }
 }

@@ -86,7 +86,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	@Override
 	public boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate) throws IOException {
-		ExecutorService executorService = Executors.newFixedThreadPool(5);
+		ExecutorService executorService = Executors.newFixedThreadPool(10);
 		for (Identity identity : identities) {
 			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate));
 		}

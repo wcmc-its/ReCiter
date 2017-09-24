@@ -40,11 +40,13 @@ public class IdentityServiceImpl implements IdentityService {
 
     @Override
     public List<Identity> findByUids(List<String> uids) {
-        return null;
+        List<Identity> identities = new ArrayList<>();
+        identityRepository.findAll(uids).forEach(e -> identities.add(e.getIdentity()));
+        return identities;
     }
 
     @Override
     public Identity findByUid(String uid) {
-        return null;
+        return identityRepository.findOne(uid).getIdentity();
     }
 }

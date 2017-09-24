@@ -41,7 +41,7 @@ public class ReCiterCompleteness implements ArticleCompleteness {
 		if (article.getArticleCoAuthors().exist()) {
 			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
 //				articleCompleteness += author.getAuthorName().nameSimilarityScore(target.getAuthorName());
-				if (author.getAuthorName().isFullName()) { numAuthorFullNames += 1; }
+				if (author.getAuthorName().isFirstNameAndMiddleNameNonEmpty()) { numAuthorFullNames += 1; }
 			}
 		}
 		// the percentage of full names is greater than 50%.
