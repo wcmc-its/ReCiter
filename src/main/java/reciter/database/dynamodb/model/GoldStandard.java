@@ -1,6 +1,7 @@
 package reciter.database.dynamodb.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.List;
 @DynamoDBTable(tableName = "GoldStandard")
 @Data
 @AllArgsConstructor
+@DynamoDBDocument
 public class GoldStandard {
     private final String uid;
     private final List<Long> knownPmids;

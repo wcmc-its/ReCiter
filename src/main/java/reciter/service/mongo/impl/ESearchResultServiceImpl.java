@@ -28,7 +28,7 @@ import reciter.database.dynamodb.repository.ESearchResultRepository;
 
 import reciter.service.ESearchResultService;
 
-@Service("eSearchResultService")
+//@Service("eSearchResultService")
 public class ESearchResultServiceImpl implements ESearchResultService {
 
 	@Autowired

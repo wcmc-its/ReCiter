@@ -190,7 +190,7 @@ public class AuthorName {
 				lastName.equals(name.getLastName());
 	}
 
-	public boolean isFirstNameAndMiddleNameNonEmpty() {
+	public boolean checkFirstNameAndMiddleNameNotEmpty() {
 		return firstName.length() > 1 || middleName.length() > 1;
 	}
 

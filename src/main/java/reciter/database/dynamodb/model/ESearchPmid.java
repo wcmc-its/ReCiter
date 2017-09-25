@@ -1,8 +1,11 @@
 package reciter.database.dynamodb.model;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+
 import java.util.Date;
 import java.util.List;
 
+@DynamoDBDocument
 public class ESearchPmid {
     private List<Long> pmids;
     private String retrievalStrategyName;
