@@ -6,7 +6,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-@DynamoDBTable(tableName = "GoldStandard")
+@DynamoDBTable(tableName = "ESearchResult")
 @Data
 @AllArgsConstructor
 public class ESearchResult {

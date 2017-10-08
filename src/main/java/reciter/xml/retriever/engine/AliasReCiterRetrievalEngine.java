@@ -101,7 +101,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 	
 	private Set<Long> retrieveData(Identity identity) throws IOException {
-		Set<Long> uniquePmids = new HashSet<Long>();
+		Set<Long> uniquePmids = new HashSet<>();
 		
 		String uid = identity.getUid();
 		

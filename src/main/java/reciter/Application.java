@@ -24,14 +24,12 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
-//@EnableMongoRepositories("reciter.database.mongo")
 @EnableDynamoDBRepositories("reciter.database.dynamodb")
 @ComponentScan("reciter")
 public class Application {
