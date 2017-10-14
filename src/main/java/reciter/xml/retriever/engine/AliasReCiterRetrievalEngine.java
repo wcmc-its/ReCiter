@@ -115,7 +115,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
 			 
 			// Update alias.
-			List<PubMedAlias> pubMedAliases = new ArrayList<PubMedAlias>();
+			List<PubMedAlias> pubMedAliases = new ArrayList<>();
 			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
 				PubMedAlias pubMedAlias = new PubMedAlias();
 				pubMedAlias.setAuthorName(entry.getValue());
