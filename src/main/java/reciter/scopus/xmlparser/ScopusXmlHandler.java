@@ -215,7 +215,13 @@ public class ScopusXmlHandler extends DefaultHandler {
 		}
 		if (qName.equalsIgnoreCase("affiliation") && bAffiliation) {
 			if (afid != 0) {
-				affiliations.put(afid, new Affiliation(afid, affilname, affiliationCity, affiliationCountry));
+				affiliations.put(afid,
+						Affiliation.builder()
+								.affiliationCity(affiliationCity)
+								.afid(afid)
+								.affilname(affilname)
+								.affiliationCountry(affiliationCountry)
+								.build());
 			}
 			bAffiliation = false;
 		}
@@ -246,7 +252,15 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 		if (qName.equalsIgnoreCase("author") && bAuthor) {
 			if (authid != 0) {
-				authors.put(authid, new Author(seq, authid, authname, surname, givenName, initials, afids));
+				authors.put(authid,
+						Author.builder()
+								.seq(seq)
+								.afids(afids)
+								.authid(authid)
+								.authname(authname)
+								.surname(surname)
+								.givenName(givenName)
+								.initials(initials).build());
 			}
 			bAuthor = false;
 		}
@@ -285,7 +299,10 @@ public class ScopusXmlHandler extends DefaultHandler {
 				for (Author author : authors.values()) {
 					authorList.add(author);
 				}
-				scopusArticle = new ScopusArticle(pubmedId, affiliationList, authorList);
+				scopusArticle = ScopusArticle.builder()
+						.pubmedId(pubmedId)
+						.affiliations(affiliationList)
+						.authors(authorList).build();
 				if (doi != null) {
 					scopusArticle.setDoi(doi);
 					doi = null;

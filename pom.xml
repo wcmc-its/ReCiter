@@ -103,6 +103,11 @@
 			<artifactId>reciter-pubmed-model</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>edu.wcmc.reciter</groupId>
+			<artifactId>reciter-scopus-model</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.hynnet/oracle-driver-ojdbc6 -->
 		<dependency>
 			<groupId>com.hynnet</groupId>

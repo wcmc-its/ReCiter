@@ -26,8 +26,9 @@ public class ScopusServiceImpl implements ScopusService {
                     scopusArticle
             );
             dbScopusArticles.add(dbScopusArticle);
+            System.out.println("Saving Scopus article:" + scopusArticle.getPubmedId());
         }
-        scopusRepository.save(dbScopusArticles);
+        scopusRepository.save(dbScopusArticles.get(0));
     }
 
     @Override

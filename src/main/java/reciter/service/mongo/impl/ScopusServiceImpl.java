@@ -30,7 +30,7 @@ import reciter.database.dynamodb.repository.ScopusArticleRepository;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ScopusService;
 
-@Service("scopusService")
+//@Service("scopusService")
 public class ScopusServiceImpl implements ScopusService {
 
 	@Autowired
