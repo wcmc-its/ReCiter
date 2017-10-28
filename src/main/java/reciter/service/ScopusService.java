@@ -27,5 +27,5 @@ public interface ScopusService {
 
 	void save(Collection<ScopusArticle> pubMedArticles);
 	
-	List<ScopusArticle> findByPmids(List<Long> pmids);
+	List<ScopusArticle> findByPmids(List<String> pmids);
 }

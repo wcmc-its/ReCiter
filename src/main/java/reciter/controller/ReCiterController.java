@@ -374,14 +374,16 @@ public class ReCiterController {
 		// create a list of pmids to pass to search
 		List<Long> pmidList = new ArrayList<>(pmids);
 		List<Long> filtered = new ArrayList<>();
+		List<String> filteredString = new ArrayList<>();
 		for (long pmid : pmidList) {
 			if (pmid <= 27090613) {
 				filtered.add(pmid);
+				filteredString.add(String.valueOf(pmid));
 			}
 		}
 
 		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
-		List<ScopusArticle> scopusArticles = scopusService.findByPmids(filtered);
+		List<ScopusArticle> scopusArticles = scopusService.findByPmids(filteredString);
 
 		// create temporary map to retrieve Scopus articles by PMID (at the stage below)
 		Map<Long, ScopusArticle> map = new HashMap<>();

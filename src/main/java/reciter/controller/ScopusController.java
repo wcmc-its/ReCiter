@@ -50,7 +50,7 @@ public class ScopusController {
 	
 	@RequestMapping(value = "/reciter/find/scopus/articles/pmids/", method = RequestMethod.GET)
 	@ResponseBody
-	public List<ScopusArticle> findByPmids(@RequestParam List<Long> pmids) {
+	public List<ScopusArticle> findByPmids(@RequestParam List<String> pmids) {
 		slf4jLogger.info("calling findByPmids with size of pmids=" + pmids);
 		return scopusService.findByPmids(pmids);
 	}

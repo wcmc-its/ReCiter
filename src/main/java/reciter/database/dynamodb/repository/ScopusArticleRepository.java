@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 import reciter.database.dynamodb.model.ScopusArticle;
 
 @EnableScan
-public interface ScopusArticleRepository extends CrudRepository<ScopusArticle, Long> {
+public interface ScopusArticleRepository extends CrudRepository<ScopusArticle, String> {
 }

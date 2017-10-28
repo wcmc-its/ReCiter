@@ -211,7 +211,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 	
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate) throws IOException {
-		Set<Long> uniquePmids = new HashSet<Long>();
+		Set<Long> uniquePmids = new HashSet<>();
 		
 		String uid = identity.getUid();
 		

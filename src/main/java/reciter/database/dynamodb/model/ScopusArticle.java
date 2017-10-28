@@ -9,12 +9,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ScopusArticle {
 
-    private long pmid;
+    private String id;
     private reciter.model.scopus.ScopusArticle scopusArticle;
 
-    @DynamoDBHashKey(attributeName = "pmid")
-    public long getPmid() {
-        return pmid;
+    @DynamoDBHashKey(attributeName = "id")
+    public String getId() {
+        return id;
     }
 
     @DynamoDBAttribute(attributeName = "scopusarticle")
@@ -22,8 +22,8 @@ public class ScopusArticle {
         return scopusArticle;
     }
 
-    public void setPmid(long pmid) {
-        this.pmid = pmid;
+    public void setPmid(String id) {
+        this.id = id;
     }
 
     public void setScopusArticle(reciter.model.scopus.ScopusArticle scopusArticle) {
