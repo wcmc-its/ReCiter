@@ -14,9 +14,9 @@ import java.util.List;
 @AllArgsConstructor
 @DynamoDBDocument
 public class GoldStandard {
-    private final String uid;
-    private final List<Long> knownPmids;
-    private final List<Long> rejectedPmids;
+    private String uid;
+    private List<Long> knownPmids;
+    private List<Long> rejectedPmids;
 
     @DynamoDBHashKey(attributeName = "uid")
     public String getUid() {

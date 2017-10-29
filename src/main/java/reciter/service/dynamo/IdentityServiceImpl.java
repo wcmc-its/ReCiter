@@ -9,6 +9,7 @@ import reciter.service.IdentityService;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 @Primary
@@ -48,5 +49,18 @@ public class IdentityServiceImpl implements IdentityService {
     @Override
     public Identity findByUid(String uid) {
         return identityRepository.findOne(uid).getIdentity();
+    }
+
+    @Override
+    public List<Identity> findAll() {
+        Iterable<reciter.database.dynamodb.model.Identity> it = identityRepository.findAll();
+        List<Identity> identities = new ArrayList<>();
+        Iterator<reciter.database.dynamodb.model.Identity> iterator = it.iterator();
+        while (iterator.hasNext()) {
+            Identity identity = iterator.next().getIdentity();
+            System.out.println("getting identity:" + identity.getUid());
+            identities.add(identity);
+        }
+        return identities;
     }
 }

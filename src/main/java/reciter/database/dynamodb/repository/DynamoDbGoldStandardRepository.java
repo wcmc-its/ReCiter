@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 import reciter.database.dynamodb.model.GoldStandard;
 
 @EnableScan
-public interface GoldStandardRepository extends CrudRepository<GoldStandard, String> {
+public interface DynamoDbGoldStandardRepository extends CrudRepository<GoldStandard, String> {
 }

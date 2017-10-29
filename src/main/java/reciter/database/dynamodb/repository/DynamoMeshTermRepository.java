@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 import reciter.database.dynamodb.model.MeshTerm;
 
 @EnableScan
-public interface MeshTermRepository extends CrudRepository<MeshTerm, String> {
+public interface DynamoMeshTermRepository extends CrudRepository<MeshTerm, String> {
 }

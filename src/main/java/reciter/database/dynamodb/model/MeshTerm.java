@@ -10,8 +10,8 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class MeshTerm {
-    private final String mesh;
-    private final long count;
+    private String mesh;
+    private long count;
 
     @DynamoDBHashKey(attributeName = "mesh")
     public String getMesh() {

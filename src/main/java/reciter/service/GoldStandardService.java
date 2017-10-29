@@ -18,7 +18,8 @@
  *******************************************************************************/
 package reciter.service;
 
-import reciter.database.dynamodb.model.GoldStandard;
+
+import reciter.database.mongo.model.GoldStandard;
 
 public interface GoldStandardService {
 

@@ -18,13 +18,11 @@
  *******************************************************************************/
 package reciter.service;
 
-import reciter.database.dynamodb.model.MeshTerm;
-
 import java.util.List;
 
 public interface MeshTermService {
 
-	void save(List<MeshTerm> meshTerms);
+	void save(List<reciter.database.dynamodb.model.MeshTerm> meshTerms);
 
-	List<MeshTerm> findAll();
+	List<reciter.database.mongo.model.MeshTerm> findAll();
 }

@@ -60,6 +60,8 @@ import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.scopus.retriever.ScopusArticleRetriever;
+import reciter.service.dynamo.DynamoDbMeshTermService;
+import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.service.ldap.LdapIdentityService;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
@@ -99,6 +101,9 @@ public class ReCiterController {
 	private MeshTermService meshTermService;
 
 	@Autowired
+	private DynamoDbMeshTermService dynamoDbMeshTermService;
+
+	@Autowired
 	private PubMedArticleFeatureService pubMedArticleFeatureService;
 
 	@Autowired
@@ -118,6 +123,9 @@ public class ReCiterController {
 	
 	@Autowired
 	private LdapIdentityService ldapIdentityService;
+
+	@Autowired
+	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
@@ -186,31 +194,46 @@ public class ReCiterController {
 		return institutionAfidService.getAfidByInstitution(institution);
 	}
 	
-	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
-	@ResponseBody
-	public void retrieveGoldStandard() {
-		long startTime = System.currentTimeMillis();
-		slf4jLogger.info("Start time is: " + startTime);
-
-		for (String uid : Uids.uids) {
-			GoldStandard goldStandard = goldStandardService.findByUid(uid);
-			try {
-				aliasReCiterRetrievalEngine.retrieveByPmids(goldStandard.getUid(), goldStandard.getKnownPmids());
-			} catch (IOException e) {
-				slf4jLogger.info("Failed to retrieve articles.", e);
-			}
-		}
-		long estimatedTime = System.currentTimeMillis() - startTime;
-		slf4jLogger.info("elapsed time: " + estimatedTime);
-	}
+//	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
+//	@ResponseBody
+//	public void retrieveGoldStandard() {
+//		long startTime = System.currentTimeMillis();
+//		slf4jLogger.info("Start time is: " + startTime);
+//
+//		for (String uid : Uids.uids) {
+//			GoldStandard goldStandard = goldStandardService.findByUid(uid);
+//			try {
+//				aliasReCiterRetrievalEngine.retrieveByPmids(goldStandard.getUid(), goldStandard.getKnownPmids());
+//			} catch (IOException e) {
+//				slf4jLogger.info("Failed to retrieve articles.", e);
+//			}
+//		}
+//		long estimatedTime = System.currentTimeMillis() - startTime;
+//		slf4jLogger.info("elapsed time: " + estimatedTime);
+//	}
 
 	@RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
+	public ResponseEntity<reciter.database.mongo.model.GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
-		GoldStandard goldStandard = goldStandardService.findByUid(uid);
+		reciter.database.mongo.model.GoldStandard goldStandard = goldStandardService.findByUid(uid);
 		return ResponseEntity.ok(goldStandard);
+	}
+
+	@RequestMapping(value = "/reciter/goldstandard/migrate", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseEntity<String> migrateGoldStandard() {
+		long startTime = System.currentTimeMillis();
+		slf4jLogger.info("Start time is: " + startTime);
+		List<Identity> identities = identityService.findAll();
+		for (Identity identity : identities) {
+			reciter.database.mongo.model.GoldStandard goldStandard = goldStandardService.findByUid(identity.getUid());
+			slf4jLogger.info("Found goldstand:" + identity.getUid());
+			dynamoDbGoldStandardService.save(new GoldStandard(identity.getUid(), goldStandard.getKnownPmids(), goldStandard.getRejectedPmids()));
+			slf4jLogger.info("Saved goldstandard:" + identity.getUid());
+		}
+		return ResponseEntity.ok("Done");
 	}
 
 	@RequestMapping(value = "/reciter/scopusarticle/{pmid}", method = RequestMethod.GET)
@@ -227,7 +250,7 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseEntity<GoldStandard> updateGoldStandard(@RequestBody GoldStandard goldStandard) {
-		goldStandardService.save(goldStandard);
+//		goldStandardService.save(goldStandard);
 		return ResponseEntity.ok(goldStandard);
 	}
 
@@ -343,6 +366,20 @@ public class ReCiterController {
 		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
 		return engineOutput.getReCiterFeature();
 	}
+
+	@RequestMapping(value = "/reciter/meshterms", method = RequestMethod.GET)
+	@ResponseBody
+	public int meshTerms() {
+		List<reciter.database.mongo.model.MeshTerm> meshTerms = meshTermService.findAll();
+		List<MeshTerm> meshTermsToSave = new ArrayList<>();
+		for (reciter.database.mongo.model.MeshTerm meshTerm : meshTerms) {
+			MeshTerm meshTerm1 = new MeshTerm(meshTerm.getMesh(), meshTerm.getCount());
+			meshTermsToSave.add(meshTerm1);
+		}
+		dynamoDbMeshTermService.save(meshTermsToSave);
+		System.out.println("finished saving dynamodb");
+		return meshTermsToSave.size();
+	}
 	
 	@RequestMapping(value = "/reciter/analysis/web/by/uid", method = RequestMethod.GET)
 	@ResponseBody
@@ -412,7 +449,8 @@ public class ReCiterController {
 		parameters.setScopusArticles(Collections.emptyList());
 
 		if (EngineParameters.getMeshCountMap() == null) {
-			List<MeshTerm> meshTerms = meshTermService.findAll();
+//			List<MeshTerm> meshTerms = meshTermService.findAll();
+			List<MeshTerm> meshTerms = new ArrayList<>();
 			slf4jLogger.info("Found " + meshTerms.size() + " mesh terms");
 			Map<String, Long> meshCountMap = new HashMap<>();
 			for (MeshTerm meshTerm : meshTerms) {
@@ -425,12 +463,12 @@ public class ReCiterController {
 			
 		}
 
-		GoldStandard goldStandard = goldStandardService.findByUid(uid);
-		if (goldStandard == null) {
-			parameters.setKnownPmids(new ArrayList<>());
-		} else {
-			parameters.setKnownPmids(goldStandard.getKnownPmids());
-		}
+//		GoldStandard goldStandard = goldStandardService.findByUid(uid);
+//		if (goldStandard == null) {
+//			parameters.setKnownPmids(new ArrayList<>());
+//		} else {
+//			parameters.setKnownPmids(goldStandard.getKnownPmids());
+//		}
 		return parameters;
 	}
 }

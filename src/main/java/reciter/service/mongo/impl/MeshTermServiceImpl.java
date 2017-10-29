@@ -24,8 +24,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import reciter.database.dynamodb.model.MeshTerm;
-import reciter.database.dynamodb.repository.MeshTermRepository;
+import reciter.database.mongo.model.MeshTerm;
+import reciter.database.mongo.repository.MeshTermRepository;
 import reciter.service.MeshTermService;
 
 @Service("meshTermService")
@@ -33,12 +33,12 @@ public class MeshTermServiceImpl implements MeshTermService {
 
 	@Autowired
 	private MeshTermRepository meshTermRepository;
-	
+
 	@Override
-	public void save(List<MeshTerm> meshTerms) {
-		meshTermRepository.save(meshTerms);
+	public void save(List<reciter.database.dynamodb.model.MeshTerm> meshTerms) {
+
 	}
-	
+
 	@Override
 	public List<MeshTerm> findAll() {
 		List<MeshTerm> meshTerms = new ArrayList<>();
