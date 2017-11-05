@@ -44,6 +44,7 @@ import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.MeshTerm;
+import reciter.database.mongo.model.InstitutionAfid;
 import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
@@ -62,6 +63,7 @@ import reciter.model.scopus.ScopusArticle;
 import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
+import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
 import reciter.service.ldap.LdapIdentityService;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
@@ -127,6 +129,9 @@ public class ReCiterController {
 	@Autowired
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 
+	@Autowired
+	private IDynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
+
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
 
@@ -190,7 +195,7 @@ public class ReCiterController {
 	
 	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Integer> retrieveAfids(String institution) {
+	public List<String> retrieveAfids(String institution) {
 		return institutionAfidService.getAfidByInstitution(institution);
 	}
 	
@@ -380,6 +385,30 @@ public class ReCiterController {
 		System.out.println("finished saving dynamodb");
 		return meshTermsToSave.size();
 	}
+
+	@RequestMapping(value = "/reciter/institutionafids", method = RequestMethod.GET)
+	@ResponseBody
+	public int institutionAfids() {
+		List<reciter.database.mongo.model.InstitutionAfid> mongoInstitutionAfids = institutionAfidService.findAll();
+		Map<String, List<String>> mapping = new HashMap<>();
+		for (reciter.database.mongo.model.InstitutionAfid institutionAfid : mongoInstitutionAfids) {
+			if (!mapping.containsKey(institutionAfid.getInstitution())) {
+				List<String> afids = new ArrayList<>();
+				afids.add(institutionAfid.getAfid());
+				mapping.put(institutionAfid.getInstitution(), afids);
+			} else {
+				mapping.get(institutionAfid.getInstitution()).add(institutionAfid.getAfid());
+			}
+		}
+		List<reciter.database.dynamodb.model.InstitutionAfid> toSave = new ArrayList<>();
+		for (Map.Entry<String, List<String>> entry : mapping.entrySet()) {
+			reciter.database.dynamodb.model.InstitutionAfid institutionAfidToSave =
+					new reciter.database.dynamodb.model.InstitutionAfid(entry.getKey(), entry.getValue());
+			toSave.add(institutionAfidToSave);
+		}
+		dynamoDbInstitutionAfidService.save(toSave);
+		return toSave.size();
+	}
 	
 	@RequestMapping(value = "/reciter/analysis/web/by/uid", method = RequestMethod.GET)
 	@ResponseBody
@@ -395,6 +424,12 @@ public class ReCiterController {
 		Analysis analysis = engineOutput.getAnalysis();
 		List<ReCiterCluster> reCiterClusters = engineOutput.getReCiterClusters();
 		return ReCiterAnalysisTranslator.convert(uid, parameters.getKnownPmids(), analysis, reCiterClusters);
+	}
+
+	@RequestMapping(value = "/reciter/institutionafid", method = RequestMethod.GET)
+	@ResponseBody
+	public List<InstitutionAfid> institutionAfid() {
+		return institutionAfidService.findAll();
 	}
 
 	private EngineParameters initializeEngineParameters(String uid) {

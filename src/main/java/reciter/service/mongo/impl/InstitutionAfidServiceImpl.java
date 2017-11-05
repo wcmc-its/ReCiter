@@ -17,13 +17,18 @@ public class InstitutionAfidServiceImpl implements InstitutionAfidService {
 	private InstitutionAfidRepository institutionAfidRepository;
 	
 	@Override
-	public List<Integer> getAfidByInstitution(String institution) {
+	public List<String> getAfidByInstitution(String institution) {
 		System.out.println("institution: " + institution);
 		List<InstitutionAfid> institutionAfids = institutionAfidRepository.findByInstitution(institution);
-		List<Integer> afids = new ArrayList<>(institutionAfids.size());
+		List<String> afids = new ArrayList<>(institutionAfids.size());
 		for (InstitutionAfid institutionAfid : institutionAfids) {
 			afids.add(institutionAfid.getAfid());
 		}
 		return afids;
+	}
+
+	@Override
+	public List<InstitutionAfid> findAll() {
+		return institutionAfidRepository.findAll();
 	}
 }

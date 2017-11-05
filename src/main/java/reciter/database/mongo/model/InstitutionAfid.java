@@ -11,7 +11,7 @@ public class InstitutionAfid {
 	private ObjectId id;
 	
 	private String institution;
-	private int afid;
+	private String afid;
 	
 	public ObjectId getId() {
 		return id;
@@ -25,10 +25,10 @@ public class InstitutionAfid {
 	public void setInstitution(String institution) {
 		this.institution = institution;
 	}
-	public int getAfid() {
+	public String getAfid() {
 		return afid;
 	}
-	public void setAfid(int afid) {
+	public void setAfid(String afid) {
 		this.afid = afid;
 	}
 	
