@@ -11,6 +11,8 @@ public class ESearchPmid {
     private String retrievalStrategyName;
     private Date retrievalDate;
 
+    public ESearchPmid() {}
+
     public ESearchPmid(List<Long> pmids, String retrievalStrategyName, Date retrievalDate) {
         this.pmids = pmids;
         this.retrievalStrategyName = retrievalStrategyName;

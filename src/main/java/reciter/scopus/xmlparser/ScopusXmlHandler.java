@@ -71,7 +71,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 //	private String nameVariant;
 	private String affiliationCity;
 	private String affiliationCountry;
-	private Map<Integer, Affiliation> affiliations = new HashMap<Integer, Affiliation>();
+	private Map<Integer, Affiliation> affiliations = new HashMap<>();
 
 	private long pubmedId;
 	private String doi;
@@ -82,10 +82,10 @@ public class ScopusXmlHandler extends DefaultHandler {
 	private String surname;
 	private String givenName;
 	private String initials;
-	private Set<Integer> afids;
-	private Map<Long, Author> authors = new HashMap<Long, Author>();
+	private List<Integer> afids;
+	private Map<Long, Author> authors = new HashMap<>();
 	
-	private List<ScopusArticle> scopusArticles = new ArrayList<ScopusArticle>();
+	private List<ScopusArticle> scopusArticles = new ArrayList<>();
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -125,7 +125,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("author")) {
 			bAuthor = true;
 			seq = Integer.parseInt(attributes.getValue("seq"));
-			afids = new HashSet<Integer>();
+			afids = new ArrayList<>();
 		}
 		if (bAuthor) {
 			if (qName.equalsIgnoreCase("authid")) {

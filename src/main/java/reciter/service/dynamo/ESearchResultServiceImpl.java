@@ -20,8 +20,8 @@ public class ESearchResultServiceImpl implements ESearchResultService {
     }
 
     @Override
-    public List<ESearchResult> findByUid(String uid) {
-        return null;
+    public ESearchResult findByUid(String uid) {
+        return eSearchResultRepository.findOne(uid);
     }
 
     @Override

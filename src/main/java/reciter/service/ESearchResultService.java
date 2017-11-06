@@ -26,7 +26,7 @@ public interface ESearchResultService {
 
 	void save(ESearchResult eSearchResult);
 
-	List<ESearchResult> findByUid(String uid);
+	ESearchResult findByUid(String uid);
 
 	boolean pushESearchResult(ESearchResult eSearchResult);
 

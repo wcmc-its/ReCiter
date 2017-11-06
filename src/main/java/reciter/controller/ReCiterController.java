@@ -43,9 +43,10 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.database.dynamodb.model.MeshTerm;
-import reciter.database.mongo.model.InstitutionAfid;
-import reciter.database.mongo.model.PubMedArticleFeature;
+//import reciter.database.mongo.model.InstitutionAfid;
+//import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
@@ -108,8 +109,8 @@ public class ReCiterController {
 	@Autowired
 	private PubMedArticleFeatureService pubMedArticleFeatureService;
 
-	@Autowired
-	private GoldStandardService goldStandardService;
+//	@Autowired
+//	private GoldStandardService goldStandardService;
 
 	@Autowired
 	private AnalysisService analysisService;
@@ -120,8 +121,8 @@ public class ReCiterController {
 	@Autowired
 	private StrategyParameters strategyParameters;
 	
-	@Autowired
-	private InstitutionAfidService institutionAfidService;
+//	@Autowired
+//	private InstitutionAfidService institutionAfidService;
 	
 	@Autowired
 	private LdapIdentityService ldapIdentityService;
@@ -196,7 +197,7 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
 	@ResponseBody
 	public List<String> retrieveAfids(String institution) {
-		return institutionAfidService.getAfidByInstitution(institution);
+		return dynamoDbInstitutionAfidService.findByInstitution(institution).getAfids();
 	}
 	
 //	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
@@ -219,27 +220,27 @@ public class ReCiterController {
 
 	@RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseEntity<reciter.database.mongo.model.GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
+	public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
-		reciter.database.mongo.model.GoldStandard goldStandard = goldStandardService.findByUid(uid);
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
 		return ResponseEntity.ok(goldStandard);
 	}
 
-	@RequestMapping(value = "/reciter/goldstandard/migrate", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseEntity<String> migrateGoldStandard() {
-		long startTime = System.currentTimeMillis();
-		slf4jLogger.info("Start time is: " + startTime);
-		List<Identity> identities = identityService.findAll();
-		for (Identity identity : identities) {
-			reciter.database.mongo.model.GoldStandard goldStandard = goldStandardService.findByUid(identity.getUid());
-			slf4jLogger.info("Found goldstand:" + identity.getUid());
-			dynamoDbGoldStandardService.save(new GoldStandard(identity.getUid(), goldStandard.getKnownPmids(), goldStandard.getRejectedPmids()));
-			slf4jLogger.info("Saved goldstandard:" + identity.getUid());
-		}
-		return ResponseEntity.ok("Done");
-	}
+//	@RequestMapping(value = "/reciter/goldstandard/migrate", method = RequestMethod.GET)
+//	@ResponseBody
+//	public ResponseEntity<String> migrateGoldStandard() {
+//		long startTime = System.currentTimeMillis();
+//		slf4jLogger.info("Start time is: " + startTime);
+//		List<Identity> identities = identityService.findAll();
+//		for (Identity identity : identities) {
+//			reciter.database.mongo.model.GoldStandard goldStandard = goldStandardService.findByUid(identity.getUid());
+//			slf4jLogger.info("Found goldstand:" + identity.getUid());
+//			dynamoDbGoldStandardService.save(new GoldStandard(identity.getUid(), goldStandard.getKnownPmids(), goldStandard.getRejectedPmids()));
+//			slf4jLogger.info("Saved goldstandard:" + identity.getUid());
+//		}
+//		return ResponseEntity.ok("Done");
+//	}
 
 	@RequestMapping(value = "/reciter/scopusarticle/{pmid}", method = RequestMethod.GET)
 	@ResponseBody
@@ -323,21 +324,21 @@ public class ReCiterController {
 		return "Success";
 	}
 
-	@RequestMapping(value = "/reciter/all/feature/", method = RequestMethod.GET)
-	@ResponseBody
-	public String generateAllFeatures() {
-		for (String uid : Uids.uids) {
-			runAnalysis(uid);
-			EngineParameters parameters = initializeEngineParameters(uid);
-			Engine engine = new ReCiterEngine();
-			List<Feature> features = engine.generateFeature(parameters);
-			PubMedArticleFeature articleFeatures = new PubMedArticleFeature();
-			articleFeatures.setUid(uid);
-			articleFeatures.setFeatures(features);
-			pubMedArticleFeatureService.save(articleFeatures);
-		}
-		return "Success";
-	}
+//	@RequestMapping(value = "/reciter/all/feature/", method = RequestMethod.GET)
+//	@ResponseBody
+//	public String generateAllFeatures() {
+//		for (String uid : Uids.uids) {
+//			runAnalysis(uid);
+//			EngineParameters parameters = initializeEngineParameters(uid);
+//			Engine engine = new ReCiterEngine();
+//			List<Feature> features = engine.generateFeature(parameters);
+//			PubMedArticleFeature articleFeatures = new PubMedArticleFeature();
+//			articleFeatures.setUid(uid);
+//			articleFeatures.setFeatures(features);
+//			pubMedArticleFeatureService.save(articleFeatures);
+//		}
+//		return "Success";
+//	}
 	
 	@RequestMapping(value = "/reciter/feature/by/uid", method = RequestMethod.GET)
 	@ResponseBody
@@ -356,7 +357,7 @@ public class ReCiterController {
 		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
 
 		slf4jLogger.info(engineOutput.getAnalysis().toString());
-		analysisService.save(engineOutput.getAnalysis(), uid);
+//		analysisService.save(engineOutput.getAnalysis(), uid);
 		// TODO uncomment
 //		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
 
@@ -386,29 +387,29 @@ public class ReCiterController {
 		return meshTermsToSave.size();
 	}
 
-	@RequestMapping(value = "/reciter/institutionafids", method = RequestMethod.GET)
-	@ResponseBody
-	public int institutionAfids() {
-		List<reciter.database.mongo.model.InstitutionAfid> mongoInstitutionAfids = institutionAfidService.findAll();
-		Map<String, List<String>> mapping = new HashMap<>();
-		for (reciter.database.mongo.model.InstitutionAfid institutionAfid : mongoInstitutionAfids) {
-			if (!mapping.containsKey(institutionAfid.getInstitution())) {
-				List<String> afids = new ArrayList<>();
-				afids.add(institutionAfid.getAfid());
-				mapping.put(institutionAfid.getInstitution(), afids);
-			} else {
-				mapping.get(institutionAfid.getInstitution()).add(institutionAfid.getAfid());
-			}
-		}
-		List<reciter.database.dynamodb.model.InstitutionAfid> toSave = new ArrayList<>();
-		for (Map.Entry<String, List<String>> entry : mapping.entrySet()) {
-			reciter.database.dynamodb.model.InstitutionAfid institutionAfidToSave =
-					new reciter.database.dynamodb.model.InstitutionAfid(entry.getKey(), entry.getValue());
-			toSave.add(institutionAfidToSave);
-		}
-		dynamoDbInstitutionAfidService.save(toSave);
-		return toSave.size();
-	}
+//	@RequestMapping(value = "/reciter/institutionafids", method = RequestMethod.GET)
+//	@ResponseBody
+//	public int institutionAfids() {
+//		List<reciter.database.mongo.model.InstitutionAfid> mongoInstitutionAfids = institutionAfidService.findAll();
+//		Map<String, List<String>> mapping = new HashMap<>();
+//		for (reciter.database.mongo.model.InstitutionAfid institutionAfid : mongoInstitutionAfids) {
+//			if (!mapping.containsKey(institutionAfid.getInstitution())) {
+//				List<String> afids = new ArrayList<>();
+//				afids.add(institutionAfid.getAfid());
+//				mapping.put(institutionAfid.getInstitution(), afids);
+//			} else {
+//				mapping.get(institutionAfid.getInstitution()).add(institutionAfid.getAfid());
+//			}
+//		}
+//		List<reciter.database.dynamodb.model.InstitutionAfid> toSave = new ArrayList<>();
+//		for (Map.Entry<String, List<String>> entry : mapping.entrySet()) {
+//			reciter.database.dynamodb.model.InstitutionAfid institutionAfidToSave =
+//					new reciter.database.dynamodb.model.InstitutionAfid(entry.getKey(), entry.getValue());
+//			toSave.add(institutionAfidToSave);
+//		}
+//		dynamoDbInstitutionAfidService.save(toSave);
+//		return toSave.size();
+//	}
 	
 	@RequestMapping(value = "/reciter/analysis/web/by/uid", method = RequestMethod.GET)
 	@ResponseBody
@@ -426,22 +427,17 @@ public class ReCiterController {
 		return ReCiterAnalysisTranslator.convert(uid, parameters.getKnownPmids(), analysis, reCiterClusters);
 	}
 
-	@RequestMapping(value = "/reciter/institutionafid", method = RequestMethod.GET)
-	@ResponseBody
-	public List<InstitutionAfid> institutionAfid() {
-		return institutionAfidService.findAll();
-	}
-
 	private EngineParameters initializeEngineParameters(String uid) {
 		// find identity
 		Identity identity = identityService.findByUid(uid);
 
 		// find search results for this identity
-		List<ESearchResult> eSearchResults = eSearchResultService.findByUid(uid);
+		ESearchResult eSearchResults = eSearchResultService.findByUid(uid);
+		slf4jLogger.info("eSearchResults size {}", eSearchResults);
 		Set<Long> pmids = new HashSet<>();
-		for (ESearchResult eSearchResult : eSearchResults) {
-			pmids.addAll(eSearchResult.getESearchPmid().getPmids());
-		}
+//		for (ESearchResult eSearchResult : eSearchResults) {
+			pmids.addAll(eSearchResults.getESearchPmid().getPmids());
+//		}
 
 		// create a list of pmids to pass to search
 		List<Long> pmidList = new ArrayList<>(pmids);
