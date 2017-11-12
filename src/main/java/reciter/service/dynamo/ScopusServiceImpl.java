@@ -50,4 +50,9 @@ public class ScopusServiceImpl implements ScopusService {
         }
         return scopusArticles;
     }
+
+    @Override
+    public ScopusArticle findByPmid(String pmid) {
+        return scopusRepository.findOne(pmid).getScopusArticle();
+    }
 }

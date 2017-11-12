@@ -64,32 +64,24 @@ public class AuthorName {
 
 		if (firstName == null) {
 			this.firstName = "";
+			this.firstInitial = "";
 		} else {
 			this.firstName = capitalize(firstName.trim().toLowerCase());
+			this.firstInitial = this.firstName.substring(0, 1);
 		}
 
 		if (middleName == null) {
 			this.middleName = "";
+			this.middleInitial = "";
 		} else {
-			this.middleName =capitalize(middleName.trim().toLowerCase());
+			this.middleName = capitalize(middleName.trim().toLowerCase());
+			this.middleInitial = this.middleName.substring(0, 1);
 		}
 
 		if (lastName == null) {
 			this.lastName = "";
 		} else {
 			this.lastName = capitalize(lastName.trim().toLowerCase());
-		}
-
-		if (firstName == null) {
-			this.firstInitial = "";
-		} else {
-			firstInitial = this.firstName.substring(0, 1);
-		}
-
-		if (middleName == null ) {
-			middleInitial = "";
-		} else {
-			middleInitial = this.middleName.substring(0, 1);
 		}
 	}
 
@@ -118,11 +110,11 @@ public class AuthorName {
 	}
 
 	public boolean firstInitialLastNameMatch(AuthorName name) {
-		return name.getFirstInitial().equals(firstInitial) && name.getLastName().equals(lastName);
+		return firstInitial.equals(name.getFirstInitial()) && lastName.equals(name.getLastName());
 	}
-	
+
 	public boolean firstInitialMiddleInitialLastNameMatch(AuthorName name) {
-		return name.getFirstInitial().equals(firstInitial) && name.getMiddleInitial().equals(middleInitial) && name.getLastName().equals(lastName);
+		return firstInitial.equals(name.getFirstInitial()) && middleInitial.equals(name.getMiddleInitial()) && lastName.equals(name.getLastName());
 	}
 
 //	public double nameSimilarityScore(AuthorName name) {
@@ -185,9 +177,13 @@ public class AuthorName {
 	}
 
 	public boolean isFullNameMatch(AuthorName name) {
-		return firstName.equals(name.getFirstName()) &&
-				middleName.equals(name.getMiddleName()) &&
-				lastName.equals(name.getLastName());
+		if (lastName != null && firstName != null && middleName != null) {
+			return firstName.equals(name.getFirstName()) &&
+					middleName.equals(name.getMiddleName()) &&
+					lastName.equals(name.getLastName());
+		} else {
+			return false;
+		}
 	}
 
 	public boolean checkFirstNameAndMiddleNameNotEmpty() {

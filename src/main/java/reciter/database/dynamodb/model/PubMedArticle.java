@@ -6,18 +6,18 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
 @DynamoDBTable(tableName = "PubMedArticle")
 public class PubMedArticle {
-    private long pmid;
+    private Long pmid;
     private reciter.model.pubmed.PubMedArticle pubMedArticle;
 
     public PubMedArticle() {}
 
-    public PubMedArticle(long pmid, reciter.model.pubmed.PubMedArticle pubMedArticle) {
+    public PubMedArticle(Long pmid, reciter.model.pubmed.PubMedArticle pubMedArticle) {
         this.pmid = pmid;
         this.pubMedArticle = pubMedArticle;
     }
 
     @DynamoDBHashKey(attributeName = "pmid")
-    public long getPmid() {
+    public Long getPmid() {
         return pmid;
     }
 
@@ -26,11 +26,11 @@ public class PubMedArticle {
         return pubMedArticle;
     }
 
-    public void setPmid(long pmid) {
+    public void setPmid(Long pmid) {
         this.pmid = pmid;
     }
 
-    public void setPubMedArticle(reciter.model.pubmed.PubMedArticle pubMedArticle) {
+    public void setPubmedArticle(reciter.model.pubmed.PubMedArticle pubMedArticle) {
         this.pubMedArticle = pubMedArticle;
     }
 }

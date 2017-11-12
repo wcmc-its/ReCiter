@@ -133,7 +133,7 @@ public class ArticleTranslator {
 				ReCiterMeshHeadingDescriptorName reCiterMeshHeadingDescriptorName = new ReCiterMeshHeadingDescriptorName();
 				reCiterMeshHeadingDescriptorName.setDescriptorName(descriptorNameString);
 				ReCiterCitationYNEnum reCiterCitationYNEnum;
-				if (MedlineCitationYNEnum.Y == meshMajorTopicYN) {
+				if ("Y".equals(meshMajorTopicYN.getVal())) {
 					reCiterCitationYNEnum = ReCiterCitationYNEnum.Y;
 				} else {
 					reCiterCitationYNEnum = ReCiterCitationYNEnum.N;
@@ -147,7 +147,7 @@ public class ArticleTranslator {
 					reCiterMeshHeadingQualifierName.setQualifierName(medlineCitationMeshHeadingQualifierName.getQualifiername());
 					
 					ReCiterCitationYNEnum e;
-					if (medlineCitationMeshHeadingQualifierName.getMajortopicyn() == MedlineCitationYNEnum.Y) {
+					if ("Y".equals(medlineCitationMeshHeadingQualifierName.getMajortopicyn())) {
 						e = ReCiterCitationYNEnum.Y;
 					} else {
 						e = ReCiterCitationYNEnum.N;
@@ -172,11 +172,13 @@ public class ArticleTranslator {
 		// Use PubMed Article date as the publication date (pubdate)
 		// TODO optimize date (single date across ReCiter files) (Tech Debt)
 		MedlineCitationDate medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getArticledate();
-		LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
-				Integer.parseInt(medlineCitationDate.getMonth()),
-				Integer.parseInt(medlineCitationDate.getDay()));
-		Date date = localDate.toDate();
-		reCiterArticle.setPubDate(date);
+		if (medlineCitationDate != null && medlineCitationDate.getYear() != null && medlineCitationDate.getMonth() != null && medlineCitationDate.getDay() != null) {
+			LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
+					Integer.parseInt(medlineCitationDate.getMonth()),
+					Integer.parseInt(medlineCitationDate.getDay()));
+			Date date = localDate.toDate();
+			reCiterArticle.setPubDate(date);
+		}
 		
 		// Update PubMed's authors' first name from Scopus Article. Logic is as follows:
 		// 1. First compare last name if match:

@@ -5,11 +5,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @DynamoDBTable(tableName = "InstitutionAfid")
 @AllArgsConstructor
+@NoArgsConstructor
 @DynamoDBDocument
 public class InstitutionAfid {
     private String institution;

@@ -6,11 +6,17 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
 
 @DynamoDBTable(tableName = "ScopusArticle")
-@AllArgsConstructor
 public class ScopusArticle {
 
     private String id;
     private reciter.model.scopus.ScopusArticle scopusArticle;
+
+    public ScopusArticle() {}
+
+    public ScopusArticle(String id, reciter.model.scopus.ScopusArticle scopusArticle) {
+        this.id = id;
+        this.scopusArticle = scopusArticle;
+    }
 
     @DynamoDBHashKey(attributeName = "id")
     public String getId() {
@@ -22,7 +28,7 @@ public class ScopusArticle {
         return scopusArticle;
     }
 
-    public void setPmid(String id) {
+    public void setId(String id) {
         this.id = id;
     }
 

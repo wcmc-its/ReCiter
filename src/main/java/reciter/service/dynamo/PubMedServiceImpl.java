@@ -41,7 +41,7 @@ public class PubMedServiceImpl implements PubMedService {
     }
 
     @Override
-    public PubMedArticle findByPmid(long pmid) {
+    public PubMedArticle findByPmid(Long pmid) {
         return pubMedRepository.findOne(pmid).getPubmedArticle();
     }
 }

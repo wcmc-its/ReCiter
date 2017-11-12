@@ -389,7 +389,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 							// check middle name.
 							// Case: False Positive List: [2]: [12814220, 21740463] for Anna Bender.
 							// Remove this article because middle name exist in article, but not in db identity.
-							if (middleName.length() > 0 && targetAuthorMiddleName.length() == 0) {
+							if (middleName != null && middleName.length() > 0 && targetAuthorMiddleName != null && targetAuthorMiddleName.length() == 0) {
 								boolean foundEqualMiddleInitialInAlternateNames = false;
 								for (AuthorName alternateNames : identity.getAlternateNames()) {
 									// need to check for alternate names as well.
@@ -410,7 +410,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 							// case: pmid=11467038, uid = ajmarcus
 							// Middle name doesn't match. Mark for removal.
-							if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
+							if (middleName != null && middleName.length() > 0 && targetAuthorMiddleName != null && targetAuthorMiddleName.length() > 0) {
 								String middleInitial = author.getAuthorName().getMiddleInitial();
 								String targetAuthorMiddleInitial = identity.getPrimaryName().getMiddleInitial();
 

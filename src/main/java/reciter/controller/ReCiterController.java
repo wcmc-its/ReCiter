@@ -410,7 +410,19 @@ public class ReCiterController {
 //		dynamoDbInstitutionAfidService.save(toSave);
 //		return toSave.size();
 //	}
-	
+
+	@RequestMapping(value = "/reciter/pubmed/pmid", method = RequestMethod.GET)
+	@ResponseBody
+	public PubMedArticle pubMedArticle(@RequestParam(value="pmid") Long pmid) {
+		return pubMedService.findByPmid(pmid);
+	}
+
+	@RequestMapping(value = "/reciter/scopus/id", method = RequestMethod.GET)
+	@ResponseBody
+	public ScopusArticle scopusArticle(@RequestParam(value="id") String id) {
+		return scopusService.findByPmid(id);
+	}
+
 	@RequestMapping(value = "/reciter/analysis/web/by/uid", method = RequestMethod.GET)
 	@ResponseBody
 	public ReCiterAnalysis runReCiterAnalysis(@RequestParam(value="uid") String uid) {
@@ -494,12 +506,12 @@ public class ReCiterController {
 			
 		}
 
-//		GoldStandard goldStandard = goldStandardService.findByUid(uid);
-//		if (goldStandard == null) {
-//			parameters.setKnownPmids(new ArrayList<>());
-//		} else {
-//			parameters.setKnownPmids(goldStandard.getKnownPmids());
-//		}
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
+		if (goldStandard == null) {
+			parameters.setKnownPmids(new ArrayList<>());
+		} else {
+			parameters.setKnownPmids(goldStandard.getKnownPmids());
+		}
 		return parameters;
 	}
 }

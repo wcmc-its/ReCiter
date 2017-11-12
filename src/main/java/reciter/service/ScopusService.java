@@ -28,4 +28,6 @@ public interface ScopusService {
 	void save(Collection<ScopusArticle> pubMedArticles);
 	
 	List<ScopusArticle> findByPmids(List<String> pmids);
+
+	ScopusArticle findByPmid(String pmid);
 }
