@@ -247,6 +247,17 @@ public class ArticleTranslator {
 			}
 			reCiterArticle.setCommentsCorrectionsPmids(commentsCorrectionsPmids);
 		}
+
+		// Volume
+		reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
+
+		// issue
+		reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
+
+		// pages
+
+		// pmcid
+
 		return reCiterArticle;
 	}
 }

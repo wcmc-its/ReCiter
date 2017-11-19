@@ -5,9 +5,8 @@ import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.engine.analysis.evidence.PositiveEvidence;
-import reciter.engine.erroranalysis.ReCiterAnalysis;
+import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
@@ -38,7 +37,8 @@ public class ReCiterFeatureGenerator {
     public ReCiterFeature computeFeatures(String mode,
                                           Clusterer reCiterClusterer,
                                           ClusterSelector clusterSelector,
-                                          List<Long> goldStandardPmids) {
+                                          List<Long> goldStandardPmids,
+                                          Analysis analysis) {
         Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
         Set<Long> selection = clusterSelector.getSelectedClusterIds();
         Identity identity = reCiterClusterer.getIdentity();
@@ -57,10 +57,13 @@ public class ReCiterFeatureGenerator {
         }
 
         // overall accuracy
+        reCiterFeature.setOverallAccuracy((analysis.getPrecision() + analysis.getRecall()) / 2);
 
         // precision
+        reCiterFeature.setPrecision(analysis.getPrecision());
 
         // recall
+        reCiterFeature.setRecall(analysis.getRecall());
 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
@@ -117,11 +120,25 @@ public class ReCiterFeatureGenerator {
             // article title
             reCiterArticleFeature.setArticleTitle(reCiterArticle.getArticleTitle());
 
+            // volume
+            reCiterArticleFeature.setVolume(reCiterArticle.getVolume());
+
+            // issue
+            reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
+
+            // pages
+
+            // pmcid
+
+            // doi
+
             // author list
             List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
+            int i = 1;
             for (ReCiterAuthor reCiterArticleAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
                 ReCiterArticleAuthorFeature reCiterArticleAuthorFeature = new ReCiterArticleAuthorFeature();
                 // rank
+                reCiterArticleAuthorFeature.setRank(i++);
 
                 // lastname
                 reCiterArticleAuthorFeature.setLastName(reCiterArticleAuthor.getAuthorName().getLastName());
@@ -166,6 +183,7 @@ public class ReCiterFeatureGenerator {
 
             // Clustering Evidence
             positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
+            reCiterArticleFeatures.add(reCiterArticleFeature);
         }
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures);
 

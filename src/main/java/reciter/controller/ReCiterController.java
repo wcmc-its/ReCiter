@@ -492,8 +492,8 @@ public class ReCiterController {
 		parameters.setScopusArticles(Collections.emptyList());
 
 		if (EngineParameters.getMeshCountMap() == null) {
-//			List<MeshTerm> meshTerms = meshTermService.findAll();
-			List<MeshTerm> meshTerms = new ArrayList<>();
+			List<MeshTerm> meshTerms = dynamoDbMeshTermService.findAll();
+//			List<MeshTerm> meshTerms = new ArrayList<>();
 			slf4jLogger.info("Found " + meshTerms.size() + " mesh terms");
 			Map<String, Long> meshCountMap = new HashMap<>();
 			for (MeshTerm meshTerm : meshTerms) {

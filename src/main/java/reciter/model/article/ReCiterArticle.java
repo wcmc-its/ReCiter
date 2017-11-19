@@ -84,6 +84,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
     /**
      * Grant List.
+
      */
     private List<ReCiterArticleGrant> grantList;
     private List<ReCiterArticleGrant> matchingGrantList = new ArrayList<>(0);
@@ -152,6 +153,25 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private GrantEvidence grantEvidence;
 
     private List<RelationshipEvidence> relationshipEvidences;
+
+    private String volume;
+    private String issue;
+
+    public String getIssue() {
+        return issue;
+    }
+
+    public void setIssue(String issue) {
+        this.issue = issue;
+    }
+
+    public String getVolume() {
+        return volume;
+    }
+
+    public void setVolume(String volume) {
+        this.volume = volume;
+    }
 
     public List<RelationshipEvidence> getRelationshipEvidences() {
         return relationshipEvidences;
