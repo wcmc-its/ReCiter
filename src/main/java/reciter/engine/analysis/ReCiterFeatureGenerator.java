@@ -143,9 +143,7 @@ public class ReCiterFeatureGenerator {
 
             // doi
             // <ArticleId IdType="doi">10.1093/jnci/djq238</ArticleId>
-            if (reCiterArticle.getScopusArticle() != null && reCiterArticle.getScopusArticle().getDoi() != null) {
-                reCiterArticleFeature.setDoi(reCiterArticle.getScopusArticle().getDoi());
-            }
+            reCiterArticleFeature.setDoi(reCiterArticle.getDoi());
 
             // author list
             List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();

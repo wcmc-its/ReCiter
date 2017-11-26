@@ -263,6 +263,11 @@ public class ArticleTranslator {
 		// pmcid
 		reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
 
+		// doi
+		if (pubmedArticle.getMedlinecitation().getArticle().getElocationid() != null) {
+			reCiterArticle.setDoi(pubmedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid());
+		}
+
 		return reCiterArticle;
 	}
 }

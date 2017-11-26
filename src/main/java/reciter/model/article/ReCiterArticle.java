@@ -158,6 +158,15 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private String issue;
     private String pmcid;
     private String pages;
+    private String doi;
+
+    public String getDoi() {
+        return doi;
+    }
+
+    public void setDoi(String doi) {
+        this.doi = doi;
+    }
 
     public String getPages() {
         return pages;
