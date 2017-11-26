@@ -106,6 +106,8 @@ public class ReCiterFeatureGenerator {
                             reCiterArticle.getDoctoralYearDiscrepancyScore() +
                             reCiterArticle.getInternshipAndResidenceStrategyScore() +
                             reCiterArticle.getNameStrategyScore()); // score
+
+            // true; false; null. make it Boolean
             reCiterArticleFeature.setUserAssertion(false); // userAssertion TODO get from DB
 
             // PubDate
@@ -126,11 +128,24 @@ public class ReCiterFeatureGenerator {
             // issue
             reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
 
+            /**
+             * <Pagination>
+             <MedlinePgn>1083-95</MedlinePgn> get the first one.
+             </Pagination>
+             */
             // pages
+            reCiterArticleFeature.setPages(reCiterArticle.getPages());
 
-            // pmcid
+            // pmcid (https://www.ncbi.nlm.nih.gov/pubmed/26174865?report=xml&format=text)
+            // Need to add parsing for <OtherID Source="NLM">PMC5009940 [Available on 01/01/17]</OtherID>
+            // Or check <ArticleId IdType="pmc">PMC2907408</ArticleId>
+            reCiterArticleFeature.setPmcid(reCiterArticle.getPmcid());
 
             // doi
+            // <ArticleId IdType="doi">10.1093/jnci/djq238</ArticleId>
+            if (reCiterArticle.getScopusArticle() != null && reCiterArticle.getScopusArticle().getDoi() != null) {
+                reCiterArticleFeature.setDoi(reCiterArticle.getScopusArticle().getDoi());
+            }
 
             // author list
             List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
@@ -160,6 +175,7 @@ public class ReCiterFeatureGenerator {
                 // affiliation Scopus id
 
                 // isTargetAuthor
+                // fill it out.
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }

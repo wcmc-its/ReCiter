@@ -184,9 +184,9 @@ public class ArticleTranslator {
 		// 1. First compare last name if match:
 		// 2. Check scopus's first name has length > 1, so no initials (b/c PubMed already contains this info.)
 		// 3. Check first initial is same.
-		// 4. Check that scopus author's first name is more "complete" than Pubmed'a author name.
+		// 4. Check that scopus author's first name is more "complete" than Pubmed's author name.
 		// 5. Only update if PubMed's author name is length = 1.
-		// 6. remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
+		// 6. Sanitization: remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
 
 		if (scopusArticle != null) {
 			for (Author scopusAuthor : scopusArticle.getAuthors()) {
@@ -255,8 +255,13 @@ public class ArticleTranslator {
 		reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
 
 		// pages
+		if (pubmedArticle.getMedlinecitation().getArticle().getPagination() != null &&
+				pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns() != null) {
+			reCiterArticle.setPages(pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns().get(0));
+		}
 
 		// pmcid
+		reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
 
 		return reCiterArticle;
 	}

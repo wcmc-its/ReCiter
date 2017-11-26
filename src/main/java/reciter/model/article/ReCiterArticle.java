@@ -156,6 +156,24 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
     private String volume;
     private String issue;
+    private String pmcid;
+    private String pages;
+
+    public String getPages() {
+        return pages;
+    }
+
+    public void setPages(String pages) {
+        this.pages = pages;
+    }
+
+    public String getPmcid() {
+        return pmcid;
+    }
+
+    public void setPmcid(String pmcid) {
+        this.pmcid = pmcid;
+    }
 
     public String getIssue() {
         return issue;
