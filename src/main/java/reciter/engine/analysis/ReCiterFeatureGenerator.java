@@ -7,6 +7,7 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
+import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.PositiveEvidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
@@ -203,6 +204,10 @@ public class ReCiterFeatureGenerator {
             positiveEvidence.setRelationshipEvidences(reCiterArticle.getRelationshipEvidence());
 
             // Education Year Evidence
+            EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
+            educationYearEvidence.setDiscrepancyDegreeYearBachelor(reCiterArticle.getBachelorsYearDiscrepancy());
+            educationYearEvidence.setDiscrepancyDegreeYearTerminal(reCiterArticle.getDoctoralYearDiscrepancy());
+            reCiterArticle.setEducationYearEvidence(educationYearEvidence);
             positiveEvidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
 
             // Clustering Evidence

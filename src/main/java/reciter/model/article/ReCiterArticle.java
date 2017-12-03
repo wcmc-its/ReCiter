@@ -117,9 +117,9 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private double internshipAndResidenceStrategyScore;
     private double bachelorsYearDiscrepancyScore;
     private double doctoralYearDiscrepancyScore;
-    private double bachelorsYearDiscrepancy;
+    private int bachelorsYearDiscrepancy;
     private String publishedPriorAcademicDegreeBachelors;
-    private double doctoralYearDiscrepancy;
+    private int doctoralYearDiscrepancy;
     private String publishedPriorAcademicDegreeDoctoral;
     private boolean isArticleTitleStartWithBracket;
     private double educationStrategyScore;
@@ -344,7 +344,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     /**
      * Default Completeness Score Calculation: ReCiterCompleteness
      *
-     * @param articleID
+     * @param articleId
      */
     public ReCiterArticle(long articleId) {
         this.articleId = articleId;
@@ -631,19 +631,19 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
         this.meshHeadings = meshHeadings;
     }
 
-    public double getBachelorsYearDiscrepancy() {
+    public int getBachelorsYearDiscrepancy() {
         return bachelorsYearDiscrepancy;
     }
 
-    public void setBachelorsYearDiscrepancy(double bachelorsYearDiscrepancy) {
+    public void setBachelorsYearDiscrepancy(int bachelorsYearDiscrepancy) {
         this.bachelorsYearDiscrepancy = bachelorsYearDiscrepancy;
     }
 
-    public double getDoctoralYearDiscrepancy() {
+    public int getDoctoralYearDiscrepancy() {
         return doctoralYearDiscrepancy;
     }
 
-    public void setDoctoralYearDiscrepancy(double doctoralYearDiscrepancy) {
+    public void setDoctoralYearDiscrepancy(int doctoralYearDiscrepancy) {
         this.doctoralYearDiscrepancy = doctoralYearDiscrepancy;
     }
 
