@@ -21,6 +21,7 @@ package reciter.algorithm.evidence.targetauthor.knownrelationship.strategy;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
@@ -29,6 +30,7 @@ import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.model.identity.KnownRelationship;
 
+@Slf4j
 public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
@@ -42,13 +44,15 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 				if (!author.getAuthorName().firstInitialLastNameMatch(identity.getPrimaryName())) {
 					for (KnownRelationship authorName : relationships) {
 						if (authorName.getName().isFullNameMatch(author.getAuthorName())) {
+							log.info("[known relationship match: " +  authorName + "] ");
 							reCiterArticle.getKnownRelationships().add(author);
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known relationship match: " +  authorName + "] ");
 							score += 1;
 							reCiterArticle.getKnownRelationship().add(authorName);
 							RelationshipEvidence relationshipEvidence = new RelationshipEvidence();
-							relationshipEvidence.setRelationshipName(authorName.getName().toString());
-//							relationshipEvidence.setRelationshipTypes();
+							relationshipEvidence.setRelationshipName(authorName.getName());
+							relationshipEvidence.setRelationshipType(authorName.getType());
+							relationshipEvidences.add(relationshipEvidence);
 						}
 					}
 				}

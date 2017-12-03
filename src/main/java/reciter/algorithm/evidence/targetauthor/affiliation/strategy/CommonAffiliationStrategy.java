@@ -40,13 +40,12 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 		if (containsWeillCornell(reCiterArticle)) {
 			reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[contains weill cornell and its variant:" + variantName + "]");
 			AffiliationEvidence affiliationEvidence = new AffiliationEvidence();
-			affiliationEvidence.setInstitutionalAffiliation(variantName);
-//			affiliationEvidence.setEmail();
-//			affiliationEvidence.setDepartment();
-//			affiliationEvidence.setArticleAffiliation();
-			reCiterArticle.setAffiliationEvidence(new AffiliationEvidence());
+			affiliationEvidence.setInstitutionalAffiliations(identity.getInstitutions());
+			affiliationEvidence.setEmails(identity.getEmails());
+			affiliationEvidence.setDepartments(identity.getDepartments());
+			affiliationEvidence.setArticleAffiliation(variantName);
+			reCiterArticle.setAffiliationEvidence(affiliationEvidence);
 			score = 1;
-
 		}
 		reCiterArticle.setAffiliationScore(score);
 		return score;

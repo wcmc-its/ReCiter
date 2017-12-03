@@ -1,6 +1,7 @@
 package reciter.engine.analysis;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Data
+@Slf4j
 public class ReCiterFeatureGenerator {
 
     private double precision;
@@ -180,7 +182,6 @@ public class ReCiterFeatureGenerator {
             reCiterArticleFeature.setReCiterArticleAuthorFeatures(reCiterArticleAuthorFeatures);
 
             PositiveEvidence positiveEvidence = new PositiveEvidence();
-            reCiterArticleFeature.setPositiveEvidence(positiveEvidence);
             // Affiliation Evidence
             positiveEvidence.setAffiliationEvidence(reCiterArticle.getAffiliationEvidence());
 
@@ -197,6 +198,10 @@ public class ReCiterFeatureGenerator {
 
             // Clustering Evidence
             positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
+
+            log.info("Positive:" + positiveEvidence);
+
+            reCiterArticleFeature.setPositiveEvidence(positiveEvidence);
             reCiterArticleFeatures.add(reCiterArticleFeature);
         }
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures);
