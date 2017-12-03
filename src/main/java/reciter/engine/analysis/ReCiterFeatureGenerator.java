@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
+import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
+import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.PositiveEvidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
@@ -175,7 +177,7 @@ public class ReCiterFeatureGenerator {
                 // affiliation Scopus id
 
                 // isTargetAuthor
-                // fill it out.
+
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }
@@ -186,6 +188,13 @@ public class ReCiterFeatureGenerator {
             positiveEvidence.setAffiliationEvidence(reCiterArticle.getAffiliationEvidence());
 
             // AuthorName Evidence (the most complete author name in the article)
+            AuthorNameEvidence authorNameEvidence = new AuthorNameEvidence();
+            ReCiterAuthor reCiterAuthor = RemoveByNameStrategy.getCorrectAuthor(reCiterArticle, identity);
+            if (reCiterAuthor != null) {
+                authorNameEvidence.setArticleAuthorName(reCiterAuthor.getAuthorName());
+                authorNameEvidence.setInstitutionalAuthorName(identity.getPrimaryName());
+            }
+            positiveEvidence.setAuthorNameEvidence(authorNameEvidence);
 
             // Grant Evidence
             positiveEvidence.setGrantEvidence(reCiterArticle.getGrantEvidence());

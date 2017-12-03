@@ -382,7 +382,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 
 		// Map of cluster ids to ReCiterArticle objects. Keep tracks of the new cluster ids that these
 		// ReCiterArticle objects will be placed at the end of the below loop.
-		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Long, List<ReCiterArticle>>();
+		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<>();
 
 		for (long clusterId : selectedClusterIds) {
 			for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
@@ -398,7 +398,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 							if (clusterIdToReCiterArticleList.containsKey(clusterId)) {
 								clusterIdToReCiterArticleList.get(clusterId).add(otherReCiterArticle);
 							} else {
-								List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
+								List<ReCiterArticle> articleList = new ArrayList<>();
 								articleList.add(otherReCiterArticle);
 								clusterIdToReCiterArticleList.put(clusterId, articleList);
 							}
@@ -429,7 +429,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			Map<Long, ReCiterCluster> clusters, 
 			Identity identity) {
 
-		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<Long, List<ReCiterArticle>>();
+		Map<Long, List<ReCiterArticle>> clusterIdToReCiterArticleList = new HashMap<>();
 
 		for (long clusterId : selectedClusterIds) {
 			for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {

@@ -41,7 +41,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 	private String firstNameFieldVar;
 	private String middleNameFieldVar;
 
-	private ReCiterAuthor getCorrectAuthor(ReCiterArticle reCiterArticle, Identity identity) {
+	// TODO move to a correct place. doesn't belong here.
+	public static ReCiterAuthor getCorrectAuthor(ReCiterArticle reCiterArticle, Identity identity) {
 		String targetAuthorLastName = identity.getPrimaryName().getLastName();
 		ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 		ReCiterAuthor correctAuthor = null;
