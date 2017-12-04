@@ -76,7 +76,8 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 * @return
 	 */
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
-
+		slf4jLogger.info("Executing mesh major strategy for reCiterArticle id {} and identity {}.",
+				reCiterArticle.getArticleId(), identity.getUid());
 		boolean isAuthorNameMatch = matchAuthorName(reCiterArticle, identity);
 		double score = 0;
 		if (isAuthorNameMatch) {
