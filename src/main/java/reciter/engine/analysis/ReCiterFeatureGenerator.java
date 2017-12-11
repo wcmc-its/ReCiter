@@ -83,9 +83,18 @@ public class ReCiterFeatureGenerator {
         int countSuggestedArticles = 0;
         List<ReCiterArticle> articleList = new ArrayList<>();
         for (long s : selection) {
+            long clusterOriginator = finalCluster.get(s).getClusterOriginator();
+            String journalTitle = null;
             for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
                 articleList.add(reCiterArticle);
+                if (reCiterArticle.getArticleId() == clusterOriginator) {
+                    journalTitle = reCiterArticle.getJournal().getJournalTitle();
+                }
                 countSuggestedArticles++;
+            }
+            // Add journals
+            for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
+                reCiterArticle.getClusteringEvidence().setJournal(journalTitle);
             }
         }
         reCiterFeature.setCountSuggestedArticles(countSuggestedArticles);
@@ -213,9 +222,8 @@ public class ReCiterFeatureGenerator {
             // Clustering Evidence
             positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
 
-            log.info("Positive:" + positiveEvidence);
-
             reCiterArticleFeature.setPositiveEvidence(positiveEvidence);
+
             reCiterArticleFeatures.add(reCiterArticleFeature);
         }
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures);
