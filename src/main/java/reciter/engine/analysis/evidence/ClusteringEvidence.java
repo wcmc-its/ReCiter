@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @ToString
 public class ClusteringEvidence {
-    private List<String> meshMajors = new ArrayList<>();
+    private List<String> meshMajors;
     private String journal;
     private List<Long> cites = new ArrayList<>();
     private List<Long> bibliographicCoupling = new ArrayList<>();

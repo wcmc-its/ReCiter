@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,23 +16,23 @@ import lombok.NoArgsConstructor;
 public class ESearchResult {
 
     private String uid;
-    private ESearchPmid eSearchPmid;
+    private List<ESearchPmid> eSearchPmids;
 
     @DynamoDBHashKey(attributeName = "uid")
     public String getUid() {
         return uid;
     }
 
-    @DynamoDBAttribute(attributeName = "esearchpmid")
-    public ESearchPmid getESearchPmid() {
-        return eSearchPmid;
+    @DynamoDBAttribute(attributeName = "esearchpmids")
+    public List<ESearchPmid> getESearchPmids() {
+        return eSearchPmids;
     }
 
     public void setUid(String uid) {
         this.uid = uid;
     }
 
-    public void setESearchPmid(ESearchPmid eSearchPmid) {
-        this.eSearchPmid = eSearchPmid;
+    public void setESearchPmids(List<ESearchPmid> eSearchPmids) {
+        this.eSearchPmids = eSearchPmids;
     }
 }

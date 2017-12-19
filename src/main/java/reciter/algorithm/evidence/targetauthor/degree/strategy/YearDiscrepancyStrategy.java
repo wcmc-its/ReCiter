@@ -94,6 +94,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 					difference = year - identity.getDegreeYear().getBachelorYear();
 					reCiterArticle.setBachelorsYearDiscrepancy(difference);
 					if (difference < 1) {
+						log.info("Bachelors: Identity degree and reCiter article {} journal issue publication date difference < 1. Remove from cluster.", reCiterArticle.getArticleId());
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 								+ " [Bachelors Degree Difference=" + difference + "]");
 						reCiterArticle.setBachelorsYearDiscrepancyScore(1);
@@ -109,6 +110,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 					reCiterArticle.setDoctoralYearDiscrepancy(difference);
 					if (doctoral < 1998) {
 						if (difference < -6) {
+							log.info("DOCTORAL 1998: Identity degree and reCiter article {} journal issue publication date difference < -6" +
+									". Remove from cluster.", reCiterArticle.getArticleId());
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 									+ " [Doctoral Degree Difference (<1988) =" + difference + "]");
 							reCiterArticle.setDoctoralYearDiscrepancyScore(1);
@@ -118,6 +121,9 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						}
 					} else {
 						if (difference < -13) {
+							log.info("DOCTORAL: Identity degree and reCiter article {} journal issue publication date difference < -13. " +
+									"Remove from cluster.", reCiterArticle.getArticleId());
+
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 									+ " [Doctoral Degree Difference (>=1998) =" + difference + "]");
 							reCiterArticle.setDoctoralYearDiscrepancyScore(1);

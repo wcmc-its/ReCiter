@@ -41,10 +41,7 @@ import org.springframework.web.bind.annotation.*;
 import reciter.Uids;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.util.ArticleTranslator;
-import reciter.database.dynamodb.model.ESearchResult;
-import reciter.database.dynamodb.model.GoldStandard;
-import reciter.database.dynamodb.model.InstitutionAfid;
-import reciter.database.dynamodb.model.MeshTerm;
+import reciter.database.dynamodb.model.*;
 //import reciter.database.mongo.model.InstitutionAfid;
 //import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
@@ -273,6 +270,7 @@ public class ReCiterController {
 		LocalDate startDate = initial.withDayOfMonth(1);
 		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
 		for (String uid : Uids.uids) {
+			slf4jLogger.info("Retrieving uid {}.", uid);
 			Identity identity = identityService.findByUid(uid);
 			identities.add(identity);
 		}
@@ -447,9 +445,9 @@ public class ReCiterController {
 		ESearchResult eSearchResults = eSearchResultService.findByUid(uid);
 		slf4jLogger.info("eSearchResults size {}", eSearchResults);
 		Set<Long> pmids = new HashSet<>();
-//		for (ESearchResult eSearchResult : eSearchResults) {
-			pmids.addAll(eSearchResults.getESearchPmid().getPmids());
-//		}
+		for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
+			pmids.addAll(eSearchPmid.getPmids());
+		}
 
 		// create a list of pmids to pass to search
 		List<Long> pmidList = new ArrayList<>(pmids);

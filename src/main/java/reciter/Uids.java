@@ -23,7 +23,7 @@ public class Uids {
 	public static String[] uids = {
 			"aas2004",
 			"ajo9001",
-			"als7001",
+//			"als7001", // not in DynamoDb need to import.
 			"amb9023",
 			"amm2014",
 			"arifkind",
@@ -32,7 +32,7 @@ public class Uids {
 			"bid2004",
 			"brs9035",
 			"bsg2001",
-			"clg9008",
+//			"clg9008",
 			"cnathan",
 			"dcm9006",
 			"ecp2002",

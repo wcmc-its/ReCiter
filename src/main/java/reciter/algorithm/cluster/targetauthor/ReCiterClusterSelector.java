@@ -301,7 +301,7 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 	 */
 	public void selectClusters(Map<Long, ReCiterCluster> clusters, Identity identity) {
 
-		Set<Long> selectedClusterIds = new HashSet<Long>();
+		Set<Long> selectedClusterIds = new HashSet<>();
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long clusterId = entry.getKey();
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();

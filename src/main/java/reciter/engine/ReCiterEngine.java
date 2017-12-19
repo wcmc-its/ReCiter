@@ -176,7 +176,7 @@ public class ReCiterEngine implements Engine {
 		
 		StrategyContext meshMajorStrategyContext = new MeshMajorStrategyContext(new MeshMajorStrategy(selectedArticles, EngineParameters.getMeshCountMap()));
 		clusterSelector.handleNonSelectedClusters((MeshMajorStrategyContext) meshMajorStrategyContext, clusterer.getClusters(), identity);
-		
+
 		StrategyContext bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		StrategyContext doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 		clusterSelector.handleStrategyContext(bachelorsYearDiscrepancyStrategyContext, clusterer.getClusters(), identity);

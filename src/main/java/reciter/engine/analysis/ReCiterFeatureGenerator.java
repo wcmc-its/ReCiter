@@ -162,6 +162,7 @@ public class ReCiterFeatureGenerator {
             // author list
             List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
             int i = 1;
+
             for (ReCiterAuthor reCiterArticleAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
                 ReCiterArticleAuthorFeature reCiterArticleAuthorFeature = new ReCiterArticleAuthorFeature();
                 // rank
@@ -187,7 +188,6 @@ public class ReCiterFeatureGenerator {
                 // affiliation Scopus id
 
                 // isTargetAuthor
-
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }
@@ -221,11 +221,12 @@ public class ReCiterFeatureGenerator {
 
             // Clustering Evidence
             positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
-
+            log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
             reCiterArticleFeature.setPositiveEvidence(positiveEvidence);
 
             reCiterArticleFeatures.add(reCiterArticleFeature);
         }
+        // rak2007
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures);
 
         return reCiterFeature;

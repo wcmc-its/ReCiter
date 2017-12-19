@@ -174,7 +174,7 @@ public class ArticleTranslator {
 		MedlineCitationDate medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getArticledate();
 		if (medlineCitationDate != null && medlineCitationDate.getYear() != null && medlineCitationDate.getMonth() != null && medlineCitationDate.getDay() != null) {
 			LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
-					Integer.parseInt(medlineCitationDate.getMonth()),
+					Integer.parseInt(medlineCitationDate.getMonth()), // convert JUL to 7
 					Integer.parseInt(medlineCitationDate.getDay()));
 			Date date = localDate.toDate();
 			reCiterArticle.setPubDate(date);
@@ -256,7 +256,8 @@ public class ArticleTranslator {
 
 		// pages
 		if (pubmedArticle.getMedlinecitation().getArticle().getPagination() != null &&
-				pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns() != null) {
+				pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns() != null &&
+				!pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns().isEmpty()) {
 			reCiterArticle.setPages(pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns().get(0));
 		}
 
