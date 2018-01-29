@@ -381,7 +381,6 @@ public class ReCiterController {
 			meshTermsToSave.add(meshTerm1);
 		}
 		dynamoDbMeshTermService.save(meshTermsToSave);
-		System.out.println("finished saving dynamodb");
 		return meshTermsToSave.size();
 	}
 
