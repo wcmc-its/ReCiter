@@ -71,7 +71,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 //	private String nameVariant;
 	private String affiliationCity;
 	private String affiliationCountry;
-	private Map<Integer, Affiliation> affiliations = new HashMap<Integer, Affiliation>();
+	private Map<Integer, Affiliation> affiliations = new HashMap<>();
 
 	private long pubmedId;
 	private String doi;
@@ -82,10 +82,10 @@ public class ScopusXmlHandler extends DefaultHandler {
 	private String surname;
 	private String givenName;
 	private String initials;
-	private Set<Integer> afids;
-	private Map<Long, Author> authors = new HashMap<Long, Author>();
+	private List<Integer> afids;
+	private Map<Long, Author> authors = new HashMap<>();
 	
-	private List<ScopusArticle> scopusArticles = new ArrayList<ScopusArticle>();
+	private List<ScopusArticle> scopusArticles = new ArrayList<>();
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -125,7 +125,7 @@ public class ScopusXmlHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("author")) {
 			bAuthor = true;
 			seq = Integer.parseInt(attributes.getValue("seq"));
-			afids = new HashSet<Integer>();
+			afids = new ArrayList<>();
 		}
 		if (bAuthor) {
 			if (qName.equalsIgnoreCase("authid")) {
@@ -215,7 +215,13 @@ public class ScopusXmlHandler extends DefaultHandler {
 		}
 		if (qName.equalsIgnoreCase("affiliation") && bAffiliation) {
 			if (afid != 0) {
-				affiliations.put(afid, new Affiliation(afid, affilname, affiliationCity, affiliationCountry));
+				affiliations.put(afid,
+						Affiliation.builder()
+								.affiliationCity(affiliationCity)
+								.afid(afid)
+								.affilname(affilname)
+								.affiliationCountry(affiliationCountry)
+								.build());
 			}
 			bAffiliation = false;
 		}
@@ -246,7 +252,15 @@ public class ScopusXmlHandler extends DefaultHandler {
 
 		if (qName.equalsIgnoreCase("author") && bAuthor) {
 			if (authid != 0) {
-				authors.put(authid, new Author(seq, authid, authname, surname, givenName, initials, afids));
+				authors.put(authid,
+						Author.builder()
+								.seq(seq)
+								.afids(afids)
+								.authid(authid)
+								.authname(authname)
+								.surname(surname)
+								.givenName(givenName)
+								.initials(initials).build());
 			}
 			bAuthor = false;
 		}
@@ -285,7 +299,10 @@ public class ScopusXmlHandler extends DefaultHandler {
 				for (Author author : authors.values()) {
 					authorList.add(author);
 				}
-				scopusArticle = new ScopusArticle(pubmedId, affiliationList, authorList);
+				scopusArticle = ScopusArticle.builder()
+						.pubmedId(pubmedId)
+						.affiliations(affiliationList)
+						.authors(authorList).build();
 				if (doi != null) {
 					scopusArticle.setDoi(doi);
 					doi = null;

@@ -20,16 +20,11 @@ package reciter.scopus.retriever;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import reciter.model.scopus.ScopusArticle;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,32 +54,33 @@ public class ScopusArticleRetriever<T> {
         if (queryParams.isEmpty()) {
             return Collections.emptyList();
         }
-        if (PMID_MODIFIER.equals(queryModifier)) {
-            String nodeUrl = SCOPUS_SERVICE + "/query/";
-            RestTemplate restTemplate = new RestTemplate();
-            log.info("Sending web request for query " + queryParams + " modifier:" + queryModifier + ":" + nodeUrl);
-            List<Long> pmidList = new ArrayList<>();
-            for (T t : queryParams) {
-                pmidList.add((Long) t);
-            }
-            ResponseEntity<List<ScopusArticle>> responseEntity = null;
-            Pmids pmids = new Pmids(pmidList);
-            try {
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<Object> requestEntity = new HttpEntity<>(pmids,headers);
-                responseEntity =
-                        restTemplate.exchange(nodeUrl, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<List<ScopusArticle>>() {});
-            } catch (Exception e) {
-                log.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
-            }
-            if (responseEntity == null) {
-                return Collections.emptyList();
-            }
-            List<ScopusArticle> scopusArticles = responseEntity.getBody();
-            return scopusArticles;
-        } else {
-            throw new UnsupportedOperationException("Scopus queryModifier: " + queryModifier + " is unsupported");
+        String nodeUrl = SCOPUS_SERVICE + "/query/";
+        RestTemplate restTemplate = new RestTemplate();
+        log.info("Sending web request for query " + queryParams + " modifier:" + queryModifier + ":" + nodeUrl);
+        List<Object> pmidList = new ArrayList<>();
+        for (T t : queryParams) {
+            pmidList.add(t);
         }
+        Pmids pmids = null;
+        ResponseEntity<List<ScopusArticle>> responseEntity = null;
+        if (PMID_MODIFIER.equals(queryModifier)) {
+            pmids = new Pmids(pmidList, "pmid");
+        } else if (DOI_MODIFIER.equals(queryModifier)) {
+            pmids = new Pmids(pmidList, "doi");
+        }
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Object> requestEntity = new HttpEntity<>(pmids, headers);
+            responseEntity =
+                    restTemplate.exchange(nodeUrl, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<List<ScopusArticle>>() {
+                    });
+        } catch (Exception e) {
+            log.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
+        }
+        if (responseEntity == null) {
+            return Collections.emptyList();
+        }
+        return responseEntity.getBody();
     }
 }

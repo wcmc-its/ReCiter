@@ -10,6 +10,6 @@ public class ReCiterArticleAuthorFeature {
     private String lastName;
     private String firstName;
     private String initials;
-    private List<ReCiterArticleAffiliationFeature> reCiterArticleAffiliationFeatures;
+    private List<ReCiterArticleAffiliationFeature> affiliations;
     private boolean isTargetAuthor;
 }

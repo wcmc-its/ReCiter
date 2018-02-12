@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.engine.erroranalysis;
 
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -72,7 +73,7 @@ public class AnalysisTranslator {
 					if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
 						if (scopusAuthorFirstName.substring(0, 1).equals(targetAuthorFirstInitial)) {
 
-							Set<Integer> afidSet = scopusAuthor.getAfids();
+							List<Integer> afidSet = scopusAuthor.getAfids();
 							for (int afid : afidSet) {
 								for (Affiliation affiliation : scopusArticle.getAffiliations()) {
 									if (affiliation.getAfid() == afid) {
@@ -96,7 +97,7 @@ public class AnalysisTranslator {
 						}
 					}
 				} else {
-					Set<Integer> afidSet = scopusAuthor.getAfids();
+					List<Integer> afidSet = scopusAuthor.getAfids();
 					for (int afid : afidSet) {
 						for (Affiliation affiliation : scopusArticle.getAffiliations()) {
 							if (affiliation.getAfid() == afid) {

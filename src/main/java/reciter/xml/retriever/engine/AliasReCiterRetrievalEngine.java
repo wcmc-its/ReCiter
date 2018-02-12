@@ -101,7 +101,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 	
 	private Set<Long> retrieveData(Identity identity) throws IOException {
-		Set<Long> uniquePmids = new HashSet<Long>();
+		Set<Long> uniquePmids = new HashSet<>();
 		
 		String uid = identity.getUid();
 		
@@ -115,7 +115,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
 			 
 			// Update alias.
-			List<PubMedAlias> pubMedAliases = new ArrayList<PubMedAlias>();
+			List<PubMedAlias> pubMedAliases = new ArrayList<>();
 			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
 				PubMedAlias pubMedAlias = new PubMedAlias();
 				pubMedAlias.setAuthorName(entry.getValue());
@@ -211,7 +211,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 	
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate) throws IOException {
-		Set<Long> uniquePmids = new HashSet<Long>();
+		Set<Long> uniquePmids = new HashSet<>();
 		
 		String uid = identity.getUid();
 		

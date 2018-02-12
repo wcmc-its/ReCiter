@@ -18,10 +18,15 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.grant.strategy;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.Grant;
 import reciter.engine.analysis.evidence.GrantEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleGrant;
@@ -29,21 +34,33 @@ import reciter.model.identity.Identity;
 
 public class GrantStrategy extends AbstractTargetAuthorStrategy {
 
+	private static final Logger log = LoggerFactory.getLogger(GrantStrategy.class);
+
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
+		log.info("Executing grant strategy for article id {} and identity id {}",
+				reCiterArticle.getArticleId(),
+				identity.getUid());
 		double score = 0;
+		GrantEvidence grantEvidence = new GrantEvidence();
+		List<Grant> grants = new ArrayList<>();
+		grantEvidence.setGrants(grants);
 		for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
-			for (String knownGrantIds : identity.getGrants()) {
-				if (grant.getGrantID() != null && grant.getGrantID().contains(knownGrantIds)) {
-					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [known grant ids match=" + knownGrantIds + "], ");
-					GrantEvidence grantEvidence = new GrantEvidence();
-					grantEvidence.setArticleGrant(knownGrantIds);
-//					grantEvidence.setInstitutionGrant();
+			for (String identityGrantId : identity.getGrants()) {
+				log.info("identity grant {}", identityGrantId);
+				if (grant.getGrantID() != null && grant.getGrantID().contains(identityGrantId)) {
+					log.info("[known grant ids match=" + identityGrantId + "]");
+					reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [known grant ids match=" + identityGrantId + "], ");
+					Grant analysisGrant = new Grant();
+					analysisGrant.setArticleGrant(grant.getGrantID());
+					analysisGrant.setInstitutionGrant(identityGrantId);
 					score += 1;
 					reCiterArticle.getMatchingGrantList().add(grant);
+					grants.add(analysisGrant);
 				}
 			}
 		}
+		reCiterArticle.setGrantEvidence(grantEvidence);
 		return score;
 	}
 	

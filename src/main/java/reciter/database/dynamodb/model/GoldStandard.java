@@ -6,17 +6,19 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @DynamoDBTable(tableName = "GoldStandard")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @DynamoDBDocument
 public class GoldStandard {
-    private final String uid;
-    private final List<Long> knownPmids;
-    private final List<Long> rejectedPmids;
+    private String uid;
+    private List<Long> knownPmids;
+    private List<Long> rejectedPmids;
 
     @DynamoDBHashKey(attributeName = "uid")
     public String getUid() {

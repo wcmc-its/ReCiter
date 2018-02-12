@@ -1,13 +1,16 @@
 package reciter.engine.analysis;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
+import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
+import reciter.engine.analysis.evidence.AuthorNameEvidence;
+import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.PositiveEvidence;
-import reciter.engine.erroranalysis.ReCiterAnalysis;
+import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
@@ -19,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Data
+@Slf4j
 public class ReCiterFeatureGenerator {
 
     private double precision;
@@ -38,7 +42,8 @@ public class ReCiterFeatureGenerator {
     public ReCiterFeature computeFeatures(String mode,
                                           Clusterer reCiterClusterer,
                                           ClusterSelector clusterSelector,
-                                          List<Long> goldStandardPmids) {
+                                          List<Long> goldStandardPmids,
+                                          Analysis analysis) {
         Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
         Set<Long> selection = clusterSelector.getSelectedClusterIds();
         Identity identity = reCiterClusterer.getIdentity();
@@ -57,10 +62,13 @@ public class ReCiterFeatureGenerator {
         }
 
         // overall accuracy
+        reCiterFeature.setOverallAccuracy((analysis.getPrecision() + analysis.getRecall()) / 2);
 
         // precision
+        reCiterFeature.setPrecision(analysis.getPrecision());
 
         // recall
+        reCiterFeature.setRecall(analysis.getRecall());
 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
@@ -75,9 +83,18 @@ public class ReCiterFeatureGenerator {
         int countSuggestedArticles = 0;
         List<ReCiterArticle> articleList = new ArrayList<>();
         for (long s : selection) {
+            long clusterOriginator = finalCluster.get(s).getClusterOriginator();
+            String journalTitle = null;
             for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
                 articleList.add(reCiterArticle);
+                if (reCiterArticle.getArticleId() == clusterOriginator) {
+                    journalTitle = reCiterArticle.getJournal().getJournalTitle();
+                }
                 countSuggestedArticles++;
+            }
+            // Add journals
+            for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
+                reCiterArticle.getClusteringEvidence().setJournal(journalTitle);
             }
         }
         reCiterFeature.setCountSuggestedArticles(countSuggestedArticles);
@@ -103,6 +120,8 @@ public class ReCiterFeatureGenerator {
                             reCiterArticle.getDoctoralYearDiscrepancyScore() +
                             reCiterArticle.getInternshipAndResidenceStrategyScore() +
                             reCiterArticle.getNameStrategyScore()); // score
+
+            // true; false; null. make it Boolean
             reCiterArticleFeature.setUserAssertion(false); // userAssertion TODO get from DB
 
             // PubDate
@@ -117,11 +136,37 @@ public class ReCiterFeatureGenerator {
             // article title
             reCiterArticleFeature.setArticleTitle(reCiterArticle.getArticleTitle());
 
+            // volume
+            reCiterArticleFeature.setVolume(reCiterArticle.getVolume());
+
+            // issue
+            reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
+
+            /**
+             * <Pagination>
+             <MedlinePgn>1083-95</MedlinePgn> get the first one.
+             </Pagination>
+             */
+            // pages
+            reCiterArticleFeature.setPages(reCiterArticle.getPages());
+
+            // pmcid (https://www.ncbi.nlm.nih.gov/pubmed/26174865?report=xml&format=text)
+            // Need to add parsing for <OtherID Source="NLM">PMC5009940 [Available on 01/01/17]</OtherID>
+            // Or check <ArticleId IdType="pmc">PMC2907408</ArticleId>
+            reCiterArticleFeature.setPmcid(reCiterArticle.getPmcid());
+
+            // doi
+            // <ArticleId IdType="doi">10.1093/jnci/djq238</ArticleId>
+            reCiterArticleFeature.setDoi(reCiterArticle.getDoi());
+
             // author list
             List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
+            int i = 1;
+
             for (ReCiterAuthor reCiterArticleAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
                 ReCiterArticleAuthorFeature reCiterArticleAuthorFeature = new ReCiterArticleAuthorFeature();
                 // rank
+                reCiterArticleAuthorFeature.setRank(i++);
 
                 // lastname
                 reCiterArticleAuthorFeature.setLastName(reCiterArticleAuthor.getAuthorName().getLastName());
@@ -149,11 +194,17 @@ public class ReCiterFeatureGenerator {
             reCiterArticleFeature.setReCiterArticleAuthorFeatures(reCiterArticleAuthorFeatures);
 
             PositiveEvidence positiveEvidence = new PositiveEvidence();
-            reCiterArticleFeature.setPositiveEvidence(positiveEvidence);
             // Affiliation Evidence
             positiveEvidence.setAffiliationEvidence(reCiterArticle.getAffiliationEvidence());
 
             // AuthorName Evidence (the most complete author name in the article)
+            AuthorNameEvidence authorNameEvidence = new AuthorNameEvidence();
+            ReCiterAuthor reCiterAuthor = RemoveByNameStrategy.getCorrectAuthor(reCiterArticle, identity);
+            if (reCiterAuthor != null) {
+                authorNameEvidence.setArticleAuthorName(reCiterAuthor.getAuthorName());
+                authorNameEvidence.setInstitutionalAuthorName(identity.getPrimaryName());
+            }
+            positiveEvidence.setAuthorNameEvidence(authorNameEvidence);
 
             // Grant Evidence
             positiveEvidence.setGrantEvidence(reCiterArticle.getGrantEvidence());
@@ -162,11 +213,20 @@ public class ReCiterFeatureGenerator {
             positiveEvidence.setRelationshipEvidences(reCiterArticle.getRelationshipEvidence());
 
             // Education Year Evidence
+            EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
+            educationYearEvidence.setDiscrepancyDegreeYearBachelor(reCiterArticle.getBachelorsYearDiscrepancy());
+            educationYearEvidence.setDiscrepancyDegreeYearTerminal(reCiterArticle.getDoctoralYearDiscrepancy());
+            reCiterArticle.setEducationYearEvidence(educationYearEvidence);
             positiveEvidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
 
             // Clustering Evidence
             positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
+            log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
+            reCiterArticleFeature.setPositiveEvidence(positiveEvidence);
+
+            reCiterArticleFeatures.add(reCiterArticleFeature);
         }
+        // rak2007
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures);
 
         return reCiterFeature;

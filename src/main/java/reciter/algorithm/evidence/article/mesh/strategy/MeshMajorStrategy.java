@@ -76,7 +76,8 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 * @return
 	 */
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
-
+		slf4jLogger.info("Executing mesh major strategy for reCiterArticle id {} and identity {}.",
+				reCiterArticle.getArticleId(), identity.getUid());
 		boolean isAuthorNameMatch = matchAuthorName(reCiterArticle, identity);
 		double score = 0;
 		if (isAuthorNameMatch) {
@@ -91,6 +92,10 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 						reCiterArticle.getMeshMajorInfo().append("This article shares MeSH major term of '" + descriptorName 
 								+ "' with an article with PMIDs=" + meshMajorToPmid.get(descriptorName));
 						reCiterArticle.getOverlappingMeSHMajorNegativeArticles().add(descriptorName);
+						if (reCiterArticle.getClusteringEvidence().getMeshMajors() == null) {
+							reCiterArticle.getClusteringEvidence().setMeshMajors(new ArrayList<>());
+						}
+						slf4jLogger.info("reCiter {} hashcode mesh {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
 						reCiterArticle.getClusteringEvidence().getMeshMajors().add(descriptorName);
 						score += 1;
 					}

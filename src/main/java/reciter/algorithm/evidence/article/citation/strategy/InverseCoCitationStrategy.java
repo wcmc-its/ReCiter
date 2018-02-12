@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticle.CoCitation;
@@ -33,10 +34,13 @@ import reciter.model.article.ReCiterArticle.CoCitation;
  * @author Jie
  *
  */
+@Slf4j
 public class InverseCoCitationStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
+		log.info("Executing InverseCoCitationStrategy for reCiterArticle {} and other reCiterArticle {}.",
+				reCiterArticle.getArticleId(), otherReCiterArticle.getArticleId());
 		return checkInverseCoCitationReference(reCiterArticle, otherReCiterArticle);
 	}
 

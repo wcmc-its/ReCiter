@@ -1,21 +1,21 @@
 package reciter.database.dynamodb.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @DynamoDBDocument
 public class ESearchPmid {
     private List<Long> pmids;
     private String retrievalStrategyName;
     private Date retrievalDate;
-
-    public ESearchPmid(List<Long> pmids, String retrievalStrategyName, Date retrievalDate) {
-        this.pmids = pmids;
-        this.retrievalStrategyName = retrievalStrategyName;
-        this.retrievalDate = retrievalDate;
-    }
 
     public List<Long> getPmids() {
         return pmids;

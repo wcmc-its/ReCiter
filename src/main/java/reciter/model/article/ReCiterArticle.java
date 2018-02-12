@@ -84,6 +84,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
     /**
      * Grant List.
+
      */
     private List<ReCiterArticleGrant> grantList;
     private List<ReCiterArticleGrant> matchingGrantList = new ArrayList<>(0);
@@ -116,9 +117,9 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private double internshipAndResidenceStrategyScore;
     private double bachelorsYearDiscrepancyScore;
     private double doctoralYearDiscrepancyScore;
-    private double bachelorsYearDiscrepancy;
+    private int bachelorsYearDiscrepancy;
     private String publishedPriorAcademicDegreeBachelors;
-    private double doctoralYearDiscrepancy;
+    private int doctoralYearDiscrepancy;
     private String publishedPriorAcademicDegreeDoctoral;
     private boolean isArticleTitleStartWithBracket;
     private double educationStrategyScore;
@@ -152,6 +153,52 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private GrantEvidence grantEvidence;
 
     private List<RelationshipEvidence> relationshipEvidences;
+
+    private String volume;
+    private String issue;
+    private String pmcid;
+    private String pages;
+    private String doi;
+
+    public String getDoi() {
+        return doi;
+    }
+
+    public void setDoi(String doi) {
+        this.doi = doi;
+    }
+
+    public String getPages() {
+        return pages;
+    }
+
+    public void setPages(String pages) {
+        this.pages = pages;
+    }
+
+    public String getPmcid() {
+        return pmcid;
+    }
+
+    public void setPmcid(String pmcid) {
+        this.pmcid = pmcid;
+    }
+
+    public String getIssue() {
+        return issue;
+    }
+
+    public void setIssue(String issue) {
+        this.issue = issue;
+    }
+
+    public String getVolume() {
+        return volume;
+    }
+
+    public void setVolume(String volume) {
+        this.volume = volume;
+    }
 
     public List<RelationshipEvidence> getRelationshipEvidences() {
         return relationshipEvidences;
@@ -297,7 +344,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     /**
      * Default Completeness Score Calculation: ReCiterCompleteness
      *
-     * @param articleID
+     * @param articleId
      */
     public ReCiterArticle(long articleId) {
         this.articleId = articleId;
@@ -584,19 +631,19 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
         this.meshHeadings = meshHeadings;
     }
 
-    public double getBachelorsYearDiscrepancy() {
+    public int getBachelorsYearDiscrepancy() {
         return bachelorsYearDiscrepancy;
     }
 
-    public void setBachelorsYearDiscrepancy(double bachelorsYearDiscrepancy) {
+    public void setBachelorsYearDiscrepancy(int bachelorsYearDiscrepancy) {
         this.bachelorsYearDiscrepancy = bachelorsYearDiscrepancy;
     }
 
-    public double getDoctoralYearDiscrepancy() {
+    public int getDoctoralYearDiscrepancy() {
         return doctoralYearDiscrepancy;
     }
 
-    public void setDoctoralYearDiscrepancy(double doctoralYearDiscrepancy) {
+    public void setDoctoralYearDiscrepancy(int doctoralYearDiscrepancy) {
         this.doctoralYearDiscrepancy = doctoralYearDiscrepancy;
     }
 

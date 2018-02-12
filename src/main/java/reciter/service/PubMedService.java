@@ -29,5 +29,5 @@ public interface PubMedService {
 	
 	List<PubMedArticle> findByPmids(List<Long> pmids);
 	
-	PubMedArticle findByPmid(long pmid);
+	PubMedArticle findByPmid(Long pmid);
 }

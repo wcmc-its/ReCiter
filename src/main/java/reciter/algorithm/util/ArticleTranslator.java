@@ -133,7 +133,7 @@ public class ArticleTranslator {
 				ReCiterMeshHeadingDescriptorName reCiterMeshHeadingDescriptorName = new ReCiterMeshHeadingDescriptorName();
 				reCiterMeshHeadingDescriptorName.setDescriptorName(descriptorNameString);
 				ReCiterCitationYNEnum reCiterCitationYNEnum;
-				if (MedlineCitationYNEnum.Y == meshMajorTopicYN) {
+				if ("Y".equals(meshMajorTopicYN)) {
 					reCiterCitationYNEnum = ReCiterCitationYNEnum.Y;
 				} else {
 					reCiterCitationYNEnum = ReCiterCitationYNEnum.N;
@@ -147,7 +147,7 @@ public class ArticleTranslator {
 					reCiterMeshHeadingQualifierName.setQualifierName(medlineCitationMeshHeadingQualifierName.getQualifiername());
 					
 					ReCiterCitationYNEnum e;
-					if (medlineCitationMeshHeadingQualifierName.getMajortopicyn() == MedlineCitationYNEnum.Y) {
+					if ("Y".equals(medlineCitationMeshHeadingQualifierName.getMajortopicyn())) {
 						e = ReCiterCitationYNEnum.Y;
 					} else {
 						e = ReCiterCitationYNEnum.N;
@@ -172,19 +172,21 @@ public class ArticleTranslator {
 		// Use PubMed Article date as the publication date (pubdate)
 		// TODO optimize date (single date across ReCiter files) (Tech Debt)
 		MedlineCitationDate medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getArticledate();
-		LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
-				Integer.parseInt(medlineCitationDate.getMonth()),
-				Integer.parseInt(medlineCitationDate.getDay()));
-		Date date = localDate.toDate();
-		reCiterArticle.setPubDate(date);
+		if (medlineCitationDate != null && medlineCitationDate.getYear() != null && medlineCitationDate.getMonth() != null && medlineCitationDate.getDay() != null) {
+			LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
+					Integer.parseInt(medlineCitationDate.getMonth()), // convert JUL to 7
+					Integer.parseInt(medlineCitationDate.getDay()));
+			Date date = localDate.toDate();
+			reCiterArticle.setPubDate(date);
+		}
 		
 		// Update PubMed's authors' first name from Scopus Article. Logic is as follows:
 		// 1. First compare last name if match:
 		// 2. Check scopus's first name has length > 1, so no initials (b/c PubMed already contains this info.)
 		// 3. Check first initial is same.
-		// 4. Check that scopus author's first name is more "complete" than Pubmed'a author name.
+		// 4. Check that scopus author's first name is more "complete" than Pubmed's author name.
 		// 5. Only update if PubMed's author name is length = 1.
-		// 6. remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
+		// 6. Sanitization: remove periods and whitespaces. Grab only the first name (Scopus also provides middle initial).
 
 		if (scopusArticle != null) {
 			for (Author scopusAuthor : scopusArticle.getAuthors()) {
@@ -245,6 +247,28 @@ public class ArticleTranslator {
 			}
 			reCiterArticle.setCommentsCorrectionsPmids(commentsCorrectionsPmids);
 		}
+
+		// Volume
+		reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
+
+		// issue
+		reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
+
+		// pages
+		if (pubmedArticle.getMedlinecitation().getArticle().getPagination() != null &&
+				pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns() != null &&
+				!pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns().isEmpty()) {
+			reCiterArticle.setPages(pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns().get(0));
+		}
+
+		// pmcid
+//		reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
+
+		// doi
+		if (pubmedArticle.getMedlinecitation().getArticle().getElocationid() != null) {
+			reCiterArticle.setDoi(pubmedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid());
+		}
+
 		return reCiterArticle;
 	}
 }

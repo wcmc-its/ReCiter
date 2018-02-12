@@ -64,7 +64,7 @@ public class Analysis {
 	 * @param uid
 	 */
 	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> pmids) {
-		Set<Long> pmidSet = new HashSet<Long>();
+		Set<Long> pmidSet = new HashSet<>();
 		for (long pmid : pmids) {
 			pmidSet.add(pmid);
 		}

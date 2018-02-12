@@ -20,6 +20,7 @@ package reciter.algorithm.evidence.targetauthor.degree.strategy;
 
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.model.article.ReCiterArticle;
@@ -38,6 +39,7 @@ import reciter.model.identity.Identity;
  * @author jil3004
  *
  */
+@Slf4j
 public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 	/**
@@ -87,24 +89,17 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 			int year = reCiterArticle.getJournal().getJournalIssuePubDateYear();
 
 			int difference;
-
 			if (degreeType.equals(DegreeType.BACHELORS)) {
 				if (identity.getDegreeYear().getBachelorYear() != 0) {
 					difference = year - identity.getDegreeYear().getBachelorYear();
 					reCiterArticle.setBachelorsYearDiscrepancy(difference);
 					if (difference < 1) {
+						log.info("Bachelors: Identity degree and reCiter article {} journal issue publication date difference < 1. Remove from cluster.", reCiterArticle.getArticleId());
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 								+ " [Bachelors Degree Difference=" + difference + "]");
 						reCiterArticle.setBachelorsYearDiscrepancyScore(1);
 						reCiterArticle.setPublishedPriorAcademicDegreeBachelors("Target Author bachelors graduation year: " +
 								identity.getDegreeYear().getBachelorYear() + " publication date: " + year + ". Diff="+ difference);
-
-						if (reCiterArticle.getEducationYearEvidence() == null) {
-							EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
-							educationYearEvidence.setDiscrepancyDegreeYearBachelor(difference);
-						} else {
-							reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearBachelor(difference);
-						}
 						return 1;
 					}
 				}
@@ -115,32 +110,25 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 					reCiterArticle.setDoctoralYearDiscrepancy(difference);
 					if (doctoral < 1998) {
 						if (difference < -6) {
+							log.info("DOCTORAL 1998: Identity degree and reCiter article {} journal issue publication date difference < -6" +
+									". Remove from cluster.", reCiterArticle.getArticleId());
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 									+ " [Doctoral Degree Difference (<1988) =" + difference + "]");
 							reCiterArticle.setDoctoralYearDiscrepancyScore(1);
 							reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("(Case doctoral < 1998) Target Author doctoral graduation year: " +
 									identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
-							if (reCiterArticle.getEducationYearEvidence() == null) {
-								EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
-								educationYearEvidence.setDiscrepancyDegreeYearTerminal(difference);
-							} else {
-								reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearTerminal(difference);
-							}
 							return 1;
 						}
 					} else {
 						if (difference < -13) {
+							log.info("DOCTORAL: Identity degree and reCiter article {} journal issue publication date difference < -13. " +
+									"Remove from cluster.", reCiterArticle.getArticleId());
+
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 									+ " [Doctoral Degree Difference (>=1998) =" + difference + "]");
 							reCiterArticle.setDoctoralYearDiscrepancyScore(1);
 							reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("Target Author doctoral graduation year: " +
 									identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
-							if (reCiterArticle.getEducationYearEvidence() == null) {
-								EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
-								educationYearEvidence.setDiscrepancyDegreeYearTerminal(difference);
-							} else {
-								reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearTerminal(difference);
-							}
 							return 1;
 						}
 					}

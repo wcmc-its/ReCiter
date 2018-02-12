@@ -138,7 +138,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 					return true;
 				} else if (StringUtils.containsIgnoreCase(extractedDept, department) && !StringUtils.containsIgnoreCase(extractedDept, "medicine")) {
 					// check for substring match - only when the extracted department is not "medicine" because
-					// it too common.
+					// it is too common.
 					if (reCiterAuthor.getAuthorName().firstInitialMiddleInitialLastNameMatch(identity.getPrimaryName())) {
 						slf4jLogger.info("Extracted department=[" + extractedDept + "] contains identity's department=[" + department + "] "
 								+ "for author=[" + identity.getUid() + "] in pmid=[" + pmid + "]. And first initial, middle initial and last names match. "

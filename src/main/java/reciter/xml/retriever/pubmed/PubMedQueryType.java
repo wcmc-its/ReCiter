@@ -110,7 +110,7 @@ public class PubMedQueryType {
 			return p;
 		}
 		
-		private PubMedQuery buildPmid(List<Long> pmids) {
+		public PubMedQuery buildPmids(List<Long> pmids) {
 			List<String> pmidsUid = new ArrayList<>();
 			for (long pmid : pmids) {
 				pmidsUid.add(pmid + "[uid]");

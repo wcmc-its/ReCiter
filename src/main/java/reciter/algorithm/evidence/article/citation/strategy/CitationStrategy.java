@@ -20,14 +20,17 @@ package reciter.algorithm.evidence.article.citation.strategy;
 
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
 import reciter.model.article.ReCiterArticle;
 
+@Slf4j
 public class CitationStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
-
+		log.info("Executing Citation Strategy for reCiterArticle {} and other reCiterArticle {}.",
+				reCiterArticle.getArticleId(), otherReCiterArticle.getArticleId());
 		// check citation references in both ways.
 		if (checkCitationReference(reCiterArticle, otherReCiterArticle) == 0) {
 			return checkCitationReference(otherReCiterArticle, reCiterArticle);
@@ -39,13 +42,15 @@ public class CitationStrategy extends AbstractReCiterArticleStrategy {
 	private double checkCitationReference(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
 		if (reCiterArticle.getCommentsCorrectionsPmids() != null && 
 				reCiterArticle.getCommentsCorrectionsPmids().contains(otherReCiterArticle.getArticleId())) {
-
 			reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[article " + reCiterArticle.getArticleId() + 
 					"(" + reCiterArticle.getGoldStandard() + ")" + 
 					" references article " + otherReCiterArticle.getArticleId() + "(" + otherReCiterArticle.getGoldStandard() + ")]");
 			reCiterArticle.getCitations().add(otherReCiterArticle.getArticleId());
 			reCiterArticle.getCitesInfo().append("This article cites another article with PMID of " + otherReCiterArticle.getArticleId() + ". ");
+			reCiterArticle.getClusteringEvidence().getCites().add(otherReCiterArticle.getArticleId());
 			otherReCiterArticle.getCitedByInfo().append("This article is cited by another article with PMID of " + reCiterArticle.getArticleId() + ". ");
+			log.info("This article {} cites another article with PMID of {}.", reCiterArticle.getArticleId(),
+					otherReCiterArticle.getArticleId());
 			return 1;
 		}
 		return 0;

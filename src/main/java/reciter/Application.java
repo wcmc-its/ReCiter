@@ -22,19 +22,30 @@ import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRep
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
-//@EnableMongoRepositories("reciter.database.mongo")
 @EnableDynamoDBRepositories("reciter.database.dynamodb")
+@EnableMongoRepositories("reciter.database.mongo")
 @ComponentScan("reciter")
 public class Application {
+
+	@Bean
+	public BCryptPasswordEncoder bCryptPasswordEncoder() {
+		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+		String password = "reciter";
+		String hashedPassword = encoder.encode(password);
+		System.out.println("password:" + hashedPassword);
+		return new BCryptPasswordEncoder();
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);

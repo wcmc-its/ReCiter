@@ -32,4 +32,6 @@ public interface IdentityService {
 	List<Identity> findByUids(List<String> uids);
 	
 	Identity findByUid(String uid);
+
+	List<Identity> findAll();
 }
