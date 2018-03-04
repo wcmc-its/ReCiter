@@ -133,7 +133,7 @@ public class ArticleTranslator {
 				ReCiterMeshHeadingDescriptorName reCiterMeshHeadingDescriptorName = new ReCiterMeshHeadingDescriptorName();
 				reCiterMeshHeadingDescriptorName.setDescriptorName(descriptorNameString);
 				ReCiterCitationYNEnum reCiterCitationYNEnum;
-				if ("Y".equals(meshMajorTopicYN)) {
+				if (MedlineCitationYNEnum.Y == meshMajorTopicYN) {
 					reCiterCitationYNEnum = ReCiterCitationYNEnum.Y;
 				} else {
 					reCiterCitationYNEnum = ReCiterCitationYNEnum.N;
@@ -262,7 +262,7 @@ public class ArticleTranslator {
 		}
 
 		// pmcid
-//		reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
+		reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
 
 		// doi
 		if (pubmedArticle.getMedlinecitation().getArticle().getElocationid() != null) {
