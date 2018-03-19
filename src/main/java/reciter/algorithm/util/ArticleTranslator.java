@@ -132,13 +132,7 @@ public class ArticleTranslator {
 				ReCiterArticleMeshHeading reCiterArticleMeshHeading = new ReCiterArticleMeshHeading();
 				ReCiterMeshHeadingDescriptorName reCiterMeshHeadingDescriptorName = new ReCiterMeshHeadingDescriptorName();
 				reCiterMeshHeadingDescriptorName.setDescriptorName(descriptorNameString);
-				ReCiterCitationYNEnum reCiterCitationYNEnum;
-				if (MedlineCitationYNEnum.Y == meshMajorTopicYN) {
-					reCiterCitationYNEnum = ReCiterCitationYNEnum.Y;
-				} else {
-					reCiterCitationYNEnum = ReCiterCitationYNEnum.N;
-				}
-				reCiterMeshHeadingDescriptorName.setMajorTopicYN(reCiterCitationYNEnum);
+				reCiterMeshHeadingDescriptorName.setMajorTopicYN(meshMajorTopicYN.getVal());
 				reCiterArticleMeshHeading.setDescriptorName(reCiterMeshHeadingDescriptorName);
 				
 				// For each qualifier, set name and major topic.

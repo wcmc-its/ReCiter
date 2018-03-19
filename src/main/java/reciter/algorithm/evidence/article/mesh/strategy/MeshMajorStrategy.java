@@ -191,9 +191,9 @@ public class MeshMajorStrategy extends AbstractTargetAuthorStrategy {
 	 */
 	public static boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
 		// Easy case:
-		if (meshHeading.getDescriptorName().getMajorTopicYN() == ReCiterCitationYNEnum.Y)
+		if (meshHeading.getDescriptorName().getMajorTopicYN().equals(ReCiterCitationYNEnum.Y.name())) {
 			return true;
-
+		}
 		// Single subheading or Multiple subheading:
 		for (ReCiterMeshHeadingQualifierName qualifierName : meshHeading.getQualifierNameList()) {
 			if (qualifierName.getMajorTopicYN() == ReCiterCitationYNEnum.Y) {

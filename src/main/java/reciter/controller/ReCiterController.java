@@ -30,6 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +79,7 @@ import reciter.service.ReCiterClusterService;
 import reciter.service.ScopusService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
+@Api(value="ReCiterController", description="Operations on ReCiter API.")
 @Controller
 public class ReCiterController {
 
@@ -117,10 +122,10 @@ public class ReCiterController {
 
 	@Autowired
 	private StrategyParameters strategyParameters;
-	
+
 //	@Autowired
 //	private InstitutionAfidService institutionAfidService;
-	
+
 	@Autowired
 	private LdapIdentityService ldapIdentityService;
 
@@ -172,7 +177,7 @@ public class ReCiterController {
 		}
 		return identity;
 	}
-	
+
 	@RequestMapping(value = "/reciter/retrieval/and/analysis/by/uid", method = RequestMethod.GET)
 	@ResponseBody
 	public ReCiterAnalysis runRetrievalAndAnalysisByUid(String uid) {
@@ -190,13 +195,13 @@ public class ReCiterController {
 		}
 		return result ? runReCiterAnalysis(uid) : null;
 	}
-	
+
 	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
 	@ResponseBody
 	public List<String> retrieveAfids(String institution) {
 		return dynamoDbInstitutionAfidService.findByInstitution(institution).getAfids();
 	}
-	
+
 //	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
 //	@ResponseBody
 //	public void retrieveGoldStandard() {
@@ -283,7 +288,7 @@ public class ReCiterController {
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 		return ResponseEntity.ok().build();
 	}
-	
+
 	/**
 	 * Retrieve all articles in Uids.java.
 	 */
@@ -337,7 +342,7 @@ public class ReCiterController {
 //		}
 //		return "Success";
 //	}
-	
+
 	@RequestMapping(value = "/reciter/feature/by/uid", method = RequestMethod.GET)
 	@ResponseBody
 	public List<Feature> generateFeatures(@RequestParam(value="uid") String uid) {
@@ -362,7 +367,14 @@ public class ReCiterController {
 		return engineOutput.getAnalysis();
 	}
 
-	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET)
+	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class)
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Successfully retrieved list"),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+			})
+	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
 	public ReCiterFeature runFeatureGenerator(@RequestParam(value="uid") String uid) {
 		EngineParameters parameters = initializeEngineParameters(uid);

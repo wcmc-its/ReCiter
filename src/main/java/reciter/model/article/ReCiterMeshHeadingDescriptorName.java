@@ -20,13 +20,13 @@ package reciter.model.article;
 
 public class ReCiterMeshHeadingDescriptorName {
 
-	private ReCiterCitationYNEnum majorTopicYN;
+	private String majorTopicYN;
 	private String descriptorName;
-	
-	public ReCiterCitationYNEnum getMajorTopicYN() {
+
+	public String getMajorTopicYN() {
 		return majorTopicYN;
 	}
-	public void setMajorTopicYN(ReCiterCitationYNEnum majorTopicYN) {
+	public void setMajorTopicYN(String majorTopicYN) {
 		this.majorTopicYN = majorTopicYN;
 	}
 	public String getDescriptorName() {
