@@ -1,0 +1,19 @@
+version: 0.2
+# https://docs.aws.amazon.com/codebuild/latest/userguide/getting-started.html
+phases:
+  install:
+    commands:
+      - echo Nothing to do in the install phase...
+  pre_build:
+    commands:
+      - echo Nothing to do in the pre_build phase...
+  build:
+    commands:
+      - echo Build started on `date`
+      - mvn install
+  post_build:
+    commands:
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - target/reciter-1.0.jar
