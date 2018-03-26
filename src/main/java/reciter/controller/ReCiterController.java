@@ -66,7 +66,6 @@ import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
-import reciter.service.ldap.LdapIdentityService;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.GoldStandardService;
@@ -126,8 +125,8 @@ public class ReCiterController {
 //	@Autowired
 //	private InstitutionAfidService institutionAfidService;
 
-	@Autowired
-	private LdapIdentityService ldapIdentityService;
+//	@Autowired
+//	private LdapIdentityService ldapIdentityService;
 
 	@Autowired
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
@@ -152,49 +151,49 @@ public class ReCiterController {
 		return identityService.findByUid(uid);
 	}
 
-	@RequestMapping(value = "/reciter/ldap/get/all/identity/", method = RequestMethod.GET)
-	@ResponseBody
-	public String getAllIdentity() {
-		for (String uid : Uids.uids) {
-			Identity identity = ldapIdentityService.getIdentity(uid);
-			if (identity != null) {
-				identityService.save(identity);
-			} else {
-				slf4jLogger.info("uid doesn't exist: " + uid);
-			}
-		}
-		return "done";
-	}
+//	@RequestMapping(value = "/reciter/ldap/get/all/identity/", method = RequestMethod.GET)
+//	@ResponseBody
+//	public String getAllIdentity() {
+//		for (String uid : Uids.uids) {
+//			Identity identity = ldapIdentityService.getIdentity(uid);
+//			if (identity != null) {
+//				identityService.save(identity);
+//			} else {
+//				slf4jLogger.info("uid doesn't exist: " + uid);
+//			}
+//		}
+//		return "done";
+//	}
+//
+//	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
+//	@ResponseBody
+//	public Identity getIdentity(@RequestParam String uid) {
+//		Identity identity = ldapIdentityService.getIdentity(uid);
+//		if (identity != null) {
+//			identityService.save(identity);
+//		} else {
+//			slf4jLogger.info("uid doesn't exist: " + uid);
+//		}
+//		return identity;
+//	}
 
-	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
-	@ResponseBody
-	public Identity getIdentity(@RequestParam String uid) {
-		Identity identity = ldapIdentityService.getIdentity(uid);
-		if (identity != null) {
-			identityService.save(identity);
-		} else {
-			slf4jLogger.info("uid doesn't exist: " + uid);
-		}
-		return identity;
-	}
-
-	@RequestMapping(value = "/reciter/retrieval/and/analysis/by/uid", method = RequestMethod.GET)
-	@ResponseBody
-	public ReCiterAnalysis runRetrievalAndAnalysisByUid(String uid) {
-		Identity identity = getIdentity(uid);
-		List<Identity> identities = new ArrayList<>();
-		LocalDate initial = LocalDate.now();
-		LocalDate startDate = initial.withDayOfMonth(1);
-		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
-		boolean result = false;
-		identities.add(identity);
-		try {
-			result = aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
-		} catch (IOException e) {
-			slf4jLogger.info("Failed to retrieve articles.", e);
-		}
-		return result ? runReCiterAnalysis(uid) : null;
-	}
+//	@RequestMapping(value = "/reciter/retrieval/and/analysis/by/uid", method = RequestMethod.GET)
+//	@ResponseBody
+//	public ReCiterAnalysis runRetrievalAndAnalysisByUid(String uid) {
+//		Identity identity = getIdentity(uid);
+//		List<Identity> identities = new ArrayList<>();
+//		LocalDate initial = LocalDate.now();
+//		LocalDate startDate = initial.withDayOfMonth(1);
+//		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
+//		boolean result = false;
+//		identities.add(identity);
+//		try {
+//			result = aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
+//		} catch (IOException e) {
+//			slf4jLogger.info("Failed to retrieve articles.", e);
+//		}
+//		return result ? runReCiterAnalysis(uid) : null;
+//	}
 
 	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
 	@ResponseBody

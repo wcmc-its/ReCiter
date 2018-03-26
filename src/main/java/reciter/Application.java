@@ -34,7 +34,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @EnableAutoConfiguration
 @EnableAsync
 @EnableDynamoDBRepositories("reciter.database.dynamodb")
-@EnableMongoRepositories("reciter.database.mongo")
+//@EnableMongoRepositories("reciter.database.mongo")
 @ComponentScan("reciter")
 public class Application {
 
