@@ -2,47 +2,44 @@
 /build/
 /bin/
 target/
- 
+
 # OS Files #
 .DS_Store
- 
+
 *.class
- 
+
 # Package Files #
 *.jar
 *.war
 *.ear
 *.db
- 
+
 ######################
 # Windows
 ######################
- 
+
 # Windows image file caches
-Thumbs.db 
- 
+Thumbs.db
+
 # Folder config file
 Desktop.ini
- 
+
 ######################
 # OSX
 ######################
- 
+
 .DS_Store
 .svn
- 
+
 # Thumbnails
 ._*
- 
+
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
- 
- 
 ######################
 # Eclipse
 ######################
- 
 *.pydevproject
 # .project
 .metadata
@@ -63,10 +60,10 @@ build.xml
 
 # External tool builders
 .externalToolBuilders/
- 
+
 # Locally stored "Eclipse launch configurations"
 *.launch
- 
+
 # CDT-specific
 .cproject
 
@@ -74,7 +71,7 @@ build.xml
 .buildpath
 
 # application.properties
-src/main/resources/application.properties
+# src/main/resources/application.properties
 
 # Do not any log files.
 reciter.log
