@@ -25,9 +25,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
 @Configuration
@@ -38,14 +37,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @ComponentScan("reciter")
 public class Application {
 
-	@Bean
-	public BCryptPasswordEncoder bCryptPasswordEncoder() {
-		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-		String password = "reciter";
-		String hashedPassword = encoder.encode(password);
-		System.out.println("password:" + hashedPassword);
-		return new BCryptPasswordEncoder();
-	}
+//	@Bean
+//	public BCryptPasswordEncoder bCryptPasswordEncoder() {
+//		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+//		String password = "reciter";
+//		String hashedPassword = encoder.encode(password);
+//		System.out.println("password:" + hashedPassword);
+//		return new BCryptPasswordEncoder();
+//	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);

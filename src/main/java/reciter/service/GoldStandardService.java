@@ -19,7 +19,7 @@
 package reciter.service;
 
 
-import reciter.database.mongo.model.GoldStandard;
+import reciter.database.dynamodb.model.GoldStandard;
 
 public interface GoldStandardService {
 

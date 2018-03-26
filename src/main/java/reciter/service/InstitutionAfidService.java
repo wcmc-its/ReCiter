@@ -1,6 +1,6 @@
 package reciter.service;
 
-import reciter.database.mongo.model.InstitutionAfid;
+import reciter.database.dynamodb.model.InstitutionAfid;
 
 import java.util.List;
 

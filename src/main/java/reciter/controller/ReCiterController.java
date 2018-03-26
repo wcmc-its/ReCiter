@@ -68,11 +68,8 @@ import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
-import reciter.service.GoldStandardService;
 import reciter.service.IdentityService;
-import reciter.service.InstitutionAfidService;
 import reciter.service.MeshTermService;
-import reciter.service.PubMedArticleFeatureService;
 import reciter.service.PubMedService;
 import reciter.service.ReCiterClusterService;
 import reciter.service.ScopusService;
@@ -102,22 +99,10 @@ public class ReCiterController {
 	private ScopusService scopusService;
 
 	@Autowired
-	private MeshTermService meshTermService;
-
-	@Autowired
 	private DynamoDbMeshTermService dynamoDbMeshTermService;
-
-	@Autowired
-	private PubMedArticleFeatureService pubMedArticleFeatureService;
 
 //	@Autowired
 //	private GoldStandardService goldStandardService;
-
-	@Autowired
-	private AnalysisService analysisService;
-
-	@Autowired
-	private ReCiterClusterService reCiterClusterService;
 
 	@Autowired
 	private StrategyParameters strategyParameters;
@@ -382,43 +367,6 @@ public class ReCiterController {
 		return engineOutput.getReCiterFeature();
 	}
 
-	@RequestMapping(value = "/reciter/meshterms", method = RequestMethod.GET)
-	@ResponseBody
-	public int meshTerms() {
-		List<reciter.database.mongo.model.MeshTerm> meshTerms = meshTermService.findAll();
-		List<MeshTerm> meshTermsToSave = new ArrayList<>();
-		for (reciter.database.mongo.model.MeshTerm meshTerm : meshTerms) {
-			MeshTerm meshTerm1 = new MeshTerm(meshTerm.getMesh(), meshTerm.getCount());
-			meshTermsToSave.add(meshTerm1);
-		}
-		dynamoDbMeshTermService.save(meshTermsToSave);
-		return meshTermsToSave.size();
-	}
-
-//	@RequestMapping(value = "/reciter/institutionafids", method = RequestMethod.GET)
-//	@ResponseBody
-//	public int institutionAfids() {
-//		List<reciter.database.mongo.model.InstitutionAfid> mongoInstitutionAfids = institutionAfidService.findAll();
-//		Map<String, List<String>> mapping = new HashMap<>();
-//		for (reciter.database.mongo.model.InstitutionAfid institutionAfid : mongoInstitutionAfids) {
-//			if (!mapping.containsKey(institutionAfid.getInstitution())) {
-//				List<String> afids = new ArrayList<>();
-//				afids.add(institutionAfid.getAfid());
-//				mapping.put(institutionAfid.getInstitution(), afids);
-//			} else {
-//				mapping.get(institutionAfid.getInstitution()).add(institutionAfid.getAfid());
-//			}
-//		}
-//		List<reciter.database.dynamodb.model.InstitutionAfid> toSave = new ArrayList<>();
-//		for (Map.Entry<String, List<String>> entry : mapping.entrySet()) {
-//			reciter.database.dynamodb.model.InstitutionAfid institutionAfidToSave =
-//					new reciter.database.dynamodb.model.InstitutionAfid(entry.getKey(), entry.getValue());
-//			toSave.add(institutionAfidToSave);
-//		}
-//		dynamoDbInstitutionAfidService.save(toSave);
-//		return toSave.size();
-//	}
-
 	@RequestMapping(value = "/reciter/pubmed/pmid", method = RequestMethod.GET)
 	@ResponseBody
 	public PubMedArticle pubMedArticle(@RequestParam(value="pmid") Long pmid) {
@@ -429,22 +377,6 @@ public class ReCiterController {
 	@ResponseBody
 	public ScopusArticle scopusArticle(@RequestParam(value="id") String id) {
 		return scopusService.findByPmid(id);
-	}
-
-	@RequestMapping(value = "/reciter/analysis/web/by/uid", method = RequestMethod.GET)
-	@ResponseBody
-	public ReCiterAnalysis runReCiterAnalysis(@RequestParam(value="uid") String uid) {
-		EngineParameters parameters = initializeEngineParameters(uid);
-		Engine engine = new ReCiterEngine();
-		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
-
-		slf4jLogger.info(engineOutput.getAnalysis().toString());
-		analysisService.save(engineOutput.getAnalysis(), uid);
-		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
-
-		Analysis analysis = engineOutput.getAnalysis();
-		List<ReCiterCluster> reCiterClusters = engineOutput.getReCiterClusters();
-		return ReCiterAnalysisTranslator.convert(uid, parameters.getKnownPmids(), analysis, reCiterClusters);
 	}
 
 	private EngineParameters initializeEngineParameters(String uid) {

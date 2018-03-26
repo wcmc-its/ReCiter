@@ -35,7 +35,7 @@ public class SwaggerConfig {
                 .required(true);
         parameterBuilders.add(parameterBuilder.build());
         return new Docket(DocumentationType.SWAGGER_2)
-                .globalOperationParameters(parameterBuilders)
+//                .globalOperationParameters(parameterBuilders)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("reciter.controller"))
                 .paths(regex("/reciter.*"))
