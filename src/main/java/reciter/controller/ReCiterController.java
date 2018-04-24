@@ -246,6 +246,13 @@ public class ReCiterController {
 		dynamoDbGoldStandardService.save(goldStandard);
 		return ResponseEntity.ok(goldStandard);
 	}
+	
+	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT)
+	@ResponseBody
+	public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard) {
+		dynamoDbGoldStandardService.save(goldStandard);
+		return ResponseEntity.ok(goldStandard);
+	}
 
 	/**
 	 * Retrieve all articles in Uids.java.
