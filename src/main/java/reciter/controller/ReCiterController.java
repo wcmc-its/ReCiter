@@ -68,6 +68,7 @@ import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
+import reciter.service.GoldStandardService;
 import reciter.service.IdentityService;
 import reciter.service.MeshTermService;
 import reciter.service.PubMedService;
@@ -242,7 +243,14 @@ public class ReCiterController {
 	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseEntity<GoldStandard> updateGoldStandard(@RequestBody GoldStandard goldStandard) {
-//		goldStandardService.save(goldStandard);
+		dynamoDbGoldStandardService.save(goldStandard);
+		return ResponseEntity.ok(goldStandard);
+	}
+	
+	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT)
+	@ResponseBody
+	public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard) {
+		dynamoDbGoldStandardService.save(goldStandard);
 		return ResponseEntity.ok(goldStandard);
 	}
 
