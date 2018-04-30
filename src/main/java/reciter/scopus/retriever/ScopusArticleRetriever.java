@@ -54,7 +54,7 @@ public class ScopusArticleRetriever<T> {
         if (queryParams.isEmpty()) {
             return Collections.emptyList();
         }
-        String nodeUrl = SCOPUS_SERVICE + "/query/";
+        String nodeUrl = SCOPUS_SERVICE + "/scopus/query/";
         RestTemplate restTemplate = new RestTemplate();
         log.info("Sending web request for query " + queryParams + " modifier:" + queryModifier + ":" + nodeUrl);
         List<Object> pmidList = new ArrayList<>();
