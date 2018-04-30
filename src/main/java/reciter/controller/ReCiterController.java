@@ -262,15 +262,19 @@ public class ReCiterController {
 	public ResponseEntity retrieveArticles() {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
-		List<Identity> identities = new ArrayList<>();
 		LocalDate initial = LocalDate.now();
+		
 		LocalDate startDate = initial.withDayOfMonth(1);
 		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
-		for (String uid : Uids.uids) {
+		/* Commented hard coded uids
+		    List<Identity> identities = new ArrayList<Identity>();
+		 	for (String uid : Uids.uids) {
 			slf4jLogger.info("Retrieving uid {}.", uid);
 			Identity identity = identityService.findByUid(uid);
 			identities.add(identity);
-		}
+		}*/
+		
+		List<Identity> identities =  identityService.findAll();
 		try {
 			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
 		} catch (IOException e) {
