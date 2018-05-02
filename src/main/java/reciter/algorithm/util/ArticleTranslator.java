@@ -243,10 +243,15 @@ public class ArticleTranslator {
 		}
 
 		// Volume
-		reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
-
+		if(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume() != null &&
+				!pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isEmpty()) {
+			reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
+		}
 		// issue
-		reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
+		if(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue() != null &&
+				!pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isEmpty()) {
+			reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
+		}
 
 		// pages
 		if (pubmedArticle.getMedlinecitation().getArticle().getPagination() != null &&
@@ -256,7 +261,12 @@ public class ArticleTranslator {
 		}
 
 		// pmcid
-		reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
+		if(pubmedArticle.getPubmeddata().getArticleIdList() != null) {
+			if (pubmedArticle.getPubmeddata().getArticleIdList().getPmc() != null &&
+					!pubmedArticle.getPubmeddata().getArticleIdList().getPmc().isEmpty()) {
+				reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
+			}
+		}
 
 		// doi
 		if (pubmedArticle.getMedlinecitation().getArticle().getElocationid() != null) {
