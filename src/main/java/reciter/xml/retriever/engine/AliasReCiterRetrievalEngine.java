@@ -129,7 +129,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateInitialRun(date);
 			identity.setDateLastRun(date);
 			identityService.save(identity);
-			
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}
 		
@@ -165,6 +164,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		if (useScopusArticles) {
 			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
+			//Delete the table first if required
+			//scopusService.delete();
+			
 			scopusService.save(scopusArticles);
 
 			// Look up the remaining Scopus articles by DOI.
@@ -179,10 +181,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					notFoundPmids.add(pmid);
 				}
 			}
+			
 			List<String> dois = new ArrayList<>();
 			Map<String, Long> doiToPmid = new HashMap<>();
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
+				
 				if (pubMedArticle.getMedlinecitation().getArticle().getElocationid() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
 					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
