@@ -30,4 +30,6 @@ public interface ScopusService {
 	List<ScopusArticle> findByPmids(List<String> pmids);
 
 	ScopusArticle findByPmid(String pmid);
+	
+	void delete();
 }
