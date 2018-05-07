@@ -3,6 +3,8 @@ package reciter.service.dynamo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+
 import reciter.database.dynamodb.repository.ScopusArticleRepository;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ScopusService;
@@ -23,21 +25,31 @@ public class ScopusServiceImpl implements ScopusService {
     public void save(Collection<ScopusArticle> scopusArticles) {
         List<reciter.database.dynamodb.model.ScopusArticle> dbScopusArticles = new ArrayList<>();
         for (ScopusArticle scopusArticle : scopusArticles) {
-            reciter.database.dynamodb.model.ScopusArticle dbScopusArticle;
-            if (scopusArticle.getPubmedId() == 0) {
+            reciter.database.dynamodb.model.ScopusArticle dbScopusArticle = null;
+            /* Commented out to store pubmed id as unique ID for ScopusArticle table in DynamoDb
+             * if (scopusArticle.getPubmedId() == 0) {
                 dbScopusArticle = new reciter.database.dynamodb.model.ScopusArticle(
                         String.valueOf(scopusArticle.getPubmedId()),
                         scopusArticle
                 );
             } else {
                 dbScopusArticle = new reciter.database.dynamodb.model.ScopusArticle(
-                        scopusArticle.getDoi(),
+                        scopusArticle.getDoi().trim(),
+                        scopusArticle
+                ); 
+            }*/
+            
+            if (scopusArticle.getPubmedId() != 0) {
+                dbScopusArticle = new reciter.database.dynamodb.model.ScopusArticle(
+                        String.valueOf(scopusArticle.getPubmedId()),
                         scopusArticle
                 );
             }
-            dbScopusArticles.add(dbScopusArticle);
+            if(dbScopusArticle != null)
+            	dbScopusArticles.add(dbScopusArticle);
         }
-        log.info("Saving number of scopus articles: {},", scopusArticles.size());
+        log.info("Saving number of scopus articles: {},", dbScopusArticles.size());
+        
         scopusRepository.save(dbScopusArticles);
     }
 
@@ -55,4 +67,11 @@ public class ScopusServiceImpl implements ScopusService {
     public ScopusArticle findByPmid(String pmid) {
         return scopusRepository.findOne(pmid).getScopusArticle();
     }
+
+	@Override
+	public void delete() {
+		 scopusRepository.deleteAll();
+		 log.info("The entire table is cleared");
+		 
+	}
 }
