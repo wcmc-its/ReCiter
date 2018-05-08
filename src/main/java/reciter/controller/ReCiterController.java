@@ -370,7 +370,7 @@ public class ReCiterController {
 			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
 			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 			})
-	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/reciter/analysis-summary/by/uid", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
 	public ReCiterFeature runFeatureGenerator(@RequestParam(value="uid") String uid) {
 		EngineParameters parameters = initializeEngineParameters(uid);
