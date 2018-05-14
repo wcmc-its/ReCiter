@@ -49,7 +49,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	
 	@Autowired
 	private ESearchResultService eSearchResultService;
-
 	
 	private class AsyncRetrievalEngine extends Thread {
 
@@ -117,7 +116,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity);
 		pubMedArticles = retrievalResult.getPubMedArticles();
 		
-		
 		if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
@@ -138,7 +136,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateInitialRun(date);
 			identity.setDateLastRun(date);
 			identityService.save(identity);
-			
+      
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}
 		
@@ -174,6 +172,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		if (useScopusArticles) {
 			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
+      
+			//Delete the table first if required
+			//scopusService.delete();
+
 			scopusService.save(scopusArticles);
 
 			// Look up the remaining Scopus articles by DOI.
@@ -192,6 +194,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			Map<String, Long> doiToPmid = new HashMap<>();
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
+
 				if (pubMedArticle.getMedlinecitation().getArticle().getElocationid() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
 					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
