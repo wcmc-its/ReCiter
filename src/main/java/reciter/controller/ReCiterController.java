@@ -30,14 +30,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.QueryParam;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -257,9 +262,16 @@ public class ReCiterController {
 	/**
 	 * Retrieve all articles in Uids.java.
 	 */
-	@RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET)
+	@ApiOperation(value = "Retrieve Articles for all UID in Identity Table", response = ResponseEntity.class, notes = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Successfully retrieved list"),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+			})
+	@RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public ResponseEntity retrieveArticles() {
+	public ResponseEntity retrieveArticles(boolean refreshFlag) {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
 		LocalDate initial = LocalDate.now();
@@ -288,26 +300,66 @@ public class ReCiterController {
 	/**
 	 * Retrieve all articles in Uids.java.
 	 */
-	@RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET)
+	@ApiOperation(value = "Retrieve Articles for an UID.", response = ResponseEntity.class, notes = "This API retrieves candidate articles for a given uid from pubmed and its complementing articles from scopus")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Successfully retrieved list"),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+			})
+	@RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public ResponseEntity retrieveArticlesByUid(String uid) {
+	public ResponseEntity retrieveArticlesByUid(String uid, boolean refreshFlag) {
 		long startTime = System.currentTimeMillis();
+		long estimatedTime = 0;
 		slf4jLogger.info("Start time is: " + startTime);
 		List<Identity> identities = new ArrayList<>();
 		LocalDate initial = LocalDate.now();
 		LocalDate startDate = initial.withDayOfMonth(1);
 		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
-		Identity identity = identityService.findByUid(uid);
-		identities.add(identity);
-		try {
-			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
-		} catch (IOException e) {
-			slf4jLogger.info("Failed to retrieve articles.", e);
-			return ResponseEntity.notFound().build();
+		Identity identity = null;
+
+		try { 
+			identity = identityService.findByUid(uid);
 		}
-		long estimatedTime = System.currentTimeMillis() - startTime;
+		catch(NullPointerException ne) {
+			estimatedTime = System.currentTimeMillis() - startTime;
+			slf4jLogger.info("elapsed time: " + estimatedTime);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '"  + uid + "' was not found in the Identity table");
+		}
+		//Clean up the ESearchResult Table if set refreshFlag is set
+		try {
+			if(!refreshFlag && eSearchResultService.findByUid(uid.trim()) != null) {
+				slf4jLogger.info("Using the cached retrieval articles for " + uid + ". Skipping the retrieval process");
+				estimatedTime = System.currentTimeMillis() - startTime;
+				slf4jLogger.info("elapsed time: " + estimatedTime);
+				return ResponseEntity.status(HttpStatus.OK).body("The cached results of uid " + uid + " will be used since refreshFlag is not set to true");
+			}
+		
+		else {
+				if(eSearchResultService.findByUid(uid.trim()) != null)
+					eSearchResultService.delete(uid.trim());
+				if(identity != null)
+					identities.add(identity);
+				
+				try {
+					aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
+				} catch (IOException e) {
+					slf4jLogger.info("Failed to retrieve articles.", e);
+					estimatedTime = System.currentTimeMillis() - startTime;
+					slf4jLogger.info("elapsed time: " + estimatedTime);
+					return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retreieve articles");
+				}
+				
+			}
+		}
+		catch(EmptyResultDataAccessException e) {
+			slf4jLogger.info("No such entity exists: " , e);
+		}
+		
+		estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
-		return ResponseEntity.ok().build();
+		return ResponseEntity.ok().body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
 	}
 
 	/**
@@ -362,7 +414,7 @@ public class ReCiterController {
 
 		return engineOutput.getAnalysis();
 	}
-
+	
 	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class)
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Successfully retrieved list"),
@@ -408,10 +460,10 @@ public class ReCiterController {
 		List<Long> filtered = new ArrayList<>();
 		List<String> filteredString = new ArrayList<>();
 		for (long pmid : pmidList) {
-			if (pmid <= 27090613) {
+			//if (pmid <= 27090613) {
 				filtered.add(pmid);
 				filteredString.add(String.valueOf(pmid));
-			}
+			//}
 		}
 
 		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);

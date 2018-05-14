@@ -103,11 +103,18 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	private Set<Long> retrieveData(Identity identity) throws IOException {
 		Set<Long> uniquePmids = new HashSet<>();
 		
+		//eSearchResultService.delete();
+		
 		String uid = identity.getUid();
+		
+		//Retreive by GoldStandard
+		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity);
+		Map<Long, PubMedArticle> pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
+		savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity);
-		Map<Long, PubMedArticle> pubMedArticles = retrievalResult.getPubMedArticles();
+		pubMedArticles = retrievalResult.getPubMedArticles();
 		
 		if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
@@ -129,6 +136,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateInitialRun(date);
 			identity.setDateLastRun(date);
 			identityService.save(identity);
+      
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}
 		
@@ -164,9 +172,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		if (useScopusArticles) {
 			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
+      
 			//Delete the table first if required
 			//scopusService.delete();
-			
+
 			scopusService.save(scopusArticles);
 
 			// Look up the remaining Scopus articles by DOI.
@@ -181,12 +190,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					notFoundPmids.add(pmid);
 				}
 			}
-			
 			List<String> dois = new ArrayList<>();
 			Map<String, Long> doiToPmid = new HashMap<>();
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
-				
+
 				if (pubMedArticle.getMedlinecitation().getArticle().getElocationid() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
 					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
@@ -194,11 +202,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
 				}
 			}
-			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
+			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);;
 			List<Long> pmidsByDoi = new ArrayList<>();
 			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
 				// manually insert PMID information.
-				if (scopusArticle.getDoi() != null) {
+				if (scopusArticle.getDoi() != null && !scopusArticle.getDoi().isEmpty()) {
 					// Need to lowercase doi here because of null pointer exception.
 					// PMID: 28221372
 					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112

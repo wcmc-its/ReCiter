@@ -31,7 +31,7 @@ public interface IdentityService {
 	
 	List<Identity> findByUids(List<String> uids);
 	
-	Identity findByUid(String uid);
+	Identity findByUid(String uid) throws NullPointerException;
 
 	List<Identity> findAll();
 }

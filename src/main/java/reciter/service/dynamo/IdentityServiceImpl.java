@@ -47,7 +47,7 @@ public class IdentityServiceImpl implements IdentityService {
     }
 
     @Override
-    public Identity findByUid(String uid) {
+    public Identity findByUid(String uid) throws NullPointerException {
         return identityRepository.findOne(uid).getIdentity();
     }
 
