@@ -202,11 +202,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
 				}
 			}
-			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
+			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);;
 			List<Long> pmidsByDoi = new ArrayList<>();
 			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
 				// manually insert PMID information.
-				if (scopusArticle.getDoi() != null) {
+				if (scopusArticle.getDoi() != null && !scopusArticle.getDoi().isEmpty()) {
 					// Need to lowercase doi here because of null pointer exception.
 					// PMID: 28221372
 					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112
