@@ -33,4 +33,8 @@ public interface ESearchResultService {
 	void update(ESearchResult eSearchResult);
 	
 	boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName);
+	
+	void deleteAll();
+
+	void delete(String uid);
 }
