@@ -30,12 +30,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import reciter.database.dynamodb.model.GoldStandard;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
+import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameUtils;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
@@ -49,6 +51,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	
 	@Autowired
 	private ESearchResultService eSearchResultService;
+
 	
 	private class AsyncRetrievalEngine extends Thread {
 
@@ -103,11 +106,19 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	private Set<Long> retrieveData(Identity identity) throws IOException {
 		Set<Long> uniquePmids = new HashSet<>();
 		
+		//eSearchResultService.delete();
+		
 		String uid = identity.getUid();
+		
+		//Retreive by GoldStandard
+		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity);
+		Map<Long, PubMedArticle> pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
+		savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity);
-		Map<Long, PubMedArticle> pubMedArticles = retrievalResult.getPubMedArticles();
+		pubMedArticles = retrievalResult.getPubMedArticles();
+		
 		
 		if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
