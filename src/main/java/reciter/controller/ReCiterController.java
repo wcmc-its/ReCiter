@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.QueryParam;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -41,6 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -91,6 +91,9 @@ public class ReCiterController {
 
 	@Autowired
 	private ESearchResultService eSearchResultService;
+	
+	@Autowired
+    private MessageSource messageSource;
 
 	@Autowired
 	private PubMedService pubMedService;
@@ -112,6 +115,9 @@ public class ReCiterController {
 
 	@Autowired
 	private StrategyParameters strategyParameters;
+	
+	@Autowired
+	private AnalysisService analysisService;
 
 //	@Autowired
 //	private InstitutionAfidService institutionAfidService;
@@ -415,20 +421,41 @@ public class ReCiterController {
 		return engineOutput.getAnalysis();
 	}
 	
-	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class)
+	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence for s")
 	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Successfully retrieved list"),
+			@ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
 			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
 			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found"),
+			@ApiResponse(code = 500, message = "The uid provided was not found in the Identity table")
 			})
 	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public ReCiterFeature runFeatureGenerator(@RequestParam(value="uid") String uid) {
-		EngineParameters parameters = initializeEngineParameters(uid);
-		Engine engine = new ReCiterEngine();
-		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
-		return engineOutput.getReCiterFeature();
+	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, boolean refreshFlag) {
+		EngineOutput engineOutput = null;
+		try {
+			identityService.findByUid(uid);
+		}
+		catch(NullPointerException n) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '"  + uid + "' was not found in the Identity table");
+		}
+		if(!refreshFlag && analysisService.findByUid(uid.trim()) !=null) {
+			return new ResponseEntity<ReCiterFeature>(analysisService.findByUid(uid.trim()).getReCiterFeature(), HttpStatus.OK);
+		}
+		else {
+			EngineParameters parameters = initializeEngineParameters(uid);
+			Engine engine = new ReCiterEngine();
+			engineOutput = engine.run(parameters, strategyParameters);
+			AnalysisOutput analysisOutput = new AnalysisOutput();
+			if(engineOutput != null)
+				analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
+			analysisOutput.setUid(uid);
+			if(analysisOutput.getReCiterFeature() != null)
+				analysisService.save(analysisOutput);
+		}
+		
+		//return engineOutput.getReCiterFeature();
+		return new ResponseEntity<ReCiterFeature>(engineOutput.getReCiterFeature(), HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/reciter/pubmed/pmid", method = RequestMethod.GET)
@@ -511,4 +538,5 @@ public class ReCiterController {
 		}
 		return parameters;
 	}
+	
 }
