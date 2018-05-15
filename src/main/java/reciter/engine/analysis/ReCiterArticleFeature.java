@@ -6,7 +6,10 @@ import reciter.engine.analysis.evidence.PositiveEvidence;
 import java.util.Date;
 import java.util.List;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+
 @Data
+@DynamoDBDocument
 public class ReCiterArticleFeature {
     private long pmid;
     private double score;
