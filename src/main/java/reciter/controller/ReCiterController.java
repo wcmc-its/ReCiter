@@ -473,9 +473,18 @@ public class ReCiterController {
 	private EngineParameters initializeEngineParameters(String uid) {
 		// find identity
 		Identity identity = identityService.findByUid(uid);
-
+		ESearchResult eSearchResults = null;
 		// find search results for this identity
-		ESearchResult eSearchResults = eSearchResultService.findByUid(uid);
+		try{
+			 eSearchResults = eSearchResultService.findByUid(uid);
+			 if(eSearchResults == null) {
+				 retrieveArticlesByUid(uid, true);
+				 eSearchResults = eSearchResultService.findByUid(uid);
+			 }
+		}
+		catch(EmptyResultDataAccessException e) {
+			slf4jLogger.info("No such entity exists: " , e);
+		}
 		slf4jLogger.info("eSearchResults size {}", eSearchResults);
 		Set<Long> pmids = new HashSet<>();
 		for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
