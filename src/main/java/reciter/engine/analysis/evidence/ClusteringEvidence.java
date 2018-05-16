@@ -6,8 +6,11 @@ import lombok.ToString;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+
 @Data
 @ToString
+@DynamoDBDocument
 public class ClusteringEvidence {
     private List<String> meshMajors;
     private String journal;

@@ -16,22 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.service;
+package reciter.database.dynamodb.model;
 
-import java.util.Collection;
-import java.util.List;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
-import reciter.model.identity.Identity;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import reciter.engine.analysis.ReCiterFeature;
 
-public interface IdentityService {
-
-	void save(Collection<Identity> identities);
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@DynamoDBTable(tableName = "Analysis")
+public class AnalysisOutput {
 	
-	void save(Identity identity);
-	
-	List<Identity> findByUids(List<String> uids);
-	
-	Identity findByUid(String uid);
 
-	List<Identity> findAll();
+	private String uid;
+	private ReCiterFeature reCiterFeature;
+	
+	@DynamoDBHashKey(attributeName = "uid")
+    public String getUid() {
+        return uid;
+    }
+	
+	@DynamoDBAttribute(attributeName = "reCiterFeature")
+	public ReCiterFeature getReCiterFeature() {
+		return reCiterFeature;
+	}
 }

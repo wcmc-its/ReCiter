@@ -5,7 +5,10 @@ import lombok.Data;
 import java.util.Date;
 import java.util.List;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+
 @Data
+@DynamoDBDocument
 public class ReCiterFeature {
     private String personIdentifier;
     private Date dateAdded;
