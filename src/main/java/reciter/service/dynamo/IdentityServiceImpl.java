@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Primary
 @Service
@@ -47,7 +48,7 @@ public class IdentityServiceImpl implements IdentityService {
     }
 
     @Override
-    public Identity findByUid(String uid) throws NullPointerException {
+    public Identity findByUid(String uid) {
         return identityRepository.findOne(uid).getIdentity();
     }
 
