@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,7 @@ import org.springframework.web.bind.annotation.*;
 
 import reciter.Uids;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.dynamodb.model.*;
 //import reciter.database.mongo.model.InstitutionAfid;
@@ -433,6 +435,7 @@ public class ReCiterController {
 	@ResponseBody
 	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, boolean refreshFlag) {
 		EngineOutput engineOutput = null;
+		EngineParameters parameters = null;
 		try {
 			identityService.findByUid(uid);
 		}
@@ -443,7 +446,19 @@ public class ReCiterController {
 			return new ResponseEntity<ReCiterFeature>(analysisService.findByUid(uid.trim()).getReCiterFeature(), HttpStatus.OK);
 		}
 		else {
-			EngineParameters parameters = initializeEngineParameters(uid);
+			parameters = initializeEngineParameters(uid);
+			TargetAuthorSelection t = new  TargetAuthorSelection();
+			slf4jLogger.info(parameters.getReciterArticles().size() +" Article size");
+			t.identifyTargetAuthor(parameters.getReciterArticles(), parameters.getIdentity());
+			Iterator<ReCiterArticle> it = parameters.getReciterArticles().iterator();
+			while(it.hasNext()) {
+				ReCiterArticle reciterArticle = it.next();
+				boolean targetAuthor = reciterArticle.getArticleCoAuthors().getAuthors().stream().anyMatch(authors -> authors.isTargetAuthor()==true);
+				if(!targetAuthor) {
+					slf4jLogger.info("No Target Author for " + reciterArticle.getArticleId() + " Removing from list of articles to be analyzed");
+					it.remove();
+				}
+			}
 			Engine engine = new ReCiterEngine();
 			engineOutput = engine.run(parameters, strategyParameters);
 			AnalysisOutput analysisOutput = new AnalysisOutput();
@@ -530,6 +545,7 @@ public class ReCiterController {
 		parameters.setIdentity(identity);
 		parameters.setPubMedArticles(pubMedArticles);
 		parameters.setScopusArticles(Collections.emptyList());
+		parameters.setReciterArticles(reCiterArticles);
 
 		if (EngineParameters.getMeshCountMap() == null) {
 			List<MeshTerm> meshTerms = dynamoDbMeshTermService.findAll();
