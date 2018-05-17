@@ -35,6 +35,9 @@ public class ClusterSizeStrategy extends AbstractRemoveClusterStrategy {
 		int clusterSize = reCiterCluster.getArticleCluster().size();
 		for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 			
+			if(reCiterArticle.getEmailStrategyScore() > 0)
+				return 0;
+			
 			sumOfArticleScores += reCiterArticle.getDepartmentStrategyScore() + 
 								  reCiterArticle.getKnownCoinvestigatorScore() +
 								  reCiterArticle.getAffiliationScore() + 
