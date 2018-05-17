@@ -93,8 +93,8 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 		String targetAuthorMiddleName = identity.getPrimaryName().getMiddleName();
 		String targetAuthorMiddleNameInitial = identity.getPrimaryName().getMiddleInitial();
 
-		boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor = isMultipleAuthorsWithSameLastNameAsTargetAuthor(
-				reCiterArticle, identity);
+		//boolean isMultipleAuthorsWithSameLastNameAsTargetAuthor = isMultipleAuthorsWithSameLastNameAsTargetAuthor(
+		//		reCiterArticle, identity);
 
 		if (authors != null) {
 			for (ReCiterAuthor author : authors.getAuthors()) {
@@ -103,11 +103,11 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 				analysisObjectAuthor.setAuthor(author);
 				
 				// Update author with the correct author.
-				if (isMultipleAuthorsWithSameLastNameAsTargetAuthor) {
+				/*if (isMultipleAuthorsWithSameLastNameAsTargetAuthor) {
 					author = getCorrectAuthor(reCiterArticle, identity);
-				}
+				}*/
 
-				if (author != null) {
+				if (author != null && author.isTargetAuthor()) {
 					foundMatchingAuthor = true;
 					String firstName = author.getAuthorName().getFirstName();
 					String firstNameInitial = author.getAuthorName().getFirstInitial();
@@ -359,7 +359,7 @@ public class RemoveByNameStrategy extends AbstractRemoveReCiterArticleStrategy {
 
 								// case: pmid=23045697, uid = mlg2007
 								// First name, last name matches, but middle name and affiliation doesn't match. Mark for removal.
-								if (middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
+								if (middleName != null && targetAuthorMiddleName != null && middleName.length() > 0 && targetAuthorMiddleName.length() > 0) {
 									String middleInitial = author.getAuthorName().getMiddleInitial();
 									String targetAuthorMiddleInitial = identity.getPrimaryName().getMiddleInitial();
 
