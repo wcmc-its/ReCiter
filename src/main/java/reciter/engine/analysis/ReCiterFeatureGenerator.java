@@ -188,6 +188,7 @@ public class ReCiterFeatureGenerator {
                 // affiliation Scopus id
 
                 // isTargetAuthor
+                reCiterArticleAuthorFeature.setTargetAuthor(reCiterArticleAuthor.isTargetAuthor());
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }
