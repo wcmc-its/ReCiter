@@ -30,11 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.QueryParam;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
@@ -45,14 +42,15 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 
-import reciter.Uids;
-import reciter.algorithm.cluster.model.ReCiterCluster;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.dynamodb.model.*;
-//import reciter.database.mongo.model.InstitutionAfid;
-//import reciter.database.mongo.model.PubMedArticleFeature;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
@@ -60,9 +58,6 @@ import reciter.engine.Feature;
 import reciter.engine.ReCiterEngine;
 import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.ReCiterFeature;
-import reciter.engine.erroranalysis.Analysis;
-import reciter.engine.erroranalysis.ReCiterAnalysis;
-import reciter.engine.erroranalysis.ReCiterAnalysisTranslator;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
@@ -71,13 +66,9 @@ import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
-import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
-import reciter.service.GoldStandardService;
 import reciter.service.IdentityService;
-import reciter.service.MeshTermService;
 import reciter.service.PubMedService;
-import reciter.service.ReCiterClusterService;
 import reciter.service.ScopusService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
@@ -107,17 +98,8 @@ public class ReCiterController {
 	@Autowired
 	private DynamoDbMeshTermService dynamoDbMeshTermService;
 
-//	@Autowired
-//	private GoldStandardService goldStandardService;
-
 	@Autowired
 	private StrategyParameters strategyParameters;
-
-//	@Autowired
-//	private InstitutionAfidService institutionAfidService;
-
-//	@Autowired
-//	private LdapIdentityService ldapIdentityService;
 
 	@Autowired
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
@@ -142,73 +124,11 @@ public class ReCiterController {
 		return identityService.findByUid(uid);
 	}
 
-//	@RequestMapping(value = "/reciter/ldap/get/all/identity/", method = RequestMethod.GET)
-//	@ResponseBody
-//	public String getAllIdentity() {
-//		for (String uid : Uids.uids) {
-//			Identity identity = ldapIdentityService.getIdentity(uid);
-//			if (identity != null) {
-//				identityService.save(identity);
-//			} else {
-//				slf4jLogger.info("uid doesn't exist: " + uid);
-//			}
-//		}
-//		return "done";
-//	}
-//
-//	@RequestMapping(value = "/reciter/ldap/get/identity/by/uid", method = RequestMethod.GET)
-//	@ResponseBody
-//	public Identity getIdentity(@RequestParam String uid) {
-//		Identity identity = ldapIdentityService.getIdentity(uid);
-//		if (identity != null) {
-//			identityService.save(identity);
-//		} else {
-//			slf4jLogger.info("uid doesn't exist: " + uid);
-//		}
-//		return identity;
-//	}
-
-//	@RequestMapping(value = "/reciter/retrieval/and/analysis/by/uid", method = RequestMethod.GET)
-//	@ResponseBody
-//	public ReCiterAnalysis runRetrievalAndAnalysisByUid(String uid) {
-//		Identity identity = getIdentity(uid);
-//		List<Identity> identities = new ArrayList<>();
-//		LocalDate initial = LocalDate.now();
-//		LocalDate startDate = initial.withDayOfMonth(1);
-//		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
-//		boolean result = false;
-//		identities.add(identity);
-//		try {
-//			result = aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
-//		} catch (IOException e) {
-//			slf4jLogger.info("Failed to retrieve articles.", e);
-//		}
-//		return result ? runReCiterAnalysis(uid) : null;
-//	}
-
 	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
 	@ResponseBody
 	public List<String> retrieveAfids(String institution) {
 		return dynamoDbInstitutionAfidService.findByInstitution(institution).getAfids();
 	}
-
-//	@RequestMapping(value = "/reciter/retrieve/goldstandard", method = RequestMethod.GET)
-//	@ResponseBody
-//	public void retrieveGoldStandard() {
-//		long startTime = System.currentTimeMillis();
-//		slf4jLogger.info("Start time is: " + startTime);
-//
-//		for (String uid : Uids.uids) {
-//			GoldStandard goldStandard = goldStandardService.findByUid(uid);
-//			try {
-//				aliasReCiterRetrievalEngine.retrieveByPmids(goldStandard.getUid(), goldStandard.getKnownPmids());
-//			} catch (IOException e) {
-//				slf4jLogger.info("Failed to retrieve articles.", e);
-//			}
-//		}
-//		long estimatedTime = System.currentTimeMillis() - startTime;
-//		slf4jLogger.info("elapsed time: " + estimatedTime);
-//	}
 
 	@RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET)
 	@ResponseBody
@@ -218,21 +138,6 @@ public class ReCiterController {
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
 		return ResponseEntity.ok(goldStandard);
 	}
-
-//	@RequestMapping(value = "/reciter/goldstandard/migrate", method = RequestMethod.GET)
-//	@ResponseBody
-//	public ResponseEntity<String> migrateGoldStandard() {
-//		long startTime = System.currentTimeMillis();
-//		slf4jLogger.info("Start time is: " + startTime);
-//		List<Identity> identities = identityService.findAll();
-//		for (Identity identity : identities) {
-//			reciter.database.mongo.model.GoldStandard goldStandard = goldStandardService.findByUid(identity.getUid());
-//			slf4jLogger.info("Found goldstand:" + identity.getUid());
-//			dynamoDbGoldStandardService.save(new GoldStandard(identity.getUid(), goldStandard.getKnownPmids(), goldStandard.getRejectedPmids()));
-//			slf4jLogger.info("Saved goldstandard:" + identity.getUid());
-//		}
-//		return ResponseEntity.ok("Done");
-//	}
 
 	@RequestMapping(value = "/reciter/scopusarticle/{pmid}", method = RequestMethod.GET)
 	@ResponseBody
@@ -251,7 +156,7 @@ public class ReCiterController {
 		dynamoDbGoldStandardService.save(goldStandard);
 		return ResponseEntity.ok(goldStandard);
 	}
-	
+
 	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT)
 	@ResponseBody
 	public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard) {
@@ -275,7 +180,7 @@ public class ReCiterController {
 		long startTime = System.currentTimeMillis();
 		slf4jLogger.info("Start time is: " + startTime);
 		LocalDate initial = LocalDate.now();
-		
+
 		LocalDate startDate = initial.withDayOfMonth(1);
 		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
 		/* Commented hard coded uids
@@ -285,7 +190,7 @@ public class ReCiterController {
 			Identity identity = identityService.findByUid(uid);
 			identities.add(identity);
 		}*/
-		
+
 		List<Identity> identities =  identityService.findAll();
 		try {
 			aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
@@ -319,7 +224,7 @@ public class ReCiterController {
 		LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
 		Identity identity = null;
 
-		try { 
+		try {
 			identity = identityService.findByUid(uid);
 		}
 		catch(NullPointerException ne) {
@@ -335,13 +240,13 @@ public class ReCiterController {
 				slf4jLogger.info("elapsed time: " + estimatedTime);
 				return ResponseEntity.status(HttpStatus.OK).body("The cached results of uid " + uid + " will be used since refreshFlag is not set to true");
 			}
-		
+
 		else {
 				if(eSearchResultService.findByUid(uid.trim()) != null)
 					eSearchResultService.delete(uid.trim());
 				if(identity != null)
 					identities.add(identity);
-				
+
 				try {
 					aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
 				} catch (IOException e) {
@@ -350,46 +255,17 @@ public class ReCiterController {
 					slf4jLogger.info("elapsed time: " + estimatedTime);
 					return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retreieve articles");
 				}
-				
+
 			}
 		}
 		catch(EmptyResultDataAccessException e) {
 			slf4jLogger.info("No such entity exists: " , e);
 		}
-		
+
 		estimatedTime = System.currentTimeMillis() - startTime;
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 		return ResponseEntity.ok().body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
 	}
-
-	/**
-	 * Run analysis for all uids in Uids.java.
-	 * @return
-	 */
-	@RequestMapping(value = "/reciter/all/analysis/", method = RequestMethod.GET)
-	@ResponseBody
-	public String runAllAnalysis() {
-		for (String uid : Uids.uids) {
-			runAnalysis(uid);
-		}
-		return "Success";
-	}
-
-//	@RequestMapping(value = "/reciter/all/feature/", method = RequestMethod.GET)
-//	@ResponseBody
-//	public String generateAllFeatures() {
-//		for (String uid : Uids.uids) {
-//			runAnalysis(uid);
-//			EngineParameters parameters = initializeEngineParameters(uid);
-//			Engine engine = new ReCiterEngine();
-//			List<Feature> features = engine.generateFeature(parameters);
-//			PubMedArticleFeature articleFeatures = new PubMedArticleFeature();
-//			articleFeatures.setUid(uid);
-//			articleFeatures.setFeatures(features);
-//			pubMedArticleFeatureService.save(articleFeatures);
-//		}
-//		return "Success";
-//	}
 
 	@RequestMapping(value = "/reciter/feature/by/uid", method = RequestMethod.GET)
 	@ResponseBody
@@ -399,22 +275,6 @@ public class ReCiterController {
 		return engine.generateFeature(parameters);
 	}
 
-	@RequestMapping(value = "/reciter/analysis/by/uid", method = RequestMethod.GET)
-	@ResponseBody
-	public Analysis runAnalysis(@RequestParam(value="uid") String uid) {
-
-		EngineParameters parameters = initializeEngineParameters(uid);
-		Engine engine = new ReCiterEngine();
-		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
-
-		slf4jLogger.info(engineOutput.getAnalysis().toString());
-//		analysisService.save(engineOutput.getAnalysis(), uid);
-		// TODO uncomment
-//		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
-
-		return engineOutput.getAnalysis();
-	}
-	
 	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class)
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Successfully retrieved list"),
