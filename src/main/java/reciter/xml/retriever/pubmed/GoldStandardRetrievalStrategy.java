@@ -49,6 +49,22 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 		return retrievalStrategyName;
 	}
 	
+	protected List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> unqiuePmids) {
+		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
+		System.out.println(identity.getUid());
+		List<Long> goldStandardPmids = dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids();
+		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
+		goldStandardPmids.removeAll(unqiuePmids);
+		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
+
+		PubMedQueryType pubMedQueryType = new PubMedQueryType();
+		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));
+		pubMedQueryType.setStrictQuery(new PubMedQueryResult(goldStandardQuery));
+		pubMedQueries.add(pubMedQueryType);
+
+		return pubMedQueries;
+	}
+	
 
 	@Override
 	protected List<PubMedQueryType> buildQuery(Identity identity) {

@@ -21,6 +21,7 @@ package reciter.engine;
 import java.util.List;
 import java.util.Map;
 
+import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
@@ -30,7 +31,9 @@ public class EngineParameters {
 	private Identity identity;
 	private List<PubMedArticle> pubMedArticles;
 	private List<ScopusArticle> scopusArticles;
+	private List<ReCiterArticle> reciterArticles;
 	private List<Long> knownPmids;
+	private List<Long> rejectedPmids;
 	private static Map<String, Long> meshCountMap;
 	private static Map<String, List<String>> afiliationNameToAfidMap;
 	
@@ -49,6 +52,12 @@ public class EngineParameters {
 	public List<ScopusArticle> getScopusArticles() {
 		return scopusArticles;
 	}
+	public List<ReCiterArticle> getReciterArticles() {
+		return reciterArticles;
+	}
+	public void setReciterArticles(List<ReCiterArticle> reciterArticles) {
+		this.reciterArticles = reciterArticles;
+	}
 	public void setScopusArticles(List<ScopusArticle> scopusArticles) {
 		this.scopusArticles = scopusArticles;
 	}
@@ -63,6 +72,12 @@ public class EngineParameters {
 	}
 	public void setKnownPmids(List<Long> knownPmids) {
 		this.knownPmids = knownPmids;
+	}
+	public List<Long> getRejectedPmids() {
+		return rejectedPmids;
+	}
+	public void setRejectedPmids(List<Long> rejectedPmids) {
+		this.rejectedPmids = rejectedPmids;
 	}
 	public static Map<String, List<String>> getAfiliationNameToAfidMap() {
 		return afiliationNameToAfidMap;

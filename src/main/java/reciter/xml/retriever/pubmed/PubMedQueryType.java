@@ -113,9 +113,12 @@ public class PubMedQueryType {
 		public PubMedQuery buildPmids(List<Long> pmids) {
 			List<String> pmidsUid = new ArrayList<>();
 			for (long pmid : pmids) {
-				pmidsUid.add(pmid + "[uid]");
+				//Commented using of OR with [uid] since it was causing issue with GoldStandardRetreivalStrategy if number of pmid used was bigger than 100
+				//pmidsUid.add(pmid + "[uid]");
+				pmidsUid.add( Long.toString(pmid));
 			}
-			PubMedQuery p =  PubMedQuery.builder().strategyQuery(StringUtils.join(pmidsUid, " OR ")).build();
+			//PubMedQuery p =  PubMedQuery.builder().strategyQuery(StringUtils.join(pmidsUid, " OR ")).build();
+			PubMedQuery p =  PubMedQuery.builder().strategyQuery(pmidsUid.toString()).build();
 			return p;
 		}
 		

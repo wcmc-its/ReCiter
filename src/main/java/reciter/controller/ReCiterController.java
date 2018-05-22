@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,11 +39,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-
+import reciter.Uids;
+import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -82,6 +87,9 @@ public class ReCiterController {
 
 	@Autowired
 	private ESearchResultService eSearchResultService;
+	
+	@Autowired
+    private MessageSource messageSource;
 
 	@Autowired
 	private PubMedService pubMedService;
@@ -100,6 +108,9 @@ public class ReCiterController {
 
 	@Autowired
 	private StrategyParameters strategyParameters;
+	
+	@Autowired
+	private AnalysisService analysisService;
 
 	@Autowired
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
@@ -275,20 +286,70 @@ public class ReCiterController {
 		return engine.generateFeature(parameters);
 	}
 
-	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class)
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Successfully retrieved list"),
-			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-			})
-	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/reciter/analysis/by/uid", method = RequestMethod.GET)
 	@ResponseBody
-	public ReCiterFeature runFeatureGenerator(@RequestParam(value="uid") String uid) {
+	public Analysis runAnalysis(@RequestParam(value="uid") String uid) {
+
 		EngineParameters parameters = initializeEngineParameters(uid);
 		Engine engine = new ReCiterEngine();
 		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
-		return engineOutput.getReCiterFeature();
+
+		slf4jLogger.info(engineOutput.getAnalysis().toString());
+//		analysisService.save(engineOutput.getAnalysis(), uid);
+		// TODO uncomment
+//		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
+
+		return engineOutput.getAnalysis();
+	}
+	
+	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence for s")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found"),
+			@ApiResponse(code = 500, message = "The uid provided was not found in the Identity table")
+			})
+	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
+	@ResponseBody
+	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, boolean refreshFlag) {
+		EngineOutput engineOutput = null;
+		EngineParameters parameters = null;
+		try {
+			identityService.findByUid(uid);
+		}
+		catch(NullPointerException n) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '"  + uid + "' was not found in the Identity table");
+		}
+		if(!refreshFlag && analysisService.findByUid(uid.trim()) !=null) {
+			return new ResponseEntity<ReCiterFeature>(analysisService.findByUid(uid.trim()).getReCiterFeature(), HttpStatus.OK);
+		}
+		else {
+			parameters = initializeEngineParameters(uid);
+			TargetAuthorSelection t = new  TargetAuthorSelection();
+			t.identifyTargetAuthor(parameters.getReciterArticles(), parameters.getIdentity());
+			Iterator<ReCiterArticle> it = parameters.getReciterArticles().iterator();
+			/*while(it.hasNext()) {
+				ReCiterArticle reciterArticle = it.next();
+				boolean targetAuthor = reciterArticle.getArticleCoAuthors().getAuthors().stream().anyMatch(authors -> authors.isTargetAuthor()==true);
+				if(!targetAuthor) {
+					slf4jLogger.info("No Target Author for " + reciterArticle.getArticleId() + " Removing from list of articles to be analyzed");
+					it.remove();
+				}
+			}*/
+			
+			Engine engine = new ReCiterEngine();
+			engineOutput = engine.run(parameters, strategyParameters);
+			AnalysisOutput analysisOutput = new AnalysisOutput();
+			if(engineOutput != null)
+				analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
+			analysisOutput.setUid(uid);
+			//if(analysisOutput.getReCiterFeature() != null)
+			//	analysisService.save(analysisOutput);
+		}
+		
+		//return engineOutput.getReCiterFeature();
+		return new ResponseEntity<ReCiterFeature>(engineOutput.getReCiterFeature(), HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/reciter/pubmed/pmid", method = RequestMethod.GET)
@@ -306,9 +367,18 @@ public class ReCiterController {
 	private EngineParameters initializeEngineParameters(String uid) {
 		// find identity
 		Identity identity = identityService.findByUid(uid);
-
+		ESearchResult eSearchResults = null;
 		// find search results for this identity
-		ESearchResult eSearchResults = eSearchResultService.findByUid(uid);
+		try{
+			 eSearchResults = eSearchResultService.findByUid(uid);
+			 if(eSearchResults == null) {
+				 retrieveArticlesByUid(uid, true);
+				 eSearchResults = eSearchResultService.findByUid(uid);
+			 }
+		}
+		catch(EmptyResultDataAccessException e) {
+			slf4jLogger.info("No such entity exists: " , e);
+		}
 		slf4jLogger.info("eSearchResults size {}", eSearchResults);
 		Set<Long> pmids = new HashSet<>();
 		for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
@@ -354,6 +424,7 @@ public class ReCiterController {
 		parameters.setIdentity(identity);
 		parameters.setPubMedArticles(pubMedArticles);
 		parameters.setScopusArticles(Collections.emptyList());
+		parameters.setReciterArticles(reCiterArticles);
 
 		if (EngineParameters.getMeshCountMap() == null) {
 			List<MeshTerm> meshTerms = dynamoDbMeshTermService.findAll();
@@ -366,9 +437,12 @@ public class ReCiterController {
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
 		if (goldStandard == null) {
 			parameters.setKnownPmids(new ArrayList<>());
+			parameters.setRejectedPmids(new ArrayList<>());
 		} else {
 			parameters.setKnownPmids(goldStandard.getKnownPmids());
+			parameters.setRejectedPmids(goldStandard.getRejectedPmids());
 		}
 		return parameters;
 	}
+	
 }

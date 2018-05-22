@@ -18,9 +18,15 @@
  *******************************************************************************/
 package reciter.service;
 
-import reciter.engine.erroranalysis.Analysis;
+import reciter.database.dynamodb.model.AnalysisOutput;
 
 public interface AnalysisService {
 
-	void save(Analysis analysis, String uid);
+	void save(AnalysisOutput analysis);
+	
+	AnalysisOutput findByUid(String uid);
+	
+	void deleteAll();
+
+	void delete(String uid);
 }

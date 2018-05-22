@@ -126,7 +126,7 @@ public class ReCiterEngine implements Engine {
 		for (ScopusArticle scopusArticle : scopusArticles) {
 			map.put(scopusArticle.getPubmedId(), scopusArticle);
 		}
-		List<ReCiterArticle> reCiterArticles = new ArrayList<>();
+		/*List<ReCiterArticle> reCiterArticles = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 			if (map.containsKey(pmid)) {
@@ -134,8 +134,9 @@ public class ReCiterEngine implements Engine {
 			} else {
 				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
 			}
-		}
+		}*/
 		
+		List<ReCiterArticle> reCiterArticles = parameters.getReciterArticles();
 		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids());
 
 		// Perform Phase 1 clustering.
@@ -165,7 +166,7 @@ public class ReCiterEngine implements Engine {
 		// Perform Phase 2 clusters selection.
 		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity, strategyParameters);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), identity);
-
+		slf4jLogger.info(clusterSelector.getSelectedClusterIds().size() +"Size");
 		// Perform Mesh Heading recall improvement.
 		// Use MeSH major to improve recall after phase two (https://github.com/wcmc-its/ReCiter/issues/131)
 		List<ReCiterArticle> selectedArticles = new ArrayList<>();
@@ -269,7 +270,7 @@ public class ReCiterEngine implements Engine {
 		}
 		engineOutput.setReCiterClusters(reCiterClusters);
 		ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
-		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures("test", clusterer, clusterSelector, parameters.getKnownPmids(), analysis);
+		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures("test", clusterer, clusterSelector, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
 		engineOutput.setReCiterFeature(reCiterFeature);
 		return engineOutput;
 	}

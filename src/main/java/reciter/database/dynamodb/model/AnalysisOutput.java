@@ -16,41 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.model.article;
+package reciter.database.dynamodb.model;
 
-import reciter.model.identity.AuthorName;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
-/**
- * 
- * @author jil3004
- *
- */
-public class ReCiterAuthor {
-	
-	private AuthorName name;
-	private String affiliation;
-	private boolean targetAuthor;
-	
-	public ReCiterAuthor(AuthorName name, String affiliation) {
-		this.name = name;
-		this.affiliation = affiliation;
-	}
-	
-	public String getAffiliation() {
-		return affiliation;
-	}
-	
-	public AuthorName getAuthorName() {
-		return name;
-	}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import reciter.engine.analysis.ReCiterFeature;
 
-	public boolean isTargetAuthor() {
-		return targetAuthor;
-	}
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@DynamoDBTable(tableName = "Analysis")
+public class AnalysisOutput {
+	
 
-	public void setTargetAuthor(boolean targetAuthor) {
-		this.targetAuthor = targetAuthor;
+	private String uid;
+	private ReCiterFeature reCiterFeature;
+	
+	@DynamoDBHashKey(attributeName = "uid")
+    public String getUid() {
+        return uid;
+    }
+	
+	@DynamoDBAttribute(attributeName = "reCiterFeature")
+	public ReCiterFeature getReCiterFeature() {
+		return reCiterFeature;
 	}
-	
-	
 }

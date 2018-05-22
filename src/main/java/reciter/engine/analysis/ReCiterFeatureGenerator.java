@@ -43,6 +43,7 @@ public class ReCiterFeatureGenerator {
                                           Clusterer reCiterClusterer,
                                           ClusterSelector clusterSelector,
                                           List<Long> goldStandardPmids,
+                                          List<Long> rejectedPmids,
                                           Analysis analysis) {
         Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
         Set<Long> selection = clusterSelector.getSelectedClusterIds();
@@ -122,7 +123,20 @@ public class ReCiterFeatureGenerator {
                             reCiterArticle.getNameStrategyScore()); // score
 
             // true; false; null. make it Boolean
-            reCiterArticleFeature.setUserAssertion(false); // userAssertion TODO get from DB
+         // userAssertion TODO get from DB
+            if(goldStandardPmids != null && goldStandardPmids.contains(reCiterArticle.getArticleId())) {
+            	reCiterArticleFeature.setUserAssertion(true);
+            }
+            else if(rejectedPmids != null && rejectedPmids.contains(reCiterArticle.getArticleId())) {
+            	reCiterArticleFeature.setUserAssertion(false);
+            }
+            else {
+            	reCiterArticleFeature.setUserAssertion(null);
+            }
+            	
+            	
+            	
+             
 
             // PubDate
             reCiterArticleFeature.setPubDate(reCiterArticle.getPubDate());
@@ -188,6 +202,7 @@ public class ReCiterFeatureGenerator {
                 // affiliation Scopus id
 
                 // isTargetAuthor
+                reCiterArticleAuthorFeature.setTargetAuthor(reCiterArticleAuthor.isTargetAuthor());
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }
