@@ -22,67 +22,91 @@ public class TargetAuthorSelection {
 			ReCiterArticleAuthors authors = reciterArticle.getArticleCoAuthors();
 			if (authors != null) {
 				int emailMatchcount = 0;
-				int lastNameMatchCount = 0;
-				int lastNamePartialMatchCount = 0;
+				int lastMiddleFirstMatchCount = 0;
+				int lastNameMiddleInitialFirstMatchCount = 0;
+				int lastNameFirstNameMatchCount = 0;
 				int lastNameFirstInitialMatchCount = 0;
-				int lastNameMiddleInitialMatchCount = 0;
+				int middleToFirstInitialAndFirstInitialToMiddleMatchCount = 0;
+				int lastNamePartialFirstInitialMatchCount = 0;
+				int lastNameMatchCount = 0;
 				int firstNameMatchCount = 0;
-				int firstInitialMatchCount = 0;
-				int firstInitialMiddleInitialCount = 0;
+				int fullLastNameToIdentityPartialMatchCount = 0;
+				
 	            emailMatchcount = checkEmailMatch(authors.getAuthors(), identity, emailMatchcount);
 	            if(emailMatchcount == 0 || emailMatchcount > 1)
-	            	lastNameMatchCount = checkLastNameExactMatch(authors.getAuthors(), identity, emailMatchcount);
+	            	lastMiddleFirstMatchCount = checkExactLastMiddleFirstNameMatch(authors.getAuthors(), identity, emailMatchcount);
 	            if(emailMatchcount == 1) {	
 	            	slf4jLogger.info("Email Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
-	            if(lastNameMatchCount == 0 || lastNameMatchCount > 1)
-	            	lastNamePartialMatchCount = checkLastNamePartMatch(authors.getAuthors(), identity, lastNameMatchCount);
-	            if(lastNameMatchCount ==1) {
-	            	slf4jLogger.info("Exact Last Name Match found for article: " + reciterArticle.getArticleId());
+	            if(lastMiddleFirstMatchCount == 0 || lastMiddleFirstMatchCount > 1)
+	            	lastNameMiddleInitialFirstMatchCount = checkExactLastMiddleInitialFirstNameMatch(authors.getAuthors(), identity, lastMiddleFirstMatchCount);
+	            if(lastMiddleFirstMatchCount ==1) {
+	            	slf4jLogger.info("Exact Last Name, Middle Name and First Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
-	            if(lastNamePartialMatchCount == 0 || lastNamePartialMatchCount > 1)
-	            	lastNameFirstInitialMatchCount = checkLastNameFirstInitialMatch(authors.getAuthors(), identity, lastNamePartialMatchCount);
-	            if(lastNamePartialMatchCount == 1) {
-	            	slf4jLogger.info("Last Name partial Match found for article: " + reciterArticle.getArticleId());
+	            if(lastNameMiddleInitialFirstMatchCount == 0 || lastNameMiddleInitialFirstMatchCount > 1)
+	            	lastNameFirstNameMatchCount = checkExactLastFirstNameMatch(authors.getAuthors(), identity, lastNameMiddleInitialFirstMatchCount);
+	            if(lastNameMiddleInitialFirstMatchCount == 1) {
+	            	slf4jLogger.info("Last Name Middle Initial and First Name Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+	            
+	            if(lastNameFirstNameMatchCount == 0 || lastNameFirstNameMatchCount > 1)
+	            	lastNameFirstInitialMatchCount = checkExactLastFirstInitialNameMatch(authors.getAuthors(), identity, lastNameFirstNameMatchCount);
+	            if(lastNameFirstNameMatchCount == 1) {
+	            	slf4jLogger.info("Last Name First Name exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstInitialMatchCount == 0 || lastNameFirstInitialMatchCount > 1)
-	            	lastNameMiddleInitialMatchCount = checkLastNameMiddleInitialMatch(authors.getAuthors(), identity, lastNameFirstInitialMatchCount);
+	            	middleToFirstInitialAndFirstInitialToMiddleMatchCount = checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(authors.getAuthors(), identity, lastNameFirstInitialMatchCount);
 	            if(lastNameFirstInitialMatchCount == 1) {
-	            	slf4jLogger.info("Last Name First Initial Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.info("Last Name First Initial exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
-	            if(lastNameMiddleInitialMatchCount == 0 || lastNameMiddleInitialMatchCount > 1)
-	            	firstNameMatchCount = checkFirstNameMatch(authors.getAuthors(), identity, lastNameMiddleInitialMatchCount);
-	            if(lastNameMiddleInitialMatchCount == 1) {
-	            	slf4jLogger.info("Last Name Middle Initial Match found for article: " + reciterArticle.getArticleId());
+	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 0 || middleToFirstInitialAndFirstInitialToMiddleMatchCount > 1)
+	            	lastNamePartialFirstInitialMatchCount = checkPartialLastNameFirstInitialMatch(authors.getAuthors(), identity, middleToFirstInitialAndFirstInitialToMiddleMatchCount);
+	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 1) {
+	            	slf4jLogger.info("Middle intial to first initial and first intial to middle initial Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+	            
+	            if(lastNamePartialFirstInitialMatchCount == 0 || lastNamePartialFirstInitialMatchCount > 1)
+	            	lastNameMatchCount = checkLastNameExactMatch(authors.getAuthors(), identity, lastNamePartialFirstInitialMatchCount);
+	            if(lastNamePartialFirstInitialMatchCount == 1) {
+	            	slf4jLogger.info("Last Name Partial First Initial Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+	            
+	            if(lastNameMatchCount == 0 || lastNameMatchCount > 1)
+	            	firstNameMatchCount = checkFirstNameExactMatch(authors.getAuthors(), identity, lastNameMatchCount);
+	            if(lastNameMatchCount == 1) {
+	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(firstNameMatchCount == 0 || firstNameMatchCount > 1)
-	            	firstInitialMatchCount = checkFirstInitialMatch(authors.getAuthors(), identity, firstNameMatchCount);
+	            	fullLastNameToIdentityPartialMatchCount = checkLastNameFullArticleToIdentityPartialMatch(authors.getAuthors(), identity, firstNameMatchCount);
 	            if(firstNameMatchCount == 1) {
-	            	slf4jLogger.info("First Name Contains Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
-	            if(firstInitialMatchCount == 0 || firstInitialMatchCount > 1)
-	            	firstInitialMiddleInitialCount = checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(authors.getAuthors(), identity, firstInitialMatchCount);
-	            if(firstInitialMatchCount == 1) {
-	            	slf4jLogger.info("First Initial Match found for article: " + reciterArticle.getArticleId());
-	            	continue;
-	            }
-	            
-	            if(firstInitialMiddleInitialCount == 0 || firstInitialMiddleInitialCount > 1)
+	            if(fullLastNameToIdentityPartialMatchCount == 0) {
 	            	slf4jLogger.info("There was no target author found for " + reciterArticle.getArticleId());
-	            if(firstInitialMiddleInitialCount == 1)
+	            	assignTargetAuthorFalse(authors.getAuthors());
+	            }
+	            else if(fullLastNameToIdentityPartialMatchCount > 1) {
+	            	slf4jLogger.info(fullLastNameToIdentityPartialMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId());
+	            }
+	            if(fullLastNameToIdentityPartialMatchCount == 1) {
+	            	slf4jLogger.info("Full Last Name match to partial Identity Last Name: " + reciterArticle.getArticleId());
 	            	continue;
+	            }
             	
             		
 	        }
@@ -111,36 +135,364 @@ public class TargetAuthorSelection {
 		return matchCount;
 	}
 	
-	//Step 2: attempt lastName match from article to identity using all name aliases in identity table
-	public int checkLastNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+	//Step 2 : Attempt strict last name, strict middle name, and strict first name match
+	public int checkExactLastMiddleFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
 		int count = 0;
-		
 		for (ReCiterAuthor author : authors) {
-			if(matchCount > 1 && author.isTargetAuthor()) {
-				if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) {
-					author.setTargetAuthor(true);
-					count++;
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleName() != null &&
+					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null && identity.getPrimaryName().getMiddleName() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleName().trim())) &&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getMiddleName() != null && alternateName.getFirstName() != null && alternateName.getLastName() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+					
+					
 				}
-				else
-					author.setTargetAuthor(false);
-				
-				
-			}
-			else if(matchCount == 0 && !author.isTargetAuthor()) {
-				if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) {
-					author.setTargetAuthor(true);
-					count++;
+				else if(matchCount == 0) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName().trim()), 
+									ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleName().trim())) &&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getMiddleName() != null && alternateName.getFirstName() != null && alternateName.getLastName() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
 				}
-				else
-					author.setTargetAuthor(false);
 			}
 		}
 		return count;
 	}
 	
-	//Step 3: Attempt %lastName OR lastName% match.
+	//Step 3 : Attempt strict last name, middle initial, and strict first name match
+	public int checkExactLastMiddleInitialFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+		int count = 0;
+		
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null &&
+					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null && identity.getPrimaryName().getMiddleInitial() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) &&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && alternateName.getMiddleInitial() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+					
+					
+				}
+				else if(matchCount == 0) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) &&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && alternateName.getMiddleInitial() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+		
+	//Step 4 : Attempt strict last name and strict first name match
+	public int checkExactLastFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+		int count = 0;
+		
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null &&
+					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+					
+					
+				}
+				else if(matchCount == 0) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+	
+	//Step 5 : Attempt strict last name and first initial match
+	public int checkExactLastFirstInitialNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+		int count = 0;
+		
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null &&
+					identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getLastName() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null && alternateName.getLastName() != null &&
+									ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+					
+					
+				}
+				else if(matchCount == 0) {
+					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim()))) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null && alternateName.getLastName() != null &&
+									ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
+									&& ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+	
+	//Step 6:Attempt firstInitial to middleInitial, and middleInitial to firstInitial match with strict lastname match
+	public int checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+		int count = 0;
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null && 
+					identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getLastName() != null && identity.getPrimaryName().getMiddleInitial() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
+							author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 && 
+							identity.getPrimaryName().getMiddleInitial() != null && identity.getPrimaryName().getMiddleInitial().length() > 0 &&
+							identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial().length() > 0 &&
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getMiddleInitial() != null && 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial())))) //FirstInitial to MiddleInitial
+						&&
+						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+								identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null && 
+								ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//MiddleInitial to First Initial
+					) &&
+						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+								identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null && 
+								ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))//Exact lastname match
+					)) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+				else if(matchCount == 0) {
+					if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
+							author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 && 
+							identity.getPrimaryName().getMiddleInitial() != null && identity.getPrimaryName().getMiddleInitial().length() > 0 &&
+							identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial().length() > 0 &&
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getMiddleInitial() != null && 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial())))) //FirstInitial to MiddleInitial
+						&&
+						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+								identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null && 
+								ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//MiddleInitial to First Initial
+					) &&
+						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+								identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null && 
+								ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))//Exact lastname match
+					)) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+	
+	//Step 7: Attempt partial last name and exact first initial match
+	public int checkPartialLastNameFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+        int count = 0;
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null &&
+					identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getLastName() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if((ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null && 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).contains(ReCiterStringUtil.deAccent(alternateName.getLastName())))) //Last Name partial Match
+						&&
+						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+								identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null && 
+								ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//First Initial match
+					)) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+				else if(matchCount == 0) {
+					if((ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null && 
+							author.getAuthorName().getLastName().contains(alternateName.getLastName()))) //Last Name partial Match
+						&&
+						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+								identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null &&  
+								ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//First Initial match
+					)) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+	
+	
+	//Step 8: attempt lastName match from article to identity using all name aliases in identity table
+	public int checkLastNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+		int count = 0;
+		
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getLastName() != null && identity.getPrimaryName().getLastName() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+					
+					
+				}
+				else if(matchCount == 0) {
+					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+	
+	//Step 9: attempt strict firstname match
+	public int checkFirstNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+		int count = 0;
+		
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getFirstName() != null && identity.getPrimaryName().getFirstName() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+					
+					
+				}
+				else if(matchCount == 0) {
+					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null &&
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+	
+	//Step 10: Attempt full last name match from article to partial last name from identity. (e.g., Somersan-Karakaya)
+	public int checkLastNameFullArticleToIdentityPartialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
+		int count = 0;
+		
+		for (ReCiterAuthor author : authors) {
+			if(author.getAuthorName().getLastName() != null && identity.getPrimaryName().getLastName() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
+							ReCiterStringUtil.deAccent(alternateName.getLastName()).contains(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+				else if(matchCount == 0) {
+					if(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
+							ReCiterStringUtil.deAccent(alternateName.getLastName()).contains(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
+				}
+			}
+		}
+		return count;
+	}
+	
+	
+	//Not Used
 	public int checkLastNamePartMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
 		int count = 0;
 		
@@ -166,78 +518,8 @@ public class TargetAuthorSelection {
 		}
 		return count;
 	}
-	
-	//Step 4: Attempt lastName, firstInitial match
-	public int checkLastNameFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
-        int count = 0;
-		for (ReCiterAuthor author : authors) {
-			if(matchCount > 1 && author.isTargetAuthor()) {
-				if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) //Last Name Match
-					&&
-					(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
-							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//First Initial match
-				)) {
-					author.setTargetAuthor(true);
-					count++;
-				}
-				else
-					author.setTargetAuthor(false);
-			}
-			else if(matchCount == 0 && !author.isTargetAuthor()) {
-				if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> author.getAuthorName().getLastName().equalsIgnoreCase(alternateName.getLastName()))) //Last Name Match
-					&&
-					(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
-							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//First Initial match
-				)) {
-					author.setTargetAuthor(true);
-					count++;
-				}
-				else
-					author.setTargetAuthor(false);
-			}
-			
-		}
-		return count;
-	}
-	
-	//Step 5: Attempt lastName, middleInitial match
-	public int checkLastNameMiddleInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
-        
-		int count = 0;
-		for (ReCiterAuthor author : authors) {
-			if(matchCount > 1 && author.isTargetAuthor()) {
-				if(author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 && (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) //Last Name Match
-					&&
-					(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) ||
-							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial())))//Middle Initial match
-				)) {
-					author.setTargetAuthor(true);
-					count++;
-				}
-				else
-					author.setTargetAuthor(false);
-			}
-			else if(matchCount == 0 && !author.isTargetAuthor()) {
-				if(author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 && (StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) //Last Name Match
-					&&
-					(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) ||
-							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial())))//Middle Initial match
-				)) {
-					author.setTargetAuthor(true);
-					count++;
-				}
-				else
-					author.setTargetAuthor(false);
-			}
-		}
-		return count;
-	}
 		
-	//Step 6: Attempt %firstName% match
+	//Not Used
 	public int checkFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
 		int count = 0;
 		for (ReCiterAuthor author : authors) {
@@ -264,79 +546,37 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Step 7: Attempt Attempt FirstInitial match
+	//Not Used
 	public int checkFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
         int count = 0;
 		for (ReCiterAuthor author : authors) {
-			if(matchCount > 1 && author.isTargetAuthor()) {
-				if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
-					author.setTargetAuthor(true);
-					count++;
+			if(author.getAuthorName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
 				}
-				else
-					author.setTargetAuthor(false);
-			}
-			else if(matchCount == 0 && !author.isTargetAuthor()) {
-				if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
-					author.setTargetAuthor(true);
-					count++;
+				else if(matchCount == 0 && !author.isTargetAuthor()) {
+					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
+						author.setTargetAuthor(true);
+						count++;
+					}
+					else
+						author.setTargetAuthor(false);
 				}
-				else
-					author.setTargetAuthor(false);
 			}
-			
 		}
 		return count;
 	}
 	
-	//Step 8:Attempt firstInitial to middleInitial, and middleInitial to firstInitial match
-	public int checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
-		int count = 0;
+	public void assignTargetAuthorFalse(List<ReCiterAuthor> authors) {
 		for (ReCiterAuthor author : authors) {
-			if(matchCount > 1 && author.isTargetAuthor()) {
-				if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
-						author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 && 
-						identity.getPrimaryName().getMiddleInitial() != null && identity.getPrimaryName().getMiddleInitial().length() > 0 &&
-						identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial().length() > 0 &&
-						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial())))) //FirstInitial to MiddleInitial
-					&&
-					(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
-							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//MiddleInitial to First Initial
-				)) {
-					author.setTargetAuthor(true);
-					count++;
-				}
-				else
-					author.setTargetAuthor(false);
-			}
-			else if(matchCount == 0 && !author.isTargetAuthor()) {
-				if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
-						author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 &&
-						identity.getPrimaryName().getMiddleInitial() != null && identity.getPrimaryName().getMiddleInitial().length() > 0 &&
-						identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial().length() > 0 &&
-						(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) ||
-						identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getMiddleInitial())))) //FirstInitial to MiddleInitial
-					&&
-					(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
-							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))//MiddleInitial to First Initial
-				)) {
-					author.setTargetAuthor(true);
-					count++;
-				}
-				else
-					author.setTargetAuthor(false);
-			}
-			
+			author.setTargetAuthor(false);
 		}
-		return count;
 	}
-		
-		
-		
-		
-
-
 }
