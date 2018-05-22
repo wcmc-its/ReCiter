@@ -199,7 +199,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
 					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
 					dois.add(doi);
-					slf4jLogger.info("Doi: " + doi + " Pubmed: " + pmid);
 					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
 				}
 			}
@@ -212,7 +211,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					// PMID: 28221372
 					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112
 					//Sometimes scopus doi retrieval wont match with the DOI found in Pubmed
-					slf4jLogger.info("Doi Search in SCopus: " + scopusArticle.getDoi().toLowerCase());
 					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null)
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
 				}
