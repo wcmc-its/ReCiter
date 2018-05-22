@@ -35,18 +35,16 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import reciter.Uids;
-import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -68,7 +66,6 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
-import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
@@ -123,26 +120,47 @@ public class ReCiterController {
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
 
-	@RequestMapping(value = "/reciter/identity/", method = RequestMethod.POST)
-	@ResponseBody
-	public ResponseEntity addIdentity(@RequestBody Identity identity) {
-		slf4jLogger.info("Inserting: " + identity);
-		identityService.save(identity);
-		return ResponseEntity.ok().build();
-	}
-
-	@RequestMapping(value = "/reciter/identity/{uid}", method = RequestMethod.GET)
-	@ResponseBody
-	public Identity getIdentityByUid(@PathVariable String uid) {
-		return identityService.findByUid(uid);
-	}
-
-	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
+/*	@RequestMapping(value = "/reciter/retrieve/afid/by/institution", method = RequestMethod.GET)
 	@ResponseBody
 	public List<String> retrieveAfids(String institution) {
 		return dynamoDbInstitutionAfidService.findByInstitution(institution).getAfids();
+	}*/
+	
+	@ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "GoldStandard creation successful"),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+			})
+	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseEntity<GoldStandard> updateGoldStandard(@RequestBody GoldStandard goldStandard) {
+		dynamoDbGoldStandardService.save(goldStandard);
+		return ResponseEntity.ok(goldStandard);
 	}
-
+	
+	@ApiOperation(value = "Update the goldstandard by passing  a list of GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing list of GoldStandard model(uid, knownPmids, rejectedPmids).")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "GoldStandard List creation successful"),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+			})
+	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT)
+	@ResponseBody
+	public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard) {
+		dynamoDbGoldStandardService.save(goldStandard);
+		return ResponseEntity.ok(goldStandard);
+	}
+	
+	@ApiOperation(value = "Get the goldStandard by passing an uid", notes = "This api gets the goldStandard by passing an uid.")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "The goldstandard retrieval for supplied uid is successful"),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+			})
 	@RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
@@ -152,37 +170,12 @@ public class ReCiterController {
 		return ResponseEntity.ok(goldStandard);
 	}
 
-	@RequestMapping(value = "/reciter/scopusarticle/{pmid}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseEntity<List<ScopusArticle>> retrieveScopusArticleByPmid(@PathVariable String pmid) {
-		List<Long> pmids = new ArrayList<>();
-		pmids.add(Long.parseLong(pmid));
-		ScopusArticleRetriever<Long> scopusArticleRetriever = new ScopusArticleRetriever<>();
-		List<ScopusArticle> scopusArticles =
-				scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.PMID_MODIFIER, new ArrayList<>(pmids));
-		return ResponseEntity.ok(scopusArticles);
-	}
-
-	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)
-	@ResponseBody
-	public ResponseEntity<GoldStandard> updateGoldStandard(@RequestBody GoldStandard goldStandard) {
-		dynamoDbGoldStandardService.save(goldStandard);
-		return ResponseEntity.ok(goldStandard);
-	}
-
-	@RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT)
-	@ResponseBody
-	public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard) {
-		dynamoDbGoldStandardService.save(goldStandard);
-		return ResponseEntity.ok(goldStandard);
-	}
-
 	/**
 	 * Retrieve all articles in Uids.java.
 	 */
 	@ApiOperation(value = "Retrieve Articles for all UID in Identity Table", response = ResponseEntity.class, notes = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
 	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Successfully retrieved list"),
+			@ApiResponse(code = 200, message = "Successfully retrieved list for given list of uid"),
 			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
 			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
 			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -279,32 +272,8 @@ public class ReCiterController {
 		slf4jLogger.info("elapsed time: " + estimatedTime);
 		return ResponseEntity.ok().body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
 	}
-
-	@RequestMapping(value = "/reciter/feature/by/uid", method = RequestMethod.GET)
-	@ResponseBody
-	public List<Feature> generateFeatures(@RequestParam(value="uid") String uid) {
-		EngineParameters parameters = initializeEngineParameters(uid);
-		Engine engine = new ReCiterEngine();
-		return engine.generateFeature(parameters);
-	}
-
-	@RequestMapping(value = "/reciter/analysis/by/uid", method = RequestMethod.GET)
-	@ResponseBody
-	public Analysis runAnalysis(@RequestParam(value="uid") String uid) {
-
-		EngineParameters parameters = initializeEngineParameters(uid);
-		Engine engine = new ReCiterEngine();
-		EngineOutput engineOutput = engine.run(parameters, strategyParameters);
-
-		slf4jLogger.info(engineOutput.getAnalysis().toString());
-//		analysisService.save(engineOutput.getAnalysis(), uid);
-		// TODO uncomment
-//		reCiterClusterService.save(engineOutput.getReCiterClusters(), uid);
-
-		return engineOutput.getAnalysis();
-	}
 	
-	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence for s")
+	@ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence.")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
 			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -354,17 +323,11 @@ public class ReCiterController {
 		return new ResponseEntity<ReCiterFeature>(engineOutput.getReCiterFeature(), HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/reciter/pubmed/pmid", method = RequestMethod.GET)
+	/*@RequestMapping(value = "/reciter/pubmed/pmid", method = RequestMethod.GET)
 	@ResponseBody
 	public PubMedArticle pubMedArticle(@RequestParam(value="pmid") Long pmid) {
 		return pubMedService.findByPmid(pmid);
-	}
-
-	@RequestMapping(value = "/reciter/scopus/id", method = RequestMethod.GET)
-	@ResponseBody
-	public ScopusArticle scopusArticle(@RequestParam(value="id") String id) {
-		return scopusService.findByPmid(id);
-	}
+	}*/
 
 	private EngineParameters initializeEngineParameters(String uid) {
 		// find identity
