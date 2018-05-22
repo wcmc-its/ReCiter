@@ -270,7 +270,7 @@ public class ReCiterEngine implements Engine {
 		}
 		engineOutput.setReCiterClusters(reCiterClusters);
 		ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
-		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures("test", clusterer, clusterSelector, parameters.getKnownPmids(), analysis);
+		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures("test", clusterer, clusterSelector, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
 		engineOutput.setReCiterFeature(reCiterFeature);
 		return engineOutput;
 	}
