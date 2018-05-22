@@ -29,6 +29,7 @@ public class ReCiterAuthor {
 	
 	private AuthorName name;
 	private String affiliation;
+	private boolean targetAuthor;
 	
 	public ReCiterAuthor(AuthorName name, String affiliation) {
 		this.name = name;
@@ -42,4 +43,14 @@ public class ReCiterAuthor {
 	public AuthorName getAuthorName() {
 		return name;
 	}
+
+	public boolean isTargetAuthor() {
+		return targetAuthor;
+	}
+
+	public void setTargetAuthor(boolean targetAuthor) {
+		this.targetAuthor = targetAuthor;
+	}
+	
+	
 }
