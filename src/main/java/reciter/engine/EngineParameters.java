@@ -33,6 +33,7 @@ public class EngineParameters {
 	private List<ScopusArticle> scopusArticles;
 	private List<ReCiterArticle> reciterArticles;
 	private List<Long> knownPmids;
+	private List<Long> rejectedPmids;
 	private static Map<String, Long> meshCountMap;
 	private static Map<String, List<String>> afiliationNameToAfidMap;
 	
@@ -71,6 +72,12 @@ public class EngineParameters {
 	}
 	public void setKnownPmids(List<Long> knownPmids) {
 		this.knownPmids = knownPmids;
+	}
+	public List<Long> getRejectedPmids() {
+		return rejectedPmids;
+	}
+	public void setRejectedPmids(List<Long> rejectedPmids) {
+		this.rejectedPmids = rejectedPmids;
 	}
 	public static Map<String, List<String>> getAfiliationNameToAfidMap() {
 		return afiliationNameToAfidMap;
