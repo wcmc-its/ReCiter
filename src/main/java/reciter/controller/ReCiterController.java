@@ -448,25 +448,25 @@ public class ReCiterController {
 		else {
 			parameters = initializeEngineParameters(uid);
 			TargetAuthorSelection t = new  TargetAuthorSelection();
-			slf4jLogger.info(parameters.getReciterArticles().size() +" Article size");
 			t.identifyTargetAuthor(parameters.getReciterArticles(), parameters.getIdentity());
 			Iterator<ReCiterArticle> it = parameters.getReciterArticles().iterator();
-			while(it.hasNext()) {
+			/*while(it.hasNext()) {
 				ReCiterArticle reciterArticle = it.next();
 				boolean targetAuthor = reciterArticle.getArticleCoAuthors().getAuthors().stream().anyMatch(authors -> authors.isTargetAuthor()==true);
 				if(!targetAuthor) {
 					slf4jLogger.info("No Target Author for " + reciterArticle.getArticleId() + " Removing from list of articles to be analyzed");
 					it.remove();
 				}
-			}
+			}*/
+			
 			Engine engine = new ReCiterEngine();
 			engineOutput = engine.run(parameters, strategyParameters);
 			AnalysisOutput analysisOutput = new AnalysisOutput();
 			if(engineOutput != null)
 				analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
 			analysisOutput.setUid(uid);
-			if(analysisOutput.getReCiterFeature() != null)
-				analysisService.save(analysisOutput);
+			//if(analysisOutput.getReCiterFeature() != null)
+			//	analysisService.save(analysisOutput);
 		}
 		
 		//return engineOutput.getReCiterFeature();
@@ -558,8 +558,10 @@ public class ReCiterController {
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
 		if (goldStandard == null) {
 			parameters.setKnownPmids(new ArrayList<>());
+			parameters.setRejectedPmids(new ArrayList<>());
 		} else {
 			parameters.setKnownPmids(goldStandard.getKnownPmids());
+			parameters.setRejectedPmids(goldStandard.getRejectedPmids());
 		}
 		return parameters;
 	}
