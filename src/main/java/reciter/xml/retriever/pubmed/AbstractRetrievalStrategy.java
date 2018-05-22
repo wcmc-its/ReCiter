@@ -19,11 +19,11 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
@@ -34,6 +34,7 @@ import reciter.model.scopus.ScopusArticle;
 import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.scopus.retriever.ScopusArticleRetriever;
+import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
 
 @Configurable
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
@@ -45,6 +46,9 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
 	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
 	private static final int scopusNodeSize = 3;
+	
+	@Autowired
+	private GoldStandardRetrievalStrategy goldStandardRetrievalStrategy;
 
 	public static class RetrievalResult {
 		private final Map<Long, PubMedArticle> pubMedArticles;
@@ -87,7 +91,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
 
-	protected abstract List<PubMedQueryType> buildQuery(Identity identity);
+	protected abstract List<PubMedQueryType> buildQuery(Identity identity);;
 	protected abstract List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate);
 
 	@Override
@@ -99,6 +103,14 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	@Override
 	public RetrievalResult retrievePubMedArticles(Identity identity) throws IOException {
 		List<PubMedQueryType> pubMedQueries = buildQuery(identity);
+		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
+			slf4jLogger.info(pubMedQueryType.toString());
+		}
+		return retrievePubMedArticles(identity, pubMedQueries);
+	}
+	
+	public RetrievalResult retrievePubMedArticlesUsingGoldStandard(Identity identity, Set<Long> uniquePmids) throws IOException {
+		List<PubMedQueryType> pubMedQueries = goldStandardRetrievalStrategy.buildQueryGoldStandard(identity, uniquePmids);
 		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
 			slf4jLogger.info(pubMedQueryType.toString());
 		}
