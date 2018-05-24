@@ -117,8 +117,8 @@ public class PubMedQueryType {
 				//pmidsUid.add(pmid + "[uid]");
 				pmidsUid.add( Long.toString(pmid));
 			}
-			//PubMedQuery p =  PubMedQuery.builder().strategyQuery(StringUtils.join(pmidsUid, " OR ")).build();
-			PubMedQuery p =  PubMedQuery.builder().strategyQuery(pmidsUid.toString()).build();
+			PubMedQuery p =  PubMedQuery.builder().strategyQuery(StringUtils.join(pmidsUid, ",")).build();
+			//PubMedQuery p =  PubMedQuery.builder().strategyQuery(pmidsUid.toString()).build();
 			return p;
 		}
 		

@@ -107,9 +107,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		String uid = identity.getUid();
 		
+		//Retreive by GoldStandard
+		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity);
+		Map<Long, PubMedArticle> pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
+		savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
+		
+		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity);
-		Map<Long, PubMedArticle> pubMedArticles = retrievalResult.getPubMedArticles();
+		pubMedArticles = retrievalResult.getPubMedArticles();
 		
 		if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
@@ -164,11 +170,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
 			uniquePmids.addAll(r5.getPubMedArticles().keySet());
 		}
-		
-		//Retreive by GoldStandard
-		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticlesUsingGoldStandard(identity, uniquePmids);
-		pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-		savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
 		
 		
 		if (useScopusArticles) {
