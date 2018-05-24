@@ -112,7 +112,8 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		ReCiterCluster firstCluster = new ReCiterCluster();
 
 		reCiterArticles.forEach(article -> {
-			if (!isFirstArticleSelected) {
+			//if (!isFirstArticleSelected) {
+			if(firstCluster.getClusterOriginator() == 0) {
 				// Select first article.
 				firstCluster.setClusterOriginator(article.getArticleId());
 				firstCluster.add(article);
