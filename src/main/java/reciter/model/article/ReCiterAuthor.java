@@ -30,6 +30,7 @@ public class ReCiterAuthor {
 	private AuthorName name;
 	private String affiliation;
 	private boolean targetAuthor;
+	private String validEmail;
 	
 	public ReCiterAuthor(AuthorName name, String affiliation) {
 		this.name = name;
@@ -51,6 +52,15 @@ public class ReCiterAuthor {
 	public void setTargetAuthor(boolean targetAuthor) {
 		this.targetAuthor = targetAuthor;
 	}
+
+	public String getValidEmail() {
+		return validEmail;
+	}
+
+	public void setValidEmail(String validEmail) {
+		this.validEmail = validEmail;
+	}
+	
 	
 	
 }
