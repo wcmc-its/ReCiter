@@ -30,4 +30,6 @@ public interface ClusteringStrategy {
 	Map<Long, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles);
 	
 	Map<Long, ReCiterCluster> cluster(List<ReCiterArticle> reCiterArticles, Set<Long> seedPmids);
+	
+	Map<Long, ReCiterCluster> cluster(Map<Long, ReCiterCluster> clusters);
 }

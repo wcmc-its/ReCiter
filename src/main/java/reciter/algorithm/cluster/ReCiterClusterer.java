@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
 import reciter.algorithm.cluster.clusteringstrategy.article.NameMatchingClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.InitialClusteringStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
@@ -50,7 +52,8 @@ public class ReCiterClusterer extends AbstractClusterer {
 		this.reCiterArticles = reCiterArticles;
 		this.identity = identity;
 		clusters = new HashMap<Long, ReCiterCluster>();
-		clusteringStrategy = new NameMatchingClusteringStrategy(identity);
+		//clusteringStrategy = new NameMatchingClusteringStrategy(identity);
+		clusteringStrategy = new InitialClusteringStrategy();
 	}
 
 	/**
@@ -64,6 +67,12 @@ public class ReCiterClusterer extends AbstractClusterer {
 		log.info("Running ReCiter for: [" + identity.getUid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		clusters = clusteringStrategy.cluster(reCiterArticles);
+		log.info("Number of clusters after initial clustering: " + clusters.size());
+		log.info("Initial CLustering Strategy results: " + toString());
+		clusteringStrategy = new EmailFeatureClusteringStrategy();
+		clusters = clusteringStrategy.cluster(clusters);
+		log.info("Number of clusters after email strategy clustering: " + clusters.size());
+		log.info("email strategy CLustering Strategy results: " + toString());
 	}
 	
 

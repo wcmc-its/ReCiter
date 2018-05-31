@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
-public class ReCiterCluster {
+public class ReCiterCluster implements Comparable<ReCiterCluster>{
 
 	/**
 	 * Cluster Id.
@@ -57,6 +58,8 @@ public class ReCiterCluster {
 	private boolean isSelected;
 
 	private String clusterInfo = "";
+	
+	private boolean isMerge;
 	
 	public static class MeshTermCount {
 		private String mesh;
@@ -183,8 +186,8 @@ public class ReCiterCluster {
 		articleCluster.add(article);
 	}
 
-	public void addAll(ReCiterCluster cluster) {
-		articleCluster.addAll(cluster.getArticleCluster());
+	public void addAll(List<ReCiterArticle> reCiterArticles) {
+		articleCluster.addAll(reCiterArticles);
 	}
 
 	public List<ReCiterArticle> getArticleCluster() {
@@ -239,5 +242,33 @@ public class ReCiterCluster {
 	public void setSelected(boolean isSelected) {
 		this.isSelected = isSelected;
 	}
+
+	public boolean isMerge() {
+		return isMerge;
+	}
+
+	public void setMerge(boolean isMerge) {
+		this.isMerge = isMerge;
+	}
+	
+
+	@Override
+	public int compareTo(ReCiterCluster o) {
+		boolean emailMatch = false;
+		// TODO Auto-generated method stub
+		for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+			for(ReCiterAuthor authoro: reCiterArticle.getArticleCoAuthors().getAuthors()) {
+				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isEmpty()) {
+					emailMatch = this.articleCluster.stream().anyMatch(article -> article.getArticleCoAuthors().getAuthors().stream().anyMatch(author -> author.getValidEmail() != null && !author.getValidEmail().isEmpty() &&
+							StringUtils.equalsIgnoreCase(author.getValidEmail(), authoro.getValidEmail())));
+					if(emailMatch) {
+						return 1;
+					}
+				}
+			}
+		}
+		return 0;
+	}
+	
 
 }

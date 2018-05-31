@@ -239,4 +239,10 @@ public class NameMatchingClusteringStrategy extends AbstractClusteringStrategy {
 		return identity;
 	}
 
+	@Override
+	public Map<Long, ReCiterCluster> cluster(Map<Long, ReCiterCluster> clusters) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
