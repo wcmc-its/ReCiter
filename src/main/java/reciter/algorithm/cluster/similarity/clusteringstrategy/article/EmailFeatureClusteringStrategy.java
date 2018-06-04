@@ -1,7 +1,6 @@
 package reciter.algorithm.cluster.similarity.clusteringstrategy.article;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +10,6 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 
 import reciter.algorithm.cluster.clusteringstrategy.article.AbstractClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
@@ -40,7 +38,7 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	}
 	
 	/**
-	 * This function will group from the initial clusters with articles having an valid email
+	 * This function will group from the initial clusters with articles having an valid email and email matches
 	 * @param clusters List of clusters from initial clustering
 	 * @return list of clusters
 	 */
@@ -59,19 +57,22 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 			}
 		}
 		
-		String[] values = clusters.values().toArray(new String[clusters.size()]);
-		
-		for(int i=0 ; i < clusters.size() -1 ; i++) {
-			int index = i;
-			for(int j = i+1; j < clusters.size(); j++) {
-				if(clusters.get(j).compareTo(clusters.get(index)) == 1) {
-					clusters.get(i).setMerge(true);
-					clusters.get(j).setMerge(true);
+		//Compare each clusters with all other for matching email
+		for(Long i=(long) 1 ; i < clusters.size() ; i++) {
+			Long index = i;
+			for(Long j = i+1; j < clusters.size(); j++) {
+				if(clusters.get(j) != null && clusters.get(index) != null) {
+					if(clusters.get(j).compareTo(clusters.get(index)) == 1) {
+						//clusters.get(i).setMerge(true);
+						//clusters.get(j).setMerge(true);
+						clusters.get(index).addAll(clusters.get(j).getArticleCluster());
+						clusters.remove(j);
+					}
 				}
 			}
 		}
 		
-		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
+		/*for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long validEmailClutserId = 0;
 	        ReCiterCluster reCiterCluster = entry.getValue();
 	        if(reCiterCluster.isMerge()) {
@@ -88,9 +89,9 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	        else {
 	        	mergedClusters.put(entry.getKey(), reCiterCluster);
 	        }
-		}
+		}*/
 		
-		return mergedClusters;
+		return clusters;
 	}
 	
 	private void checkForValidEmail(ReCiterArticle reCiterArticle) {
@@ -117,12 +118,6 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 			return matcher.group();
 		}
 		return null;
-	}
-	
-	private <T> T combineTwoObjects(T a, T b, T destination) {
-	    BeanUtils.copyProperties(a, destination);
-	    BeanUtils.copyProperties(b, destination);
-	    return destination;
 	}
 
 }
