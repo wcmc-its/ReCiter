@@ -59,8 +59,6 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 
 	private String clusterInfo = "";
 	
-	private boolean isMerge;
-	
 	public static class MeshTermCount {
 		private String mesh;
 		private long count;
@@ -243,16 +241,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		this.isSelected = isSelected;
 	}
 
-	public boolean isMerge() {
-		return isMerge;
-	}
-
-	public void setMerge(boolean isMerge) {
-		this.isMerge = isMerge;
-	}
 	
-
-	@Override
 	public int compareTo(ReCiterCluster o) {
 		boolean emailMatch = false;
 		// TODO Auto-generated method stub
