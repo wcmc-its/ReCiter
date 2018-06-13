@@ -34,7 +34,8 @@ import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
 import reciter.algorithm.cluster.clusteringstrategy.article.NameMatchingClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.InitialClusteringStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.GrantFeatureClusteringStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.BaselineClusteringStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
@@ -53,7 +54,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 		this.identity = identity;
 		clusters = new HashMap<Long, ReCiterCluster>();
 		//clusteringStrategy = new NameMatchingClusteringStrategy(identity);
-		clusteringStrategy = new InitialClusteringStrategy();
+		clusteringStrategy = new BaselineClusteringStrategy();
 	}
 
 	/**
@@ -66,13 +67,22 @@ public class ReCiterClusterer extends AbstractClusterer {
 	public void cluster() {
 		log.info("Running ReCiter for: [" + identity.getUid() + "] "
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
+		//Baseline Clustering Strategy
 		clusters = clusteringStrategy.cluster(reCiterArticles);
 		log.info("Number of clusters after initial clustering: " + clusters.size());
 		log.info("Initial CLustering Strategy results: " + toString());
+		
+		//Email Clustering Strategy
 		clusteringStrategy = new EmailFeatureClusteringStrategy();
 		clusters = clusteringStrategy.cluster(clusters);
 		log.info("Number of clusters after email strategy clustering: " + clusters.size());
 		log.info("email strategy CLustering Strategy results: " + toString());
+		
+		//Grant Clustering Strategy
+		clusteringStrategy = new GrantFeatureClusteringStrategy();
+		clusters = clusteringStrategy.cluster(clusters);
+		log.info("Number of clusters after grant strategy clustering: " + clusters.size());
+		log.info("grant strategy CLustering Strategy results: " + toString());
 	}
 	
 
