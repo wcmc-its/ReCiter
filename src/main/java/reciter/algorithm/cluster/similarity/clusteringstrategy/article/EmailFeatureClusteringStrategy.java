@@ -51,46 +51,27 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	        ReCiterCluster reCiterCluster = entry.getValue();
 	        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
 				checkForValidEmail(reCiterArticle);
-				//entry.getValue().setMerge(true);
-				//reCiterCluster.addAll(reCiterCluster);
-				//break;
 			}
 		}
 		
 		//Compare each clusters with all other for matching email
-		for(Long i=(long) 1 ; i < clusters.size() ; i++) {
-			Long index = i;
-			for(Long j = i+1; j < clusters.size(); j++) {
-				if(clusters.get(j) != null && clusters.get(index) != null) {
-					if(clusters.get(j).compareTo(clusters.get(index)) == 1) {
-						//clusters.get(i).setMerge(true);
-						//clusters.get(j).setMerge(true);
-						clusters.get(index).addAll(clusters.get(j).getArticleCluster());
-						clusters.remove(j);
+		long mapSize = clusters.size();
+		for(long i=(long) 1 ; i <= mapSize ; i++) {
+			long index = i;
+			for(long j = 1; j <= mapSize; j++) {
+				if(i==j) {
+					continue;
+				}
+				else {
+					if(clusters.get(j) != null && clusters.get(index) != null) {
+						if(clusters.get(index).compareTo(clusters.get(j)) == 1) {
+							clusters.get(index).addAll(clusters.get(j).getArticleCluster());
+							clusters.remove(j);
+						}
 					}
 				}
 			}
 		}
-		
-		/*for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
-			long validEmailClutserId = 0;
-	        ReCiterCluster reCiterCluster = entry.getValue();
-	        if(reCiterCluster.isMerge()) {
-	        	if(mergedClusters != null && mergedClusters.containsKey(validEmailClutserId)) {
-	        		ReCiterCluster mergedCluster = mergedClusters.get(validEmailClutserId);
-	        		mergedCluster.addAll(reCiterCluster.getArticleCluster());
-				    //combineTwoObjects(mergedClusters.get(entry.getKey()), reCiterCluster, mergedCluster);
-				    mergedClusters.put(validEmailClutserId, mergedCluster);
-	        	}
-	        	else {
-	        		mergedClusters.put(validEmailClutserId, reCiterCluster);
-	        	}
-	        }
-	        else {
-	        	mergedClusters.put(entry.getKey(), reCiterCluster);
-	        }
-		}*/
-		
 		return clusters;
 	}
 	
