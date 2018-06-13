@@ -20,16 +20,20 @@ package reciter.algorithm.cluster.model;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
@@ -181,7 +185,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	}
 
 	public void add(ReCiterArticle article) {
-		articleCluster.add(article);
+		this.articleCluster.add(article);
 	}
 
 	public void addAll(List<ReCiterArticle> reCiterArticles) {
@@ -189,7 +193,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	}
 
 	public List<ReCiterArticle> getArticleCluster() {
-		return articleCluster;
+		return this.articleCluster;
 	}
 
 	public void setArticleCluster(List<ReCiterArticle> articleCluster) {
@@ -197,8 +201,8 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	}
 
 	public ReCiterCluster() {
-		clusterId = clusterIDCounter.incrementAndGet();
-		articleCluster = new ArrayList<ReCiterArticle>();
+		this.clusterId = clusterIDCounter.incrementAndGet();
+		this.articleCluster = new ArrayList<ReCiterArticle>();
 	}
 
 	public long getClusterID() {
@@ -241,10 +245,9 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		this.isSelected = isSelected;
 	}
 
-	
+	@Override
 	public int compareTo(ReCiterCluster o) {
 		boolean emailMatch = false;
-		// TODO Auto-generated method stub
 		for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 			for(ReCiterAuthor authoro: reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isEmpty()) {
@@ -254,6 +257,28 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 						return 1;
 					}
 				}
+			}
+		}
+		return 0;
+	}
+	
+	/**
+	 * @param o The ReCiterCluster to compare to
+	 * @param comparisonType what kind of comparison happening e.g. email or grants etc.
+	 * @return 1 if equal or 0 if not
+	 */
+	public int compareTo(ReCiterCluster o, String comparisonType) {
+		boolean match = false;
+		for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+			for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
+				if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
+					match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() &&
+							StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
+					if(match) {
+						return 1;
+					}
+				}
+				
 			}
 		}
 		return 0;
