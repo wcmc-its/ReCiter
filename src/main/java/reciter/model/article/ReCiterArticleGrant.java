@@ -24,6 +24,7 @@ public class ReCiterArticleGrant {
 	private String acronym;
 	private String agency;
 	private String country;
+	private String sanitizedGrantID;
 	
 	public String getGrantID() {
 		return grantID;
@@ -48,5 +49,11 @@ public class ReCiterArticleGrant {
 	}
 	public void setCountry(String country) {
 		this.country = country;
+	}
+	public String getSanitizedGrantID() {
+		return sanitizedGrantID;
+	}
+	public void setSanitizedGrantID(String sanitizedGrantID) {
+		this.sanitizedGrantID = sanitizedGrantID;
 	}
 }
