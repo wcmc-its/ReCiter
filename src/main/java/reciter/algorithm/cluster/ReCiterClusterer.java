@@ -35,6 +35,7 @@ import reciter.algorithm.cluster.clusteringstrategy.article.NameMatchingClusteri
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.GrantFeatureClusteringStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.BaselineClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.CitesFeatureClusteringStrategy;
 import reciter.model.article.ReCiterArticle;
@@ -45,7 +46,7 @@ import reciter.model.identity.Identity;
 @Setter
 public class ReCiterClusterer extends AbstractClusterer {
 
-			private List<ReCiterArticle> reCiterArticles;
+	private List<ReCiterArticle> reCiterArticles;
 	private Identity identity;
 	private Map<Long, ReCiterCluster> clusters;
 	private ClusteringStrategy clusteringStrategy;
@@ -93,6 +94,12 @@ public class ReCiterClusterer extends AbstractClusterer {
 		clusters = clusteringStrategy.cluster(clusters);
 		log.info("Number of clusters after cites strategy clustering: " + clusters.size());
 		log.info("cites strategy Clustering Strategy results: " + toString());
+		
+		//Mesh Major Clustering Strategy
+		clusteringStrategy = new MeshMajorClusteringStrategy();
+		clusters = clusteringStrategy.cluster(clusters);
+		log.info("Number of clusters after mesh major strategy clustering: " + clusters.size());
+		log.info("Mesh Major strategy Clustering Strategy results: " + toString());
 	}
 	
 
