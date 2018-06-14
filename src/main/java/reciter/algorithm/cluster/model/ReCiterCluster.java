@@ -32,8 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
+import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleGrant;
+import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
@@ -298,6 +301,23 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 					if(match) {
 						return 1;
 					}
+			}
+		}
+		else if(comparisonType.equalsIgnoreCase("meshMajor")) {
+			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+				for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
+					if(meshHeading != null && MeshMajorStrategy.isMeshMajor(meshHeading)) {
+						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getMeshHeadings() != null && 
+								articleList.getMeshHeadings().stream().anyMatch(mesh -> MeshMajorStrategy.isMeshMajor(mesh) && 
+								StringUtils.equalsIgnoreCase(mesh.getDescriptorName().getDescriptorName(), meshHeading.getDescriptorName().getDescriptorName()) && 
+								EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
+								EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 4000L
+								));
+					}
+					if(match) {
+						return 1;
+					}
+				}
 			}
 		}
 		return 0;
