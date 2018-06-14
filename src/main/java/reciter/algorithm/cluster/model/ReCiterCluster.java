@@ -269,16 +269,35 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	 */
 	public int compareTo(ReCiterCluster o, String comparisonType) {
 		boolean match = false;
-		for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
-			for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
-				if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
-					match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() &&
-							StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
+		if(comparisonType.equalsIgnoreCase("grant")) {
+			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+				for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
+					if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
+						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() &&
+								StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
+						if(match) {
+							return 1;
+						}
+					}
+					
+				}
+			}
+		}
+		else if(comparisonType.equalsIgnoreCase("cites")) {
+			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+					//A cites B
+					match = this.articleCluster.stream().anyMatch(articleList -> reCiterArticle.getCommentsCorrectionsPmids() != null && 
+							reCiterArticle.getCommentsCorrectionsPmids().size() > 0 && articleList.getArticleId() != 0 && 
+							reCiterArticle.getCommentsCorrectionsPmids().contains(articleList.getArticleId()));
+					//B cites A
+					if(!match) {
+						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getCommentsCorrectionsPmids() != null && 
+								articleList.getCommentsCorrectionsPmids().size() > 0 && reCiterArticle.getArticleId() != 0 &&
+								articleList.getCommentsCorrectionsPmids().contains(reCiterArticle.getArticleId()));
+					}
 					if(match) {
 						return 1;
 					}
-				}
-				
 			}
 		}
 		return 0;
