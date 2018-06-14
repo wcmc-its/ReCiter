@@ -1,6 +1,5 @@
 package reciter.algorithm.cluster.similarity.clusteringstrategy.article;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +10,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.clusteringstrategy.article.AbstractClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.model.article.ReCiterArticle;
@@ -45,8 +45,6 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	@Override
 	public Map<Long, ReCiterCluster> cluster(Map<Long, ReCiterCluster> clusters) {
 		
-		Map<Long, ReCiterCluster> mergedClusters = new HashMap<Long, ReCiterCluster>();
-		
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 	        ReCiterCluster reCiterCluster = entry.getValue();
 	        for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
@@ -55,7 +53,7 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 		}
 		
 		//Compare each clusters with all other for matching email
-		long mapSize = clusters.size();
+		long mapSize = ReCiterClusterer.baselineClusterSize;
 		for(long i=(long) 1 ; i <= mapSize ; i++) {
 			long index = i;
 			for(long j = 1; j <= mapSize; j++) {
