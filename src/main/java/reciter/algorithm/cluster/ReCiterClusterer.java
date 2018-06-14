@@ -36,6 +36,7 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.GrantFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.BaselineClusteringStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.CitesFeatureClusteringStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
@@ -48,6 +49,7 @@ public class ReCiterClusterer extends AbstractClusterer {
 	private Identity identity;
 	private Map<Long, ReCiterCluster> clusters;
 	private ClusteringStrategy clusteringStrategy;
+	public static int baselineClusterSize;
 	
 	public ReCiterClusterer(Identity identity, List<ReCiterArticle> reCiterArticles) {
 		this.reCiterArticles = reCiterArticles;
@@ -69,20 +71,28 @@ public class ReCiterClusterer extends AbstractClusterer {
 				+ "Number of articles to be clustered:" + reCiterArticles.size());
 		//Baseline Clustering Strategy
 		clusters = clusteringStrategy.cluster(reCiterArticles);
-		log.info("Number of clusters after initial clustering: " + clusters.size());
-		log.info("Initial CLustering Strategy results: " + toString());
+		log.info("Number of clusters after Baseline clustering: " + clusters.size());
+		log.info("Baseline Clustering Strategy results: " + toString());
+		
+		baselineClusterSize = clusters.size();
 		
 		//Email Clustering Strategy
 		clusteringStrategy = new EmailFeatureClusteringStrategy();
 		clusters = clusteringStrategy.cluster(clusters);
 		log.info("Number of clusters after email strategy clustering: " + clusters.size());
-		log.info("email strategy CLustering Strategy results: " + toString());
+		log.info("email strategy Clustering Strategy results: " + toString());
 		
 		//Grant Clustering Strategy
 		clusteringStrategy = new GrantFeatureClusteringStrategy();
 		clusters = clusteringStrategy.cluster(clusters);
 		log.info("Number of clusters after grant strategy clustering: " + clusters.size());
-		log.info("grant strategy CLustering Strategy results: " + toString());
+		log.info("grant strategy Clustering Strategy results: " + toString());
+		
+		//Cites or Cited by Clustering Strategy
+		clusteringStrategy = new CitesFeatureClusteringStrategy();
+		clusters = clusteringStrategy.cluster(clusters);
+		log.info("Number of clusters after cites strategy clustering: " + clusters.size());
+		log.info("cites strategy Clustering Strategy results: " + toString());
 	}
 	
 
