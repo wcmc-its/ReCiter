@@ -26,7 +26,7 @@ import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.GrantEvidence;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.model.article.completeness.ArticleCompleteness;
-import reciter.model.article.completeness.ReCiterCompleteness;
+import reciter.model.article.features.ReCiterArticleFeatures;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.KnownRelationship;
@@ -75,6 +75,11 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
      */
     @Transient
     private ArticleCompleteness articleCompleteness;
+    
+    /**
+     * Populate features of a article based on journal title and meshMajor and co-authors
+     */
+    private ReCiterArticleFeatures reCiterArticleFeatures;
 
     /**
      * Scopus Article.
@@ -348,7 +353,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
      */
     public ReCiterArticle(long articleId) {
         this.articleId = articleId;
-        this.setArticleCompleteness(new ReCiterCompleteness());
+        //this.setArticleCompleteness(new ReCiterCompleteness());
     }
 
     public void setCorrectAuthor(Identity identity) {
@@ -798,4 +803,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     public void setPublishedPriorAcademicDegreeDoctoral(String publishedPriorAcademicDegreeDoctoral) {
         this.publishedPriorAcademicDegreeDoctoral = publishedPriorAcademicDegreeDoctoral;
     }
+
+	public ReCiterArticleFeatures getReCiterArticleFeatures() {
+		return reCiterArticleFeatures;
+	}
+
+	public void setReCiterArticleFeatures(ReCiterArticleFeatures reCiterArticleFeatures) {
+		this.reCiterArticleFeatures = reCiterArticleFeatures;
+	}
 }
