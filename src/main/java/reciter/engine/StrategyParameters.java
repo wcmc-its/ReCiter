@@ -83,6 +83,9 @@ public class StrategyParameters {
 	
 	@Value("${use.rejected.evidence}")
 	private boolean useRejectedEvidence;
+	
+	@Value("${cluster.similarity.threshold.score}")
+	private double clusterSimilarityThresholdScore;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -242,5 +245,13 @@ public class StrategyParameters {
 
 	public void setUseRejectedEvidence(boolean useRejectedEvidence) {
 		this.useRejectedEvidence = useRejectedEvidence;
+	}
+
+	public double getClusterSimilarityThresholdScore() {
+		return clusterSimilarityThresholdScore;
+	}
+
+	public void setClusterSimilarityThresholdScore(double clusterSimilarityThresholdScore) {
+		this.clusterSimilarityThresholdScore = clusterSimilarityThresholdScore;
 	}
 }
