@@ -36,6 +36,7 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.GrantFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.TepidClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.BaselineClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.CitesFeatureClusteringStrategy;
 import reciter.model.article.ReCiterArticle;
@@ -76,6 +77,12 @@ public class ReCiterClusterer extends AbstractClusterer {
 		log.info("Baseline Clustering Strategy results: " + toString());
 		
 		baselineClusterSize = clusters.size();
+		
+		//Tepid Clustering Strategy
+		clusteringStrategy = new TepidClusteringStrategy();
+		clusters = clusteringStrategy.cluster(clusters);
+		log.info("Number of clusters after tepid strategy clustering: " + clusters.size());
+		log.info("tepid strategy Clustering Strategy results: " + toString());
 		
 		//Email Clustering Strategy
 		clusteringStrategy = new EmailFeatureClusteringStrategy();
