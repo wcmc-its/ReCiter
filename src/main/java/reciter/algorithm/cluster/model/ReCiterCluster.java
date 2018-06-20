@@ -24,20 +24,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.engine.EngineParameters;
+import reciter.engine.ReCiterEngine;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
+import reciter.model.article.features.ReCiterArticleFeatures;
 import reciter.model.identity.Identity;
 
 public class ReCiterCluster implements Comparable<ReCiterCluster>{
@@ -320,7 +320,64 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 				}
 			}
 		}
+		else if(comparisonType.equalsIgnoreCase("tepid")) {
+			int matchCount = 0;
+			double clusterSimilarityScore = 0;
+			for(ReCiterArticle reCiterArticleo: o.getArticleCluster()) {
+				for(ReCiterArticle reCiterArticle: this.articleCluster) {
+					matchCount = reCiterOverlapCount(reCiterArticle.getReCiterArticleFeatures(), reCiterArticleo.getReCiterArticleFeatures());
+					if(matchCount > 0 && reCiterArticle.getReCiterArticleFeatures().getFeatureCount() >= 3 && reCiterArticleo.getReCiterArticleFeatures().getFeatureCount() >= 3) {
+						clusterSimilarityScore = computeClusterSimilarityScore(reCiterArticle.getReCiterArticleFeatures().getFeatureCount(), reCiterArticleo.getReCiterArticleFeatures().getFeatureCount(), matchCount);
+						if(clusterSimilarityScore > ReCiterEngine.clusterSimilarityThresholdScore) {
+							return 1;
+						}
+					}
+				}
+			}
+		}
 		return 0;
+	}
+	
+	private int reCiterOverlapCount(ReCiterArticleFeatures reCiterArticleFeature1, ReCiterArticleFeatures reCiterArticleFeature2) {
+		int matchCount = 0;
+		//Journal Feature match
+		if(reCiterArticleFeature1.getJournalName() != null && !reCiterArticleFeature1.getJournalName().isEmpty() && 
+				reCiterArticleFeature2.getJournalName() != null && !reCiterArticleFeature2.getJournalName().isEmpty() &&
+				StringUtils.equalsIgnoreCase(reCiterArticleFeature1.getJournalName(), reCiterArticleFeature2.getJournalName())) {
+			matchCount++;
+		}
+		//MeshMajor Feature match
+		if(reCiterArticleFeature1.getMeshMajor() != null && reCiterArticleFeature1.getMeshMajor().size() > 0 &&
+				reCiterArticleFeature2.getMeshMajor() != null && reCiterArticleFeature2.getMeshMajor().size() > 0) {
+			List<String> matchingMeshMajor = new ArrayList<String>(reCiterArticleFeature1.getMeshMajor());
+			matchingMeshMajor.retainAll(reCiterArticleFeature2.getMeshMajor());
+			if(matchingMeshMajor.size() > 0) {
+				matchCount = matchCount + matchingMeshMajor.size();
+			}
+		}
+		//Co-Author Feature match
+		if(reCiterArticleFeature1.getCoAuthors() != null && reCiterArticleFeature1.getCoAuthors().size() > 0 &&
+				reCiterArticleFeature2.getCoAuthors() != null && reCiterArticleFeature2.getCoAuthors().size() > 0) {
+			List<String> matchingCoAuthor = new ArrayList<String>(reCiterArticleFeature1.getCoAuthors());
+			matchingCoAuthor.retainAll(reCiterArticleFeature2.getCoAuthors());
+			if(matchingCoAuthor.size() > 0) {
+				matchCount = matchCount + matchingCoAuthor.size();
+			}
+		}
+		
+		if(reCiterArticleFeature1.getAffiliationIds() != null && reCiterArticleFeature1.getAffiliationIds().size() > 0 &&
+				reCiterArticleFeature2.getAffiliationIds() != null && reCiterArticleFeature2.getAffiliationIds().size() > 0) {
+			List<Integer> matchingAffiliationId = new ArrayList<Integer>(reCiterArticleFeature1.getAffiliationIds());
+			matchingAffiliationId.retainAll(reCiterArticleFeature2.getAffiliationIds());
+			if(matchingAffiliationId.size() > 0) {
+				matchCount = matchCount + 1;
+			}
+		}
+		return matchCount;
+	}
+	
+	private double computeClusterSimilarityScore(int clusterScore1, int clusterScore2, int overlapScore) {
+		return Math.pow(overlapScore, 2)/(clusterScore1 * clusterScore2);
 	}
 	
 
