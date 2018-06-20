@@ -66,6 +66,8 @@ public class ReCiterEngine implements Engine {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngine.class);
 	
+	public static double clusterSimilarityThresholdScore;
+	
 	@Override
 	public List<Feature> generateFeature(EngineParameters parameters) {
 		
@@ -121,6 +123,7 @@ public class ReCiterEngine implements Engine {
 		Identity identity = parameters.getIdentity();
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
 		List<ScopusArticle> scopusArticles = parameters.getScopusArticles();
+		clusterSimilarityThresholdScore = strategyParameters.getClusterSimilarityThresholdScore();
 		
 		Map<Long, ScopusArticle> map = new HashMap<>();
 		for (ScopusArticle scopusArticle : scopusArticles) {
