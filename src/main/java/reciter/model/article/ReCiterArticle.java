@@ -21,6 +21,7 @@ package reciter.model.article;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
 import reciter.engine.analysis.evidence.AffiliationEvidence;
+import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.ClusteringEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.GrantEvidence;
@@ -156,6 +157,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
     private AffiliationEvidence affiliationEvidence;
     private GrantEvidence grantEvidence;
+    private AuthorNameEvidence authorNameEvidence;
 
     private List<RelationshipEvidence> relationshipEvidences;
 
@@ -258,7 +260,15 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
         this.affiliationEvidence = affiliationEvidence;
     }
 
-    public Date getPubDate() {
+    public AuthorNameEvidence getAuthorNameEvidence() {
+		return authorNameEvidence;
+	}
+
+	public void setAuthorNameEvidence(AuthorNameEvidence authorNameEvidence) {
+		this.authorNameEvidence = authorNameEvidence;
+	}
+
+	public Date getPubDate() {
         return pubDate;
     }
 
