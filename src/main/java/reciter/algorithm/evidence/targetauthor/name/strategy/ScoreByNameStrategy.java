@@ -93,7 +93,6 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			authorNameEvidence.setNameMatchMiddleType("nullTargetAuthor-MatchNotAttempted");
 		}
 		
-		authorNameEvidence.setInstitutionalAuthorName(identity.getPrimaryName());
 		authorNameEvidence.setArticleAuthorName(sanitizedTargetAuthor.iterator().next());
 		slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + authorNameEvidence.toString());
 		
@@ -485,105 +484,112 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	}
 	
 	private void scoreLastName(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
-		if(articleAuthorNames.size() == 1) {
+		if(articleAuthorNames.size() > 0) {
 			AuthorName articleAuthorName = articleAuthorNames.iterator().next();
-			if(identityAuthorNames.stream().anyMatch(identityAuthor -> StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getLastName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName())))) {
-				authorNameEvidence.setNameMatchLastType("full-exact");
-				authorNameEvidence.setNameMatchLastScore(2);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getMiddleName() != null && StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getLastName() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName())))) {
-				authorNameEvidence.setNameMatchLastType("full-exact");
-				authorNameEvidence.setNameMatchLastScore(2);
-				authorNameEvidence.setNameMatchMiddleType("full-exact");
-				authorNameEvidence.setNameMatchMiddleScore(2);
-				authorNameEvidence.setNameMatchModifier("combinedMiddleNameLastName");
-				authorNameEvidence.setNameMatchModifierScore(1);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getMiddleName() != null && ReCiterStringUtil.deAccent(identityAuthor.getLastName()).contains(ReCiterStringUtil.deAccent(articleAuthorName.getLastName())))) {
-				authorNameEvidence.setNameMatchLastType("full-exact");
-				authorNameEvidence.setNameMatchLastScore(2);
-				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-lastName");
-				authorNameEvidence.setNameMatchModifierScore(-2);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getLastName().length() >= 4 && ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getLastName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName())) <= 1)) {
-				authorNameEvidence.setNameMatchLastType("full-fuzzy");
-				authorNameEvidence.setNameMatchLastScore(1);
-			}
-			else {
-				authorNameEvidence.setNameMatchLastType("full-conflictingEntirely");
-				authorNameEvidence.setNameMatchLastScore(-3);
+			for(AuthorName identityAuthor: identityAuthorNames) {
+				if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getLastName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName()))) {
+					authorNameEvidence.setNameMatchLastType("full-exact");
+					authorNameEvidence.setNameMatchLastScore(2);
+				}
+				else if(identityAuthor.getMiddleName() != null && StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getLastName() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName()))) {
+					authorNameEvidence.setNameMatchLastType("full-exact");
+					authorNameEvidence.setNameMatchLastScore(2);
+					authorNameEvidence.setNameMatchMiddleType("full-exact");
+					authorNameEvidence.setNameMatchMiddleScore(2);
+					authorNameEvidence.setNameMatchModifier("combinedMiddleNameLastName");
+					authorNameEvidence.setNameMatchModifierScore(1);
+				}
+				else if(identityAuthor.getMiddleName() != null && ReCiterStringUtil.deAccent(identityAuthor.getLastName()).contains(ReCiterStringUtil.deAccent(articleAuthorName.getLastName()))) {
+					authorNameEvidence.setNameMatchLastType("full-exact");
+					authorNameEvidence.setNameMatchLastScore(2);
+					authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-lastName");
+					authorNameEvidence.setNameMatchModifierScore(-2);
+				}
+				else if(identityAuthor.getLastName().length() >= 4 && ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getLastName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName())) <= 1) {
+					authorNameEvidence.setNameMatchLastType("full-fuzzy");
+					authorNameEvidence.setNameMatchLastScore(1);
+				}
+				else {
+					authorNameEvidence.setNameMatchLastType("full-conflictingEntirely");
+					authorNameEvidence.setNameMatchLastScore(-3);
+				}
+				authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
 			}
 		}
 	}
 	
 	private void scoreFirstNameMiddleNameNull(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
-		if(articleAuthorNames.size() == 1) {
+		if(articleAuthorNames.size() > 0) {
 			AuthorName articleAuthorName = articleAuthorNames.iterator().next();
-			if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
-				authorNameEvidence.setNameMatchFirstType("full-exact");
-				authorNameEvidence.setNameMatchFirstScore(2);
-				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-				authorNameEvidence.setNameMatchMiddleScore(0);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).startsWith(ReCiterStringUtil.deAccent(identityAuthor.getFirstName())))) { //Example: Paul (identity.firstName) = PaulJames (article.firstName)
-				authorNameEvidence.setNameMatchFirstType("full-exact");
-				authorNameEvidence.setNameMatchFirstScore(2);
-				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-				authorNameEvidence.setNameMatchMiddleScore(0);
-				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstName");
-				authorNameEvidence.setNameMatchModifierScore(-1);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && 
-					ReCiterStringUtil.deAccent(identityAuthor.getFirstName()).startsWith(ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) { //Example: Paul (identity.firstName) = P (article.firstName)
-				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
-				authorNameEvidence.setNameMatchFirstScore(1);
-				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-				authorNameEvidence.setNameMatchMiddleScore(0);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 2)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 2))))) { //Example: Paul (identity.firstName) = P (article.firstName)
-				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
-				authorNameEvidence.setNameMatchFirstScore(0);
-				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-				authorNameEvidence.setNameMatchMiddleScore(0);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null &&
-					identityAuthor.getFirstName().length() >= 4 && ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())) == 1)) {
-				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
-				authorNameEvidence.setNameMatchFirstScore(0);
-				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-				authorNameEvidence.setNameMatchMiddleScore(0);
-			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null &&
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial()),ReCiterStringUtil.deAccent(articleAuthorName.getFirstInitial())))) {
-				authorNameEvidence.setNameMatchFirstType("full-conflictingAllButInitials");
-				authorNameEvidence.setNameMatchFirstScore(-2);
-				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-				authorNameEvidence.setNameMatchMiddleScore(0);
-			}
-			else {
-				authorNameEvidence.setNameMatchLastType("full-conflictingEntirely");
-				authorNameEvidence.setNameMatchLastScore(-3);
-				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-				authorNameEvidence.setNameMatchMiddleScore(0);
+			for(AuthorName identityAuthor: identityAuthorNames) {
+				if(identityAuthor.getFirstName() != null && 
+						StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
+					authorNameEvidence.setNameMatchFirstType("full-exact");
+					authorNameEvidence.setNameMatchFirstScore(2);
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(0);
+				}
+				else if(identityAuthor.getFirstName() != null && 
+						ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).startsWith(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()))) { //Example: Paul (identity.firstName) = PaulJames (article.firstName)
+					authorNameEvidence.setNameMatchFirstType("full-exact");
+					authorNameEvidence.setNameMatchFirstScore(2);
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(0);
+					authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstName");
+					authorNameEvidence.setNameMatchModifierScore(-1);
+				}
+				else if(identityAuthor.getFirstName() != null && 
+						ReCiterStringUtil.deAccent(identityAuthor.getFirstName()).startsWith(ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) { //Example: Paul (identity.firstName) = P (article.firstName)
+					authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
+					authorNameEvidence.setNameMatchFirstScore(1);
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(0);
+				}
+				else if(identityAuthor.getFirstName() != null && 
+						StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 2)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 2)))) { //Example: Paul (identity.firstName) = P (article.firstName)
+					authorNameEvidence.setNameMatchFirstType("full-fuzzy");
+					authorNameEvidence.setNameMatchFirstScore(0);
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(0);
+				}
+				else if(identityAuthor.getFirstName() != null &&
+						identityAuthor.getFirstName().length() >= 4 && ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())) == 1) {
+					authorNameEvidence.setNameMatchFirstType("full-fuzzy");
+					authorNameEvidence.setNameMatchFirstScore(0);
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(0);
+				}
+				else if(identityAuthor.getFirstName() != null &&
+						StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial()),ReCiterStringUtil.deAccent(articleAuthorName.getFirstInitial()))) {
+					authorNameEvidence.setNameMatchFirstType("full-conflictingAllButInitials");
+					authorNameEvidence.setNameMatchFirstScore(-2);
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(0);
+				}
+				else {
+					authorNameEvidence.setNameMatchLastType("full-conflictingEntirely");
+					authorNameEvidence.setNameMatchLastScore(-3);
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(0);
+				}
+				authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
 			}
 		}
 	}
 	
 	private void scoreFirstNameMiddleName(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
-		if(articleAuthorNames.size() == 1) {
+		if(articleAuthorNames.size() > 0) {
 			AuthorName articleAuthorName = articleAuthorNames.iterator().next();
-			if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			for(AuthorName identityAuthor: identityAuthorNames) {
+			if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
 				authorNameEvidence.setNameMatchMiddleScore(2);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + "(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + "(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()))) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -591,15 +597,15 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstMiddleName");
 				authorNameEvidence.setNameMatchModifierScore(1);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName() + identityAuthor.getMiddleInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName() + identityAuthor.getMiddleInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchMiddleScore(1);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + "(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleInitial())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + "(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleInitial()))) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("inferredInitials-exact");
@@ -607,22 +613,22 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstMiddleName");
 				authorNameEvidence.setNameMatchModifierScore(1);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial() + identityAuthor.getMiddleInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial() + identityAuthor.getMiddleInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchMiddleScore(1);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
 				authorNameEvidence.setNameMatchMiddleScore(2);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()) + "(.*)"))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()) + "(.*)")) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -630,8 +636,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstMiddleName");
 				authorNameEvidence.setNameMatchModifierScore(1);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + ReCiterStringUtil.deAccent(identityAuthor.getMiddleInitial()) + "(.*)"))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + ReCiterStringUtil.deAccent(identityAuthor.getMiddleInitial()) + "(.*)")) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("inferredInitials-exact");
@@ -639,15 +645,15 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstMiddleName");
 				authorNameEvidence.setNameMatchModifierScore(1);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
 				authorNameEvidence.setNameMatchMiddleScore(0);
 			}
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getMiddleInitial() + identityAuthor.getFirstInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getMiddleInitial() + identityAuthor.getFirstInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("inferredInitials-exact");
@@ -657,7 +663,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//If there's more than one capital letter in identity.firstName or identity.middleName, attempt match where any capitals in identity.firstName + any capital letters in identity.middleName = article.firstName
 			//Example: KS (identity.initialsInFirstName) + C (identity.initialsInMiddleName) = KSC (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
 					(identityAuthor.getFirstName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1 || identityAuthor.getMiddleName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1) && //check if there is more than 1 capital letters
 					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()).chars().filter(Character::isUpperCase)
 	                           .mapToObj(c -> Character.toString((char)c))
@@ -665,7 +671,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	                           ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()).chars().filter(Character::isUpperCase)
 	                           .mapToObj(c -> Character.toString((char)c))
 	                           .collect(Collectors.joining()), 
-							ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+							ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("inferredInitials-exact");
@@ -673,12 +679,12 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//If there's more than one capital letter in identity.firstName, attempt match where any capitals in identity.firstName = article.firstName
 			//Example: KS (identity.initialsInFirstName) = KS (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
 					identityAuthor.getFirstName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1 && //check if there is more than 1 capital letters
 					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()).chars().filter(Character::isUpperCase)
 	                           .mapToObj(c -> Character.toString((char)c))
 	                           .collect(Collectors.joining()) , 
-							ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+							ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
@@ -686,12 +692,12 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//If there's more than one capital letter in identity.firstName, attempt match where any capitals in identity.firstName + identity.middleName = article.firstName
 			//Example: KS (identity.initialsInFirstName) + Clifford (identity.middleName) = KSClifford (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
 					identityAuthor.getFirstName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1 && //check if there is more than 1 capital letters
 					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()).chars().filter(Character::isUpperCase)
 	                           .mapToObj(c -> Character.toString((char)c))
 	                           .collect(Collectors.joining()) + identityAuthor.getMiddleName() , 
-							ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+							ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -699,8 +705,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where identity.firstName + "%" = article.firstName
 			//Example: Robert (identity.firstName) = RobertR (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + "(.*)"))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + "(.*)")) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
@@ -710,8 +716,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where "%" + identity.firstName = article.firstName
 			//Example: Cary (identity.firstName) = MCary (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches("(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches("(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
 				authorNameEvidence.setNameMatchFirstScore(2);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
@@ -721,8 +727,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where identity.middleName = article.firstName
 			//Example: Clifford (identity.middleName) = Clifford (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("noMatch");
 				authorNameEvidence.setNameMatchFirstScore(-1);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -730,8 +736,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where identity.middleName + "%" = article.firstName
 			//Example: Clifford (identity.middleName) = CliffordKS (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()) + "(.*)"))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()) + "(.*)")) {
 				authorNameEvidence.setNameMatchFirstType("noMatch");
 				authorNameEvidence.setNameMatchFirstScore(-1);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -741,8 +747,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where "%" + identity.middleName = article.firstName
 			//Example: Clifford (identity.middleName) = KunSungClifford (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches("(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches("(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()))) {
 				authorNameEvidence.setNameMatchFirstType("noMatch");
 				authorNameEvidence.setNameMatchFirstScore(-1);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -752,8 +758,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where levenshteinDistance between identity.firstName + identity.middleName and article.firstName is <=2.
 			//Example: Manney (identity.firstName) + Carrington (identity.middleName) = MannyCarrington (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())) <= 2)) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()) + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())) <= 2) {
 				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
 				authorNameEvidence.setNameMatchFirstScore(0);
 				authorNameEvidence.setNameMatchMiddleType("full-fuzzy");
@@ -761,9 +767,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where identity.firstName >= 4 characters and levenshteinDistance between identity.firstName and article.firstName is <=1.
 			//Example: Nassar (identity.firstName) = Nasser (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null &&
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  &&
 					identityAuthor.getFirstName().length() >= 4 && 
-					ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())) <= 1)) {
+					ReCiterStringUtil.levenshteinDistance(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())) <= 1) {
 				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
 				authorNameEvidence.setNameMatchFirstScore(0);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
@@ -771,9 +777,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where first three characters of identity.firstName = first three characters of identity.firstName.
 			//Example: Massimiliano (identity.firstName) = Massimo (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null &&
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  &&
 					identityAuthor.getFirstName().length() >=3 && articleAuthorName.getFirstName().length() >=3 &&
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 3)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 3))))) {
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 3)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 3)))) {
 				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
 				authorNameEvidence.setNameMatchFirstScore(0);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
@@ -781,8 +787,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where identity.firstInitial + "%" + identity.middleName = article.firstName
 			//Example: M (identity.firstInitial) + Carrington (identity.middleName) = MannyCarrington (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial()) + "(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()).matches(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial()) + "(.*)" + ReCiterStringUtil.deAccent(identityAuthor.getMiddleName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -792,8 +798,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where identity.middleName + identity.firstInitial = article.firstName
 			//Example: Carrington (identity.middleName) + M (identity.firstInitial) = CarringtonM (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getMiddleName() + identityAuthor.getFirstInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getMiddleName() + identityAuthor.getFirstInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(1);
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -803,9 +809,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where article.firstName is only one character and identity.firstName = first character of article.firstName.
 			//Example: Jessica (identity.firstName) = J (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null &&
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  &&
 					articleAuthorName.getFirstName().length() == 1 &&
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName())))) {
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("full-conflictingAllButInitials");
 				authorNameEvidence.setNameMatchFirstScore(-2);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
@@ -813,8 +819,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			//Attempt match where first character of identity.firstName = first character of identity.firstName.
 			//Example: Jessica (identity.firstName) = Jochen (article.firstName)
-			else if(identityAuthorNames.stream().anyMatch(identityAuthor -> identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null && articleAuthorName.getMiddleName() != null &&
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 1)), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 1))))) {
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  &&
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 1)), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 1)))) {
 				authorNameEvidence.setNameMatchFirstType("full-conflictingAllButInitials");
 				authorNameEvidence.setNameMatchFirstScore(-2);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
@@ -827,6 +833,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchFirstScore(-3);
 				authorNameEvidence.setNameMatchMiddleType("full-conflictingEntirely");
 				authorNameEvidence.setNameMatchMiddleScore(-2);
+			}
+			authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
 			}
 		}
 	}
@@ -930,12 +938,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				identityPrimaryName.setLastName(lastName);
 				if(additionalName.getFirstName() != null) {
 					additionalName.setLastName(lastName);
-					additionalName.setFirstInitial(identity.getPrimaryName().getFirstInitial());
-					additionalName.setMiddleInitial(identity.getPrimaryName().getMiddleInitial());
 				}
 			}
-			identityPrimaryName.setFirstInitial(identity.getPrimaryName().getFirstInitial());
-			identityPrimaryName.setMiddleInitial(identity.getPrimaryName().getMiddleInitial());
 			sanitizedIdentityAuthorName.add(identityPrimaryName);
 		}
 		
@@ -951,8 +955,6 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				if(aliasAuthorName.getLastName() != null) {
 					identityAliasAuthorName.setLastName(aliasAuthorName.getLastName().replaceAll("[-.\",()\\s]|(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", ""));
 				}
-				identityAliasAuthorName.setFirstInitial(aliasAuthorName.getFirstInitial());
-				identityAliasAuthorName.setMiddleInitial(aliasAuthorName.getMiddleInitial());
 				
 				sanitizedIdentityAuthorName.add(identityAliasAuthorName);
 			}
@@ -975,15 +977,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 						if(targetAuthorName.getAuthorName().getFirstName() != null) {
 							targetAuthor.setFirstName(targetAuthorName.getAuthorName().getFirstName().replaceAll("[-.\"() ]", ""));
 						}
-						if(targetAuthorName.getAuthorName().getMiddleName() != null) {
-							targetAuthor.setMiddleName(targetAuthorName.getAuthorName().getMiddleName().replaceAll("[-.\"() ]", ""));
-						}
 						if(targetAuthorName.getAuthorName().getLastName() != null) {
 							targetAuthor.setLastName(targetAuthorName.getAuthorName().getLastName().replaceAll("[-.\",()\\s]|(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", ""));
 						}
-						targetAuthor.setFirstInitial(targetAuthorName.getAuthorName().getFirstInitial());
-						targetAuthor.setMiddleInitial(targetAuthorName.getAuthorName().getMiddleInitial());
-						
 						sanitizedAuthorName.add(targetAuthor);
 					}
 				}
