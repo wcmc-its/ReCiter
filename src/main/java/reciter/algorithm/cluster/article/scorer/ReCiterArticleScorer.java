@@ -41,7 +41,9 @@ import reciter.algorithm.evidence.targetauthor.grant.strategy.GrantStrategy;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.KnownRelationshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownRelationshipStrategy;
 import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
+import reciter.algorithm.evidence.targetauthor.name.ScoreByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
+import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
 import reciter.engine.StrategyParameters;
@@ -62,6 +64,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 * Email Strategy.
 	 */
 	private StrategyContext emailStrategyContext;
+	
+	/**
+	 * Name Strategy.
+	 */
+	private StrategyContext nameStrategyContext;
 
 	/**
 	 * Department Strategy.
@@ -156,6 +163,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		
 		// Strategies that select clusters that are similar to the target author.
 		this.emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
+		this.nameStrategyContext = new ScoreByNameStrategyContext(new ScoreByNameStrategy());
 		this.departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
 		this.knownRelationshipsStrategyContext = new KnownRelationshipStrategyContext(new KnownRelationshipStrategy());
 		this.affiliationStrategyContext = new AffiliationStrategyContext(new CommonAffiliationStrategy());
@@ -246,14 +254,20 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			this.strategyContexts.add(this.clusterSizeStrategyContext);
 		}
 	}
+	
 
 	@Override
 	public void runArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity) {
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long clusterId = entry.getKey();
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
+			
+			for(ReCiterArticle reCiterArticle: reCiterArticles) {
+			
+				double nameStrategyScore = ((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticle, identity);
+			}
 
-			if (strategyParameters.isEmail()) {
+			/*if (strategyParameters.isEmail()) {
 				double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
 				if (emailStrategyScore > 0) {
 					selectedClusterIds.add(clusterId);
@@ -279,7 +293,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 				if (affiliationScore > 0) {
 					selectedClusterIds.add(clusterId);
 				}
-			}
+			}*/
 		}
 		
 	}
