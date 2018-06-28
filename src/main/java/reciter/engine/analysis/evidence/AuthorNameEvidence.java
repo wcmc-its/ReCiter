@@ -12,4 +12,12 @@ import reciter.model.identity.AuthorName;
 public class AuthorNameEvidence {
     private AuthorName institutionalAuthorName;
     private AuthorName articleAuthorName;
+    private String nameMatchFirstType;
+    private double nameMatchFirstScore;
+    private String nameMatchMiddleType;
+    private double nameMatchMiddleScore;
+    private String nameMatchLastType;
+    private double nameMatchLastScore;
+    private String nameMatchModifier;
+    private double nameMatchModifierScore;
 }
