@@ -185,6 +185,21 @@ public class AuthorName {
 			return false;
 		}
 	}
+	
+	public boolean isNameMatch(AuthorName name) {
+		if (lastName != null && firstName != null && middleName != null) {
+			return firstName.equals(name.getFirstName()) &&
+					middleName.equals(name.getMiddleName()) &&
+					lastName.equals(name.getLastName());
+		} 
+		else if (lastName != null && firstName != null && middleName == null) {
+			return firstName.equals(name.getFirstName()) &&
+					lastName.equals(name.getLastName());
+		}
+		else {
+			return false;
+		}
+	}
 
 	public boolean checkFirstNameAndMiddleNameNotEmpty() {
 		return firstName.length() > 1 || middleName.length() > 1;
