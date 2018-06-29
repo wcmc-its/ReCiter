@@ -1,10 +1,15 @@
 package reciter.algorithm.evidence.targetauthor.name.strategy;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,7 +62,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		
 		Set<AuthorName> sanitizedIdentityAuthor = new HashSet<AuthorName>();
 		Set<AuthorName> sanitizedTargetAuthor = new HashSet<AuthorName>();
-		AuthorNameEvidence authorNameEvidence = new AuthorNameEvidence();
+		AuthorNameEvidence authorNameEvidence;
+		
+		
 		double score = 0;
 		boolean shouldRemove = false;
 		boolean foundAuthorWithSameFirstName = false;
@@ -75,25 +82,28 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		if(identity != null) { 
 			sanitizeIdentityAuthorNames(identity, sanitizedIdentityAuthor);
 		}
-		
-		if(targetAuthorCount >=1) {
+		List<AuthorNameEvidence> authorNameEvidences = new ArrayList<AuthorNameEvidence>(sanitizedIdentityAuthor.size());
+		if(targetAuthorCount >=1) {			
 			sanitizeTargetAuthorNames(reCiterArticle, sanitizedTargetAuthor);
-			scoreLastName(sanitizedIdentityAuthor, sanitizedTargetAuthor, authorNameEvidence);
+			scoreLastName(sanitizedIdentityAuthor, sanitizedTargetAuthor, authorNameEvidences);
 			if(!isNotNullIdentityMiddleName(sanitizedIdentityAuthor)) {
-				scoreFirstNameMiddleNameNull(sanitizedIdentityAuthor, sanitizedTargetAuthor, authorNameEvidence);
+				scoreFirstNameMiddleNameNull(sanitizedIdentityAuthor, sanitizedTargetAuthor, authorNameEvidences);
 			}
 			else {
-				scoreFirstNameMiddleName(sanitizedIdentityAuthor, sanitizedTargetAuthor, authorNameEvidence);
+				scoreFirstNameMiddleName(sanitizedIdentityAuthor, sanitizedTargetAuthor, authorNameEvidences);
 			}
+			authorNameEvidence = calculateHighestScore(authorNameEvidences);
 		}
 		else {
+			authorNameEvidence = new AuthorNameEvidence();
 			authorNameEvidence.setInstitutionalAuthorName(identity.getPrimaryName());
 			authorNameEvidence.setNameMatchFirstType("nullTargetAuthor-MatchNotAttempted");
 			authorNameEvidence.setNameMatchLastType("nullTargetAuthor-MatchNotAttempted");
 			authorNameEvidence.setNameMatchMiddleType("nullTargetAuthor-MatchNotAttempted");
 		}
 		
-		authorNameEvidence.setArticleAuthorName(sanitizedTargetAuthor.iterator().next());
+		reCiterArticle.setAuthorNameEvidence(authorNameEvidence);
+		
 		slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + authorNameEvidence.toString());
 		
 /*		slf4jLogger.info("SanitizedIdentityNames");
@@ -483,10 +493,11 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		return 0;
 	}
 	
-	private void scoreLastName(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
+	private void scoreLastName(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, List<AuthorNameEvidence> authorNameEvidences) {
 		if(articleAuthorNames.size() > 0) {
 			AuthorName articleAuthorName = articleAuthorNames.iterator().next();
 			for(AuthorName identityAuthor: identityAuthorNames) {
+				AuthorNameEvidence authorNameEvidence = new AuthorNameEvidence();
 				if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getLastName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName()))) {
 					authorNameEvidence.setNameMatchLastType("full-exact");
 					authorNameEvidence.setNameMatchLastScore(2);
@@ -514,14 +525,18 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					authorNameEvidence.setNameMatchLastScore(-3);
 				}
 				authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
+				authorNameEvidence.setArticleAuthorName(articleAuthorName);
+				authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
+				authorNameEvidences.add(authorNameEvidence);
 			}
 		}
 	}
 	
-	private void scoreFirstNameMiddleNameNull(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
+	private void scoreFirstNameMiddleNameNull(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, List<AuthorNameEvidence> authorNameEvidences) {
 		if(articleAuthorNames.size() > 0) {
 			AuthorName articleAuthorName = articleAuthorNames.iterator().next();
 			for(AuthorName identityAuthor: identityAuthorNames) {
+				AuthorNameEvidence authorNameEvidence = new AuthorNameEvidence();
 				if(identityAuthor.getFirstName() != null && 
 						StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 					authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -573,14 +588,18 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					authorNameEvidence.setNameMatchMiddleScore(0);
 				}
 				authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
+				authorNameEvidence.setArticleAuthorName(articleAuthorName);
+				authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
+				authorNameEvidences.add(authorNameEvidence);
 			}
 		}
 	}
 	
-	private void scoreFirstNameMiddleName(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
+	private void scoreFirstNameMiddleName(Set<AuthorName> identityAuthorNames, Set<AuthorName> articleAuthorNames, List<AuthorNameEvidence> authorNameEvidences) {
 		if(articleAuthorNames.size() > 0) {
 			AuthorName articleAuthorName = articleAuthorNames.iterator().next();
 			for(AuthorName identityAuthor: identityAuthorNames) {
+				AuthorNameEvidence authorNameEvidence = new AuthorNameEvidence();
 			if(identityAuthor.getFirstName() != null && identityAuthor.getMiddleName() != null && articleAuthorName.getFirstName() != null  && 
 					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -835,6 +854,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleScore(-2);
 			}
 			authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
+			authorNameEvidence.setArticleAuthorName(articleAuthorName);
+			authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
+			authorNameEvidences.add(authorNameEvidence);
 			}
 		}
 	}
@@ -940,7 +962,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					additionalName.setLastName(lastName);
 				}
 			}
-			sanitizedIdentityAuthorName.add(identityPrimaryName);
+			if(identityPrimaryName.getLastName() != null) {
+				sanitizedIdentityAuthorName.add(identityPrimaryName);
+			}
 		}
 		
 		if(identity.getAlternateNames() != null && identity.getAlternateNames().size() > 0) {
@@ -956,10 +980,12 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					identityAliasAuthorName.setLastName(aliasAuthorName.getLastName().replaceAll("[-.\",()\\s]|(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", ""));
 				}
 				
-				sanitizedIdentityAuthorName.add(identityAliasAuthorName);
+				if(identityAliasAuthorName.getLastName() != null) {
+					sanitizedIdentityAuthorName.add(identityAliasAuthorName);
+				}
 			}
 		}
-		if(additionalName != null) {
+		if(additionalName != null && additionalName.getLastName() != null) {
 			sanitizedIdentityAuthorName.add(additionalName);
 		}
 		
@@ -998,6 +1024,10 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		}
 		return middleNameNull;
 		
+	}
+	
+	private AuthorNameEvidence calculateHighestScore(List<AuthorNameEvidence> authorNameEvidences) {
+		return authorNameEvidences.stream().max(Comparator.comparing(AuthorNameEvidence::getTotalScore)).orElseThrow(NoSuchElementException::new);
 	}
 
 	@Override
