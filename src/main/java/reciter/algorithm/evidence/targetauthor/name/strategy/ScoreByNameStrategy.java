@@ -60,7 +60,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		
-		Set<AuthorName> sanitizedIdentityAuthor = new HashSet<AuthorName>();
+		List<AuthorName> sanitizedIdentityAuthor = new ArrayList<AuthorName>();
 		Set<AuthorName> sanitizedTargetAuthor = new HashSet<AuthorName>();
 		AuthorNameEvidence authorNameEvidence;
 		
@@ -81,6 +81,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		int targetAuthorCount = getTargetAuthorCount(reCiterArticle);
 		if(identity != null) { 
 			sanitizeIdentityAuthorNames(identity, sanitizedIdentityAuthor);
+			checkToIgnoreNameVariants(sanitizedIdentityAuthor);
 		}
 		List<AuthorNameEvidence> authorNameEvidences = new ArrayList<AuthorNameEvidence>(sanitizedIdentityAuthor.size());
 		if(targetAuthorCount >=1) {			
@@ -92,7 +93,12 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					scoreFirstNameMiddleNameNull(identityAuthorName, sanitizedTargetAuthor, authorNameEvidence);
 				}
 				else {
-					scoreFirstNameMiddleName(identityAuthorName, sanitizedTargetAuthor, authorNameEvidence);
+					if(identityAuthorName.getMiddleName() == null) {
+						scoreFirstNameMiddleNameNull(identityAuthorName, sanitizedTargetAuthor, authorNameEvidence);
+					}
+					else {
+						scoreFirstNameMiddleName(identityAuthorName, sanitizedTargetAuthor, authorNameEvidence);
+					}
 				}
 				authorNameEvidences.add(authorNameEvidence);
 			}
@@ -558,8 +564,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
 				authorNameEvidence.setNameMatchMiddleScore(0);
 			}
-			else if(identityAuthor.getFirstName() != null && 
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 2)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 2)))) { //Example: Paul (identity.firstName) = P (article.firstName)
+			else if(identityAuthor.getFirstName() != null && identityAuthor.getFirstName().length() >= 3 && articleAuthorName.getFirstName().length() >= 3 &&
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 2)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 2)))) { //Example: Paul (identity.firstName) = Pau (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
 				authorNameEvidence.setNameMatchFirstScore(0);
 				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
@@ -906,7 +912,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		"Capetillo Gonzalez de Zarate" --> "CapetilloGonzalezdeZarate"
 	 *
 	 */
-	private void sanitizeIdentityAuthorNames(Identity identity, Set<AuthorName> sanitizedIdentityAuthorName) {
+	private void sanitizeIdentityAuthorNames(Identity identity, List<AuthorName> sanitizedIdentityAuthorName) {
 		AuthorName identityPrimaryName = new AuthorName();
 		AuthorName additionalName = new AuthorName();
 		String firstName = null;
@@ -1006,7 +1012,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	/**
 	 * This function check if middle name is null in all variants of identity name. If there is null return false
 	 */
-	private boolean isNotNullIdentityMiddleName(Set<AuthorName> idenityAuthorName) {
+	private boolean isNotNullIdentityMiddleName(List<AuthorName> idenityAuthorName) {
 		boolean middleNameNull = false;
 		for(AuthorName authorName: idenityAuthorName) {
 			if(authorName.getMiddleName() != null) {
@@ -1017,6 +1023,32 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		return middleNameNull;
 		
 	}
+	
+	private void checkToIgnoreNameVariants(List<AuthorName> idenityAuthorNames) {
+		for(int i= 0 ; i < idenityAuthorNames.size() ; i++) {
+			for(int j = 0; j < idenityAuthorNames.size(); j++) {
+				if(i==j) {
+					continue;
+				}
+				if(idenityAuthorNames.get(i) != null && idenityAuthorNames.get(j) != null) {
+					if(StringUtils.equalsIgnoreCase(idenityAuthorNames.get(i).getLastName(), idenityAuthorNames.get(j).getLastName()) && 
+							idenityAuthorNames.get(i).getFirstName().startsWith(idenityAuthorNames.get(j).getFirstName())) {
+						if(idenityAuthorNames.get(j).getMiddleName() == null) {
+							idenityAuthorNames.remove(j);
+						}
+					}
+					if(StringUtils.equalsIgnoreCase(idenityAuthorNames.get(i).getLastName(), idenityAuthorNames.get(j).getLastName()) && 
+							StringUtils.equalsIgnoreCase(idenityAuthorNames.get(i).getFirstName(), idenityAuthorNames.get(j).getFirstName()) &&
+							idenityAuthorNames.get(i).getMiddleName() != null && idenityAuthorNames.get(j).getMiddleName() != null && 
+							idenityAuthorNames.get(i).getMiddleName().startsWith(idenityAuthorNames.get(j).getMiddleName())) {
+							idenityAuthorNames.remove(j);
+					}
+				}
+			}
+				
+		}
+	}
+		
 	
 	private AuthorNameEvidence calculateHighestScore(List<AuthorNameEvidence> authorNameEvidences) {
 		return authorNameEvidences.stream().max(Comparator.comparing(AuthorNameEvidence::getTotalScore)).orElseThrow(NoSuchElementException::new);
