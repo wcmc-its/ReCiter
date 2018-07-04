@@ -66,7 +66,8 @@ public class AuthorName {
 			this.firstName = "";
 			this.firstInitial = "";
 		} else {
-			this.firstName = capitalize(firstName.trim().toLowerCase());
+			//this.firstName = capitalize(firstName.trim().toLowerCase());
+			this.firstName = firstName.trim();
 			this.firstInitial = this.firstName.substring(0, 1);
 		}
 
@@ -74,14 +75,16 @@ public class AuthorName {
 			this.middleName = "";
 			this.middleInitial = "";
 		} else {
-			this.middleName = capitalize(middleName.trim().toLowerCase());
+			//this.middleName = capitalize(middleName.trim().toLowerCase());
+			this.middleName = middleName.trim();
 			this.middleInitial = this.middleName.substring(0, 1);
 		}
 
 		if (lastName == null) {
 			this.lastName = "";
 		} else {
-			this.lastName = capitalize(lastName.trim().toLowerCase());
+			//this.lastName = capitalize(lastName.trim().toLowerCase());
+			this.lastName = lastName.trim();
 		}
 	}
 
@@ -185,6 +188,21 @@ public class AuthorName {
 			return false;
 		}
 	}
+	
+	public boolean isNameMatch(AuthorName name) {
+		if (lastName != null && firstName != null && middleName != null) {
+			return firstName.equals(name.getFirstName()) &&
+					middleName.equals(name.getMiddleName()) &&
+					lastName.equals(name.getLastName());
+		} 
+		else if (lastName != null && firstName != null && middleName == null) {
+			return firstName.equals(name.getFirstName()) &&
+					lastName.equals(name.getLastName());
+		}
+		else {
+			return false;
+		}
+	}
 
 	public boolean checkFirstNameAndMiddleNameNotEmpty() {
 		return firstName.length() > 1 || middleName.length() > 1;
@@ -260,13 +278,15 @@ public class AuthorName {
 	
 	public void setFirstName(String firstName) {
 		if (firstName == null) throw new IllegalArgumentException("first name should not be null.");
-		this.firstName = capitalize(firstName.trim().toLowerCase());
+		//this.firstName = capitalize(firstName.trim().toLowerCase());
+		this.firstName = firstName.trim();
 		this.firstInitial = firstName.length() > 0 ? firstName.substring(0, 1) : "";
 	}
 	
 	public void setMiddleName(String middleName) {
 		if (middleName == null) throw new IllegalArgumentException("middle name should not be null.");
-		this.middleName = capitalize(middleName.trim().toLowerCase());
+		//this.middleName = capitalize(middleName.trim().toLowerCase());
+		this.middleName = middleName.trim();
 		this.middleInitial = middleName.length() > 0 ? middleName.substring(0, 1) : "";
 	}
 
@@ -300,7 +320,8 @@ public class AuthorName {
 
 	public void setLastName(String lastName) {
 		if (lastName == null) throw new IllegalArgumentException("last name should not be null.");
-		this.lastName = capitalize(lastName.trim().toLowerCase());
+		//this.lastName = capitalize(lastName.trim().toLowerCase());
+		this.lastName = lastName.trim();
 	}
 
 	@Override

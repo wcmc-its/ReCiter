@@ -20,19 +20,27 @@ package reciter.algorithm.cluster.model;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
+import reciter.engine.EngineParameters;
+import reciter.engine.ReCiterEngine;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleGrant;
+import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
+import reciter.model.article.features.ReCiterArticleFeatures;
 import reciter.model.identity.Identity;
 
-public class ReCiterCluster {
+public class ReCiterCluster implements Comparable<ReCiterCluster>{
 
 	/**
 	 * Cluster Id.
@@ -180,15 +188,15 @@ public class ReCiterCluster {
 	}
 
 	public void add(ReCiterArticle article) {
-		articleCluster.add(article);
+		this.articleCluster.add(article);
 	}
 
-	public void addAll(ReCiterCluster cluster) {
-		articleCluster.addAll(cluster.getArticleCluster());
+	public void addAll(List<ReCiterArticle> reCiterArticles) {
+		articleCluster.addAll(reCiterArticles);
 	}
 
 	public List<ReCiterArticle> getArticleCluster() {
-		return articleCluster;
+		return this.articleCluster;
 	}
 
 	public void setArticleCluster(List<ReCiterArticle> articleCluster) {
@@ -196,8 +204,8 @@ public class ReCiterCluster {
 	}
 
 	public ReCiterCluster() {
-		clusterId = clusterIDCounter.incrementAndGet();
-		articleCluster = new ArrayList<ReCiterArticle>();
+		this.clusterId = clusterIDCounter.incrementAndGet();
+		this.articleCluster = new ArrayList<ReCiterArticle>();
 	}
 
 	public long getClusterID() {
@@ -239,5 +247,138 @@ public class ReCiterCluster {
 	public void setSelected(boolean isSelected) {
 		this.isSelected = isSelected;
 	}
+
+	@Override
+	public int compareTo(ReCiterCluster o) {
+		boolean emailMatch = false;
+		for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+			for(ReCiterAuthor authoro: reCiterArticle.getArticleCoAuthors().getAuthors()) {
+				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isEmpty()) {
+					emailMatch = this.articleCluster.stream().anyMatch(article -> article.getArticleCoAuthors().getAuthors().stream().anyMatch(author -> author.getValidEmail() != null && !author.getValidEmail().isEmpty() &&
+							StringUtils.equalsIgnoreCase(author.getValidEmail(), authoro.getValidEmail())));
+					if(emailMatch) {
+						return 1;
+					}
+				}
+			}
+		}
+		return 0;
+	}
+	
+	/**
+	 * @param o The ReCiterCluster to compare to
+	 * @param comparisonType what kind of comparison happening e.g. email or grants etc.
+	 * @return 1 if equal or 0 if not
+	 */
+	public int compareTo(ReCiterCluster o, String comparisonType) {
+		boolean match = false;
+		if(comparisonType.equalsIgnoreCase("grant")) {
+			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+				for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
+					if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
+						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() &&
+								StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
+						if(match) {
+							return 1;
+						}
+					}
+					
+				}
+			}
+		}
+		else if(comparisonType.equalsIgnoreCase("cites")) {
+			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+					//A cites B
+					match = this.articleCluster.stream().anyMatch(articleList -> reCiterArticle.getCommentsCorrectionsPmids() != null && 
+							reCiterArticle.getCommentsCorrectionsPmids().size() > 0 && articleList.getArticleId() != 0 && 
+							reCiterArticle.getCommentsCorrectionsPmids().contains(articleList.getArticleId()));
+					//B cites A
+					if(!match) {
+						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getCommentsCorrectionsPmids() != null && 
+								articleList.getCommentsCorrectionsPmids().size() > 0 && reCiterArticle.getArticleId() != 0 &&
+								articleList.getCommentsCorrectionsPmids().contains(reCiterArticle.getArticleId()));
+					}
+					if(match) {
+						return 1;
+					}
+			}
+		}
+		else if(comparisonType.equalsIgnoreCase("meshMajor")) {
+			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+				for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
+					if(meshHeading != null && MeshMajorStrategy.isMeshMajor(meshHeading)) {
+						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getMeshHeadings() != null && 
+								articleList.getMeshHeadings().stream().anyMatch(mesh -> MeshMajorStrategy.isMeshMajor(mesh) && 
+								StringUtils.equalsIgnoreCase(mesh.getDescriptorName().getDescriptorName(), meshHeading.getDescriptorName().getDescriptorName()) && 
+								EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
+								EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 4000L
+								));
+					}
+					if(match) {
+						return 1;
+					}
+				}
+			}
+		}
+		else if(comparisonType.equalsIgnoreCase("tepid")) {
+			int matchCount = 0;
+			double clusterSimilarityScore = 0;
+			for(ReCiterArticle reCiterArticleo: o.getArticleCluster()) {
+				for(ReCiterArticle reCiterArticle: this.articleCluster) {
+					matchCount = reCiterOverlapCount(reCiterArticle.getReCiterArticleFeatures(), reCiterArticleo.getReCiterArticleFeatures());
+					if(matchCount > 0 && reCiterArticle.getReCiterArticleFeatures().getFeatureCount() >= 3 && reCiterArticleo.getReCiterArticleFeatures().getFeatureCount() >= 3) {
+						clusterSimilarityScore = computeClusterSimilarityScore(reCiterArticle.getReCiterArticleFeatures().getFeatureCount(), reCiterArticleo.getReCiterArticleFeatures().getFeatureCount(), matchCount);
+						if(clusterSimilarityScore > ReCiterEngine.clusterSimilarityThresholdScore) {
+							return 1;
+						}
+					}
+				}
+			}
+		}
+		return 0;
+	}
+	
+	private int reCiterOverlapCount(ReCiterArticleFeatures reCiterArticleFeature1, ReCiterArticleFeatures reCiterArticleFeature2) {
+		int matchCount = 0;
+		//Journal Feature match
+		if(reCiterArticleFeature1.getJournalName() != null && !reCiterArticleFeature1.getJournalName().isEmpty() && 
+				reCiterArticleFeature2.getJournalName() != null && !reCiterArticleFeature2.getJournalName().isEmpty() &&
+				StringUtils.equalsIgnoreCase(reCiterArticleFeature1.getJournalName(), reCiterArticleFeature2.getJournalName())) {
+			matchCount++;
+		}
+		//MeshMajor Feature match
+		if(reCiterArticleFeature1.getMeshMajor() != null && reCiterArticleFeature1.getMeshMajor().size() > 0 &&
+				reCiterArticleFeature2.getMeshMajor() != null && reCiterArticleFeature2.getMeshMajor().size() > 0) {
+			List<String> matchingMeshMajor = new ArrayList<String>(reCiterArticleFeature1.getMeshMajor());
+			matchingMeshMajor.retainAll(reCiterArticleFeature2.getMeshMajor());
+			if(matchingMeshMajor.size() > 0) {
+				matchCount = matchCount + matchingMeshMajor.size();
+			}
+		}
+		//Co-Author Feature match
+		if(reCiterArticleFeature1.getCoAuthors() != null && reCiterArticleFeature1.getCoAuthors().size() > 0 &&
+				reCiterArticleFeature2.getCoAuthors() != null && reCiterArticleFeature2.getCoAuthors().size() > 0) {
+			List<String> matchingCoAuthor = new ArrayList<String>(reCiterArticleFeature1.getCoAuthors());
+			matchingCoAuthor.retainAll(reCiterArticleFeature2.getCoAuthors());
+			if(matchingCoAuthor.size() > 0) {
+				matchCount = matchCount + matchingCoAuthor.size();
+			}
+		}
+		
+		if(reCiterArticleFeature1.getAffiliationIds() != null && reCiterArticleFeature1.getAffiliationIds().size() > 0 &&
+				reCiterArticleFeature2.getAffiliationIds() != null && reCiterArticleFeature2.getAffiliationIds().size() > 0) {
+			List<Integer> matchingAffiliationId = new ArrayList<Integer>(reCiterArticleFeature1.getAffiliationIds());
+			matchingAffiliationId.retainAll(reCiterArticleFeature2.getAffiliationIds());
+			if(matchingAffiliationId.size() > 0) {
+				matchCount = matchCount + 1;
+			}
+		}
+		return matchCount;
+	}
+	
+	private double computeClusterSimilarityScore(int clusterScore1, int clusterScore2, int overlapScore) {
+		return Math.pow(overlapScore, 2)/(clusterScore1 * clusterScore2);
+	}
+	
 
 }

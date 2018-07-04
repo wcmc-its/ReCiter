@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package reciter.algorithm.cluster.clusteringstrategy.article;
+package reciter.algorithm.cluster.similarity.clusteringstrategy.article;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +27,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import reciter.algorithm.cluster.clusteringstrategy.article.AbstractClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;

@@ -86,13 +86,14 @@ public class ArticleTranslator {
 				// TODO: Deal with collective names in XML.
 				if (lastName != null) {
 					if (foreName != null) {
-						String[] foreNameArray = foreName.split("\\s+");
-						if (foreNameArray.length == 2) {
-							firstName = foreNameArray[0];
-							middleName = foreNameArray[1];
-						} else {
-							firstName = foreName;
-						}
+						//String[] foreNameArray = foreName.split("\\s+");
+						//if (foreNameArray.length == 2) {
+						//	firstName = foreNameArray[0];
+						//	middleName = foreNameArray[1];
+						//} else {
+						//	firstName = foreName;
+						//}
+						firstName = foreName;
 					} else if (initials != null) {
 						firstName = initials;
 					}

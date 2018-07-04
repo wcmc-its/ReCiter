@@ -45,6 +45,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -63,6 +65,7 @@ import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.features.ReCiterArticleFeatures;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
@@ -297,17 +300,19 @@ public class ReCiterController {
 		}
 		else {
 			parameters = initializeEngineParameters(uid);
-			TargetAuthorSelection t = new  TargetAuthorSelection();
+			TargetAuthorSelection t = new TargetAuthorSelection();
 			t.identifyTargetAuthor(parameters.getReciterArticles(), parameters.getIdentity());
 			Iterator<ReCiterArticle> it = parameters.getReciterArticles().iterator();
-			/*while(it.hasNext()) {
+			while(it.hasNext()) {
 				ReCiterArticle reciterArticle = it.next();
-				boolean targetAuthor = reciterArticle.getArticleCoAuthors().getAuthors().stream().anyMatch(authors -> authors.isTargetAuthor()==true);
+				//populate Features
+				reciterArticle.setReCiterArticleFeatures(new ReCiterArticleFeatures(reciterArticle));
+				/*boolean targetAuthor = reciterArticle.getArticleCoAuthors().getAuthors().stream().anyMatch(authors -> authors.isTargetAuthor()==true);
 				if(!targetAuthor) {
 					slf4jLogger.info("No Target Author for " + reciterArticle.getArticleId() + " Removing from list of articles to be analyzed");
 					it.remove();
-				}
-			}*/
+				}*/
+			}
 			
 			Engine engine = new ReCiterEngine();
 			engineOutput = engine.run(parameters, strategyParameters);
@@ -409,5 +414,4 @@ public class ReCiterController {
 		}
 		return parameters;
 	}
-	
 }

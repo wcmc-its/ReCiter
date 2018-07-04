@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
+import reciter.algorithm.cluster.article.scorer.ArticleScorer;
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.model.ReCiterCluster.MeshTermCount;
 import reciter.algorithm.cluster.targetauthor.ClusterSelector;
@@ -65,6 +67,8 @@ import reciter.model.scopus.ScopusArticle;
 public class ReCiterEngine implements Engine {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterEngine.class);
+	
+	public static double clusterSimilarityThresholdScore;
 	
 	@Override
 	public List<Feature> generateFeature(EngineParameters parameters) {
@@ -121,6 +125,7 @@ public class ReCiterEngine implements Engine {
 		Identity identity = parameters.getIdentity();
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
 		List<ScopusArticle> scopusArticles = parameters.getScopusArticles();
+		clusterSimilarityThresholdScore = strategyParameters.getClusterSimilarityThresholdScore();
 		
 		Map<Long, ScopusArticle> map = new HashMap<>();
 		for (ScopusArticle scopusArticle : scopusArticles) {
@@ -160,11 +165,14 @@ public class ReCiterEngine implements Engine {
 //			clusterer.cluster();
 //		}
 		clusterer.cluster();
-		slf4jLogger.info("Phase 1 Clustering result");
-		slf4jLogger.info(clusterer.toString());
+		//slf4jLogger.info("Phase 1 Clustering result");
+		//slf4jLogger.info(clusterer.toString());
+		
+		ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
+		articleScorer.runArticleScorer(clusterer.getClusters(), identity);
 
 		// Perform Phase 2 clusters selection.
-		ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity, strategyParameters);
+		/*ClusterSelector clusterSelector = new ReCiterClusterSelector(clusterer.getClusters(), identity, strategyParameters);
 		clusterSelector.runSelectionStrategy(clusterer.getClusters(), identity);
 		slf4jLogger.info(clusterSelector.getSelectedClusterIds().size() +"Size");
 		// Perform Mesh Heading recall improvement.
@@ -256,10 +264,10 @@ public class ReCiterEngine implements Engine {
 				}
 				clusterer.getClusters().put(rejectedCluster.getClusterID(), rejectedCluster);
 			}
-		}
+		}*/
 		
 		EngineOutput engineOutput = new EngineOutput();
-		engineOutput.setAnalysis(analysis);
+		/*engineOutput.setAnalysis(analysis);
 		List<ReCiterCluster> reCiterClusters = new ArrayList<>();
 		for (ReCiterCluster cluster : clusterer.getClusters().values()) {
 			// set cluster's selected field to true if this cluster has been selected.
@@ -271,7 +279,7 @@ public class ReCiterEngine implements Engine {
 		engineOutput.setReCiterClusters(reCiterClusters);
 		ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
 		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures("test", clusterer, clusterSelector, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
-		engineOutput.setReCiterFeature(reCiterFeature);
+		engineOutput.setReCiterFeature(reCiterFeature);*/
 		return engineOutput;
 	}
 	
