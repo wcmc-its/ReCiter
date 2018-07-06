@@ -155,11 +155,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
 	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
 	
-	private StrategyParameters strategyParameters;
+	public static StrategyParameters strategyParameters;
 	
 	public ReCiterArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity, StrategyParameters strategyParameters) {
 		
-		this.strategyParameters = strategyParameters;
+		ReCiterArticleScorer.strategyParameters = strategyParameters;
 		
 		// Strategies that select clusters that are similar to the target author.
 		this.emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
@@ -261,11 +261,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long clusterId = entry.getKey();
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
-			
-			for(ReCiterArticle reCiterArticle: reCiterArticles) {
-			
-				double nameStrategyScore = ((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticle, identity);
-			}
+			double nameStrategyScore = ((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
 
 			/*if (strategyParameters.isEmail()) {
 				double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
