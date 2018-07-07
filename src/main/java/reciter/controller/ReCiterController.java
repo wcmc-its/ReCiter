@@ -284,7 +284,7 @@ public class ReCiterController {
 			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found"),
 			@ApiResponse(code = 500, message = "The uid provided was not found in the Identity table")
 			})
-	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/reciter/analysis-summary/by/uid", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
 	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, boolean refreshFlag) {
 		EngineOutput engineOutput = null;
