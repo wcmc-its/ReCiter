@@ -126,6 +126,9 @@ public class StrategyParameters {
 	@Value("${nameMatchMiddleType.full-exact}")
 	private double nameMatchMiddleTypeFullExactScore;
 	
+	@Value("${nameMatchMiddleType.exact-singleInitial}")
+	private double nameMatchMiddleTypeExactSingleInitialScore;
+	
 	@Value("${nameMatchMiddleType.noMatch}")
 	private double nameMatchMiddleTypeNoMatchScore;
 	
@@ -542,6 +545,14 @@ public class StrategyParameters {
 	public void setNameMatchModifierIdentitySubstringOfArticleFirstMiddlenameScore(
 			double nameMatchModifierIdentitySubstringOfArticleFirstMiddlenameScore) {
 		this.nameMatchModifierIdentitySubstringOfArticleFirstMiddlenameScore = nameMatchModifierIdentitySubstringOfArticleFirstMiddlenameScore;
+	}
+
+	public double getNameMatchMiddleTypeExactSingleInitialScore() {
+		return nameMatchMiddleTypeExactSingleInitialScore;
+	}
+
+	public void setNameMatchMiddleTypeExactSingleInitialScore(double nameMatchMiddleTypeExactSingleInitialScore) {
+		this.nameMatchMiddleTypeExactSingleInitialScore = nameMatchMiddleTypeExactSingleInitialScore;
 	}
 
 	public double getNameMatchModifierCombinedMiddleNameLastNameScore() {
