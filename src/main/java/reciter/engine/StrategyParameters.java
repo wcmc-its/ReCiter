@@ -120,10 +120,10 @@ public class StrategyParameters {
 	@Value("${nameMatchLastType.nullTargetAuthor-MatchNotAttempted}")
 	private double nameMatchLastTypeNullTargetAuthorMatchNotAttemptedScore;
 	
-	@Value("${nameMatchMiddleType.full-exact}")
+	@Value("${nameMatchMiddleType.inferredInitials-exact}")
 	private double nameMatchMiddleTypeInferredInitialsExactScore;
 	
-	@Value("${nameMatchMiddleType.inferredInitials-exact}")
+	@Value("${nameMatchMiddleType.full-exact}")
 	private double nameMatchMiddleTypeFullExactScore;
 	
 	@Value("${nameMatchMiddleType.noMatch}")
