@@ -22,18 +22,24 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
 public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(EmailStringMatchStrategy.class);
 	private List<String> emailSuffixes;
 	
-	private final String[] defaultSuffixes = {"@med.cornell.edu", "@mail.med.cornell.edu", "@weill.cornell.edu", "@nyp.org"};
+	private final String[] defaultSuffixes = ReCiterArticleScorer.strategyParameters.getDefaultSuffixes().trim().split(",");
 	
 	public EmailStringMatchStrategy() {
 		setEmailSuffixes(Arrays.asList(defaultSuffixes));
@@ -78,7 +84,31 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sumScore = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			sumScore += executeStrategy(reCiterArticle, identity);
+			//sumScore += executeStrategy(reCiterArticle, identity);
+			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+				EmailEvidence emailEvidence = new EmailEvidence();
+				if (author.isTargetAuthor() && author.getAffiliation() != null) {
+					String affiliation = author.getAffiliation();
+					for (String email : identity.getEmails()) {
+						if (affiliation.contains(email)) {
+							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + email + "]");
+							reCiterArticle.getMatchingEmails().add(email);
+							emailEvidence.setEmailMatch(email);
+							emailEvidence.setEmailMatchScore(ReCiterArticleScorer.strategyParameters.getEmailMatchScore());
+						} else if(emailSuffixes.stream().anyMatch(suffix -> affiliation.contains(identity.getUid() + suffix))) {
+							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
+							reCiterArticle.getMatchingEmails().add(email);
+							emailEvidence.setEmailMatch(email);
+							emailEvidence.setEmailMatchScore(ReCiterArticleScorer.strategyParameters.getEmailMatchScore());
+						}
+					}
+				}
+				if(emailEvidence.getEmailMatch() != null) {
+					reCiterArticle.setEmailEvidence(emailEvidence);
+					slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + emailEvidence.toString());
+					break;
+				}
+			}
 		}
 		return sumScore;
 	}
