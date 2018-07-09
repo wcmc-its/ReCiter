@@ -167,6 +167,12 @@ public class StrategyParameters {
 	
 	@Value("${nameMatchModifier.combinedMiddleNameLastName}")
 	private double nameMatchModifierCombinedMiddleNameLastNameScore;
+	
+	@Value("${strategy.email.emailMatchScore}")
+	private double emailMatchScore;
+	
+	@Value("${strategy.email.default.suffixes}")
+	private String defaultSuffixes;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -562,6 +568,22 @@ public class StrategyParameters {
 	public void setNameMatchModifierCombinedMiddleNameLastNameScore(
 			double nameMatchModifierCombinedMiddleNameLastNameScore) {
 		this.nameMatchModifierCombinedMiddleNameLastNameScore = nameMatchModifierCombinedMiddleNameLastNameScore;
+	}
+
+	public double getEmailMatchScore() {
+		return emailMatchScore;
+	}
+
+	public void setEmailMatchScore(double emailMatchScore) {
+		this.emailMatchScore = emailMatchScore;
+	}
+
+	public String getDefaultSuffixes() {
+		return defaultSuffixes;
+	}
+
+	public void setDefaultSuffixes(String defaultSuffixes) {
+		this.defaultSuffixes = defaultSuffixes;
 	}
 	
 	
