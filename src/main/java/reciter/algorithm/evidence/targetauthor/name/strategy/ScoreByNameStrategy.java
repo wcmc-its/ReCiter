@@ -2,14 +2,9 @@ package reciter.algorithm.evidence.targetauthor.name.strategy;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,15 +19,14 @@ import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
-import reciter.engine.erroranalysis.AnalysisObjectAuthor;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 
 /**
  * @author szd2013
+ * This class scores ReCiterArticles based on name and assigns score for each part of the name - first, middle and last
  *
  */
 public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
