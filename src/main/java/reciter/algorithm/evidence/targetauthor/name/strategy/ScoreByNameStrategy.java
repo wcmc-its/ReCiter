@@ -513,7 +513,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchLastScore(ReCiterArticleScorer.strategyParameters.getNameMatchLastTypeFullExactScore());
 			} else if(identityAuthor.getMiddleName() != null && StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getLastName() + identityAuthor.getMiddleName()), ReCiterStringUtil.deAccent(articleAuthorName.getLastName()))) {
 				//Combine following identity.middleName, identity.lastName into mergedName. Now attempt match against article.lastName.
-				//Example: Garcia (identity.middleName) + Marquez (identity.lastName) = GarciaMarques (article.lastName)
+				//Example: Garcia (identity.middleName) + Marquez (identity.lastName) = GarciaMarquez (article.lastName)
 				authorNameEvidence.setNameMatchLastType("full-exact");
 				authorNameEvidence.setNameMatchLastScore(ReCiterArticleScorer.strategyParameters.getNameMatchLastTypeFullExactScore());
 				authorNameEvidence.setNameMatchMiddleType("full-exact");
@@ -979,8 +979,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstInitial()), ReCiterStringUtil.deAccent(articleAuthorName.getFirstName()))) {
 				//Attempt match where article.firstName is only one character and identity.firstName = first character of article.firstName.
 				//Example: Jessica (identity.firstName) = J (article.firstName)
-				authorNameEvidence.setNameMatchFirstType("full-conflictingAllButInitials");
-				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeFullConflictingAllButInitialsScore());
+				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");  
+				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeInferredInitialsExactScore());
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeNoMatchScore());
 			} else if(identityAuthor.getFirstName() != null 
