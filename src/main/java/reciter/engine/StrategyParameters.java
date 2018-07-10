@@ -173,6 +173,9 @@ public class StrategyParameters {
 	
 	@Value("${strategy.email.default.suffixes}")
 	private String defaultSuffixes;
+	
+	@Value("${strategy.grant.grantMatchScore}")
+	private double grantMatchScore;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -585,6 +588,15 @@ public class StrategyParameters {
 	public void setDefaultSuffixes(String defaultSuffixes) {
 		this.defaultSuffixes = defaultSuffixes;
 	}
+
+	public double getGrantMatchScore() {
+		return grantMatchScore;
+	}
+
+	public void setGrantMatchScore(double grantMatchScore) {
+		this.grantMatchScore = grantMatchScore;
+	}
+	
 	
 	
 }

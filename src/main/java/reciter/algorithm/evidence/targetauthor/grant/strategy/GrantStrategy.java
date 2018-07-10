@@ -27,8 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
+import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.evidence.Grant;
 import reciter.engine.analysis.evidence.GrantEvidence;
 import reciter.model.article.ReCiterArticle;
@@ -87,7 +89,7 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 						Grant analysisGrant = new Grant();
 						analysisGrant.setArticleGrant(grant.getGrantID());
 						analysisGrant.setInstitutionGrant(identityGrantId);
-						analysisGrant.setGrantMatchScore(2);
+						analysisGrant.setGrantMatchScore(ReCiterArticleScorer.strategyParameters.getGrantMatchScore());
 						score += 1;
 						reCiterArticle.getMatchingGrantList().add(grant);
 						grants.add(analysisGrant);
