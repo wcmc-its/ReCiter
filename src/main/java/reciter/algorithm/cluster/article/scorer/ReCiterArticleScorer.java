@@ -270,6 +270,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			if (strategyParameters.isGrant()) {
 				double emailStrategyScore = ((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
+			
+			if (strategyParameters.isKnownRelationship()) {
+				double emailStrategyScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
 
 			/*if (strategyParameters.isDepartment()) {
 				double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
