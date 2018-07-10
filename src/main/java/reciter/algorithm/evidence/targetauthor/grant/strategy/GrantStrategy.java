@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +92,10 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 						analysisGrant.setGrantMatchScore(ReCiterArticleScorer.strategyParameters.getGrantMatchScore());
 						score += 1;
 						reCiterArticle.getMatchingGrantList().add(grant);
-						grants.add(analysisGrant);
+						if(!grants.stream().anyMatch(matchingGrant -> org.apache.commons.lang3.StringUtils.equalsIgnoreCase(identityGrantId, matchingGrant.getInstitutionGrant()))) {
+							grants.add(analysisGrant);
+						}
+						
 						
 						
 					}
