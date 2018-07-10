@@ -11,4 +11,5 @@ import lombok.ToString;
 public class Grant {
     private String institutionGrant;
     private String articleGrant;
+	private double grantMatchScore;
 }

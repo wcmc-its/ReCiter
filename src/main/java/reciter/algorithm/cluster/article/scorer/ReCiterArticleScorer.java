@@ -265,9 +265,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
 			if (strategyParameters.isEmail()) {
 				double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
-				if (emailStrategyScore > 0) {
-					selectedClusterIds.add(clusterId);
-				}
+			}
+			
+			if (strategyParameters.isGrant()) {
+				double emailStrategyScore = ((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
 			/*if (strategyParameters.isDepartment()) {

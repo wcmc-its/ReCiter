@@ -19,11 +19,14 @@
 package reciter.algorithm.evidence.targetauthor.grant.strategy;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.Grant;
@@ -66,9 +69,38 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 	
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		Set<String> sanitizedIdentityGrants = new HashSet<String>();
+		if(identity != null) {
+			sanitizeIdentityGrants(identity, sanitizedIdentityGrants);
+		}
+		GrantEvidence grantEvidence = null;
+		
 		double score = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			score += executeStrategy(reCiterArticle, identity);
+			//score += executeStrategy(reCiterArticle, identity);
+			List<Grant> grants = new ArrayList<>();
+			for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
+				for (String identityGrantId : sanitizedIdentityGrants) {
+					//log.info("identity grant {}", identityGrantId);
+					if (grant.getGrantID() != null && org.apache.commons.lang3.StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID(), identityGrantId)) {
+						//log.info("[known grant ids match=" + identityGrantId + "]");
+						Grant analysisGrant = new Grant();
+						analysisGrant.setArticleGrant(grant.getGrantID());
+						analysisGrant.setInstitutionGrant(identityGrantId);
+						analysisGrant.setGrantMatchScore(2);
+						score += 1;
+						reCiterArticle.getMatchingGrantList().add(grant);
+						grants.add(analysisGrant);
+						grantEvidence = new GrantEvidence();
+						grantEvidence.setGrants(grants);
+						
+					}
+				}
+			}
+			reCiterArticle.setGrantEvidence(grantEvidence);
+			if(grantEvidence != null) {
+				log.info("Pmid: " + reCiterArticle.getArticleId() + " " + grantEvidence.toString());
+			}
 		}
 		return score;
 	}
@@ -77,5 +109,11 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private void sanitizeIdentityGrants(Identity identity, Set<String> sanitizedIdentityGrants) {
+		for (String identityGrantId : identity.getGrants()) {
+			sanitizedIdentityGrants.add(new StringBuilder(identityGrantId).insert(2, "-").toString());
+		}
 	}
 }
