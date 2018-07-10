@@ -1,5 +1,7 @@
 package reciter.engine.analysis.evidence;
 
+import java.util.Set;
+
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
 
 import lombok.Data;
@@ -11,5 +13,9 @@ import reciter.model.identity.AuthorName;
 @DynamoDBDocument
 public class RelationshipEvidence {
     private AuthorName relationshipName;
-    private String relationshipType;
+    private Set<String> relationshipType;
+    private String relationshipMatchType;
+    private double relationshipMatchingScore;
+    private double relationshipVerboseMatchModifierScore;
+    
 }

@@ -176,6 +176,12 @@ public class StrategyParameters {
 	
 	@Value("${strategy.grant.grantMatchScore}")
 	private double grantMatchScore;
+	
+	@Value("${strategy.knownrelationships.relationshipMatchingScore}")
+	private double relationshipMatchingScore;
+	
+	@Value("${strategy.knownrelationships.relationshipVerboseMatchModifier}")
+	private double relationshipVerboseMatchModifier;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -596,7 +602,21 @@ public class StrategyParameters {
 	public void setGrantMatchScore(double grantMatchScore) {
 		this.grantMatchScore = grantMatchScore;
 	}
-	
-	
+
+	public double getRelationshipMatchingScore() {
+		return relationshipMatchingScore;
+	}
+
+	public void setRelationshipMatchingScore(double relationshipMatchingScore) {
+		this.relationshipMatchingScore = relationshipMatchingScore;
+	}
+
+	public double getRelationshipVerboseMatchModifier() {
+		return relationshipVerboseMatchModifier;
+	}
+
+	public void setRelationshipVerboseMatchModifier(double relationshipVerboseMatchModifier) {
+		this.relationshipVerboseMatchModifier = relationshipVerboseMatchModifier;
+	}
 	
 }
