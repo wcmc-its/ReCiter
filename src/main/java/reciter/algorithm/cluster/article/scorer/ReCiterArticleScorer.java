@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
 import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
 import reciter.algorithm.evidence.article.citation.strategy.InverseCoCitationStrategy;
@@ -273,6 +274,14 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			
 			if (strategyParameters.isKnownRelationship()) {
 				double emailStrategyScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if (strategyParameters.isBachelorsYearDiscrepancy()) {
+				double emailStrategyScore = ((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if (strategyParameters.isDoctoralYearDiscrepancy()) {
+				double emailStrategyScore = ((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
 			/*if (strategyParameters.isDepartment()) {

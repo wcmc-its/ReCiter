@@ -21,6 +21,7 @@ package reciter.algorithm.evidence.targetauthor.degree.strategy;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.model.article.ReCiterArticle;
@@ -140,6 +141,114 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		for(ReCiterArticle reCiterArticle: reCiterArticles) {
+			EducationYearEvidence educationYearEvidence = null;
+			if (reCiterArticle != null 												&&
+					reCiterArticle.getJournal() != null 							&& 
+					reCiterArticle.getJournal().getJournalIssuePubDateYear() != 0) {
+
+				int year = reCiterArticle.getJournal().getJournalIssuePubDateYear();
+
+				int difference;
+				if (degreeType.equals(DegreeType.BACHELORS)) {
+					if (identity.getDegreeYear().getBachelorYear() != 0) {
+						difference = year - identity.getDegreeYear().getBachelorYear();
+						reCiterArticle.setBachelorsYearDiscrepancy(difference);
+						educationYearEvidence = new EducationYearEvidence();
+						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
+						//if (difference < 1) {
+						if(year + ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearBachelorThreshold() < identity.getDegreeYear().getBachelorYear()) {
+							//log.info("Bachelors: Identity degree and reCiter article {} journal issue publication date difference < 1. Remove from cluster.", reCiterArticle.getArticleId());
+							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
+									+ " [Bachelors Degree Difference=" + difference + "]");
+							reCiterArticle.setBachelorsYearDiscrepancyScore(1);
+							reCiterArticle.setPublishedPriorAcademicDegreeBachelors("Target Author bachelors graduation year: " +
+									identity.getDegreeYear().getBachelorYear() + " publication date: " + year + ". Diff="+ difference);
+							educationYearEvidence.setDiscrepancyDegreeYearBachelor(difference);
+							educationYearEvidence.setDiscrepancyDegreeYearBachelorScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearBachelorScore());
+							
+							//return 1;
+						} else {
+							educationYearEvidence.setDiscrepancyDegreeYearBachelor(difference);
+							educationYearEvidence.setDiscrepancyDegreeYearBachelorScore(0);
+						}
+					}
+				} else if (degreeType.equals(DegreeType.DOCTORAL)) {
+					if (identity.getDegreeYear().getDoctoralYear() != 0) {
+						int doctoral = identity.getDegreeYear().getDoctoralYear();
+						difference = year - doctoral;
+						reCiterArticle.setDoctoralYearDiscrepancy(difference);
+						if (doctoral < ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers()) {
+							if (year - ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold1() < doctoral) {
+								//log.info("DOCTORAL 1998: Identity degree and reCiter article {} journal issue publication date difference < -6" +
+								//		". Remove from cluster.", reCiterArticle.getArticleId());
+								reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
+										+ " [Doctoral Degree Difference (<1988) =" + difference + "]");
+								reCiterArticle.setDoctoralYearDiscrepancyScore(1);
+								reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("(Case doctoral < 1998) Target Author doctoral graduation year: " +
+										identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
+								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
+								} else {
+									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
+									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
+								}
+								//return 1;
+							} else {
+								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(0);
+								} else {
+									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(0);
+									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
+								}
+							}
+							
+						} else {
+							if (year - ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold2() < doctoral) {
+								//log.info("DOCTORAL: Identity degree and reCiter article {} journal issue publication date difference < -13. " +
+								//		"Remove from cluster.", reCiterArticle.getArticleId());
+
+								reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
+										+ " [Doctoral Degree Difference (>=1998) =" + difference + "]");
+								reCiterArticle.setDoctoralYearDiscrepancyScore(1);
+								reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("Target Author doctoral graduation year: " +
+										identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
+								//return 1;
+								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
+								} else {
+									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
+									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
+								}
+							} else {
+								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
+									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(0);
+								} else {
+									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
+									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(0);
+									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
+								}
+							}
+						}
+					}
+					if(reCiterArticle.getEducationYearEvidence() != null) {
+						log.info("Pmid: " + reCiterArticle.getArticleId() + " " + reCiterArticle.getEducationYearEvidence().toString());
+					}
+				}
+			}
+			
+		}
 		return 0;
 	}
 
