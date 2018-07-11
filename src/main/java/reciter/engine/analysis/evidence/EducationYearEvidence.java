@@ -10,5 +10,8 @@ import lombok.ToString;
 @DynamoDBDocument
 public class EducationYearEvidence {
     private int discrepancyDegreeYearBachelor;
-    private int discrepancyDegreeYearTerminal;
+    private double discrepancyDegreeYearBachelorScore;
+    private int discrepancyDegreeYearDoctoral;
+    private double discrepancyDegreeYearDoctoralScore;
+    
 }

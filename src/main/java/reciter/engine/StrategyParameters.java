@@ -182,6 +182,24 @@ public class StrategyParameters {
 	
 	@Value("${strategy.knownrelationships.relationshipVerboseMatchModifier}")
 	private double relationshipVerboseMatchModifier;
+	
+	@Value("${strategy.discrepancyDegreeYear-BachelorThreshold}")
+	private double discrepancyDegreeYearBachelorThreshold;
+	
+	@Value("${strategy.discrepancyDegreeYear-BachelorScore}")
+	private double discrepancyDegreeYearBachelorScore;
+
+	@Value("${strategy.discrepancyDegreeYear-YearWhichPhDStudentsStartedToAuthorMorePapers}")
+	private int discrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers;
+	
+	@Value("${strategy.discrepancyDegreeYear-DoctoralThreshold1}")
+	private double discrepancyDegreeYearDoctoralThreshold1;
+	
+	@Value("${strategy.discrepancyDegreeYear-DoctoralThreshold2}")
+	private double discrepancyDegreeYearDoctoralThreshold2;
+	
+	@Value("${strategy.discrepancyDegreeYear-DoctoralScore}")
+	private double discrepancyDegreeYearDoctoralScore;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -617,6 +635,55 @@ public class StrategyParameters {
 
 	public void setRelationshipVerboseMatchModifier(double relationshipVerboseMatchModifier) {
 		this.relationshipVerboseMatchModifier = relationshipVerboseMatchModifier;
+	}
+
+	public double getDiscrepancyDegreeYearBachelorThreshold() {
+		return discrepancyDegreeYearBachelorThreshold;
+	}
+
+	public void setDiscrepancyDegreeYearBachelorThreshold(double discrepancyDegreeYearBachelorThreshold) {
+		this.discrepancyDegreeYearBachelorThreshold = discrepancyDegreeYearBachelorThreshold;
+	}
+
+	public double getDiscrepancyDegreeYearBachelorScore() {
+		return discrepancyDegreeYearBachelorScore;
+	}
+
+	public void setDiscrepancyDegreeYearBachelorScore(double discrepancyDegreeYearBachelorScore) {
+		this.discrepancyDegreeYearBachelorScore = discrepancyDegreeYearBachelorScore;
+	}
+
+	public int getDiscrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers() {
+		return discrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers;
+	}
+
+	public void setDiscrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers(
+			int discrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers) {
+		this.discrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers = discrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers;
+	}
+
+	public double getDiscrepancyDegreeYearDoctoralThreshold1() {
+		return discrepancyDegreeYearDoctoralThreshold1;
+	}
+
+	public void setDiscrepancyDegreeYearDoctoralThreshold1(double discrepancyDegreeYearDoctoralThreshold1) {
+		this.discrepancyDegreeYearDoctoralThreshold1 = discrepancyDegreeYearDoctoralThreshold1;
+	}
+
+	public double getDiscrepancyDegreeYearDoctoralThreshold2() {
+		return discrepancyDegreeYearDoctoralThreshold2;
+	}
+
+	public void setDiscrepancyDegreeYearDoctoralThreshold2(double discrepancyDegreeYearDoctoralThreshold2) {
+		this.discrepancyDegreeYearDoctoralThreshold2 = discrepancyDegreeYearDoctoralThreshold2;
+	}
+
+	public double getDiscrepancyDegreeYearDoctoralScore() {
+		return discrepancyDegreeYearDoctoralScore;
+	}
+
+	public void setDiscrepancyDegreeYearDoctoralScore(double discrepancyDegreeYearDoctoralScore) {
+		this.discrepancyDegreeYearDoctoralScore = discrepancyDegreeYearDoctoralScore;
 	}
 	
 }
