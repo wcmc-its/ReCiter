@@ -155,9 +155,11 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						difference = year - identity.getDegreeYear().getBachelorYear();
 						reCiterArticle.setBachelorsYearDiscrepancy(difference);
 						educationYearEvidence = new EducationYearEvidence();
+						educationYearEvidence.setIdentityBachelorYear(identity.getDegreeYear().getBachelorYear());
+						educationYearEvidence.setArticleYear(year);
 						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
 						//if (difference < 1) {
-						if(year + ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearBachelorThreshold() < identity.getDegreeYear().getBachelorYear()) {
+						if(year < ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearBachelorThreshold() + identity.getDegreeYear().getBachelorYear()) {
 							//log.info("Bachelors: Identity degree and reCiter article {} journal issue publication date difference < 1. Remove from cluster.", reCiterArticle.getArticleId());
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
 									+ " [Bachelors Degree Difference=" + difference + "]");
@@ -179,7 +181,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						difference = year - doctoral;
 						reCiterArticle.setDoctoralYearDiscrepancy(difference);
 						if (doctoral < ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers()) {
-							if (year - ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold1() < doctoral) {
+							if (year < doctoral + ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold1()) {
 								//log.info("DOCTORAL 1998: Identity degree and reCiter article {} journal issue publication date difference < -6" +
 								//		". Remove from cluster.", reCiterArticle.getArticleId());
 								reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
@@ -188,10 +190,13 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 								reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("(Case doctoral < 1998) Target Author doctoral graduation year: " +
 										identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
 								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
 								} else {
 									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
+									educationYearEvidence.setArticleYear(year);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
 									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
@@ -199,10 +204,13 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 								//return 1;
 							} else {
 								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(0);
 								} else {
 									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
+									educationYearEvidence.setArticleYear(year);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(0);
 									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
@@ -210,7 +218,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 							}
 							
 						} else {
-							if (year - ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold2() < doctoral) {
+							if (year < doctoral + ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold2()) {
 								//log.info("DOCTORAL: Identity degree and reCiter article {} journal issue publication date difference < -13. " +
 								//		"Remove from cluster.", reCiterArticle.getArticleId());
 
@@ -221,20 +229,26 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 										identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
 								//return 1;
 								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
 								} else {
 									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
+									educationYearEvidence.setArticleYear(year);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
 									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
 								}
 							} else {
 								if(reCiterArticle.getEducationYearEvidence() != null) {
+									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
 									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(0);
 								} else {
 									educationYearEvidence = new EducationYearEvidence();
+									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
+									educationYearEvidence.setArticleYear(year);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
 									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(0);
 									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
