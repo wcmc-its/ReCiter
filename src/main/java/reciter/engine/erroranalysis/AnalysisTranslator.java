@@ -176,7 +176,7 @@ public class AnalysisTranslator {
 		
 		analysisObject.setTargetAuthorYearBachelorsDegree(identity.getDegreeYear().getBachelorYear());
 		analysisObject.setTargetAuthorYearTerminalDegree(identity.getDegreeYear().getDoctoralYear());
-		analysisObject.setDepartments(identity.getDepartments());
+		analysisObject.setOrganizationalUnits(identity.getOrganizationalUnits());
 		analysisObject.setTargetAuthorKnownEmails(identity.getEmails());
 		analysisObject.setTargetAuthorKnownNameAliases(identity.getAlternateNames());
 		analysisObject.setTargetAuthorKnownAffiliations(identity.getInstitutions());

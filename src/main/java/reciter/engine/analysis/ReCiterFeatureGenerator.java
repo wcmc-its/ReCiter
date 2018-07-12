@@ -230,7 +230,7 @@ public class ReCiterFeatureGenerator {
             // Education Year Evidence
             EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
             educationYearEvidence.setDiscrepancyDegreeYearBachelor(reCiterArticle.getBachelorsYearDiscrepancy());
-            educationYearEvidence.setDiscrepancyDegreeYearTerminal(reCiterArticle.getDoctoralYearDiscrepancy());
+            educationYearEvidence.setDiscrepancyDegreeYearDoctoral(reCiterArticle.getDoctoralYearDiscrepancy());
             reCiterArticle.setEducationYearEvidence(educationYearEvidence);
             positiveEvidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
 

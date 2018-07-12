@@ -19,9 +19,12 @@
 package reciter.algorithm.evidence.targetauthor.knownrelationship.strategy;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
@@ -36,7 +39,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		double score = 0;
-		List<KnownRelationship> relationships = identity.getKnownRelationships();
+		/*List<KnownRelationship> relationships = identity.getKnownRelationships();
 		List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
 		if (relationships != null) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
@@ -59,7 +62,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			}
 			reCiterArticle.setKnownCoinvestigatorScore(score);
 		}
-		reCiterArticle.setRelationshipEvidence(relationshipEvidences);
+		reCiterArticle.setRelationshipEvidence(relationshipEvidences);*/
 		return score;
 	}
 
@@ -67,7 +70,56 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			sum += executeStrategy(reCiterArticle, identity);
+			//sum += executeStrategy(reCiterArticle, identity);
+			List<KnownRelationship> relationships = identity.getKnownRelationships();
+			List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
+			Set<String> relationshipTypes = new HashSet<String>();
+			if (relationships != null) {
+				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+					// do not match target author's name
+					if (!author.isTargetAuthor()) {
+						for (KnownRelationship authorName : relationships) {
+							if (authorName.getName().firstInitialLastNameMatch(author.getAuthorName())) {
+								RelationshipEvidence relationshipEvidence = new RelationshipEvidence();
+								//if(StringUtils.equalsIgnoreCase(authorName.getName().getFirstName(), author.getAuthorName().getFirstName())) {
+								if(authorName.getName().getFirstName().length() > 1 
+										&&
+										author.getAuthorName().getFirstName().startsWith(authorName.getName().getFirstName())) {
+									relationshipEvidence.setRelationshipMatchType("verbose");
+									relationshipEvidence.setRelationshipVerboseMatchModifierScore(ReCiterArticleScorer.strategyParameters.getRelationshipVerboseMatchModifier());
+								} else {
+									relationshipEvidence.setRelationshipMatchType("initial");
+								}
+								//log.info("[known relationship match: " +  authorName + "] ");
+								reCiterArticle.getKnownRelationships().add(author);
+								reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + "[known relationship match: " +  authorName + "] ");
+								sum += 1;
+								reCiterArticle.getKnownRelationship().add(authorName);
+								relationshipEvidence.setRelationshipMatchingScore(ReCiterArticleScorer.strategyParameters.getRelationshipMatchingScore());
+								relationshipEvidence.setRelationshipName(authorName.getName());
+								relationshipEvidence.setRelationshipType(relationshipTypes);
+								if(relationshipEvidences.size() > 0 
+										&&
+										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().equals(evidence.getRelationshipName()))) {
+										RelationshipEvidence relationshipEvidenceInList = relationshipEvidences.stream().filter(evidence -> authorName.getName().equals(evidence.getRelationshipName())).findFirst().get();
+										if(relationshipEvidenceInList != null) {
+											relationshipEvidenceInList.getRelationshipType().add(authorName.getType());
+											break;
+										}
+								} else {
+									relationshipTypes.add(authorName.getType());
+								}
+								relationshipEvidences.add(relationshipEvidence);
+							}
+						}
+					}
+				}
+				reCiterArticle.setKnownCoinvestigatorScore(sum);
+			}
+			if(relationshipEvidences.size() > 0) {
+				reCiterArticle.setRelationshipEvidence(relationshipEvidences);
+				log.info("Pmid: " + reCiterArticle.getArticleId() + " " + relationshipEvidences.toString());
+			}
 		}
 		return sum;
 	}

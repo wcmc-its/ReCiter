@@ -25,6 +25,7 @@ import java.util.Set;
 
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
+import reciter.model.identity.OrganizationalUnit;
 
 public class AnalysisObject {
 
@@ -75,7 +76,7 @@ public class AnalysisObject {
 	// Date of retrieval
 	private Date dateInitialRun; // the date of the first time that ReCiter perform the retrieval
 	private Date dateLastRun; // the date of the most recent retrieval
-	private List<String> departments;
+	private List<OrganizationalUnit> organizationalUnits;
 	private List<AnalysisObjectAuthor> analysisObjectAuthors;
 	private List<String> frequentInstitutionalCollaborators;
 	private List<ReCiterAuthor> knownRelationships;
@@ -303,11 +304,11 @@ public class AnalysisObject {
 	public void setTargetAuthorYearBachelorsDegree(int targetAuthorYearBachelorsDegree) {
 		this.targetAuthorYearBachelorsDegree = targetAuthorYearBachelorsDegree;
 	}
-	public List<String> getDepartments() {
-		return departments;
+	public List<OrganizationalUnit> getOrganizationalUnits() {
+		return organizationalUnits;
 	}
-	public void setDepartments(List<String> departments) {
-		this.departments = departments;
+	public void setOrganizationalUnits(List<OrganizationalUnit> organizationalUnits) {
+		this.organizationalUnits = organizationalUnits;
 	}
 	public List<String> getTargetAuthorKnownEmails() {
 		return targetAuthorKnownEmails;
@@ -381,7 +382,7 @@ public class AnalysisObject {
 				+ ", doctoralYearDiscrepancyScore=" + doctoralYearDiscrepancyScore + ", isArticleTitleStartWithBracket="
 				+ isArticleTitleStartWithBracket + ", educationScore=" + educationScore + ", bachelorsYearDiscrepancy="
 				+ bachelorsYearDiscrepancy + ", doctoralYearDiscrepancy=" + doctoralYearDiscrepancy
-				+ ", dateInitialRun=" + dateInitialRun + ", dateLastRun=" + dateLastRun + ", departments=" + departments
+				+ ", dateInitialRun=" + dateInitialRun + ", dateLastRun=" + dateLastRun + ", departments=" + organizationalUnits
 				+ ", analysisObjectAuthors=" + analysisObjectAuthors + ", frequentInstitutionalCollaborators="
 				+ frequentInstitutionalCollaborators + ", knownRelationships=" + knownRelationships
 				+ ", meshMajorStrategyScore=" + meshMajorStrategyScore + ", overlappingMeSHMajorNegativeArticles="

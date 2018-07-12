@@ -24,6 +24,7 @@ import reciter.engine.analysis.evidence.AffiliationEvidence;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.ClusteringEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
+import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.engine.analysis.evidence.GrantEvidence;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.model.article.completeness.ArticleCompleteness;
@@ -154,10 +155,11 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private StringBuffer journalTitleInfo;
 
     private Date pubDate;
-
+    
     private AffiliationEvidence affiliationEvidence;
     private GrantEvidence grantEvidence;
     private AuthorNameEvidence authorNameEvidence;
+    private EmailEvidence emailEvidence;
 
     private List<RelationshipEvidence> relationshipEvidences;
 
@@ -821,4 +823,13 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setReCiterArticleFeatures(ReCiterArticleFeatures reCiterArticleFeatures) {
 		this.reCiterArticleFeatures = reCiterArticleFeatures;
 	}
+
+	public EmailEvidence getEmailEvidence() {
+		return emailEvidence;
+	}
+
+	public void setEmailEvidence(EmailEvidence emailEvidence) {
+		this.emailEvidence = emailEvidence;
+	}
+	
 }

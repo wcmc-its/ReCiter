@@ -32,7 +32,7 @@ public class Identity {
 	private List<AuthorName> alternateNames; // aliases
 	private List<String> emails; // list of emails
 	private List<KnownRelationship> knownRelationships; // known relationships
-	private List<String> departments; // list of department
+	private List<OrganizationalUnit> organizationalUnits; // list of department
 	private String title; // title of the person
 	private List<String> institutions; // institutions
 	private Education degreeYear; // degreeYear
@@ -88,12 +88,12 @@ public class Identity {
 		this.knownRelationships = knownRelationships;
 	}
 
-	public List<String> getDepartments() {
-		return departments;
+	public List<OrganizationalUnit> getOrganizationalUnits() {
+		return organizationalUnits;
 	}
 
-	public void setDepartments(List<String> departments) {
-		this.departments = departments;
+	public void setOrganizationalUnits(List<OrganizationalUnit> organizationalUnits) {
+		this.organizationalUnits = organizationalUnits;
 	}
 
 	public String getTitle() {

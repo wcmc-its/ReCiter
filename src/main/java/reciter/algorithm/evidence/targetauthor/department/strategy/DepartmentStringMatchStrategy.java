@@ -32,6 +32,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.model.identity.OrganizationalUnit;
 
 /**
  * 
@@ -96,7 +97,33 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			sum += executeStrategy(reCiterArticle, identity);
+			//sum += executeStrategy(reCiterArticle, identity);
+			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
+				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+					if(author.isTargetAuthor()) {
+						//boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(reCiterArticle.getArticleId(), reCiterArticle.getGoldStandard(),
+						//		reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
+						if(identity.getOrganizationalUnits() != null 
+								&& 
+								identity.getOrganizationalUnits().size() > 0) {
+							//This is for department
+							//if(identity.getDepartments().contains(""))
+						}
+
+	
+						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
+								" [department and first name initial matches: " + extractedDept + 
+								", first name initial: " + identity.getPrimaryName().getFirstInitial() + "]");
+						slf4jLogger.info("Department and first name initial matches. "
+								+ "PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
+								"] Is Gold=[" + isGoldStandard + "]");
+						//score = 1;
+						reCiterArticle.setMatchingDepartment(extractedDept);
+						break;
+						
+					}
+				}
+			}
 		}
 		return sum;
 	}
@@ -116,9 +143,9 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		if (reCiterAuthor.getAffiliation() != null && reCiterAuthor.getAffiliation() != null) {
 			String affiliation = reCiterAuthor.getAffiliation();
 			String extractedDept = extractDepartment(affiliation);
-			List<String> targetAuthorDepts = targetAuthor.getDepartments();
-			for (String dept : targetAuthorDepts) {
-				if (StringUtils.containsIgnoreCase(extractedDept, dept)) {
+			List<OrganizationalUnit> targetAuthorDepts = targetAuthor.getOrganizationalUnits();
+			for (OrganizationalUnit dept : targetAuthorDepts) {
+				if (StringUtils.containsIgnoreCase(extractedDept, dept.getOrganizationalUnitLabel())) {
 					return true;
 				}
 			}
@@ -133,10 +160,10 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			String affiliation = reCiterAuthor.getAffiliation();
 			extractedDept = extractDepartment(affiliation);
 			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getUid() + "] in pmid=[" + pmid + "].");
-			for (String department : identity.getDepartments()) {
-				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
+			for (OrganizationalUnit department : identity.getOrganizationalUnits()) {
+				if (StringUtils.equalsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel())) {
 					return true;
-				} else if (StringUtils.containsIgnoreCase(extractedDept, department) && !StringUtils.containsIgnoreCase(extractedDept, "medicine")) {
+				} else if (StringUtils.containsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel()) && !StringUtils.containsIgnoreCase(extractedDept, "medicine")) {
 					// check for substring match - only when the extracted department is not "medicine" because
 					// it is too common.
 					if (reCiterAuthor.getAuthorName().firstInitialMiddleInitialLastNameMatch(identity.getPrimaryName())) {
@@ -165,8 +192,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 					String affiliation = author.getAffiliation();
 					extractedDept = extractDepartment(affiliation);
 
-					for (String department : identity.getDepartments()) {
-						if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
+					for (OrganizationalUnit department : identity.getOrganizationalUnits()) {
+						if (StringUtils.equalsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel())) {
 							return true;
 						}
 					}
@@ -199,8 +226,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			//			if (extractedDept.length() > 0) {
 			//				departments.add(extractedDept);
 			//			}
-			for (String department : identity.getDepartments()) {
-				if (StringUtils.equalsIgnoreCase(extractedDept, department)) {
+			for (OrganizationalUnit department : identity.getOrganizationalUnits()) {
+				if (StringUtils.equalsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel())) {
 					return true;
 				}
 			}

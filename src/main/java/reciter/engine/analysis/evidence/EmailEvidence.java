@@ -8,8 +8,8 @@ import lombok.ToString;
 @Data
 @ToString
 @DynamoDBDocument
-public class Grant {
-    private String institutionGrant;
-    private String articleGrant;
-	private double grantMatchScore;
+public class EmailEvidence {
+	
+	private String emailMatch;
+	private double emailMatchScore;
 }
