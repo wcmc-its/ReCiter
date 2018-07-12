@@ -26,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import reciter.engine.analysis.ReCiterArticleFeature;
+import reciter.engine.analysis.ReCiterFeature;
 
 @Data
 @AllArgsConstructor
@@ -35,7 +36,7 @@ public class AnalysisOutput {
 	
 
 	private String uid;
-	private ReCiterArticleFeature reCiterFeature;
+	private ReCiterFeature reCiterFeature;
 	
 	@DynamoDBHashKey(attributeName = "uid")
     public String getUid() {
@@ -43,7 +44,7 @@ public class AnalysisOutput {
     }
 	
 	@DynamoDBAttribute(attributeName = "reCiterFeature")
-	public ReCiterArticleFeature getReCiterFeature() {
+	public ReCiterFeature getReCiterFeature() {
 		return reCiterFeature;
 	}
 }

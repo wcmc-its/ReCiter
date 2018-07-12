@@ -317,8 +317,9 @@ public class ReCiterController {
 			Engine engine = new ReCiterEngine();
 			engineOutput = engine.run(parameters, strategyParameters);
 			AnalysisOutput analysisOutput = new AnalysisOutput();
-			if(engineOutput != null)
+			if(engineOutput != null) {
 				analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
+			}
 			analysisOutput.setUid(uid);
 			//if(analysisOutput.getReCiterFeature() != null)
 			//	analysisService.save(analysisOutput);
