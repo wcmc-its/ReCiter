@@ -18,7 +18,10 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.department.strategy;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,8 +29,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.OrganizationalUnitEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
@@ -98,32 +103,72 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			//sum += executeStrategy(reCiterArticle, identity);
+			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
 			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 					if(author.isTargetAuthor()) {
-						//boolean isDepartmentMatch = departmentMatchStrictAndFillInAffiliationIfNotPresent(reCiterArticle.getArticleId(), reCiterArticle.getGoldStandard(),
-						//		reCiterArticle.getArticleCoAuthors().getAuthors(), author, identity);
+						OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence();
+						String articleAffiliation = author.getAffiliation().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
 						if(identity.getOrganizationalUnits() != null 
 								&& 
 								identity.getOrganizationalUnits().size() > 0) {
 							//This is for department
-							//if(identity.getDepartments().contains(""))
+							for(OrganizationalUnit orgUnit: identity.getOrganizationalUnits()) {
+								String identityDepartment = orgUnit.getOrganizationalUnitLabel().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
+								if(orgUnit.getOrganizationalUnitType().equals("department")) {
+									if(orgUnit.getOrganizationalUnitLabel() != null 
+											&& 
+											(orgUnit.getOrganizationalUnitLabel().contains("Center")
+													||
+													orgUnit.getOrganizationalUnitLabel().contains("Program")
+													||
+													orgUnit.getOrganizationalUnitLabel().contains("Institute")) 
+											&& 
+											orgUnit.getOrganizationalUnitLabel().length() > 14) {
+										if(articleAffiliation.contains(identityDepartment)) {
+											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
+											//identityDepartment: "Center for Integrative Medicine"
+											//departmentMatchingScore: 2
+											orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+											orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+											orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
+										}
+									} else if(articleAffiliation.contains("Department of " + identityDepartment) 
+											|| 
+											articleAffiliation.contains("Division of " + identityDepartment)) {
+										//articleAffiliation: "Department of Pharmacology, Weill Cornell Medical College. New York, NY 10021, USA. jobuck@med.cornell.edu"
+										//identityDepartment: "Pharmacology"
+										//departmentMatchingScore: 2
+										orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
+									}  
+									
+									
+									if(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split(",")).contains(identityDepartment)) {
+										orgUnitEvidence.setOrganizationalUnitModifier(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split(",")).toString());
+										orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
+									}
+								} else {
+									if(articleAffiliation.contains("Program in " + identityDepartment) 
+											||
+											articleAffiliation.contains(identityDepartment + " Program")
+											||
+											articleAffiliation.contains(identityDepartment + " Graduate Program")) {
+										orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitProgramMatchingScore());
+									}
+								}
+							}
 						}
-
-	
-						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + 
-								" [department and first name initial matches: " + extractedDept + 
-								", first name initial: " + identity.getPrimaryName().getFirstInitial() + "]");
-						slf4jLogger.info("Department and first name initial matches. "
-								+ "PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
-								"] Is Gold=[" + isGoldStandard + "]");
-						//score = 1;
-						reCiterArticle.setMatchingDepartment(extractedDept);
-						break;
-						
+						if(orgUnitEvidence != null && orgUnitEvidence.getIdentityOrganizationalUnit() != null && orgUnitEvidence.getArticleAffiliation() != null) {
+							orgUnitEvidences.add(orgUnitEvidence);
+						}
 					}
 				}
 			}
+			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
 		}
 		return sum;
 	}

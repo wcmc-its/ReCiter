@@ -200,6 +200,18 @@ public class StrategyParameters {
 	
 	@Value("${strategy.discrepancyDegreeYear-DoctoralScore}")
 	private double discrepancyDegreeYearDoctoralScore;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitDepartmentMatchingScore}")
+	private double organizationalUnitDepartmentMatchingScore;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitModifier}")
+	private String organizationalUnitModifier;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitModifierScore}")
+	private double organizationalUnitModifierScore;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitProgramMatchingScore}")
+	private double organizationalUnitProgramMatchingScore;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -684,6 +696,38 @@ public class StrategyParameters {
 
 	public void setDiscrepancyDegreeYearDoctoralScore(double discrepancyDegreeYearDoctoralScore) {
 		this.discrepancyDegreeYearDoctoralScore = discrepancyDegreeYearDoctoralScore;
+	}
+
+	public double getOrganizationalUnitDepartmentMatchingScore() {
+		return organizationalUnitDepartmentMatchingScore;
+	}
+
+	public void setOrganizationalUnitDepartmentMatchingScore(double organizationalUnitDepartmentMatchingScore) {
+		this.organizationalUnitDepartmentMatchingScore = organizationalUnitDepartmentMatchingScore;
+	}
+
+	public String getOrganizationalUnitModifier() {
+		return organizationalUnitModifier;
+	}
+
+	public void setOrganizationalUnitModifier(String organizationalUnitModifier) {
+		this.organizationalUnitModifier = organizationalUnitModifier;
+	}
+
+	public double getOrganizationalUnitModifierScore() {
+		return organizationalUnitModifierScore;
+	}
+
+	public void setOrganizationalUnitModifierScore(double organizationalUnitModifierScore) {
+		this.organizationalUnitModifierScore = organizationalUnitModifierScore;
+	}
+
+	public double getOrganizationalUnitProgramMatchingScore() {
+		return organizationalUnitProgramMatchingScore;
+	}
+
+	public void setOrganizationalUnitProgramMatchingScore(double organizationalUnitProgramMatchingScore) {
+		this.organizationalUnitProgramMatchingScore = organizationalUnitProgramMatchingScore;
 	}
 	
 }
