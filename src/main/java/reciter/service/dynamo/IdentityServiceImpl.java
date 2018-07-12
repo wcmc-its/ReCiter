@@ -64,4 +64,14 @@ public class IdentityServiceImpl implements IdentityService {
         }
         return identities;
     }
+
+	@Override
+	public void deleteAll() {
+		identityRepository.deleteAll();
+	}
+
+	@Override
+	public void delete(String uid) {
+		identityRepository.delete(uid);
+	}
 }

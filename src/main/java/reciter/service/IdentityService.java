@@ -34,4 +34,9 @@ public interface IdentityService {
 	Identity findByUid(String uid);
 
 	List<Identity> findAll();
+	
+	void deleteAll();
+
+	void delete(String uid);
+	
 }
