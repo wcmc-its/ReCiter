@@ -39,8 +39,8 @@ public class DepartmentRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
 	@Override
 	protected String getStrategySpecificKeyword(Identity identity) {
-		if (identity.getDepartments() != null && !identity.getDepartments().isEmpty()) {
-			return identity.getDepartments().get(0);
+		if (identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
+			return identity.getOrganizationalUnits().get(0).getOrganizationalUnitLabel();
 		} else {
 			return null;
 		}

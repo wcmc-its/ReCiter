@@ -42,7 +42,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 			AffiliationEvidence affiliationEvidence = new AffiliationEvidence();
 			affiliationEvidence.setInstitutionalAffiliations(identity.getInstitutions());
 			affiliationEvidence.setEmails(identity.getEmails());
-			affiliationEvidence.setDepartments(identity.getDepartments());
+			affiliationEvidence.setDepartments(identity.getOrganizationalUnits());
 			affiliationEvidence.setArticleAffiliation(variantName);
 			reCiterArticle.setAffiliationEvidence(affiliationEvidence);
 			score = 1;
