@@ -102,6 +102,10 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if(reCiterArticle.getArticleId() == 25456561 ) {
+				slf4jLogger.info("here");
+				
+			}
 			//sum += executeStrategy(reCiterArticle, identity);
 			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
 			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
@@ -148,8 +152,11 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 									
 									
 									if(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split(",")).contains(identityDepartment)) {
-										orgUnitEvidence.setOrganizationalUnitModifier(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split(",")).toString());
+										orgUnitEvidence.setOrganizationalUnitModifier(identityDepartment);
 										orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
+									} else {
+										orgUnitEvidence.setOrganizationalUnitModifier(null);
+										orgUnitEvidence.setOrganizationalUnitModifierScore(0);
 									}
 								} else {
 									if(articleAffiliation.contains("Program in " + identityDepartment) 
