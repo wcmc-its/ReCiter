@@ -106,7 +106,9 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
 			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-					if(author.isTargetAuthor()) {
+					if(author.isTargetAuthor() 
+							&& 
+							author.getAffiliation() != null) {
 						OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence();
 						String articleAffiliation = author.getAffiliation().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
 						if(identity.getOrganizationalUnits() != null 
@@ -168,7 +170,9 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 					}
 				}
 			}
-			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
+			if(orgUnitEvidences.size() > 0) {
+				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
+			}
 		}
 		return sum;
 	}
