@@ -284,14 +284,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 				double emailStrategyScore = ((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
-			/*if (strategyParameters.isDepartment()) {
+			if (strategyParameters.isDepartment()) {
 				double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
-				if (departmentStrategyScore > 0) {
-					selectedClusterIds.add(clusterId);
-				}
 			}
 
-			if (strategyParameters.isKnownRelationship()) {
+			/*if (strategyParameters.isKnownRelationship()) {
 				double knownRelationshipScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
 				if (knownRelationshipScore > 0) {
 					selectedClusterIds.add(clusterId);
