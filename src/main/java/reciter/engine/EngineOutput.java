@@ -18,17 +18,17 @@
  *******************************************************************************/
 package reciter.engine;
 
-import java.util.List;
-
 import lombok.Data;
 import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.engine.analysis.ReCiterFeature;
+import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.engine.erroranalysis.Analysis;
+
+import java.util.List;
 
 @Data
 public class EngineOutput {
 
-	private Analysis analysis;
-	private ReCiterFeature reCiterFeature;
-	private List<ReCiterCluster> reCiterClusters;
+    private Analysis analysis;
+    private ReCiterArticleFeature reCiterFeature;
+    private List<ReCiterCluster> reCiterClusters;
 }

@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Primary
 @Service
@@ -65,13 +64,13 @@ public class IdentityServiceImpl implements IdentityService {
         return identities;
     }
 
-	@Override
-	public void deleteAll() {
-		identityRepository.deleteAll();
-	}
+    @Override
+    public void deleteAll() {
+        identityRepository.deleteAll();
+    }
 
-	@Override
-	public void delete(String uid) {
-		identityRepository.delete(uid);
-	}
+    @Override
+    public void delete(String uid) {
+        identityRepository.delete(uid);
+    }
 }

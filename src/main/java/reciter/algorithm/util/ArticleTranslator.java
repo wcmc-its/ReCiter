@@ -136,7 +136,7 @@ public class ArticleTranslator {
 				ReCiterArticleMeshHeading reCiterArticleMeshHeading = new ReCiterArticleMeshHeading();
 				ReCiterMeshHeadingDescriptorName reCiterMeshHeadingDescriptorName = new ReCiterMeshHeadingDescriptorName();
 				reCiterMeshHeadingDescriptorName.setDescriptorName(descriptorNameString);
-				reCiterMeshHeadingDescriptorName.setMajorTopicYN(meshMajorTopicYN.getVal());
+				reCiterMeshHeadingDescriptorName.setMajorTopicYN(meshMajorTopicYN.name());
 				reCiterArticleMeshHeading.setDescriptorName(reCiterMeshHeadingDescriptorName);
 				
 				// For each qualifier, set name and major topic.
@@ -270,12 +270,12 @@ public class ArticleTranslator {
 		}
 
 		// pmcid
-		if(pubmedArticle.getPubmeddata().getArticleIdList() != null) {
-			if (pubmedArticle.getPubmeddata().getArticleIdList().getPmc() != null &&
-					!pubmedArticle.getPubmeddata().getArticleIdList().getPmc().isEmpty()) {
-				reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
-			}
-		}
+//		if(pubmedArticle.getPubmeddata().getArticleIdList() != null) {
+//			if (pubmedArticle.getPubmeddata().getArticleIdList().getPmc() != null &&
+//					!pubmedArticle.getPubmeddata().getArticleIdList().getPmc().isEmpty()) {
+//				reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
+//			}
+//		}
 
 		// doi
 		if (pubmedArticle.getMedlinecitation().getArticle().getElocationid() != null) {
