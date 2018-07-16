@@ -183,6 +183,12 @@ public class StrategyParameters {
 	@Value("${strategy.knownrelationships.relationshipVerboseMatchModifier}")
 	private double relationshipVerboseMatchModifier;
 	
+	@Value("${strategy.knownrelationships.relationshipMatchModifier-Mentor}")
+	private double relationshipMatchModifierMentor;
+	
+	@Value("${strategy.knownrelationships.relationshipMatchModifier-Mentor-SeniorAuthor}")
+	private double relationshipMatchModifierMentorSeniorAuthor;
+	
 	@Value("${strategy.discrepancyDegreeYear-BachelorThreshold}")
 	private double discrepancyDegreeYearBachelorThreshold;
 	
@@ -647,6 +653,22 @@ public class StrategyParameters {
 
 	public void setRelationshipVerboseMatchModifier(double relationshipVerboseMatchModifier) {
 		this.relationshipVerboseMatchModifier = relationshipVerboseMatchModifier;
+	}
+
+	public double getRelationshipMatchModifierMentor() {
+		return relationshipMatchModifierMentor;
+	}
+
+	public void setRelationshipMatchModifierMentor(double relationshipMatchModifierMentor) {
+		this.relationshipMatchModifierMentor = relationshipMatchModifierMentor;
+	}
+
+	public double getRelationshipMatchModifierMentorSeniorAuthor() {
+		return relationshipMatchModifierMentorSeniorAuthor;
+	}
+
+	public void setRelationshipMatchModifierMentorSeniorAuthor(double relationshipMatchModifierMentorSeniorAuthor) {
+		this.relationshipMatchModifierMentorSeniorAuthor = relationshipMatchModifierMentorSeniorAuthor;
 	}
 
 	public double getDiscrepancyDegreeYearBachelorThreshold() {
