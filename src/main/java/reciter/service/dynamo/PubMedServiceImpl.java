@@ -2,6 +2,7 @@ package reciter.service.dynamo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import reciter.database.dynamodb.repository.PubMedArticleRepository;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.PubMedService;
@@ -32,11 +33,16 @@ public class PubMedServiceImpl implements PubMedService {
 
     @Override
     public List<PubMedArticle> findByPmids(List<Long> pmids) {
+    	List<PubMedArticle> pubMedArticles = null;
+    	try {
         Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAll(pmids).iterator();
-        List<PubMedArticle> pubMedArticles = new ArrayList<>(pmids.size());
+        pubMedArticles = new ArrayList<>(pmids.size());
         while (iterator.hasNext()) {
             pubMedArticles.add(iterator.next().getPubmedArticle());
         }
+    	} catch(NullPointerException ne) {
+    		return null;
+    	}
         return pubMedArticles;
     }
 

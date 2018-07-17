@@ -300,6 +300,9 @@ public class ReCiterController {
 		}
 		else {
 			parameters = initializeEngineParameters(uid);
+			if(parameters == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '"  + uid + "' does not have any candidate records in ESearchResult table. Try running the candidate article retrieval api first with refreshFlag = true.");
+			}
 			TargetAuthorSelection t = new TargetAuthorSelection();
 			t.identifyTargetAuthor(parameters.getReciterArticles(), parameters.getIdentity());
 			Iterator<ReCiterArticle> it = parameters.getReciterArticles().iterator();
@@ -366,8 +369,11 @@ public class ReCiterController {
 				filteredString.add(String.valueOf(pmid));
 			//}
 		}
-
+		
 		List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
+		if(pubMedArticles == null) {
+			return null;
+		}
 		List<ScopusArticle> scopusArticles = scopusService.findByPmids(filteredString);
 
 		// create temporary map to retrieve Scopus articles by PMID (at the stage below)
