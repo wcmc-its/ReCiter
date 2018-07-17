@@ -45,6 +45,8 @@ import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.ScoreByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy;
+import reciter.algorithm.evidence.targetauthor.persontype.PersonTypeStrategyContext;
+import reciter.algorithm.evidence.targetauthor.persontype.strategy.PersonTypeStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
 import reciter.engine.StrategyParameters;
@@ -136,6 +138,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 * Article size.
 	 */
 	private StrategyContext articleSizeStrategyContext;
+	
+	/**
+	 * Person Type.
+	 */
+	private StrategyContext personTypeStrategyContext;
 
 	/**
 	 * Remove clusters based on cluster information.
@@ -185,6 +192,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			numArticles += reCiterCluster.getArticleCluster().size();
 		}
 		this.articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy(numArticles));
+		this.personTypeStrategyContext = new PersonTypeStrategyContext(new PersonTypeStrategy());
 
 		// TODO: getBoardCertificationScore(map);
 
@@ -246,6 +254,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		if (strategyParameters.isRemoveByName()) {
 			this.strategyContexts.add(this.removeByNameStrategyContext);
 		}
+		
+		if(strategyParameters.isPersonType()) {
+			this.strategyContexts.add(this.personTypeStrategyContext);
+		}
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		this.strategyContexts.add(this.emailStrategyContext);
@@ -291,6 +303,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			
 			if (strategyParameters.isArticleSize()) {
 				((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if (strategyParameters.isPersonType()) {
+				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
 			/*if (strategyParameters.isKnownRelationship()) {
