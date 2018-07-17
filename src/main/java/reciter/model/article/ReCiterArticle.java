@@ -27,6 +27,7 @@ import reciter.engine.analysis.evidence.ClusteringEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.engine.analysis.evidence.GrantEvidence;
+import reciter.engine.analysis.evidence.PersonTypeEvidence;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.model.article.completeness.ArticleCompleteness;
 import reciter.model.article.features.ReCiterArticleFeatures;
@@ -163,6 +164,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private EmailEvidence emailEvidence;
     
     private ArticleCountEvidence articleCountEvidence;
+    private PersonTypeEvidence personTypeEvidence;
 
     private List<RelationshipEvidence> relationshipEvidences;
 
@@ -841,6 +843,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
 	public void setArticleCountEvidence(ArticleCountEvidence articleCountEvidence) {
 		this.articleCountEvidence = articleCountEvidence;
+	}
+
+	public PersonTypeEvidence getPersonTypeEvidence() {
+		return personTypeEvidence;
+	}
+
+	public void setPersonTypeEvidence(PersonTypeEvidence personTypeEvidence) {
+		this.personTypeEvidence = personTypeEvidence;
 	}
 	
 	

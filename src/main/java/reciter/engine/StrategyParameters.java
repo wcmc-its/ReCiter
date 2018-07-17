@@ -63,6 +63,9 @@ public class StrategyParameters {
 	@Value("${strategy.article.size}")
 	private boolean isArticleSize;
 	
+	@Value("${strategy.persontype}")
+	private boolean isPersonType;
+	
 	@Value("${strategy.bachelors.year.discrepancy}")
 	private boolean isBachelorsYearDiscrepancy;
 	
@@ -224,6 +227,13 @@ public class StrategyParameters {
 	
 	@Value("${strategy.articleCountScoringStrategy.articleCountWeight}")
 	private double articleCountWeight;
+	
+	@Value("${strategy.personTypeScoringStrategy.personTypeScore-academic-faculty-weillfulltime}")
+	private double personTypeScoreAcademicFacultyWeillfulltime;
+	
+	@Value("${strategy.personTypeScoringStrategy.personTypeScore-student-md-new-york}")
+	private double personTypeScoreStudentMdNewyork;
+	
 
 	public boolean isEmail() {
 		return isEmail;
@@ -772,6 +782,30 @@ public class StrategyParameters {
 
 	public void setArticleCountWeight(double articleCountWeight) {
 		this.articleCountWeight = articleCountWeight;
+	}
+
+	public double getPersonTypeScoreAcademicFacultyWeillfulltime() {
+		return personTypeScoreAcademicFacultyWeillfulltime;
+	}
+
+	public void setPersonTypeScoreAcademicFacultyWeillfulltime(double personTypeScoreAcademicFacultyWeillfulltime) {
+		this.personTypeScoreAcademicFacultyWeillfulltime = personTypeScoreAcademicFacultyWeillfulltime;
+	}
+
+	public double getPersonTypeScoreStudentMdNewyork() {
+		return personTypeScoreStudentMdNewyork;
+	}
+
+	public void setPersonTypeScoreStudentMdNewyork(double personTypeScoreStudentMdNewyork) {
+		this.personTypeScoreStudentMdNewyork = personTypeScoreStudentMdNewyork;
+	}
+
+	public boolean isPersonType() {
+		return isPersonType;
+	}
+
+	public void setPersonType(boolean isPersonType) {
+		this.isPersonType = isPersonType;
 	}
 	
 }
