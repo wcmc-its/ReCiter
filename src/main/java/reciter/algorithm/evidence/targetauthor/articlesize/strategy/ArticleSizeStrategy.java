@@ -25,10 +25,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchStrategy;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.ArticleCountEvidence;
 import reciter.model.article.ReCiterArticle;
