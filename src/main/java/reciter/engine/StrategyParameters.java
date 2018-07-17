@@ -218,6 +218,12 @@ public class StrategyParameters {
 	
 	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitProgramMatchingScore}")
 	private double organizationalUnitProgramMatchingScore;
+	
+	@Value("${strategy.articleCountScoringStrategy.articleCountThresholdScore}")
+	private double articleCountThresholdScore;
+	
+	@Value("${strategy.articleCountScoringStrategy.articleCountWeight}")
+	private double articleCountWeight;
 
 	public boolean isEmail() {
 		return isEmail;
@@ -750,6 +756,22 @@ public class StrategyParameters {
 
 	public void setOrganizationalUnitProgramMatchingScore(double organizationalUnitProgramMatchingScore) {
 		this.organizationalUnitProgramMatchingScore = organizationalUnitProgramMatchingScore;
+	}
+
+	public double getArticleCountThresholdScore() {
+		return articleCountThresholdScore;
+	}
+
+	public void setArticleCountThresholdScore(double articleCountThresholdScore) {
+		this.articleCountThresholdScore = articleCountThresholdScore;
+	}
+
+	public double getArticleCountWeight() {
+		return articleCountWeight;
+	}
+
+	public void setArticleCountWeight(double articleCountWeight) {
+		this.articleCountWeight = articleCountWeight;
 	}
 	
 }

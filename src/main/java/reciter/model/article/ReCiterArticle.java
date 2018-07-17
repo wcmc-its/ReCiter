@@ -21,6 +21,7 @@ package reciter.model.article;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
 import reciter.engine.analysis.evidence.AffiliationEvidence;
+import reciter.engine.analysis.evidence.ArticleCountEvidence;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.ClusteringEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
@@ -160,6 +161,8 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private GrantEvidence grantEvidence;
     private AuthorNameEvidence authorNameEvidence;
     private EmailEvidence emailEvidence;
+    
+    private ArticleCountEvidence articleCountEvidence;
 
     private List<RelationshipEvidence> relationshipEvidences;
 
@@ -831,5 +834,15 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setEmailEvidence(EmailEvidence emailEvidence) {
 		this.emailEvidence = emailEvidence;
 	}
+
+	public ArticleCountEvidence getArticleCountEvidence() {
+		return articleCountEvidence;
+	}
+
+	public void setArticleCountEvidence(ArticleCountEvidence articleCountEvidence) {
+		this.articleCountEvidence = articleCountEvidence;
+	}
+	
+	
 	
 }
