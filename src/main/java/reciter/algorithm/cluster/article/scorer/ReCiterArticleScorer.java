@@ -261,31 +261,36 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	public void runArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity) {
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long clusterId = entry.getKey();
+			slf4jLogger.info("******************** Cluster " + clusterId + " scoring starts **********************");
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
-			double nameStrategyScore = ((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+			((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
 
 			if (strategyParameters.isEmail()) {
-				double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
+				((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isGrant()) {
-				double emailStrategyScore = ((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
+				((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isKnownRelationship()) {
-				double emailStrategyScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+				((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isBachelorsYearDiscrepancy()) {
-				double emailStrategyScore = ((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+				((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isDoctoralYearDiscrepancy()) {
-				double emailStrategyScore = ((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+				((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
 			if (strategyParameters.isDepartment()) {
-				double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+				((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if (strategyParameters.isArticleSize()) {
+				((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
 			/*if (strategyParameters.isKnownRelationship()) {
@@ -301,6 +306,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 					selectedClusterIds.add(clusterId);
 				}
 			}*/
+			
+			slf4jLogger.info("******************** Cluster " + clusterId + " scoring ends **********************");
 		}
 		
 	}
