@@ -1,5 +1,7 @@
 package reciter.algorithm.cluster.article.scorer;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.article.acceptedrejected.AcceptedRejectedStrategyContext;
+import reciter.algorithm.evidence.article.acceptedrejected.strategy.AcceptedRejectedStrategy;
 import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
 import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
 import reciter.algorithm.evidence.article.citation.strategy.InverseCoCitationStrategy;
@@ -143,6 +148,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 * Person Type.
 	 */
 	private StrategyContext personTypeStrategyContext;
+	
+	/**
+	 * Accpeted Rejected .
+	 */
+	private StrategyContext acceptedRejectedStrategyContext;
 
 	/**
 	 * Remove clusters based on cluster information.
@@ -186,6 +196,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
 		this.citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
 		this.coCitationStrategyContext = new CitationStrategyContext(new InverseCoCitationStrategy());
+		this.acceptedRejectedStrategyContext = new AcceptedRejectedStrategyContext(new AcceptedRejectedStrategy());
 		
 		int numArticles = 0;
 		for (ReCiterCluster reCiterCluster : clusters.values()) {
@@ -258,6 +269,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		if(strategyParameters.isPersonType()) {
 			this.strategyContexts.add(this.personTypeStrategyContext);
 		}
+		
+		if(strategyParameters.isAcceptedRejected()) {
+			this.strategyContexts.add(this.acceptedRejectedStrategyContext);
+		}
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		this.strategyContexts.add(this.emailStrategyContext);
@@ -307,6 +322,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			
 			if (strategyParameters.isPersonType()) {
 				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if (strategyParameters.isAcceptedRejected()) {
+				((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
 			}
 
 			/*if (strategyParameters.isKnownRelationship()) {
