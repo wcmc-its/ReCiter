@@ -66,6 +66,9 @@ public class StrategyParameters {
 	@Value("${strategy.persontype}")
 	private boolean isPersonType;
 	
+	@Value("${strategy.acceptedrejected}")
+	private boolean isAcceptedRejected;
+	
 	@Value("${strategy.bachelors.year.discrepancy}")
 	private boolean isBachelorsYearDiscrepancy;
 	
@@ -233,6 +236,15 @@ public class StrategyParameters {
 	
 	@Value("${strategy.personTypeScoringStrategy.personTypeScore-student-md-new-york}")
 	private double personTypeScoreStudentMdNewyork;
+	
+	@Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-accepted}")
+	private double acceptedArticleScore;
+	
+	@Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-rejected}")
+	private double rejectedArticleScore;
+	
+	@Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-null}")
+	private double feedbackScoreNullScore;
 	
 
 	public boolean isEmail() {
@@ -807,5 +819,38 @@ public class StrategyParameters {
 	public void setPersonType(boolean isPersonType) {
 		this.isPersonType = isPersonType;
 	}
+
+	public boolean isAcceptedRejected() {
+		return isAcceptedRejected;
+	}
+
+	public void setAcceptedRejected(boolean isAcceptedRejected) {
+		this.isAcceptedRejected = isAcceptedRejected;
+	}
+
+	public double getAcceptedArticleScore() {
+		return acceptedArticleScore;
+	}
+
+	public void setAcceptedArticleScore(double acceptedArticleScore) {
+		this.acceptedArticleScore = acceptedArticleScore;
+	}
+
+	public double getRejectedArticleScore() {
+		return rejectedArticleScore;
+	}
+
+	public void setRejectedArticleScore(double rejectedArticleScore) {
+		this.rejectedArticleScore = rejectedArticleScore;
+	}
+
+	public double getFeedbackScoreNullScore() {
+		return feedbackScoreNullScore;
+	}
+
+	public void setFeedbackScoreNullScore(double feedbackScoreNullScore) {
+		this.feedbackScoreNullScore = feedbackScoreNullScore;
+	}
+	
 	
 }
