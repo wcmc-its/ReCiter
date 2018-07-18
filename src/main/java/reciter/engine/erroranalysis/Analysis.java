@@ -63,11 +63,12 @@ public class Analysis {
 	 * @param reCiterArticles
 	 * @param uid
 	 */
-	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> pmids) {
+	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> acceptedPmids, List<Long> rejectedPmids) {
 		Set<Long> pmidSet = new HashSet<>();
-		for (long pmid : pmids) {
-			pmidSet.add(pmid);
-		}
+		acceptedPmids.stream().forEach(acceptedPmid -> {
+			pmidSet.add(acceptedPmid);
+		});
+		
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			if (pmidSet.contains(reCiterArticle.getArticleId())) {
 				reCiterArticle.setGoldStandard(1);
@@ -75,6 +76,23 @@ public class Analysis {
 				reCiterArticle.setGoldStandard(0);
 			}
 		}
+		if(rejectedPmids != null) {
+			if(pmidSet.size() > 0) {
+				pmidSet.clear();
+			}
+			rejectedPmids.stream().forEach(rejectedPmid -> {
+				pmidSet.add(rejectedPmid);
+			});
+			
+			for (ReCiterArticle reCiterArticle : reCiterArticles) {
+				if (pmidSet.contains(reCiterArticle.getArticleId())) {
+					reCiterArticle.setGoldStandard(-1);
+				} else {
+					reCiterArticle.setGoldStandard(0);
+				}
+			}
+		}
+		
 	}
 
 	/**

@@ -179,6 +179,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			}
 			if(orgUnitEvidences.size() > 0) {
 				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
+				reCiterArticle.setOrganizationalUnitEvidences(orgUnitEvidences);
 			}
 		}
 		return sum;

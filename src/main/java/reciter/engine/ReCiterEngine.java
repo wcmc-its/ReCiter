@@ -91,7 +91,7 @@ public class ReCiterEngine implements Engine {
 			}
 		}
 		
-		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids());
+		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids());
 		
 		List<Feature> features = new ArrayList<>();
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
@@ -142,7 +142,7 @@ public class ReCiterEngine implements Engine {
 		}*/
 		
 		List<ReCiterArticle> reCiterArticles = parameters.getReciterArticles();
-		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids());
+		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids());
 
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);

@@ -20,6 +20,8 @@ package reciter.model.article;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Transient;
+
+import reciter.engine.analysis.evidence.AcceptedRejectedEvidence;
 import reciter.engine.analysis.evidence.AffiliationEvidence;
 import reciter.engine.analysis.evidence.ArticleCountEvidence;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
@@ -27,6 +29,7 @@ import reciter.engine.analysis.evidence.ClusteringEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.engine.analysis.evidence.GrantEvidence;
+import reciter.engine.analysis.evidence.OrganizationalUnitEvidence;
 import reciter.engine.analysis.evidence.PersonTypeEvidence;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.model.article.completeness.ArticleCompleteness;
@@ -158,11 +161,14 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
     private Date pubDate;
     
+    private List<OrganizationalUnitEvidence> organizationalUnitEvidences;
+    private EducationYearEvidence educationYearEvidence;
     private AffiliationEvidence affiliationEvidence;
     private GrantEvidence grantEvidence;
     private AuthorNameEvidence authorNameEvidence;
     private EmailEvidence emailEvidence;
     
+    private AcceptedRejectedEvidence acceptedRejectedEvidence;
     private ArticleCountEvidence articleCountEvidence;
     private PersonTypeEvidence personTypeEvidence;
 
@@ -239,8 +245,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     public void setEducationYearEvidence(EducationYearEvidence educationYearEvidence) {
         this.educationYearEvidence = educationYearEvidence;
     }
-
-    private EducationYearEvidence educationYearEvidence;
 
     public List<RelationshipEvidence> getRelationshipEvidence() {
         return relationshipEvidences;
@@ -852,7 +856,21 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setPersonTypeEvidence(PersonTypeEvidence personTypeEvidence) {
 		this.personTypeEvidence = personTypeEvidence;
 	}
-	
-	
+
+	public List<OrganizationalUnitEvidence> getOrganizationalUnitEvidences() {
+		return organizationalUnitEvidences;
+	}
+
+	public void setOrganizationalUnitEvidences(List<OrganizationalUnitEvidence> organizationalEvidences) {
+		this.organizationalUnitEvidences = organizationalEvidences;
+	}
+
+	public AcceptedRejectedEvidence getAcceptedRejectedEvidence() {
+		return acceptedRejectedEvidence;
+	}
+
+	public void setAcceptedRejectedEvidence(AcceptedRejectedEvidence acceptedRejectedEvidence) {
+		this.acceptedRejectedEvidence = acceptedRejectedEvidence;
+	}
 	
 }
