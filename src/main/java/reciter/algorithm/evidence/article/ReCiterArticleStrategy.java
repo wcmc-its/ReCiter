@@ -26,4 +26,5 @@ public interface ReCiterArticleStrategy {
 
 	double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle);
 	double executeStrategy(List<ReCiterArticle> reCiterArticles, ReCiterArticle otherReCiterArticle);
+	double executeStrategy(List<ReCiterArticle> reCiterArticles);
 }

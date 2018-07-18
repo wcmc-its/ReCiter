@@ -27,4 +27,5 @@ public interface ReCiterArticleStrategyContext extends StrategyContext {
 
 	double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle);
 	double executeStrategy(List<ReCiterArticle> reCiterArticles, ReCiterArticle otherReCiterArticle);
+	double executeStrategy(List<ReCiterArticle> reCiterArticles);
 }
