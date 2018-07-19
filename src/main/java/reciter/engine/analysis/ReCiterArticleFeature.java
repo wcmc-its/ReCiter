@@ -1,7 +1,7 @@
 package reciter.engine.analysis;
 
 import lombok.Data;
-import reciter.engine.analysis.evidence.PositiveEvidence;
+import reciter.engine.analysis.evidence.Evidence;
 
 import java.util.Date;
 import java.util.List;
@@ -24,5 +24,5 @@ public class ReCiterArticleFeature {
     private String pages;
     private String pmcid;
     private String doi;
-    private PositiveEvidence positiveEvidence;
+    private Evidence evidence;
 }

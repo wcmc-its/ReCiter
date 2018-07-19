@@ -102,10 +102,11 @@ public class Analysis {
 	 * @param uid
 	 * @return
 	 */
-	public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, List<Long> goldStandardPmids) {
+	//public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, List<Long> goldStandardPmids) {
+	public static Analysis performAnalysis(Clusterer reCiterClusterer, List<Long> goldStandardPmids) {
 	    
 		Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
-		Set<Long> selection = clusterSelector.getSelectedClusterIds();
+		//Set<Long> selection = clusterSelector.getSelectedClusterIds();
 		String uid = reCiterClusterer.getIdentity().getUid();
 		
 		Analysis analysis = new Analysis();
@@ -114,12 +115,12 @@ public class Analysis {
 		analysis.setGoldStandardSize(goldStandardPmids.size());
 
 		// Combine all articles into a single list.
-		List<ReCiterArticle> articleList = new ArrayList<ReCiterArticle>();
-		for (long s : selection) {
+		List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles();//new ArrayList<ReCiterArticle>();
+		/*for (long s : selection) {
 			for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
 				articleList.add(reCiterArticle);
 			}
-		}
+		}*/
 
 		analysis.setSelectedClusterSize(articleList.size());
 
@@ -144,7 +145,7 @@ public class Analysis {
 					statusEnum = StatusEnum.TRUE_NEGATIVE;
 				}
 
-				boolean isClusterOriginator = false;
+				/*boolean isClusterOriginator = false;
 				long clusterOriginator = entry.getValue().getClusterOriginator();
 				if (pmid == clusterOriginator) {
 					isClusterOriginator = true;
@@ -163,7 +164,7 @@ public class Analysis {
 						isClusterOriginator, 
 						entry.getValue().getClusterID(), 
 						entry.getValue().getArticleCluster().size(), 
-						isArticleSelected);
+						isArticleSelected);*/
 				
 			}
 		}

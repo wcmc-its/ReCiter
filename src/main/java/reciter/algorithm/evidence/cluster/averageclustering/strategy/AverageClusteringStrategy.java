@@ -68,8 +68,8 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 			AverageClusteringEvidence averageClusteringEvidence = new AverageClusteringEvidence();
 			averageClusteringEvidence.setClusterScoreAverage(averageClusterScore);
 			averageClusteringEvidence.setClusterScoreDiscrepancy(clusterScoreDiscrepancy);
-			averageClusteringEvidence.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreWithoutClustering() + clusterScoreDiscrepancy);
-			reCiterArticle.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreWithoutClustering() + clusterScoreDiscrepancy);
+			averageClusteringEvidence.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy);
+			reCiterArticle.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy);
 			reCiterArticle.setAverageClusteringEvidence(averageClusteringEvidence);
 			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
 		});
