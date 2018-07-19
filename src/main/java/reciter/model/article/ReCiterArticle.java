@@ -25,6 +25,7 @@ import reciter.engine.analysis.evidence.AcceptedRejectedEvidence;
 import reciter.engine.analysis.evidence.AffiliationEvidence;
 import reciter.engine.analysis.evidence.ArticleCountEvidence;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
+import reciter.engine.analysis.evidence.AverageClusteringEvidence;
 import reciter.engine.analysis.evidence.ClusteringEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.EmailEvidence;
@@ -43,7 +44,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+
+import javax.validation.constraints.NotNull;
 
 public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
@@ -110,8 +114,19 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
      */
     @Transient
     private String clusterInfo = "";
+    
+    private double totalArticleScoreWithoutClustering;
+    private double totalArticleScoreNonStandardized;
 
-    private double emailStrategyScore;
+    public double getTotalArticleScoreNonStandardized() {
+		return totalArticleScoreNonStandardized;
+	}
+
+	public void setTotalArticleScoreNonStandardized(double totalArticleScoreNonStandardized) {
+		this.totalArticleScoreNonStandardized = totalArticleScoreNonStandardized;
+	}
+
+	private double emailStrategyScore;
     private List<String> matchingEmails = new ArrayList<>(0);
     private double departmentStrategyScore;
     private String matchingDepartment;
@@ -166,13 +181,24 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private AffiliationEvidence affiliationEvidence;
     private GrantEvidence grantEvidence;
     private AuthorNameEvidence authorNameEvidence;
+    
+    @NotNull
     private EmailEvidence emailEvidence;
     
     private AcceptedRejectedEvidence acceptedRejectedEvidence;
     private ArticleCountEvidence articleCountEvidence;
     private PersonTypeEvidence personTypeEvidence;
+    private AverageClusteringEvidence averageClusteringEvidence;
 
-    private List<RelationshipEvidence> relationshipEvidences;
+    public AverageClusteringEvidence getAverageClusteringEvidence() {
+		return averageClusteringEvidence;
+	}
+
+	public void setAverageClusteringEvidence(AverageClusteringEvidence averageClusteringEvidence) {
+		this.averageClusteringEvidence = averageClusteringEvidence;
+	}
+
+	private List<RelationshipEvidence> relationshipEvidences;
 
     private String volume;
     private String issue;
@@ -218,14 +244,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 
     public void setVolume(String volume) {
         this.volume = volume;
-    }
-
-    public List<RelationshipEvidence> getRelationshipEvidences() {
-        return relationshipEvidences;
-    }
-
-    public void setRelationshipEvidences(List<RelationshipEvidence> relationshipEvidences) {
-        this.relationshipEvidences = relationshipEvidences;
     }
 
     public ClusteringEvidence getClusteringEvidence() {
@@ -325,6 +343,31 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
             coCitationInfo = new StringBuffer();
         }
         return coCitationInfo;
+    }
+    
+    public double getGrantEvidenceTotalScore() {
+    	if(this.grantEvidence == null) {
+    		return 0;
+    	}
+    	return this.grantEvidence.getGrants().stream().mapToDouble(grant -> grant.getGrantMatchScore()).sum();
+    }
+    
+    public double getRelationshipEvidencesTotalScore() {
+    	if(this.relationshipEvidences == null) {
+    		return 0;
+    	}
+    	return this.relationshipEvidences.stream().mapToDouble(relationShipEvidence -> relationShipEvidence.getRelationshipMatchingScore() 
+    			+ relationShipEvidence.getRelationshipVerboseMatchModifierScore()
+    			+ relationShipEvidence.getRelationshipMatchModifierMentorSeniorAuthor()
+    			+ relationShipEvidence.getRelationshipMatchModifierMentor()).sum();
+    }
+    
+    public double getOrganizationalEvidencesTotalScore() {
+    	if(this.organizationalUnitEvidences == null) {
+    		return 0;
+    	}
+    	return this.organizationalUnitEvidences.stream().mapToDouble(organizationalUnitEvidence -> organizationalUnitEvidence.getOrganizationalUnitMatchingScore() +
+    			organizationalUnitEvidence.getOrganizationalUnitModifierScore()).sum();
     }
 
     public void setCoCitationInfo(StringBuffer coCitationInfo) {
@@ -872,5 +915,15 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setAcceptedRejectedEvidence(AcceptedRejectedEvidence acceptedRejectedEvidence) {
 		this.acceptedRejectedEvidence = acceptedRejectedEvidence;
 	}
+
+	public double getTotalArticleScoreWithoutClustering() {
+		return totalArticleScoreWithoutClustering;
+	}
+
+	public void setTotalArticleScoreWithoutClustering(double totalArticleScoreWithoutClustering) {
+		this.totalArticleScoreWithoutClustering = totalArticleScoreWithoutClustering;
+	}
+	
+	
 	
 }

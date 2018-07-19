@@ -69,6 +69,9 @@ public class StrategyParameters {
 	@Value("${strategy.acceptedrejected}")
 	private boolean isAcceptedRejected;
 	
+	@Value("${strategy.averageclustering}")
+	private boolean isAverageClustering;
+	
 	@Value("${strategy.bachelors.year.discrepancy}")
 	private boolean isBachelorsYearDiscrepancy;
 	
@@ -245,6 +248,9 @@ public class StrategyParameters {
 	
 	@Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-null}")
 	private double feedbackScoreNullScore;
+	
+	@Value("${strategy.averageClusteringScoringStrategy.clusterScore-Factor}")
+	private double clusterScoreFactor;
 	
 
 	public boolean isEmail() {
@@ -850,6 +856,22 @@ public class StrategyParameters {
 
 	public void setFeedbackScoreNullScore(double feedbackScoreNullScore) {
 		this.feedbackScoreNullScore = feedbackScoreNullScore;
+	}
+
+	public double getClusterScoreFactor() {
+		return clusterScoreFactor;
+	}
+
+	public void setClusterScoreFactor(double clusterScoreFactor) {
+		this.clusterScoreFactor = clusterScoreFactor;
+	}
+
+	public boolean isAverageClustering() {
+		return isAverageClustering;
+	}
+
+	public void setAverageClustering(boolean isAverageClustering) {
+		this.isAverageClustering = isAverageClustering;
 	}
 	
 	
