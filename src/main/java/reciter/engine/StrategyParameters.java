@@ -253,7 +253,7 @@ public class StrategyParameters {
 	private double clusterScoreFactor;
 	
 	@Value("${standardizedScoreMapping}")
-	private double standardizedScoreMapping;
+	private String standardizedScoreMapping;
 	
 	@Value("${totalArticleScore-standardized-default}")
 	private double totalArticleScoreStandardizedDefault;
@@ -880,11 +880,11 @@ public class StrategyParameters {
 		this.isAverageClustering = isAverageClustering;
 	}
 
-	public double getStandardizedScoreMapping() {
+	public String getStandardizedScoreMapping() {
 		return standardizedScoreMapping;
 	}
 
-	public void setStandardizedScoreMapping(double standardizedScoreMapping) {
+	public void setStandardizedScoreMapping(String standardizedScoreMapping) {
 		this.standardizedScoreMapping = standardizedScoreMapping;
 	}
 
