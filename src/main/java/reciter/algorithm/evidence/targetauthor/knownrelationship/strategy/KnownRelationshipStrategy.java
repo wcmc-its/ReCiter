@@ -71,9 +71,6 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			//sum += executeStrategy(reCiterArticle, identity);
-			if(reCiterArticle.getArticleId() == 29503865) {
-				log.info("here");
-			}
 			List<KnownRelationship> relationships = identity.getKnownRelationships();
 			List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
 			

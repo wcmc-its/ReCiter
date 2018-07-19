@@ -33,7 +33,7 @@ public class AcceptedRejectedStrategy extends AbstractReCiterArticleStrategy {
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
 		// TODO Auto-generated method stub
-		if(ReCiterArticleScorer.strategyParameters.isAcceptedRejected()) {
+		if(ReCiterArticleScorer.strategyParameters.isUseGoldStandardEvidence()) {
 			reCiterArticles.stream().forEach(reCiterArticle -> {
 				AcceptedRejectedEvidence acceptedRejectedEvidence = new AcceptedRejectedEvidence();
 				if(reCiterArticle.getGoldStandard() == 1) {
