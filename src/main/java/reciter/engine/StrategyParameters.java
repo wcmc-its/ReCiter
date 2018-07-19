@@ -252,6 +252,12 @@ public class StrategyParameters {
 	@Value("${strategy.averageClusteringScoringStrategy.clusterScore-Factor}")
 	private double clusterScoreFactor;
 	
+	@Value("${standardizedScoreMapping}")
+	private double standardizedScoreMapping;
+	
+	@Value("${totalArticleScore-standardized-default}")
+	private double totalArticleScoreStandardizedDefault;
+	
 
 	public boolean isEmail() {
 		return isEmail;
@@ -872,6 +878,22 @@ public class StrategyParameters {
 
 	public void setAverageClustering(boolean isAverageClustering) {
 		this.isAverageClustering = isAverageClustering;
+	}
+
+	public double getStandardizedScoreMapping() {
+		return standardizedScoreMapping;
+	}
+
+	public void setStandardizedScoreMapping(double standardizedScoreMapping) {
+		this.standardizedScoreMapping = standardizedScoreMapping;
+	}
+
+	public double getTotalArticleScoreStandardizedDefault() {
+		return totalArticleScoreStandardizedDefault;
+	}
+
+	public void setTotalArticleScoreStandardizedDefault(double totalArticleScoreStandardizedDefault) {
+		this.totalArticleScoreStandardizedDefault = totalArticleScoreStandardizedDefault;
 	}
 	
 	
