@@ -24,6 +24,8 @@ import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
 import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
+import reciter.algorithm.evidence.article.standardizedscore.StandardScoreStrategyContext;
+import reciter.algorithm.evidence.article.standardizedscore.strategy.StandardScoreStrategy;
 import reciter.algorithm.evidence.cluster.ClusterStrategyContext;
 import reciter.algorithm.evidence.cluster.averageclustering.AverageClusteringStrategyContext;
 import reciter.algorithm.evidence.cluster.averageclustering.strategy.AverageClusteringStrategy;
@@ -133,6 +135,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private StrategyContext articleTitleInEnglishStrategyContext;
 	
 	private StrategyContext averageClusteringStrategyContext;
+	
+	private StrategyContext standardScoreStrategyContext;
 
 	/**
 	 * Education.
@@ -203,6 +207,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.coCitationStrategyContext = new CitationStrategyContext(new InverseCoCitationStrategy());
 		this.acceptedRejectedStrategyContext = new AcceptedRejectedStrategyContext(new AcceptedRejectedStrategy());
 		this.averageClusteringStrategyContext = new AverageClusteringStrategyContext(new AverageClusteringStrategy());
+		this.standardScoreStrategyContext = new StandardScoreStrategyContext(new StandardScoreStrategy());
 		
 		int numArticles = 0;
 		for (ReCiterCluster reCiterCluster : clusters.values()) {
@@ -341,6 +346,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			if (strategyParameters.isAverageClustering()) {
 				((ClusterStrategyContext) averageClusteringStrategyContext).executeStrategy(entry.getValue());
 			}
+			
+			((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
 			
 
 			/*if (strategyParameters.isKnownRelationship()) {
