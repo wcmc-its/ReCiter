@@ -286,7 +286,7 @@ public class ReCiterController {
 			})
 	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, boolean refreshFlag) {
+	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, Double totalStandardizedArticleScore, boolean refreshFlag) {
 		EngineOutput engineOutput = null;
 		EngineParameters parameters = null;
 		try {
@@ -299,7 +299,7 @@ public class ReCiterController {
 			return new ResponseEntity<ReCiterFeature>(analysisService.findByUid(uid.trim()).getReCiterFeature(), HttpStatus.OK);
 		}
 		else {
-			parameters = initializeEngineParameters(uid);
+			parameters = initializeEngineParameters(uid, totalStandardizedArticleScore);
 			if(parameters == null) {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '"  + uid + "' does not have any candidate records in ESearchResult table. Try running the candidate article retrieval api first with refreshFlag = true.");
 			}
@@ -338,7 +338,7 @@ public class ReCiterController {
 		return pubMedService.findByPmid(pmid);
 	}*/
 
-	private EngineParameters initializeEngineParameters(String uid) {
+	private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore) {
 		// find identity
 		Identity identity = identityService.findByUid(uid);
 		ESearchResult eSearchResults = null;
@@ -418,6 +418,11 @@ public class ReCiterController {
 		} else {
 			parameters.setKnownPmids(goldStandard.getKnownPmids());
 			parameters.setRejectedPmids(goldStandard.getRejectedPmids());
+		}
+		if(totalStandardizedArticleScore == null) {
+			parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault());
+		} else {
+			parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore);
 		}
 		return parameters;
 	}
