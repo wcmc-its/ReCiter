@@ -20,7 +20,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 		
 			reCiterCluster.getArticleCluster().stream().forEach(reCiterArticle -> {
 				if(ReCiterArticleScorer.strategyParameters.isUseGoldStandardEvidence()) {
-					double totalArticleScoreWithoutClustering =  ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getTotalScore()):0) +
+					double totalArticleScoreWithoutClustering =  ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getNameScoreTotal()):0) +
 							((reCiterArticle.getEmailEvidence() != null)?reCiterArticle.getEmailEvidence().getEmailMatchScore():0) +
 							reCiterArticle.getGrantEvidenceTotalScore() +
 							reCiterArticle.getRelationshipEvidencesTotalScore() +
@@ -29,13 +29,13 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +
 							reCiterArticle.getArticleCountEvidence().getArticleCountScore() +
 							((reCiterArticle.getPersonTypeEvidence() != null)?reCiterArticle.getPersonTypeEvidence().getPersonTypeScore():0) +
-							reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() + 
-							reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() +
-							reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreNull();
+							((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) + 
+							((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0) +
+							((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreNull() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreNull():0);
 					
 					reCiterArticle.setTotalArticleScoreWithoutClustering(totalArticleScoreWithoutClustering);
 				} else {
-					double totalArticleScoreWithoutClustering = ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getTotalScore()):0) + 
+					double totalArticleScoreWithoutClustering = ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getNameScoreTotal()):0) + 
 							((reCiterArticle.getEmailEvidence() != null)?reCiterArticle.getEmailEvidence().getEmailMatchScore():0) + 
 							reCiterArticle.getGrantEvidenceTotalScore() +
 							reCiterArticle.getRelationshipEvidencesTotalScore() +
@@ -66,13 +66,18 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 		reCiterCluster.getArticleCluster().stream().forEach(reCiterArticle -> {
 			double clusterScoreDiscrepancy = (reCiterArticle.getTotalArticleScoreWithoutClustering() - averageClusterScore) * ReCiterArticleScorer.strategyParameters.getClusterScoreFactor();
 			AverageClusteringEvidence averageClusteringEvidence = new AverageClusteringEvidence();
-			averageClusteringEvidence.setClusterScoreAverage(averageClusterScore);
-			averageClusteringEvidence.setClusterScoreDiscrepancy(clusterScoreDiscrepancy);
-			averageClusteringEvidence.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy);
-			reCiterArticle.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy);
+			averageClusteringEvidence.setClusterScoreAverage(roundAvoid(averageClusterScore, 2));
+			averageClusteringEvidence.setClusterScoreModificationOfTotalScore(roundAvoid(-clusterScoreDiscrepancy, 2));
+			averageClusteringEvidence.setTotalArticleScoreWithoutClustering(roundAvoid(reCiterArticle.getTotalArticleScoreWithoutClustering(), 2));
+			reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy, 2));
 			reCiterArticle.setAverageClusteringEvidence(averageClusteringEvidence);
 			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
 		});
+	}
+	
+	public static double roundAvoid(double value, int places) {
+	    double scale = Math.pow(10, places);
+	    return Math.round(value * scale) / scale;
 	}
 
 }
