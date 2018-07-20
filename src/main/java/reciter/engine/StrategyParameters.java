@@ -63,6 +63,15 @@ public class StrategyParameters {
 	@Value("${strategy.article.size}")
 	private boolean isArticleSize;
 	
+	@Value("${strategy.persontype}")
+	private boolean isPersonType;
+	
+	@Value("${strategy.acceptedrejected}")
+	private boolean isAcceptedRejected;
+	
+	@Value("${strategy.averageclustering}")
+	private boolean isAverageClustering;
+	
 	@Value("${strategy.bachelors.year.discrepancy}")
 	private boolean isBachelorsYearDiscrepancy;
 	
@@ -183,6 +192,12 @@ public class StrategyParameters {
 	@Value("${strategy.knownrelationships.relationshipVerboseMatchModifier}")
 	private double relationshipVerboseMatchModifier;
 	
+	@Value("${strategy.knownrelationships.relationshipMatchModifier-Mentor}")
+	private double relationshipMatchModifierMentor;
+	
+	@Value("${strategy.knownrelationships.relationshipMatchModifier-Mentor-SeniorAuthor}")
+	private double relationshipMatchModifierMentorSeniorAuthor;
+	
 	@Value("${strategy.discrepancyDegreeYear-BachelorThreshold}")
 	private double discrepancyDegreeYearBachelorThreshold;
 	
@@ -200,6 +215,49 @@ public class StrategyParameters {
 	
 	@Value("${strategy.discrepancyDegreeYear-DoctoralScore}")
 	private double discrepancyDegreeYearDoctoralScore;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitDepartmentMatchingScore}")
+	private double organizationalUnitDepartmentMatchingScore;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitModifier}")
+	private String organizationalUnitModifier;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitModifierScore}")
+	private double organizationalUnitModifierScore;
+	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitProgramMatchingScore}")
+	private double organizationalUnitProgramMatchingScore;
+	
+	@Value("${strategy.articleCountScoringStrategy.articleCountThresholdScore}")
+	private double articleCountThresholdScore;
+	
+	@Value("${strategy.articleCountScoringStrategy.articleCountWeight}")
+	private double articleCountWeight;
+	
+	@Value("${strategy.personTypeScoringStrategy.personTypeScore-academic-faculty-weillfulltime}")
+	private double personTypeScoreAcademicFacultyWeillfulltime;
+	
+	@Value("${strategy.personTypeScoringStrategy.personTypeScore-student-md-new-york}")
+	private double personTypeScoreStudentMdNewyork;
+	
+	@Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-accepted}")
+	private double acceptedArticleScore;
+	
+	@Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-rejected}")
+	private double rejectedArticleScore;
+	
+	@Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-null}")
+	private double feedbackScoreNullScore;
+	
+	@Value("${strategy.averageClusteringScoringStrategy.clusterScore-Factor}")
+	private double clusterScoreFactor;
+	
+	@Value("${standardizedScoreMapping}")
+	private String standardizedScoreMapping;
+	
+	@Value("${totalArticleScore-standardized-default}")
+	private double totalArticleScoreStandardizedDefault;
+	
 
 	public boolean isEmail() {
 		return isEmail;
@@ -637,6 +695,22 @@ public class StrategyParameters {
 		this.relationshipVerboseMatchModifier = relationshipVerboseMatchModifier;
 	}
 
+	public double getRelationshipMatchModifierMentor() {
+		return relationshipMatchModifierMentor;
+	}
+
+	public void setRelationshipMatchModifierMentor(double relationshipMatchModifierMentor) {
+		this.relationshipMatchModifierMentor = relationshipMatchModifierMentor;
+	}
+
+	public double getRelationshipMatchModifierMentorSeniorAuthor() {
+		return relationshipMatchModifierMentorSeniorAuthor;
+	}
+
+	public void setRelationshipMatchModifierMentorSeniorAuthor(double relationshipMatchModifierMentorSeniorAuthor) {
+		this.relationshipMatchModifierMentorSeniorAuthor = relationshipMatchModifierMentorSeniorAuthor;
+	}
+
 	public double getDiscrepancyDegreeYearBachelorThreshold() {
 		return discrepancyDegreeYearBachelorThreshold;
 	}
@@ -685,5 +759,142 @@ public class StrategyParameters {
 	public void setDiscrepancyDegreeYearDoctoralScore(double discrepancyDegreeYearDoctoralScore) {
 		this.discrepancyDegreeYearDoctoralScore = discrepancyDegreeYearDoctoralScore;
 	}
+
+	public double getOrganizationalUnitDepartmentMatchingScore() {
+		return organizationalUnitDepartmentMatchingScore;
+	}
+
+	public void setOrganizationalUnitDepartmentMatchingScore(double organizationalUnitDepartmentMatchingScore) {
+		this.organizationalUnitDepartmentMatchingScore = organizationalUnitDepartmentMatchingScore;
+	}
+
+	public String getOrganizationalUnitModifier() {
+		return organizationalUnitModifier;
+	}
+
+	public void setOrganizationalUnitModifier(String organizationalUnitModifier) {
+		this.organizationalUnitModifier = organizationalUnitModifier;
+	}
+
+	public double getOrganizationalUnitModifierScore() {
+		return organizationalUnitModifierScore;
+	}
+
+	public void setOrganizationalUnitModifierScore(double organizationalUnitModifierScore) {
+		this.organizationalUnitModifierScore = organizationalUnitModifierScore;
+	}
+
+	public double getOrganizationalUnitProgramMatchingScore() {
+		return organizationalUnitProgramMatchingScore;
+	}
+
+	public void setOrganizationalUnitProgramMatchingScore(double organizationalUnitProgramMatchingScore) {
+		this.organizationalUnitProgramMatchingScore = organizationalUnitProgramMatchingScore;
+	}
+
+	public double getArticleCountThresholdScore() {
+		return articleCountThresholdScore;
+	}
+
+	public void setArticleCountThresholdScore(double articleCountThresholdScore) {
+		this.articleCountThresholdScore = articleCountThresholdScore;
+	}
+
+	public double getArticleCountWeight() {
+		return articleCountWeight;
+	}
+
+	public void setArticleCountWeight(double articleCountWeight) {
+		this.articleCountWeight = articleCountWeight;
+	}
+
+	public double getPersonTypeScoreAcademicFacultyWeillfulltime() {
+		return personTypeScoreAcademicFacultyWeillfulltime;
+	}
+
+	public void setPersonTypeScoreAcademicFacultyWeillfulltime(double personTypeScoreAcademicFacultyWeillfulltime) {
+		this.personTypeScoreAcademicFacultyWeillfulltime = personTypeScoreAcademicFacultyWeillfulltime;
+	}
+
+	public double getPersonTypeScoreStudentMdNewyork() {
+		return personTypeScoreStudentMdNewyork;
+	}
+
+	public void setPersonTypeScoreStudentMdNewyork(double personTypeScoreStudentMdNewyork) {
+		this.personTypeScoreStudentMdNewyork = personTypeScoreStudentMdNewyork;
+	}
+
+	public boolean isPersonType() {
+		return isPersonType;
+	}
+
+	public void setPersonType(boolean isPersonType) {
+		this.isPersonType = isPersonType;
+	}
+
+	public boolean isAcceptedRejected() {
+		return isAcceptedRejected;
+	}
+
+	public void setAcceptedRejected(boolean isAcceptedRejected) {
+		this.isAcceptedRejected = isAcceptedRejected;
+	}
+
+	public double getAcceptedArticleScore() {
+		return acceptedArticleScore;
+	}
+
+	public void setAcceptedArticleScore(double acceptedArticleScore) {
+		this.acceptedArticleScore = acceptedArticleScore;
+	}
+
+	public double getRejectedArticleScore() {
+		return rejectedArticleScore;
+	}
+
+	public void setRejectedArticleScore(double rejectedArticleScore) {
+		this.rejectedArticleScore = rejectedArticleScore;
+	}
+
+	public double getFeedbackScoreNullScore() {
+		return feedbackScoreNullScore;
+	}
+
+	public void setFeedbackScoreNullScore(double feedbackScoreNullScore) {
+		this.feedbackScoreNullScore = feedbackScoreNullScore;
+	}
+
+	public double getClusterScoreFactor() {
+		return clusterScoreFactor;
+	}
+
+	public void setClusterScoreFactor(double clusterScoreFactor) {
+		this.clusterScoreFactor = clusterScoreFactor;
+	}
+
+	public boolean isAverageClustering() {
+		return isAverageClustering;
+	}
+
+	public void setAverageClustering(boolean isAverageClustering) {
+		this.isAverageClustering = isAverageClustering;
+	}
+
+	public String getStandardizedScoreMapping() {
+		return standardizedScoreMapping;
+	}
+
+	public void setStandardizedScoreMapping(String standardizedScoreMapping) {
+		this.standardizedScoreMapping = standardizedScoreMapping;
+	}
+
+	public double getTotalArticleScoreStandardizedDefault() {
+		return totalArticleScoreStandardizedDefault;
+	}
+
+	public void setTotalArticleScoreStandardizedDefault(double totalArticleScoreStandardizedDefault) {
+		this.totalArticleScoreStandardizedDefault = totalArticleScoreStandardizedDefault;
+	}
+	
 	
 }

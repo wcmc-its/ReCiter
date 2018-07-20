@@ -17,5 +17,7 @@ public class RelationshipEvidence {
     private String relationshipMatchType;
     private double relationshipMatchingScore;
     private double relationshipVerboseMatchModifierScore;
+    private double relationshipMatchModifierMentor;
+    private double relationshipMatchModifierMentorSeniorAuthor;
     
 }

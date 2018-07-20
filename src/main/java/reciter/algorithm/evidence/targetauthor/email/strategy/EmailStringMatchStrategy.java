@@ -20,6 +20,7 @@ package reciter.algorithm.evidence.targetauthor.email.strategy;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

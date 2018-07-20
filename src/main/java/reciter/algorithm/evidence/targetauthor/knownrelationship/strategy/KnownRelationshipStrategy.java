@@ -73,9 +73,10 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			//sum += executeStrategy(reCiterArticle, identity);
 			List<KnownRelationship> relationships = identity.getKnownRelationships();
 			List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
-			Set<String> relationshipTypes = new HashSet<String>();
+			
 			if (relationships != null) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+					Set<String> relationshipTypes = new HashSet<String>();
 					// do not match target author's name
 					if (!author.isTargetAuthor()) {
 						for (KnownRelationship authorName : relationships) {
@@ -98,13 +99,39 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 								relationshipEvidence.setRelationshipMatchingScore(ReCiterArticleScorer.strategyParameters.getRelationshipMatchingScore());
 								relationshipEvidence.setRelationshipName(authorName.getName());
 								relationshipEvidence.setRelationshipType(relationshipTypes);
+								
+								if(authorName.getType().equals("mentor")) {
+									relationshipEvidence.setRelationshipMatchModifierMentor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentor());
+									if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
+											&& 
+											author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
+											) { //If the matching author is the last author or senior author
+										relationshipEvidence.setRelationshipMatchModifierMentorSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentorSeniorAuthor());
+									}
+								}
+								
 								if(relationshipEvidences.size() > 0 
 										&&
-										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().equals(evidence.getRelationshipName()))) {
-										RelationshipEvidence relationshipEvidenceInList = relationshipEvidences.stream().filter(evidence -> authorName.getName().equals(evidence.getRelationshipName())).findFirst().get();
+										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipName().getFirstName())
+												&&
+												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipName().getLastName()))) {
+										RelationshipEvidence relationshipEvidenceInList = relationshipEvidences.stream().filter(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipName().getFirstName())
+												&&
+												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipName().getLastName())
+												).findFirst().get();
+										
 										if(relationshipEvidenceInList != null) {
+											if(authorName.getType().equals("mentor")) {
+												relationshipEvidenceInList.setRelationshipMatchModifierMentor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentor());
+												if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
+														&& 
+														author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
+														) { //If the matching author is the last author or senior author
+													relationshipEvidenceInList.setRelationshipMatchModifierMentorSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentorSeniorAuthor());
+												}
+											}
 											relationshipEvidenceInList.getRelationshipType().add(authorName.getType());
-											break;
+											continue;
 										}
 								} else {
 									relationshipTypes.add(authorName.getType());
@@ -113,6 +140,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 							}
 						}
 					}
+					
 				}
 				reCiterArticle.setKnownCoinvestigatorScore(sum);
 			}

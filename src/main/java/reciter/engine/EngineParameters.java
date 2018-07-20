@@ -34,6 +34,7 @@ public class EngineParameters {
 	private List<ReCiterArticle> reciterArticles;
 	private List<Long> knownPmids;
 	private List<Long> rejectedPmids;
+	private double totalStandardzizedArticleScore;
 	private static Map<String, Long> meshCountMap;
 	private static Map<String, List<String>> afiliationNameToAfidMap;
 	
@@ -84,5 +85,11 @@ public class EngineParameters {
 	}
 	public static void setAfiliationNameToAfidMap(Map<String, List<String>> afiliationNameToAfidMap) {
 		EngineParameters.afiliationNameToAfidMap = afiliationNameToAfidMap;
+	}
+	public double getTotalStandardzizedArticleScore() {
+		return totalStandardzizedArticleScore;
+	}
+	public void setTotalStandardzizedArticleScore(double totalStandardzizedArticleScore) {
+		this.totalStandardzizedArticleScore = totalStandardzizedArticleScore;
 	}
 }

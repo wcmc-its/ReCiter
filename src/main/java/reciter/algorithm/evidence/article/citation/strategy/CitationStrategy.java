@@ -62,4 +62,10 @@ public class CitationStrategy extends AbstractReCiterArticleStrategy {
 		return 0;
 	}
 
+	@Override
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

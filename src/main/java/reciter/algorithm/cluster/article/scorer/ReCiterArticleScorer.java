@@ -1,5 +1,7 @@
 package reciter.algorithm.cluster.article.scorer;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.article.acceptedrejected.AcceptedRejectedStrategyContext;
+import reciter.algorithm.evidence.article.acceptedrejected.strategy.AcceptedRejectedStrategy;
 import reciter.algorithm.evidence.article.citation.CitationStrategyContext;
 import reciter.algorithm.evidence.article.citation.strategy.CitationStrategy;
 import reciter.algorithm.evidence.article.citation.strategy.InverseCoCitationStrategy;
@@ -19,6 +24,11 @@ import reciter.algorithm.evidence.article.coauthor.CoauthorStrategyContext;
 import reciter.algorithm.evidence.article.coauthor.strategy.CoauthorStrategy;
 import reciter.algorithm.evidence.article.journal.JournalStrategyContext;
 import reciter.algorithm.evidence.article.journal.strategy.JournalStrategy;
+import reciter.algorithm.evidence.article.standardizedscore.StandardScoreStrategyContext;
+import reciter.algorithm.evidence.article.standardizedscore.strategy.StandardScoreStrategy;
+import reciter.algorithm.evidence.cluster.ClusterStrategyContext;
+import reciter.algorithm.evidence.cluster.averageclustering.AverageClusteringStrategyContext;
+import reciter.algorithm.evidence.cluster.averageclustering.strategy.AverageClusteringStrategy;
 import reciter.algorithm.evidence.cluster.clustersize.ClusterSizeStrategyContext;
 import reciter.algorithm.evidence.cluster.clustersize.strategy.ClusterSizeStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
@@ -45,6 +55,8 @@ import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.ScoreByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy;
+import reciter.algorithm.evidence.targetauthor.persontype.PersonTypeStrategyContext;
+import reciter.algorithm.evidence.targetauthor.persontype.strategy.PersonTypeStrategy;
 import reciter.algorithm.evidence.targetauthor.scopus.ScopusStrategyContext;
 import reciter.algorithm.evidence.targetauthor.scopus.strategy.ScopusCommonAffiliation;
 import reciter.engine.StrategyParameters;
@@ -121,6 +133,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 * Discounts Articles not in English.
 	 */
 	private StrategyContext articleTitleInEnglishStrategyContext;
+	
+	private StrategyContext averageClusteringStrategyContext;
+	
+	private StrategyContext standardScoreStrategyContext;
 
 	/**
 	 * Education.
@@ -136,6 +152,16 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 * Article size.
 	 */
 	private StrategyContext articleSizeStrategyContext;
+	
+	/**
+	 * Person Type.
+	 */
+	private StrategyContext personTypeStrategyContext;
+	
+	/**
+	 * Accpeted Rejected .
+	 */
+	private StrategyContext acceptedRejectedStrategyContext;
 
 	/**
 	 * Remove clusters based on cluster information.
@@ -179,12 +205,16 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
 		this.citationStrategyContext = new CitationStrategyContext(new CitationStrategy());
 		this.coCitationStrategyContext = new CitationStrategyContext(new InverseCoCitationStrategy());
+		this.acceptedRejectedStrategyContext = new AcceptedRejectedStrategyContext(new AcceptedRejectedStrategy());
+		this.averageClusteringStrategyContext = new AverageClusteringStrategyContext(new AverageClusteringStrategy());
+		this.standardScoreStrategyContext = new StandardScoreStrategyContext(new StandardScoreStrategy());
 		
 		int numArticles = 0;
 		for (ReCiterCluster reCiterCluster : clusters.values()) {
 			numArticles += reCiterCluster.getArticleCluster().size();
 		}
 		this.articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy(numArticles));
+		this.personTypeStrategyContext = new PersonTypeStrategyContext(new PersonTypeStrategy());
 
 		// TODO: getBoardCertificationScore(map);
 
@@ -246,6 +276,14 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		if (strategyParameters.isRemoveByName()) {
 			this.strategyContexts.add(this.removeByNameStrategyContext);
 		}
+		
+		if(strategyParameters.isPersonType()) {
+			this.strategyContexts.add(this.personTypeStrategyContext);
+		}
+		
+		if(strategyParameters.isAcceptedRejected()) {
+			this.strategyContexts.add(this.acceptedRejectedStrategyContext);
+		}
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		this.strategyContexts.add(this.emailStrategyContext);
@@ -254,6 +292,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		if (strategyParameters.isClusterSize()) {
 			this.strategyContexts.add(this.clusterSizeStrategyContext);
 		}
+		
+		if(strategyParameters.isAverageClustering()) {
+			this.strategyContexts.add(this.averageClusteringStrategyContext);
+		}
 	}
 	
 
@@ -261,37 +303,54 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	public void runArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity) {
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long clusterId = entry.getKey();
+			slf4jLogger.info("******************** Cluster " + clusterId + " scoring starts **********************");
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
-			double nameStrategyScore = ((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+			((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
 
 			if (strategyParameters.isEmail()) {
-				double emailStrategyScore = ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
+				((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isGrant()) {
-				double emailStrategyScore = ((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
+				((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isKnownRelationship()) {
-				double emailStrategyScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+				((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isBachelorsYearDiscrepancy()) {
-				double emailStrategyScore = ((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+				((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isDoctoralYearDiscrepancy()) {
-				double emailStrategyScore = ((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+				((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
-			/*if (strategyParameters.isDepartment()) {
-				double departmentStrategyScore = ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
-				if (departmentStrategyScore > 0) {
-					selectedClusterIds.add(clusterId);
-				}
+			if (strategyParameters.isDepartment()) {
+				((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
+			
+			if (strategyParameters.isArticleSize()) {
+				((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if (strategyParameters.isPersonType()) {
+				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if (strategyParameters.isAcceptedRejected()) {
+				((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
+			}
+			
+			if (strategyParameters.isAverageClustering()) {
+				((ClusterStrategyContext) averageClusteringStrategyContext).executeStrategy(entry.getValue());
+			}
+			
+			((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
+			
 
-			if (strategyParameters.isKnownRelationship()) {
+			/*if (strategyParameters.isKnownRelationship()) {
 				double knownRelationshipScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
 				if (knownRelationshipScore > 0) {
 					selectedClusterIds.add(clusterId);
@@ -304,6 +363,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 					selectedClusterIds.add(clusterId);
 				}
 			}*/
+			
+			slf4jLogger.info("******************** Cluster " + clusterId + " scoring ends **********************");
 		}
 		
 	}

@@ -72,4 +72,10 @@ public class CoauthorStrategy extends AbstractReCiterArticleStrategy {
 		}
 		return numCoauthorMatches;
 	}
+
+	@Override
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

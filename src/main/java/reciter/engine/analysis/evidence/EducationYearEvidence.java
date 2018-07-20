@@ -13,9 +13,9 @@ public class EducationYearEvidence {
 	private Integer identityBachelorYear;
 	private Integer identityDoctoralYear;
 	private Integer articleYear;
-    private int discrepancyDegreeYearBachelor;
+    private Integer discrepancyDegreeYearBachelor;
     private double discrepancyDegreeYearBachelorScore;
-    private int discrepancyDegreeYearDoctoral;
+    private Integer discrepancyDegreeYearDoctoral;
     private double discrepancyDegreeYearDoctoralScore;
     
 }

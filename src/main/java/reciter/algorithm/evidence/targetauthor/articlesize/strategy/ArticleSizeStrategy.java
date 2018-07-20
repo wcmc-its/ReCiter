@@ -18,16 +18,25 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.articlesize.strategy;
 
+import static org.hamcrest.CoreMatchers.sameInstance;
+
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.ArticleCountEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
 public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
+	
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(ArticleSizeStrategy.class);
 
 	private static final int FIRST_LEVEL = 200;
 	private static final int SECOND_LEVEL = 500;
@@ -84,7 +93,16 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		// TODO Auto-generated method stub
+		reCiterArticles.forEach(reCiterArticle -> {
+		ArticleCountEvidence articleCountEvidence = new ArticleCountEvidence();
+		if(this.numberOfArticles > 0) {
+			articleCountEvidence.setCountArticlesRetrieved(this.numberOfArticles);
+			articleCountEvidence.setArticleCountScore(-(this.numberOfArticles - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+			reCiterArticle.setArticleCountEvidence(articleCountEvidence);
+			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + articleCountEvidence.toString());
+		
+		}
+		});
 		return 0;
 	}
 

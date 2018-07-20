@@ -43,4 +43,10 @@ public class CoauthorStrategyContext implements ReCiterArticleStrategyContext{
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, ReCiterArticle otherReCiterArticle) {
 		return strategy.executeStrategy(reCiterArticles, otherReCiterArticle);
 	}
+
+	@Override
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

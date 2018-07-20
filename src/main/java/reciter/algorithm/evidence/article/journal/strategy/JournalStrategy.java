@@ -90,4 +90,10 @@ public class JournalStrategy extends AbstractReCiterArticleStrategy {
 		}
 		return false;
 	}
+
+	@Override
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
