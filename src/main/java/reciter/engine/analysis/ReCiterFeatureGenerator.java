@@ -11,6 +11,7 @@ import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.Evidence;
 import reciter.engine.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
@@ -42,7 +43,7 @@ public class ReCiterFeatureGenerator {
     private List<Long> falsePositiveList = new ArrayList<>();
     private List<Long> falseNegativeList = new ArrayList<>();
 
-    public ReCiterFeature computeFeatures(String mode,
+    public ReCiterFeature computeFeatures(UseGoldStandard mode,
     										 double totalStandardizedScore,
                                           Clusterer reCiterClusterer,
                                           List<Long> goldStandardPmids,

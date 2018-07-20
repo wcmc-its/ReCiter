@@ -58,6 +58,7 @@ import reciter.algorithm.util.ArticleTranslator;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.ReCiterFeatureGenerator;
 import reciter.engine.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.identity.Identity;
@@ -132,7 +133,7 @@ public class ReCiterEngine implements Engine {
 			map.put(scopusArticle.getPubmedId(), scopusArticle);
 		}
 		List<ReCiterArticle> reCiterArticles = parameters.getReciterArticles();
-		Iterator<ReCiterArticle> itr = reCiterArticles.iterator();
+		/*Iterator<ReCiterArticle> itr = reCiterArticles.iterator();
 		//Check the mode for testing mode remove accepted and rejected pmids
 		if(!strategyParameters.isUseGoldStandardEvidence()) {
 			while(itr.hasNext()) {
@@ -144,7 +145,7 @@ public class ReCiterEngine implements Engine {
 				}
 			}
 		}
-		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids());
+*/		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids());
 
 		// Perform Phase 1 clustering.
 		Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);
@@ -281,11 +282,11 @@ public class ReCiterEngine implements Engine {
 		}
 		engineOutput.setReCiterClusters(reCiterClusters);
 		ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
-		String mode;
+		UseGoldStandard mode;
 		if(strategyParameters.isUseGoldStandardEvidence()) {
-			mode = "evidence";
+			mode = UseGoldStandard.AS_EVIDENCE;
 		} else {
-			mode = "testing";
+			mode = UseGoldStandard.FOR_TESTING_ONLY;
 		}
 		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(mode, parameters.getTotalStandardzizedArticleScore(), clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
 		engineOutput.setReCiterFeature(reCiterFeature);

@@ -1,6 +1,7 @@
 package reciter.engine.analysis;
 
 import lombok.Data;
+import reciter.engine.erroranalysis.UseGoldStandard;
 
 import java.util.Date;
 import java.util.List;
@@ -13,7 +14,7 @@ public class ReCiterFeature {
     private String personIdentifier;
     private Date dateAdded;
     private Date dateUpdated;
-    private String mode;
+    private UseGoldStandard mode;
     private double overallAccuracy;
     private double precision;
     private double recall;

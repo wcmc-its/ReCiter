@@ -36,6 +36,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,7 @@ import reciter.engine.ReCiterEngine;
 import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.features.ReCiterArticleFeatures;
 import reciter.model.identity.Identity;
@@ -286,7 +288,7 @@ public class ReCiterController {
 			})
 	@RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, Double totalStandardizedArticleScore, boolean refreshFlag) {
+	public ResponseEntity runFeatureGenerator(@RequestParam(value="uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, boolean refreshFlag) {
 		EngineOutput engineOutput = null;
 		EngineParameters parameters = null;
 		try {
@@ -299,6 +301,14 @@ public class ReCiterController {
 			return new ResponseEntity<ReCiterFeature>(analysisService.findByUid(uid.trim()).getReCiterFeature(), HttpStatus.OK);
 		}
 		else {
+			if(useGoldStandard == null) {
+				strategyParameters.setUseGoldStandardEvidence(true);
+			} else if(useGoldStandard == UseGoldStandard.FOR_TESTING_ONLY) {
+				strategyParameters.setUseGoldStandardEvidence(false);
+			} else if(useGoldStandard == UseGoldStandard.AS_EVIDENCE) {
+				strategyParameters.setUseGoldStandardEvidence(true);
+			}
+			
 			parameters = initializeEngineParameters(uid, totalStandardizedArticleScore);
 			if(parameters == null) {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '"  + uid + "' does not have any candidate records in ESearchResult table. Try running the candidate article retrieval api first with refreshFlag = true.");
@@ -356,7 +366,12 @@ public class ReCiterController {
 		slf4jLogger.info("eSearchResults size {}", eSearchResults);
 		Set<Long> pmids = new HashSet<>();
 		for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
-			pmids.addAll(eSearchPmid.getPmids());
+			if(!strategyParameters.isUseGoldStandardEvidence() && StringUtils.equalsIgnoreCase(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
+				slf4jLogger.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
+			} else {
+				pmids.addAll(eSearchPmid.getPmids());
+			} 
+			
 		}
 
 		// create a list of pmids to pass to search
