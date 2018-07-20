@@ -131,17 +131,19 @@ public class ReCiterEngine implements Engine {
 		for (ScopusArticle scopusArticle : scopusArticles) {
 			map.put(scopusArticle.getPubmedId(), scopusArticle);
 		}
-		/*List<ReCiterArticle> reCiterArticles = new ArrayList<>();
-		for (PubMedArticle pubMedArticle : pubMedArticles) {
-			long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
-			if (map.containsKey(pmid)) {
-				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
-			} else {
-				reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
-			}
-		}*/
-		
 		List<ReCiterArticle> reCiterArticles = parameters.getReciterArticles();
+		Iterator<ReCiterArticle> itr = reCiterArticles.iterator();
+		//Check the mode for testing mode remove accepted and rejected pmids
+		if(!strategyParameters.isUseGoldStandardEvidence()) {
+			while(itr.hasNext()) {
+				ReCiterArticle reCiterArticle = itr.next();
+				if((parameters.getKnownPmids() != null && parameters.getKnownPmids().contains(reCiterArticle.getArticleId())) 
+						|| 
+						(parameters.getRejectedPmids() != null && parameters.getRejectedPmids().contains(reCiterArticle.getArticleId()))) {
+					itr.remove();
+				}
+			}
+		}
 		Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids());
 
 		// Perform Phase 1 clustering.
@@ -192,7 +194,7 @@ public class ReCiterEngine implements Engine {
 		clusterSelector.handleStrategyContext(doctoralYearDiscrepancyStrategyContext, clusterer.getClusters(), identity);*/
 		
 		//Analysis analysis = Analysis.performAnalysis(clusterer, clusterSelector, parameters.getKnownPmids());
-		Analysis analysis = Analysis.performAnalysis(clusterer, parameters.getKnownPmids());
+		Analysis analysis = Analysis.performAnalysis(clusterer, parameters.getKnownPmids(), parameters.getTotalStandardzizedArticleScore());
 		slf4jLogger.info(clusterer.toString());
 		slf4jLogger.info("Analysis for uid=[" + identity.getUid() + "]");
 		slf4jLogger.info("Precision=" + analysis.getPrecision());
@@ -279,7 +281,13 @@ public class ReCiterEngine implements Engine {
 		}
 		engineOutput.setReCiterClusters(reCiterClusters);
 		ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
-		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures("test", clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
+		String mode;
+		if(strategyParameters.isUseGoldStandardEvidence()) {
+			mode = "evidence";
+		} else {
+			mode = "testing";
+		}
+		ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(mode, parameters.getTotalStandardzizedArticleScore(), clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
 		engineOutput.setReCiterFeature(reCiterFeature);
 		return engineOutput;
 	}

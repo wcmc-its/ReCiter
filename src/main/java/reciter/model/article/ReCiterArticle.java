@@ -117,8 +117,25 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     
     private double totalArticleScoreWithoutClustering;
     private double totalArticleScoreNonStandardized;
+    private double totalArticleScoreStandardized;
 
-    public double getTotalArticleScoreNonStandardized() {
+    public double getTotalArticleScoreStandardized() {
+		return totalArticleScoreStandardized;
+	}
+
+	public void setTotalArticleScoreStandardized(double totalArticleScoreStandardized) {
+		this.totalArticleScoreStandardized = totalArticleScoreStandardized;
+	}
+
+	public List<RelationshipEvidence> getRelationshipEvidences() {
+		return relationshipEvidences;
+	}
+
+	public void setRelationshipEvidences(List<RelationshipEvidence> relationshipEvidences) {
+		this.relationshipEvidences = relationshipEvidences;
+	}
+
+	public double getTotalArticleScoreNonStandardized() {
 		return totalArticleScoreNonStandardized;
 	}
 
@@ -174,7 +191,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private StringBuffer coCitationInfo;
     private StringBuffer journalTitleInfo;
 
-    private Date pubDate;
+    private String pubDate;
     
     private List<OrganizationalUnitEvidence> organizationalUnitEvidences;
     private EducationYearEvidence educationYearEvidence;
@@ -297,11 +314,11 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.authorNameEvidence = authorNameEvidence;
 	}
 
-	public Date getPubDate() {
+	public String getPubDate() {
         return pubDate;
     }
 
-    public void setPubDate(Date pubDate) {
+    public void setPubDate(String pubDate) {
         this.pubDate = pubDate;
     }
 

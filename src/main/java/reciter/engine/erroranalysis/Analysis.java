@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +104,7 @@ public class Analysis {
 	 * @return
 	 */
 	//public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, List<Long> goldStandardPmids) {
-	public static Analysis performAnalysis(Clusterer reCiterClusterer, List<Long> goldStandardPmids) {
+	public static Analysis performAnalysis(Clusterer reCiterClusterer, List<Long> goldStandardPmids, double totalStandardzizedArticleScore) {
 	    
 		Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 		//Set<Long> selection = clusterSelector.getSelectedClusterIds();
@@ -115,7 +116,7 @@ public class Analysis {
 		analysis.setGoldStandardSize(goldStandardPmids.size());
 
 		// Combine all articles into a single list.
-		List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles();//new ArrayList<ReCiterArticle>();
+		List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardzizedArticleScore).collect(Collectors.toList());//new ArrayList<ReCiterArticle>();
 		/*for (long s : selection) {
 			for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
 				articleList.add(reCiterArticle);
