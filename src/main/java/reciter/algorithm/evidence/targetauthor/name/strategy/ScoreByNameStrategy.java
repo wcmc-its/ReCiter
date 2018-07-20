@@ -89,7 +89,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 							identityAuthorName.getMiddleName().length() == 1) {
 						authorNameEvidence.setNameMatchMiddleType("exact-singleInitial");
 						authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeExactSingleInitialScore());
-						authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchModifierScore());
+						authorNameEvidence.setNameScoreTotal(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchModifierScore());
 					}
 					authorNameEvidences.add(authorNameEvidence);
 				}
@@ -157,7 +157,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
 			authorNameEvidence.setArticleAuthorName(articleAuthorName);
-			authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
+			authorNameEvidence.setNameScoreTotal(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
 		}
 	}
 	
@@ -187,7 +187,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
 			authorNameEvidence.setArticleAuthorName(articleAuthorName);
-			authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
+			authorNameEvidence.setNameScoreTotal(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
 		}
 	}
 	
@@ -268,7 +268,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
 			authorNameEvidence.setArticleAuthorName(articleAuthorName);
-			authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
+			authorNameEvidence.setNameScoreTotal(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
 		}
 	}
 	
@@ -657,7 +657,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 			authorNameEvidence.setInstitutionalAuthorName(identityAuthor);
 			authorNameEvidence.setArticleAuthorName(articleAuthorName);
-			authorNameEvidence.setTotalScore(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
+			authorNameEvidence.setNameScoreTotal(authorNameEvidence.getNameMatchFirstScore() + authorNameEvidence.getNameMatchMiddleScore() + authorNameEvidence.getNameMatchLastScore() + authorNameEvidence.getNameMatchModifierScore());
 		}
 	}
 	
@@ -870,7 +870,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	 * @return
 	 */
 	private AuthorNameEvidence calculateHighestScore(List<AuthorNameEvidence> authorNameEvidences) {
-		return authorNameEvidences.stream().max(Comparator.comparing(AuthorNameEvidence::getTotalScore)).orElseThrow(NoSuchElementException::new);
+		return authorNameEvidences.stream().max(Comparator.comparing(AuthorNameEvidence::getNameScoreTotal)).orElseThrow(NoSuchElementException::new);
 	}
 
 	@Override
