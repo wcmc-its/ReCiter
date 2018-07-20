@@ -18,6 +18,9 @@
  *******************************************************************************/
 package reciter.algorithm.util;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
@@ -172,7 +175,12 @@ public class ArticleTranslator {
 					Integer.parseInt(medlineCitationDate.getMonth()), // convert JUL to 7
 					Integer.parseInt(medlineCitationDate.getDay()));
 			Date date = localDate.toDate();
-			reCiterArticle.setPubDate(date);
+			DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+			reCiterArticle.setPubDate(df.format(date));
+		}
+		
+		if(reCiterArticle.getPubDate() == null && Integer.toString(journalIssuePubDateYear).length() == 4) {
+			reCiterArticle.setPubDate(Integer.toString(journalIssuePubDateYear));
 		}
 		
 		// Update PubMed's authors' first name from Scopus Article. Logic is as follows:
