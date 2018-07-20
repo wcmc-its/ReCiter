@@ -10,7 +10,7 @@ import lombok.ToString;
 @DynamoDBDocument
 public class AcceptedRejectedEvidence {
 	
-	private double feedbackScoreAccepted;
-	private double feedbackScoreRejected;
-	private double feedbackScoreNull;
+	private Double feedbackScoreAccepted;
+	private Double feedbackScoreRejected;
+	private Double feedbackScoreNull;
 }

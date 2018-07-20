@@ -9,7 +9,7 @@ import lombok.ToString;
 @ToString
 @DynamoDBDocument
 public class AverageClusteringEvidence {
-	private double totalArticleScoreNonStandardized;
+	private double totalArticleScoreWithoutClustering;
 	private double clusterScoreAverage;
-	private double clusterScoreDiscrepancy;
+	private double clusterScoreModificationOfTotalScore;
 }

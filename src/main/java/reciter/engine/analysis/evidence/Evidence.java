@@ -16,7 +16,7 @@ public class Evidence {
 	private EmailEvidence emailEvidence;
 	private List<OrganizationalUnitEvidence> organizationalUnitEvidence;
 	private AffiliationEvidence affiliationEvidence; 
-	private List<RelationshipEvidence> relationshipEvidences;
+	private List<RelationshipEvidence> relationshipEvidence;
     private GrantEvidence grantEvidence;
     private EducationYearEvidence educationYearEvidence;
     private PersonTypeEvidence personTypeEvidence;
