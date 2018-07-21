@@ -233,7 +233,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName().length() >= 3 
 					&&
-					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 2)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 2)))) {
+					StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(identityAuthor.getFirstName().substring(0, 3)),ReCiterStringUtil.deAccent(articleAuthorName.getFirstName().substring(0, 3)))) {
 				//Attempt match where first three characters of identity.firstName = first three characters of article.firstName
 				//Example: Paul (identity.firstName) = Pau (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
