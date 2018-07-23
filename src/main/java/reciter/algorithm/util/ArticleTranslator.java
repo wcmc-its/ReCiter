@@ -136,7 +136,7 @@ public class ArticleTranslator {
 				ReCiterArticleMeshHeading reCiterArticleMeshHeading = new ReCiterArticleMeshHeading();
 				ReCiterMeshHeadingDescriptorName reCiterMeshHeadingDescriptorName = new ReCiterMeshHeadingDescriptorName();
 				reCiterMeshHeadingDescriptorName.setDescriptorName(descriptorNameString);
-				reCiterMeshHeadingDescriptorName.setMajorTopicYN(meshMajorTopicYN.name());
+				reCiterMeshHeadingDescriptorName.setMajorTopicYN(meshMajorTopicYN.getVal());
 				reCiterArticleMeshHeading.setDescriptorName(reCiterMeshHeadingDescriptorName);
 				
 				// For each qualifier, set name and major topic.
