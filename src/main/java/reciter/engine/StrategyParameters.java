@@ -258,7 +258,51 @@ public class StrategyParameters {
 	@Value("${totalArticleScore-standardized-default}")
 	private double totalArticleScoreStandardizedDefault;
 	
-
+	@Value("${strategy.authorAffiliationScoringStrategy.targetAuthor-institutionalAffiliation-matchType-positiveMatch-individual-score}")
+	private double targetAuthorInstAfflMatchTypePositiveIndividualScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.targetAuthor-institutionalAffiliation-matchType-positiveMatch-institution-score}")
+	private double targetAuthorInstAfflMatchTypePositiveInstitutionScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.targetAuthor-institutionalAffiliation-matchType-null-score}")
+	private double targetAuthorInstAfflMatchTypeNullScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.targetAuthor-institutionalAffiliation-matchType-noMatch-score}")
+	private double targetAuthorInstAfflMatchTypeNoMatchScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.nonTargetAuthor-institutionalAffiliation-matchType-positiveMatch-individual-score}")
+	private double nonTargetAuthorInstAfflMatchTypePositiveIndividualScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.nonTargetAuthor-institutionalAffiliation-matchType-positiveMatch-institution-score}")
+	private double nonTargetAuthorInstAfflMatchTypePositiveInstitutionScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.nonTargetAuthor-institutionalAffiliation-matchType-null-score}")
+	private double nonTargetAuthorInstAfflMatchTypeNullScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.nonTargetAuthor-institutionalAffiliation-matchType-noMatch-score}")
+	private double nonTargetAuthorInstAfflMatchTypeNoMatchScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.nonTargetAuthor-institutionalAffiliation-weight}")
+	private double nonTargetAuthorInstAfflMatchTypeWeight;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.nonTargetAuthor-institutionalAffiliation-maxScore}")
+	private double nonTargetAuthorInstAfflMatchTypeMaxScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.homeInstitution-keywords}")
+	private String instAfflHomeInstKeywords;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.homeInstitution-label}")
+	private String instAfflInstLabel;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.homeInstitution-scopusInstitutionIDs}")
+	private String instAfflHomeInstScopusInstIDs;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.collaboratingInstitutions-scopusInstitutionIDs}")
+	private String instAfflCollaboratingInstScopusInstIDs;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.collaboratingInstitutions-keywords}")
+	private String instAfflCollaboratingInstKeywords;
+	
 	public boolean isEmail() {
 		return isEmail;
 	}
@@ -895,6 +939,132 @@ public class StrategyParameters {
 	public void setTotalArticleScoreStandardizedDefault(double totalArticleScoreStandardizedDefault) {
 		this.totalArticleScoreStandardizedDefault = totalArticleScoreStandardizedDefault;
 	}
+
+	public double getTargetAuthorInstAfflMatchTypePositiveIndividualScore() {
+		return targetAuthorInstAfflMatchTypePositiveIndividualScore;
+	}
+
+	public void setTargetAuthorInstAfflMatchTypePositiveIndividualScore(
+			double targetAuthorInstAfflMatchTypePositiveIndividualScore) {
+		this.targetAuthorInstAfflMatchTypePositiveIndividualScore = targetAuthorInstAfflMatchTypePositiveIndividualScore;
+	}
+
+	public double getTargetAuthorInstAfflMatchTypePositiveInstitutionScore() {
+		return targetAuthorInstAfflMatchTypePositiveInstitutionScore;
+	}
+
+	public void setTargetAuthorInstAfflMatchTypePositiveInstitutionScore(
+			double targetAuthorInstAfflMatchTypePositiveInstitutionScore) {
+		this.targetAuthorInstAfflMatchTypePositiveInstitutionScore = targetAuthorInstAfflMatchTypePositiveInstitutionScore;
+	}
+
+	public double getTargetAuthorInstAfflMatchTypeNullScore() {
+		return targetAuthorInstAfflMatchTypeNullScore;
+	}
+
+	public void setTargetAuthorInstAfflMatchTypeNullScore(double targetAuthorInstAfflMatchTypeNullScore) {
+		this.targetAuthorInstAfflMatchTypeNullScore = targetAuthorInstAfflMatchTypeNullScore;
+	}
+
+	public double getTargetAuthorInstAfflMatchTypeNoMatchScore() {
+		return targetAuthorInstAfflMatchTypeNoMatchScore;
+	}
+
+	public void setTargetAuthorInstAfflMatchTypeNoMatchScore(double targetAuthorInstAfflMatchTypeNoMatchScore) {
+		this.targetAuthorInstAfflMatchTypeNoMatchScore = targetAuthorInstAfflMatchTypeNoMatchScore;
+	}
+
+	public double getNonTargetAuthorInstAfflMatchTypePositiveIndividualScore() {
+		return nonTargetAuthorInstAfflMatchTypePositiveIndividualScore;
+	}
+
+	public void setNonTargetAuthorInstAfflMatchTypePositiveIndividualScore(
+			double nonTargetAuthorInstAfflMatchTypePositiveIndividualScore) {
+		this.nonTargetAuthorInstAfflMatchTypePositiveIndividualScore = nonTargetAuthorInstAfflMatchTypePositiveIndividualScore;
+	}
+
+	public double getNonTargetAuthorInstAfflMatchTypePositiveInstitutionScore() {
+		return nonTargetAuthorInstAfflMatchTypePositiveInstitutionScore;
+	}
+
+	public void setNonTargetAuthorInstAfflMatchTypePositiveInstitutionScore(
+			double nonTargetAuthorInstAfflMatchTypePositiveInstitutionScore) {
+		this.nonTargetAuthorInstAfflMatchTypePositiveInstitutionScore = nonTargetAuthorInstAfflMatchTypePositiveInstitutionScore;
+	}
+
+	public double getNonTargetAuthorInstAfflMatchTypeNullScore() {
+		return nonTargetAuthorInstAfflMatchTypeNullScore;
+	}
+
+	public void setNonTargetAuthorInstAfflMatchTypeNullScore(double nonTargetAuthorInstAfflMatchTypeNullScore) {
+		this.nonTargetAuthorInstAfflMatchTypeNullScore = nonTargetAuthorInstAfflMatchTypeNullScore;
+	}
+
+	public double getNonTargetAuthorInstAfflMatchTypeNoMatchScore() {
+		return nonTargetAuthorInstAfflMatchTypeNoMatchScore;
+	}
+
+	public void setNonTargetAuthorInstAfflMatchTypeNoMatchScore(double nonTargetAuthorInstAfflMatchTypeNoMatchScore) {
+		this.nonTargetAuthorInstAfflMatchTypeNoMatchScore = nonTargetAuthorInstAfflMatchTypeNoMatchScore;
+	}
+
+	public double getNonTargetAuthorInstAfflMatchTypeWeight() {
+		return nonTargetAuthorInstAfflMatchTypeWeight;
+	}
+
+	public void setNonTargetAuthorInstAfflMatchTypeWeight(double nonTargetAuthorInstAfflMatchTypeWeight) {
+		this.nonTargetAuthorInstAfflMatchTypeWeight = nonTargetAuthorInstAfflMatchTypeWeight;
+	}
+
+	public double getNonTargetAuthorInstAfflMatchTypeMaxScore() {
+		return nonTargetAuthorInstAfflMatchTypeMaxScore;
+	}
+
+	public void setNonTargetAuthorInstAfflMatchTypeMaxScore(double nonTargetAuthorInstAfflMatchTypeMaxScore) {
+		this.nonTargetAuthorInstAfflMatchTypeMaxScore = nonTargetAuthorInstAfflMatchTypeMaxScore;
+	}
+
+	public String getInstAfflHomeInstKeywords() {
+		return instAfflHomeInstKeywords;
+	}
+
+	public void setInstAfflHomeInstKeywords(String instAfflHomeInstKeywords) {
+		this.instAfflHomeInstKeywords = instAfflHomeInstKeywords;
+	}
+
+	public String getInstAfflInstLabel() {
+		return instAfflInstLabel;
+	}
+
+	public void setInstAfflInstLabel(String instAfflInstLabel) {
+		this.instAfflInstLabel = instAfflInstLabel;
+	}
+
+	public String getInstAfflHomeInstScopusInstIDs() {
+		return instAfflHomeInstScopusInstIDs;
+	}
+
+	public void setInstAfflHomeInstScopusInstIDs(String instAfflHomeInstScopusInstIDs) {
+		this.instAfflHomeInstScopusInstIDs = instAfflHomeInstScopusInstIDs;
+	}
+
+	public String getInstAfflCollaboratingInstScopusInstIDs() {
+		return instAfflCollaboratingInstScopusInstIDs;
+	}
+
+	public void setInstAfflCollaboratingInstScopusInstIDs(String instAfflCollaboratingInstScopusInstIDs) {
+		this.instAfflCollaboratingInstScopusInstIDs = instAfflCollaboratingInstScopusInstIDs;
+	}
+
+	public String getInstAfflCollaboratingInstKeywords() {
+		return instAfflCollaboratingInstKeywords;
+	}
+
+	public void setInstAfflCollaboratingInstKeywords(String instAfflCollaboratingInstKeywords) {
+		this.instAfflCollaboratingInstKeywords = instAfflCollaboratingInstKeywords;
+	}
+	
+	
 	
 	
 }
