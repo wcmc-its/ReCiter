@@ -27,6 +27,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearBachelorScore():0) +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearDoctoralScore():0) +
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +
+							reCiterArticle.getAffiliationScore() + 
 							reCiterArticle.getArticleCountEvidence().getArticleCountScore() +
 							((reCiterArticle.getPersonTypeEvidence() != null)?reCiterArticle.getPersonTypeEvidence().getPersonTypeScore():0) +
 							((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) + 
@@ -42,6 +43,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearBachelorScore():0) +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearDoctoralScore():0) +
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +
+							reCiterArticle.getAffiliationScore() +
 							reCiterArticle.getArticleCountEvidence().getArticleCountScore() +
 							((reCiterArticle.getPersonTypeEvidence() != null)?reCiterArticle.getPersonTypeEvidence().getPersonTypeScore():0);
 					
