@@ -95,7 +95,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					if(ReCiterArticleScorer.strategyParameters.isScopusCommonAffiliation()) {
 						if(reCiterArticle.getScopusArticle() != null) {
 							//Get the corresponding Scopus Author for the target author
-							if(reCiterArticle.getArticleId() == 4591948) {
+							if(reCiterArticle.getArticleId() == 25542278) {
 								slf4jLogger.info("PubmedId: " + reCiterArticle.getArticleId());
 							}
 							Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().stream().filter(author -> reCiterAuthor.getRank() == author.getSeq()).findFirst().orElse(null);
@@ -296,8 +296,8 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					&&
 					identity.getInstitutions().size() > 0) {
 				for(String identityInst: identity.getInstitutions()) {
-					List<String> santizeInst = Arrays.asList(identityInst.replaceAll("[,-]", "").split(" "));
-					List<String> matchingKeywords = santizeInst.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation, inst)).collect(Collectors.toList());
+					Set<String> santizeInst = new HashSet<String>(Arrays.asList(identityInst.replaceAll("[,-]", "").split(" ")));
+					List<String> matchingKeywords = santizeInst.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation.trim(), inst.trim())).collect(Collectors.toList());
 					if(santizeInst != null 
 							&& 
 							matchingKeywords != null 
@@ -321,7 +321,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 						&&
 						homeInstKeywords.size() > 0) {
 					for(String keywords: homeInstKeywords) {
-						List<String> keyword = Arrays.asList(keywords.trim().split("|"));
+						Set<String> keyword = new HashSet<String>(Arrays.asList(keywords.trim().split("\\|")));
 						List<String> matchingKeywords = keyword.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation, inst)).collect(Collectors.toList());
 						if(keyword != null 
 								&& 
@@ -347,8 +347,8 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 						&&
 						collabInstKeywords.size() > 0) {
 					for(String keywords: collabInstKeywords) {
-						List<String> keyword = Arrays.asList(keywords.trim().split("|"));
-						List<String> matchingKeywords = keyword.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation, inst)).collect(Collectors.toList());
+						List<String> keyword = Arrays.asList(keywords.trim().split("\\|"));
+						List<String> matchingKeywords = keyword.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation.trim(), inst.trim())).collect(Collectors.toList());
 						if(keyword != null 
 								&& 
 								matchingKeywords != null 
@@ -366,7 +366,17 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					}
 				}
 			}
+			if(pubmedAffiliationEvidence == null) { //There's no match. Output:
+				pubmedAffiliationEvidence = new TargetAuthorPubmedAffiliation();
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationSource(InstitutionalAffiliationSource.PUBMED);
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationIdentity(ReCiterArticleScorer.strategyParameters.getInstAfflInstLabel());
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationArticlePubmedLabel(affiliation);
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchType(InstitutionalAffiliationMatchType.NO_MATCH);
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchTypeScore(ReCiterArticleScorer.strategyParameters.getNonTargetAuthorInstAfflMatchTypeNoMatchScore());
+				totalAffiliationScore = totalAffiliationScore + ReCiterArticleScorer.strategyParameters.getNonTargetAuthorInstAfflMatchTypeNoMatchScore();
+			}
 			affiliationEvidence.setPubmedTargetAuthorAffiliation(pubmedAffiliationEvidence);
+			
 		}
 	}
 	
