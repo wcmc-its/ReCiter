@@ -303,6 +303,9 @@ public class StrategyParameters {
 	@Value("${strategy.authorAffiliationScoringStrategy.collaboratingInstitutions-keywords}")
 	private String instAfflCollaboratingInstKeywords;
 	
+	@Value("${strategy.authorAffiliationScoringStrategy.institutionStopwords}")
+	private String instAfflInstitutionStopwords;
+	
 	public boolean isEmail() {
 		return isEmail;
 	}
@@ -1063,8 +1066,12 @@ public class StrategyParameters {
 	public void setInstAfflCollaboratingInstKeywords(String instAfflCollaboratingInstKeywords) {
 		this.instAfflCollaboratingInstKeywords = instAfflCollaboratingInstKeywords;
 	}
-	
-	
-	
-	
+
+	public String getInstAfflInstitutionStopwords() {
+		return instAfflInstitutionStopwords;
+	}
+
+	public void setInstAfflInstitutionStopwords(String instAfflInstitutionStopwords) {
+		this.instAfflInstitutionStopwords = instAfflInstitutionStopwords;
+	}
 }

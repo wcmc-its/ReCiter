@@ -51,19 +51,21 @@ import reciter.model.scopus.Author;
 public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(CommonAffiliationStrategy.class);
-
+	
 	private final String[] homeInstScopusInstitutionsIDs = ReCiterArticleScorer.strategyParameters.getInstAfflHomeInstScopusInstIDs().trim().split("\\s*,\\s*");
 	private final String[] collaboratingInstScopusInstitutionsIDs = ReCiterArticleScorer.strategyParameters.getInstAfflCollaboratingInstScopusInstIDs().trim().split("\\s*,\\s*");
 	private final String[] homeInstitutionsKeywords = ReCiterArticleScorer.strategyParameters.getInstAfflHomeInstKeywords().trim().split("\\s*,\\s*");
 	private final String[] collaboratingInstitutionsKeywords = ReCiterArticleScorer.strategyParameters.getInstAfflCollaboratingInstKeywords().trim().split("\\s*,\\s*");
+	private final String[] instAfflInstitutionStopwords = ReCiterArticleScorer.strategyParameters.getInstAfflInstitutionStopwords().trim().split("\\s*,\\s*");
 	
 	private Set<String> knownAffiliationIds = new HashSet<String>();
 	private List<Integer> nonTargetAuthorScopusAffiliationIds = new ArrayList<Integer>();
 	private double totalAffiliationScore = 0;
+	private String stopWordRegex;
 	
 	
 	public CommonAffiliationStrategy() {
-		
+		constructRegexForStopWords();
 	}
 	
 	@Override
@@ -95,9 +97,9 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					if(ReCiterArticleScorer.strategyParameters.isScopusCommonAffiliation()) {
 						if(reCiterArticle.getScopusArticle() != null) {
 							//Get the corresponding Scopus Author for the target author
-							if(reCiterArticle.getArticleId() == 25542278) {
+							/*if(reCiterArticle.getArticleId() == 25542278) {
 								slf4jLogger.info("PubmedId: " + reCiterArticle.getArticleId());
-							}
+							}*/
 							Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().stream().filter(author -> reCiterAuthor.getRank() == author.getSeq()).findFirst().orElse(null);
 							List<TargetAuthorScopusAffiliation> scopusAffiliationEvidences = new ArrayList<>();
 							if(scopusAuthor != null 
@@ -290,13 +292,13 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 	private void evaluateTargetAuthorPubmedAffiliation(AffiliationEvidence affiliationEvidence, ReCiterAuthor reCiterAuthor, Identity identity) {
 		if(reCiterAuthor.getAffiliation() != null) {
 			TargetAuthorPubmedAffiliation pubmedAffiliationEvidence = null;
-			String affiliation = reCiterAuthor.getAffiliation().replaceAll("[,-]", "");
+			String affiliation = reCiterAuthor.getAffiliation().replaceAll(this.stopWordRegex, "");
 			//Attempt match against identity instituions and if there is a single match then break 
 			if(identity.getInstitutions() != null 
 					&&
 					identity.getInstitutions().size() > 0) {
 				for(String identityInst: identity.getInstitutions()) {
-					Set<String> santizeInst = new HashSet<String>(Arrays.asList(identityInst.replaceAll("[,-]", "").split(" ")));
+					Set<String> santizeInst = new HashSet<String>(Arrays.asList(identityInst.replaceAll(this.stopWordRegex, "").split(" ")));
 					List<String> matchingKeywords = santizeInst.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation.trim(), inst.trim())).collect(Collectors.toList());
 					if(santizeInst != null 
 							&& 
@@ -419,6 +421,16 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 		if(this.homeInstScopusInstitutionsIDs.length > 0) {
 			this.knownAffiliationIds.addAll(Arrays.asList(this.homeInstScopusInstitutionsIDs));
 		}
+	}
+	
+	private void constructRegexForStopWords() {
+		String regex = "(?i)[-,]|(";
+		List<String> stopWords = Arrays.asList(this.instAfflInstitutionStopwords);
+		for(String stopwWord: stopWords) {
+			regex = regex + " \\b" + stopwWord + "\\b|" + "\\b" + stopwWord + "\\b" + " |";  
+		}
+		regex = regex.replaceAll("\\|$", "") + ")";
+		this.stopWordRegex = regex;
 	}
 	
 	/**
