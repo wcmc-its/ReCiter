@@ -97,9 +97,9 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					if(ReCiterArticleScorer.strategyParameters.isScopusCommonAffiliation()) {
 						if(reCiterArticle.getScopusArticle() != null) {
 							//Get the corresponding Scopus Author for the target author
-							/*if(reCiterArticle.getArticleId() == 25542278) {
+							if(reCiterArticle.getArticleId() == 22667600) {
 								slf4jLogger.info("PubmedId: " + reCiterArticle.getArticleId());
-							}*/
+							}
 							Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().stream().filter(author -> reCiterAuthor.getRank() == author.getSeq()).findFirst().orElse(null);
 							List<TargetAuthorScopusAffiliation> scopusAffiliationEvidences = new ArrayList<>();
 							if(scopusAuthor != null 
@@ -129,7 +129,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 										}
 									}
 									
-								} else if(matchingAfids == null) { //If there is no match then match collaborating institutions, which are defined at the institutional level. Grab values from collaboratingInstitutions-scopusInstitutionIDs (stored in application.properties). Look for overlap between the two.
+								} else if(matchingAfids.size() == 0) { //If there is no match then match collaborating institutions, which are defined at the institutional level. Grab values from collaboratingInstitutions-scopusInstitutionIDs (stored in application.properties). Look for overlap between the two.
 									matchingAfids = scopusAuthor.getAfids().stream().distinct().filter(Objects::nonNull).filter(scopusAfid -> Arrays.asList(this.collaboratingInstScopusInstitutionsIDs).contains(String.valueOf(scopusAfid))).collect(Collectors.toList());
 									if(matchingAfids != null && matchingAfids.size() > 0) {
 										//While there can be multiple matches, the maximum score returned for this type of match should be 1.
