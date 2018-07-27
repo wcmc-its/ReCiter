@@ -102,10 +102,6 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if(reCiterArticle.getArticleId() == 25456561 ) {
-				slf4jLogger.info("here");
-				
-			}
 			//sum += executeStrategy(reCiterArticle, identity);
 			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
 			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
@@ -139,6 +135,15 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 											orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 											orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
 										}
+									}  
+									
+									if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
+											&&
+											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
+										//This is for https://github.com/wcmc-its/ReCiter/issues/251 - Account for possibility that department name may be missing preposition in article.affiliation
+										orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
 									} else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
 											|| 
 											StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment)
@@ -192,6 +197,16 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			}
 		}
 		return sum;
+	}
+	
+	private String constructRegexForStopWords() {
+		String regex = "(?i)[-,]|(";
+		List<String> stopWords = Arrays.asList(ReCiterArticleScorer.strategyParameters.getInstAfflInstitutionStopwords().trim().split("\\s*,\\s*"));
+		for(String stopwWord: stopWords) {
+			regex = regex + " \\b" + stopwWord + "\\b|" + "\\b" + stopwWord + "\\b" + " |";  
+		}
+		regex = regex.replaceAll("\\|$", "") + ")";
+		return regex;
 	}
 
 	/**
