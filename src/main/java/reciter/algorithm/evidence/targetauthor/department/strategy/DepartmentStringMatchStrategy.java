@@ -124,14 +124,14 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								if(orgUnit.getOrganizationalUnitType().equals("department")) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
 											&& 
-											(orgUnit.getOrganizationalUnitLabel().contains("Center")
+											(StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center")
 													||
-													orgUnit.getOrganizationalUnitLabel().contains("Program")
+													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Program")
 													||
-													orgUnit.getOrganizationalUnitLabel().contains("Institute")) 
+													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
 											&& 
 											orgUnit.getOrganizationalUnitLabel().length() > 14) {
-										if(articleAffiliation.contains(identityDepartment)) {
+										if(StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment)) {
 											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
 											//identityDepartment: "Center for Integrative Medicine"
 											//departmentMatchingScore: 2
@@ -139,9 +139,18 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 											orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 											orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
 										}
-									} else if(articleAffiliation.contains("Department of " + identityDepartment) 
+									} else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
 											|| 
-											articleAffiliation.contains("Division of " + identityDepartment)) {
+											StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Dept of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departments of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Divisions of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment)) {
+										//This addresses https://github.com/wcmc-its/ReCiter/issues/250
 										//articleAffiliation: "Department of Pharmacology, Weill Cornell Medical College. New York, NY 10021, USA. jobuck@med.cornell.edu"
 										//identityDepartment: "Pharmacology"
 										//departmentMatchingScore: 2
@@ -151,7 +160,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 									}  
 									
 									
-									if(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split(",")).contains(identityDepartment)) {
+									if(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split("\\s*,\\s*")).contains(identityDepartment)) {
 										orgUnitEvidence.setOrganizationalUnitModifier(identityDepartment);
 										orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
 									} else {
