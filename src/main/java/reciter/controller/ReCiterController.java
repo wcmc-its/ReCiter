@@ -42,6 +42,7 @@ import reciter.algorithm.util.ArticleTranslator;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.database.dynamodb.model.MeshTerm;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
@@ -60,6 +61,7 @@ import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
+import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
@@ -75,6 +77,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Api(value = "ReCiterController", description = "Operations on ReCiter API.")
 @Controller
@@ -108,6 +111,9 @@ public class ReCiterController {
 
     @Autowired
     private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
+    
+    @Autowired
+    private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -384,6 +390,11 @@ public class ReCiterController {
         } else {
             parameters.setKnownPmids(goldStandard.getKnownPmids());
             parameters.setRejectedPmids(goldStandard.getRejectedPmids());
+        }
+        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
+        if(instAfids != null && instAfids.size() > 0) {
+        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
+        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
         }
         if (totalStandardizedArticleScore == null) {
             parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault());

@@ -29,6 +29,7 @@ public class ReCiterAuthor {
 	
 	private AuthorName name;
 	private String affiliation;
+	private int rank;
 	private boolean targetAuthor;
 	private String validEmail;
 	
@@ -59,6 +60,14 @@ public class ReCiterAuthor {
 
 	public void setValidEmail(String validEmail) {
 		this.validEmail = validEmail;
+	}
+
+	public int getRank() {
+		return rank;
+	}
+
+	public void setRank(int rank) {
+		this.rank = rank;
 	}
 	
 	

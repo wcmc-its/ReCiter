@@ -3,9 +3,14 @@ package reciter.service.dynamo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reciter.database.dynamodb.model.InstitutionAfid;
+import reciter.database.dynamodb.model.MeshTerm;
 import reciter.database.dynamodb.repository.DynamoDbInstitutionAfidRepository;
+import reciter.model.identity.Identity;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 @Service("dynamoDbInstitutionAfidService")
 public class DynamoDbInstitutionAfidService implements IDynamoDbInstitutionAfidService {
@@ -21,5 +26,17 @@ public class DynamoDbInstitutionAfidService implements IDynamoDbInstitutionAfidS
     @Override
     public InstitutionAfid findByInstitution(String institution) {
         return dynamoDbInstitutionAfidRepository.findOne(institution);
+    }
+    
+    @Override
+    public List<InstitutionAfid> findAll() {
+    	Iterable<InstitutionAfid> institutionsAfidIterable = dynamoDbInstitutionAfidRepository.findAll();
+        List<InstitutionAfid> institutionAfids = new ArrayList<>();
+        Iterator<InstitutionAfid> iterator = institutionsAfidIterable.iterator();
+        while (iterator.hasNext()) {
+        	InstitutionAfid institutionAfid = iterator.next();
+        	institutionAfids.add(institutionAfid);
+        }
+        return institutionAfids;
     }
 }

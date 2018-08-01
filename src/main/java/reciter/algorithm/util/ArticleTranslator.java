@@ -72,6 +72,7 @@ public class ArticleTranslator {
 		List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlinecitation().getArticle().getAuthorlist();
 
 		// Translating Co-Authors
+		int i = 1;
 		ReCiterArticleAuthors reCiterCoAuthors = new ReCiterArticleAuthors();
 		if (coAuthors != null) {
 			for (MedlineCitationArticleAuthor author : coAuthors) {
@@ -104,6 +105,7 @@ public class ArticleTranslator {
 					AuthorName authorName = new AuthorName(firstName, middleName, lastName);
 
 					ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, affiliation);
+					reCiterAuthor.setRank(i++);
 					reCiterCoAuthors.addAuthor(reCiterAuthor);
 				}
 			}

@@ -102,10 +102,6 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if(reCiterArticle.getArticleId() == 25456561 ) {
-				slf4jLogger.info("here");
-				
-			}
 			//sum += executeStrategy(reCiterArticle, identity);
 			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
 			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
@@ -124,14 +120,14 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								if(orgUnit.getOrganizationalUnitType().equals("department")) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
 											&& 
-											(orgUnit.getOrganizationalUnitLabel().contains("Center")
+											(StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center")
 													||
-													orgUnit.getOrganizationalUnitLabel().contains("Program")
+													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Program")
 													||
-													orgUnit.getOrganizationalUnitLabel().contains("Institute")) 
+													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
 											&& 
 											orgUnit.getOrganizationalUnitLabel().length() > 14) {
-										if(articleAffiliation.contains(identityDepartment)) {
+										if(StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment)) {
 											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
 											//identityDepartment: "Center for Integrative Medicine"
 											//departmentMatchingScore: 2
@@ -139,9 +135,27 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 											orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 											orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
 										}
-									} else if(articleAffiliation.contains("Department of " + identityDepartment) 
+									}  
+									
+									if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
+											&&
+											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
+										//This is for https://github.com/wcmc-its/ReCiter/issues/251 - Account for possibility that department name may be missing preposition in article.affiliation
+										orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
+									} else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
 											|| 
-											articleAffiliation.contains("Division of " + identityDepartment)) {
+											StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Dept of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departments of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Divisions of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment)) {
+										//This addresses https://github.com/wcmc-its/ReCiter/issues/250
 										//articleAffiliation: "Department of Pharmacology, Weill Cornell Medical College. New York, NY 10021, USA. jobuck@med.cornell.edu"
 										//identityDepartment: "Pharmacology"
 										//departmentMatchingScore: 2
@@ -151,7 +165,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 									}  
 									
 									
-									if(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split(",")).contains(identityDepartment)) {
+									if(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split("\\s*,\\s*")).contains(identityDepartment)) {
 										orgUnitEvidence.setOrganizationalUnitModifier(identityDepartment);
 										orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
 									} else {
@@ -183,6 +197,16 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			}
 		}
 		return sum;
+	}
+	
+	private String constructRegexForStopWords() {
+		String regex = "(?i)[-,]|(";
+		List<String> stopWords = Arrays.asList(ReCiterArticleScorer.strategyParameters.getInstAfflInstitutionStopwords().trim().split("\\s*,\\s*"));
+		for(String stopwWord: stopWords) {
+			regex = regex + " \\b" + stopwWord + "\\b|" + "\\b" + stopwWord + "\\b" + " |";  
+		}
+		regex = regex.replaceAll("\\|$", "") + ")";
+		return regex;
 	}
 
 	/**

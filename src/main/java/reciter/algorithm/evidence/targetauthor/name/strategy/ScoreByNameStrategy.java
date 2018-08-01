@@ -837,8 +837,16 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 						}
 					}
 					//Case - ajdannen - Throw away Andrew J Dannenberg because Andrew Jess Dannenberg exists
-					if(idenityAuthorNames.size() - 1 >= j && idenityAuthorNames.size() > 1) {
-						if(idenityAuthorNames.get(i).getLastName() != null 
+					if(idenityAuthorNames.size() > 1 
+							&&
+							idenityAuthorNames.size() -1 >= i
+							&&
+							idenityAuthorNames.size() - 1 >= j) {
+						if(idenityAuthorNames.get(i) != null
+								&&
+								idenityAuthorNames.get(j) != null
+								&&
+								idenityAuthorNames.get(i).getLastName() != null 
 								&&
 								idenityAuthorNames.get(j).getLastName() != null 
 								&&

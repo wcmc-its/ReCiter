@@ -331,6 +331,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 				((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
+			if (strategyParameters.isAffiliation()) {
+				((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
 			if (strategyParameters.isArticleSize()) {
 				((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
@@ -349,20 +353,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			
 			((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
 			
-
-			/*if (strategyParameters.isKnownRelationship()) {
-				double knownRelationshipScore = ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
-				if (knownRelationshipScore > 0) {
-					selectedClusterIds.add(clusterId);
-				}
-			}
-
-			if (strategyParameters.isAffiliation()) {
-				double affiliationScore = ((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
-				if (affiliationScore > 0) {
-					selectedClusterIds.add(clusterId);
-				}
-			}*/
 			
 			slf4jLogger.info("******************** Cluster " + clusterId + " scoring ends **********************");
 		}
