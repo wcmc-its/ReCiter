@@ -14,9 +14,12 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleGrant;
 
 /**
- * @author szd2013
+ * @author <b>Sarbajit Dutta(szd2013)</b>
+ * 
+ * @description:
  * This class parses NIH grant identifiers for all articles in a standardized logic of Funding Agency-4 to 6 digit grant code. Then matches and form clusters.
- * It also checks for transitive property matches as well.
+ * It also checks for transitive property matches as well. 
+ * For full details refer to https://github.com/wcmc-its/ReCiter/issues/217 section 4. - Feature: grant identifiers.
  */
 public class GrantFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	
