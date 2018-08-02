@@ -20,10 +20,13 @@ package reciter.algorithm.evidence.targetauthor.department.strategy;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -47,6 +50,7 @@ import reciter.model.identity.OrganizationalUnit;
 public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(DepartmentStringMatchStrategy.class);
+	private final List<String> orgUnitSynonym = Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitSynonym().trim().split("\\s*,\\s*"));
 
 	private String extractedDept;
 	private long pmid;
@@ -101,6 +105,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
+		Set<OrganizationalUnit> sanitizedIdentityInstitutions = new HashSet<OrganizationalUnit>();
+		populateSanitizedIdentityInstitutions(identity, sanitizedIdentityInstitutions);
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			//sum += executeStrategy(reCiterArticle, identity);
 			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
@@ -115,7 +121,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								&& 
 								identity.getOrganizationalUnits().size() > 0) {
 							//This is for department
-							for(OrganizationalUnit orgUnit: identity.getOrganizationalUnits()) {
+							for(OrganizationalUnit orgUnit: sanitizedIdentityInstitutions) {
 								String identityDepartment = orgUnit.getOrganizationalUnitLabel().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
 								if(orgUnit.getOrganizationalUnitType().equals("department")) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
@@ -207,6 +213,40 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		}
 		regex = regex.replaceAll("\\|$", "") + ")";
 		return regex;
+	}
+	
+	/**
+	 * This function gets orgUnits from Identity and home organizationalUnitsSynonym if declared in application.properties and return a unique set of Departments.
+	 * It also Substitute any and for & and vise versa in identity.departments Remove any commas or dashes from identity.departments. Remove any commas or dashes from article.affiliation.
+	 * Substitute any Tri-I for Tri-Institutional and vise versa.
+	 * @param identity
+	 */
+	private void populateSanitizedIdentityInstitutions(Identity identity, Set<OrganizationalUnit> sanitizedIdentityInstitutions) {
+		if(identity.getOrganizationalUnits() != null
+				&&
+				identity.getOrganizationalUnits().size() > 0) {
+			for(OrganizationalUnit orgUnit: identity.getOrganizationalUnits()) {
+				if(this.orgUnitSynonym.stream().anyMatch(syn -> StringUtils.containsIgnoreCase(syn, orgUnit.getOrganizationalUnitLabel()))) {
+					List<String> matchedOrgUnitSynonnym = this.orgUnitSynonym.stream().filter(syn -> StringUtils.containsIgnoreCase(syn, orgUnit.getOrganizationalUnitLabel())).collect(Collectors.toList());
+					for(String orgUnitsynonyms: matchedOrgUnitSynonnym) {
+						List<String> synonyms = Arrays.asList(orgUnitsynonyms.trim().split("\\|"));
+						Set<OrganizationalUnit> orgUnitWithSynonmyms = new HashSet<OrganizationalUnit>(synonyms.size());
+						//synonyms.forEach(synonym -> {
+						for(String synonym: synonyms) {
+							OrganizationalUnit orgUnitWithSynonmym = new OrganizationalUnit();
+							orgUnitWithSynonmym.setOrganizationalUnitLabel(synonym.trim());
+							orgUnitWithSynonmym.setOrganizationalUnitType("department");
+							orgUnitWithSynonmyms.add(orgUnitWithSynonmym);
+						}
+						if(orgUnitWithSynonmyms.size() > 0) {
+							sanitizedIdentityInstitutions.addAll(orgUnitWithSynonmyms);
+						}
+					}
+				} else {
+					sanitizedIdentityInstitutions.add(orgUnit);
+				}
+			}
+		}
 	}
 
 	/**
