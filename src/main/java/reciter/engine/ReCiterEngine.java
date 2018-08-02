@@ -71,6 +71,8 @@ public class ReCiterEngine implements Engine {
 	
 	public static double clusterSimilarityThresholdScore;
 	
+	public static double clutseringGrantsThreshold;
+	
 	@Override
 	public List<Feature> generateFeature(EngineParameters parameters) {
 		
@@ -127,6 +129,7 @@ public class ReCiterEngine implements Engine {
 		List<PubMedArticle> pubMedArticles = parameters.getPubMedArticles();
 		List<ScopusArticle> scopusArticles = parameters.getScopusArticles();
 		clusterSimilarityThresholdScore = strategyParameters.getClusterSimilarityThresholdScore();
+		clutseringGrantsThreshold = strategyParameters.getClusteringGrantsThreshold();
 		
 		Map<Long, ScopusArticle> map = new HashMap<>();
 		for (ScopusArticle scopusArticle : scopusArticles) {

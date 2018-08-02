@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.engine.EngineParameters;
 import reciter.engine.ReCiterEngine;
@@ -274,19 +275,23 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		boolean match = false;
 		if(comparisonType.equalsIgnoreCase("grant")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
-				for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
-					if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
-						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() &&
-								StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
-						if(match) {
-							return 1;
+				if(reCiterArticle.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold) {
+					for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
+						if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
+							match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold
+							&&
+							articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() 
+							&&
+							StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
+							if(match) {
+								return 1;
+							}
 						}
+						
 					}
-					
 				}
 			}
-		}
-		else if(comparisonType.equalsIgnoreCase("cites")) {
+		} else if(comparisonType.equalsIgnoreCase("cites")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 					//A cites B
 					match = this.articleCluster.stream().anyMatch(articleList -> reCiterArticle.getCommentsCorrectionsPmids() != null && 
@@ -302,8 +307,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 						return 1;
 					}
 			}
-		}
-		else if(comparisonType.equalsIgnoreCase("meshMajor")) {
+		} else if(comparisonType.equalsIgnoreCase("meshMajor")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 				for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
 					if(meshHeading != null && MeshMajorStrategy.isMeshMajor(meshHeading)) {
@@ -319,8 +323,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 					}
 				}
 			}
-		}
-		else if(comparisonType.equalsIgnoreCase("tepid")) {
+		} else if(comparisonType.equalsIgnoreCase("tepid")) {
 			int matchCount = 0;
 			double clusterSimilarityScore = 0;
 			for(ReCiterArticle reCiterArticleo: o.getArticleCluster()) {

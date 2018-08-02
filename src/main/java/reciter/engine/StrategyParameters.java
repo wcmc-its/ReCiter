@@ -96,6 +96,9 @@ public class StrategyParameters {
 	@Value("${cluster.similarity.threshold.score}")
 	private double clusterSimilarityThresholdScore;
 	
+	@Value("${clusteringGrants-threshold}")
+	private double clusteringGrantsThreshold;
+	
 	@Value("${nameMatchFirstType.full-exact}")
 	private double nameMatchFirstTypeFullExactScore;
 	
@@ -1074,4 +1077,13 @@ public class StrategyParameters {
 	public void setInstAfflInstitutionStopwords(String instAfflInstitutionStopwords) {
 		this.instAfflInstitutionStopwords = instAfflInstitutionStopwords;
 	}
+
+	public double getClusteringGrantsThreshold() {
+		return clusteringGrantsThreshold;
+	}
+
+	public void setClusteringGrantsThreshold(double clusteringGrantsThreshold) {
+		this.clusteringGrantsThreshold = clusteringGrantsThreshold;
+	}
+	
 }
