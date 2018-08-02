@@ -231,6 +231,9 @@ public class StrategyParameters {
 	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitProgramMatchingScore}")
 	private double organizationalUnitProgramMatchingScore;
 	
+	@Value("${strategy.orgUnitScoringStrategy.organizationalUnitSynonym}")
+	private String organizationalUnitSynonym;
+	
 	@Value("${strategy.articleCountScoringStrategy.articleCountThresholdScore}")
 	private double articleCountThresholdScore;
 	
@@ -1084,6 +1087,14 @@ public class StrategyParameters {
 
 	public void setClusteringGrantsThreshold(double clusteringGrantsThreshold) {
 		this.clusteringGrantsThreshold = clusteringGrantsThreshold;
+	}
+
+	public String getOrganizationalUnitSynonym() {
+		return organizationalUnitSynonym;
+	}
+
+	public void setOrganizationalUnitSynonym(String organizationalUnitSynonym) {
+		this.organizationalUnitSynonym = organizationalUnitSynonym;
 	}
 	
 }
