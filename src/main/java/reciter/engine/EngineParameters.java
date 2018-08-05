@@ -18,78 +18,95 @@
  *******************************************************************************/
 package reciter.engine;
 
-import java.util.List;
-import java.util.Map;
-
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 
+import java.util.List;
+import java.util.Map;
+
 public class EngineParameters {
 
-	private Identity identity;
-	private List<PubMedArticle> pubMedArticles;
-	private List<ScopusArticle> scopusArticles;
-	private List<ReCiterArticle> reciterArticles;
-	private List<Long> knownPmids;
-	private List<Long> rejectedPmids;
-	private double totalStandardzizedArticleScore;
-	private static Map<String, Long> meshCountMap;
-	private static Map<String, List<String>> afiliationNameToAfidMap;
-	
-	public Identity getIdentity() {
-		return identity;
-	}
-	public void setIdentity(Identity identity) {
-		this.identity = identity;
-	}
-	public List<PubMedArticle> getPubMedArticles() {
-		return pubMedArticles;
-	}
-	public void setPubMedArticles(List<PubMedArticle> pubMedArticles) {
-		this.pubMedArticles = pubMedArticles;
-	}
-	public List<ScopusArticle> getScopusArticles() {
-		return scopusArticles;
-	}
-	public List<ReCiterArticle> getReciterArticles() {
-		return reciterArticles;
-	}
-	public void setReciterArticles(List<ReCiterArticle> reciterArticles) {
-		this.reciterArticles = reciterArticles;
-	}
-	public void setScopusArticles(List<ScopusArticle> scopusArticles) {
-		this.scopusArticles = scopusArticles;
-	}
-	public static Map<String, Long> getMeshCountMap() {
-		return meshCountMap;
-	}
-	public static void setMeshCountMap(Map<String, Long> meshCountMap) {
-		EngineParameters.meshCountMap = meshCountMap;
-	}
-	public List<Long> getKnownPmids() {
-		return knownPmids;
-	}
-	public void setKnownPmids(List<Long> knownPmids) {
-		this.knownPmids = knownPmids;
-	}
-	public List<Long> getRejectedPmids() {
-		return rejectedPmids;
-	}
-	public void setRejectedPmids(List<Long> rejectedPmids) {
-		this.rejectedPmids = rejectedPmids;
-	}
-	public static Map<String, List<String>> getAfiliationNameToAfidMap() {
-		return afiliationNameToAfidMap;
-	}
-	public static void setAfiliationNameToAfidMap(Map<String, List<String>> afiliationNameToAfidMap) {
-		EngineParameters.afiliationNameToAfidMap = afiliationNameToAfidMap;
-	}
-	public double getTotalStandardzizedArticleScore() {
-		return totalStandardzizedArticleScore;
-	}
-	public void setTotalStandardzizedArticleScore(double totalStandardzizedArticleScore) {
-		this.totalStandardzizedArticleScore = totalStandardzizedArticleScore;
-	}
+    private static Map<String, Long> meshCountMap;
+    private static Map<String, List<String>> afiliationNameToAfidMap;
+    private Identity identity;
+    private List<PubMedArticle> pubMedArticles;
+    private List<ScopusArticle> scopusArticles;
+    private List<ReCiterArticle> reciterArticles;
+    private List<Long> knownPmids;
+    private List<Long> rejectedPmids;
+    private double totalStandardzizedArticleScore;
+
+    public static Map<String, Long> getMeshCountMap() {
+        return meshCountMap;
+    }
+
+    public static void setMeshCountMap(Map<String, Long> meshCountMap) {
+        EngineParameters.meshCountMap = meshCountMap;
+    }
+
+    public static Map<String, List<String>> getAfiliationNameToAfidMap() {
+        return afiliationNameToAfidMap;
+    }
+
+    public static void setAfiliationNameToAfidMap(Map<String, List<String>> afiliationNameToAfidMap) {
+        EngineParameters.afiliationNameToAfidMap = afiliationNameToAfidMap;
+    }
+
+    public Identity getIdentity() {
+        return identity;
+    }
+
+    public void setIdentity(Identity identity) {
+        this.identity = identity;
+    }
+
+    public List<PubMedArticle> getPubMedArticles() {
+        return pubMedArticles;
+    }
+
+    public void setPubMedArticles(List<PubMedArticle> pubMedArticles) {
+        this.pubMedArticles = pubMedArticles;
+    }
+
+    public List<ScopusArticle> getScopusArticles() {
+        return scopusArticles;
+    }
+
+    public void setScopusArticles(List<ScopusArticle> scopusArticles) {
+        this.scopusArticles = scopusArticles;
+    }
+
+    public List<ReCiterArticle> getReciterArticles() {
+        return reciterArticles;
+    }
+
+    public void setReciterArticles(List<ReCiterArticle> reciterArticles) {
+        this.reciterArticles = reciterArticles;
+    }
+
+    public List<Long> getKnownPmids() {
+        return knownPmids;
+    }
+
+    public void setKnownPmids(List<Long> knownPmids) {
+        this.knownPmids = knownPmids;
+    }
+
+    public List<Long> getRejectedPmids() {
+        return rejectedPmids;
+    }
+
+    public void setRejectedPmids(List<Long> rejectedPmids) {
+        this.rejectedPmids = rejectedPmids;
+    }
+
+    public double getTotalStandardzizedArticleScore() {
+        return totalStandardzizedArticleScore;
+    }
+
+    public void setTotalStandardzizedArticleScore(double totalStandardzizedArticleScore) {
+        this.totalStandardzizedArticleScore = totalStandardzizedArticleScore;
+    }
 }
