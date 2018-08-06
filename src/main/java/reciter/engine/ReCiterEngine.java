@@ -37,9 +37,9 @@ import java.util.List;
 @Slf4j
 public class ReCiterEngine implements Engine {
 
-    public double clusterSimilarityThresholdScore;
+    public static double clusterSimilarityThresholdScore;
 
-    public double clutseringGrantsThreshold;
+    public static double clutseringGrantsThreshold;
 
     @Override
     public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters) {

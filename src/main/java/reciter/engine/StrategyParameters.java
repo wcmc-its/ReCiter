@@ -234,6 +234,9 @@ public class StrategyParameters {
 
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitProgramMatchingScore}")
     private double organizationalUnitProgramMatchingScore;
+    
+    @Value("${strategy.orgUnitScoringStrategy.organizationalUnitSynonym}")
+    private String organizationalUnitSynonym;
 
     @Value("${strategy.articleCountScoringStrategy.articleCountThresholdScore}")
     private double articleCountThresholdScore;
