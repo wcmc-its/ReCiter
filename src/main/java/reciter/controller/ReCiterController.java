@@ -162,9 +162,6 @@ public class ReCiterController {
         return ResponseEntity.ok(goldStandard);
     }
 
-    /**
-     * Retrieve all articles in Uids.java.
-     */
     @ApiOperation(value = "Retrieve Articles for all UID in Identity Table", response = ResponseEntity.class, notes = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list for given list of uid"),
@@ -193,9 +190,6 @@ public class ReCiterController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Retrieve all articles in Uids.java.
-     */
     @ApiOperation(value = "Retrieve Articles for an UID.", response = ResponseEntity.class, notes = "This API retrieves candidate articles for a given uid from pubmed and its complementing articles from scopus")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list"),
@@ -336,10 +330,8 @@ public class ReCiterController {
         List<Long> filtered = new ArrayList<>();
         List<String> filteredString = new ArrayList<>();
         for (long pmid : pmidList) {
-            //if (pmid <= 27090613) {
             filtered.add(pmid);
             filteredString.add(String.valueOf(pmid));
-            //}
         }
 
         List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);

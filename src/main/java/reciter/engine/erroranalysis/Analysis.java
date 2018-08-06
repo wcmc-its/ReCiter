@@ -18,6 +18,10 @@
  *******************************************************************************/
 package reciter.engine.erroranalysis;
 
+import reciter.algorithm.cluster.Clusterer;
+import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.model.article.ReCiterArticle;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -26,266 +30,220 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import reciter.algorithm.cluster.Clusterer;
-import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.algorithm.cluster.targetauthor.ClusterSelector;
-import reciter.model.article.ReCiterArticle;
-
 /**
  * Class that performs analysis such as calculating precision and recall.
- * @author jil3004
  *
+ * @author jil3004
  */
 public class Analysis {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(Analysis.class);	
+    private double precision;
+    private double recall;
 
-	private double precision;
-	private double recall;
-	
-	private int truePos;
-	private int trueNeg;
-	private int falseNeg;
-	private int falsePos;
-	private int goldStandardSize;
-	private int selectedClusterSize;
-	private List<Long> truePositiveList = new ArrayList<Long>();
-	private List<Long> trueNegativeList = new ArrayList<Long>();
-	private List<Long> falsePositiveList = new ArrayList<Long>();
-	private List<Long> falseNegativeList = new ArrayList<Long>();
-	
-	public Analysis() {}
+    private int truePos;
+    private int trueNeg;
+    private int falseNeg;
+    private int falsePos;
+    private int goldStandardSize;
+    private int selectedClusterSize;
+    private List<Long> truePositiveList = new ArrayList<>();
+    private List<Long> trueNegativeList = new ArrayList<>();
+    private List<Long> falsePositiveList = new ArrayList<>();
+    private List<Long> falseNegativeList = new ArrayList<>();
 
-	/**
-	 * Assign gold standard to each ReCiterArticle.
-	 * @param reCiterArticles
-	 * @param uid
-	 */
-	public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> acceptedPmids, List<Long> rejectedPmids) {
-		Set<Long> pmidSet = new HashSet<>();
-		acceptedPmids.stream().forEach(acceptedPmid -> {
-			pmidSet.add(acceptedPmid);
-		});
-		
-		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if (pmidSet.contains(reCiterArticle.getArticleId())) {
-				reCiterArticle.setGoldStandard(1);
-			} else {
-				reCiterArticle.setGoldStandard(0);
-			}
-		}
-		if(rejectedPmids != null) {
-			if(pmidSet.size() > 0) {
-				pmidSet.clear();
-			}
-			rejectedPmids.stream().forEach(rejectedPmid -> {
-				pmidSet.add(rejectedPmid);
-			});
-			
-			for (ReCiterArticle reCiterArticle : reCiterArticles) {
-				if (pmidSet.contains(reCiterArticle.getArticleId())) {
-					reCiterArticle.setGoldStandard(-1);
-				} else {
-					reCiterArticle.setGoldStandard(0);
-				}
-			}
-		}
-		
-	}
+    public Analysis() {
+    }
 
-	/**
-	 * List of selections.
-	 * @param finalCluster
-	 * @param selection
-	 * @param uid
-	 * @return
-	 */
-	//public static Analysis performAnalysis(Clusterer reCiterClusterer, ClusterSelector clusterSelector, List<Long> goldStandardPmids) {
-	public static Analysis performAnalysis(Clusterer reCiterClusterer, List<Long> goldStandardPmids, double totalStandardzizedArticleScore) {
-	    
-		Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
-		//Set<Long> selection = clusterSelector.getSelectedClusterIds();
-		String uid = reCiterClusterer.getIdentity().getUid();
-		
-		Analysis analysis = new Analysis();
-		slf4jLogger.info("Gold Standard [" + goldStandardPmids.size() + "]: " + goldStandardPmids);
+    /**
+     * Assign gold standard to each ReCiterArticle.
+     *
+     * @param reCiterArticles
+     * @param uid
+     */
+    public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> acceptedPmids, List<Long> rejectedPmids) {
+        Set<Long> pmidSet = new HashSet<>();
+        acceptedPmids.stream().forEach(acceptedPmid -> {
+            pmidSet.add(acceptedPmid);
+        });
 
-		analysis.setGoldStandardSize(goldStandardPmids.size());
+        for (ReCiterArticle reCiterArticle : reCiterArticles) {
+            if (pmidSet.contains(reCiterArticle.getArticleId())) {
+                reCiterArticle.setGoldStandard(1);
+            } else {
+                reCiterArticle.setGoldStandard(0);
+            }
+        }
+        if (rejectedPmids != null) {
+            if (pmidSet.size() > 0) {
+                pmidSet.clear();
+            }
+            rejectedPmids.stream().forEach(rejectedPmid -> {
+                pmidSet.add(rejectedPmid);
+            });
 
-		// Combine all articles into a single list.
-		List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardzizedArticleScore).collect(Collectors.toList());//new ArrayList<ReCiterArticle>();
-		/*for (long s : selection) {
-			for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
-				articleList.add(reCiterArticle);
-			}
-		}*/
+            for (ReCiterArticle reCiterArticle : reCiterArticles) {
+                if (pmidSet.contains(reCiterArticle.getArticleId())) {
+                    reCiterArticle.setGoldStandard(-1);
+                } else {
+                    reCiterArticle.setGoldStandard(0);
+                }
+            }
+        }
 
-		analysis.setSelectedClusterSize(articleList.size());
+    }
 
-		for (Entry<Long, ReCiterCluster> entry : finalCluster.entrySet()) {
-			for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
-				long pmid = reCiterArticle.getArticleId();
-				StatusEnum statusEnum;
-				if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
-					analysis.getTruePositiveList().add(pmid);
-					statusEnum = StatusEnum.TRUE_POSITIVE;
-				} else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(pmid)) {
-					
-					analysis.getFalsePositiveList().add(pmid);
-					statusEnum = StatusEnum.FALSE_POSITIVE;
-					
-				} else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
-					analysis.getFalseNegativeList().add(pmid);
-					statusEnum = StatusEnum.FALSE_NEGATIVE;
-					
-				} else {
-					analysis.getTrueNegativeList().add(pmid);
-					statusEnum = StatusEnum.TRUE_NEGATIVE;
-				}
+    public static Analysis performAnalysis(Clusterer reCiterClusterer, List<Long> goldStandardPmids, double totalStandardzizedArticleScore) {
 
-				/*boolean isClusterOriginator = false;
-				long clusterOriginator = entry.getValue().getClusterOriginator();
-				if (pmid == clusterOriginator) {
-					isClusterOriginator = true;
-				}
+        Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 
-				boolean isArticleSelected = false;
-				if (articleList.contains(reCiterArticle)) {
-					isArticleSelected = true;
-				}
-				
-				AnalysisObject analysisObject = AnalysisTranslator.translate(
-						reCiterArticle, 
-						statusEnum, 
-						uid, 
-						reCiterClusterer.getIdentity(), 
-						isClusterOriginator, 
-						entry.getValue().getClusterID(), 
-						entry.getValue().getArticleCluster().size(), 
-						isArticleSelected);*/
-				
-			}
-		}
+        Analysis analysis = new Analysis();
 
-		analysis.setTruePos(analysis.getTruePositiveList().size());
-		analysis.setTrueNeg(analysis.getTrueNegativeList().size());
-		analysis.setFalseNeg(analysis.getFalseNegativeList().size());
-		analysis.setFalsePos(analysis.getFalsePositiveList().size());
-		analysis.setPrecision(analysis.getPrecision());
-		analysis.setRecall(analysis.getRecall());
-		return analysis;
-	}
+        analysis.setGoldStandardSize(goldStandardPmids.size());
 
-	public double getPrecision() {
-		if (selectedClusterSize == 0) 
-			return 0;
-		return (double) truePos / selectedClusterSize;
-	}
+        // Combine all articles into a single list.
+        List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardzizedArticleScore).collect(Collectors.toList());//new ArrayList<ReCiterArticle>();
 
-	public double getRecall() {
-		if (goldStandardSize == 0)
-			return 0;
-		return (double) truePos / goldStandardSize;
-	}
+        analysis.setSelectedClusterSize(articleList.size());
 
-	public int getTruePos() {
-		return truePos;
-	}
+        for (Entry<Long, ReCiterCluster> entry : finalCluster.entrySet()) {
+            for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
+                long pmid = reCiterArticle.getArticleId();
+                StatusEnum statusEnum;
+                if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
+                    analysis.getTruePositiveList().add(pmid);
+                    statusEnum = StatusEnum.TRUE_POSITIVE;
+                } else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(pmid)) {
 
-	public void setTruePos(int truePos) {
-		this.truePos = truePos;
-	}
+                    analysis.getFalsePositiveList().add(pmid);
+                    statusEnum = StatusEnum.FALSE_POSITIVE;
 
-	public int getGoldStandardSize() {
-		return goldStandardSize;
-	}
+                } else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
+                    analysis.getFalseNegativeList().add(pmid);
+                    statusEnum = StatusEnum.FALSE_NEGATIVE;
 
-	public void setGoldStandardSize(int goldStandardSize) {
-		this.goldStandardSize = goldStandardSize;
-	}
+                } else {
+                    analysis.getTrueNegativeList().add(pmid);
+                    statusEnum = StatusEnum.TRUE_NEGATIVE;
+                }
+            }
+        }
 
-	public int getSelectedClusterSize() {
-		return selectedClusterSize;
-	}
+        analysis.setTruePos(analysis.getTruePositiveList().size());
+        analysis.setTrueNeg(analysis.getTrueNegativeList().size());
+        analysis.setFalseNeg(analysis.getFalseNegativeList().size());
+        analysis.setFalsePos(analysis.getFalsePositiveList().size());
+        analysis.setPrecision(analysis.getPrecision());
+        analysis.setRecall(analysis.getRecall());
+        return analysis;
+    }
 
-	public void setSelectedClusterSize(int selectedClusterSize) {
-		this.selectedClusterSize = selectedClusterSize;
-	}
+    public double getPrecision() {
+        if (selectedClusterSize == 0)
+            return 0;
+        return (double) truePos / selectedClusterSize;
+    }
 
-	public List<Long> getFalsePositiveList() {
-		return falsePositiveList;
-	}
+    public void setPrecision(double precision) {
+        this.precision = precision;
+    }
 
-	public void setFalsePositiveList(List<Long> falsePositiveList) {
-		this.falsePositiveList = falsePositiveList;
-	}
+    public double getRecall() {
+        if (goldStandardSize == 0)
+            return 0;
+        return (double) truePos / goldStandardSize;
+    }
 
-	public List<Long> getFalseNegativeList() {
-		return falseNegativeList;
-	}
+    public void setRecall(double recall) {
+        this.recall = recall;
+    }
 
-	public void setFalseNegativeList(List<Long> falseNegativeList) {
-		this.falseNegativeList = falseNegativeList;
-	}
+    public int getTruePos() {
+        return truePos;
+    }
 
-	public int getFalseNeg() {
-		return falseNeg;
-	}
+    public void setTruePos(int truePos) {
+        this.truePos = truePos;
+    }
 
-	public void setFalseNeg(int falseNeg) {
-		this.falseNeg = falseNeg;
-	}
+    public int getGoldStandardSize() {
+        return goldStandardSize;
+    }
 
-	public int getTrueNeg() {
-		return trueNeg;
-	}
+    public void setGoldStandardSize(int goldStandardSize) {
+        this.goldStandardSize = goldStandardSize;
+    }
 
-	public void setTrueNeg(int trueNeg) {
-		this.trueNeg = trueNeg;
-	}
+    public int getSelectedClusterSize() {
+        return selectedClusterSize;
+    }
 
-	public int getFalsePos() {
-		return falsePos;
-	}
+    public void setSelectedClusterSize(int selectedClusterSize) {
+        this.selectedClusterSize = selectedClusterSize;
+    }
 
-	public void setFalsePos(int falsePos) {
-		this.falsePos = falsePos;
-	}
+    public List<Long> getFalsePositiveList() {
+        return falsePositiveList;
+    }
 
-	public List<Long> getTruePositiveList() {
-		return truePositiveList;
-	}
+    public void setFalsePositiveList(List<Long> falsePositiveList) {
+        this.falsePositiveList = falsePositiveList;
+    }
 
-	public void setTruePositiveList(List<Long> truePositiveList) {
-		this.truePositiveList = truePositiveList;
-	}
+    public List<Long> getFalseNegativeList() {
+        return falseNegativeList;
+    }
 
-	public List<Long> getTrueNegativeList() {
-		return trueNegativeList;
-	}
+    public void setFalseNegativeList(List<Long> falseNegativeList) {
+        this.falseNegativeList = falseNegativeList;
+    }
 
-	public void setTrueNegativeList(List<Long> trueNegativeList) {
-		this.trueNegativeList = trueNegativeList;
-	}
+    public int getFalseNeg() {
+        return falseNeg;
+    }
 
-	public void setPrecision(double precision) {
-		this.precision = precision;
-	}
+    public void setFalseNeg(int falseNeg) {
+        this.falseNeg = falseNeg;
+    }
 
-	public void setRecall(double recall) {
-		this.recall = recall;
-	}
-	
-	@Override
-	public String toString() {
-		return "Analysis [precision=" + precision + ", recall=" + recall + ", truePos=" + truePos + ", trueNeg="
-				+ trueNeg + ", falseNeg=" + falseNeg + ", falsePos=" + falsePos + ", goldStandardSize="
-				+ goldStandardSize + ", selectedClusterSize=" + selectedClusterSize + ", truePositiveList="
-				+ truePositiveList + ", trueNegativeList=" + trueNegativeList + ", falsePositiveList="
-				+ falsePositiveList + ", falseNegativeList=" + falseNegativeList + "]";
-	}
-	
+    public int getTrueNeg() {
+        return trueNeg;
+    }
+
+    public void setTrueNeg(int trueNeg) {
+        this.trueNeg = trueNeg;
+    }
+
+    public int getFalsePos() {
+        return falsePos;
+    }
+
+    public void setFalsePos(int falsePos) {
+        this.falsePos = falsePos;
+    }
+
+    public List<Long> getTruePositiveList() {
+        return truePositiveList;
+    }
+
+    public void setTruePositiveList(List<Long> truePositiveList) {
+        this.truePositiveList = truePositiveList;
+    }
+
+    public List<Long> getTrueNegativeList() {
+        return trueNegativeList;
+    }
+
+    public void setTrueNegativeList(List<Long> trueNegativeList) {
+        this.trueNegativeList = trueNegativeList;
+    }
+
+    @Override
+    public String toString() {
+        return "Analysis [precision=" + precision + ", recall=" + recall + ", truePos=" + truePos + ", trueNeg="
+                + trueNeg + ", falseNeg=" + falseNeg + ", falsePos=" + falsePos + ", goldStandardSize="
+                + goldStandardSize + ", selectedClusterSize=" + selectedClusterSize + ", truePositiveList="
+                + truePositiveList + ", trueNegativeList=" + trueNegativeList + ", falsePositiveList="
+                + falsePositiveList + ", falseNegativeList=" + falseNegativeList + "]";
+    }
+
 }

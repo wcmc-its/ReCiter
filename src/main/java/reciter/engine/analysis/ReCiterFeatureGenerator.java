@@ -4,11 +4,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.algorithm.cluster.targetauthor.ClusterSelector;
-import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
-import reciter.engine.analysis.evidence.AuthorNameEvidence;
-import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.Evidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.engine.erroranalysis.UseGoldStandard;
@@ -44,7 +40,7 @@ public class ReCiterFeatureGenerator {
     private List<Long> falseNegativeList = new ArrayList<>();
 
     public ReCiterFeature computeFeatures(UseGoldStandard mode,
-    										 double totalStandardizedScore,
+                                          double totalStandardizedScore,
                                           Clusterer reCiterClusterer,
                                           List<Long> goldStandardPmids,
                                           List<Long> rejectedPmids,
@@ -84,24 +80,6 @@ public class ReCiterFeatureGenerator {
         }
         reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
 
-        // Combine all articles into a single list. TODO optimize
-        /*int countSuggestedArticles = 0;
-        List<ReCiterArticle> articleList = new ArrayList<>();
-        for (long s : selection) {
-            long clusterOriginator = finalCluster.get(s).getClusterOriginator();
-            String journalTitle = null;
-            for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
-                articleList.add(reCiterArticle);
-                if (reCiterArticle.getArticleId() == clusterOriginator) {
-                    journalTitle = reCiterArticle.getJournal().getJournalTitle();
-                }
-                countSuggestedArticles++;
-            }
-            // Add journals
-            for (ReCiterArticle reCiterArticle : finalCluster.get(s).getArticleCluster()) {
-                reCiterArticle.getClusteringEvidence().setJournal(journalTitle);
-            }
-        }*/
         List<ReCiterArticle> selectedArticles = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardizedScore).collect(Collectors.toList());
         reCiterFeature.setCountSuggestedArticles(selectedArticles.size());
 
@@ -109,41 +87,21 @@ public class ReCiterFeatureGenerator {
         List<ReCiterArticleFeature> reCiterArticleFeatures = new ArrayList<>(selectedArticles.size());
         for (ReCiterArticle reCiterArticle : selectedArticles) {
             ReCiterArticleFeature reCiterArticleFeature = new ReCiterArticleFeature();
-            reCiterArticleFeature.setPmid(reCiterArticle.getArticleId()); // pmid
-            /*reCiterArticleFeature.setScore(
-                    reCiterArticle.getAffiliationScore() +
-                            reCiterArticle.getCitizenshipStrategyScore() +
-                            reCiterArticle.getCoauthorStrategyScore() +
-                            reCiterArticle.getDepartmentStrategyScore() +
-                            reCiterArticle.getEducationStrategyScore() +
-                            reCiterArticle.getJournalStrategyScore() +
-                            reCiterArticle.getKnownCoinvestigatorScore() +
-                            reCiterArticle.getScopusStrategyScore() +
-                            reCiterArticle.getEmailStrategyScore() +
-                            reCiterArticle.getMeshMajorStrategyScore() +
-                            reCiterArticle.getBachelorsYearDiscrepancyScore() +
-                            reCiterArticle.getBoardCertificationStrategyScore() +
-                            reCiterArticle.getDoctoralYearDiscrepancyScore() +
-                            reCiterArticle.getInternshipAndResidenceStrategyScore() +
-                            reCiterArticle.getNameStrategyScore());*/ // score
+            reCiterArticleFeature.setPmid(reCiterArticle.getArticleId());
             reCiterArticleFeature.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreNonStandardized());
             reCiterArticleFeature.setTotalArticleScoreStandardized(reCiterArticle.getTotalArticleScoreStandardized());
 
             // true; false; null. make it Boolean
-         // userAssertion TODO get from DB
+            // userAssertion TODO get from DB
             //if(goldStandardPmids != null && goldStandardPmids.contains(reCiterArticle.getArticleId())) {
-            if(reCiterArticle.getGoldStandard() == 1) {
-            	reCiterArticleFeature.setUserAssertion(PublicationFeedback.ACCEPTED);
+            if (reCiterArticle.getGoldStandard() == 1) {
+                reCiterArticleFeature.setUserAssertion(PublicationFeedback.ACCEPTED);
             } //else if(rejectedPmids != null && rejectedPmids.contains(reCiterArticle.getArticleId())) {
-            else if(reCiterArticle.getGoldStandard() == -1) {
-        			reCiterArticleFeature.setUserAssertion(PublicationFeedback.REJECTED);
-            } else if(reCiterArticle.getGoldStandard() == 0){
-            		reCiterArticleFeature.setUserAssertion(PublicationFeedback.NULL);
+            else if (reCiterArticle.getGoldStandard() == -1) {
+                reCiterArticleFeature.setUserAssertion(PublicationFeedback.REJECTED);
+            } else if (reCiterArticle.getGoldStandard() == 0) {
+                reCiterArticleFeature.setUserAssertion(PublicationFeedback.NULL);
             }
-            	
-            	
-            	
-             
 
             // PubDate
             reCiterArticleFeature.setPubDate(reCiterArticle.getPubDate());
@@ -217,8 +175,8 @@ public class ReCiterFeatureGenerator {
 
             Evidence evidence = new Evidence();
             // Affiliation Evidence
-            if(reCiterArticle.getAffiliationEvidence() != null) {
-            	evidence.setAffiliationEvidence(reCiterArticle.getAffiliationEvidence());
+            if (reCiterArticle.getAffiliationEvidence() != null) {
+                evidence.setAffiliationEvidence(reCiterArticle.getAffiliationEvidence());
             }
 
             // AuthorName Evidence (the most complete author name in the article)
@@ -229,18 +187,18 @@ public class ReCiterFeatureGenerator {
                 authorNameEvidence.setInstitutionalAuthorName(identity.getPrimaryName());
             }
             positiveEvidence.setAuthorNameEvidence(authorNameEvidence);*/
-            if(reCiterArticle.getAuthorNameEvidence() != null) {
-            	evidence.setAuthorNameEvidence(reCiterArticle.getAuthorNameEvidence());
+            if (reCiterArticle.getAuthorNameEvidence() != null) {
+                evidence.setAuthorNameEvidence(reCiterArticle.getAuthorNameEvidence());
             }
 
             // Grant Evidence
-            if(reCiterArticle.getGrantEvidence() != null) {
-            	evidence.setGrantEvidence(reCiterArticle.getGrantEvidence());
+            if (reCiterArticle.getGrantEvidence() != null) {
+                evidence.setGrantEvidence(reCiterArticle.getGrantEvidence());
             }
 
             // Relationship Evidence
-            if(reCiterArticle.getRelationshipEvidence() != null) {
-            	evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());
+            if (reCiterArticle.getRelationshipEvidence() != null) {
+                evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());
             }
 
             // Education Year Evidence
@@ -248,36 +206,36 @@ public class ReCiterFeatureGenerator {
             educationYearEvidence.setDiscrepancyDegreeYearBachelor(reCiterArticle.getBachelorsYearDiscrepancy());
             educationYearEvidence.setDiscrepancyDegreeYearDoctoral(reCiterArticle.getDoctoralYearDiscrepancy());
             reCiterArticle.setEducationYearEvidence(educationYearEvidence);*/
-            if(reCiterArticle.getEducationYearEvidence() != null) {
-            	evidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
+            if (reCiterArticle.getEducationYearEvidence() != null) {
+                evidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
             }
-            
-            if(reCiterArticle.getAcceptedRejectedEvidence() != null) {
-            	evidence.setAcceptedRejectedEvidence(reCiterArticle.getAcceptedRejectedEvidence());
+
+            if (reCiterArticle.getAcceptedRejectedEvidence() != null) {
+                evidence.setAcceptedRejectedEvidence(reCiterArticle.getAcceptedRejectedEvidence());
             }
-            
-            if(reCiterArticle.getOrganizationalUnitEvidences() != null) {
-            	evidence.setOrganizationalUnitEvidence(reCiterArticle.getOrganizationalUnitEvidences());
+
+            if (reCiterArticle.getOrganizationalUnitEvidences() != null) {
+                evidence.setOrganizationalUnitEvidence(reCiterArticle.getOrganizationalUnitEvidences());
             }
-            
-            if(reCiterArticle.getPersonTypeEvidence() != null) {
-            	evidence.setPersonTypeEvidence(reCiterArticle.getPersonTypeEvidence());
+
+            if (reCiterArticle.getPersonTypeEvidence() != null) {
+                evidence.setPersonTypeEvidence(reCiterArticle.getPersonTypeEvidence());
             }
-            
-            if(reCiterArticle.getEmailEvidence() != null) {
-            	evidence.setEmailEvidence(reCiterArticle.getEmailEvidence());
+
+            if (reCiterArticle.getEmailEvidence() != null) {
+                evidence.setEmailEvidence(reCiterArticle.getEmailEvidence());
             }
-            
-            if(reCiterArticle.getArticleCountEvidence() != null) {
-            	evidence.setArticleCountEvidence(reCiterArticle.getArticleCountEvidence());
+
+            if (reCiterArticle.getArticleCountEvidence() != null) {
+                evidence.setArticleCountEvidence(reCiterArticle.getArticleCountEvidence());
             }
-            
-            if(reCiterArticle.getAverageClusteringEvidence() != null) {
-            	evidence.setAverageClusteringEvidence(reCiterArticle.getAverageClusteringEvidence());
+
+            if (reCiterArticle.getAverageClusteringEvidence() != null) {
+                evidence.setAverageClusteringEvidence(reCiterArticle.getAverageClusteringEvidence());
             }
             // Clustering Evidence
             //positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
-            
+
             log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
             reCiterArticleFeature.setEvidence(evidence);
 
