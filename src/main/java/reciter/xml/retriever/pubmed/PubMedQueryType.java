@@ -23,6 +23,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
+
+import reciter.model.identity.AuthorName;
 import reciter.pubmed.retriever.PubMedQuery;
 
 public class PubMedQueryType {
@@ -32,6 +34,17 @@ public class PubMedQueryType {
 	
 	// QUery that tends to return less results than the lenient query.
 	private PubMedQueryResult strictQuery;
+	
+	private PubMedQueryResult lenientCountQuery;
+	
+	private PubMedQueryResult strictCountQuery;
+	
+	private PubMedQueryResult derivedQuery;
+	
+	public enum PubMedQueryMode {
+		LENIENT,
+		STRICT
+	}
 
 	public PubMedQueryResult getLenientQuery() {
 		return lenientQuery;
@@ -49,9 +62,35 @@ public class PubMedQueryType {
 		this.strictQuery = strictQuery;
 	}
 	
+	
+	public PubMedQueryResult getLenientCountQuery() {
+		return lenientCountQuery;
+	}
+
+	public void setLenientCountQuery(PubMedQueryResult lenientCountQuery) {
+		this.lenientCountQuery = lenientCountQuery;
+	}
+
+	public PubMedQueryResult getStrictCountQuery() {
+		return strictCountQuery;
+	}
+
+	public void setStrictCountQuery(PubMedQueryResult strictCountQuery) {
+		this.strictCountQuery = strictCountQuery;
+	}
+	
+
+	public PubMedQueryResult getDerivedQuery() {
+		return derivedQuery;
+	}
+
+	public void setDerivedQuery(PubMedQueryResult derivedQuery) {
+		this.derivedQuery = derivedQuery;
+	}
+
 	@Override
 	public String toString() {
-		return "PubMedQueryType [lenientQuery=" + lenientQuery + ", strictQuery=" + strictQuery + "]";
+		return "PubMedQueryType [lenientQuery=" + lenientQuery + ", strictQuery=" + strictQuery + ", lenientCountQuery=" + lenientCountQuery + ", strictCountQuery=" + strictCountQuery + "]";
 	}
 
 	/**
@@ -60,7 +99,9 @@ public class PubMedQueryType {
 	public static class PubMedQueryBuilder {
 		private String lastName;
 		private String firstName;
+		private List<AuthorName> identityAuthorNames;
 		private boolean isAuthorRequired;
+		private boolean isAuthorFullNameRequired;
 
 		// TODO update to LocalDate
 		private Date startDate;
@@ -81,10 +122,12 @@ public class PubMedQueryType {
 			this.pmids = pmids;
 		}
 		
-		public PubMedQueryBuilder author(boolean isAuthorRequired, String lastName, String firstName) {
+		public PubMedQueryBuilder author(boolean isAuthorRequired, boolean isAuthorFullNameRequired, List<AuthorName> authorNames) {
 			this.isAuthorRequired = isAuthorRequired;
-			this.lastName = lastName;
-			this.firstName = firstName;
+			this.isAuthorFullNameRequired = isAuthorFullNameRequired;
+			//this.lastName = lastName;
+			//this.firstName = firstName;
+			this.identityAuthorNames = authorNames;
 			return this;
 		}
 		
@@ -98,7 +141,8 @@ public class PubMedQueryType {
 		public PubMedQuery build() {
 			PubMedQuery p = PubMedQuery.builder().build();
 			if (isAuthorRequired) {
-				p.setAuthor(lastName + " " + firstName);
+				//p.setAuthor(lastName + " " + firstName);
+				p.setAuthor(contsructAuthorQuery());
 			}
 			if (isDateRangeRequired) {
 				p.setStart(startDate);
@@ -120,6 +164,47 @@ public class PubMedQueryType {
 			PubMedQuery p =  PubMedQuery.builder().strategyQuery(StringUtils.join(pmidsUid, ",")).build();
 			//PubMedQuery p =  PubMedQuery.builder().strategyQuery(pmidsUid.toString()).build();
 			return p;
+		}
+		
+		public String contsructAuthorQuery() {
+			if (this.identityAuthorNames != null && this.identityAuthorNames.size() > 0) {
+
+				// Below is code from Apache's StringUtils class, modified to remove null checks.
+				Iterator<AuthorName> iterator = this.identityAuthorNames.iterator();
+
+				final AuthorName first = iterator.next();
+				String firstName = first.getLastName() + " " + first.getFirstInitial();
+				if(this.isAuthorFullNameRequired) {
+					firstName = first.getLastName() + " " + first.getFirstName();
+				}
+				if (!iterator.hasNext()) {
+					return firstName;
+				}
+
+				// two or more elements
+				final StringBuilder buf = new StringBuilder(); 
+				if (first != null) {
+					buf.append(firstName);
+				}
+
+				while (iterator.hasNext()) {
+					buf.append(" OR ");
+					final AuthorName obj = iterator.next();
+
+					// data cleaning: sometimes emails would have ',' instead of '.'
+					// i.e. (ayr2001@med.cornell,edu)
+					// replace ',' with '.'
+					if(this.isAuthorFullNameRequired) { //For FullName Strict retrieval strategy
+						buf.append(obj.getLastName() + " " + obj.getFirstName());
+					} else {
+						buf.append(obj.getLastName() + " " + obj.getFirstInitial());
+					}
+					
+				}
+				return buf.toString();
+			} else {
+				return null;
+			}
 		}
 		
 //		private static final int THRESHOLD = 25;

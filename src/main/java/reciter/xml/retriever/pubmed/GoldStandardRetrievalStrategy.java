@@ -76,6 +76,8 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));
 		pubMedQueryType.setStrictQuery(new PubMedQueryResult(goldStandardQuery));
+		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(goldStandardQuery));
+		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(goldStandardQuery));
 		pubMedQueries.add(pubMedQueryType);
 
 		return pubMedQueries;
@@ -88,10 +90,15 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder()
 				.dateRange(true, startDate, endDate);
 		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids());
+		
+		PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder();
+		PubMedQuery goldStandardCountQuery = pubMedQueryBuilderCount.buildPmids(dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids());
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));
 		pubMedQueryType.setStrictQuery(new PubMedQueryResult(goldStandardQuery));
+		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(goldStandardCountQuery));
+		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(goldStandardCountQuery));
 		pubMedQueries.add(pubMedQueryType);
 
 		return pubMedQueries;

@@ -89,6 +89,8 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
 		pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
+		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQuery));
+		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQuery));
 		pubMedQueries.add(pubMedQueryType);
 
 		return pubMedQueries;
@@ -101,10 +103,15 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity))
 				.dateRange(true, startDate, endDate);
 		PubMedQuery emailQuery = pubMedQueryBuilder.build();
+		
+		PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder(constructEmailQuery(identity));
+		PubMedQuery emailQueryCount = pubMedQueryBuilderCount.build();
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
 		pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
+		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQueryCount));
+		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQueryCount));
 		pubMedQueries.add(pubMedQueryType);
 
 		return pubMedQueries;

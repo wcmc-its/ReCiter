@@ -38,6 +38,7 @@ import reciter.xml.retriever.pubmed.AffiliationRetrievalStrategy;
 import reciter.xml.retriever.pubmed.DepartmentRetrievalStrategy;
 import reciter.xml.retriever.pubmed.EmailRetrievalStrategy;
 import reciter.xml.retriever.pubmed.FirstNameInitialRetrievalStrategy;
+import reciter.xml.retriever.pubmed.FullNameRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
@@ -73,6 +74,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	protected FirstNameInitialRetrievalStrategy firstNameInitialRetrievalStrategy;
 	
 	@Autowired
+	protected FullNameRetrievalStrategy fullNameRetrievalStrategy;
+	
+	@Autowired
 	protected GoldStandardRetrievalStrategy goldStandardRetrievalStrategy;
 	
 	@Autowired
@@ -93,16 +97,30 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
-		ESearchPmid eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date());
+		ESearchPmid eSearchPmid = null;
+		if(pmids.size() > 0) {
+			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date());
+		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
 		if (eSearchResultDb == null) {
 			List<ESearchPmid> eSearchPmids = new ArrayList<>();
-			eSearchPmids.add(eSearchPmid);
-			eSearchResultService.save(new ESearchResult(uid, eSearchPmids));
+			if(eSearchPmid != null) {
+				eSearchPmids.add(eSearchPmid);
+			}
+			if(eSearchPmids.size() > 0) {
+				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids));
+			}
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
-			eSearchPmids.add(eSearchPmid);
-			eSearchResultService.save(new ESearchResult(uid, eSearchPmids));
+			if(eSearchPmid != null) {
+				eSearchPmids.add(eSearchPmid);
+			}
+			if(eSearchPmids.size() > 0) {
+				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids));
+			} else {
+				eSearchResultDb.setRetrievalDate(new Date());
+				eSearchResultService.save(eSearchResultDb);
+			}
 		}
 	}
 }

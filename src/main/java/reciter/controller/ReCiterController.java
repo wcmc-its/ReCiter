@@ -65,9 +65,11 @@ import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
+import reciter.xml.retriever.engine.RetrievalRefreshFlag;
 
 import java.io.IOException;
 import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -171,7 +173,7 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity retrieveArticles(boolean refreshFlag) {
+    public ResponseEntity retrieveArticles(RetrievalRefreshFlag refreshFlag) {
         long startTime = System.currentTimeMillis();
         slf4jLogger.info("Start time is: " + startTime);
         LocalDate initial = LocalDate.now();
@@ -181,7 +183,7 @@ public class ReCiterController {
 
         List<Identity> identities = identityService.findAll();
         try {
-            aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
+            aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
         } catch (IOException e) {
             slf4jLogger.info("Failed to retrieve articles.", e);
         }
@@ -199,14 +201,14 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity retrieveArticlesByUid(String uid, boolean refreshFlag) {
+    public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
         long startTime = System.currentTimeMillis();
         long estimatedTime = 0;
         slf4jLogger.info("Start time is: " + startTime);
         List<Identity> identities = new ArrayList<>();
         LocalDate initial = LocalDate.now();
         LocalDate startDate = initial.withDayOfMonth(1);
-        LocalDate endDate = initial.withDayOfMonth(initial.lengthOfMonth());
+        LocalDate endDate = LocalDate.parse("3000-01-01"); 
         Identity identity;
 
         try {
@@ -218,26 +220,51 @@ public class ReCiterController {
         }
         //Clean up the ESearchResult Table if set refreshFlag is set
         try {
-            if (!refreshFlag && eSearchResultService.findByUid(uid.trim()) != null) {
+            if ((refreshFlag == RetrievalRefreshFlag.FALSE 
+            		||
+            		refreshFlag == null) 
+            		&& 
+            		eSearchResultService.findByUid(uid.trim()) != null) {
                 slf4jLogger.info("Using the cached retrieval articles for " + uid + ". Skipping the retrieval process");
                 estimatedTime = System.currentTimeMillis() - startTime;
                 slf4jLogger.info("elapsed time: " + estimatedTime);
                 return ResponseEntity.status(HttpStatus.OK).body("The cached results of uid " + uid + " will be used since refreshFlag is not set to true");
-            } else {
+            } else if(refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS){
                 if (eSearchResultService.findByUid(uid.trim()) != null)
                     eSearchResultService.delete(uid.trim());
+                
                 if (identity != null)
                     identities.add(identity);
 
                 try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate));
+                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
                 } catch (IOException e) {
                     slf4jLogger.info("Failed to retrieve articles.", e);
                     estimatedTime = System.currentTimeMillis() - startTime;
                     slf4jLogger.info("elapsed time: " + estimatedTime);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retreieve articles");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                 }
 
+            } else if(refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
+            	if (identity != null)
+                    identities.add(identity);
+            	ESearchResult eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
+            	if (eSearchResult != null) {
+            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(eSearchResult.getRetrievalDate()));
+            	} else {
+            		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
+            	}
+            	
+            	try {
+                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
+                } catch (IOException e) {
+                    slf4jLogger.info("Failed to retrieve articles.", e);
+                    estimatedTime = System.currentTimeMillis() - startTime;
+                    slf4jLogger.info("elapsed time: " + estimatedTime);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
+                }
+            	
+            	
             }
         } catch (EmptyResultDataAccessException e) {
             slf4jLogger.info("No such entity exists: ", e);
@@ -308,7 +335,7 @@ public class ReCiterController {
         try {
             eSearchResults = eSearchResultService.findByUid(uid);
             if (eSearchResults == null) {
-                retrieveArticlesByUid(uid, true);
+                retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 eSearchResults = eSearchResultService.findByUid(uid);
             }
         } catch (EmptyResultDataAccessException e) {

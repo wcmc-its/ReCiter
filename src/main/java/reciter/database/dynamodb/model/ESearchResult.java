@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -16,6 +17,7 @@ import java.util.List;
 public class ESearchResult {
 
     private String uid;
+    private Date retrievalDate;
     private List<ESearchPmid> eSearchPmids;
 
     @DynamoDBHashKey(attributeName = "uid")
@@ -34,5 +36,12 @@ public class ESearchResult {
 
     public void setESearchPmids(List<ESearchPmid> eSearchPmids) {
         this.eSearchPmids = eSearchPmids;
+    }
+    
+    public Date getRetrievalDate() {
+        return retrievalDate;
+    }
+    public void setRetrievalDate(Date retrievalDate) {
+        this.retrievalDate = retrievalDate;
     }
 }

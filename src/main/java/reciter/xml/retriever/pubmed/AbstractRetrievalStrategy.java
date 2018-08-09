@@ -35,6 +35,7 @@ import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
+import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryMode;
 
 @Configurable
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
@@ -91,7 +92,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		this.isRetrieveExceedThreshold = isRetrieveExceedThreshold;
 	}
 
-	protected abstract List<PubMedQueryType> buildQuery(Identity identity);;
+	protected abstract List<PubMedQueryType> buildQuery(Identity identity);
 	protected abstract List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate);
 
 	@Override
@@ -125,26 +126,29 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		List<PubMedQueryResult> pubMedQueryResults = new ArrayList<PubMedQueryResult>();
 
 		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
+			slf4jLogger.info("Constructed lenient count query {}", pubMedQueryType.getLenientCountQuery().getQuery());
 			slf4jLogger.info("Constructed lenient query {}", pubMedQueryType.getLenientQuery().getQuery());
-			PubMedQuery encodedInitialQuery = pubMedQueryType.getLenientQuery().getQuery();
-			int handler = getNumberOfResults(encodedInitialQuery);
+			//PubMedQuery encodedInitialQuery = pubMedQueryType.getLenientQuery().getQuery();
+			PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
+			int handler = getNumberOfResults(encodedInitialCountQuery);
 
 			// check number of PubMed results returned by initial query.
 			// If it's greater than the threshold, query using the strict query.
 			pubMedQueryType.getLenientQuery().setNumResult(handler);
 
 			if (handler > DEFAULT_THRESHOLD) {
-				PubMedQuery constructedStrictQuery = pubMedQueryType.getStrictQuery().getQuery();
-//				slf4jLogger.info("Constructed strict query {}", constructedStrictQuery);
+				PubMedQuery constructedStrictCountQuery = pubMedQueryType.getStrictCountQuery().getQuery();
+				slf4jLogger.info("Constructed strict count query {}", constructedStrictCountQuery);
+				slf4jLogger.info("Constructed strict query {}", pubMedQueryType.getStrictQuery().getQuery());
 //				String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
-				int strictSearchHandler = getNumberOfResults(constructedStrictQuery);
+				int strictSearchHandler = getNumberOfResults(constructedStrictCountQuery);
 
 				pubMedQueryType.getStrictQuery().setNumResult(strictSearchHandler);
 
 				// only retrieve articles if number is less than threshold, otherwise the article download
 				// may take too long
 				if (strictSearchHandler <= DEFAULT_THRESHOLD) {
-					List<PubMedArticle> result = retrievePubMed(constructedStrictQuery, strictSearchHandler);
+					List<PubMedArticle> result = retrievePubMed(pubMedQueryType.getStrictQuery().getQuery(), strictSearchHandler);
 					for (PubMedArticle pubMedArticle : result) {
 						long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 						if (!pubMedArticles.containsKey(pmid)) {
@@ -154,7 +158,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 					pubMedQueryType.getStrictQuery().setUsed(true);
 				}
 			} else {
-				List<PubMedArticle> result = retrievePubMed(encodedInitialQuery, handler);
+				List<PubMedArticle> result = retrievePubMed(pubMedQueryType.getLenientQuery().getQuery(), handler);
 				for (PubMedArticle pubMedArticle : result) {
 					long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
 					if (!pubMedArticles.containsKey(pmid)) {

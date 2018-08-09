@@ -315,4 +315,10 @@ public class StrategyParameters {
 
     @Value("${strategy.authorAffiliationScoringStrategy.institutionStopwords}")
     private String instAfflInstitutionStopwords;
+    
+    @Value("${searchStrategy-leninent-threshold}")
+    private double searchStrategyStrictThreshold;
+    
+    @Value("${searchStrategy-strict-threshold}")
+    private double searchStrategyLeninentThreshold;
 }
