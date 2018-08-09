@@ -20,6 +20,7 @@ package reciter.xml.retriever.pubmed;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class FullNameRetrievalStrategy extends AbstractNameRetrievalStrategy {
 		return retrievalStrategyName;
 	}
 	@Override
-	protected PubMedQuery buildNameQuery(List<AuthorName> identitynames, Identity identity) {
+	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder()
 					.author(true, true, identitynames);
@@ -52,7 +53,7 @@ public class FullNameRetrievalStrategy extends AbstractNameRetrievalStrategy {
 	}
 
 	@Override
-	protected PubMedQuery buildNameQuery(List<AuthorName> identitynames, Identity identity, Date startDate,
+	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
 			Date endDate) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder()

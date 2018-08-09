@@ -38,13 +38,6 @@ public class PubMedQueryType {
 	private PubMedQueryResult lenientCountQuery;
 	
 	private PubMedQueryResult strictCountQuery;
-	
-	private PubMedQueryResult derivedQuery;
-	
-	public enum PubMedQueryMode {
-		LENIENT,
-		STRICT
-	}
 
 	public PubMedQueryResult getLenientQuery() {
 		return lenientQuery;
@@ -78,15 +71,6 @@ public class PubMedQueryType {
 	public void setStrictCountQuery(PubMedQueryResult strictCountQuery) {
 		this.strictCountQuery = strictCountQuery;
 	}
-	
-
-	public PubMedQueryResult getDerivedQuery() {
-		return derivedQuery;
-	}
-
-	public void setDerivedQuery(PubMedQueryResult derivedQuery) {
-		this.derivedQuery = derivedQuery;
-	}
 
 	@Override
 	public String toString() {
@@ -99,7 +83,7 @@ public class PubMedQueryType {
 	public static class PubMedQueryBuilder {
 		private String lastName;
 		private String firstName;
-		private List<AuthorName> identityAuthorNames;
+		private Set<AuthorName> identityAuthorNames;
 		private boolean isAuthorRequired;
 		private boolean isAuthorFullNameRequired;
 
@@ -122,7 +106,7 @@ public class PubMedQueryType {
 			this.pmids = pmids;
 		}
 		
-		public PubMedQueryBuilder author(boolean isAuthorRequired, boolean isAuthorFullNameRequired, List<AuthorName> authorNames) {
+		public PubMedQueryBuilder author(boolean isAuthorRequired, boolean isAuthorFullNameRequired, Set<AuthorName> authorNames) {
 			this.isAuthorRequired = isAuthorRequired;
 			this.isAuthorFullNameRequired = isAuthorFullNameRequired;
 			//this.lastName = lastName;
@@ -190,10 +174,6 @@ public class PubMedQueryType {
 				while (iterator.hasNext()) {
 					buf.append(" OR ");
 					final AuthorName obj = iterator.next();
-
-					// data cleaning: sometimes emails would have ',' instead of '.'
-					// i.e. (ayr2001@med.cornell,edu)
-					// replace ',' with '.'
 					if(this.isAuthorFullNameRequired) { //For FullName Strict retrieval strategy
 						buf.append(obj.getLastName() + " " + obj.getFirstName());
 					} else {

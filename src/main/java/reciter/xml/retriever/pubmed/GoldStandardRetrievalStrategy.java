@@ -28,11 +28,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
+import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
@@ -67,7 +69,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
@@ -84,7 +86,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder()
