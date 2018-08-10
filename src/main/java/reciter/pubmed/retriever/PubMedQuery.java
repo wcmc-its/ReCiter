@@ -37,7 +37,8 @@ public class PubMedQuery {
 //        return author + "[au]" + " AND " + dt.format(start) + ":" + dt.format(end) + "[DP]";
         List<String> parts = new ArrayList<String>();
         if (author != null) {
-            parts.add(author + " [au]");
+            //parts.add(author + " [au]");
+        	parts.add(author);
         }
         if (start != null && end != null) {
             parts.add(dt.format(start) + ":" + dt.format(end) + "[DP]");

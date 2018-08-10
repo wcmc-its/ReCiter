@@ -124,7 +124,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		String uid = identity.getUid();
 		
-		Map<IdentityNameType, Set<AuthorName>> identityNames = new HashMap<IdentityNameType, Set<AuthorName>>();
+		Map<IdentityNameType, Set<AuthorName>> identityNames = new LinkedHashMap<IdentityNameType, Set<AuthorName>>();
 		identityAuthorNames(identity, identityNames);
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
 		
@@ -277,7 +277,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		String uid = identity.getUid();
 		
-		Map<IdentityNameType, Set<AuthorName>> identityNames = new HashMap<IdentityNameType, Set<AuthorName>>();
+		Map<IdentityNameType, Set<AuthorName>> identityNames = new LinkedHashMap<IdentityNameType, Set<AuthorName>>();
 		identityAuthorNames(identity, identityNames);
 		
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
@@ -475,7 +475,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				identityDerivedNames.addAll(deriveAdditionalName(authorName));
 			}
 			
-			identityAuthorNames.add(identityPrimaryName);
+			identityAuthorNames.add(authorName);
 		}
 		identityNames.put(IdentityNameType.ORIGINAL, identityAuthorNames);
 		identityNames.put(IdentityNameType.DERIVED, identityDerivedNames);
