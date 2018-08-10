@@ -62,8 +62,9 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 		String firstInitial = identity.getPrimaryName().getFirstInitial();
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
+		Set<AuthorName> originalIdentityNames = new HashSet<>();
 		for(Entry<IdentityNameType, Set<AuthorName>> identityName: identityNames.entrySet()) {
-			Set<AuthorName> originalIdentityNames = new HashSet<>();
+			
 			if(identityName.getKey() == IdentityNameType.ORIGINAL) {
 				originalIdentityNames = identityName.getValue();
 				pubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));

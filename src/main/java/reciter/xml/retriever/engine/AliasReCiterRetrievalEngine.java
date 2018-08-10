@@ -175,8 +175,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				&&
 				r1.getPubMedQueryResults().size() > 0
 				&&
-				r1.getPubMedQueryResults().get(0).isUsed()
-				&&
 				r1.getPubMedQueryResults().get(0).getNumResult() < searchStrategyLeninentThreshold) {
 			pubMedArticles.putAll(r1.getPubMedArticles());
 			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults());
@@ -186,8 +184,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
-				&&
-				r1.getPubMedQueryResults().get(0).isUsed()
 				&&
 				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold
 				||
@@ -211,6 +207,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			pubMedArticles.putAll(r5.getPubMedArticles());
 			savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
 			uniquePmids.addAll(r5.getPubMedArticles().keySet());
+			
+			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
+			pubMedArticles.putAll(r6.getPubMedArticles());
+			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults());
+			uniquePmids.addAll(r6.getPubMedArticles().keySet());
 		}
 		
 		
@@ -329,8 +330,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				&&
 				r1.getPubMedQueryResults().size() > 0
 				&&
-				r1.getPubMedQueryResults().get(0).isUsed()
-				&&
 				r1.getPubMedQueryResults().get(0).getNumResult() < searchStrategyLeninentThreshold) {
 			pubMedArticles.putAll(r1.getPubMedArticles());
 			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults());
@@ -340,8 +339,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
-				&&
-				r1.getPubMedQueryResults().get(0).isUsed()
 				&&
 				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold
 				||
