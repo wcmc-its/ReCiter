@@ -20,6 +20,7 @@ package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.model.identity.OrganizationalUnit;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
@@ -43,7 +45,25 @@ public class DepartmentRetrievalStrategy extends AbstractNameRetrievalStrategy {
 	@Override
 	protected String getStrategySpecificKeyword(Identity identity) {
 		if (identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
-			return identity.getOrganizationalUnits().get(0).getOrganizationalUnitLabel();
+			Iterator<OrganizationalUnit> iter = identity.getOrganizationalUnits().iterator();
+			final OrganizationalUnit firstDepartment = iter.next(); 
+			final String first	= firstDepartment.getOrganizationalUnitLabel() + "[affiliation]";
+			if (!iter.hasNext()) {
+				return first;
+			}
+			
+			//for more than 1 institutions 
+			final StringBuilder buf = new StringBuilder();
+			if(first != null) {
+				buf.append("(" + first);
+			} 
+			while(iter.hasNext()) {
+				OrganizationalUnit orgUnit = iter.next();
+				buf.append(" OR ");
+				buf.append(orgUnit.getOrganizationalUnitLabel() + "[affiliation]");
+			}
+			buf.append(")");
+			return buf.toString();
 		} else {
 			return null;
 		}
