@@ -489,10 +489,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	 */
 	private Set<AuthorName> deriveAdditionalName(AuthorName identityName) {
 		String[] possibleLastName = identityName.getLastName().split("\\s+|-", 2);
+		Set<AuthorName> derivedAuthorNames = new HashSet<AuthorName>();
 		if(possibleLastName[0].length() >=4 
 				&&
 				possibleLastName[1].length() >=4) {
-			Set<AuthorName> derivedAuthorNames = new HashSet<AuthorName>();
+			
 			String middleName = null;
 			if(identityName.getMiddleName() != null) {
 				middleName = identityName.getMiddleName();
@@ -503,6 +504,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			derivedAuthorNames.add(authorName2);
 			return derivedAuthorNames;
 		}
-		return null;
+		return derivedAuthorNames;
 	}
 }
