@@ -459,7 +459,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		//For any name in primaryName or alternateNames, does targetAuthor have a surname, which satisfies these conditions: 
 		//contains a space or dash; if you break up the name at the first space or dash, there would be two strings of four characters or greater
-		if(identityPrimaryName.getLastName().contains(" ") || identityPrimaryName.getLastName().contains("-")) {
+		if(identityPrimaryName.getLastName().contains(" ") || identityPrimaryName.getLastName().contains("-")
+				||
+				(identityPrimaryName.getFirstName().contains(" ") || identityPrimaryName.getFirstName().contains("."))//Cases for W. Clay[firstName] Bracken[lastName]- W.[firstName] Clay[middleName] Bracken[lastName] - W Clay[firstName] Bracken[lastName]
+				||
+				(identityPrimaryName.getFirstName().length() ==1 && identityPrimaryName.getMiddleName() != null)
+				) {
 			identityDerivedNames.addAll(deriveAdditionalName(identityPrimaryName));
 		}
 		
@@ -471,7 +476,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if(authorName.getMiddleName() != null) {
 				authorName.setMiddleName(ReCiterStringUtil.deAccent(authorName.getMiddleName()));
 			}
-			if(authorName.getLastName().contains(" ") || authorName.getLastName().contains("-")) {
+			if(authorName.getLastName().contains(" ") || authorName.getLastName().contains("-")
+					||
+					(authorName.getFirstName().contains(" ") || authorName.getFirstName().contains("."))
+					||
+					(authorName.getFirstName().length() ==1 && authorName.getMiddleName() != null)) {
 				identityDerivedNames.addAll(deriveAdditionalName(authorName));
 			}
 			
@@ -488,22 +497,49 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	 * @return
 	 */
 	private Set<AuthorName> deriveAdditionalName(AuthorName identityName) {
-		String[] possibleLastName = identityName.getLastName().split("\\s+|-", 2);
+		
 		Set<AuthorName> derivedAuthorNames = new HashSet<AuthorName>();
-		if(possibleLastName[0].length() >=4 
-				&&
-				possibleLastName[1].length() >=4) {
-			
+		if(identityName.getLastName().contains(" ") || identityName.getLastName().contains(".")) {
+			String[] possibleLastName = identityName.getLastName().split("\\s+|-", 2);
+			if(possibleLastName[0].length() >=4 
+					&&
+					possibleLastName[1].length() >=4) {
+				
+				String middleName = null;
+				if(identityName.getMiddleName() != null) {
+					middleName = identityName.getMiddleName();
+				}
+				AuthorName authorName1 = new AuthorName(identityName.getFirstName(), middleName, possibleLastName[0].trim());
+				AuthorName authorName2 = new AuthorName(identityName.getFirstName(), middleName, possibleLastName[1].trim());
+				derivedAuthorNames.add(authorName1);
+				derivedAuthorNames.add(authorName2);
+			}
+		}
+		if(identityName.getFirstName().contains(" ") || identityName.getFirstName().contains(".")) {
 			String middleName = null;
 			if(identityName.getMiddleName() != null) {
 				middleName = identityName.getMiddleName();
 			}
-			AuthorName authorName1 = new AuthorName(identityName.getFirstName(), middleName, possibleLastName[0]);
-			AuthorName authorName2 = new AuthorName(identityName.getFirstName(), middleName, possibleLastName[1]);
-			derivedAuthorNames.add(authorName1);
-			derivedAuthorNames.add(authorName2);
-			return derivedAuthorNames;
+			if(identityName.getFirstName().trim().endsWith(".") && middleName != null) {
+				AuthorName authorName1 = new AuthorName(middleName, null, identityName.getLastName());//W.[firstName] Clay[middleName] Bracken[lastName]
+				derivedAuthorNames.add(authorName1);
+			}
+			if(identityName.getFirstName().contains(" ")) {
+				String[] possibleFirstName = identityName.getLastName().split("\\s+", 2);
+				AuthorName authorName1 = new AuthorName(possibleFirstName[1], middleName, identityName.getLastName());//W Clay[firstName] Bracken[lastName]
+				derivedAuthorNames.add(authorName1);
+			}	
+			if(identityName.getFirstName().contains(". ")) {
+				String[] possibleFirstName = identityName.getLastName().split(".\\s+", 2);
+				AuthorName authorName1 = new AuthorName(possibleFirstName[1], middleName, identityName.getLastName());//W. Clay[firstName] Bracken[lastName]
+				derivedAuthorNames.add(authorName1);
+			}
 		}
+		if(identityName.getFirstName().length() ==1 && identityName.getMiddleName() != null) {//Case for W[firstName] Clay[middleName] Bracken[lastName]
+			AuthorName authorName1 = new AuthorName(identityName.getMiddleName(), null, identityName.getLastName());
+			derivedAuthorNames.add(authorName1);
+		}
+		
 		return derivedAuthorNames;
 	}
 }
