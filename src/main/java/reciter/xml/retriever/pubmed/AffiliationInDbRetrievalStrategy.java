@@ -20,6 +20,7 @@ package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -42,7 +43,23 @@ public class AffiliationInDbRetrievalStrategy extends AbstractNameRetrievalStrat
 
 	protected String getStrategySpecificKeyword(Identity identity) {
 		if (identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
-			return identity.getInstitutions().get(0);
+			Iterator<String> iter = identity.getInstitutions().iterator();
+			final String firstInst = iter.next().replaceAll("\\(", "").replaceAll("\\)", "") + "[affiliation]";
+			if (!iter.hasNext()) {
+				return firstInst;
+			}
+			
+			//for more than 1 institutions 
+			final StringBuilder buf = new StringBuilder();
+			if(firstInst != null) {
+				buf.append("(" + firstInst);
+			} 
+			while(iter.hasNext()) {
+				buf.append(" OR ");
+				buf.append(iter.next().replaceAll("\\(", "").replaceAll("\\)", "") + "[affiliation]");
+			}
+			buf.append(")");
+			return buf.toString();
 		} else {
 			return null;
 		}
