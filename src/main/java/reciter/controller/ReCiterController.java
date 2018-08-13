@@ -342,7 +342,12 @@ public class ReCiterController {
             slf4jLogger.info("No such entity exists: ", e);
         }
         slf4jLogger.info("eSearchResults size {}", eSearchResults);
+        //This is when Pubmed returns 0 results.
+        if(eSearchResults == null) {
+        	return null;
+        }
         Set<Long> pmids = new HashSet<>();
+        
         for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
             if (!strategyParameters.isUseGoldStandardEvidence() && StringUtils.equalsIgnoreCase(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
                 slf4jLogger.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
