@@ -19,43 +19,63 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
-import reciter.model.identity.PubMedAlias;
 import reciter.pubmed.retriever.PubMedQuery;
+import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 
 public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractNameRetrievalStrategy.class);
 
-	protected abstract PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity);
-	protected abstract PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate, Date endDate);
+	//protected abstract PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity);
+	protected abstract PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity);
+	//protected abstract PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate, Date endDate);
+	protected abstract PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate, Date endDate);
+	
+
+	
 	protected abstract String getStrategySpecificKeyword(Identity identity);
 	
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
-		String lastName = identity.getPrimaryName().getLastName();
-		String firstName = identity.getPrimaryName().getFirstName();
-		String firstInitial = identity.getPrimaryName().getFirstInitial();
-
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		pubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(lastName, firstInitial, identity)));
-		pubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(lastName, firstName, identity)));
-
+		Set<AuthorName> originalIdentityNames = new HashSet<>();
+		for(Entry<IdentityNameType, Set<AuthorName>> identityName: identityNames.entrySet()) {
+			
+			if(identityName.getKey() == IdentityNameType.ORIGINAL) {
+				originalIdentityNames = identityName.getValue();
+				pubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
+				pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
+			} else {
+				if(identityName.getValue().size() > 0) {
+					pubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
+					pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
+				} else {
+					pubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(originalIdentityNames, identity)));
+					pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(buildNameQuery(originalIdentityNames, identity)));
+				}
+			}
+		}
+		
+		
 		pubMedQueries.add(pubMedQueryType);
 		slf4jLogger.info("Constructed lenient query: {}" + pubMedQueryType.getLenientQuery().getQuery());
 		slf4jLogger.info("Constructed strict query: {}" + pubMedQueryType.getStrictQuery().getQuery());
-		for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
+		/*for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
 
 			AuthorName alias = pubMedAlias.getAuthorName();
 			String aliasLastName = alias.getLastName();
@@ -65,8 +85,10 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 			PubMedQueryType aliasPubMedQueryType = new PubMedQueryType();
 			aliasPubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstInitial, identity)));
 			aliasPubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstName, identity)));
+			aliasPubMedQueryType.setLenientCountQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstInitial, identity)));
+			aliasPubMedQueryType.setStrictCountQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstName, identity)));
 			pubMedQueries.add(aliasPubMedQueryType);
-		}
+		}*/
 		
 		for (PubMedQueryType query : pubMedQueries) {
 			slf4jLogger.info(query.toString());
@@ -75,20 +97,30 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-
-		String lastName = identity.getPrimaryName().getLastName();
-		String firstName = identity.getPrimaryName().getFirstName();
-		String firstInitial = identity.getPrimaryName().getFirstInitial();
-
+		
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		pubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(lastName, firstInitial, identity, startDate, endDate)));
-		pubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(lastName, firstName, identity, startDate, endDate)));
+		for(Entry<IdentityNameType, Set<AuthorName>> identityName: identityNames.entrySet()) {
+			Set<AuthorName> originalIdentityNames = new HashSet<>();
+			if(identityName.getKey() == IdentityNameType.ORIGINAL) {
+				originalIdentityNames = identityName.getValue();
+				pubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity, startDate, endDate)));
+				pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
+			} else {
+				if(identityName.getValue().size() > 0) {
+					pubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity, startDate, endDate)));
+					pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
+				} else {
+					pubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(originalIdentityNames, identity, startDate, endDate)));
+					pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(buildNameQuery(originalIdentityNames, identity)));
+				}
+			}
+		}
 
 		pubMedQueries.add(pubMedQueryType);
 		
-		for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
+		/*for (PubMedAlias pubMedAlias : identity.getPubMedAlias()) {
 
 			AuthorName alias = pubMedAlias.getAuthorName();
 			String aliasLastName = alias.getLastName();
@@ -98,8 +130,10 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 			PubMedQueryType aliasPubMedQueryType = new PubMedQueryType();
 			aliasPubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstInitial, identity, startDate, endDate)));
 			aliasPubMedQueryType.setStrictQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstName, identity, startDate, endDate)));
+			aliasPubMedQueryType.setLenientCountQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstInitial, identity)));
+			aliasPubMedQueryType.setStrictCountQuery(new PubMedQueryResult(buildNameQuery(aliasLastName, aliasFirstName, identity)));
 			pubMedQueries.add(aliasPubMedQueryType);
-		}
+		}*/
 
 		return pubMedQueries;
 	}

@@ -24,11 +24,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.pubmed.retriever.PubMedQuery;
+import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 /**
@@ -80,7 +84,7 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity));
@@ -89,22 +93,29 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
 		pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
+		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQuery));
+		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQuery));
 		pubMedQueries.add(pubMedQueryType);
 
 		return pubMedQueries;
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, Date startDate, Date endDate) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity))
 				.dateRange(true, startDate, endDate);
 		PubMedQuery emailQuery = pubMedQueryBuilder.build();
+		
+		PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder(constructEmailQuery(identity));
+		PubMedQuery emailQueryCount = pubMedQueryBuilderCount.build();
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
 		pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
+		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQueryCount));
+		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQueryCount));
 		pubMedQueries.add(pubMedQueryType);
 
 		return pubMedQueries;

@@ -20,9 +20,13 @@ package reciter.xml.retriever.pubmed;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
@@ -39,27 +43,43 @@ public class AffiliationInDbRetrievalStrategy extends AbstractNameRetrievalStrat
 
 	protected String getStrategySpecificKeyword(Identity identity) {
 		if (identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
-			return identity.getInstitutions().get(0);
+			Iterator<String> iter = identity.getInstitutions().iterator();
+			final String firstInst = iter.next().replaceAll("\\(", "").replaceAll("\\)", "") + "[affiliation]";
+			if (!iter.hasNext()) {
+				return firstInst;
+			}
+			
+			//for more than 1 institutions 
+			final StringBuilder buf = new StringBuilder();
+			if(firstInst != null) {
+				buf.append("(" + firstInst);
+			} 
+			while(iter.hasNext()) {
+				buf.append(" OR ");
+				buf.append(iter.next().replaceAll("\\(", "").replaceAll("\\)", "") + "[affiliation]");
+			}
+			buf.append(")");
+			return buf.toString();
 		} else {
 			return null;
 		}
 	}
 	
 	@Override
-	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity) {
+	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-					.author(true, lastName, firstName);
+					.author(true, false, identitynames);
 		
 		return pubMedQueryBuilder.build();
 	}
 
 	@Override
-	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate,
+	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
 			Date endDate) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-					.author(true, lastName, firstName)
+					.author(true, false, identitynames)
 					.dateRange(true, startDate, endDate);
 		
 		return pubMedQueryBuilder.build();

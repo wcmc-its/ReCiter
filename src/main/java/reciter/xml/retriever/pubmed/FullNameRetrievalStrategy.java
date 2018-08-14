@@ -18,10 +18,8 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -33,41 +31,40 @@ import reciter.model.identity.Identity;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
-@Component("firstNameInitialRetrievalStrategy")
-public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStrategy {
+@Component("fullNameRetrievalStrategy")
+public class FullNameRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
-	private static final String retrievalStrategyName = "FirstNameInitialRetrievalStrategy";
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(FirstNameInitialRetrievalStrategy.class);
-
+	private static final String retrievalStrategyName = "FullNameRetrievalStrategy";
+	private final static Logger slf4jLogger = LoggerFactory.getLogger(FullNameRetrievalStrategy.class);
+	
 	@Override
 	public String getRetrievalStrategyName() {
 		return retrievalStrategyName;
 	}
-
-	@Override
-	protected String getStrategySpecificKeyword(Identity identity) {
-		return null;
-	}
-
 	@Override
 	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder()
-					.author(true, false, identitynames);
+					.author(true, true, identitynames);
 		
 		PubMedQuery query = pubMedQueryBuilder.build();
 		slf4jLogger.info(retrievalStrategyName + " produced query=[" + query + "]");
 		return query;
 	}
-	
+
 	@Override
 	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
 			Date endDate) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder()
-					.author(true, false, identitynames)
+					.author(true, true, identitynames)
 					.dateRange(true, startDate, endDate);
 		
 		return pubMedQueryBuilder.build();
+	}
+	
+	@Override
+	protected String getStrategySpecificKeyword(Identity identity) {
+		return null;
 	}
 }

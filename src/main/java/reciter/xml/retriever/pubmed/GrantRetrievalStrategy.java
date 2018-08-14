@@ -19,10 +19,11 @@
 package reciter.xml.retriever.pubmed;
 
 import java.util.Date;
-import java.time.LocalDate;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
@@ -57,20 +58,20 @@ public class GrantRetrievalStrategy extends AbstractNameRetrievalStrategy {
 	}
 
 	@Override
-	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity) {
+	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-				.author(true, lastName, firstName);
+				.author(true, false, identitynames);
 
 		return pubMedQueryBuilder.build();
 	}
 
 	@Override
-	protected PubMedQuery buildNameQuery(String lastName, String firstName, Identity identity, Date startDate,
+	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
 			Date endDate) {
 		PubMedQueryBuilder pubMedQueryBuilder = 
 				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-				.author(true, lastName, firstName)
+				.author(true, false, identitynames)
 				.dateRange(true, startDate, endDate);
 
 		return pubMedQueryBuilder.build();
