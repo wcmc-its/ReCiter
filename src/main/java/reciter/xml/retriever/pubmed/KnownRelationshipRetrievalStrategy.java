@@ -1,11 +1,14 @@
 package reciter.xml.retriever.pubmed;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import reciter.model.identity.AuthorName;
@@ -24,6 +27,9 @@ public class KnownRelationshipRetrievalStrategy extends AbstractNameRetrievalStr
 	
 	private static final String retrievalStrategyName = "KnownRelationshipRetrievalStrategy";
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(KnownRelationshipRetrievalStrategy.class);
+	
+	@Value("${namesIgnoredCoauthors}")
+	private String excludeNames;
 
 	@Override
 	public String getRetrievalStrategyName() {
@@ -55,9 +61,14 @@ public class KnownRelationshipRetrievalStrategy extends AbstractNameRetrievalStr
 	@Override
 	protected String getStrategySpecificKeyword(Identity identity) {
 		if (identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
+			List<String> nameIgnoredAuthors = Arrays.asList(excludeNames.trim().split("\\s*,\\s*"));
 			Iterator<KnownRelationship> iter = identity.getKnownRelationships().iterator();
 			final KnownRelationship firstRelationship = iter.next(); 
-			final String first	= firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[au]";
+			String first = null;
+			if(!nameIgnoredAuthors.contains(firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial())) {
+				first = firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[au]";
+			}
+			
 			if (!iter.hasNext()) {
 				return first;
 			}
@@ -69,8 +80,10 @@ public class KnownRelationshipRetrievalStrategy extends AbstractNameRetrievalStr
 			} 
 			while(iter.hasNext()) {
 				KnownRelationship knownRelationship = iter.next();
-				buf.append(" OR ");
-				buf.append(knownRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[au]");
+				if(!nameIgnoredAuthors.contains(knownRelationship.getName().getLastName() + " " + knownRelationship.getName().getFirstInitial())) {
+					buf.append(" OR ");
+					buf.append(knownRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[au]");
+				}
 			}
 			buf.append(")");
 			return buf.toString();
