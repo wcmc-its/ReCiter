@@ -43,6 +43,7 @@ import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
 import reciter.xml.retriever.pubmed.KnownRelationshipRetrievalStrategy;
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
+import reciter.xml.retriever.pubmed.SecondInitialRetrievalStrategy;
 
 @Component("abstractReCiterRetrievalEngine")
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
@@ -76,6 +77,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	
 	@Autowired
 	protected FullNameRetrievalStrategy fullNameRetrievalStrategy;
+	
+	@Autowired
+	protected SecondInitialRetrievalStrategy secondIntialRetrievalStrategy;
 	
 	@Autowired
 	protected KnownRelationshipRetrievalStrategy knownRelationshipRetrievalStrategy;
