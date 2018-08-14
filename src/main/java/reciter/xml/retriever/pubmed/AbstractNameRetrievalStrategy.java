@@ -19,10 +19,8 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,11 +30,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
-import reciter.model.identity.PubMedAlias;
-import reciter.model.scopus.Author;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 
@@ -56,10 +51,6 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 	@Override
 	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-
-		String lastName = identity.getPrimaryName().getLastName();
-		String firstName = identity.getPrimaryName().getFirstName();
-		String firstInitial = identity.getPrimaryName().getFirstInitial();
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		Set<AuthorName> originalIdentityNames = new HashSet<>();
@@ -108,10 +99,6 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 	@Override
 	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-
-		String lastName = identity.getPrimaryName().getLastName();
-		String firstName = identity.getPrimaryName().getFirstName();
-		String firstInitial = identity.getPrimaryName().getFirstInitial();
 		
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		for(Entry<IdentityNameType, Set<AuthorName>> identityName: identityNames.entrySet()) {
