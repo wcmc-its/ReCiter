@@ -132,13 +132,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		Map<Long, PubMedArticle> pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
 		savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
-		
+		uniquePmids.addAll(pubMedArticles.keySet());
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles = retrievalResult.getPubMedArticles();
 		
-		if (pubMedArticles.size() > 0) {
+		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
@@ -160,10 +160,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identityService.save(identity);
       
 			uniquePmids.addAll(pubMedArticles.keySet());
-		}
+		}*/
 		
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
+		uniquePmids.addAll(pubMedArticles.keySet());
+		
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, false);
@@ -312,13 +314,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		//Retreive by GoldStandard
 		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 		Map<Long, PubMedArticle> pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
+		//savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
+		//uniquePmids.addAll(pubMedArticles.keySet());
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-		Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
+		//Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
 		pubMedArticles = retrievalResult.getPubMedArticles();
 		
-		if (pubMedArticles.size() > 0) {
+		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
@@ -341,10 +345,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identityService.save(identity);
 			
 			uniquePmids.addAll(pubMedArticles.keySet());
-		}
+		}*/
 		
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
+		uniquePmids.addAll(pubMedArticles.keySet());
 		
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {

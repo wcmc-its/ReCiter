@@ -285,7 +285,7 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, boolean refreshFlag) {
+    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, boolean refreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
         EngineOutput engineOutput;
         EngineParameters parameters;
         try {
@@ -304,7 +304,7 @@ public class ReCiterController {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
 
-            parameters = initializeEngineParameters(uid, totalStandardizedArticleScore);
+            parameters = initializeEngineParameters(uid, totalStandardizedArticleScore, retrievalRefreshFlag);
             if (parameters == null) {
                 return ResponseEntity
                         .status(HttpStatus.NOT_FOUND)
@@ -327,17 +327,22 @@ public class ReCiterController {
         return new ResponseEntity<>(engineOutput.getReCiterFeature(), HttpStatus.OK);
     }
 
-    private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore) {
+    private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
         // find identity
         Identity identity = identityService.findByUid(uid);
         ESearchResult eSearchResults = null;
         // find search results for this identity
         try {
-            eSearchResults = eSearchResultService.findByUid(uid);
+        	eSearchResults = eSearchResultService.findByUid(uid);
             if (eSearchResults == null) {
                 retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 eSearchResults = eSearchResultService.findByUid(uid);
+            } else if(eSearchResults != null && (retrievalRefreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS || retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS)) {
+            	retrieveArticlesByUid(uid, retrievalRefreshFlag);
+            	eSearchResults = eSearchResultService.findByUid(uid);
             }
+            
+            
         } catch (EmptyResultDataAccessException e) {
             slf4jLogger.info("No such entity exists: ", e);
         }
