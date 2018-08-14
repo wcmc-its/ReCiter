@@ -234,6 +234,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
+			
+			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
+			pubMedArticles.putAll(r8.getPubMedArticles());
+			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults());
+			uniquePmids.addAll(r8.getPubMedArticles().keySet());
 		}
 		
 		
@@ -410,6 +415,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
+			
+			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
+			pubMedArticles.putAll(r8.getPubMedArticles());
+			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults());
+			uniquePmids.addAll(r8.getPubMedArticles().keySet());
 		}
 		
 		//List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
@@ -494,7 +504,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Set<AuthorName> identityAuthorNames  = new HashSet<AuthorName>();
 		Set<AuthorName> identityDerivedNames = new HashSet<AuthorName>();
 		AuthorName identityPrimaryName = identity.getPrimaryName();
-		identityPrimaryName.setFirstName(ReCiterStringUtil.deAccent(identityPrimaryName.getFirstName()));
+		identityPrimaryName.setFirstName(ReCiterStringUtil.deAccent(identityPrimaryName.getFirstName().replaceAll("[\"()]", "")));
 		identityPrimaryName.setLastName(ReCiterStringUtil.deAccent(identityPrimaryName.getLastName().replaceAll("(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "")));
 		if(identityPrimaryName.getMiddleName() != null) {
 			identityPrimaryName.setMiddleName(ReCiterStringUtil.deAccent(identityPrimaryName.getMiddleName()));
@@ -514,7 +524,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		identityAuthorNames.add(identityPrimaryName);
 		
 		for(AuthorName authorName: identity.getAlternateNames()) {
-			authorName.setFirstName(ReCiterStringUtil.deAccent(authorName.getFirstName()));
+			authorName.setFirstName(ReCiterStringUtil.deAccent(authorName.getFirstName().replaceAll("[\"()]", "")));
 			authorName.setLastName(ReCiterStringUtil.deAccent(authorName.getLastName().replaceAll("(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "")));
 			if(authorName.getMiddleName() != null) {
 				authorName.setMiddleName(ReCiterStringUtil.deAccent(authorName.getMiddleName()));
@@ -563,18 +573,18 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if(identityName.getMiddleName() != null) {
 				middleName = identityName.getMiddleName();
 			}
-			if(identityName.getFirstName().trim().endsWith(".") && middleName != null) {
+			if(identityName.getFirstName().length() ==2 && identityName.getFirstName().trim().endsWith(".") && middleName != null) {
 				AuthorName authorName1 = new AuthorName(middleName, null, identityName.getLastName());//W.[firstName] Clay[middleName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
-			if(identityName.getFirstName().contains(" ")) {
-				String[] possibleFirstName = identityName.getLastName().split("\\s+", 2);
-				AuthorName authorName1 = new AuthorName(possibleFirstName[1], middleName, identityName.getLastName());//W Clay[firstName] Bracken[lastName]
+			if(identityName.getFirstName().length() >=3 && Character.isWhitespace(identityName.getFirstName().charAt(1))) {
+				//String[] possibleFirstName = identityName.getFirstName().split("\\s+", 2);
+				AuthorName authorName1 = new AuthorName(Character.toString(identityName.getFirstName().charAt(2)), middleName, identityName.getLastName());//W Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}	
-			if(identityName.getFirstName().contains(". ")) {
-				String[] possibleFirstName = identityName.getLastName().split(".\\s+", 2);
-				AuthorName authorName1 = new AuthorName(possibleFirstName[1], middleName, identityName.getLastName());//W. Clay[firstName] Bracken[lastName]
+			if(identityName.getFirstName().length() >=4 && Character.isWhitespace(identityName.getFirstName().charAt(1)) && identityName.getFirstName().charAt(2) == '.') {
+				//String[] possibleFirstName = identityName.getFirstName().split(".\\s+", 2);
+				AuthorName authorName1 = new AuthorName(Character.toString(identityName.getFirstName().charAt(3)), middleName, identityName.getLastName());//W. Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
 		}
