@@ -29,9 +29,9 @@ public class TargetAuthorSelection {
 		
 		for(ReCiterArticle reciterArticle: reciterArticles) {
 			
-			if(reciterArticle.getArticleId() == 29603699) {
+			/*if(reciterArticle.getArticleId() == 25654307) {
 				slf4jLogger.info("here");
-			}
+			}*/
 			ReCiterArticleAuthors authors = reciterArticle.getArticleCoAuthors();
 			Set<ReCiterAuthor> multipleMarkedTargetAuthor = new HashSet<ReCiterAuthor>();
 			if (authors != null) {
@@ -170,8 +170,7 @@ public class TargetAuthorSelection {
 	public int checkExactLastMiddleFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleName() != null &&
@@ -211,6 +210,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 	
@@ -218,8 +220,7 @@ public class TargetAuthorSelection {
 	public int checkExactLastMiddleInitialFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null &&
@@ -258,6 +259,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 		
@@ -265,8 +269,7 @@ public class TargetAuthorSelection {
 	public int checkExactLastFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null &&
@@ -300,6 +303,9 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(false);
 				}
 			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
 		}
 		return count;
 	}
@@ -307,8 +313,7 @@ public class TargetAuthorSelection {
 	public int checkExactLastFirstNamePartialSubstringIdentityMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null &&
@@ -342,6 +347,9 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(false);
 				}
 			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
 		}
 		return count;
 	}
@@ -350,8 +358,7 @@ public class TargetAuthorSelection {
 	public int checkExactLastFirstNamePartialIdentityPartialSubstringMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null &&
@@ -386,6 +393,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 	
@@ -393,8 +403,7 @@ public class TargetAuthorSelection {
 	public int checkExactLastFirstInitialNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null &&
@@ -429,6 +438,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 	
@@ -436,8 +448,7 @@ public class TargetAuthorSelection {
 	public int checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null && 
@@ -492,6 +503,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 	
@@ -499,8 +513,7 @@ public class TargetAuthorSelection {
 	public int checkPartialLastNameFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
         int count = 0;
         if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null &&
@@ -539,6 +552,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 	
@@ -547,8 +563,7 @@ public class TargetAuthorSelection {
 	public int checkLastNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getLastName() != null && identity.getPrimaryName().getLastName() != null) {
@@ -578,6 +593,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 	
@@ -585,8 +603,7 @@ public class TargetAuthorSelection {
 	public int checkFirstNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstName() != null && identity.getPrimaryName().getFirstName() != null) {
@@ -616,6 +633,9 @@ public class TargetAuthorSelection {
 				}
 			}
 		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
 		return count;
 	}
 	
@@ -623,8 +643,7 @@ public class TargetAuthorSelection {
 	public int checkLastNameFullArticleToIdentityPartialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<>(multipleMarkedTargetAuthor);
-			multipleMarkedTargetAuthor.clear();
+			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
 		}
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getLastName() != null && identity.getPrimaryName().getLastName() != null) {
@@ -653,6 +672,9 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(false);
 				}
 			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
 		}
 		return count;
 	}
