@@ -188,30 +188,52 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold
 				||
 				useStrictQueryOnly) {
-			RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-			pubMedArticles.putAll(r2.getPubMedArticles());
-			savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
-			uniquePmids.addAll(r2.getPubMedArticles().keySet());
+			//Check to see if there is an actual need to do query for all steps
+			if(identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
+				RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
+				pubMedArticles.putAll(r2.getPubMedArticles());
+				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
+				uniquePmids.addAll(r2.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
+			}
 			
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r3.getPubMedArticles());
 			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults());
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
 			
-			RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-			pubMedArticles.putAll(r4.getPubMedArticles());
-			savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
-			uniquePmids.addAll(r4.getPubMedArticles().keySet());
+			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
+				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
+				pubMedArticles.putAll(r4.getPubMedArticles());
+				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
+				uniquePmids.addAll(r4.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
+			}
 			
-			RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-			pubMedArticles.putAll(r5.getPubMedArticles());
-			savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
-			uniquePmids.addAll(r5.getPubMedArticles().keySet());
+			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
+				RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
+				pubMedArticles.putAll(r5.getPubMedArticles());
+				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
+				uniquePmids.addAll(r5.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
+			}
 			
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
 			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults());
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
+			
+			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
+				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
+				pubMedArticles.putAll(r7.getPubMedArticles());
+				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults());
+				uniquePmids.addAll(r7.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
+			}
 		}
 		
 		
@@ -343,30 +365,51 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold
 				||
 				useStrictQueryOnly) {
-			RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-			pubMedArticles.putAll(r2.getPubMedArticles());
-			savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
-			uniquePmids.addAll(r2.getPubMedArticles().keySet());
+			if(identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
+				RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
+				pubMedArticles.putAll(r2.getPubMedArticles());
+				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
+				uniquePmids.addAll(r2.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
+			}
 			
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r3.getPubMedArticles());
 			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults());
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
 			
-			RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-			pubMedArticles.putAll(r4.getPubMedArticles());
-			savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
-			uniquePmids.addAll(r4.getPubMedArticles().keySet());
+			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
+				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
+				pubMedArticles.putAll(r4.getPubMedArticles());
+				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
+				uniquePmids.addAll(r4.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
+			}
 			
-			RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-			pubMedArticles.putAll(r5.getPubMedArticles());
-			savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
-			uniquePmids.addAll(r5.getPubMedArticles().keySet());
+			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
+				RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
+				pubMedArticles.putAll(r5.getPubMedArticles());
+				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
+				uniquePmids.addAll(r5.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
+			}
 			
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
 			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults());
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
+			
+			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
+				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
+				pubMedArticles.putAll(r7.getPubMedArticles());
+				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults());
+				uniquePmids.addAll(r7.getPubMedArticles().keySet());
+			} else {
+				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
+			}
 		}
 		
 		//List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);

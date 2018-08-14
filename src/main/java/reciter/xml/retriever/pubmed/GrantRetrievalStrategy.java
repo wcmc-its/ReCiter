@@ -19,9 +19,7 @@
 package reciter.xml.retriever.pubmed;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
-import java.time.LocalDate;
 
 import org.springframework.stereotype.Component;
 
