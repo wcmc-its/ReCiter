@@ -152,3 +152,163 @@ pk,primaryDepartment,scienceMetrixJournalSubfield,scienceMetrixJournalSubfieldId
 151,Gastroenterology and Hepatology,Endocrinology & Metabolism,105,0.96
 152,Clinical Genomics Initiative,Pathology,120,0.93
 153,Center for Autism and Developing Brain,Neurology & Neurosurgery,113,0.17
+154,Sports Medicine,Sport Sciences,125,3.52
+155,Ultrasound,Acoustics,168,3.39
+156,Oral Surgery,Dentistry,102,2.69
+157,NMR,Nanoscience & Nanotechnology,16,2.57
+158,Quality and Medical Informatics,Medical Informatics,36,2.32
+159,Pediatric Surgery,Pediatrics,121,2.31
+160,Radiology - MRI,Organic Chemistry,156,2.2
+161,Health Informatics and Analyticse,Medical Informatics,36,2.18
+162,Child Development,Developmental & Child Psychology,131,2.16
+163,International Medicine,Tropical Medicine,127,2.12
+164,Rheumatology,Arthritis & Rheumatology,99,2.09
+165,Pediatrics,Otorhinolaryngology,119,2.08
+166,Geriatrics and Palliative Medicine,Gerontology,138,2.07
+167,Neonatology,Pediatrics,121,2.06
+168,Community and Public Health Program,Substance Abuse,144,2.06
+169,Public Health Programs,Substance Abuse,144,2.05
+170,Employee Asstn. Pro,Substance Abuse,144,2.04
+171,Emergency Medicine,Emergency & Critical Care Medicine,104,2.03
+172,Emergency Room,Pediatrics,121,2.01
+173,Gastroenterology & Hepatology,Gastroenterology & Hepatology,107,1.98
+174,Prevention and Health Behavior,Substance Abuse,144,1.97
+175,Emergency Medicine,Toxicology,95,1.96
+176,Emergency Room,Emergency & Critical Care Medicine,104,1.94
+177,Critical Care,Pediatrics,121,1.92
+178,Medical Ethics,Applied Ethics,49,1.92
+179,Healthcare Policy and Economics,Health Policy & Services,139,1.87
+180,Ob/Gyn - Immunology,Obstetrics & Reproductive Medicine,115,1.87
+181,Maternal/Fetal,Obstetrics & Reproductive Medicine,115,1.84
+182,Geriatrics and Palliative Medicine,Family Studies,72,1.82
+183,"Endocrinology, Diabetes and Metabolism",Endocrinology & Metabolism,105,1.81
+184,Prevention and Health Behavior,Social Psychology,136,1.8
+185,Emergency Medicine,Allergy,97,1.78
+186,Health Policy,Allergy,97,1.78
+187,Dermatology,Dermatology & Venereal Diseases,103,1.78
+188,Endocrine,Ophthalmology & Optometry,117,1.78
+189,Perelman and Cohen Center for Reproductive Medicine,Obstetrics & Reproductive Medicine,115,1.77
+190,Public Health Programs,Public Health,141,1.77
+191,Health Systems Innovation and Implementation Science,Public Health,141,1.76
+192,Reproduction Medicine,Obstetrics & Reproductive Medicine,115,1.76
+193,Dermatology,Pathology,120,1.75
+194,Pediatrics Radiology,Nuclear Medicine & Medical Imaging,114,1.75
+195,Ultrasound,Nuclear Medicine & Medical Imaging,114,1.74
+196,Digestive Diseases,Gastroenterology & Hepatology,107,1.73
+197,Infectious Diseases,Mycology & Parasitology,92,1.7
+198,Quality and Medical Informatics,Health Policy & Services,139,1.69
+199,Community and Public Health Program,Public Health,141,1.69
+200,Biostatistics and Epidemiology,Complementary & Alternative Medicine,101,1.66
+201,Biostatistics and Epidemiology,Statistics & Probability,167,1.65
+202,Medical Ethics,Social Psychology,136,1.65
+203,Transplantation Surgery,Dentistry,102,1.65
+204,International Medicine,Microbiology,90,1.65
+205,Employee Asstn. Pro,Health Policy & Services,139,1.64
+206,Allergy/Immunology,Allergy,97,1.64
+207,Infectious Diseases,Microbiology,90,1.63
+208,General Academic Pediatrics,Medical Informatics,36,1.61
+209,NMR,Nuclear Medicine & Medical Imaging,114,1.6
+210,Gastroenterology and Hepatology,Gastroenterology & Hepatology,107,1.6
+211,Hematology,Pathology,120,1.58
+212,Biostatistics,Statistics & Probability,167,1.58
+213,Infectious Diseases,Tropical Medicine,127,1.58
+214,Westchester,Psychoanalysis,135,1.57
+215,Prevention and Health Behavior,Experimental Psychology,132,1.56
+216,General Radiology,Nuclear Medicine & Medical Imaging,114,1.55
+217,Neuro Radiology,Nuclear Medicine & Medical Imaging,114,1.55
+218,Invitro Fertilization,Obstetrics & Reproductive Medicine,115,1.53
+219,Pulmonary and Critical Care Medicine,Respiratory System,124,1.53
+220,Male Reproductive Medicine & Microsurgery,Obstetrics & Reproductive Medicine,115,1.51
+221,Male Reproductive Medicine & Microsurgery,Urology & Nephrology,128,1.51
+222,Westchester,Geriatrics,110,1.51
+223,Payne Whitney,Psychoanalysis,135,1.51
+224,General Academic Pediatrics,Pediatrics,121,1.49
+225,Westchester,Developmental & Child Psychology,131,1.48
+226,Critical Care,Emergency & Critical Care Medicine,104,1.47
+227,Radiology - MRI,Nuclear Medicine & Medical Imaging,114,1.45
+228,Burn Center,Geriatrics,110,1.45
+229,Psych PWC - General,Clinical Psychology,130,1.44
+230,Radiology - MRI,Medicinal & Biomolecular Chemistry,155,1.44
+231,Payne Whitney,Behavioral Science & Comparative Psychology,129,1.44
+232,Neurobiology,Biophysics,87,1.44
+233,Prevention and Health Behavior,Tropical Medicine,127,1.44
+234,Payne Whitney,Psychiatry,123,1.44
+235,Comparative Effectiveness and Outcomes Research,Health Policy & Services,139,1.43
+236,Rheumatology,Anatomy & Morphology,85,1.43
+237,Plastic Surgery,Orthopedics,118,1.43
+238,Health Policy,Applied Ethics,49,1.43
+239,Outcomes and Effectiveness Research,Otorhinolaryngology,119,1.43
+240,Plastic Surgery,Surgery,126,1.42
+241,Psych PWC - General,Psychoanalysis,135,1.41
+242,Prevention and Health Behavior,Public Health,141,1.41
+243,Gastroenterology,Gastroenterology & Hepatology,107,1.39
+244,Westchester,Psychiatry,123,1.39
+245,International Medicine,Virology,96,1.39
+246,Clinical Epidemiology and Evaluative Sciences,Public Health,141,1.38
+247,Molecular Medicine,Virology,96,1.38
+248,Health Informatics and Analyticse,Epidemiology,137,1.37
+249,Prevention and Health Behavior,Developmental & Child Psychology,131,1.36
+250,Westchester,Clinical Psychology,130,1.36
+251,Outcomes and Effectiveness Research,Orthopedics,118,1.35
+252,Ob/Gyn - Immunology,Applied Ethics,49,1.34
+253,Rheumatology,Sport Sciences,125,1.34
+254,Hospital Medicine,Virology,96,1.34
+255,Cerebral Metabolism,Pharmacology & Pharmacy,122,1.34
+256,Psych PWC - General,Social Psychology,136,1.33
+257,Burn Center,Emergency & Critical Care Medicine,104,1.33
+258,Psych PWC - General,Behavioral Science & Comparative Psychology,129,1.32
+259,Healthcare Policy and Economics,Public Health,141,1.32
+260,Nuclear Medicine,Nuclear Medicine & Medical Imaging,114,1.31
+261,Health Policy,Substance Abuse,144,1.31
+262,General Surgery,Surgery,126,1.3
+263,"Endocrinology, Diabetes and Metabolism",Ophthalmology & Optometry,117,1.3
+264,Clinical Neurophysiology,Neurology & Neurosurgery,113,1.3
+265,Health Policy,Health Policy & Services,139,1.3
+266,Transplantation Surgery,Surgery,126,1.29
+267,Cognitive Neurology,Neurology & Neurosurgery,113,1.29
+268,Surgical Research,Surgery,126,1.29
+269,Surgical Research,Endocrinology & Metabolism,105,1.28
+270,Geriatrics and Palliative Medicine,Geriatrics,110,1.28
+271,Westchester,Behavioral Science & Comparative Psychology,129,1.27
+272,Cerebral Metabolism,Experimental Psychology,132,1.27
+273,Geriatrics and Palliative Medicine,Anesthesiology,98,1.27
+274,Health Systems Innovation and Implementation Science,Arthritis & Rheumatology,99,1.27
+275,Psych PWC - General,Experimental Psychology,132,1.25
+276,Neurobiology,Neurology & Neurosurgery,113,1.25
+277,Geriatrics and Palliative Medicine,Nursing,140,1.24
+278,Oral Surgery,Biochemistry & Molecular Biology,86,1.24
+279,Cerebral Metabolism,Neurology & Neurosurgery,113,1.24
+280,Payne Whitney,Clinical Psychology,130,1.23
+281,Outcomes and Effectiveness Research,Health Policy & Services,139,1.23
+282,Psych PWC - General,Developmental & Child Psychology,131,1.22
+283,Cerebral Metabolism,Sport Sciences,125,1.22
+284,Maternal/Fetal,Applied Ethics,49,1.22
+285,Regenerative Medicine,Developmental Biology,88,1.22
+286,Surgery,Urology & Nephrology,128,1.22
+287,Infectious Diseases,Virology,96,1.22
+288,Cardiology,Cardiovascular System & Hematology,100,1.22
+289,Psych PWC - General,Psychiatry,123,1.21
+290,Oral Surgery,Pediatrics,121,1.21
+291,Cardiology,Fluids & Plasmas,172,1.2
+292,Plastic Surgery,Dentistry,102,1.2
+293,Invitro Fertilization,Developmental Biology,88,1.19
+294,Health Systems Innovation and Implementation Science,Health Policy & Services,139,1.18
+295,Hematology/Oncology,Medicinal & Biomolecular Chemistry,155,1.18
+296,Neurobiology,Physiology,94,1.18
+297,Comparative Effectiveness and Outcomes Research,Substance Abuse,144,1.17
+298,Pediatric Neurology,Neurology & Neurosurgery,113,1.16
+299,Geriatrics and Palliative Medicine,Social Psychology,136,1.15
+300,Endocrine,Pediatrics,121,1.15
+301,Allergy/Immunology,Nutrition & Dietetics,93,1.14
+302,"Endocrinology, Diabetes and Metabolism",Toxicology,95,1.14
+303,Neurosurgery,Neurology & Neurosurgery,113,1.14
+304,General Academic Pediatrics,Health Policy & Services,139,1.13
+305,Biostatistics and Epidemiology,Epidemiology,137,1.13
+306,Healthcare Policy and Economics,Substance Abuse,144,1.11
+307,Westchester,Nursing,140,1.11
+308,Prevention and Health Behavior,Clinical Psychology,130,1.11
+309,Payne Whitney,Experimental Psychology,132,1.1
+310,Health Informatics and Analyticse,Public Health,141,1.08
+311,Public Health Programs,Virology,96,1.07
+312,Clinical Epidemiology and Evaluative Sciences,Health Policy & Services,139,1.06
+313,Payne Whitney,Geriatrics,110,1.01
