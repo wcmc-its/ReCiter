@@ -1,0 +1,154 @@
+pk,primaryDepartment,scienceMetrixJournalSubfield,scienceMetrixJournalSubfieldId,logOddsRatio
+1,Library,Information & Library Sciences,75,3.92
+2,Rehabilitation Medicine,Rehabilitation,142,3.02
+3,Ophthalmology,Ophthalmology & Optometry,117,2.37
+4,Emergency Medicine,Allergy,97,2.32
+5,Library,Medical Informatics,36,2.28
+6,Dermatology,Dermatology & Venereal Diseases,103,2.22
+7,Emergency Medicine,Emergency & Critical Care Medicine,104,2.17
+8,Otolaryngology - Head and Neck Surgery,Otorhinolaryngology,119,2.16
+9,Anesthesiology,Anesthesiology,98,2.07
+10,Cell and Developmental Biology,Nanoscience & Nanotechnology,16,2.06
+11,Cell & Developmental Biology,Nanoscience & Nanotechnology,16,2.06
+12,Cardiology,Cardiovascular System & Hematology,100,2
+13,Institute for Computational Biomedicine,Bioinformatics,12,1.99
+14,Tri-I Program in Computational Biology & Medicine,Bioinformatics,12,1.99
+15,Physiology and Biophysics,Biophysics,87,1.94
+16,"Physiology, Biophysics & Systems Biology",Biophysics,87,1.94
+17,Genetic Medicine,Biotechnology,13,1.91
+18,Biochemistry,General Chemistry,153,1.9
+19,"Biochemistry, Cell & Molecular Biology",General Chemistry,153,1.9
+20,Infectious Diseases,Virology,96,1.86
+21,Psychiatry,Psychoanalysis,135,1.83
+22,Psychiatry,Clinical Psychology,130,1.72
+23,Healthcare Policy and Research,Statistics & Probability,167,1.71
+24,Pharmacology,Pharmacology & Pharmacy,122,1.7
+25,Psychiatry,Psychiatry,123,1.68
+26,Physiology and Biophysics,Physiology,94,1.67
+27,"Physiology, Biophysics & Systems Biology",Physiology,94,1.67
+28,Obstetrics and Gynecology,Obstetrics & Reproductive Medicine,115,1.67
+29,Healthcare Policy and Research,Medical Informatics,36,1.66
+30,Psychiatry,Developmental & Child Psychology,131,1.66
+31,Healthcare Policy and Research,Health Policy & Services,139,1.65
+32,Physiology and Biophysics,General Chemistry,153,1.62
+33,"Physiology, Biophysics & Systems Biology",General Chemistry,153,1.62
+34,Biochemistry,Organic Chemistry,156,1.57
+35,"Biochemistry, Cell & Molecular Biology",Organic Chemistry,156,1.57
+36,Psychiatry,Behavioral Science & Comparative Psychology,129,1.56
+37,Healthcare Policy and Research,Substance Abuse,144,1.55
+38,Microbiology and Immunology,Virology,96,1.5
+39,Immunology & Microbial Pathogenesis,Virology,96,1.5
+40,Cardiothoracic Surgery,Respiratory System,124,1.49
+41,Urology,Urology & Nephrology,128,1.47
+42,Pediatrics,Pediatrics,121,1.47
+43,Biochemistry,Biophysics,87,1.42
+44,"Biochemistry, Cell & Molecular Biology",Biophysics,87,1.42
+45,Biochemistry & Structural Biology,Biophysics,87,1.42
+46,Psychiatry,Geriatrics,110,1.41
+47,Orthopaedic Surgery,Orthopedics,118,1.41
+48,Physiology and Biophysics,Bioinformatics,12,1.37
+49,"Physiology, Biophysics & Systems Biology",Bioinformatics,12,1.37
+50,Pharmacology,Physiology,94,1.34
+51,Genetic Medicine,Genetics & Heredity,89,1.34
+52,Pathology and Laboratory Medicine,Pathology,120,1.32
+53,Biochemistry,Developmental Biology,88,1.3
+54,"Biochemistry, Cell & Molecular Biology",Developmental Biology,88,1.3
+55,Healthcare Policy and Research,Public Health,141,1.3
+56,Neurology,Neurology & Neurosurgery,113,1.27
+57,Brain and Mind Research Institute,Neurology & Neurosurgery,113,1.26
+58,Neuroscience,Neurology & Neurosurgery,113,1.26
+59,Genetic Medicine,Bioinformatics,12,1.26
+60,Neurological Surgery,Neurology & Neurosurgery,113,1.24
+61,Anesthesiology,Emergency & Critical Care Medicine,104,1.21
+62,Surgery,Surgery,126,1.21
+63,Biochemistry,Biochemistry & Molecular Biology,86,1.2
+64,"Biochemistry, Cell & Molecular Biology",Biochemistry & Molecular Biology,86,1.2
+65,Biochemistry & Structural Biology,Biochemistry & Molecular Biology,86,1.2
+66,Radiology,Nuclear Medicine & Medical Imaging,114,1.17
+67,Surgery,Dentistry,102,1.17
+68,Psychiatry,Social Psychology,136,1.15
+69,Anesthesiology,Biophysics,87,1.15
+70,Brain and Mind Research Institute,Genetics & Heredity,89,1.09
+71,Neuroscience,Genetics & Heredity,89,1.09
+72,Infectious Diseases,Microbiology,90,1.09
+73,Healthcare Policy and Research,Epidemiology,137,1.07
+74,Anesthesiology,Physiology,94,1.06
+75,Orthopaedic Surgery,Sport Sciences,125,1.05
+76,Cell and Developmental Biology,Biochemistry & Molecular Biology,86,1.03
+77,Cell & Developmental Biology,Biochemistry & Molecular Biology,86,1.03
+78,Psychiatry,Experimental Psychology,132,1.03
+79,Psychiatry,Nursing,140,1.03
+80,Pathology and Laboratory Medicine,Veterinary Sciences,7,0.97
+81,Brain and Mind Research Institute,Experimental Psychology,132,0.95
+82,Neuroscience,Experimental Psychology,132,0.95
+83,Psychiatry,Substance Abuse,144,0.95
+84,Microbiology and Immunology,Medicinal & Biomolecular Chemistry,155,0.94
+85,Immunology & Microbial Pathogenesis,Medicinal & Biomolecular Chemistry,155,0.94
+86,Pharmacology,Biochemistry & Molecular Biology,86,0.94
+87,Microbiology and Immunology,Microbiology,90,0.93
+88,Immunology & Microbial Pathogenesis,Microbiology,90,0.93
+89,Psychiatry,Public Health,141,0.93
+90,Orthopaedic Surgery,Biomedical Engineering,21,0.9
+91,Pharmacology,Developmental Biology,88,0.9
+92,Microbiology and Immunology,Developmental Biology,88,0.9
+93,Immunology & Microbial Pathogenesis,Developmental Biology,88,0.9
+94,Cell and Developmental Biology,Developmental Biology,88,0.89
+95,Cell & Developmental Biology,Developmental Biology,88,0.89
+96,Physiology and Biophysics,Biochemistry & Molecular Biology,86,0.89
+97,"Physiology, Biophysics & Systems Biology",Biochemistry & Molecular Biology,86,0.89
+98,Neurology,Rehabilitation,142,0.85
+99,Infectious Diseases,Immunology,111,0.85
+100,"Physiology, Biophysics & Systems Biology",Developmental Biology,88,0.84
+101,Pediatrics,Allergy,97,0.82
+102,Neurology,Experimental Psychology,132,0.81
+103,Orthopaedic Surgery,Anatomy & Morphology,85,0.79
+104,Brain and Mind Research Institute,Physiology,94,0.76
+105,Neuroscience,Physiology,94,0.76
+106,Radiology,Organic Chemistry,156,0.76
+107,Cardiothoracic Surgery,Cardiovascular System & Hematology,100,0.75
+108,Brain and Mind Research Institute,Biophysics,87,0.74
+109,Neuroscience,Biophysics,87,0.74
+110,Microbiology and Immunology,Immunology,111,0.71
+111,Immunology & Microbial Pathogenesis,Immunology,111,0.71
+112,Microbiology and Immunology,Biochemistry & Molecular Biology,86,0.67
+113,Immunology & Microbial Pathogenesis,Biochemistry & Molecular Biology,86,0.67
+114,Radiation Oncology,Developmental Biology,88,0.67
+115,Urology,Obstetrics & Reproductive Medicine,115,0.65
+116,Neurology,Pharmacology & Pharmacy,122,0.65
+117,Physiology and Biophysics,Pharmacology & Pharmacy,122,0.63
+118,"Physiology, Biophysics & Systems Biology",Pharmacology & Pharmacy,122,0.63
+119,Pediatrics,Developmental & Child Psychology,131,0.63
+120,Radiation Oncology,Biochemistry & Molecular Biology,86,0.62
+121,Oral and Maxillofacial Surgery,Dentistry,102,3.21
+122,Global Health,Tropical Medicine,127,3.07
+123,Tri-Institute-TDI,Bioinformatics,12,2.76
+124,Cardiac Anesthesiology,Anesthesiology,98,2.71
+125,Pediatric Anesthesiology,Anesthesiology,98,2.61
+126,Center for Autism and Developing Brain,Developmental & Child Psychology,131,2.42
+127,Tri-Institute-TDI,Medicinal & Biomolecular Chemistry,155,2.42
+128,General Endocrinology,Endocrinology & Metabolism,105,2.34
+129,Center for Autism and Developing Brain,Experimental Psychology,132,2.25
+130,Regenerative Medicine,Applied Ethics,49,2.23
+131,Neurodegen and Mitochondrial Disease,Genetics & Heredity,89,2.22
+132,Gastroenterology and Hepatology,Gastroenterology & Hepatology,107,1.85
+133,Tri-Institute-TDI,Pharmacology & Pharmacy,122,1.73
+134,Pediatric Urology,Urology & Nephrology,128,1.72
+135,Uro Oncology,Urology & Nephrology,128,1.62
+136,Reproductive Medicine,Obstetrics & Reproductive Medicine,115,1.62
+137,Gastroenterology and Hepatology,Genetics & Heredity,89,1.61
+138,Global Health,Virology,96,1.58
+139,Body Imaging,Nuclear Medicine & Medical Imaging,114,1.54
+140,Neuroradiology,Obstetrics & Reproductive Medicine,115,1.51
+141,WCINYP MRI,Nuclear Medicine & Medical Imaging,114,1.47
+142,Reproductive Medicine,Microbiology,90,1.44
+143,HeartHealth,Cardiovascular System & Hematology,100,1.43
+144,Regenerative Medicine,Developmental Biology,88,1.35
+145,Clinical Genomics Initiative,Developmental Biology,88,1.19
+146,Global Health,Microbiology,90,1.12
+147,Neuroradiology,Nuclear Medicine & Medical Imaging,114,1.08
+148,Neurodegen and Mitochondrial Disease,Neurology & Neurosurgery,113,1.07
+149,Gastroenterology and Hepatology,Biochemistry & Molecular Biology,86,0.98
+150,Clinical Genomics Initiative,Neurology & Neurosurgery,113,0.96
+151,Gastroenterology and Hepatology,Endocrinology & Metabolism,105,0.96
+152,Clinical Genomics Initiative,Pathology,120,0.93
+153,Center for Autism and Developing Brain,Neurology & Neurosurgery,113,0.17
