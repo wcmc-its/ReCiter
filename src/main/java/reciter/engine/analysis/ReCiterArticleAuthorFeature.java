@@ -5,8 +5,10 @@ import lombok.Data;
 import java.util.List;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @DynamoDBDocument
 public class ReCiterArticleAuthorFeature {
     private int rank;

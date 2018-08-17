@@ -2,13 +2,16 @@ package reciter.engine.analysis;
 
 import lombok.Data;
 import reciter.engine.analysis.evidence.Evidence;
+import reciter.model.pubmed.MedlineCitationJournalISSN;
 
 import java.util.Date;
 import java.util.List;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @DynamoDBDocument
 public class ReCiterArticleFeature {
     private long pmid;
@@ -17,6 +20,7 @@ public class ReCiterArticleFeature {
     private PublicationFeedback userAssertion;
     private String pubDate;
     private String journalTitleVerbose;
+    private List<MedlineCitationJournalISSN> issn;
     private String journalTitleISOabbreviation;
     private String articleTitle;
     private List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures;

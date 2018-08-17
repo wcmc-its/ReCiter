@@ -64,6 +64,8 @@ public class ArticleTranslator {
 
 		// Journal Title
 		String journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getTitle();
+		
+		List<MedlineCitationJournalISSN> journalIssn = pubmedArticle.getMedlinecitation().getArticle().getJournal().getIssn();
 
 		// Translating Journal Issue PubDate Year.
 		int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear());
@@ -166,6 +168,7 @@ public class ArticleTranslator {
 		reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
 		reCiterArticle.setArticleKeywords(articleKeywords);
 		reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
+		reCiterArticle.getJournal().setJournalIssn(journalIssn);
 		reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation());
 		reCiterArticle.setMeshHeadings(reCiterArticleMeshHeadings);
 
