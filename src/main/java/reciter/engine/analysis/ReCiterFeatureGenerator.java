@@ -108,6 +108,9 @@ public class ReCiterFeatureGenerator {
 
             // journal title
             reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
+            
+            //journal issn
+            reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
 
             // journal title ISO Abbreviation
             reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal().getIsoAbbreviation());

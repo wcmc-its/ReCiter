@@ -18,6 +18,10 @@
  *******************************************************************************/
 package reciter.model.article;
 
+import java.util.List;
+
+import reciter.model.pubmed.MedlineCitationJournalISSN;
+
 /**
  * ReCiterArticle journal field.
  * @author jil3004
@@ -25,6 +29,7 @@ package reciter.model.article;
  */
 public class ReCiterJournal {
 	private final String journalTitle;
+	private List<MedlineCitationJournalISSN> journalIssn;
 	private int journalIssuePubDateYear;
 	private String isoAbbreviation;
 	
@@ -48,5 +53,11 @@ public class ReCiterJournal {
 	}
 	public void setIsoAbbreviation(String isoAbbreviation) {
 		this.isoAbbreviation = isoAbbreviation;
+	}
+	public List<MedlineCitationJournalISSN> getJournalIssn() {
+		return journalIssn;
+	}
+	public void setJournalIssn(List<MedlineCitationJournalISSN> journalIssn) {
+		this.journalIssn = journalIssn;
 	}
 }
