@@ -128,12 +128,22 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-simple</artifactId>
                 </exclusion>
+                <exclusion>
+                	<groupId>com.amazonaws</groupId>
+                	<artifactId>aws-java-sdk-dynamodb</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>edu.wcmc.reciter</groupId>
             <artifactId>reciter-scopus-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <exclusions>
+            	<exclusion>
+            		<groupId>com.amazonaws</groupId>
+            		<artifactId>aws-java-sdk-dynamodb</artifactId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.github.derjust/spring-data-dynamodb -->
         <dependency>
