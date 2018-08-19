@@ -45,6 +45,7 @@ import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.database.dynamodb.model.MeshTerm;
 import reciter.database.dynamodb.model.ScienceMetrix;
+import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
@@ -61,6 +62,7 @@ import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
+import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.ScopusService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
@@ -121,6 +123,9 @@ public class ReCiterController {
 
     @Autowired
     private ScienceMetrixService scienceMetrixService;
+    
+    @Autowired
+    private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -375,6 +380,20 @@ public class ReCiterController {
     public ResponseEntity<ScienceMetrix> retrieveScienceMetrixBySmsid(@PathVariable Long smsid) {
         ScienceMetrix scienceMetrices = scienceMetrixService.findBySmsid(smsid);
         return ResponseEntity.ok(scienceMetrices);
+    }
+    
+    @ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by eissn is successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/sciencemetrixdeptcategory/subfieldid/{subfieldid}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<List<ScienceMetrixDepartmentCategory>> retrieveScienceMetrixDepartmentCategoryBySubfieldId(@PathVariable Long subfieldid) {
+        List<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategory = scienceMetrixDepartmentCategoryService.findByScienceMetrixJournalSubfieldId(subfieldid);
+        return ResponseEntity.ok(scienceMetrixDepartmentCategory);
     }
 
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
