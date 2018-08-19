@@ -3,8 +3,6 @@ package reciter.service.dynamo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-
 import reciter.database.dynamodb.repository.ScopusArticleRepository;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ScopusService;
@@ -38,45 +36,41 @@ public class ScopusServiceImpl implements ScopusService {
                         scopusArticle
                 ); 
             }*/
-            
+
             if (scopusArticle.getPubmedId() != 0) {
                 dbScopusArticle = new reciter.database.dynamodb.model.ScopusArticle(
                         String.valueOf(scopusArticle.getPubmedId()),
                         scopusArticle
                 );
             }
-            if(dbScopusArticle != null)
-            	dbScopusArticles.add(dbScopusArticle);
+            if (dbScopusArticle != null)
+                dbScopusArticles.add(dbScopusArticle);
         }
-        log.info("Saving number of scopus articles: {},", dbScopusArticles.size());
-        
-        scopusRepository.save(dbScopusArticles);
+        scopusRepository.saveAll(dbScopusArticles);
     }
 
     @Override
     public List<ScopusArticle> findByPmids(List<String> pmids) {
-    	List<ScopusArticle> scopusArticles = null;
-    	try {
-        Iterator<reciter.database.dynamodb.model.ScopusArticle> iterator = scopusRepository.findAll(pmids).iterator();
+        List<ScopusArticle> scopusArticles = null;
+        Iterator<reciter.database.dynamodb.model.ScopusArticle> iterator = scopusRepository.findAllById(pmids).iterator();
         scopusArticles = new ArrayList<>(pmids.size());
         while (iterator.hasNext()) {
             scopusArticles.add(iterator.next().getScopusArticle());
         }
-    	} catch(NullPointerException ne) {
-    		return null;
-    	}
         return scopusArticles;
     }
 
     @Override
     public ScopusArticle findByPmid(String pmid) {
-        return scopusRepository.findOne(pmid).getScopusArticle();
+        reciter.database.dynamodb.model.ScopusArticle scopusArticle = scopusRepository.findById(pmid).orElseGet(() -> null);
+        if (scopusArticle != null) {
+            return scopusArticle.getScopusArticle();
+        }
+        return null;
     }
 
-	@Override
-	public void delete() {
-		 scopusRepository.deleteAll();
-		 log.info("The entire table is cleared");
-		 
-	}
+    @Override
+    public void delete() {
+        scopusRepository.deleteAll();
+    }
 }

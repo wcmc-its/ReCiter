@@ -1,119 +1,119 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>edu.wcmc.reciter</groupId>
-	<artifactId>reciter</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>ReCiter</name>
-	<description>ReCiter</description>
-	<build>
-		<sourceDirectory>src/main/java</sourceDirectory>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-			</resource>
-		</resources>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>repackage</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.3.RELEASE</version>
-	</parent>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.data</groupId>
-				<artifactId>spring-data-releasetrain</artifactId>
-				<version>Hopper-SR10</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-	<dependencies>
-		<!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
-		<!--<dependency>-->
-			<!--<groupId>org.mongodb</groupId>-->
-			<!--<artifactId>mongo-java-driver</artifactId>-->
-		<!--</dependency>-->
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-		</dependency>
-		<!--<dependency>-->
-			<!--<groupId>org.springframework.boot</groupId>-->
-			<!--<artifactId>spring-boot-starter-data-mongodb</artifactId>-->
-		<!--</dependency>-->
-		<!--<dependency>-->
-			<!--<groupId>org.springframework.security</groupId>-->
-			<!--<artifactId>spring-security-jwt</artifactId>-->
-		<!--</dependency>-->
-		<!--&lt;!&ndash; https://mvnrepository.com/artifact/org.springframework.security.oauth/spring-security-oauth2 &ndash;&gt;-->
-		<!--<dependency>-->
-			<!--<groupId>org.springframework.security.oauth</groupId>-->
-			<!--<artifactId>spring-security-oauth2</artifactId>-->
-			<!--<version>2.2.1.RELEASE</version>-->
-		<!--</dependency>-->
-		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security -->
-		<!--<dependency>-->
-			<!--<groupId>org.springframework.boot</groupId>-->
-			<!--<artifactId>spring-boot-starter-security</artifactId>-->
-			<!--<version>1.5.10.RELEASE</version>-->
-		<!--</dependency>-->
-		<!-- https://mvnrepository.com/artifact/com.auth0/auth0-spring-security-api -->
-		<!--<dependency>-->
-			<!--<groupId>com.auth0</groupId>-->
-			<!--<artifactId>auth0-spring-security-api</artifactId>-->
-			<!--<version>1.0.0</version>-->
-		<!--</dependency>-->
-		<!--&lt;!&ndash; https://mvnrepository.com/artifact/com.auth0/auth0 &ndash;&gt;-->
-		<!--<dependency>-->
-			<!--<groupId>com.auth0</groupId>-->
-			<!--<artifactId>auth0</artifactId>-->
-			<!--<version>1.5.0</version>-->
-		<!--</dependency>-->
-		<!--&lt;!&ndash; https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt &ndash;&gt;-->
-		<!--<dependency>-->
-			<!--<groupId>io.jsonwebtoken</groupId>-->
-			<!--<artifactId>jjwt</artifactId>-->
-			<!--<version>0.9.0</version>-->
-		<!--</dependency>-->
-		 <!--https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket-->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-websocket</artifactId>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.5</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-		</dependency>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>edu.wcmc.reciter</groupId>
+    <artifactId>reciter</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>ReCiter</name>
+    <description>ReCiter</description>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.0.4.RELEASE</version>
+    </parent>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-releasetrain</artifactId>
+                <version>Kay-SR1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
+        <!--<dependency>-->
+        <!--<groupId>org.mongodb</groupId>-->
+        <!--<artifactId>mongo-java-driver</artifactId>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>org.springframework.boot</groupId>-->
+        <!--<artifactId>spring-boot-starter-data-mongodb</artifactId>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>org.springframework.security</groupId>-->
+        <!--<artifactId>spring-security-jwt</artifactId>-->
+        <!--</dependency>-->
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.springframework.security.oauth/spring-security-oauth2 &ndash;&gt;-->
+        <!--<dependency>-->
+        <!--<groupId>org.springframework.security.oauth</groupId>-->
+        <!--<artifactId>spring-security-oauth2</artifactId>-->
+        <!--<version>2.2.1.RELEASE</version>-->
+        <!--</dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security -->
+        <!--<dependency>-->
+        <!--<groupId>org.springframework.boot</groupId>-->
+        <!--<artifactId>spring-boot-starter-security</artifactId>-->
+        <!--<version>1.5.10.RELEASE</version>-->
+        <!--</dependency>-->
+        <!-- https://mvnrepository.com/artifact/com.auth0/auth0-spring-security-api -->
+        <!--<dependency>-->
+        <!--<groupId>com.auth0</groupId>-->
+        <!--<artifactId>auth0-spring-security-api</artifactId>-->
+        <!--<version>1.0.0</version>-->
+        <!--</dependency>-->
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/com.auth0/auth0 &ndash;&gt;-->
+        <!--<dependency>-->
+        <!--<groupId>com.auth0</groupId>-->
+        <!--<artifactId>auth0</artifactId>-->
+        <!--<version>1.5.0</version>-->
+        <!--</dependency>-->
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt &ndash;&gt;-->
+        <!--<dependency>-->
+        <!--<groupId>io.jsonwebtoken</groupId>-->
+        <!--<artifactId>jjwt</artifactId>-->
+        <!--<version>0.9.0</version>-->
+        <!--</dependency>-->
+        <!--https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/com.unboundid/unboundid-ldapsdk -->
         <dependency>
             <groupId>com.unboundid</groupId>
@@ -132,60 +132,57 @@
             <version>1.16.16</version>
             <scope>provided</scope>
         </dependency>
-		<dependency>
-			<groupId>edu.wcmc.reciter</groupId>
-			<artifactId>reciter-pubmed-model</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-			<exclusions>
-            	<exclusion>
-            		<groupId>org.slf4j</groupId>
-            		<artifactId>slf4j-simple</artifactId>
-            	</exclusion>
+        <dependency>
+            <groupId>edu.wcmc.reciter</groupId>
+            <artifactId>reciter-pubmed-model</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
             </exclusions>
-		</dependency>
-		<dependency>
-			<groupId>edu.wcmc.reciter</groupId>
-			<artifactId>reciter-scopus-model</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<!--&lt;!&ndash; https://mvnrepository.com/artifact/com.hynnet/oracle-driver-ojdbc6 &ndash;&gt;-->
-		<!--<dependency>-->
-			<!--<groupId>com.hynnet</groupId>-->
-			<!--<artifactId>oracle-driver-ojdbc6</artifactId>-->
-			<!--<version>12.1.0.1</version>-->
-		<!--</dependency>-->
-		<dependency>
-			<groupId>com.amazonaws</groupId>
-			<artifactId>aws-java-sdk-dynamodb</artifactId>
-			<version>1.11.34</version>
-		</dependency>
-		<dependency>
-			<groupId>com.github.derjust</groupId>
-			<artifactId>spring-data-dynamodb</artifactId>
-			<version>4.3.1</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger2 -->
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger2</artifactId>
-			<version>2.8.0</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger-ui -->
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger-ui</artifactId>
-			<version>2.8.0</version>
-		</dependency>
-	</dependencies>
-	<repositories>
-		<repository>
-			<id>wcmc-its</id>
-			<name>ReCiter-Maven-Repository</name>
-			<url>https://github.com/wcmc-its/ReCiter-Maven-Repository/raw/master/snapshots</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-		</repository>
-	</repositories>
+        </dependency>
+        <dependency>
+            <groupId>edu.wcmc.reciter</groupId>
+            <artifactId>reciter-scopus-model</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/com.hynnet/oracle-driver-ojdbc6 &ndash;&gt;-->
+        <!--<dependency>-->
+        <!--<groupId>com.hynnet</groupId>-->
+        <!--<artifactId>oracle-driver-ojdbc6</artifactId>-->
+        <!--<version>12.1.0.1</version>-->
+        <!--</dependency>-->
+        <!-- https://mvnrepository.com/artifact/com.github.derjust/spring-data-dynamodb -->
+        <dependency>
+            <groupId>com.github.derjust</groupId>
+            <artifactId>spring-data-dynamodb</artifactId>
+            <version>5.0.3</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger2 -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.8.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger-ui -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>2.8.0</version>
+        </dependency>
+    </dependencies>
+    <repositories>
+        <repository>
+            <id>wcmc-its</id>
+            <name>ReCiter-Maven-Repository</name>
+            <url>https://github.com/wcmc-its/ReCiter-Maven-Repository/raw/master/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

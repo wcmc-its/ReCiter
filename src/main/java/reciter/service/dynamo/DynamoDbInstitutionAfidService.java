@@ -20,12 +20,12 @@ public class DynamoDbInstitutionAfidService implements IDynamoDbInstitutionAfidS
 
     @Override
     public void save(Collection<InstitutionAfid> institutionAfids) {
-        dynamoDbInstitutionAfidRepository.save(institutionAfids);
+        dynamoDbInstitutionAfidRepository.saveAll(institutionAfids);
     }
 
     @Override
     public InstitutionAfid findByInstitution(String institution) {
-        return dynamoDbInstitutionAfidRepository.findOne(institution);
+        return dynamoDbInstitutionAfidRepository.findById(institution).orElseGet(() -> null);
     }
     
     @Override

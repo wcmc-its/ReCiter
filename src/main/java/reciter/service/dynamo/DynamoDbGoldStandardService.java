@@ -1,6 +1,7 @@
 package reciter.service.dynamo;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,12 +21,12 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
     @Override
     public GoldStandard findByUid(String uid) {
-        return dynamoDbGoldStandardRepository.findOne(uid);
+        return dynamoDbGoldStandardRepository.findById(uid).orElseGet(() -> null);
     }
 
 	@Override
 	public void save(List<GoldStandard> goldStandard) {
-		dynamoDbGoldStandardRepository.save(goldStandard);
+		dynamoDbGoldStandardRepository.saveAll(goldStandard);
 		
 	}
 }

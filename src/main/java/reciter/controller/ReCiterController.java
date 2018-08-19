@@ -44,6 +44,7 @@ import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.database.dynamodb.model.MeshTerm;
+import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
@@ -60,6 +61,7 @@ import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
+import reciter.service.ScienceMetrixService;
 import reciter.service.ScopusService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
@@ -117,8 +119,13 @@ public class ReCiterController {
     @Autowired
     private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
 
+    @Autowired
+    private ScienceMetrixService scienceMetrixService;
+
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
+
+
 
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiResponses(value = {
@@ -325,6 +332,49 @@ public class ReCiterController {
         }
 
         return new ResponseEntity<>(engineOutput.getReCiterFeature(), HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by eissn is successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/sciencemetrix/eissn/{eissn}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<ScienceMetrix> retrieveScienceMetrixByEissn(@PathVariable String eissn) {
+        ScienceMetrix scienceMetrices = scienceMetrixService.findByEissn(eissn);
+        return ResponseEntity.ok(scienceMetrices);
+    }
+
+    @ApiOperation(value = "Get the ScienceMetrix by issn ", notes = "This api retrieves a ScienceMetrix object by issn.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by issn is successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/sciencemetrix/issn/{issn}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<ScienceMetrix> retrieveScienceMetrixByIssn(@PathVariable String issn) {
+        ScienceMetrix scienceMetrices = scienceMetrixService.findByIssn(issn);
+        return ResponseEntity.ok(scienceMetrices);
+    }
+
+
+    @ApiOperation(value = "Get the ScienceMetrix by smsid ", notes = "This api retrieves a ScienceMetrix object by smsid.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by smsid is successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/sciencemetrix/smsid/{smsid}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<ScienceMetrix> retrieveScienceMetrixBySmsid(@PathVariable Long smsid) {
+        ScienceMetrix scienceMetrices = scienceMetrixService.findBySmsid(smsid);
+        return ResponseEntity.ok(scienceMetrices);
     }
 
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {

@@ -12,8 +12,6 @@ import reciter.service.ESearchResultService;
 
 @Service("eSearchResultService")
 public class ESearchResultServiceImpl implements ESearchResultService {
-	
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(ESearchResultServiceImpl.class);
 
     @Autowired
     private ESearchResultRepository eSearchResultRepository;
@@ -25,7 +23,7 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 
     @Override
     public ESearchResult findByUid(String uid) throws EmptyResultDataAccessException {
-        return eSearchResultRepository.findOne(uid);
+        return eSearchResultRepository.findById(uid).orElseGet(() -> null);
     }
 
     @Override
@@ -50,8 +48,7 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 
 	@Override
 	public void delete(String uid) {
-		eSearchResultRepository.delete(uid);
-		slf4jLogger.debug("Deleted search result for " + uid);
+		eSearchResultRepository.deleteById(uid);
 	}
 
 }

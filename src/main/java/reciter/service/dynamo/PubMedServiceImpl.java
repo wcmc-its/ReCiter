@@ -2,7 +2,6 @@ package reciter.service.dynamo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import reciter.database.dynamodb.repository.PubMedArticleRepository;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.PubMedService;
@@ -28,26 +27,26 @@ public class PubMedServiceImpl implements PubMedService {
             );
             pubmedArticlesDb.add(pubMedArticleDb);
         }
-        pubMedRepository.save(pubmedArticlesDb);
+        pubMedRepository.saveAll(pubmedArticlesDb);
     }
 
     @Override
     public List<PubMedArticle> findByPmids(List<Long> pmids) {
-    	List<PubMedArticle> pubMedArticles = null;
-    	try {
-        Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAll(pmids).iterator();
+        List<PubMedArticle> pubMedArticles = null;
+        Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
         pubMedArticles = new ArrayList<>(pmids.size());
         while (iterator.hasNext()) {
             pubMedArticles.add(iterator.next().getPubmedArticle());
         }
-    	} catch(NullPointerException ne) {
-    		return null;
-    	}
         return pubMedArticles;
     }
 
     @Override
     public PubMedArticle findByPmid(Long pmid) {
-        return pubMedRepository.findOne(pmid).getPubmedArticle();
+        reciter.database.dynamodb.model.PubMedArticle pubMedArticle = pubMedRepository.findById(pmid).orElseGet(() -> null);
+        if (pubMedArticle != null) {
+            return pubMedArticle.getPubmedArticle();
+        }
+        return null;
     }
 }

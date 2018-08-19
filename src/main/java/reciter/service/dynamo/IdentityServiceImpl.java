@@ -28,7 +28,7 @@ public class IdentityServiceImpl implements IdentityService {
             );
             identitiesDynamos.add(identityDynamo);
         }
-        identityRepository.save(identitiesDynamos);
+        identityRepository.saveAll(identitiesDynamos);
     }
 
     @Override
@@ -42,13 +42,17 @@ public class IdentityServiceImpl implements IdentityService {
     @Override
     public List<Identity> findByUids(List<String> uids) {
         List<Identity> identities = new ArrayList<>();
-        identityRepository.findAll(uids).forEach(e -> identities.add(e.getIdentity()));
+        identityRepository.findAllById(uids).forEach(e -> identities.add(e.getIdentity()));
         return identities;
     }
 
     @Override
     public Identity findByUid(String uid) {
-        return identityRepository.findOne(uid).getIdentity();
+        reciter.database.dynamodb.model.Identity identity = identityRepository.findById(uid).orElseGet(() -> null);
+        if (identity != null) {
+            return identity.getIdentity();
+        }
+        return null;
     }
 
     @Override
@@ -71,6 +75,6 @@ public class IdentityServiceImpl implements IdentityService {
 
     @Override
     public void delete(String uid) {
-        identityRepository.delete(uid);
+        identityRepository.deleteById(uid);
     }
 }
