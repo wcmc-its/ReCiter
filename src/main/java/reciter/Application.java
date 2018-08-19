@@ -33,7 +33,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAutoConfiguration
 @EnableAsync
 @EnableDynamoDBRepositories("reciter.database.dynamodb")
-//@EnableMongoRepositories("reciter.database.mongo")
 @ComponentScan("reciter")
 public class Application {
 
