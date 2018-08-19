@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
@@ -49,6 +50,8 @@ import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
 import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
 import reciter.algorithm.evidence.targetauthor.grant.strategy.GrantStrategy;
+import reciter.algorithm.evidence.targetauthor.journalcategory.JournalCategoryStrategyContext;
+import reciter.algorithm.evidence.targetauthor.journalcategory.strategy.JournalCategoryStrategy;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.KnownRelationshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownRelationshipStrategy;
 import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
@@ -147,6 +150,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 * Remove article if the full first name doesn't match.
 	 */
 	private StrategyContext removeByNameStrategyContext;
+	
+	/**
+	 * Journal Category Score
+	 */
+	private StrategyContext journalCategoryStrategyContext;
 
 	/**
 	 * Article size.
@@ -192,6 +200,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.emailStrategyContext = new EmailStrategyContext(new EmailStringMatchStrategy());
 		this.nameStrategyContext = new ScoreByNameStrategyContext(new ScoreByNameStrategy());
 		this.departmentStringMatchStrategyContext = new DepartmentStrategyContext(new DepartmentStringMatchStrategy());
+		this.journalCategoryStrategyContext = new JournalCategoryStrategyContext(new JournalCategoryStrategy());
 		this.knownRelationshipsStrategyContext = new KnownRelationshipStrategyContext(new KnownRelationshipStrategy());
 		this.affiliationStrategyContext = new AffiliationStrategyContext(new CommonAffiliationStrategy());
 
@@ -329,6 +338,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
 			if (strategyParameters.isDepartment()) {
 				((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+			}
+			
+			if(strategyParameters.isJournalCategory()) {
+				((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isAffiliation()) {
