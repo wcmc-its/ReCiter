@@ -15,6 +15,7 @@ public class Evidence {
 	private AuthorNameEvidence authorNameEvidence;
 	private EmailEvidence emailEvidence;
 	private List<OrganizationalUnitEvidence> organizationalUnitEvidence;
+	private JournalCategoryEvidence journalCategoryEvidence;
 	private AffiliationEvidence affiliationEvidence; 
 	private List<RelationshipEvidence> relationshipEvidence;
     private GrantEvidence grantEvidence;
