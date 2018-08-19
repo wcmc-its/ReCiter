@@ -33,6 +33,9 @@ public class StrategyParameters {
 
     @Value("${strategy.department}")
     private boolean isDepartment;
+    
+    @Value("${strategy.journalcategory}")
+    private boolean isJournalCategory;
 
     @Value("${strategy.known.relationship}")
     private boolean isKnownRelationship;
