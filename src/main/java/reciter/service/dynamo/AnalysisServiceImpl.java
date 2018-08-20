@@ -20,7 +20,8 @@ public class AnalysisServiceImpl implements AnalysisService{
 
 	@Override
 	public AnalysisOutput findByUid(String uid) {
-		return analysisOutputRepository.findById(uid).orElseGet(() -> null);
+		//return analysisOutputRepository.findById(uid).orElseGet(() -> null);
+		return analysisOutputRepository.findOne(uid);
 	}
 
 	@Override
@@ -30,7 +31,8 @@ public class AnalysisServiceImpl implements AnalysisService{
 
 	@Override
 	public void delete(String uid) {
-		analysisOutputRepository.deleteById(uid);
+		//analysisOutputRepository.deleteById(uid);
+		analysisOutputRepository.delete(uid);
 	}
 	
 

@@ -14,7 +14,7 @@ public class ScienceMetrixServiceImpl implements ScienceMetrixService {
     @Autowired
     private ScienceMetrixRepository scienceMetrixRepository;
 
-    @Override
+   /* @Override
     public ScienceMetrix findByEissn(String eissn) {
         return scienceMetrixRepository.findByEissn(eissn);
     }
@@ -22,10 +22,11 @@ public class ScienceMetrixServiceImpl implements ScienceMetrixService {
     @Override
     public ScienceMetrix findByIssn(String issn) {
         return scienceMetrixRepository.findByIssn(issn);
-    }
+    }*/
 
     @Override
     public ScienceMetrix findBySmsid(Long smsid) {
-        return scienceMetrixRepository.findById(smsid).orElseGet(() -> null);
+        //return scienceMetrixRepository.findById(smsid).orElseGet(() -> null);
+    	return scienceMetrixRepository.findOne(smsid);
     }
 }

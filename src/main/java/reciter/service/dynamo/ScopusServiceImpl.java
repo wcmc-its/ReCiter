@@ -46,27 +46,34 @@ public class ScopusServiceImpl implements ScopusService {
             if (dbScopusArticle != null)
                 dbScopusArticles.add(dbScopusArticle);
         }
-        scopusRepository.saveAll(dbScopusArticles);
+        //scopusRepository.saveAll(dbScopusArticles);
+        scopusRepository.save(dbScopusArticles);
     }
 
     @Override
     public List<ScopusArticle> findByPmids(List<String> pmids) {
         List<ScopusArticle> scopusArticles = null;
-        Iterator<reciter.database.dynamodb.model.ScopusArticle> iterator = scopusRepository.findAllById(pmids).iterator();
-        scopusArticles = new ArrayList<>(pmids.size());
-        while (iterator.hasNext()) {
-            scopusArticles.add(iterator.next().getScopusArticle());
-        }
+        //Iterator<reciter.database.dynamodb.model.ScopusArticle> iterator = scopusRepository.findAllById(pmids).iterator();
+        try {
+	        Iterator<reciter.database.dynamodb.model.ScopusArticle> iterator = scopusRepository.findAll(pmids).iterator();
+	        scopusArticles = new ArrayList<>(pmids.size());
+	        while (iterator.hasNext()) {
+	            scopusArticles.add(iterator.next().getScopusArticle());
+	        }
+        } catch(NullPointerException ne) {	
+    		return null;	
+    	}
         return scopusArticles;
     }
 
     @Override
     public ScopusArticle findByPmid(String pmid) {
-        reciter.database.dynamodb.model.ScopusArticle scopusArticle = scopusRepository.findById(pmid).orElseGet(() -> null);
+        /*reciter.database.dynamodb.model.ScopusArticle scopusArticle = scopusRepository.findById(pmid).orElseGet(() -> null);
         if (scopusArticle != null) {
             return scopusArticle.getScopusArticle();
         }
-        return null;
+        return null;*/
+    	return scopusRepository.findOne(pmid).getScopusArticle();
     }
 
     @Override

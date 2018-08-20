@@ -6,7 +6,7 @@ import reciter.database.dynamodb.model.ScienceMetrix;
 
 @EnableScan
 public interface ScienceMetrixRepository extends CrudRepository<ScienceMetrix, Long> {
-    ScienceMetrix findByEissn(String eissn);
+    //ScienceMetrix findByEissn(String eissn);
 
-    ScienceMetrix findByIssn(String issn);
+    //ScienceMetrix findByIssn(String issn);
 }

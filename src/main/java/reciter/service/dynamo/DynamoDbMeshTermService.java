@@ -18,7 +18,8 @@ public class DynamoDbMeshTermService implements IDynamoDbMeshTermService {
 
     @Override
     public void save(List<MeshTerm> meshTerms) {
-        dynamoMeshTermRepository.saveAll(meshTerms);
+        //dynamoMeshTermRepository.saveAll(meshTerms);
+    	dynamoMeshTermRepository.save(meshTerms);
     }
 
     @Override

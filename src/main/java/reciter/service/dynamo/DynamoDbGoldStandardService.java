@@ -21,12 +21,14 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
     @Override
     public GoldStandard findByUid(String uid) {
-        return dynamoDbGoldStandardRepository.findById(uid).orElseGet(() -> null);
+        //return dynamoDbGoldStandardRepository.findById(uid).orElseGet(() -> null);
+    	return dynamoDbGoldStandardRepository.findOne(uid);
     }
 
 	@Override
 	public void save(List<GoldStandard> goldStandard) {
-		dynamoDbGoldStandardRepository.saveAll(goldStandard);
+		//dynamoDbGoldStandardRepository.saveAll(goldStandard);
+		dynamoDbGoldStandardRepository.save(goldStandard);
 		
 	}
 }

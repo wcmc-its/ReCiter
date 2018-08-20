@@ -82,6 +82,8 @@ public class ArticleTranslator {
 
         // Translating Journal Issue PubDate Year.
         int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear());
+        
+        //String journalIssuePubDateYear = pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear();
 
         // Co-authors
         List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlinecitation().getArticle().getAuthorlist();
@@ -198,7 +200,9 @@ public class ArticleTranslator {
         }
 
         if (reCiterArticle.getPubDate() == null && Integer.toString(journalIssuePubDateYear).length() == 4) {
+        //if (reCiterArticle.getPubDate() == null && journalIssuePubDateYear.length() == 4) {
             reCiterArticle.setPubDate(Integer.toString(journalIssuePubDateYear));
+        	//reCiterArticle.setPubDate(journalIssuePubDateYear);
         }
 
         // Update PubMed's authors' first name from Scopus Article. Logic is as follows:

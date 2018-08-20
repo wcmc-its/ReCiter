@@ -227,24 +227,27 @@ public class ReCiterController {
         }
         //Clean up the ESearchResult Table if set refreshFlag is set
         try {
+        	ESearchResult eSearchResult = eSearchResultService.findByUid(uid.trim());
             if ((refreshFlag == RetrievalRefreshFlag.FALSE 
             		||
             		refreshFlag == null) 
             		&& 
-            		eSearchResultService.findByUid(uid.trim()) != null) {
+            		eSearchResult != null) {
                 slf4jLogger.info("Using the cached retrieval articles for " + uid + ". Skipping the retrieval process");
                 estimatedTime = System.currentTimeMillis() - startTime;
                 slf4jLogger.info("elapsed time: " + estimatedTime);
                 return ResponseEntity.status(HttpStatus.OK).body("The cached results of uid " + uid + " will be used since refreshFlag is not set to true");
-            } else if(refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS){
-                if (eSearchResultService.findByUid(uid.trim()) != null)
+            } else if(refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS
+            		||
+            		eSearchResult == null){
+                if (eSearchResult != null)
                     eSearchResultService.delete(uid.trim());
                 
                 if (identity != null)
                     identities.add(identity);
 
                 try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
+                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 } catch (IOException e) {
                     slf4jLogger.info("Failed to retrieve articles.", e);
                     estimatedTime = System.currentTimeMillis() - startTime;
@@ -255,7 +258,7 @@ public class ReCiterController {
             } else if(refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
             	if (identity != null)
                     identities.add(identity);
-            	ESearchResult eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
+            	eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
             	if (eSearchResult != null) {
             		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(eSearchResult.getRetrievalDate()));
             	} else {
@@ -293,6 +296,10 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, boolean refreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
+    	long startTime = System.currentTimeMillis();
+        long estimatedTime = 0;
+        slf4jLogger.info("Start time is: " + startTime);
+        
         EngineOutput engineOutput;
         EngineParameters parameters;
         try {
@@ -330,11 +337,13 @@ public class ReCiterController {
             Engine engine = new ReCiterEngine();
             engineOutput = engine.run(parameters, strategyParameters);
         }
-
+        
+        estimatedTime = System.currentTimeMillis() - startTime;
+        slf4jLogger.info("elapsed time: " + estimatedTime);
         return new ResponseEntity<>(engineOutput.getReCiterFeature(), HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
+    /*@ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by eissn is successful"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -360,7 +369,7 @@ public class ReCiterController {
     public ResponseEntity<ScienceMetrix> retrieveScienceMetrixByIssn(@PathVariable String issn) {
         ScienceMetrix scienceMetrices = scienceMetrixService.findByIssn(issn);
         return ResponseEntity.ok(scienceMetrices);
-    }
+    }*/
 
 
     @ApiOperation(value = "Get the ScienceMetrix by smsid ", notes = "This api retrieves a ScienceMetrix object by smsid.")

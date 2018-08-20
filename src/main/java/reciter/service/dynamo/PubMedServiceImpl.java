@@ -27,26 +27,34 @@ public class PubMedServiceImpl implements PubMedService {
             );
             pubmedArticlesDb.add(pubMedArticleDb);
         }
-        pubMedRepository.saveAll(pubmedArticlesDb);
+        //pubMedRepository.saveAll(pubmedArticlesDb);
+        pubMedRepository.save(pubmedArticlesDb);
     }
 
     @Override
     public List<PubMedArticle> findByPmids(List<Long> pmids) {
         List<PubMedArticle> pubMedArticles = null;
-        Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
-        pubMedArticles = new ArrayList<>(pmids.size());
-        while (iterator.hasNext()) {
-            pubMedArticles.add(iterator.next().getPubmedArticle());
-        }
+        //Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
+        try{
+        	Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAll(pmids).iterator();
+	        pubMedArticles = new ArrayList<>(pmids.size());
+	        while (iterator.hasNext()) {
+	            pubMedArticles.add(iterator.next().getPubmedArticle());
+	        }
+        } catch(NullPointerException ne) {	
+    		return null;	
+    	}
         return pubMedArticles;
+    	
     }
 
     @Override
     public PubMedArticle findByPmid(Long pmid) {
-        reciter.database.dynamodb.model.PubMedArticle pubMedArticle = pubMedRepository.findById(pmid).orElseGet(() -> null);
+        /*reciter.database.dynamodb.model.PubMedArticle pubMedArticle = pubMedRepository.findById(pmid).orElseGet(() -> null);
         if (pubMedArticle != null) {
             return pubMedArticle.getPubmedArticle();
         }
-        return null;
+        return null;*/
+    	return pubMedRepository.findOne(pmid).getPubmedArticle();
     }
 }

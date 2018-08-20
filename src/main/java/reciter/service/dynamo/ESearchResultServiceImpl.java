@@ -23,7 +23,8 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 
     @Override
     public ESearchResult findByUid(String uid) throws EmptyResultDataAccessException {
-        return eSearchResultRepository.findById(uid).orElseGet(() -> null);
+        //return eSearchResultRepository.findById(uid).orElseGet(() -> null);
+    	return eSearchResultRepository.findOne(uid);
     }
 
     @Override
@@ -48,7 +49,8 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 
 	@Override
 	public void delete(String uid) {
-		eSearchResultRepository.deleteById(uid);
+		//eSearchResultRepository.deleteById(uid);
+		eSearchResultRepository.delete(uid);
 	}
 
 }
