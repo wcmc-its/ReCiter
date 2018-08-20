@@ -38,14 +38,16 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.0.4.RELEASE</version>
+<!--         <version>2.0.4.RELEASE</version> -->
+        <version>1.5.3.RELEASE</version>
     </parent>
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-releasetrain</artifactId>
-                <version>Kay-SR1</version>
+<!--                 <version>Kay-SR1</version> -->
+                <version>Hopper-SR10</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -135,11 +137,17 @@
             <artifactId>reciter-scopus-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>	      
+			<groupId>com.amazonaws</groupId>	
+			<artifactId>aws-java-sdk-dynamodb</artifactId>	
+			<version>1.11.34</version>	
+		</dependency>
         <!-- https://mvnrepository.com/artifact/com.github.derjust/spring-data-dynamodb -->
         <dependency>
             <groupId>com.github.derjust</groupId>
             <artifactId>spring-data-dynamodb</artifactId>
-            <version>5.0.3</version>
+<!--      Downgraded due to issues with persisting enums and empty string <version>5.0.3</version> -->
+            <version>4.3.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger2 -->
