@@ -103,8 +103,16 @@ public class ReCiterFeatureGenerator {
                 reCiterArticleFeature.setUserAssertion(PublicationFeedback.NULL);
             }
 
-            // PubDate
-            reCiterArticleFeature.setPubDate(reCiterArticle.getPubDate());
+            //publicationDateDisplay
+            reCiterArticleFeature.setPublicationDateDisplay(reCiterArticle.getPublicationDateDisplay());
+            
+            //publicationDateStandardized
+            reCiterArticleFeature.setPublicationDateStandardized(reCiterArticle.getPublicationDateStandardized());
+            
+            //datePublicationAddedToEntrez
+            if(reCiterArticle.getDatePublicationAddedToEntrez() != null) {
+            	reCiterArticleFeature.setDatePublicationAddedToEntrez(reCiterArticle.getDatePublicationAddedToEntrez());
+            }
 
             // journal title
             reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
