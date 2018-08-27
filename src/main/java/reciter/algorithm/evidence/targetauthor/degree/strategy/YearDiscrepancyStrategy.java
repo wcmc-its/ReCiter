@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.degree.strategy;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -144,10 +145,12 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 		for(ReCiterArticle reCiterArticle: reCiterArticles) {
 			EducationYearEvidence educationYearEvidence = null;
 			if (reCiterArticle != null 												&&
-					reCiterArticle.getJournal() != null 							&& 
-					reCiterArticle.getJournal().getJournalIssuePubDateYear() != 0) {
+					reCiterArticle.getPublicationDateStandardized() != null) {
+					//reCiterArticle.getJournal() != null 							&& 
+					//reCiterArticle.getJournal().getJournalIssuePubDateYear() != 0) {
+				LocalDate date = LocalDate.parse(reCiterArticle.getPublicationDateStandardized());
 
-				int year = reCiterArticle.getJournal().getJournalIssuePubDateYear();
+				int year = date.getYear();//reCiterArticle.getJournal().getJournalIssuePubDateYear();
 
 				int difference;
 				if (degreeType.equals(DegreeType.BACHELORS)) {
