@@ -191,7 +191,12 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private StringBuffer coCitationInfo;
     private StringBuffer journalTitleInfo;
 
-    private String pubDate;
+    private String publicationDateStandardized;
+    
+    private String datePublicationAddedToEntrez;
+    
+    private String publicationDateDisplay;
+    
     
     private List<OrganizationalUnitEvidence> organizationalUnitEvidences;
     private EducationYearEvidence educationYearEvidence;
@@ -314,15 +319,31 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.authorNameEvidence = authorNameEvidence;
 	}
 
-	public String getPubDate() {
-        return pubDate;
-    }
+    public String getPublicationDateStandardized() {
+		return publicationDateStandardized;
+	}
 
-    public void setPubDate(String pubDate) {
-        this.pubDate = pubDate;
-    }
+	public void setPublicationDateStandardized(String publicationDateStandardized) {
+		this.publicationDateStandardized = publicationDateStandardized;
+	}
 
-    public StringBuffer getMeshMajorInfo() {
+	public String getDatePublicationAddedToEntrez() {
+		return datePublicationAddedToEntrez;
+	}
+
+	public void setDatePublicationAddedToEntrez(String datePublicationAddedToEntrez) {
+		this.datePublicationAddedToEntrez = datePublicationAddedToEntrez;
+	}
+
+	public String getPublicationDateDisplay() {
+		return publicationDateDisplay;
+	}
+
+	public void setPublicationDateDisplay(String publicationDateDisplay) {
+		this.publicationDateDisplay = publicationDateDisplay;
+	}
+
+	public StringBuffer getMeshMajorInfo() {
         if (meshMajorInfo == null) {
             meshMajorInfo = new StringBuffer();
         }
