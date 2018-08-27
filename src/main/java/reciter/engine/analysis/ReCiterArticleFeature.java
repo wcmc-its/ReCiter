@@ -18,7 +18,9 @@ public class ReCiterArticleFeature {
     private double totalArticleScoreStandardized;
     private double totalArticleScoreNonStandardized;
     private PublicationFeedback userAssertion;
-    private String pubDate;
+    private String publicationDateDisplay;
+    private String publicationDateStandardized;
+    private String datePublicationAddedToEntrez;
     private String journalTitleVerbose;
     private List<MedlineCitationJournalISSN> issn;
     private String journalTitleISOabbreviation;

@@ -42,6 +42,7 @@ import reciter.model.pubmed.MedlineCitationMeshHeading;
 import reciter.model.pubmed.MedlineCitationMeshHeadingQualifierName;
 import reciter.model.pubmed.MedlineCitationYNEnum;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.model.pubmed.PubMedPubDate;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
 
@@ -188,18 +189,95 @@ public class ArticleTranslator {
         // Use PubMed Article date as the publication date (pubdate)
         // TODO optimize date (single date across ReCiter files) (Tech Debt)
         MedlineCitationDate medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getArticledate();
-        if (medlineCitationDate != null && medlineCitationDate.getYear() != null && medlineCitationDate.getMonth() != null && medlineCitationDate.getDay() != null) {
+        if (medlineCitationDate != null && medlineCitationDate.getYear() != null) {
+        	String articleDateMonth = null;
+        	String articleDateDay = null;
+        	if(medlineCitationDate.getMonth()== null) {
+        		articleDateMonth = "01";
+        	} else {
+        		articleDateMonth = medlineCitationDate.getMonth();
+        	}
+        	
+        	if(medlineCitationDate.getDay()== null) {
+        		articleDateDay = "01";
+        	} else {
+        		articleDateDay = medlineCitationDate.getDay();
+        	}
             LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
-                    Integer.parseInt(medlineCitationDate.getMonth()), // convert JUL to 7
-                    Integer.parseInt(medlineCitationDate.getDay()));
+                    Integer.parseInt(articleDateMonth), // convert JUL to 7
+                    Integer.parseInt(articleDateDay));
             Date date = localDate.toDate();
-            DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
-            reCiterArticle.setPubDate(df.format(date));
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            reCiterArticle.setPublicationDateStandardized(df.format(date));
+            df = new SimpleDateFormat("yyyy MMM dd");
+            reCiterArticle.setPublicationDateDisplay(df.format(date));
         }
-
-        if (reCiterArticle.getPubDate() == null && Integer.toString(journalIssuePubDateYear).length() == 4) {
-            reCiterArticle.setPubDate(Integer.toString(journalIssuePubDateYear));
+        
+        //Case when ArticleDate does not exist use PubDate as date standardized date
+        if (reCiterArticle.getPublicationDateStandardized() == null
+        		&&
+        		pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate() != null) {
+        	medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate();
+        	String articleDateMonth = null;
+        	String articleDateDay = null;
+        	if(medlineCitationDate.getMonth()== null) {
+        		articleDateMonth = "01";
+        	} else {
+        		articleDateMonth = medlineCitationDate.getMonth();
+        	}
+        	
+        	if(medlineCitationDate.getDay()== null) {
+        		articleDateDay = "01";
+        	} else {
+        		articleDateDay = medlineCitationDate.getDay();
+        	}
+        	LocalDate localDate = new LocalDate(Integer.parseInt(medlineCitationDate.getYear()),
+                    Integer.parseInt(articleDateMonth), // convert JUL to 7
+                    Integer.parseInt(articleDateDay));
+            Date date = localDate.toDate();
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            reCiterArticle.setPublicationDateStandardized(df.format(date));
+            
+            if(reCiterArticle.getPublicationDateDisplay()== null) {
+            	df = new SimpleDateFormat("yyyy MMM dd");
+                reCiterArticle.setPublicationDateDisplay(df.format(date));
+            }
         }
+        
+        //Populate datePublicationAddedToEntrez if it exits in pubmed
+        if(pubmedArticle.getPubmeddata() != null
+        		&&
+        		pubmedArticle.getPubmeddata().getHistory() != null
+        		&&
+        		pubmedArticle.getPubmeddata().getHistory().getPubmedPubDate() != null
+        		&& pubmedArticle.getPubmeddata().getHistory().getPubmedPubDate().size() > 0) {
+        	PubMedPubDate pubmedPubDateEntrez =  pubmedArticle.getPubmeddata().getHistory().getPubmedPubDate().
+        			stream().filter(pubmedPubDate -> pubmedPubDate.getPubStatus().equalsIgnoreCase("entrez")).
+        			findAny().orElse(null);
+        	if(pubmedPubDateEntrez != null) {
+        		String entrezDateMonth = null;
+            	String entrezDateDay = null;
+            	if(pubmedPubDateEntrez.getPubMedPubDate().getMonth() == null) {
+            		entrezDateMonth = "01";
+            	} else {
+            		entrezDateMonth = pubmedPubDateEntrez.getPubMedPubDate().getMonth();
+            	}
+            	
+            	if(pubmedPubDateEntrez.getPubMedPubDate().getDay() == null) {
+            		entrezDateDay = "01";
+            	} else {
+            		entrezDateDay = pubmedPubDateEntrez.getPubMedPubDate().getDay();
+            	}
+        		LocalDate localDate = new LocalDate(Integer.parseInt(pubmedPubDateEntrez.getPubMedPubDate().getYear()),
+                        Integer.parseInt(entrezDateMonth), // convert JUL to 7
+                        Integer.parseInt(entrezDateDay));
+                Date date = localDate.toDate();
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        		reCiterArticle.setDatePublicationAddedToEntrez(df.format(date));
+        	}
+        }
+        		
+        
 
         // Update PubMed's authors' first name from Scopus Article. Logic is as follows:
         // 1. First compare last name if match:
