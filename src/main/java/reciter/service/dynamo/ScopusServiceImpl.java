@@ -37,7 +37,8 @@ public class ScopusServiceImpl implements ScopusService {
                 ); 
             }*/
 
-            if (scopusArticle.getPubmedId() != 0) {
+            if (scopusArticle.getPubmedId() != 0 && 
+            		!dbScopusArticles.stream().anyMatch(article -> article.getId().equals(String.valueOf(scopusArticle.getPubmedId())))) {
                 dbScopusArticle = new reciter.database.dynamodb.model.ScopusArticle(
                         String.valueOf(scopusArticle.getPubmedId()),
                         scopusArticle
