@@ -324,4 +324,10 @@ public class StrategyParameters {
     
     @Value("${searchStrategy-strict-threshold}")
     private double searchStrategyLeninentThreshold;
+    
+    @Value("${strategy.journalCategoryScore.journalSubfieldScore}")
+    private double journalSubfieldScore;
+    
+    @Value("${strategy.journalCategoryScore.journalSubfieldFactorScore}")
+    private double journalSubfieldFactorScore;
 }

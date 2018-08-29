@@ -206,7 +206,11 @@ public class ReCiterFeatureGenerator {
             if (reCiterArticle.getGrantEvidence() != null) {
                 evidence.setGrantEvidence(reCiterArticle.getGrantEvidence());
             }
-
+            
+            //Journal Category Evidence
+            if(reCiterArticle.getJournalCategoryEvidence() != null) {
+            	evidence.setJournalCategoryEvidence(reCiterArticle.getJournalCategoryEvidence());
+            }
             // Relationship Evidence
             if (reCiterArticle.getRelationshipEvidence() != null) {
                 evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());

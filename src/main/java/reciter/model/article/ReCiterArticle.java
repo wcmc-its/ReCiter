@@ -30,6 +30,7 @@ import reciter.engine.analysis.evidence.ClusteringEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.engine.analysis.evidence.GrantEvidence;
+import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.engine.analysis.evidence.OrganizationalUnitEvidence;
 import reciter.engine.analysis.evidence.PersonTypeEvidence;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
@@ -204,7 +205,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private GrantEvidence grantEvidence;
     private AuthorNameEvidence authorNameEvidence;
     
-    @NotNull
+    private JournalCategoryEvidence journalCategoryEvidence;
     private EmailEvidence emailEvidence;
     
     private AcceptedRejectedEvidence acceptedRejectedEvidence;
@@ -400,7 +401,17 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     			+ relationShipEvidence.getRelationshipMatchModifierMentor()).sum();
     }
     
-    public double getOrganizationalEvidencesTotalScore() {
+    
+    
+    public JournalCategoryEvidence getJournalCategoryEvidence() {
+		return journalCategoryEvidence;
+	}
+
+	public void setJournalCategoryEvidence(JournalCategoryEvidence journalCategoryEvidence) {
+		this.journalCategoryEvidence = journalCategoryEvidence;
+	}
+
+	public double getOrganizationalEvidencesTotalScore() {
     	if(this.organizationalUnitEvidences == null) {
     		return 0;
     	}
