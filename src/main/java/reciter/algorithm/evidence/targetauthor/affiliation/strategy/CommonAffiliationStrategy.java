@@ -97,14 +97,16 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					if(ReCiterArticleScorer.strategyParameters.isScopusCommonAffiliation()) {
 						if(reCiterArticle.getScopusArticle() != null) {
 							//Get the corresponding Scopus Author for the target author
-							if(reCiterArticle.getArticleId() == 22667600) {
+							if(reCiterArticle.getArticleId() == 14719507) {
 								slf4jLogger.info("PubmedId: " + reCiterArticle.getArticleId());
 							}
 							Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().stream().filter(author -> reCiterAuthor.getRank() == author.getSeq()).findFirst().orElse(null);
 							List<TargetAuthorScopusAffiliation> scopusAffiliationEvidences = new ArrayList<>();
 							if(scopusAuthor != null 
 									&& 
-									scopusAuthor.getAfids() != null) {
+									scopusAuthor.getAfids() != null
+									&&
+									scopusAuthor.getAfids().size() > 0) {
 								//Get the matching affiliation ID for target author from scopus and identity affiliation ID and known home institution IDs
 								List<Integer> matchingAfids = scopusAuthor.getAfids().stream().distinct().filter(Objects::nonNull).filter(scopusAfid -> this.knownAffiliationIds.contains(String.valueOf(scopusAfid))).collect(Collectors.toList());
 								
@@ -173,6 +175,19 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 										scopusAffiliationEvidences.add(scopusAffiliationEvidence);
 									}
 								}
+							} else if(scopusAuthor != null 
+									&& 
+									scopusAuthor.getAfids() != null
+									&&
+									scopusAuthor.getAfids().size() == 0) {
+								TargetAuthorScopusAffiliation scopusAffiliationEvidence = new TargetAuthorScopusAffiliation();
+								scopusAffiliationEvidence.setTargetAuthorInstitutionalAffiliationSource(InstitutionalAffiliationSource.SCOPUS);
+								scopusAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchType(InstitutionalAffiliationMatchType.NULL_MATCH);
+								scopusAffiliationEvidence.setTargetAuthorInstitutionalAffiliationArticleScopusLabel(null);
+								scopusAffiliationEvidence.setTargetAuthorInstitutionalAffiliationArticleScopusAffiliationId(0);
+								scopusAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchTypeScore(ReCiterArticleScorer.strategyParameters.getTargetAuthorInstAfflMatchTypeNullScore());
+								totalAffiliationScore = totalAffiliationScore + ReCiterArticleScorer.strategyParameters.getTargetAuthorInstAfflMatchTypeNullScore();
+								scopusAffiliationEvidences.add(scopusAffiliationEvidence);
 							}
 							
 							if(scopusAffiliationEvidences.size() > 0) {
