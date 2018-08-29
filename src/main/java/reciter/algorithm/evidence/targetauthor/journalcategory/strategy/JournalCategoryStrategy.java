@@ -1,6 +1,8 @@
 package reciter.algorithm.evidence.targetauthor.journalcategory.strategy;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +23,7 @@ import reciter.controller.ReCiterController;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.Feature;
+import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
@@ -53,18 +56,42 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 			if(reCiterArticle.getJournal().getJournalIssn() != null 
 					&&
 					reCiterArticle.getJournal().getJournalIssn().size() > 0) {
+				JournalCategoryEvidence journalCategoryEvidence = null;
 				ScienceMetrix scienceMetrix = checkIssnInScienceMetrix(reCiterArticle.getJournal().getJournalIssn());
 				if(scienceMetrix != null) {
-					log.info(scienceMetrix.getPublicationName());
 					List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = getScienceMetrixDepartmentCategory(scienceMetrix.getScienceMatrixSubfieldId());
 					List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream().filter(sciMetrixDeptCategory -> 
 					sanitizedIdentityInstitutions.contains(sciMetrixDeptCategory.getPrimaryDepartment().trim())
 					).collect(Collectors.toList());
 					if(matchedOrgUnits.size() > 0) {
-						log.info("here");
+						if(matchedOrgUnits.size() > 1) {
+							ScienceMetrixDepartmentCategory matchedJournal = matchedOrgUnits.stream().max(Comparator.comparing(ScienceMetrixDepartmentCategory::getLogOddsRatio)).orElse(null);
+							if(matchedJournal != null) {
+								journalCategoryEvidence = new JournalCategoryEvidence();
+								journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedJournal.getScienceMetrixJournalSubfield());
+								journalCategoryEvidence.setJournalSubfieldDepartment(matchedJournal.getPrimaryDepartment());
+								journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedJournal.getScienceMetrixJournalSubfieldId());
+								journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedJournal.getLogOddsRatio());
+							}
+						} else {
+							journalCategoryEvidence = new JournalCategoryEvidence();
+							journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedOrgUnits.get(0).getScienceMetrixJournalSubfield());
+							journalCategoryEvidence.setJournalSubfieldDepartment(matchedOrgUnits.get(0).getPrimaryDepartment());
+							journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedOrgUnits.get(0).getScienceMetrixJournalSubfieldId());
+							journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedOrgUnits.get(0).getLogOddsRatio());
+						}
+					} else {
+						journalCategoryEvidence = new JournalCategoryEvidence();
+						journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(scienceMetrix.getScienceMetrixSubfield());
+						journalCategoryEvidence.setJournalSubfieldDepartment(scienceMetrix.getScienceMetrixField());
+						journalCategoryEvidence.setJournalSubfieldScienceMetrixID(Long.parseLong(scienceMetrix.getScienceMatrixSubfieldId()));
+						journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldScore());
 					}
 				}
-
+				if(journalCategoryEvidence != null) {
+					log.info("Pmid: " + reCiterArticle.getArticleId() + " " + journalCategoryEvidence.toString());
+				}
+				reCiterArticle.setJournalCategoryEvidence(journalCategoryEvidence);
 			}
 
 		}
@@ -130,18 +157,23 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	 * @param identityOrgUnitToSynonymMap
 	 */
 	private void populateSanitizedIdentityInstitutions(Identity identity, Set<String> sanitizedIdentityInstitutions, Map<String, List<String>> identityOrgUnitToSynonymMap) {
+		List<List<String>> orgUnitSynonym = new ArrayList<List<String>>();
 		if(identity.getOrganizationalUnits() != null
 				&&
 				identity.getOrganizationalUnits().size() > 0) {
+			for(String orgUnits: this.orgUnitSynonym) {
+				List<String> synonyms =  Arrays.asList(orgUnits.trim().split("\\s*\\|\\s*"));
+				
+				orgUnitSynonym.add(synonyms);
+			}
 			for(OrganizationalUnit orgUnit: identity.getOrganizationalUnits()) {
-				if(this.orgUnitSynonym.stream().anyMatch(syn -> StringUtils.containsIgnoreCase(syn, orgUnit.getOrganizationalUnitLabel()))) {
-					List<String> matchedOrgUnitSynonnym = this.orgUnitSynonym.stream().filter(syn -> StringUtils.containsIgnoreCase(syn, orgUnit.getOrganizationalUnitLabel())).collect(Collectors.toList());
-					for(String orgUnitsynonyms: matchedOrgUnitSynonnym) {
-						List<String> synonyms = Arrays.asList(orgUnitsynonyms.trim().split("\\s*\\|\\s*"));
+				if(orgUnitSynonym.stream().anyMatch(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel()))) {
+					List<List<String>> matchedOrgUnitSynonym = orgUnitSynonym.stream().filter(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel())).collect(Collectors.toList());
+					for(List<String> orgUnitsynonyms: matchedOrgUnitSynonym) {
 						
-						identityOrgUnitToSynonymMap.put(orgUnit.getOrganizationalUnitLabel(), synonyms);
-						if(synonyms.size() > 0) {
-							sanitizedIdentityInstitutions.addAll(synonyms);
+						identityOrgUnitToSynonymMap.put(orgUnit.getOrganizationalUnitLabel(), orgUnitsynonyms);
+						if(orgUnitsynonyms.size() > 0) {
+							sanitizedIdentityInstitutions.addAll(orgUnitsynonyms);
 						}
 					}
 				} else {
