@@ -296,19 +296,23 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 	 * @param identityOrgUnitToSynonymMap
 	 */
 	private void populateSanitizedIdentityInstitutions(Identity identity, Set<OrganizationalUnit> sanitizedIdentityInstitutions, Map<String, List<String>> identityOrgUnitToSynonymMap) {
+		List<List<String>> orgUnitSynonym = new ArrayList<List<String>>();
 		if(identity.getOrganizationalUnits() != null
 				&&
 				identity.getOrganizationalUnits().size() > 0) {
+			for(String orgUnits: this.orgUnitSynonym) {
+				List<String> synonyms =  Arrays.asList(orgUnits.trim().split("\\s*\\|\\s*"));
+				
+				orgUnitSynonym.add(synonyms);
+			}
 			for(OrganizationalUnit orgUnit: identity.getOrganizationalUnits()) {
-				if(this.orgUnitSynonym.stream().anyMatch(syn -> StringUtils.containsIgnoreCase(syn, orgUnit.getOrganizationalUnitLabel()))) {
-					List<String> matchedOrgUnitSynonnym = this.orgUnitSynonym.stream().filter(syn -> StringUtils.containsIgnoreCase(syn, orgUnit.getOrganizationalUnitLabel())).collect(Collectors.toList());
-					for(String orgUnitsynonyms: matchedOrgUnitSynonnym) {
-						List<String> synonyms = Arrays.asList(orgUnitsynonyms.trim().split("\\s*\\|\\s*"));
-						Set<OrganizationalUnit> orgUnitWithSynonmyms = new HashSet<OrganizationalUnit>(synonyms.size());
-						
-						identityOrgUnitToSynonymMap.put(orgUnit.getOrganizationalUnitLabel(), synonyms);
-						//synonyms.forEach(synonym -> {
-						for(String synonym: synonyms) {
+				//if(this.orgUnitSynonym.stream().anyMatch(syn -> StringUtils.containsIgnoreCase(syn, orgUnit.getOrganizationalUnitLabel()))) {
+				if(orgUnitSynonym.stream().anyMatch(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel()))) {
+					List<List<String>> matchedOrgUnitSynonnym = orgUnitSynonym.stream().filter(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel())).collect(Collectors.toList());
+					for(List<String> orgUnitsynonyms: matchedOrgUnitSynonnym) {
+						Set<OrganizationalUnit> orgUnitWithSynonmyms = new HashSet<OrganizationalUnit>(orgUnitsynonyms.size());
+						identityOrgUnitToSynonymMap.put(orgUnit.getOrganizationalUnitLabel(), orgUnitsynonyms);
+						for(String synonym: orgUnitsynonyms) {
 							OrganizationalUnit orgUnitWithSynonmym = new OrganizationalUnit();
 							orgUnitWithSynonmym.setOrganizationalUnitLabel(synonym.trim());
 							orgUnitWithSynonmym.setOrganizationalUnitType("department");
