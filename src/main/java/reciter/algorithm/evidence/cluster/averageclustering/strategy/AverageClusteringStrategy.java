@@ -30,6 +30,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 							reCiterArticle.getAffiliationScore() + 
 							reCiterArticle.getArticleCountEvidence().getArticleCountScore() +
 							((reCiterArticle.getPersonTypeEvidence() != null)?reCiterArticle.getPersonTypeEvidence().getPersonTypeScore():0) +
+							((reCiterArticle.getJournalCategoryEvidence() != null)?reCiterArticle.getJournalCategoryEvidence().getJournalSubfieldScore():0) +
 							((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) + 
 							((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0) +
 							((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreNull() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreNull():0);
@@ -45,6 +46,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +
 							reCiterArticle.getAffiliationScore() +
 							reCiterArticle.getArticleCountEvidence().getArticleCountScore() +
+							((reCiterArticle.getJournalCategoryEvidence() != null)?reCiterArticle.getJournalCategoryEvidence().getJournalSubfieldScore():0) +
 							((reCiterArticle.getPersonTypeEvidence() != null)?reCiterArticle.getPersonTypeEvidence().getPersonTypeScore():0);
 					
 					reCiterArticle.setTotalArticleScoreWithoutClustering(totalArticleScoreWithoutClustering);
