@@ -34,17 +34,8 @@ import reciter.engine.analysis.ReCiterFeature;
 @DynamoDBTable(tableName = "Analysis")
 public class AnalysisOutput {
 	
-
-	private String uid;
-	private ReCiterFeature reCiterFeature;
-	
 	@DynamoDBHashKey(attributeName = "uid")
-    public String getUid() {
-        return uid;
-    }
-	
+	private String uid;
 	@DynamoDBAttribute(attributeName = "reCiterFeature")
-	public ReCiterFeature getReCiterFeature() {
-		return reCiterFeature;
-	}
+	private ReCiterFeature reCiterFeature;
 }

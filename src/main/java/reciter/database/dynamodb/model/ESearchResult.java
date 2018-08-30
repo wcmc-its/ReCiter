@@ -15,33 +15,11 @@ import java.util.List;
 @NoArgsConstructor
 @DynamoDBTable(tableName = "ESearchResult")
 public class ESearchResult {
-
+	
+	@DynamoDBHashKey(attributeName = "uid")
     private String uid;
+	@DynamoDBAttribute(attributeName = "retrievalDate")
     private Date retrievalDate;
-    private List<ESearchPmid> eSearchPmids;
-
-    @DynamoDBHashKey(attributeName = "uid")
-    public String getUid() {
-        return uid;
-    }
-
     @DynamoDBAttribute(attributeName = "esearchpmids")
-    public List<ESearchPmid> getESearchPmids() {
-        return eSearchPmids;
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
-    }
-
-    public void setESearchPmids(List<ESearchPmid> eSearchPmids) {
-        this.eSearchPmids = eSearchPmids;
-    }
-    
-    public Date getRetrievalDate() {
-        return retrievalDate;
-    }
-    public void setRetrievalDate(Date retrievalDate) {
-        this.retrievalDate = retrievalDate;
-    }
+    private List<ESearchPmid> eSearchPmids;
 }

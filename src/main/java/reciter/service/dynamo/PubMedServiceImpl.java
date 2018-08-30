@@ -45,7 +45,7 @@ public class PubMedServiceImpl implements PubMedService {
         Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
         pubMedArticles = new ArrayList<>(pmids.size());
         while (iterator.hasNext()) {
-            pubMedArticles.add(iterator.next().getPubmedArticle());
+            pubMedArticles.add(iterator.next().getPubMedArticle());
         }
         return pubMedArticles;
     }
@@ -54,7 +54,7 @@ public class PubMedServiceImpl implements PubMedService {
     public PubMedArticle findByPmid(Long pmid) {
         reciter.database.dynamodb.model.PubMedArticle pubMedArticle = pubMedRepository.findById(pmid).orElseGet(() -> null);
         if (pubMedArticle != null) {
-            return pubMedArticle.getPubmedArticle();
+            return pubMedArticle.getPubMedArticle();
         }
         return null;
     }

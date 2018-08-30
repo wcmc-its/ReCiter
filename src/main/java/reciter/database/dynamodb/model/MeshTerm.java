@@ -12,16 +12,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MeshTerm {
+	
+	@DynamoDBHashKey(attributeName = "mesh")
     private String mesh;
+	@DynamoDBAttribute(attributeName = "count")
     private long count;
-
-    @DynamoDBHashKey(attributeName = "mesh")
-    public String getMesh() {
-        return mesh;
-    }
-
-    @DynamoDBAttribute(attributeName = "count")
-    public long getCount() {
-        return count;
-    }
 }

@@ -10,7 +10,7 @@ import reciter.service.AnalysisService;
 @Service("AnalysisOutputService")
 public class AnalysisServiceImpl implements AnalysisService{
 	
-	 @Autowired
+	@Autowired
 	private AnalysisOutputRepository analysisOutputRepository;
 
 	@Override

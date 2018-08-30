@@ -16,22 +16,10 @@ import java.util.List;
 @NoArgsConstructor
 @DynamoDBDocument
 public class GoldStandard {
+	@DynamoDBHashKey(attributeName = "uid")
     private String uid;
+	@DynamoDBAttribute(attributeName = "knownpmids")
     private List<Long> knownPmids;
+	@DynamoDBAttribute(attributeName = "rejectedpmids")
     private List<Long> rejectedPmids;
-
-    @DynamoDBHashKey(attributeName = "uid")
-    public String getUid() {
-        return uid;
-    }
-
-    @DynamoDBAttribute(attributeName = "knownpmids")
-    public List<Long> getKnownPmids() {
-        return knownPmids;
-    }
-
-    @DynamoDBAttribute(attributeName = "rejectedpmids")
-    public List<Long> getRejectedPmids() {
-        return rejectedPmids;
-    }
 }
