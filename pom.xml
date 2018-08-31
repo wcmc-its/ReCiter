@@ -7,6 +7,10 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>ReCiter</name>
     <description>ReCiter</description>
+    
+    <properties>
+    		<sqlite4java.version>1.0.392</sqlite4java.version>
+  	</properties>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <resources>
@@ -14,6 +18,7 @@
                 <directory>src/main/resources</directory>
             </resource>
         </resources>
+        <pluginManagement>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -34,6 +39,7 @@
                 </executions>
             </plugin>
         </plugins>
+        </pluginManagement>
     </build>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -49,6 +55,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+        			<groupId>com.amazonaws</groupId>
+        			<artifactId>aws-java-sdk-bom</artifactId>
+        			<version>1.11.400</version>
+        			<type>pom</type>
+        			<scope>import</scope>
+      		</dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -123,27 +136,11 @@
             <groupId>edu.wcmc.reciter</groupId>
             <artifactId>reciter-pubmed-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-                <exclusion>
-                	<groupId>com.amazonaws</groupId>
-                	<artifactId>aws-java-sdk-dynamodb</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>edu.wcmc.reciter</groupId>
             <artifactId>reciter-scopus-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-            	<exclusion>
-            		<groupId>com.amazonaws</groupId>
-            		<artifactId>aws-java-sdk-dynamodb</artifactId>
-            	</exclusion>
-            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.github.derjust/spring-data-dynamodb -->
         <dependency>
@@ -164,6 +161,24 @@
             <artifactId>springfox-swagger-ui</artifactId>
             <version>2.8.0</version>
         </dependency>
+        <!-- Uncomment this dependency if you want to use dynamodb locally -->
+        <dependency>
+       		<groupId>com.amazonaws</groupId>
+       		<artifactId>DynamoDBLocal</artifactId>
+       		<version>[1.11,2.0)</version>
+        </dependency>
+        <dependency>
+      		<groupId>com.almworks.sqlite4java</groupId>
+      		<artifactId>sqlite4java</artifactId>
+      		<type>jar</type>
+      		<version>${sqlite4java.version}</version>
+    		</dependency>
+	    <dependency>
+	      	<groupId>com.almworks.sqlite4java</groupId>
+	      	<artifactId>libsqlite4java-linux-i386</artifactId>
+	      	<type>so</type>
+	      	<version>${sqlite4java.version}</version>
+	    </dependency>
     </dependencies>
     <repositories>
         <repository>
@@ -175,5 +190,11 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
+        <!-- Us this repository for local dynamodb. Change the region accordingly. For details: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.Maven.html -->
+        <repository>
+       		<id>dynamodb-local-oregon</id>
+       		<name>DynamoDB Local Release Repository</name>
+       		<url>https://s3-us-west-2.amazonaws.com/dynamodb-local/release</url>
+    		</repository>
     </repositories>
 </project>
