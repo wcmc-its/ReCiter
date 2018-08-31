@@ -1,6 +1,7 @@
 package reciter.database.dynamodb;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -10,8 +11,12 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.exceptions.DynamoDBLocalServiceException;
+import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
+import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +52,9 @@ import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Configuration
 @EnableDynamoDBRepositories
         (basePackages = "reciter.database.dynamodb.repository", dynamoDBMapperConfigRef = "dynamoDBMapperConfig")
@@ -60,19 +68,76 @@ public class DynamoDbConfig {
     
     private String basePackage = "reciter.database.dynamodb.model";
     
+    @Value("${aws.dynamoDb.local.port}")
+    private String dynamoDbLocalPort;
+    
+    @Value("${aws.dynamoDb.local.dbpath}")
+    private String dynamoDbPath;
+    
+    @Value("${aws.dynamoDb.local}")
+    private boolean isDynamoDbLocal;
+    
     private static final Long READ_CAPACITY_UNITS = 5L;
     private static final Long WRITE_CAPACITY_UNITS = 5L;
 
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
-        //AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
-    	AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder.standard().withEndpointConfiguration(
-    			new AwsClientBuilder.EndpointConfiguration("http://localhost:8000", "us-east-1"))
-    			.build();
-        /*if (!StringUtils.isEmpty(amazonDynamoDBEndpoint)) {
-            amazonDynamoDB.setEndpoint(amazonDynamoDBEndpoint);
-        }*/
-        createTables(amazonDynamoDB);
+    	AmazonDynamoDB amazonDynamoDB = null;
+    	
+    	if(isDynamoDbLocal) {
+    		log.info("Using dynamodb local with port - " + dynamoDbLocalPort + " and dbPath - " + dynamoDbPath);
+    		DynamoDBProxyServer server = null;
+    		
+    		try {
+    			server = ServerRunner.createServerFromCommandLineArgs(new String[]{
+					"-dbPath", 	this.dynamoDbPath,"-port", this.dynamoDbLocalPort
+				});
+				server.start();
+				
+				amazonDynamoDB = AmazonDynamoDBClientBuilder.standard().withEndpointConfiguration(
+	        			new AwsClientBuilder.EndpointConfiguration("http://localhost:" + this.dynamoDbLocalPort, "us-west-2"))
+	    				 .withCredentials(new AWSStaticCredentialsProvider(new AWSCredentials() {
+							
+							@Override
+							public String getAWSSecretKey() {
+								return "dummy";
+							}
+							
+							@Override
+							public String getAWSAccessKeyId() {
+								return "dummy";
+							}
+						}))
+	        			.build();
+			} catch (Exception e) {
+				log.error(e.getLocalizedMessage());
+			} 
+    		/*finally {
+                if(server != null) {
+                    try {
+						server.stop();
+					} catch (Exception e) {
+						log.error(e.getLocalizedMessage());
+					}
+                }
+                if(amazonDynamoDB != null) {
+                	amazonDynamoDB.shutdown();
+                }
+            } */
+    		
+    		 
+    	} else {
+    		log.info("Using dynamodb AWS with endpoint - " + amazonDynamoDBEndpoint);
+    		 amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
+    		if (!StringUtils.isEmpty(amazonDynamoDBEndpoint)) {
+                amazonDynamoDB.setEndpoint(amazonDynamoDBEndpoint);
+            }
+    	}
+    	if(amazonDynamoDB != null) {
+    		createTables(amazonDynamoDB);
+    	} else {
+    		log.info("aws.dynamoDb.local needs to have a boolean value set in application.propeties");
+    	}
         return amazonDynamoDB;
     }
 
@@ -92,6 +157,8 @@ public class DynamoDbConfig {
      */
     private void createTables(AmazonDynamoDB amazonDynamoDB) {
     	
+    	//Sometimes using Mac(OSX) there might be issues with sqllite being added to java library path. In that case copy the libsqlite4java jar to Extensions folder in /Library/Java/Extensions
+    	//sudo cp ~/.m2/repository/com/almworks/sqlite4java/libsqlite4java-osx/1.0.392/libsqlite4java-osx-1.0.392.dylib /Library/Java/Extensions This will allow local dynamoDb to use sqllite for all purposes.
     	ListTablesResult listTablesResult = amazonDynamoDB.listTables();
 
         ClassPathScanningCandidateComponentProvider scanner =
