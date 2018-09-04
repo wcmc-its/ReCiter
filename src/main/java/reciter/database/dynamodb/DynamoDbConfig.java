@@ -15,15 +15,19 @@ import com.amazonaws.services.dynamodbv2.exceptions.DynamoDBLocalServiceExceptio
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
+import com.amazonaws.services.dynamodbv2.model.Projection;
+import com.amazonaws.services.dynamodbv2.model.ProjectionType;
 
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 
 import java.lang.reflect.Field;
@@ -46,6 +50,8 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
+import com.amazonaws.services.dynamodbv2.model.GlobalSecondaryIndex;
 import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
@@ -53,6 +59,7 @@ import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 
 @Slf4j
 @Configuration
@@ -191,21 +198,79 @@ public class DynamoDbConfig {
                 }
 
                 List<AttributeDefinition> attributeDefinitions = new ArrayList<AttributeDefinition>();
-                attributeDefinitions.add(new AttributeDefinition().withAttributeName(keyName).withAttributeType(ScalarAttributeType.S));
-
-                List<KeySchemaElement> keySchemaElements = new ArrayList<KeySchemaElement>();
-                keySchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
-
-                CreateTableRequest request =
-                        new CreateTableRequest()
-                                                .withTableName(tableName)
-                                                .withKeySchema(keySchemaElements)
-                                                .withAttributeDefinitions(attributeDefinitions)
-                                                .withProvisionedThroughput(
-                                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
-                                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
-
-                amazonDynamoDB.createTable(request);
+                if(tableName.equalsIgnoreCase("ScienceMetrixDepartmentCategory") 
+                		|| 
+                		tableName.equalsIgnoreCase("ScienceMetrix") 
+                		|| 
+                		tableName.equalsIgnoreCase("PubMedArticle")) {
+                	attributeDefinitions.add(new AttributeDefinition().withAttributeName(keyName).withAttributeType(ScalarAttributeType.N));
+                	if(tableName.equalsIgnoreCase("ScienceMetrix")) {
+                		attributeDefinitions.add(new AttributeDefinition().withAttributeName("issn").withAttributeType(ScalarAttributeType.S));
+                		attributeDefinitions.add(new AttributeDefinition().withAttributeName("eissn").withAttributeType(ScalarAttributeType.S));
+                	}
+                } else {
+                	attributeDefinitions.add(new AttributeDefinition().withAttributeName(keyName).withAttributeType(ScalarAttributeType.S));
+                }
+                
+                if(tableName.equalsIgnoreCase("ScienceMetrix")) {
+                	List<GlobalSecondaryIndex> globalSecondardyIndexes = new ArrayList<GlobalSecondaryIndex>();
+                	
+                	List<KeySchemaElement> keyTableSchemaElements = new ArrayList<KeySchemaElement>();
+                	keyTableSchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
+                	
+                	GlobalSecondaryIndex issnIndex = new GlobalSecondaryIndex()
+                			.withIndexName("issn-index")
+                			.withKeySchema(new KeySchemaElement().withAttributeName("issn").withKeyType(KeyType.HASH))
+                			.withProvisionedThroughput(new ProvisionedThroughput(READ_CAPACITY_UNITS, WRITE_CAPACITY_UNITS))
+                			.withProjection(new Projection().withProjectionType(ProjectionType.ALL));
+                	
+                	GlobalSecondaryIndex eissnIndex = new GlobalSecondaryIndex()
+                			.withIndexName("eissn-index")
+                			.withKeySchema(new KeySchemaElement().withAttributeName("eissn").withKeyType(KeyType.HASH))
+                			.withProvisionedThroughput(new ProvisionedThroughput(READ_CAPACITY_UNITS, WRITE_CAPACITY_UNITS))
+                			.withProjection(new Projection().withProjectionType(ProjectionType.ALL));
+                	
+                	
+                    
+                    globalSecondardyIndexes.add(issnIndex);
+                    globalSecondardyIndexes.add(eissnIndex);
+                    
+                    CreateTableRequest request =
+                            new CreateTableRequest()
+                                                    .withTableName(tableName)
+                                                    .withAttributeDefinitions(attributeDefinitions)
+                                                    .withKeySchema(keyTableSchemaElements)
+                                                    .withGlobalSecondaryIndexes(globalSecondardyIndexes)
+                                                    .withProvisionedThroughput(
+                                                                               new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
+                                                                                                          .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
+                    
+                    amazonDynamoDB.createTable(request);
+                    if(!isDynamoDbLocal) {
+                    	log.info("Waiting for table to be created in AWS.");
+	                    try {
+							Thread.sleep(120000);
+						} catch (InterruptedException e) {
+							log.info(e.getMessage());
+						}
+                    }
+                    
+                    
+                } else {
+                	List<KeySchemaElement> keySchemaElements = new ArrayList<KeySchemaElement>();
+	                keySchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
+	
+	                CreateTableRequest request =
+	                        new CreateTableRequest()
+	                                                .withTableName(tableName)
+	                                                .withKeySchema(keySchemaElements)
+	                                                .withAttributeDefinitions(attributeDefinitions)
+	                                                .withProvisionedThroughput(
+	                                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
+	                                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
+	                amazonDynamoDB.createTable(request);
+                }
+                
             }
 
         }
