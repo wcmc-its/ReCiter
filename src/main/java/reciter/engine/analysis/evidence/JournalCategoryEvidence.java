@@ -11,7 +11,7 @@ import lombok.ToString;
 public class JournalCategoryEvidence {
 	
 	private String journalSubfieldScienceMetrixLabel;
-	private Long journalSubfieldScienceMetrixID;
+	private int journalSubfieldScienceMetrixID;
 	private String journalSubfieldDepartment;
 	private double journalSubfieldScore;
 }
