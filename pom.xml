@@ -179,6 +179,11 @@
 	      	<type>so</type>
 	      	<version>${sqlite4java.version}</version>
 	    </dependency>
+	    <dependency>
+	    	<groupId>com.opencsv</groupId>
+	    	<artifactId>opencsv</artifactId>
+	    	<version>4.2</version>
+	    </dependency>
     </dependencies>
     <repositories>
         <repository>
