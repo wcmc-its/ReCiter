@@ -22,11 +22,17 @@ import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRep
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableAsync;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
+import reciter.database.dyanmodb.files.ScienceMetrixFileImport;
+import reciter.service.ScienceMetrixDepartmentCategoryService;
 
 @SpringBootApplication
 @Configuration
@@ -47,5 +53,17 @@ public class Application {
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
+	}
+	
+	/**
+	 * This function will load all the necessary data from files folder to dynamodb
+	 */
+	@EventListener(ApplicationReadyEvent.class)
+	public void loadDynamoDbTablesAfterStartUp() {
+		ScienceMetrixDepartmentCategoryFileImport scienceMetrixDepartmentCategoryFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixDepartmentCategoryFileImport.class);
+		scienceMetrixDepartmentCategoryFileImport.importScienceMetrixDepartmentCategory();
+		
+		ScienceMetrixFileImport scienceMetrixFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixFileImport.class);
+		scienceMetrixFileImport.importScienceMetrix();
 	}
 }
