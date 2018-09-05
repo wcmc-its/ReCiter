@@ -18,7 +18,6 @@
                 <directory>src/main/resources</directory>
             </resource>
         </resources>
-        <pluginManagement>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -39,7 +38,6 @@
                 </executions>
             </plugin>
         </plugins>
-        </pluginManagement>
     </build>
     <parent>
         <groupId>org.springframework.boot</groupId>
