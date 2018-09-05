@@ -18,6 +18,8 @@
  *******************************************************************************/
 package reciter.engine;
 
+import reciter.database.dynamodb.model.ScienceMetrix;
+import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
@@ -30,6 +32,8 @@ public class EngineParameters {
 
     private static Map<String, Long> meshCountMap;
     private static Map<String, List<String>> afiliationNameToAfidMap;
+    private static List<ScienceMetrix> scienceMetrixJournals;
+    private static List<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategories;
     private Identity identity;
     private List<PubMedArticle> pubMedArticles;
     private List<ScopusArticle> scopusArticles;
@@ -54,7 +58,24 @@ public class EngineParameters {
         EngineParameters.afiliationNameToAfidMap = afiliationNameToAfidMap;
     }
 
-    public Identity getIdentity() {
+    public static List<ScienceMetrix> getScienceMetrixJournals() {
+		return scienceMetrixJournals;
+	}
+
+	public static void setScienceMetrixJournals(List<ScienceMetrix> scienceMetrixJournals) {
+		EngineParameters.scienceMetrixJournals = scienceMetrixJournals;
+	}
+
+	public static List<ScienceMetrixDepartmentCategory> getScienceMetrixDepartmentCategories() {
+		return scienceMetrixDepartmentCategories;
+	}
+
+	public static void setScienceMetrixDepartmentCategories(
+			List<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategories) {
+		EngineParameters.scienceMetrixDepartmentCategories = scienceMetrixDepartmentCategories;
+	}
+
+	public Identity getIdentity() {
         return identity;
     }
 

@@ -481,14 +481,14 @@ public class ReCiterController {
         parameters.setScopusArticles(Collections.emptyList());
         parameters.setReciterArticles(reCiterArticles);
 
-        if (EngineParameters.getMeshCountMap() == null) {
+/*        if (EngineParameters.getMeshCountMap() == null) {
             List<MeshTerm> meshTerms = dynamoDbMeshTermService.findAll();
             Map<String, Long> meshCountMap = new HashMap<>();
             for (MeshTerm meshTerm : meshTerms) {
                 meshCountMap.put(meshTerm.getMesh(), meshTerm.getCount());
             }
             EngineParameters.setMeshCountMap(meshCountMap);
-        }
+        }*/
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         if (goldStandard == null) {
             parameters.setKnownPmids(new ArrayList<>());
@@ -497,11 +497,11 @@ public class ReCiterController {
             parameters.setKnownPmids(goldStandard.getKnownPmids());
             parameters.setRejectedPmids(goldStandard.getRejectedPmids());
         }
-        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
+        /*List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
         if(instAfids != null && instAfids.size() > 0) {
         	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
         	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
-        }
+        }*/
         if (totalStandardizedArticleScore == null) {
             parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault());
         } else {

@@ -11,4 +11,6 @@ public interface ScienceMetrixDepartmentCategoryService {
 	void save(Collection<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategories);
 	
 	long getItemCount();
+
+	List<ScienceMetrixDepartmentCategory> findAll();
 }
