@@ -22,6 +22,7 @@ import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.controller.ReCiterController;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
+import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
@@ -106,10 +107,18 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	
 	private List<ScienceMetrixDepartmentCategory> getScienceMetrixDepartmentCategory(String subfieldId) {
 		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategory = null;
-		if(subfieldId != null 
+		/*if(subfieldId != null 
 				&& 
 				!subfieldId.isEmpty()) {
 			scienceMetrixDeptCategory = scienceMetrixDepartmentCategoryService.findByScienceMetrixJournalSubfieldId(Long.parseLong(subfieldId));
+		}*/
+		
+		if(subfieldId != null 
+				&& 
+				!subfieldId.isEmpty()) {
+			scienceMetrixDeptCategory = EngineParameters.getScienceMetrixDepartmentCategories().stream().filter(scienceMetrixDepartmentCategory -> 
+			scienceMetrixDepartmentCategory.getScienceMetrixJournalSubfieldId() == Integer.parseInt(subfieldId)
+					).collect(Collectors.toList());
 		}
 		return scienceMetrixDeptCategory;
 	}
@@ -128,7 +137,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 				issnLinking = journalIssn.getIssn().trim();
 			}
 		}
-		if(issnLinking != null) {
+		
+		/*if(issnLinking != null) {
 			scienceMetrix = scienceMetrixService.findByIssn(issnLinking);
 			if(scienceMetrix == null) {
 				scienceMetrix = scienceMetrixService.findByEissn(issnLinking);
@@ -143,7 +153,57 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 			if(scienceMetrix == null) {
 				scienceMetrix = scienceMetrixService.findByEissn(issnElectronic);
 			}
+		}*/
+		
+		for(ScienceMetrix scienceMetrixJournal: EngineParameters.getScienceMetrixJournals()) {
+			if(issnLinking != null) {
+				if(scienceMetrixJournal.getIssn() != null 
+						&&
+						scienceMetrixJournal.getIssn().equals(issnLinking)) {
+					scienceMetrix = scienceMetrixJournal;
+					break;
+				}
+				if(scienceMetrix == null) {
+					if(scienceMetrixJournal.getEissn() != null 
+							&&
+							scienceMetrixJournal.getEissn().equals(issnLinking)) {
+						scienceMetrix = scienceMetrixJournal;
+						break;
+					}
+				}
+			} else if(scienceMetrix == null && issnPrint != null) {
+				if(scienceMetrixJournal.getIssn() != null 
+						&&
+						scienceMetrixJournal.getIssn().equals(issnPrint)) {
+					scienceMetrix = scienceMetrixJournal;
+					break;
+				}
+				if(scienceMetrix == null) {
+					if(scienceMetrixJournal.getEissn() != null 
+							&&
+							scienceMetrixJournal.getEissn().equals(issnPrint)) {
+						scienceMetrix = scienceMetrixJournal;
+						break;
+					}
+				}
+			} else if(scienceMetrix == null && issnElectronic != null) {
+				if(scienceMetrixJournal.getIssn() != null 
+						&&
+						scienceMetrixJournal.getIssn().equals(issnElectronic)) {
+					scienceMetrix = scienceMetrixJournal;
+					break;
+				}
+				if(scienceMetrix == null) {
+					if(scienceMetrixJournal.getEissn() != null 
+							&&
+							scienceMetrixJournal.getEissn().equals(issnElectronic)) {
+						scienceMetrix = scienceMetrixJournal;
+						break;
+					}
+				}
+			}
 		}
+		
 
 		return scienceMetrix;
 	}
