@@ -11,4 +11,5 @@ public interface ScienceMetrixService {
     ScienceMetrix findBySmsid(Long smsid);
 	void save(Collection<ScienceMetrix> scienceMetrix);
 	long getItemCount();
+	List<ScienceMetrix> findAll();
 }
