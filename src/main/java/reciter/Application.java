@@ -18,7 +18,14 @@
  *******************************************************************************/
 package reciter;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,10 +37,20 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableAsync;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import lombok.extern.slf4j.Slf4j;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixFileImport;
+import reciter.database.dynamodb.model.InstitutionAfid;
+import reciter.database.dynamodb.model.MeshTerm;
+import reciter.database.dynamodb.model.ScienceMetrix;
+import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
+import reciter.engine.EngineParameters;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
+import reciter.service.ScienceMetrixService;
+import reciter.service.dynamo.DynamoDbInstitutionAfidService;
+import reciter.service.dynamo.DynamoDbMeshTermService;
 
+@Slf4j
 @SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
@@ -50,6 +67,21 @@ public class Application {
 //		System.out.println("password:" + hashedPassword);
 //		return new BCryptPasswordEncoder();
 //	}
+	
+    @Autowired
+    private DynamoDbMeshTermService dynamoDbMeshTermService;
+	
+    @Autowired
+    private ScienceMetrixService scienceMetrixService;
+    
+    @Autowired
+    private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
+    
+    @Autowired
+    private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
+    
+    @Value("${use.scopus.articles}")
+    private boolean useScopusArticles;
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -65,5 +97,39 @@ public class Application {
 		
 		ScienceMetrixFileImport scienceMetrixFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixFileImport.class);
 		scienceMetrixFileImport.importScienceMetrix();
+	}
+	
+	@EventListener(ApplicationReadyEvent.class)
+	public void populateStaticEngineParameters() {
+		
+		log.info("Loading ScienceMetrixJournals to Engine Parameters");
+		List<ScienceMetrix> scienceMetrixJournals = scienceMetrixService.findAll();
+        if(scienceMetrixJournals != null && scienceMetrixJournals.size() > 0) {
+        	EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
+        }
+        
+        log.info("Loading ScienceMetrixDepartmentCategories to Engine Parameters");
+		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = scienceMetrixDepartmentCategoryService.findAll();
+        if(scienceMetrixDeptCategories != null && scienceMetrixDeptCategories.size() > 0) {
+        	EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
+        }
+        
+        log.info("Loading MeshTermCounts to Engine Parameters");
+        if (EngineParameters.getMeshCountMap() == null) {
+            List<MeshTerm> meshTerms = dynamoDbMeshTermService.findAll();
+            Map<String, Long> meshCountMap = new HashMap<>();
+            for (MeshTerm meshTerm : meshTerms) {
+                meshCountMap.put(meshTerm.getMesh(), meshTerm.getCount());
+            }
+            EngineParameters.setMeshCountMap(meshCountMap);
+        }
+        if(useScopusArticles) {
+	        log.info("Loading ScopusInstitutionalAfids to Engine Parameters");
+	        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
+	        if(instAfids != null && instAfids.size() > 0) {
+	        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
+	        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
+	        }
+        }
 	}
 }
