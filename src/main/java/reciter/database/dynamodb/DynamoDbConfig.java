@@ -57,6 +57,8 @@ import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
+import com.amazonaws.services.dynamodbv2.util.TableUtils;
+import com.amazonaws.services.dynamodbv2.util.TableUtils.TableNeverTransitionedToStateException;
 
 import lombok.extern.slf4j.Slf4j;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
@@ -246,16 +248,12 @@ public class DynamoDbConfig {
                                                                                                           .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
                     
                     amazonDynamoDB.createTable(request);
-                    if(!isDynamoDbLocal) {
-                    	log.info("Waiting for table to be created in AWS.");
-	                    try {
-							Thread.sleep(120000);
-						} catch (InterruptedException e) {
-							log.info(e.getMessage());
-						}
-                    }
-                    
-                    
+                	log.info("Waiting for table to be created in AWS.");
+                	try {
+						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
+					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
+						log.error(e.getMessage());
+					}
                 } else {
                 	List<KeySchemaElement> keySchemaElements = new ArrayList<KeySchemaElement>();
 	                keySchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
