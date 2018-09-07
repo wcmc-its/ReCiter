@@ -182,6 +182,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults());
 			uniquePmids.addAll(r1.getPubMedArticles().keySet());
 		} 
+		//toggle useStrictQUery as true if results from Last Name First Initial Strategy is larger than lenientStrategy
+		if(r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
+			useStrictQueryOnly = true;
+		}
 		
 		if(r1.getPubMedQueryResults() != null
 				&&
