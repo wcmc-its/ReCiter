@@ -835,7 +835,15 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 						&&
 						idenityAuthorNames.size() - 1 >= j
 						&&
-						idenityAuthorNames.get(i) != null && idenityAuthorNames.get(j) != null) {
+						idenityAuthorNames.get(i) != null && idenityAuthorNames.get(j) != null
+						&&
+						idenityAuthorNames.get(i).getFirstName() != null
+						&&
+						idenityAuthorNames.get(i).getLastName() != null
+						&&
+						idenityAuthorNames.get(j).getFirstName() != null
+						&&
+						idenityAuthorNames.get(j).getLastName() != null) {
 					if(StringUtils.equalsIgnoreCase(idenityAuthorNames.get(i).getLastName(), idenityAuthorNames.get(j).getLastName()) && 
 							idenityAuthorNames.get(i).getFirstName().startsWith(idenityAuthorNames.get(j).getFirstName())) {
 						if(idenityAuthorNames.get(j).getMiddleName() == null) {
