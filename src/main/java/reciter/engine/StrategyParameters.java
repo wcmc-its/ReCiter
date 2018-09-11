@@ -264,6 +264,9 @@ public class StrategyParameters {
 
     @Value("${strategy.averageClusteringScoringStrategy.clusterScore-Factor}")
     private double clusterScoreFactor;
+    
+    @Value("${strategy.averageClusteringScoringStrategy.clusterReliabilityScoreFactor}")
+    private double clusterReliabilityScoreFactor;
 
     @Value("${standardizedScoreMapping}")
     private String standardizedScoreMapping;
