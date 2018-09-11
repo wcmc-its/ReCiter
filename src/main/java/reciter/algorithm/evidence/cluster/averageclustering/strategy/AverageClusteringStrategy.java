@@ -29,7 +29,6 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 	public double executeStrategy(ReCiterCluster reCiterCluster) {
 			
 			List<String> articleAuthorFirstNames = new ArrayList<String>();
-		
 			reCiterCluster.getArticleCluster().stream().forEach(reCiterArticle -> {
 				if(reCiterCluster.getArticleCluster().size() > 1) {
 					populateArticeAuthorFirstName(reCiterArticle, articleAuthorFirstNames);
@@ -113,7 +112,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 		ReCiterAuthor reCiterAuthor = reCiterArticle.getArticleCoAuthors().getAuthors().stream().filter(author -> author.isTargetAuthor() == true).findAny().orElse(null);
 		
 		if(reCiterAuthor != null) {
-			String firstName = reCiterAuthor.getAuthorName().getFirstName().replaceAll("[A-Z]", "").trim();
+			String firstName = reCiterAuthor.getAuthorName().getFirstName().replaceAll("[A-Z-.\"() ]", "").trim();
 			if(!firstName.isEmpty()) {
 				articleAuthorFirstNames.add(firstName);
 			}
