@@ -11,5 +11,6 @@ import lombok.ToString;
 public class AverageClusteringEvidence {
 	private double totalArticleScoreWithoutClustering;
 	private double clusterScoreAverage;
+	private double clusterReliabilityScore;
 	private double clusterScoreModificationOfTotalScore;
 }
