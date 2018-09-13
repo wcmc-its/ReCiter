@@ -19,5 +19,7 @@ public class RelationshipEvidence {
     private double relationshipVerboseMatchModifierScore;
     private double relationshipMatchModifierMentor;
     private double relationshipMatchModifierMentorSeniorAuthor;
+    private double relationshipMatchModifierManager;
+    private double relationshipMatchModifierManagerSeniorAuthor;
     
 }

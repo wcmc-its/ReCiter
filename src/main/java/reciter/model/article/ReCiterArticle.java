@@ -398,7 +398,9 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     	return this.relationshipEvidences.stream().mapToDouble(relationShipEvidence -> relationShipEvidence.getRelationshipMatchingScore() 
     			+ relationShipEvidence.getRelationshipVerboseMatchModifierScore()
     			+ relationShipEvidence.getRelationshipMatchModifierMentorSeniorAuthor()
-    			+ relationShipEvidence.getRelationshipMatchModifierMentor()).sum();
+    			+ relationShipEvidence.getRelationshipMatchModifierMentor()
+    			+ relationShipEvidence.getRelationshipMatchModifierManagerSeniorAuthor()
+    			+ relationShipEvidence.getRelationshipMatchModifierManager()).sum();
     }
     
     
