@@ -207,6 +207,12 @@ public class StrategyParameters {
 
     @Value("${strategy.knownrelationships.relationshipMatchModifier-Mentor-SeniorAuthor}")
     private double relationshipMatchModifierMentorSeniorAuthor;
+    
+    @Value("${strategy.knownrelationships.relationshipMatchModifier-Manager}")
+    private double relationshipMatchModifierManager;
+
+    @Value("${strategy.knownrelationships.relationshipMatchModifier-Manager-SeniorAuthor}")
+    private double relationshipMatchModifierManagerSeniorAuthor;
 
     @Value("${strategy.discrepancyDegreeYear-BachelorThreshold}")
     private double discrepancyDegreeYearBachelorThreshold;
