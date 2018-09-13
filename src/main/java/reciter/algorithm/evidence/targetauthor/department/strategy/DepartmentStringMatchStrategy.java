@@ -111,7 +111,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		Map<String, List<String>> identityOrgUnitToSynonymMap = new HashMap<String, List<String>>();
 		populateSanitizedIdentityInstitutions(identity, sanitizedIdentityInstitutions, identityOrgUnitToSynonymMap);
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if(reCiterArticle.getArticleId() == 10499040) {
+			if(reCiterArticle.getArticleId() == 29720570) {
 				slf4jLogger.info("here");
 			}
 			//sum += executeStrategy(reCiterArticle, identity);
@@ -130,7 +130,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 							//This is for department
 							for(OrganizationalUnit orgUnit: sanitizedIdentityInstitutions) {
 								String identityDepartment = orgUnit.getOrganizationalUnitLabel().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
-								if(orgUnit.getOrganizationalUnitType().equals("department")) {
+								if(orgUnit.getOrganizationalUnitType().equals("department") || orgUnit.getOrganizationalUnitType().equals("division")) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
 											&& 
 											(StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center")
@@ -232,10 +232,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										if(synonymOrgUnitLabel == null) {
 											orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
 										}
+										orgUnitEvidence.setOrganizationalUnitModifier(identityDepartment);
 										orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
-									} else {
-										orgUnitEvidence.setOrganizationalUnitModifier(null);
-										orgUnitEvidence.setOrganizationalUnitModifierScore(0);
 									}
 								} else {
 									if(articleAffiliation.contains("Program in " + identityDepartment) 
