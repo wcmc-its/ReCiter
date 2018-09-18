@@ -41,6 +41,9 @@ public class AmazonSQSExtendedClientConfig {
     @Value("${aws.sqs.use}")
     private boolean isAwsSqs;
     
+    @Value("${aws.sqs.region}")
+    private String awsSQSRegion;
+    
     @Value("${aws.sqs.extenedClient}")
     private boolean isAwsSqsExtenedClient;
     
@@ -100,7 +103,7 @@ public class AmazonSQSExtendedClientConfig {
 							return amazonAWSAccessKey;
 						}
 					}))
-					.withRegion(awsS3Region)
+					.withRegion(awsSQSRegion)
 					.build(), extendedClientConfig);
     				
     		return sqs;
@@ -120,7 +123,7 @@ public class AmazonSQSExtendedClientConfig {
 								return amazonAWSAccessKey;
 							}
 						}))
-						.withRegion(awsS3Region)
+						.withRegion(awsSQSRegion)
 						.build();
 	  				
 	  		return sqs;
