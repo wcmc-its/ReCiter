@@ -313,8 +313,9 @@ public class ReCiterController {
         } catch (NullPointerException n) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        if (!refreshFlag && analysisService.findByUid(uid.trim()) != null) {
-            return new ResponseEntity<>(analysisService.findByUid(uid.trim()).getReCiterFeature(), HttpStatus.OK);
+        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        if (!refreshFlag && analysis != null) {
+            return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
         } else {
             if (useGoldStandard == null) {
                 strategyParameters.setUseGoldStandardEvidence(true);
@@ -354,7 +355,7 @@ public class ReCiterController {
         return new ResponseEntity<>(engineOutput.getReCiterFeature(), HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
+    /*@ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by eissn is successful"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -409,7 +410,7 @@ public class ReCiterController {
     public ResponseEntity<List<ScienceMetrixDepartmentCategory>> retrieveScienceMetrixDepartmentCategoryBySubfieldId(@PathVariable Long subfieldid) {
         List<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategory = scienceMetrixDepartmentCategoryService.findByScienceMetrixJournalSubfieldId(subfieldid);
         return ResponseEntity.ok(scienceMetrixDepartmentCategory);
-    }
+    }*/
 
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
         // find identity
