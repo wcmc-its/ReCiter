@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.repository.AnalysisOutputRepository;
+import reciter.engine.analysis.ReCiterFeature;
 import reciter.service.AnalysisService;
 
 @Slf4j
@@ -26,6 +27,9 @@ public class AnalysisServiceImpl implements AnalysisService{
 	@Autowired
 	private DynamoDbS3Operations ddbs3;
 	
+    @Value("${aws.s3.use}")
+    private boolean isS3Use;
+	
     @Value("${aws.s3.dynamodb.bucketName}")
     private String s3BucketName;
 
@@ -34,18 +38,29 @@ public class AnalysisServiceImpl implements AnalysisService{
 		try{
 			analysisOutputRepository.save(analysis);
 		} catch(AmazonDynamoDBException addbe) {
-			log.info("Storing item in s3 since it item size exceeds more than 400kb");
-			ddbs3.saveLargeItem(s3BucketName, analysis, analysis.getUid());
-			analysis.setReCiterFeature(null);
-			analysis.setUsingS3(true);
-			analysisOutputRepository.save(analysis);
-			
+			if(isS3Use) {
+				log.info("Storing item in s3 since it item size exceeds more than 400kb");
+				ddbs3.saveLargeItem(s3BucketName, analysis.getReCiterFeature(), AnalysisOutput.class.getSimpleName() + "/" + analysis.getUid());
+				analysis.setReCiterFeature(null);
+				analysis.setUsingS3(true);
+				analysisOutputRepository.save(analysis);
+			} else {
+				log.info("Enable s3 use in application properties file to store larger objects. Set aws.s3.use to true and set aws.s3.dynamodb.bucketName");
+			}
 		}
 	}
 
 	@Override
 	public AnalysisOutput findByUid(String uid) {
-		return analysisOutputRepository.findById(uid).orElseGet(() -> null);
+		AnalysisOutput analysisOutput = analysisOutputRepository.findById(uid).orElseGet(() -> null);
+		if(analysisOutput != null 
+				&&
+				analysisOutput.isUsingS3()) {
+			log.info("Retreving analysis from s3 for " + uid);
+			ReCiterFeature reCiterFeature = (ReCiterFeature) ddbs3.retrieveLargeItem(s3BucketName, AnalysisOutput.class.getSimpleName() + "/" + uid.trim(), ReCiterFeature.class);
+			analysisOutput.setReCiterFeature(reCiterFeature);
+		} 
+		return analysisOutput;
 	}
 
 	@Override
