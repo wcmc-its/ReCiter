@@ -14,6 +14,7 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.exceptions.DynamoDBLocalServiceException;
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
+import com.amazonaws.services.dynamodbv2.local.shared.access.sqlite.AmazonDynamoDBOfflineSQLiteJob;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.Projection;
 import com.amazonaws.services.dynamodbv2.model.ProjectionType;
@@ -141,6 +142,7 @@ public class DynamoDbConfig {
     		if (!StringUtils.isEmpty(amazonDynamoDBEndpoint)) {
                 amazonDynamoDB.setEndpoint(amazonDynamoDBEndpoint);
             }
+    		
     	}
     	if(amazonDynamoDB != null) {
     		createTables(amazonDynamoDB);

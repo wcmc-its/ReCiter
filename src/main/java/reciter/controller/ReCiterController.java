@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
+import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
@@ -341,6 +342,12 @@ public class ReCiterController {
 
             Engine engine = new ReCiterEngine();
             engineOutput = engine.run(parameters, strategyParameters);
+            AnalysisOutput analysisOutput = new AnalysisOutput();
+            if(engineOutput != null)
+				analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
+			analysisOutput.setUid(uid);
+			if(analysisOutput.getReCiterFeature() != null)
+				analysisService.save(analysisOutput);
         }
         estimatedTime = System.currentTimeMillis() - startTime;
         slf4jLogger.info("elapsed time: " + estimatedTime);

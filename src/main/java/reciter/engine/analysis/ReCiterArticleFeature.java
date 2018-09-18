@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.List;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperFieldModel.DynamoDBAttributeType;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTyped;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Data
@@ -17,6 +19,7 @@ public class ReCiterArticleFeature {
     private long pmid;
     private double totalArticleScoreStandardized;
     private double totalArticleScoreNonStandardized;
+    @DynamoDBTyped(DynamoDBAttributeType.S)
     private PublicationFeedback userAssertion;
     private String publicationDateDisplay;
     private String publicationDateStandardized;

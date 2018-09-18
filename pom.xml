@@ -152,7 +152,7 @@
             <artifactId>spring-data-dynamodb</artifactId>
             <version>5.0.3</version>
         </dependency>
-
+        
         <!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger2 -->
         <dependency>
             <groupId>io.springfox</groupId>
@@ -187,6 +187,16 @@
 	    	<groupId>com.opencsv</groupId>
 	    	<artifactId>opencsv</artifactId>
 	    	<version>4.2</version>
+	    </dependency>
+	    <dependency>
+	    	<groupId>com.amazonaws</groupId>
+	    	<artifactId>aws-java-sdk-sqs</artifactId>
+	    	<version>1.11.405</version>
+	    </dependency>
+	    <dependency>
+	    	<groupId>com.amazonaws</groupId>
+	    	<artifactId>amazon-sqs-java-extended-client-lib</artifactId>
+	    	<version>1.0.2</version>
 	    </dependency>
     </dependencies>
     <repositories>
