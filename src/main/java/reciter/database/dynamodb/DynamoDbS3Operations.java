@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -37,6 +38,12 @@ public class DynamoDbS3Operations {
 	
 	private static final String CONTENT_TYPE = "application/json";
 	
+	/**
+	 * This function stores large object which has size more than 400kb.
+	 * @param bucketName
+	 * @param object
+	 * @param keyName
+	 */
 	public void saveLargeItem(String bucketName, Object object, String keyName) {
 		
 		if(!s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
@@ -55,7 +62,13 @@ public class DynamoDbS3Operations {
 			metadata.setContentLength(objectContentBytes.length);
 			PutObjectRequest putObjectRequest = new PutObjectRequest(
 					bucketName.toLowerCase(), keyName, fileInputStream, metadata);
-			s3.putObject(putObjectRequest);
+			try{
+				s3.putObject(putObjectRequest);
+			} catch(AmazonServiceException e) {
+				// The call was transmitted successfully, but Amazon S3 couldn't process 
+	            // it, so it returned an error response.
+				log.error(e.getErrorMessage());
+			}
 		} else {
 			log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
 			s3.deleteObject(bucketName.toLowerCase(), keyName);
@@ -73,20 +86,34 @@ public class DynamoDbS3Operations {
 			metadata.setContentLength(objectContentBytes.length);
 			PutObjectRequest putObjectRequest = new PutObjectRequest(
 					bucketName.toLowerCase(), keyName, fileInputStream, metadata);
-			s3.putObject(putObjectRequest);
+			try{
+				s3.putObject(putObjectRequest);
+			}
+			catch(AmazonServiceException e) {
+				// The call was transmitted successfully, but Amazon S3 couldn't process 
+	            // it, so it returned an error response.
+				log.error(e.getErrorMessage());
+			}
 		}
 	}
 	
+	/**
+	 * This function retrieves large object from S3
+	 * @param bucketName
+	 * @param keyName
+	 * @param objectClass
+	 * @return
+	 */
 	public <T> Object retrieveLargeItem(String bucketName, String keyName, Class<T> objectClass) {
-		S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 		try {
+			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 			String objectContent = IOUtils.toString(s3Object.getObjectContent());
 			if(objectClass == ReCiterFeature.class) {
 				ReCiterFeature reCiterFeature = OBJECT_MAPPER.readValue(objectContent, ReCiterFeature.class);
 				return reCiterFeature;
 			}
 			
-		} catch (IOException e) {
+		} catch (IOException | AmazonServiceException e) {
 			log.error(e.getMessage());
 		}
 		return null;
