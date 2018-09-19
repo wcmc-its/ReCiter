@@ -101,7 +101,11 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 			averageClusteringEvidence.setClusterReliabilityScore(roundAvoid(reCiterCluster.getClusterReliabilityScore(),2));
 			averageClusteringEvidence.setClusterScoreModificationOfTotalScore(roundAvoid(-clusterScoreDiscrepancy, 2));
 			averageClusteringEvidence.setTotalArticleScoreWithoutClustering(roundAvoid(reCiterArticle.getTotalArticleScoreWithoutClustering(), 2));
-			reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy, 2));
+			//Remove accepted rejected score from raw score - https://github.com/wcmc-its/ReCiter/issues/286
+			double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy - 
+					((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) -
+					((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0);
+			reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(totalArticleScoreNonStandardized, 2));
 			reCiterArticle.setAverageClusteringEvidence(averageClusteringEvidence);
 			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
 		});
