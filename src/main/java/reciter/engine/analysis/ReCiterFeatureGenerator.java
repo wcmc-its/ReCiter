@@ -79,8 +79,19 @@ public class ReCiterFeatureGenerator {
             }
         }
         reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+        List<ReCiterArticle> selectedArticles = new ArrayList<>();
+        if(mode == UseGoldStandard.AS_EVIDENCE) {
+        	selectedArticles = reCiterClusterer.getReCiterArticles()
+        			.stream()
+        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardizedScore || reCiterArticle.getGoldStandard() == 1 || reCiterArticle.getGoldStandard() == -1)
+        			.collect(Collectors.toList());
+        } else {
+        	selectedArticles = reCiterClusterer.getReCiterArticles()
+        			.stream()
+        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardizedScore)
+        			.collect(Collectors.toList());
+        }
 
-        List<ReCiterArticle> selectedArticles = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardizedScore).collect(Collectors.toList());
         reCiterFeature.setCountSuggestedArticles(selectedArticles.size());
 
         // "suggestedArticles"
@@ -256,7 +267,7 @@ public class ReCiterFeatureGenerator {
 
             reCiterArticleFeatures.add(reCiterArticleFeature);
         }
-        // rak2007
+        //Sorting the List in descending order based on TotalScoreNonStandardized
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures.stream().sorted(Comparator.comparing(ReCiterArticleFeature::getTotalArticleScoreNonStandardized).reversed()).collect(Collectors.toList()));
 
         return reCiterFeature;
