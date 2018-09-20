@@ -20,7 +20,9 @@ package reciter.engine;
 
 import java.util.List;
 
+import reciter.engine.erroranalysis.FilterFeedbackType;
+
 public interface Engine {
 
-	EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters);
+	EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore);
 }

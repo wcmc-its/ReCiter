@@ -7,6 +7,7 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.evidence.Evidence;
 import reciter.engine.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.FilterFeedbackType;
 import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
@@ -40,12 +41,14 @@ public class ReCiterFeatureGenerator {
     private List<Long> falseNegativeList = new ArrayList<>();
 
     public ReCiterFeature computeFeatures(UseGoldStandard mode,
-                                          double totalStandardizedScore,
+                                          final double filterScore,
                                           Clusterer reCiterClusterer,
                                           List<Long> goldStandardPmids,
                                           List<Long> rejectedPmids,
                                           Analysis analysis) {
         Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
+        //Select Filter to filter by total score
+        
         //Set<Long> selection = clusterSelector.getSelectedClusterIds();
         Identity identity = reCiterClusterer.getIdentity();
 
@@ -73,22 +76,31 @@ public class ReCiterFeatureGenerator {
 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
-        for (long pmid : goldStandardPmids) {
-            if (!pmidsRetrieved.contains(pmid)) {
-                inGoldStandardButNotRetrieved.add(pmid);
-            }
+        if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
+	        for (long pmid : goldStandardPmids) {
+	            if (!pmidsRetrieved.contains(pmid)) {
+	                inGoldStandardButNotRetrieved.add(pmid);
+	            }
+	        }
+        }
+        if(rejectedPmids != null && rejectedPmids.size() > 0) {
+	        for (long pmid : rejectedPmids) {
+	            if (!pmidsRetrieved.contains(pmid)) {
+	                inGoldStandardButNotRetrieved.add(pmid);
+	            }
+	        }
         }
         reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {
         	selectedArticles = reCiterClusterer.getReCiterArticles()
         			.stream()
-        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardizedScore || reCiterArticle.getGoldStandard() == 1 || reCiterArticle.getGoldStandard() == -1)
+        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore || reCiterArticle.getGoldStandard() == 1 || reCiterArticle.getGoldStandard() == -1)
         			.collect(Collectors.toList());
         } else {
         	selectedArticles = reCiterClusterer.getReCiterArticles()
         			.stream()
-        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardizedScore)
+        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore)
         			.collect(Collectors.toList());
         }
 
@@ -101,7 +113,6 @@ public class ReCiterFeatureGenerator {
             reCiterArticleFeature.setPmid(reCiterArticle.getArticleId());
             reCiterArticleFeature.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreNonStandardized());
             reCiterArticleFeature.setTotalArticleScoreStandardized(reCiterArticle.getTotalArticleScoreStandardized());
-
             // true; false; null. make it Boolean
             // userAssertion TODO get from DB
             //if(goldStandardPmids != null && goldStandardPmids.contains(reCiterArticle.getArticleId())) {

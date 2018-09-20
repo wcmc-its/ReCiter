@@ -27,6 +27,7 @@ import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.ReCiterFeatureGenerator;
 import reciter.engine.erroranalysis.Analysis;
+import reciter.engine.erroranalysis.FilterFeedbackType;
 import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
@@ -42,7 +43,7 @@ public class ReCiterEngine implements Engine {
     public static double clutseringGrantsThreshold;
 
     @Override
-    public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters) {
+    public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore) {
 
         Identity identity = parameters.getIdentity();
         clusterSimilarityThresholdScore = strategyParameters.getClusterSimilarityThresholdScore();
@@ -88,8 +89,9 @@ public class ReCiterEngine implements Engine {
         } else {
             mode = UseGoldStandard.FOR_TESTING_ONLY;
         }
+
         ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
-                mode, parameters.getTotalStandardzizedArticleScore(),
+                mode, filterScore,
                 clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
         engineOutput.setReCiterFeature(reCiterFeature);
         return engineOutput;

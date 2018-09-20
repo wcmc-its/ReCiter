@@ -43,16 +43,15 @@ import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
-import reciter.database.dynamodb.model.InstitutionAfid;
-import reciter.database.dynamodb.model.MeshTerm;
-import reciter.database.dynamodb.model.ScienceMetrix;
-import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
 import reciter.engine.EngineParameters;
 import reciter.engine.ReCiterEngine;
 import reciter.engine.StrategyParameters;
+import reciter.engine.analysis.ReCiterArticleFeature;
+import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterFeature;
+import reciter.engine.erroranalysis.FilterFeedbackType;
 import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.features.ReCiterArticleFeatures;
@@ -130,6 +129,9 @@ public class ReCiterController {
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
+    
+    @Value("${totalArticleScore-standardized-default}")
+    private double totalArticleScoreStandardizedDefault;
 
 
 
@@ -301,20 +303,94 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, boolean refreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
+    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
     	long startTime = System.currentTimeMillis();
         long estimatedTime = 0;
         slf4jLogger.info("Start time is: " + startTime);
+        
+        final double totalScore;
+        
+        if(totalStandardizedArticleScore == null) {
+        	totalScore = totalArticleScoreStandardizedDefault;
+        } else {
+        	totalScore = totalStandardizedArticleScore;
+        }
     	
         EngineOutput engineOutput;
         EngineParameters parameters;
+        List<ReCiterArticleFeature> originalFeatures = new ArrayList<ReCiterArticleFeature>();
         try {
             identityService.findByUid(uid);
         } catch (NullPointerException n) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
         AnalysisOutput analysis = analysisService.findByUid(uid.trim());
-        if (!refreshFlag && analysis != null) {
+        if (!analysisRefreshFlag 
+        		&& 
+        		analysis != null 
+        		&& 
+        		useGoldStandard == UseGoldStandard.AS_EVIDENCE) {//This was added to ensure to use analysis results only in evidence mode
+        	//All the results are filtered based on filterByFeedback
+        	if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
+	        	analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+			            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+			            	&&
+			            	(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+			            	||
+			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
+			            	||
+			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+			            	.collect(Collectors.toList()));
+	        	analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
+        	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_ONLY) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
+		            	.collect(Collectors.toList()));
+        		analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
+        	} else if(filterByFeedback == FilterFeedbackType.REJECTED_ONLY) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
+		            	.collect(Collectors.toList()));
+        		analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
+        	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+		            	.collect(Collectors.toList()));
+        		analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
+        	} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+		            	.collect(Collectors.toList()));
+        		analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
+        	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_REJECTED) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED))
+		            	.collect(Collectors.toList()));
+        		analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
+        	} else if(filterByFeedback == FilterFeedbackType.NULL) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
+		            	.collect(Collectors.toList()));
+        		analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
+        	}
             return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
         } else {
             if (useGoldStandard == null) {
@@ -340,19 +416,131 @@ public class ReCiterController {
                 ReCiterArticle reciterArticle = it.next();
                 reciterArticle.setReCiterArticleFeatures(new ReCiterArticleFeatures(reciterArticle));
             }
-
+            double filterScore = 0;
+            if(parameters.getTotalStandardzizedArticleScore() >= strategyParameters.getMinimumStorageThreshold()) {
+            	filterScore = strategyParameters.getMinimumStorageThreshold();
+            } else {
+            	filterScore = parameters.getTotalStandardzizedArticleScore();
+            }
             Engine engine = new ReCiterEngine();
-            engineOutput = engine.run(parameters, strategyParameters);
-            AnalysisOutput analysisOutput = new AnalysisOutput();
-            if(engineOutput != null)
-				analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
-			analysisOutput.setUid(uid);
-			if(analysisOutput.getReCiterFeature() != null)
-				analysisService.save(analysisOutput);
+            engineOutput = engine.run(parameters, strategyParameters, filterScore);
+            originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
+            
+            //Store Analysis only in evidence mode
+            if(useGoldStandard == UseGoldStandard.AS_EVIDENCE) {
+	            AnalysisOutput analysisOutput = new AnalysisOutput();
+	            if(engineOutput != null) {
+	            	if(filterScore == strategyParameters.getMinimumStorageThreshold()) {
+	            		analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
+	            	} else {
+	            		//Enforce Strict Minimum Storage Threshold
+	            		ReCiterFeature reCiterFeature = new ReCiterFeature();
+	            		reCiterFeature = engineOutput.getReCiterFeature();
+	            				
+	            		List<ReCiterArticleFeature> reCiterFilteredArticles = reCiterFeature.getReCiterArticleFeatures()
+		            	.stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= strategyParameters.getMinimumStorageThreshold()
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
+		            	.collect(Collectors.toList());
+	            		reCiterFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+	            		reCiterFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
+	            		analysisOutput.setReCiterFeature(reCiterFeature);
+	            	}
+
+					
+	            }
+				analysisOutput.setUid(uid);
+				if(analysisOutput.getReCiterFeature() != null) {
+					analysisService.save(analysisOutput);
+				}
+            }
+        }
+        
+        ReCiterFeature reCiterOutputFeature = new ReCiterFeature();
+        reCiterOutputFeature = engineOutput.getReCiterFeature();
+        
+        
+        //All the results are filtered based on filterByFeedback
+        if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
+        List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
+        		.stream()
+            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+            			&&
+		            	(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+            	.collect(Collectors.toList());
+        reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+        reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
+        } else if(filterByFeedback == FilterFeedbackType.ACCEPTED_ONLY){
+        	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
+            		.stream()
+                	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                			&&
+                			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
+                	.collect(Collectors.toList());
+            reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+            reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
+        } else if(filterByFeedback == FilterFeedbackType.REJECTED_ONLY){
+        	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
+            		.stream()
+                	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                			&&
+                			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
+                	.collect(Collectors.toList());
+            reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+            reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
+        } else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL){
+        	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
+            		.stream()
+                	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                			&&
+    		            	(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+                			||
+                			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+                	.collect(Collectors.toList());
+            reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+            reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
+        } else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL){
+        	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
+            		.stream()
+                	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                			&&
+                			(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
+                			||
+                			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+                	.collect(Collectors.toList());
+            reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+            reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
+        } else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_REJECTED){
+        	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
+            		.stream()
+                	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                			&&
+                			(reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+                			||
+                			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED))
+                	.collect(Collectors.toList());
+            reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+            reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
+        } else {
+        	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
+            		.stream()
+                	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                			&&
+                			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
+                	.collect(Collectors.toList());
+            reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
+            reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
         }
         estimatedTime = System.currentTimeMillis() - startTime;
         slf4jLogger.info("elapsed time: " + estimatedTime);
-        return new ResponseEntity<>(engineOutput.getReCiterFeature(), HttpStatus.OK);
+        return new ResponseEntity<>(reCiterOutputFeature, HttpStatus.OK);
     }
 
     /*@ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")

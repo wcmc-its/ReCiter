@@ -93,7 +93,9 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 	
 	private void populateAverageClusterEvidence(ReCiterCluster reCiterCluster, double averageClusterScore) {
 		reCiterCluster.getArticleCluster().stream().forEach(reCiterArticle -> {
-			
+			reCiterArticle.setTotalArticleScoreWithoutClustering(reCiterArticle.getTotalArticleScoreWithoutClustering()
+					- (((reCiterArticle.getAcceptedRejectedEvidence() != null && reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) +
+							((reCiterArticle.getAcceptedRejectedEvidence() != null && reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0)));
 			double clusterScoreDiscrepancy = (reCiterArticle.getTotalArticleScoreWithoutClustering() - averageClusterScore) * ReCiterArticleScorer.strategyParameters.getClusterScoreFactor()
 					* ((reCiterCluster.getClusterReliabilityScore()>0)?reCiterCluster.getClusterReliabilityScore():1);
 			AverageClusteringEvidence averageClusteringEvidence = new AverageClusteringEvidence();
@@ -102,9 +104,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 			averageClusteringEvidence.setClusterScoreModificationOfTotalScore(roundAvoid(-clusterScoreDiscrepancy, 2));
 			averageClusteringEvidence.setTotalArticleScoreWithoutClustering(roundAvoid(reCiterArticle.getTotalArticleScoreWithoutClustering(), 2));
 			//Remove accepted rejected score from raw score - https://github.com/wcmc-its/ReCiter/issues/286
-			double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy - 
-					((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) -
-					((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0);
+			double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy;
 			reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(totalArticleScoreNonStandardized, 2));
 			reCiterArticle.setAverageClusteringEvidence(averageClusteringEvidence);
 			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);

@@ -69,9 +69,7 @@ public class Analysis {
         for (ReCiterArticle reCiterArticle : reCiterArticles) {
             if (pmidSet.contains(reCiterArticle.getArticleId())) {
                 reCiterArticle.setGoldStandard(1);
-            } else {
-                reCiterArticle.setGoldStandard(0);
-            }
+            } 
         }
         if (rejectedPmids != null) {
             if (pmidSet.size() > 0) {
@@ -84,8 +82,6 @@ public class Analysis {
             for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 if (pmidSet.contains(reCiterArticle.getArticleId())) {
                     reCiterArticle.setGoldStandard(-1);
-                } else {
-                    reCiterArticle.setGoldStandard(0);
                 }
             }
         }

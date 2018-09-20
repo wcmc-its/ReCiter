@@ -38,20 +38,14 @@ public class StandardScoreStrategy extends AbstractReCiterArticleStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
 		reCiterArticles.stream().forEach(reCiterArticle -> {
 			double standardizedScore = 1;
-			double totalArticleScoreNonStandardizedExcludingFeedbackScore = reCiterArticle.getTotalArticleScoreNonStandardized();
-			if(reCiterArticle.getAcceptedRejectedEvidence() != null) {
-				 totalArticleScoreNonStandardizedExcludingFeedbackScore = totalArticleScoreNonStandardizedExcludingFeedbackScore  -
-					((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) - 
-					((reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0);
-			}
 			for(int i = 0; i < this.standardizedScores.size(); i++) {
 					if(i == this.standardizedScores.size() - 1) {
-						if(totalArticleScoreNonStandardizedExcludingFeedbackScore >= Double.parseDouble(this.standardizedScores.get(i))) {
+						if(reCiterArticle.getTotalArticleScoreNonStandardized() >= Double.parseDouble(this.standardizedScores.get(i))) {
 							reCiterArticle.setTotalArticleScoreStandardized(standardizedScore);
 						}
-					} else if(totalArticleScoreNonStandardizedExcludingFeedbackScore >= Double.parseDouble(this.standardizedScores.get(i)) 
+					} else if(reCiterArticle.getTotalArticleScoreNonStandardized() >= Double.parseDouble(this.standardizedScores.get(i)) 
 							&&
-							totalArticleScoreNonStandardizedExcludingFeedbackScore < Double.parseDouble(this.standardizedScores.get(i + 1))) {
+							reCiterArticle.getTotalArticleScoreNonStandardized() < Double.parseDouble(this.standardizedScores.get(i + 1))) {
 						reCiterArticle.setTotalArticleScoreStandardized(standardizedScore);
 					}
 					standardizedScore++;
