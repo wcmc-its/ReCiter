@@ -60,23 +60,10 @@ public class ReCiterEngine implements Engine {
         ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
         articleScorer.runArticleScorer(clusterer.getClusters(), identity);
 
-        Analysis analysis = Analysis.performAnalysis(clusterer, parameters.getKnownPmids(), parameters.getTotalStandardzizedArticleScore());
         log.info(clusterer.toString());
-        log.info("Analysis for uid=[" + identity.getUid() + "]");
-        log.info("Precision=" + analysis.getPrecision());
-        log.info("Recall=" + analysis.getRecall());
-
-        double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2.0;
-        log.info("Accuracy=" + accuracy);
-
-        log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
-        log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
-        log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
-        log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
-        log.info("\n");
 
         EngineOutput engineOutput = new EngineOutput();
-        engineOutput.setAnalysis(analysis);
+        //engineOutput.setAnalysis(analysis);
         List<ReCiterCluster> reCiterClusters = new ArrayList<>();
         for (ReCiterCluster cluster : clusterer.getClusters().values()) {
             reCiterClusters.add(cluster);
@@ -92,7 +79,7 @@ public class ReCiterEngine implements Engine {
 
         ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
                 mode, filterScore,
-                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
+                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids());
         engineOutput.setReCiterFeature(reCiterFeature);
         return engineOutput;
     }

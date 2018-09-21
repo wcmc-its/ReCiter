@@ -44,13 +44,13 @@ public class ReCiterFeatureGenerator {
                                           final double filterScore,
                                           Clusterer reCiterClusterer,
                                           List<Long> goldStandardPmids,
-                                          List<Long> rejectedPmids,
-                                          Analysis analysis) {
+                                          List<Long> rejectedPmids) {
         Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
         //Select Filter to filter by total score
         
         //Set<Long> selection = clusterSelector.getSelectedClusterIds();
         Identity identity = reCiterClusterer.getIdentity();
+        List<Long> finalArticles = reCiterClusterer.getReCiterArticles().stream().map(article -> article.getArticleId()).collect(Collectors.toList());
 
         ReCiterFeature reCiterFeature = new ReCiterFeature();
         reCiterFeature.setPersonIdentifier(identity.getUid());
@@ -65,14 +65,7 @@ public class ReCiterFeatureGenerator {
             }
         }
 
-        // overall accuracy
-        reCiterFeature.setOverallAccuracy((analysis.getPrecision() + analysis.getRecall()) / 2);
-
-        // precision
-        reCiterFeature.setPrecision(analysis.getPrecision());
-
-        // recall
-        reCiterFeature.setRecall(analysis.getRecall());
+       
 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
@@ -105,6 +98,32 @@ public class ReCiterFeatureGenerator {
         }
 
         reCiterFeature.setCountSuggestedArticles(selectedArticles.size());
+        
+        List<Long> filteredArticles = selectedArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
+        
+        Analysis analysis = Analysis.performAnalysis(finalArticles, filteredArticles, goldStandardPmids);
+        
+        log.info("Analysis for uid=[" + identity.getUid() + "]");
+        log.info("Precision=" + analysis.getPrecision());
+        log.info("Recall=" + analysis.getRecall());
+
+        double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2.0;
+        log.info("Accuracy=" + accuracy);
+
+        log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
+        log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
+        log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
+        log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
+        log.info("\n");
+        
+        // overall accuracy
+        reCiterFeature.setOverallAccuracy((analysis.getPrecision() + analysis.getRecall()) / 2);
+
+        // precision
+        reCiterFeature.setPrecision(analysis.getPrecision());
+
+        // recall
+        reCiterFeature.setRecall(analysis.getRecall());
 
         // "suggestedArticles"
         List<ReCiterArticleFeature> reCiterArticleFeatures = new ArrayList<>(selectedArticles.size());
