@@ -107,7 +107,7 @@ public class DynamoDbS3Operations {
 	public <T> Object retrieveLargeItem(String bucketName, String keyName, Class<T> objectClass) {
 		try {
 			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
-			String objectContent = IOUtils.toString(s3Object.getObjectContent());
+			String objectContent = IOUtils.toString(s3Object.getObjectContent(), StandardCharsets.UTF_8);
 			if(objectClass == ReCiterFeature.class) {
 				ReCiterFeature reCiterFeature = OBJECT_MAPPER.readValue(objectContent, ReCiterFeature.class);
 				return reCiterFeature;
