@@ -139,7 +139,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
 											&& 
 											orgUnit.getOrganizationalUnitLabel().length() > 14) {
-										if(StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment)) {
+										if(StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
 											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
 											//identityDepartment: "Center for Integrative Medicine"
 											//departmentMatchingScore: 2
@@ -163,7 +163,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										}
 									}  
 									
-									if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
+									/*if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
 											&&
 											StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
 										//This is for https://github.com/wcmc-its/ReCiter/issues/251 - Account for possibility that department name may be missing preposition in article.affiliation
@@ -184,7 +184,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
 										isOrgUnitMatch = true;
-									} else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
+									}*/ else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
 											|| 
 											StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment)
 											||
