@@ -230,7 +230,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 	private void evaluateNonTargetAuthorScopusAffiliation(AffiliationEvidence affiliationEvidence, ReCiterArticle reCiterArticle) {
 		Set<String> collaboratingInstScopusInstIds = new HashSet<String>(Arrays.asList(this.collaboratingInstScopusInstitutionsIDs));
 		List<Integer> matchingKnownInstitutionIds = null;
-		List<Integer> matchingCollaboratingInstituionIds = null;
+		List<Integer> matchingCollaboratingInstituionIds = new ArrayList<>();
 		//count of cases where affiliation ID from scopusIDsNonTargetAuthor-Article is in scopusIDsNonTargetAuthor-Identity-KnownInstitutions
 		int countScopusIDsNonTargetAuthorArticleKnownInstitution = 0;
 		if(this.nonTargetAuthorScopusAffiliationIds.size() > 0 && this.knownAffiliationIds.size() > 0) {
@@ -239,8 +239,14 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 		}
 		int countScopusIDsNonTargetAuthorArticleCollaboratingInstitution = 0;
 		if(this.nonTargetAuthorScopusAffiliationIds.size() > 0 && collaboratingInstScopusInstIds.size() > 0) {
-			countScopusIDsNonTargetAuthorArticleCollaboratingInstitution = (int)this.nonTargetAuthorScopusAffiliationIds.stream().filter(scopusAffiliationId -> collaboratingInstScopusInstIds.contains(String.valueOf(scopusAffiliationId))).count();
-			matchingCollaboratingInstituionIds = this.nonTargetAuthorScopusAffiliationIds.stream().filter(scopusAffiliationId -> collaboratingInstScopusInstIds.contains(String.valueOf(scopusAffiliationId))).collect(Collectors.toList());
+			for(Integer scopusAffiliationId: this.nonTargetAuthorScopusAffiliationIds) {
+				if(collaboratingInstScopusInstIds.contains(String.valueOf(scopusAffiliationId)) && !matchingKnownInstitutionIds.contains(scopusAffiliationId)) {
+					countScopusIDsNonTargetAuthorArticleCollaboratingInstitution++;
+					matchingCollaboratingInstituionIds.add(scopusAffiliationId);
+				}
+			}
+			//countScopusIDsNonTargetAuthorArticleCollaboratingInstitution = (int)this.nonTargetAuthorScopusAffiliationIds.stream().filter(scopusAffiliationId -> collaboratingInstScopusInstIds.contains(String.valueOf(scopusAffiliationId))).count();
+			//matchingCollaboratingInstituionIds = this.nonTargetAuthorScopusAffiliationIds.stream().filter(scopusAffiliationId -> collaboratingInstScopusInstIds.contains(String.valueOf(scopusAffiliationId))).collect(Collectors.toList());
 		}
 		
 		double overallScore = ReCiterArticleScorer.strategyParameters.getNonTargetAuthorInstAfflMatchTypeMaxScore()
