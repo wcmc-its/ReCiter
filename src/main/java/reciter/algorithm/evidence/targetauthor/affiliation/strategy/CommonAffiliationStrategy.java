@@ -90,16 +90,12 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 		double sum = 0;
 		populateKnownAffiliationIds(identity);
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			//sum += executeStrategy(reCiterArticle, identity);
 			AffiliationEvidence affiliationEvidence = new AffiliationEvidence();
 			for(ReCiterAuthor reCiterAuthor: reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				if(reCiterAuthor.isTargetAuthor()) {
-					if(ReCiterArticleScorer.strategyParameters.isScopusCommonAffiliation()) {
+					if(ReCiterArticleScorer.strategyParameters.isUseScopusArticles() && ReCiterArticleScorer.strategyParameters.isScopusCommonAffiliation()) {
 						if(reCiterArticle.getScopusArticle() != null) {
 							//Get the corresponding Scopus Author for the target author
-							if(reCiterArticle.getArticleId() == 14719507) {
-								slf4jLogger.info("PubmedId: " + reCiterArticle.getArticleId());
-							}
 							Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().stream().filter(author -> reCiterAuthor.getRank() == author.getSeq()).findFirst().orElse(null);
 							List<TargetAuthorScopusAffiliation> scopusAffiliationEvidences = new ArrayList<>();
 							if(scopusAuthor != null 
@@ -200,7 +196,11 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 							}
 						}
 					}
-					if(affiliationEvidence.getScopusTargetAuthorAffiliation() == null) {
+					if((affiliationEvidence.getScopusTargetAuthorAffiliation() != null
+							&&
+							affiliationEvidence.getScopusTargetAuthorAffiliation().stream().allMatch(scopusAffiliation -> scopusAffiliation.getTargetAuthorInstitutionalAffiliationMatchType() == InstitutionalAffiliationMatchType.NULL_MATCH))
+							||
+							!ReCiterArticleScorer.strategyParameters.isUseScopusArticles()) {
 						//Evaluate Pubmed
 						evaluateTargetAuthorPubmedAffiliation(affiliationEvidence, reCiterAuthor, identity);
 						
@@ -389,13 +389,26 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					}
 				}
 			}
-			if(pubmedAffiliationEvidence == null) { //There's no match. Output:
+			if(pubmedAffiliationEvidence == null 
+					&&
+					affiliation != null) { //There's no match. Output:
 				pubmedAffiliationEvidence = new TargetAuthorPubmedAffiliation();
 				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationSource(InstitutionalAffiliationSource.PUBMED);
 				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationIdentity(ReCiterArticleScorer.strategyParameters.getInstAfflInstLabel());
 				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationArticlePubmedLabel(affiliation);
 				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchType(InstitutionalAffiliationMatchType.NO_MATCH);
-				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchTypeScore(ReCiterArticleScorer.strategyParameters.getNonTargetAuthorInstAfflMatchTypeNoMatchScore());
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchTypeScore(ReCiterArticleScorer.strategyParameters.getTargetAuthorInstAfflMatchTypeNoMatchScore());
+				totalAffiliationScore = totalAffiliationScore + ReCiterArticleScorer.strategyParameters.getNonTargetAuthorInstAfflMatchTypeNoMatchScore();
+			}
+			if(pubmedAffiliationEvidence == null
+					&&
+					affiliation == null) {
+				pubmedAffiliationEvidence = new TargetAuthorPubmedAffiliation();
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationSource(InstitutionalAffiliationSource.PUBMED);
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationIdentity(ReCiterArticleScorer.strategyParameters.getInstAfflInstLabel());
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationArticlePubmedLabel(null);
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchType(InstitutionalAffiliationMatchType.NULL_MATCH);
+				pubmedAffiliationEvidence.setTargetAuthorInstitutionalAffiliationMatchTypeScore(ReCiterArticleScorer.strategyParameters.getTargetAuthorInstAfflMatchTypeNullScore());
 				totalAffiliationScore = totalAffiliationScore + ReCiterArticleScorer.strategyParameters.getNonTargetAuthorInstAfflMatchTypeNoMatchScore();
 			}
 			affiliationEvidence.setPubmedTargetAuthorAffiliation(pubmedAffiliationEvidence);
