@@ -31,6 +31,9 @@ public class StrategyParameters {
 	@Value("${reciter.minimumStorageThreshold}")
 	private double minimumStorageThreshold;
 	
+	@Value("${use.scopus.articles}")
+	private boolean isUseScopusArticles;
+	
     @Value("${strategy.email}")
     private boolean isEmail;
 
