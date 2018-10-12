@@ -1,4 +1,4 @@
-package reciter.engine.erroranalysis;
+package reciter.api.parameters;
 
 /**
  * @author szd2013

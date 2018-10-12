@@ -1,4 +1,4 @@
-package reciter.xml.retriever.engine;
+package reciter.api.parameters;
 
 /**
  * User would be able to select one of the refresh flag for retrieval.
