@@ -39,6 +39,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
+import reciter.api.parameters.FilterFeedbackType;
+import reciter.api.parameters.GoldStandardUpdateFlag;
+import reciter.api.parameters.RetrievalRefreshFlag;
+import reciter.api.parameters.UseGoldStandard;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
@@ -52,8 +56,6 @@ import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
-import reciter.engine.erroranalysis.FilterFeedbackType;
-import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.features.ReCiterArticleFeatures;
 import reciter.model.identity.Identity;
@@ -70,7 +72,6 @@ import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
-import reciter.xml.retriever.engine.RetrievalRefreshFlag;
 
 import java.io.IOException;
 import java.sql.Date;
@@ -145,8 +146,18 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<GoldStandard> updateGoldStandard(@RequestBody GoldStandard goldStandard) {
-        dynamoDbGoldStandardService.save(goldStandard);
+    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    	if(goldStandard == null) {
+    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a GoldStandard model");
+    	} else if(goldStandard != null && goldStandard.getUid() == null) {
+    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a valid uid to be passed with GoldStandard model");
+    	}
+    	if(goldStandardUpdateFlag == null ||
+    			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    	} else {
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    	}
         return ResponseEntity.ok(goldStandard);
     }
 
@@ -159,8 +170,13 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT)
     @ResponseBody
-    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard) {
-        dynamoDbGoldStandardService.save(goldStandard);
+    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    	if(goldStandardUpdateFlag == null ||
+    			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    	} else {
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    	}
         return ResponseEntity.ok(goldStandard);
     }
 
