@@ -3,7 +3,7 @@ package reciter.engine.analysis;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import reciter.engine.erroranalysis.UseGoldStandard;
+import reciter.api.parameters.UseGoldStandard;
 
 import java.util.Date;
 import java.util.List;

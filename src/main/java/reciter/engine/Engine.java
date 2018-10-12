@@ -20,7 +20,7 @@ package reciter.engine;
 
 import java.util.List;
 
-import reciter.engine.erroranalysis.FilterFeedbackType;
+import reciter.api.parameters.FilterFeedbackType;
 
 public interface Engine {
 

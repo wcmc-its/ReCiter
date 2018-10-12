@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
+import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.model.identity.Identity;
 
 public interface ReCiterRetrievalEngine {

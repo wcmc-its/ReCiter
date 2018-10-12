@@ -24,11 +24,11 @@ import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.article.scorer.ArticleScorer;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.api.parameters.FilterFeedbackType;
+import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.ReCiterFeatureGenerator;
 import reciter.engine.erroranalysis.Analysis;
-import reciter.engine.erroranalysis.FilterFeedbackType;
-import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
