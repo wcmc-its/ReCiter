@@ -223,10 +223,6 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 			strategyContexts.add(journalStrategyContext);
 		}
 		
-		if (strategyParameters.isCitizenship()) {
-			strategyContexts.add(citizenshipStrategyContext);
-		}
-		
 		if (strategyParameters.isEducation()) {
 			strategyContexts.add(educationStrategyContext);
 		}	
@@ -256,10 +252,6 @@ public class ReCiterClusterSelector extends AbstractClusterSelector {
 		}
 		
 		//		strategyContexts.add(articleTitleInEnglishStrategyContext);
-		
-		if (strategyParameters.isRemoveByName()) {
-			strategyContexts.add(removeByNameStrategyContext);
-		}
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		strategyContexts.add(emailStrategyContext);

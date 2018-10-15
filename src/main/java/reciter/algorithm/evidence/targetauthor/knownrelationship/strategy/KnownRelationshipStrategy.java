@@ -74,6 +74,10 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			List<KnownRelationship> relationships = identity.getKnownRelationships();
 			List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
 			
+			if(reCiterArticle.getArticleId() == 28158328) {
+				System.out.println("here");
+			}
+			
 			if (relationships != null) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 					Set<String> relationshipTypes = new HashSet<String>();
@@ -110,6 +114,16 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 									}
 								}
 								
+								if(authorName.getType().equals("manager")) {
+									relationshipEvidence.setRelationshipMatchModifierManager(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManager());
+									if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
+											&& 
+											author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
+											) { //If the matching author is the manager and the last author or senior author
+										relationshipEvidence.setRelationshipMatchModifierManagerSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManagerSeniorAuthor());
+									}
+								}
+								
 								if(relationshipEvidences.size() > 0 
 										&&
 										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipName().getFirstName())
@@ -128,6 +142,16 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 														author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
 														) { //If the matching author is the last author or senior author
 													relationshipEvidenceInList.setRelationshipMatchModifierMentorSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentorSeniorAuthor());
+												}
+											}
+											
+											if(authorName.getType().equals("manager")) {
+												relationshipEvidenceInList.setRelationshipMatchModifierManager(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManager());
+												if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
+														&& 
+														author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
+														) { //If the matching author is the manager and the last author or senior author
+													relationshipEvidenceInList.setRelationshipMatchModifierManagerSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManagerSeniorAuthor());
 												}
 											}
 											relationshipEvidenceInList.getRelationshipType().add(authorName.getType());

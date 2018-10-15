@@ -30,6 +30,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -49,6 +50,7 @@ import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
+import reciter.storage.s3.AmazonS3Config;
 
 @Slf4j
 @SpringBootApplication

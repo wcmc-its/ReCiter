@@ -248,10 +248,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			this.strategyContexts.add(this.journalStrategyContext);
 		}
 		
-		if (strategyParameters.isCitizenship()) {
-			this.strategyContexts.add(this.citizenshipStrategyContext);
-		}
-		
 		if (strategyParameters.isEducation()) {
 			this.strategyContexts.add(this.educationStrategyContext);
 		}	
@@ -280,18 +276,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			this.strategyContexts.add(this.doctoralYearDiscrepancyStrategyContext);
 		}
 		
-		//		strategyContexts.add(articleTitleInEnglishStrategyContext);
-		
-		if (strategyParameters.isRemoveByName()) {
-			this.strategyContexts.add(this.removeByNameStrategyContext);
-		}
-		
 		if(strategyParameters.isPersonType()) {
 			this.strategyContexts.add(this.personTypeStrategyContext);
-		}
-		
-		if(strategyParameters.isAcceptedRejected()) {
-			this.strategyContexts.add(this.acceptedRejectedStrategyContext);
 		}
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
@@ -356,7 +342,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
-			if (strategyParameters.isAcceptedRejected()) {
+			if (strategyParameters.isUseGoldStandardEvidence()) {
 				((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
 			}
 			

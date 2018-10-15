@@ -20,6 +20,7 @@ package reciter.engine.erroranalysis;
 
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.model.article.ReCiterArticle;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class Analysis {
 
     private double precision;
     private double recall;
+    private double accuracy;
 
     private int truePos;
     private int trueNeg;
@@ -69,9 +71,7 @@ public class Analysis {
         for (ReCiterArticle reCiterArticle : reCiterArticles) {
             if (pmidSet.contains(reCiterArticle.getArticleId())) {
                 reCiterArticle.setGoldStandard(1);
-            } else {
-                reCiterArticle.setGoldStandard(0);
-            }
+            } 
         }
         if (rejectedPmids != null) {
             if (pmidSet.size() > 0) {
@@ -84,49 +84,43 @@ public class Analysis {
             for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 if (pmidSet.contains(reCiterArticle.getArticleId())) {
                     reCiterArticle.setGoldStandard(-1);
-                } else {
-                    reCiterArticle.setGoldStandard(0);
                 }
             }
         }
 
     }
 
-    public static Analysis performAnalysis(Clusterer reCiterClusterer, List<Long> goldStandardPmids, double totalStandardzizedArticleScore) {
+    public static Analysis performAnalysis(List<Long> finalArticles, List<Long> selectedArticles, List<Long> goldStandardPmids) {
 
-        Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
+        //Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 
         Analysis analysis = new Analysis();
 
         analysis.setGoldStandardSize(goldStandardPmids.size());
 
         // Combine all articles into a single list.
-        List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardzizedArticleScore).collect(Collectors.toList());//new ArrayList<ReCiterArticle>();
+        //List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardzizedArticleScore).collect(Collectors.toList());//new ArrayList<ReCiterArticle>();
 
-        analysis.setSelectedClusterSize(articleList.size());
+        analysis.setSelectedClusterSize(selectedArticles.size());
 
-        for (Entry<Long, ReCiterCluster> entry : finalCluster.entrySet()) {
-            for (ReCiterArticle reCiterArticle : entry.getValue().getArticleCluster()) {
-                long pmid = reCiterArticle.getArticleId();
+            for (Long selectedArticle : selectedArticles) {
                 StatusEnum statusEnum;
-                if (articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
-                    analysis.getTruePositiveList().add(pmid);
+                if (finalArticles.contains(selectedArticle) && goldStandardPmids.contains(selectedArticle)) {
+                    analysis.getTruePositiveList().add(selectedArticle);
                     statusEnum = StatusEnum.TRUE_POSITIVE;
-                } else if (articleList.contains(reCiterArticle) && !goldStandardPmids.contains(pmid)) {
-
-                    analysis.getFalsePositiveList().add(pmid);
+                } else if (finalArticles.contains(selectedArticle) && !goldStandardPmids.contains(selectedArticle)) {
+                    analysis.getFalsePositiveList().add(selectedArticle);
                     statusEnum = StatusEnum.FALSE_POSITIVE;
 
-                } else if (!articleList.contains(reCiterArticle) && goldStandardPmids.contains(pmid)) {
-                    analysis.getFalseNegativeList().add(pmid);
+                } else if (!finalArticles.contains(selectedArticle) && goldStandardPmids.contains(selectedArticle)) {
+                    analysis.getFalseNegativeList().add(selectedArticle);
                     statusEnum = StatusEnum.FALSE_NEGATIVE;
 
                 } else {
-                    analysis.getTrueNegativeList().add(pmid);
+                    analysis.getTrueNegativeList().add(selectedArticle);
                     statusEnum = StatusEnum.TRUE_NEGATIVE;
                 }
             }
-        }
 
         analysis.setTruePos(analysis.getTruePositiveList().size());
         analysis.setTrueNeg(analysis.getTrueNegativeList().size());
@@ -136,7 +130,7 @@ public class Analysis {
         analysis.setRecall(analysis.getRecall());
         return analysis;
     }
-
+    
     public double getPrecision() {
         if (selectedClusterSize == 0)
             return 0;
@@ -156,8 +150,12 @@ public class Analysis {
     public void setRecall(double recall) {
         this.recall = recall;
     }
+    
+    public double getAccuracy() {
+		return (this.precision + this.recall)/2;
+	}
 
-    public int getTruePos() {
+	public int getTruePos() {
         return truePos;
     }
 

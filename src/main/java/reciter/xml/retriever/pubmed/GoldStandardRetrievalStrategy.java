@@ -73,7 +73,25 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
-		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids());
+		List<Long> goldStandardPmids = new ArrayList<Long>();
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
+		if(goldStandard != null 
+				&& 
+				goldStandard.getKnownPmids() != null 
+				&& 
+				goldStandard.getKnownPmids().size() > 0) {
+			goldStandardPmids = goldStandard.getKnownPmids();
+		}
+		
+		if(goldStandard != null 
+				&&
+				goldStandard.getRejectedPmids() != null
+				&&
+				goldStandard.getRejectedPmids().size() > 0) {
+			goldStandardPmids.addAll(goldStandard.getRejectedPmids());
+		}
+		
+		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));
@@ -88,13 +106,31 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	@Override
 	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
+		
+		List<Long> goldStandardPmids = new ArrayList<Long>();
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
+		if(goldStandard != null 
+				&& 
+				goldStandard.getKnownPmids() != null 
+				&& 
+				goldStandard.getKnownPmids().size() > 0) {
+			goldStandardPmids = goldStandard.getKnownPmids();
+		}
+		
+		if(goldStandard != null 
+				&&
+				goldStandard.getRejectedPmids() != null
+				&&
+				goldStandard.getRejectedPmids().size() > 0) {
+			goldStandardPmids.addAll(goldStandard.getRejectedPmids());
+		}
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder()
 				.dateRange(true, startDate, endDate);
-		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids());
+		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
 		
 		PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder();
-		PubMedQuery goldStandardCountQuery = pubMedQueryBuilderCount.buildPmids(dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids());
+		PubMedQuery goldStandardCountQuery = pubMedQueryBuilderCount.buildPmids(goldStandardPmids);
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));

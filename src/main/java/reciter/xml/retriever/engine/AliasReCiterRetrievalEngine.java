@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import reciter.algorithm.util.ReCiterStringUtil;
+import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;

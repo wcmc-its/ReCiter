@@ -32,14 +32,12 @@ public class AcceptedRejectedStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
-		// TODO Auto-generated method stub
-		if(ReCiterArticleScorer.strategyParameters.isUseGoldStandardEvidence()) {
 			reCiterArticles.stream().forEach(reCiterArticle -> {
 				AcceptedRejectedEvidence acceptedRejectedEvidence = new AcceptedRejectedEvidence();
 				if(reCiterArticle.getGoldStandard() == 1) {
 					acceptedRejectedEvidence.setFeedbackScoreAccepted(ReCiterArticleScorer.strategyParameters.getAcceptedArticleScore());
 				} else if(reCiterArticle.getGoldStandard() == -1) {
-					acceptedRejectedEvidence.setFeedbackScoreRejected(ReCiterArticleScorer.strategyParameters.getAcceptedArticleScore());
+					acceptedRejectedEvidence.setFeedbackScoreRejected(ReCiterArticleScorer.strategyParameters.getRejectedArticleScore());
 				} else if(reCiterArticle.getGoldStandard() == 0) {
 					acceptedRejectedEvidence.setFeedbackScoreNull(ReCiterArticleScorer.strategyParameters.getFeedbackScoreNullScore());
 				}
@@ -49,7 +47,6 @@ public class AcceptedRejectedStrategy extends AbstractReCiterArticleStrategy {
 					reCiterArticle.setAcceptedRejectedEvidence(acceptedRejectedEvidence);
 				}
 			});
-		}
 		return 0;
 	}
 
