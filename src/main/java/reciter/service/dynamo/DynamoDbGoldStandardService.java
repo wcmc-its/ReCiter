@@ -51,6 +51,18 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     				}
     				goldStandard.setRejectedPmids(rejectedPmids);
     			}
+    			
+    			if(goldStandardDdb.getAuditLog() != null
+						&&
+						goldStandardDdb.getAuditLog().size() > 0) {
+					if(goldStandard.getAuditLog() != null
+							&&
+							goldStandard.getAuditLog().size() > 0) {
+						goldStandard.getAuditLog().addAll(goldStandardDdb.getAuditLog());
+					} else {
+						goldStandard.setAuditLog(goldStandardDdb.getAuditLog());
+					}
+				}
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		}
     	}
@@ -99,6 +111,18 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
         				}
         				goldStandardNew.setRejectedPmids(rejectedPmids);
         			}
+        			
+        			if(goldStandardDdb.getAuditLog() != null
+    						&&
+    						goldStandardDdb.getAuditLog().size() > 0) {
+    					if(goldStandardNew.getAuditLog() != null
+    							&&
+    							goldStandardNew.getAuditLog().size() > 0) {
+    						goldStandardNew.getAuditLog().addAll(goldStandardDdb.getAuditLog());
+    					} else {
+    						goldStandardNew.setAuditLog(goldStandardDdb.getAuditLog());
+    					}
+    				}
     			}
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
     		}

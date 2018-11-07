@@ -119,4 +119,16 @@ public class DynamoDbS3Operations {
 		return null;
 		
 	}
+	
+	/**
+	 * This function delete large objects from S3
+	 * @param bucketName
+	 * @param keyName
+	 */
+	public void deleteLargeItem(String bucketName, String keyName) {
+		if(s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
+			log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
+			s3.deleteObject(bucketName.toLowerCase(), keyName);
+		}
+	}
 }

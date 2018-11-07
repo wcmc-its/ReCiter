@@ -19,13 +19,18 @@
 package reciter.model.identity;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperFieldModel.DynamoDBAttributeType;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTyped;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 @DynamoDBDocument
 public class KnownRelationship {
 
 	private String uid;
 	private AuthorName name;
-	private String type;
+	@DynamoDBTyped(DynamoDBAttributeType.S)
+	private RelationshipType type;
 	
 	public String getUid() {
 		return uid;
@@ -39,14 +44,25 @@ public class KnownRelationship {
 	public void setName(AuthorName name) {
 		this.name = name;
 	}
-	public String getType() {
+	public RelationshipType getType() {
 		return type;
 	}
-	public void setType(String type) {
+	public void setType(RelationshipType type) {
 		this.type = type;
 	}
 	@Override
 	public String toString() {
 		return "KnownRelationship [uid=" + uid + ", name=" + name + ", type=" + type + "]";
+	}
+	
+	public enum RelationshipType {
+		
+		CO_INVESTIGATOR,
+		MENTOR,
+		MENTEE,
+		MANAGER,
+		REPORT,
+		HR
+		
 	}
 }
