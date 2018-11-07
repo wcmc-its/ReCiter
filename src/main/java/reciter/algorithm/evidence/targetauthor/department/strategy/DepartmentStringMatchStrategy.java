@@ -43,6 +43,7 @@ import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
+import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 
 /**
  * This strategy matches on Organizational Unit recorded in Identity to affiliation string of target author
@@ -129,7 +130,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								boolean isOrgUnitMatch = false;
 								OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence();
 								String identityDepartment = orgUnit.getOrganizationalUnitLabel().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
-								if(orgUnit.getOrganizationalUnitType().equals("department") || orgUnit.getOrganizationalUnitType().equals("division")) {
+								if(orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DEPARTMENT || orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DIVISION) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
 											&& 
 											(StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center")
@@ -330,7 +331,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 						for(String synonym: orgUnitsynonyms) {
 							OrganizationalUnit orgUnitWithSynonmym = new OrganizationalUnit();
 							orgUnitWithSynonmym.setOrganizationalUnitLabel(synonym.trim());
-							orgUnitWithSynonmym.setOrganizationalUnitType("department");
+							orgUnitWithSynonmym.setOrganizationalUnitType(OrganizationalUnitType.DEPARTMENT);
 							orgUnitWithSynonmyms.add(orgUnitWithSynonmym);
 						}
 						if(orgUnitWithSynonmyms.size() > 0) {

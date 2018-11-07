@@ -32,6 +32,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.model.identity.KnownRelationship;
+import reciter.model.identity.KnownRelationship.RelationshipType;
 
 @Slf4j
 public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
@@ -104,7 +105,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 								relationshipEvidence.setRelationshipName(authorName.getName());
 								relationshipEvidence.setRelationshipType(relationshipTypes);
 								
-								if(authorName.getType().equals("mentor")) {
+								if(authorName.getType() == RelationshipType.MENTOR) {
 									relationshipEvidence.setRelationshipMatchModifierMentor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentor());
 									if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
 											&& 
@@ -114,7 +115,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 									}
 								}
 								
-								if(authorName.getType().equals("manager")) {
+								if(authorName.getType() == RelationshipType.MANAGER) {
 									relationshipEvidence.setRelationshipMatchModifierManager(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManager());
 									if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
 											&& 
@@ -135,7 +136,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 												).findFirst().get();
 										
 										if(relationshipEvidenceInList != null) {
-											if(authorName.getType().equals("mentor")) {
+											if(authorName.getType() == RelationshipType.MENTOR) {
 												relationshipEvidenceInList.setRelationshipMatchModifierMentor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentor());
 												if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
 														&& 
@@ -145,7 +146,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 												}
 											}
 											
-											if(authorName.getType().equals("manager")) {
+											if(authorName.getType() == RelationshipType.MANAGER) {
 												relationshipEvidenceInList.setRelationshipMatchModifierManager(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManager());
 												if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
 														&& 
@@ -154,11 +155,11 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 													relationshipEvidenceInList.setRelationshipMatchModifierManagerSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManagerSeniorAuthor());
 												}
 											}
-											relationshipEvidenceInList.getRelationshipType().add(authorName.getType());
+											relationshipEvidenceInList.getRelationshipType().add(authorName.getType().name());
 											continue;
 										}
 								} else {
-									relationshipTypes.add(authorName.getType());
+									relationshipTypes.add(authorName.getType().name());
 								}
 								relationshipEvidences.add(relationshipEvidence);
 							}
