@@ -139,7 +139,7 @@ public class ReCiterController {
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST)
+    @RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public ResponseEntity<GoldStandard> updateGoldStandard(@RequestBody GoldStandard goldStandard) {
         dynamoDbGoldStandardService.save(goldStandard);
@@ -153,7 +153,7 @@ public class ReCiterController {
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT)
+    @RequestMapping(value = "/reciter/goldstandard/", method = RequestMethod.PUT, produces = "application/json")
     @ResponseBody
     public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard) {
         dynamoDbGoldStandardService.save(goldStandard);
@@ -167,7 +167,7 @@ public class ReCiterController {
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET)
+    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
         long startTime = System.currentTimeMillis();
