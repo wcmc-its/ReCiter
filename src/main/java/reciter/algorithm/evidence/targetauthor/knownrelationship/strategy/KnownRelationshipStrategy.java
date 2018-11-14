@@ -75,10 +75,6 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			List<KnownRelationship> relationships = identity.getKnownRelationships();
 			List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
 			
-			if(reCiterArticle.getArticleId() == 28158328) {
-				System.out.println("here");
-			}
-			
 			if (relationships != null) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 					Set<String> relationshipTypes = new HashSet<String>();
@@ -155,7 +151,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 													relationshipEvidenceInList.setRelationshipMatchModifierManagerSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManagerSeniorAuthor());
 												}
 											}
-											relationshipEvidenceInList.getRelationshipType().add(authorName.getType().name());
+											relationshipEvidenceInList.getRelationshipType().add(authorName.getType().toString());
 											continue;
 										}
 								} else {

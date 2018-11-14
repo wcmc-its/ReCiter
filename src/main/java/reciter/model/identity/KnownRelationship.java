@@ -62,7 +62,7 @@ public class KnownRelationship {
 		MENTEE("Mentee"),
 		MANAGER("Manager"),
 		REPORT("Report"),
-		HR("HR")
+		HR("Organizational unit")
 		;
 		
 		private final String text;
