@@ -153,8 +153,8 @@ public class ReCiterController {
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a valid uid to be passed with GoldStandard model");
     	}
     	if(goldStandardUpdateFlag == null ||
-    			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
+    		dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
     	}
@@ -172,8 +172,8 @@ public class ReCiterController {
     @ResponseBody
     public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
     	if(goldStandardUpdateFlag == null ||
-    			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
+    		dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
     	}

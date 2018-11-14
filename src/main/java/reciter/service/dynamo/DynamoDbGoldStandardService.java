@@ -21,7 +21,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
     @Override
     public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
-    	if(goldStandardUpdateFlag == goldStandardUpdateFlag.REFRESH) {
+    	if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.save(goldStandard);
     	} else {
     		GoldStandard goldStandardDdb = findByUid(goldStandard.getUid());
@@ -29,27 +29,91 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		} else {
     			List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
-    			if(acceptedPmids != null && acceptedPmids.size() > 0) {
-    				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
-	    				for(Long acceptedPmid: goldStandard.getKnownPmids()) {
-	    					if(!acceptedPmids.contains(acceptedPmid)) {
-	    						acceptedPmids.add(acceptedPmid);
-	    					}
-	    				}
-    				}
-    				goldStandard.setKnownPmids(acceptedPmids);
-    			}
-    			
     			List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
-    			if(rejectedPmids != null && rejectedPmids.size() > 0) {
-    				if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
-	    				for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
-	    					if(!rejectedPmids.contains(rejectedPmid)) {
-	    						rejectedPmids.add(rejectedPmid);
+    			if(goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
+    				if(acceptedPmids != null && acceptedPmids.size() > 0) {
+        				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+        					for(Long acceptedPmid: goldStandard.getKnownPmids()) {
+        						if(acceptedPmids.contains(acceptedPmid)) {
+    	    						acceptedPmids.remove(acceptedPmid);
+    	    					}
+        					}
+        				}
+        				
+        			}
+    				
+    				if(rejectedPmids != null && rejectedPmids.size() > 0) {
+        				if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+        					for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
+        						if(rejectedPmids.contains(rejectedPmid)) {
+        							rejectedPmids.remove(rejectedPmid);
+    	    					}
+        					}
+        				}
+        			}
+    				if(acceptedPmids == null) {
+    					goldStandard.setKnownPmids(new ArrayList<Long>());
+    				} else {
+    					goldStandard.setKnownPmids(acceptedPmids);
+    				}
+    				if(rejectedPmids == null) {
+    					goldStandard.setRejectedPmids(new ArrayList<Long>());
+    				} else {
+    					goldStandard.setRejectedPmids(rejectedPmids);
+    				}
+    			} else if(goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    			
+	     			if(acceptedPmids != null && acceptedPmids.size() > 0) {
+	    				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+		    				for(Long acceptedPmid: goldStandard.getKnownPmids()) {
+		    					if(!acceptedPmids.contains(acceptedPmid)) {
+		    						acceptedPmids.add(acceptedPmid);
+		    					}
+		    					if(rejectedPmids != null && rejectedPmids.size() > 0) {
+		    						if(rejectedPmids.contains(acceptedPmid)) {
+		    							rejectedPmids.remove(acceptedPmid);
+		    						}
+		    					}
+		    				}
+	    				}
+	    				goldStandard.setKnownPmids(acceptedPmids);
+	    			} else {
+	    				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+	    					for(Long acceptedPmid: goldStandard.getKnownPmids()) {
+	    						if(goldStandard.getRejectedPmids() != null) {
+		    						if(goldStandard.getRejectedPmids().contains(acceptedPmid)) {
+		    							goldStandard.getRejectedPmids().remove(acceptedPmid);
+		    						}
+	    						}
 	    					}
 	    				}
-    				}
-    				goldStandard.setRejectedPmids(rejectedPmids);
+	    			}
+	     			
+	    			if(rejectedPmids != null && rejectedPmids.size() > 0) {
+	    				if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+		    				for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
+		    					if(!rejectedPmids.contains(rejectedPmid)) {
+		    						rejectedPmids.add(rejectedPmid);
+		    					}
+		    					if(acceptedPmids != null && acceptedPmids.size() > 0) {
+		    						if(acceptedPmids.contains(rejectedPmid)) {
+		    							acceptedPmids.remove(rejectedPmid);
+		    						}
+		    					}
+		    				}
+	    				}
+	    				goldStandard.setRejectedPmids(rejectedPmids);
+	    			} else {
+	    				if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+	    					for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
+	    						if(goldStandard.getKnownPmids() != null) {
+		    						if(goldStandard.getKnownPmids().contains(rejectedPmid)) {
+		    							goldStandard.getKnownPmids().remove(rejectedPmid);
+		    						}
+	    						}
+	    					}
+	    				}
+	    			}
     			}
     			
     			if(goldStandardDdb.getAuditLog() != null
@@ -77,7 +141,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	@Override
 	public void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
 		
-		if(goldStandardUpdateFlag == goldStandardUpdateFlag.REFRESH) {
+		if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.saveAll(goldStandard);
     	} else {
     		List<String> goldStandardUids = goldStandard.stream().map(GoldStandard::getUid).collect(Collectors.toList());
