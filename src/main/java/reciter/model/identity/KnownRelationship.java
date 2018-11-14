@@ -57,12 +57,30 @@ public class KnownRelationship {
 	
 	public enum RelationshipType {
 		
-		CO_INVESTIGATOR,
-		MENTOR,
-		MENTEE,
-		MANAGER,
-		REPORT,
-		HR
+		CO_INVESTIGATOR("Co-investigator"),
+		MENTOR("Mentor"),
+		MENTEE("Mentee"),
+		MANAGER("Manager"),
+		REPORT("Report"),
+		HR("HR")
+		;
+		
+		private final String text;
+
+	    /**
+	     * @param text
+	     */
+		RelationshipType(final String text) {
+	        this.text = text;
+	    }
+
+	    /* (non-Javadoc)
+	     * @see java.lang.Enum#toString()
+	     */
+	    @Override
+	    public String toString() {
+	        return text;
+	    }
 		
 	}
 }
