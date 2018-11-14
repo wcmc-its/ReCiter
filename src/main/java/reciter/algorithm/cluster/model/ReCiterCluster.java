@@ -57,6 +57,8 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	 * List of articles in its cluster.
 	 */
 	private List<ReCiterArticle> articleCluster;
+	
+	private double clusterReliabilityScore;
 
 	/**
 	 * Cluster originator.
@@ -202,6 +204,14 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 
 	public void setArticleCluster(List<ReCiterArticle> articleCluster) {
 		this.articleCluster = articleCluster;
+	}
+
+	public double getClusterReliabilityScore() {
+		return clusterReliabilityScore;
+	}
+
+	public void setClusterReliabilityScore(double clusterReliabilityScore) {
+		this.clusterReliabilityScore = clusterReliabilityScore;
 	}
 
 	public ReCiterCluster() {

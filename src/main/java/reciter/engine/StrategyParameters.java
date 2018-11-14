@@ -27,7 +27,13 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 public class StrategyParameters {
-
+	
+	@Value("${reciter.minimumStorageThreshold}")
+	private double minimumStorageThreshold;
+	
+	@Value("${use.scopus.articles}")
+	private boolean isUseScopusArticles;
+	
     @Value("${strategy.email}")
     private boolean isEmail;
 
@@ -52,9 +58,6 @@ public class StrategyParameters {
     @Value("${strategy.journal}")
     private boolean isJournal;
 
-    @Value("${strategy.citizenship}")
-    private boolean isCitizenship;
-
     @Value("${strategy.education}")
     private boolean isEducation;
 
@@ -73,9 +76,6 @@ public class StrategyParameters {
     @Value("${strategy.persontype}")
     private boolean isPersonType;
 
-    @Value("${strategy.acceptedrejected}")
-    private boolean isAcceptedRejected;
-
     @Value("${strategy.averageclustering}")
     private boolean isAverageClustering;
 
@@ -85,20 +85,13 @@ public class StrategyParameters {
     @Value("${strategy.doctoral.year.discrepancy}")
     private boolean isDoctoralYearDiscrepancy;
 
-    @Value("${strategy.remove.by.name}")
-    private boolean isRemoveByName;
-
     @Value("${strategy.cluster.size}")
     private boolean isClusterSize;
 
     @Value("${strategy.mesh.major}")
     private boolean isMeshMajor;
 
-    @Value("${use.gold.standard.evidence}")
     private boolean useGoldStandardEvidence;
-
-    @Value("${use.rejected.evidence}")
-    private boolean useRejectedEvidence;
 
     @Value("${cluster.similarity.threshold.score}")
     private double clusterSimilarityThresholdScore;
@@ -207,6 +200,12 @@ public class StrategyParameters {
 
     @Value("${strategy.knownrelationships.relationshipMatchModifier-Mentor-SeniorAuthor}")
     private double relationshipMatchModifierMentorSeniorAuthor;
+    
+    @Value("${strategy.knownrelationships.relationshipMatchModifier-Manager}")
+    private double relationshipMatchModifierManager;
+
+    @Value("${strategy.knownrelationships.relationshipMatchModifier-Manager-SeniorAuthor}")
+    private double relationshipMatchModifierManagerSeniorAuthor;
 
     @Value("${strategy.discrepancyDegreeYear-BachelorThreshold}")
     private double discrepancyDegreeYearBachelorThreshold;
@@ -264,6 +263,9 @@ public class StrategyParameters {
 
     @Value("${strategy.averageClusteringScoringStrategy.clusterScore-Factor}")
     private double clusterScoreFactor;
+    
+    @Value("${strategy.averageClusteringScoringStrategy.clusterReliabilityScoreFactor}")
+    private double clusterReliabilityScoreFactor;
 
     @Value("${standardizedScoreMapping}")
     private String standardizedScoreMapping;

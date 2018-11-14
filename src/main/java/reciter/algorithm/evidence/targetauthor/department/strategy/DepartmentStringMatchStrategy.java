@@ -43,10 +43,12 @@ import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
+import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 
 /**
- * 
- * @author jil3004
+ * This strategy matches on Organizational Unit recorded in Identity to affiliation string of target author
+ * @author Sarbajit Dutta(szd2013)
+ * @see <a href ="https://github.com/wcmc-its/ReCiter/issues/229">Organizational Unit Strategy</a>
  *
  */
 public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
@@ -111,17 +113,13 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		Map<String, List<String>> identityOrgUnitToSynonymMap = new HashMap<String, List<String>>();
 		populateSanitizedIdentityInstitutions(identity, sanitizedIdentityInstitutions, identityOrgUnitToSynonymMap);
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if(reCiterArticle.getArticleId() == 10499040) {
-				slf4jLogger.info("here");
-			}
-			//sum += executeStrategy(reCiterArticle, identity);
 			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
 			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 					if(author.isTargetAuthor() 
 							&& 
 							author.getAffiliation() != null) {
-						OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence();
+						
 						String synonymOrgUnitLabel = null;
 						String articleAffiliation = author.getAffiliation().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
 						if(identity.getOrganizationalUnits() != null 
@@ -129,8 +127,10 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								identity.getOrganizationalUnits().size() > 0) {
 							//This is for department
 							for(OrganizationalUnit orgUnit: sanitizedIdentityInstitutions) {
+								boolean isOrgUnitMatch = false;
+								OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence();
 								String identityDepartment = orgUnit.getOrganizationalUnitLabel().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
-								if(orgUnit.getOrganizationalUnitType().equals("department")) {
+								if(orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DEPARTMENT || orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DIVISION) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
 											&& 
 											(StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center")
@@ -140,7 +140,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
 											&& 
 											orgUnit.getOrganizationalUnitLabel().length() > 14) {
-										if(StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment)) {
+										if(StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
 											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
 											//identityDepartment: "Center for Integrative Medicine"
 											//departmentMatchingScore: 2
@@ -160,12 +160,13 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 											}
 											orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 											orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
+											isOrgUnitMatch = true;
 										}
 									}  
 									
-									if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
+									/*if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
 											&&
-											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
+											StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
 										//This is for https://github.com/wcmc-its/ReCiter/issues/251 - Account for possibility that department name may be missing preposition in article.affiliation
 										if(identityOrgUnitToSynonymMap.size() > 0 &&
 												identityOrgUnitToSynonymMap.entrySet().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))) {
@@ -183,7 +184,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										}
 										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
-									} else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
+										isOrgUnitMatch = true;
+									}*/ else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
 											|| 
 											StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment)
 											||
@@ -193,7 +195,13 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 											||
 											StringUtils.containsIgnoreCase(articleAffiliation, "Divisions of " + identityDepartment)
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment)) {
+											StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Department")
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Division")
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Dept")) {
 										//This addresses https://github.com/wcmc-its/ReCiter/issues/250
 										//articleAffiliation: "Department of Pharmacology, Weill Cornell Medical College. New York, NY 10021, USA. jobuck@med.cornell.edu"
 										//identityDepartment: "Pharmacology"
@@ -214,10 +222,13 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										}
 										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
+										isOrgUnitMatch = true;
 									}  
 									
-									
-									if(Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split("\\s*,\\s*")).contains(identityDepartment)) {
+									//This is added to the modifier should be dependent on the matched score which should be more than 0
+									if(isOrgUnitMatch
+											&&
+											Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split("\\s*,\\s*")).contains(identityDepartment)) {
 										if(identityOrgUnitToSynonymMap.size() > 0 &&
 												identityOrgUnitToSynonymMap.values().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.contains(identityDepartment))) {
 												synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
@@ -232,10 +243,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										if(synonymOrgUnitLabel == null) {
 											orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
 										}
+										orgUnitEvidence.setOrganizationalUnitModifier(identityDepartment);
 										orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
-									} else {
-										orgUnitEvidence.setOrganizationalUnitModifier(null);
-										orgUnitEvidence.setOrganizationalUnitModifierScore(0);
 									}
 								} else {
 									if(articleAffiliation.contains("Program in " + identityDepartment) 
@@ -261,11 +270,18 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitProgramMatchingScore());
 									}
 								}
+								if(orgUnitEvidence.getIdentityOrganizationalUnit() == null) {
+									orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+								}
+								if(orgUnitEvidence != null && orgUnitEvidence.getIdentityOrganizationalUnit() != null && orgUnitEvidence.getArticleAffiliation() != null && orgUnitEvidence.getOrganizationalUnitMatchingScore() > 0) {
+									if(!orgUnitEvidences.stream().anyMatch(oue -> oue.getIdentityOrganizationalUnit().equals(orgUnit.getOrganizationalUnitLabel()) || 
+											oue.getIdentityOrganizationalUnit().equals(identityDepartment))) {
+										orgUnitEvidences.add(orgUnitEvidence);
+									}
+								}
 							}
 						}
-						if(orgUnitEvidence != null && orgUnitEvidence.getIdentityOrganizationalUnit() != null && orgUnitEvidence.getArticleAffiliation() != null) {
-							orgUnitEvidences.add(orgUnitEvidence);
-						}
+						
 					}
 				}
 			}
@@ -315,7 +331,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 						for(String synonym: orgUnitsynonyms) {
 							OrganizationalUnit orgUnitWithSynonmym = new OrganizationalUnit();
 							orgUnitWithSynonmym.setOrganizationalUnitLabel(synonym.trim());
-							orgUnitWithSynonmym.setOrganizationalUnitType("department");
+							orgUnitWithSynonmym.setOrganizationalUnitType(OrganizationalUnitType.DEPARTMENT);
 							orgUnitWithSynonmyms.add(orgUnitWithSynonmym);
 						}
 						if(orgUnitWithSynonmyms.size() > 0) {

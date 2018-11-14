@@ -14,6 +14,7 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.exceptions.DynamoDBLocalServiceException;
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
+import com.amazonaws.services.dynamodbv2.local.shared.access.sqlite.AmazonDynamoDBOfflineSQLiteJob;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.Projection;
 import com.amazonaws.services.dynamodbv2.model.ProjectionType;
@@ -80,6 +81,15 @@ public class DynamoDbConfig {
     @Value("${aws.dynamoDb.local.port}")
     private String dynamoDbLocalPort;
     
+    @Value("${aws.dynamoDb.local.region}")
+    private String dynamodbLocalRegion;
+    
+    @Value("${aws.dynamoDb.local.accesskey}")
+    private String dynamodbLocalAccessKey;
+    
+    @Value("${aws.dynamoDb.local.secretkey}")
+    private String dynamodbLocalSecretKey;
+    
     @Value("${aws.dynamoDb.local.dbpath}")
     private String dynamoDbPath;
     
@@ -104,17 +114,17 @@ public class DynamoDbConfig {
 				server.start();
 				
 				amazonDynamoDB = AmazonDynamoDBClientBuilder.standard().withEndpointConfiguration(
-	        			new AwsClientBuilder.EndpointConfiguration("http://localhost:" + this.dynamoDbLocalPort, "us-west-2"))
+	        			new AwsClientBuilder.EndpointConfiguration("http://localhost:" + this.dynamoDbLocalPort, dynamodbLocalRegion))
 	    				 .withCredentials(new AWSStaticCredentialsProvider(new AWSCredentials() {
 							
 							@Override
 							public String getAWSSecretKey() {
-								return "dummy";
+								return dynamodbLocalSecretKey;
 							}
 							
 							@Override
 							public String getAWSAccessKeyId() {
-								return "dummy";
+								return dynamodbLocalAccessKey;
 							}
 						}))
 	        			.build();
@@ -141,6 +151,7 @@ public class DynamoDbConfig {
     		if (!StringUtils.isEmpty(amazonDynamoDBEndpoint)) {
                 amazonDynamoDB.setEndpoint(amazonDynamoDBEndpoint);
             }
+    		
     	}
     	if(amazonDynamoDB != null) {
     		createTables(amazonDynamoDB);

@@ -1,4 +1,4 @@
-package reciter.engine.erroranalysis;
+package reciter.api.parameters;
 
 public enum UseGoldStandard {
 	

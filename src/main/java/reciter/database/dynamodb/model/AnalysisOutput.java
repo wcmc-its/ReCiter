@@ -20,7 +20,9 @@ package reciter.database.dynamodb.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperFieldModel.DynamoDBAttributeType;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTyped;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,6 +38,9 @@ public class AnalysisOutput {
 	
 	@DynamoDBHashKey(attributeName = "uid")
 	private String uid;
+	@DynamoDBTyped(DynamoDBAttributeType.BOOL)
+	@DynamoDBAttribute(attributeName = "s3StorageFlag")
+	private boolean isUsingS3;
 	@DynamoDBAttribute(attributeName = "reCiterFeature")
 	private ReCiterFeature reCiterFeature;
 }

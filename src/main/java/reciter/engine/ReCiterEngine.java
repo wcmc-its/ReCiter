@@ -24,10 +24,11 @@ import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.article.scorer.ArticleScorer;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.api.parameters.FilterFeedbackType;
+import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.ReCiterFeatureGenerator;
 import reciter.engine.erroranalysis.Analysis;
-import reciter.engine.erroranalysis.UseGoldStandard;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
@@ -42,7 +43,7 @@ public class ReCiterEngine implements Engine {
     public static double clutseringGrantsThreshold;
 
     @Override
-    public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters) {
+    public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore) {
 
         Identity identity = parameters.getIdentity();
         clusterSimilarityThresholdScore = strategyParameters.getClusterSimilarityThresholdScore();
@@ -59,23 +60,10 @@ public class ReCiterEngine implements Engine {
         ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
         articleScorer.runArticleScorer(clusterer.getClusters(), identity);
 
-        Analysis analysis = Analysis.performAnalysis(clusterer, parameters.getKnownPmids(), parameters.getTotalStandardzizedArticleScore());
         log.info(clusterer.toString());
-        log.info("Analysis for uid=[" + identity.getUid() + "]");
-        log.info("Precision=" + analysis.getPrecision());
-        log.info("Recall=" + analysis.getRecall());
-
-        double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2.0;
-        log.info("Accuracy=" + accuracy);
-
-        log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
-        log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
-        log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
-        log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
-        log.info("\n");
 
         EngineOutput engineOutput = new EngineOutput();
-        engineOutput.setAnalysis(analysis);
+        //engineOutput.setAnalysis(analysis);
         List<ReCiterCluster> reCiterClusters = new ArrayList<>();
         for (ReCiterCluster cluster : clusterer.getClusters().values()) {
             reCiterClusters.add(cluster);
@@ -88,9 +76,10 @@ public class ReCiterEngine implements Engine {
         } else {
             mode = UseGoldStandard.FOR_TESTING_ONLY;
         }
+
         ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
-                mode, parameters.getTotalStandardzizedArticleScore(),
-                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids(), analysis);
+                mode, filterScore,
+                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids());
         engineOutput.setReCiterFeature(reCiterFeature);
         return engineOutput;
     }

@@ -84,7 +84,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 					} else {
 						journalCategoryEvidence = new JournalCategoryEvidence();
 						journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(scienceMetrix.getScienceMetrixSubfield());
-						journalCategoryEvidence.setJournalSubfieldDepartment(scienceMetrix.getScienceMetrixField());
+						journalCategoryEvidence.setJournalSubfieldDepartment("NO_MATCH");
 						journalCategoryEvidence.setJournalSubfieldScienceMetrixID(Integer.parseInt(scienceMetrix.getScienceMatrixSubfieldId()));
 						journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldScore());
 					}

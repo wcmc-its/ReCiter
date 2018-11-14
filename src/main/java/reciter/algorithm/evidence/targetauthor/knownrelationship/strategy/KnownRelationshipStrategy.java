@@ -32,6 +32,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.model.identity.KnownRelationship;
+import reciter.model.identity.KnownRelationship.RelationshipType;
 
 @Slf4j
 public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
@@ -74,6 +75,10 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			List<KnownRelationship> relationships = identity.getKnownRelationships();
 			List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
 			
+			if(reCiterArticle.getArticleId() == 28158328) {
+				System.out.println("here");
+			}
+			
 			if (relationships != null) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 					Set<String> relationshipTypes = new HashSet<String>();
@@ -100,13 +105,23 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 								relationshipEvidence.setRelationshipName(authorName.getName());
 								relationshipEvidence.setRelationshipType(relationshipTypes);
 								
-								if(authorName.getType().equals("mentor")) {
+								if(authorName.getType() == RelationshipType.MENTOR) {
 									relationshipEvidence.setRelationshipMatchModifierMentor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentor());
 									if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
 											&& 
 											author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
 											) { //If the matching author is the last author or senior author
 										relationshipEvidence.setRelationshipMatchModifierMentorSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentorSeniorAuthor());
+									}
+								}
+								
+								if(authorName.getType() == RelationshipType.MANAGER) {
+									relationshipEvidence.setRelationshipMatchModifierManager(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManager());
+									if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
+											&& 
+											author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
+											) { //If the matching author is the manager and the last author or senior author
+										relationshipEvidence.setRelationshipMatchModifierManagerSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManagerSeniorAuthor());
 									}
 								}
 								
@@ -121,7 +136,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 												).findFirst().get();
 										
 										if(relationshipEvidenceInList != null) {
-											if(authorName.getType().equals("mentor")) {
+											if(authorName.getType() == RelationshipType.MENTOR) {
 												relationshipEvidenceInList.setRelationshipMatchModifierMentor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentor());
 												if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
 														&& 
@@ -130,11 +145,21 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 													relationshipEvidenceInList.setRelationshipMatchModifierMentorSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierMentorSeniorAuthor());
 												}
 											}
-											relationshipEvidenceInList.getRelationshipType().add(authorName.getType());
+											
+											if(authorName.getType() == RelationshipType.MANAGER) {
+												relationshipEvidenceInList.setRelationshipMatchModifierManager(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManager());
+												if(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() > 0 
+														&& 
+														author.getAuthorName().equals(reCiterArticle.getArticleCoAuthors().getAuthors().get(reCiterArticle.getArticleCoAuthors().getNumberOfAuthors() - 1).getAuthorName())
+														) { //If the matching author is the manager and the last author or senior author
+													relationshipEvidenceInList.setRelationshipMatchModifierManagerSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManagerSeniorAuthor());
+												}
+											}
+											relationshipEvidenceInList.getRelationshipType().add(authorName.getType().name());
 											continue;
 										}
 								} else {
-									relationshipTypes.add(authorName.getType());
+									relationshipTypes.add(authorName.getType().name());
 								}
 								relationshipEvidences.add(relationshipEvidence);
 							}
