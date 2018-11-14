@@ -159,7 +159,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 											continue;
 										}
 								} else {
-									relationshipTypes.add(authorName.getType().name());
+									relationshipTypes.add(authorName.getType().toString());
 								}
 								relationshipEvidences.add(relationshipEvidence);
 							}
