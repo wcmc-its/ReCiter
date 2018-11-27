@@ -129,6 +129,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 							for(OrganizationalUnit orgUnit: sanitizedIdentityInstitutions) {
 								boolean isOrgUnitMatch = false;
 								OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence();
+								orgUnitEvidence.setOrganizationalUnitType(orgUnit.getOrganizationalUnitType());
 								String identityDepartment = orgUnit.getOrganizationalUnitLabel().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
 								if(orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DEPARTMENT || orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DIVISION) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
