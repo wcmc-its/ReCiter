@@ -13,10 +13,10 @@ phases:
       - mvn clean install -Dmaven.test.skip=true
       - cp target/reciter-0.0.1-SNAPSHOT.jar .
       - mkdir build_zip
+      - cp -rf ./reciter-0.0.1-SNAPSHOT.jar ./build_zip
+      - cp -rf .ebextensions ./build_zip
+      - cp -rf Procfile ./build_zip
       - cd build_zip
-      - cp -rf ./reciter-0.0.1-SNAPSHOT.jar .
-      - cp -rf .ebextensions .
-      - cp -rf Procfile .
       - zip ../reciter.zip -r reciter-0.0.1-SNAPSHOT.jar .ebextensions Procfile
       - cd ..
       - pwd
