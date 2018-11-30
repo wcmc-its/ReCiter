@@ -11,8 +11,15 @@ phases:
     commands:
       - echo Build started on `date`
       - mvn clean install -Dmaven.test.skip=true
-      - cp target/reciter-0.0.1-SNAPSHOT.jar . 
-      - zip ./reciter.zip -r reciter-0.0.1-SNAPSHOT.jar .ebextensions Procfile
+      - cp target/reciter-0.0.1-SNAPSHOT.jar .
+      - mkdir build_zip
+      - cd build_zip
+      - cp -rf ./reciter-0.0.1-SNAPSHOT.jar .
+      - cp -rf .ebextensions .
+      - cp -rf Procfile .
+      - zip ../reciter.zip -r reciter-0.0.1-SNAPSHOT.jar .ebextensions Procfile
+      - cd ..
+      - pwd
   post_build:
     commands:
       - echo Build completed on `date`
