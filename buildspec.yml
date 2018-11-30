@@ -11,9 +11,10 @@ phases:
     commands:
       - echo Build started on `date`
       - mvn clean install -Dmaven.test.skip=true
+      - zip ./reciter.zip -r target/reciter-0.0.1-SNAPSHOT.jar .ebextensions
   post_build:
     commands:
       - echo Build completed on `date`
 artifacts:
   files:
-    - target/reciter-0.0.1-SNAPSHOT.jar
+    - ./reciter.zip
