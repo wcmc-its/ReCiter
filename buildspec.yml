@@ -12,12 +12,13 @@ phases:
       - echo Build started on `date`
       - mvn clean install -Dmaven.test.skip=true
       - cp target/reciter-0.0.1-SNAPSHOT.jar .
+      - pwd
       - mkdir build_zip
       - cp -rf ./reciter-0.0.1-SNAPSHOT.jar ./build_zip
       - cp -rf .ebextensions ./build_zip
       - cp -rf Procfile ./build_zip
       - cd build_zip
-      - zip ../reciter.zip -r reciter-0.0.1-SNAPSHOT.jar .ebextensions Procfile
+      - zip -r ../reciter.zip reciter-0.0.1-SNAPSHOT.jar .ebextensions Procfile
       - cd ..
       - pwd
   post_build:
@@ -25,4 +26,4 @@ phases:
       - echo Build completed on `date`
 artifacts:
   files:
-    - ./reciter.zip
+    - reciter.zip
