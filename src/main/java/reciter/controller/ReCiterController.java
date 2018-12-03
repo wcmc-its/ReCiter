@@ -354,7 +354,7 @@ public class ReCiterController {
         		&& 
         		analysis != null 
         		&& 
-        		useGoldStandard == UseGoldStandard.AS_EVIDENCE) {//This was added to ensure to use analysis results only in evidence mode
+        		(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null)) {//This was added to ensure to use analysis results only in evidence mode
         	List<Long> finalArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
         	GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         	List<Long> knownPmids = null;
@@ -492,7 +492,7 @@ public class ReCiterController {
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
             
             //Store Analysis only in evidence mode
-            if(useGoldStandard == UseGoldStandard.AS_EVIDENCE) {
+            if(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null) {
 	            AnalysisOutput analysisOutput = new AnalysisOutput();
 	            if(engineOutput != null) {
 	            	if(filterScore == strategyParameters.getMinimumStorageThreshold()) {
