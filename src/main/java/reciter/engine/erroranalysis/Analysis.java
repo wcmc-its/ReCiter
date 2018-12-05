@@ -64,9 +64,11 @@ public class Analysis {
      */
     public static void assignGoldStandard(List<ReCiterArticle> reCiterArticles, List<Long> acceptedPmids, List<Long> rejectedPmids) {
         Set<Long> pmidSet = new HashSet<>();
-        acceptedPmids.stream().forEach(acceptedPmid -> {
-            pmidSet.add(acceptedPmid);
-        });
+        if(acceptedPmids != null && acceptedPmids.size() > 0) {
+	        acceptedPmids.stream().forEach(acceptedPmid -> {
+	            pmidSet.add(acceptedPmid);
+	        });
+        }
 
         for (ReCiterArticle reCiterArticle : reCiterArticles) {
             if (pmidSet.contains(reCiterArticle.getArticleId())) {
@@ -95,39 +97,41 @@ public class Analysis {
         //Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
 
         Analysis analysis = new Analysis();
+        if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
 
-        analysis.setGoldStandardSize(goldStandardPmids.size());
-
-        // Combine all articles into a single list.
-        //List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardzizedArticleScore).collect(Collectors.toList());//new ArrayList<ReCiterArticle>();
-
-        analysis.setSelectedClusterSize(selectedArticles.size());
-
-            for (Long selectedArticle : selectedArticles) {
-                StatusEnum statusEnum;
-                if (finalArticles.contains(selectedArticle) && goldStandardPmids.contains(selectedArticle)) {
-                    analysis.getTruePositiveList().add(selectedArticle);
-                    statusEnum = StatusEnum.TRUE_POSITIVE;
-                } else if (finalArticles.contains(selectedArticle) && !goldStandardPmids.contains(selectedArticle)) {
-                    analysis.getFalsePositiveList().add(selectedArticle);
-                    statusEnum = StatusEnum.FALSE_POSITIVE;
-
-                } else if (!finalArticles.contains(selectedArticle) && goldStandardPmids.contains(selectedArticle)) {
-                    analysis.getFalseNegativeList().add(selectedArticle);
-                    statusEnum = StatusEnum.FALSE_NEGATIVE;
-
-                } else {
-                    analysis.getTrueNegativeList().add(selectedArticle);
-                    statusEnum = StatusEnum.TRUE_NEGATIVE;
-                }
-            }
-
-        analysis.setTruePos(analysis.getTruePositiveList().size());
-        analysis.setTrueNeg(analysis.getTrueNegativeList().size());
-        analysis.setFalseNeg(analysis.getFalseNegativeList().size());
-        analysis.setFalsePos(analysis.getFalsePositiveList().size());
-        analysis.setPrecision(analysis.getPrecision());
-        analysis.setRecall(analysis.getRecall());
+	        analysis.setGoldStandardSize(goldStandardPmids.size());
+	
+	        // Combine all articles into a single list.
+	        //List<ReCiterArticle> articleList = reCiterClusterer.getReCiterArticles().stream().filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= totalStandardzizedArticleScore).collect(Collectors.toList());//new ArrayList<ReCiterArticle>();
+	
+	        analysis.setSelectedClusterSize(selectedArticles.size());
+	
+	            for (Long selectedArticle : selectedArticles) {
+	                StatusEnum statusEnum;
+	                if (finalArticles.contains(selectedArticle) && goldStandardPmids.contains(selectedArticle)) {
+	                    analysis.getTruePositiveList().add(selectedArticle);
+	                    statusEnum = StatusEnum.TRUE_POSITIVE;
+	                } else if (finalArticles.contains(selectedArticle) && !goldStandardPmids.contains(selectedArticle)) {
+	                    analysis.getFalsePositiveList().add(selectedArticle);
+	                    statusEnum = StatusEnum.FALSE_POSITIVE;
+	
+	                } else if (!finalArticles.contains(selectedArticle) && goldStandardPmids.contains(selectedArticle)) {
+	                    analysis.getFalseNegativeList().add(selectedArticle);
+	                    statusEnum = StatusEnum.FALSE_NEGATIVE;
+	
+	                } else {
+	                    analysis.getTrueNegativeList().add(selectedArticle);
+	                    statusEnum = StatusEnum.TRUE_NEGATIVE;
+	                }
+	            }
+	
+	        analysis.setTruePos(analysis.getTruePositiveList().size());
+	        analysis.setTrueNeg(analysis.getTrueNegativeList().size());
+	        analysis.setFalseNeg(analysis.getFalseNegativeList().size());
+	        analysis.setFalsePos(analysis.getFalsePositiveList().size());
+	        analysis.setPrecision(analysis.getPrecision());
+	        analysis.setRecall(analysis.getRecall());
+        }
         return analysis;
     }
     
