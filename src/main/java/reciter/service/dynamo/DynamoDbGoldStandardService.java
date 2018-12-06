@@ -10,14 +10,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import reciter.api.parameters.GoldStandardUpdateFlag;
+import reciter.database.dynamodb.model.ESearchPmid;
+import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.repository.DynamoDbGoldStandardRepository;
+import reciter.service.ESearchResultService;
 
 @Service("DynamoDbGoldStandardService")
 public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService {
 
     @Autowired
     private DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
+    
+    @Autowired
+    private ESearchResultService eSearchResultService;
 
     @Override
     public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
@@ -31,6 +37,24 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     			List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
     			List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
     			if(goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
+    				//This portion deals with cases when deleting a pmid from GoldStandard it will delete it from eSearchResult as well if it exists
+    				ESearchResult eSearchResult = eSearchResultService.findByUid(goldStandard.getUid());
+    				if(eSearchResult != null && eSearchResult.getESearchPmids() != null && eSearchResult.getESearchPmids().size() > 0) {
+    					List<ESearchPmid> eSearchPmidGS = eSearchResult.getESearchPmids().stream().filter(eSearchPmid -> eSearchPmid.getRetrievalStrategyName().equalsIgnoreCase("GoldStandardRetrievalStrategy")).collect(Collectors.toList());
+    					if(eSearchPmidGS != null && !eSearchPmidGS.isEmpty()) {
+    						for(ESearchPmid eSearchPmid: eSearchPmidGS) {
+		    					if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+		    						eSearchPmid.getPmids().removeAll(goldStandard.getKnownPmids());
+		    					}
+		    					if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+		    						eSearchPmid.getPmids().removeAll(goldStandard.getRejectedPmids());
+		    					}
+    						}
+    					}
+    					
+    					eSearchResultService.save(eSearchResult);
+    				}
+    				
     				if(acceptedPmids != null && acceptedPmids.size() > 0) {
         				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
         					for(Long acceptedPmid: goldStandard.getKnownPmids()) {
