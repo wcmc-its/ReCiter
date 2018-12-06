@@ -32,12 +32,14 @@ import org.springframework.stereotype.Component;
 
 import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.api.parameters.RetrievalRefreshFlag;
+import reciter.database.dynamodb.model.GoldStandard;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
+import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameUtils;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
@@ -51,6 +53,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	
 	@Value("${searchStrategy-leninent-threshold}")
 	private double searchStrategyLeninentThreshold;
+	
+	@Autowired
+	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 	
 	@Autowired
 	private ESearchResultService eSearchResultService;
@@ -130,10 +135,21 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
 		
 		//Retreive by GoldStandard
-		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-		Map<Long, PubMedArticle> pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-		savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
-		uniquePmids.addAll(pubMedArticles.keySet());
+		Map<Long, PubMedArticle> pubMedArticles = null;
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
+		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
+			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
+			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
+			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
+			uniquePmids.addAll(pubMedArticles.keySet());
+			try {
+				Thread.sleep(250);
+			} catch (InterruptedException e) {
+				slf4jLogger.error("InterruptedException", e);
+			}
+		}
+		
+		
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -351,12 +367,21 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		identityAuthorNames(identity, identityNames);
 		
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
-		
+		Map<Long, PubMedArticle> pubMedArticles = null;
 		//Retreive by GoldStandard
-		RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-		Map<Long, PubMedArticle> pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-		savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
-		uniquePmids.addAll(pubMedArticles.keySet());
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
+		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
+			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
+			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
+			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
+			uniquePmids.addAll(pubMedArticles.keySet());
+			
+			try {
+				Thread.sleep(250);
+			} catch (InterruptedException e) {
+				slf4jLogger.error("InterruptedException", e);
+			}
+		}
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
