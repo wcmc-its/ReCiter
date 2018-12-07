@@ -142,11 +142,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
 			uniquePmids.addAll(pubMedArticles.keySet());
-			try {
-				Thread.sleep(250);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
 		}
 		
 		
@@ -183,12 +178,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
 		uniquePmids.addAll(pubMedArticles.keySet());
 		
-		try {
-			Thread.sleep(250);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("InterruptedException", e);
-		}
-		
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, false);
@@ -208,12 +197,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		//toggle useStrictQUery as true if results from Last Name First Initial Strategy is larger than lenientStrategy
 		if(r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
 			useStrictQueryOnly = true;
-			
-			try {
-				Thread.sleep(250);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
 		}
 		
 		if(r1.getPubMedQueryResults() != null
@@ -229,12 +212,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r2.getPubMedArticles());
 				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
 			}
@@ -250,11 +227,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
 				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
 			}
@@ -264,12 +236,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r5.getPubMedArticles());
 				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
 			}
@@ -284,12 +250,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r7.getPubMedArticles());
 				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults());
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
@@ -375,12 +335,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults());
 			uniquePmids.addAll(pubMedArticles.keySet());
-			
-			try {
-				Thread.sleep(250);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
 		}
 		
 		// Retrieve by email.
@@ -417,12 +371,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults());
 		uniquePmids.addAll(pubMedArticles.keySet());
 		
-		try {
-			Thread.sleep(250);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("InterruptedException", e);
-		}
-		
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, false);
@@ -440,12 +388,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			uniquePmids.addAll(r1.getPubMedArticles().keySet());
 		}
 		
-		try {
-			Thread.sleep(250);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("InterruptedException", e);
-		}
-		
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
@@ -458,12 +400,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r2.getPubMedArticles());
 				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults());
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
 			}
@@ -478,12 +414,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r4.getPubMedArticles());
 				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults());
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
 			}
@@ -493,12 +423,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r5.getPubMedArticles());
 				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults());
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
 			}
@@ -513,12 +437,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r7.getPubMedArticles());
 				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults());
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
