@@ -604,63 +604,106 @@ public class ReCiterController {
         slf4jLogger.info("elapsed time: " + estimatedTime);
         return new ResponseEntity<>(reCiterOutputFeature, HttpStatus.OK);
     }
-
-    /*@ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by eissn is successful"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-    })
-    @RequestMapping(value = "/reciter/sciencemetrix/eissn/{eissn}", method = RequestMethod.GET)
-    @ResponseBody
-    public ResponseEntity<ScienceMetrix> retrieveScienceMetrixByEissn(@PathVariable String eissn) {
-        ScienceMetrix scienceMetrices = scienceMetrixService.findByEissn(eissn);
-        return ResponseEntity.ok(scienceMetrices);
-    }
-
-    @ApiOperation(value = "Get the ScienceMetrix by issn ", notes = "This api retrieves a ScienceMetrix object by issn.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by issn is successful"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-    })
-    @RequestMapping(value = "/reciter/sciencemetrix/issn/{issn}", method = RequestMethod.GET)
-    @ResponseBody
-    public ResponseEntity<ScienceMetrix> retrieveScienceMetrixByIssn(@PathVariable String issn) {
-        ScienceMetrix scienceMetrices = scienceMetrixService.findByIssn(issn);
-        return ResponseEntity.ok(scienceMetrices);
-    }
-
-
-    @ApiOperation(value = "Get the ScienceMetrix by smsid ", notes = "This api retrieves a ScienceMetrix object by smsid.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by smsid is successful"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-    })
-    @RequestMapping(value = "/reciter/sciencemetrix/smsid/{smsid}", method = RequestMethod.GET)
-    @ResponseBody
-    public ResponseEntity<ScienceMetrix> retrieveScienceMetrixBySmsid(@PathVariable Long smsid) {
-        ScienceMetrix scienceMetrices = scienceMetrixService.findBySmsid(smsid);
-        return ResponseEntity.ok(scienceMetrices);
-    }
     
-    @ApiOperation(value = "Get the ScienceMetrix by eissn ", notes = "This api retrieves a ScienceMetrix object by eissn.")
+    @ApiOperation(value = "Article retrieval by UID.", response = ReCiterFeature.class, notes = "This api returns all the publication for a supplied uid.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The retrieval of a ScienceMetrix object by eissn is successful"),
+            @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found"),
+            @ApiResponse(code = 500, message = "The uid provided was not found in the Identity table")
     })
-    @RequestMapping(value = "/reciter/sciencemetrixdeptcategory/subfieldid/{subfieldid}", method = RequestMethod.GET)
+    @RequestMapping(value = "/reciter/article-retrieval/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity<List<ScienceMetrixDepartmentCategory>> retrieveScienceMetrixDepartmentCategoryBySubfieldId(@PathVariable Long subfieldid) {
-        List<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategory = scienceMetrixDepartmentCategoryService.findByScienceMetrixJournalSubfieldId(subfieldid);
-        return ResponseEntity.ok(scienceMetrixDepartmentCategory);
-    }*/
+    public ResponseEntity runArticleRetrievalByUid(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
+    	long startTime = System.currentTimeMillis();
+        long estimatedTime = 0;
+        slf4jLogger.info("Start time is: " + startTime);
+        
+        final double totalScore;
+        
+        if(totalStandardizedArticleScore == null) {
+        	totalScore = totalArticleScoreStandardizedDefault;
+        } else {
+        	totalScore = totalStandardizedArticleScore;
+        }
+        try {
+            identityService.findByUid(uid);
+        } catch (NullPointerException n) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
+        }
+        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        if (analysis != null) {//This was added to ensure to use analysis results only in evidence mode
+        	if(analysis.getReCiterFeature() != null) {
+        		analysis.getReCiterFeature().setInGoldStandardButNotRetrieved(null);
+        		analysis.getReCiterFeature().setPrecision(null);
+        		analysis.getReCiterFeature().setRecall(null);
+        		analysis.getReCiterFeature().setOverallAccuracy(null);
+        		if(analysis.getReCiterFeature().getReCiterArticleFeatures() != null && analysis.getReCiterFeature().getReCiterArticleFeatures().size() > 0) {
+        			for(ReCiterArticleFeature reCiterArticleFeatures: analysis.getReCiterFeature().getReCiterArticleFeatures()) {
+        				reCiterArticleFeatures.setEvidence(null);
+        			}
+        		}
+        	}
+        	//All the results are filtered based on filterByFeedback
+        	if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
+	        	analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+			            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+			            	&&
+			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
+			            	||
+			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+			            	||
+			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
+			            	)
+			            	.collect(Collectors.toList()));
+        	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_ONLY) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
+		            	.collect(Collectors.toList()));
+        	} else if(filterByFeedback == FilterFeedbackType.REJECTED_ONLY) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
+		            	.collect(Collectors.toList()));
+        	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore 
+		            	&& 
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+		            	)
+		            	.collect(Collectors.toList()));
+        	} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
+		            	)
+		            	.collect(Collectors.toList()));
+        	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_REJECTED) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+		            	||
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
+		            	.collect(Collectors.toList()));
+        	} else if(filterByFeedback == FilterFeedbackType.NULL) {
+        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	&&
+		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
+		            	.collect(Collectors.toList()));
+        	}
+        	 estimatedTime = System.currentTimeMillis() - startTime;
+             slf4jLogger.info("elapsed time: " + estimatedTime);
+            return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
+        } 
+        return ResponseEntity.ok().body("There is no publications data for uid " + uid + ". Please wait while feature-generator re-runs tonight.");
+       
+    }
+
 
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
         // find identity

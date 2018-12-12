@@ -24,9 +24,9 @@ public class ReCiterFeature {
     private Date dateUpdated;
     @DynamoDBTyped(DynamoDBAttributeType.S)
     private UseGoldStandard mode;
-    private double overallAccuracy;
-    private double precision;
-    private double recall;
+    private Double overallAccuracy;
+    private Double precision;
+    private Double recall;
     private List<Long> inGoldStandardButNotRetrieved;
     private int countSuggestedArticles;
     private List<ReCiterArticleFeature> reCiterArticleFeatures;
