@@ -628,7 +628,10 @@ public class ReCiterController {
         	totalScore = totalStandardizedArticleScore;
         }
         try {
-            identityService.findByUid(uid);
+        	Identity identity = identityService.findByUid(uid);
+            if(identity == null) {
+            	return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
+            }
         } catch (NullPointerException n) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
