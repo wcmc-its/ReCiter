@@ -18,8 +18,14 @@
  *******************************************************************************/
 package reciter.model.identity;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperFieldModel.DynamoDBAttributeType;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConvertedEnum;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTyped;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -29,7 +35,7 @@ public class KnownRelationship {
 
 	private String uid;
 	private AuthorName name;
-	@DynamoDBTyped(DynamoDBAttributeType.S)
+	@DynamoDBMarshalling(marshallerClass=RelationshipTypeEnumMarshaller.class)
 	private RelationshipType type;
 	
 	public String getUid() {
@@ -82,5 +88,10 @@ public class KnownRelationship {
 	        return text;
 	    }
 		
+	}
+	
+	public static RelationshipType getEnum(String value) {
+	    List<RelationshipType> list = Arrays.asList(RelationshipType.values());
+	    return list.stream().filter(m -> m.text.equals(value)).findAny().orElse(null);
 	}
 }
