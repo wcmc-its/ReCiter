@@ -154,6 +154,36 @@ public class ReCiterFeatureGenerator {
             if(reCiterArticle.getDatePublicationAddedToEntrez() != null) {
             	reCiterArticleFeature.setDatePublicationAddedToEntrez(reCiterArticle.getDatePublicationAddedToEntrez());
             }
+            
+            //Publication type
+            ReCiterArticlePublicationType reCiterPublicationType = ReCiterArticlePublicationType.builder().build();
+            
+            if(reCiterArticle.getPublicationTypeCanonical() != null) {
+            	reCiterPublicationType.setPublicationTypeCanonical(reCiterArticle.getPublicationTypeCanonical());
+            }
+            if(reCiterArticle.getPublicationTypePubmed() != null) {
+            	reCiterPublicationType.setPublicationTypePubMed(reCiterArticle.getPublicationTypePubmed());
+            }
+            if(reCiterArticle.getPublicationTypeScopus() != null) {
+            	reCiterPublicationType.setPublicationTypeScopus(reCiterArticle.getPublicationTypeScopus());
+            }
+            
+            reCiterArticleFeature.setPublicationType(reCiterPublicationType);
+            
+            //times cited
+            if(reCiterArticle.getTimesCited() != null) {
+            	reCiterArticleFeature.setTimesCited(reCiterArticle.getTimesCited());
+            }
+            
+            //abstract
+            if(reCiterArticle.getPublicationAbstract() != null) {
+            	reCiterArticleFeature.setPublicationAbstract(reCiterArticle.getPublicationAbstract());
+            }
+            
+            //scopus doc id
+            if(reCiterArticle.getScopusDocId() != null) {
+            	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
+            }
 
             // journal title
             reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());

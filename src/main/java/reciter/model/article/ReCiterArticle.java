@@ -148,6 +148,15 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private List<String> matchingEmails = new ArrayList<>(0);
     private double departmentStrategyScore;
     private String matchingDepartment;
+    
+    private String publicationTypePubmed;
+    private ReCiterPublicationTypeScopus publicationTypeScopus;
+    private String publicationTypeCanonical;
+    
+    private Long timesCited;
+    private String publicationAbstract;
+    private String scopusDocId;
+    
 
     private double knownCoinvestigatorScore;
     private List<KnownRelationship> knownRelationship = new ArrayList<>(0);
@@ -974,7 +983,52 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 	public void setTotalArticleScoreWithoutClustering(double totalArticleScoreWithoutClustering) {
 		this.totalArticleScoreWithoutClustering = totalArticleScoreWithoutClustering;
 	}
-	
-	
-	
+
+	public String getPublicationTypePubmed() {
+		return publicationTypePubmed;
+	}
+
+	public void setPublicationTypePubmed(String publicationTypePubmed) {
+		this.publicationTypePubmed = publicationTypePubmed;
+	}
+
+	public ReCiterPublicationTypeScopus getPublicationTypeScopus() {
+		return publicationTypeScopus;
+	}
+
+	public void setPublicationTypeScopus(ReCiterPublicationTypeScopus publicationTypeScopus) {
+		this.publicationTypeScopus = publicationTypeScopus;
+	}
+
+	public String getPublicationTypeCanonical() {
+		return publicationTypeCanonical;
+	}
+
+	public void setPublicationTypeCanonical(String publicationTypeCanonical) {
+		this.publicationTypeCanonical = publicationTypeCanonical;
+	}
+
+	public Long getTimesCited() {
+		return timesCited;
+	}
+
+	public void setTimesCited(Long timesCited) {
+		this.timesCited = timesCited;
+	}
+
+	public String getPublicationAbstract() {
+		return publicationAbstract;
+	}
+
+	public void setPublicationAbstract(String publicationAbstract) {
+		this.publicationAbstract = publicationAbstract;
+	}
+
+	public String getScopusDocId() {
+		return scopusDocId;
+	}
+
+	public void setScopusDocId(String scopusDocId) {
+		this.scopusDocId = scopusDocId;
+	}	
 }

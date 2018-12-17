@@ -24,6 +24,11 @@ public class ReCiterArticleFeature {
     private String publicationDateDisplay;
     private String publicationDateStandardized;
     private String datePublicationAddedToEntrez;
+    private String doi;
+    private ReCiterArticlePublicationType publicationType;
+    private Long timesCited;
+    private String publicationAbstract;
+    private String scopusDocID;
     private String journalTitleVerbose;
     private List<MedlineCitationJournalISSN> issn;
     private String journalTitleISOabbreviation;
@@ -33,7 +38,6 @@ public class ReCiterArticleFeature {
     private String issue;
     private String pages;
     private String pmcid;
-    private String doi;
     private Evidence evidence;
     
     public enum PublicationFeedback {
