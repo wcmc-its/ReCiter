@@ -149,7 +149,7 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private double departmentStrategyScore;
     private String matchingDepartment;
     
-    private String publicationTypePubmed;
+    private List<String> publicationTypePubmed;
     private ReCiterPublicationTypeScopus publicationTypeScopus;
     private String publicationTypeCanonical;
     
@@ -984,11 +984,11 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
 		this.totalArticleScoreWithoutClustering = totalArticleScoreWithoutClustering;
 	}
 
-	public String getPublicationTypePubmed() {
+	public List<String> getPublicationTypePubmed() {
 		return publicationTypePubmed;
 	}
 
-	public void setPublicationTypePubmed(String publicationTypePubmed) {
+	public void setPublicationTypePubmed(List<String> publicationTypePubmed) {
 		this.publicationTypePubmed = publicationTypePubmed;
 	}
 
