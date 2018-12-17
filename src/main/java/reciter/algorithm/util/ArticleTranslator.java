@@ -523,8 +523,8 @@ public class ArticleTranslator {
             } else {
                 publicationTypeCanonical = "Article";
             }
-            reCiterArticle.setPublicationTypeCanonical(publicationTypeCanonical);
     	}
+    	reCiterArticle.setPublicationTypeCanonical(publicationTypeCanonical);
     }
 }
 
