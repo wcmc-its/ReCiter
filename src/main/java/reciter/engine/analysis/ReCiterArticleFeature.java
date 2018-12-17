@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @DynamoDBDocument
 public class ReCiterArticleFeature {
     private long pmid;
+    private String pmcid;
     private double totalArticleScoreStandardized;
     private double totalArticleScoreNonStandardized;
     @DynamoDBTyped(DynamoDBAttributeType.S)
@@ -37,7 +38,6 @@ public class ReCiterArticleFeature {
     private String volume;
     private String issue;
     private String pages;
-    private String pmcid;
     private Evidence evidence;
     
     public enum PublicationFeedback {

@@ -152,7 +152,6 @@ public class ReCiterArticle implements Comparable<ReCiterArticle> {
     private List<String> publicationTypePubmed;
     private ReCiterPublicationTypeScopus publicationTypeScopus;
     private String publicationTypeCanonical;
-    
     private Long timesCited;
     private String publicationAbstract;
     private String scopusDocId;

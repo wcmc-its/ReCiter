@@ -75,6 +75,14 @@ public class ArticleTranslator {
         // PMID
         long pmid = pubmedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
         ReCiterArticle reCiterArticle = new ReCiterArticle(pmid);
+        
+        //PMCID
+        
+        if(pubmedArticle.getPubmeddata() != null && 
+        		pubmedArticle.getPubmeddata().getArticleIdList() != null &&
+        		pubmedArticle.getPubmeddata().getArticleIdList().getPmc() != null) {
+        	reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
+        }
 
         // Article title
         String articleTitle = pubmedArticle.getMedlinecitation().getArticle().getArticletitle();
@@ -400,14 +408,6 @@ public class ArticleTranslator {
                 !pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns().isEmpty()) {
             reCiterArticle.setPages(pubmedArticle.getMedlinecitation().getArticle().getPagination().getMedlinepgns().get(0));
         }
-
-        // pmcid
-//		if(pubmedArticle.getPubmeddata().getArticleIdList() != null) {
-//			if (pubmedArticle.getPubmeddata().getArticleIdList().getPmc() != null &&
-//					!pubmedArticle.getPubmeddata().getArticleIdList().getPmc().isEmpty()) {
-//				reCiterArticle.setPmcid(pubmedArticle.getPubmeddata().getArticleIdList().getPmc());
-//			}
-//		}
 
         // doi
         if (pubmedArticle.getMedlinecitation().getArticle().getElocationid() != null) {

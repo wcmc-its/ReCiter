@@ -214,7 +214,9 @@ public class ReCiterFeatureGenerator {
             // pmcid (https://www.ncbi.nlm.nih.gov/pubmed/26174865?report=xml&format=text)
             // Need to add parsing for <OtherID Source="NLM">PMC5009940 [Available on 01/01/17]</OtherID>
             // Or check <ArticleId IdType="pmc">PMC2907408</ArticleId>
-            reCiterArticleFeature.setPmcid(reCiterArticle.getPmcid());
+            if(reCiterArticle.getPmcid() != null) {
+            	reCiterArticleFeature.setPmcid(reCiterArticle.getPmcid());
+            }
 
             // doi
             // <ArticleId IdType="doi">10.1093/jnci/djq238</ArticleId>
