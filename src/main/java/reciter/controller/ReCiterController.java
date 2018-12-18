@@ -703,7 +703,7 @@ public class ReCiterController {
              slf4jLogger.info("elapsed time: " + estimatedTime);
             return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
         } 
-        return ResponseEntity.ok().body("There is no publications data for uid " + uid + ". Please wait while feature-generator re-runs tonight.");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There is no publications data for uid " + uid + ". Please wait while feature-generator re-runs tonight.");
        
     }
 
