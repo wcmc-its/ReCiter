@@ -35,10 +35,10 @@ import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
 import reciter.engine.EngineParameters;
 import reciter.engine.ReCiterEngine;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleFeatures;
 import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.features.ReCiterArticleFeatures;
 import reciter.model.identity.Identity;
 
 public class ReCiterCluster implements Comparable<ReCiterCluster>{

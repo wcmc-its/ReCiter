@@ -54,9 +54,7 @@ import reciter.algorithm.evidence.targetauthor.journalcategory.JournalCategorySt
 import reciter.algorithm.evidence.targetauthor.journalcategory.strategy.JournalCategoryStrategy;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.KnownRelationshipStrategyContext;
 import reciter.algorithm.evidence.targetauthor.knownrelationship.strategy.KnownRelationshipStrategy;
-import reciter.algorithm.evidence.targetauthor.name.RemoveByNameStrategyContext;
 import reciter.algorithm.evidence.targetauthor.name.ScoreByNameStrategyContext;
-import reciter.algorithm.evidence.targetauthor.name.strategy.RemoveByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy;
 import reciter.algorithm.evidence.targetauthor.persontype.PersonTypeStrategyContext;
 import reciter.algorithm.evidence.targetauthor.persontype.strategy.PersonTypeStrategy;
@@ -230,7 +228,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
 		// articleTitleInEnglishStrategyContext = new ArticleTitleStrategyContext(new ArticleTitleInEnglish());
-		this.removeByNameStrategyContext = new RemoveByNameStrategyContext(new RemoveByNameStrategy());
 
 		this.clusterSizeStrategyContext = new ClusterSizeStrategyContext(new ClusterSizeStrategy());
 

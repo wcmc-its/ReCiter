@@ -1,4 +1,4 @@
-package reciter.engine.analysis;
+package reciter.engine;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -6,7 +6,12 @@ import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.api.parameters.FilterFeedbackType;
 import reciter.api.parameters.UseGoldStandard;
+import reciter.engine.analysis.ReCiterArticleAffiliationFeature;
+import reciter.engine.analysis.ReCiterArticleAuthorFeature;
+import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
+import reciter.engine.analysis.ReCiterArticlePublicationType;
+import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.evidence.Evidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
