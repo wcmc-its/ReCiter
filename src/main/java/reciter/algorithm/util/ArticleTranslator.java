@@ -595,7 +595,7 @@ public class ArticleTranslator {
 				i++;			
 			}
 			if(!reCiterArticleFeatures.getAffiliationIds().isEmpty()) {
-				featureCount++;
+				featureCount = featureCount + reCiterArticleFeatures.getAffiliationIds().size();
 			}
 			
 		}

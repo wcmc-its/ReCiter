@@ -48,7 +48,7 @@ public class ScopusController {
 	@Autowired
 	private ScopusService scopusService;
 	
-	@ApiOperation(value = "Add list of scopus articles to ScopusArticle table in DynamoDb", notes = "This api saves list of scopusArticles in the ScopusArticle table in dynamoDb.")
+	/*@ApiOperation(value = "Add list of scopus articles to ScopusArticle table in DynamoDb", notes = "This api saves list of scopusArticles in the ScopusArticle table in dynamoDb.")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "ScopusArticle List creation successful"),
 			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -105,5 +105,5 @@ public class ScopusController {
 		List<ScopusArticle> scopusArticles =
 				scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.PMID_MODIFIER, new ArrayList<>(pmids));
 		return ResponseEntity.ok(scopusArticles);
-	}
+	}*/
 }
