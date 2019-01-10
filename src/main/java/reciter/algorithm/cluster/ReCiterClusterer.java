@@ -27,11 +27,8 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
-import reciter.algorithm.cluster.clusteringstrategy.article.NameMatchingClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.GrantFeatureClusteringStrategy;

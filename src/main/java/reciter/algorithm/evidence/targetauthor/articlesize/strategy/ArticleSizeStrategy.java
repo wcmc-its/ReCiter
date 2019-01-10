@@ -111,5 +111,4 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 		// TODO Auto-generated method stub
 		
 	}
-
 }

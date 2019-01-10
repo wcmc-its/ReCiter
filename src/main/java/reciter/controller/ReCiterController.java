@@ -57,7 +57,7 @@ import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.features.ReCiterArticleFeatures;
+import reciter.model.article.ReCiterArticleFeatures;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
@@ -476,11 +476,6 @@ public class ReCiterController {
             }
             TargetAuthorSelection t = new TargetAuthorSelection();
             t.identifyTargetAuthor(parameters.getReciterArticles(), parameters.getIdentity());
-            Iterator<ReCiterArticle> it = parameters.getReciterArticles().iterator();
-            while (it.hasNext()) {
-                ReCiterArticle reciterArticle = it.next();
-                reciterArticle.setReCiterArticleFeatures(new ReCiterArticleFeatures(reciterArticle));
-            }
             double filterScore = 0;
             if(parameters.getTotalStandardzizedArticleScore() >= strategyParameters.getMinimumStorageThreshold()) {
             	filterScore = strategyParameters.getMinimumStorageThreshold();

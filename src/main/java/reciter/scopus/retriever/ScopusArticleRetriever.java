@@ -23,6 +23,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import reciter.model.scopus.ScopusArticle;
+import reciter.model.scopus.ScopusQuery;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,17 +62,17 @@ public class ScopusArticleRetriever<T> {
         for (T t : queryParams) {
             pmidList.add(t);
         }
-        Pmids pmids = null;
+        ScopusQuery scopusQuery = null;
         ResponseEntity<List<ScopusArticle>> responseEntity = null;
         if (PMID_MODIFIER.equals(queryModifier)) {
-            pmids = new Pmids(pmidList, "pmid");
+        	scopusQuery = new ScopusQuery(pmidList, "pmid");
         } else if (DOI_MODIFIER.equals(queryModifier)) {
-            pmids = new Pmids(pmidList, "doi");
+        	scopusQuery = new ScopusQuery(pmidList, "doi");
         }
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Object> requestEntity = new HttpEntity<>(pmids, headers);
+            HttpEntity<Object> requestEntity = new HttpEntity<>(scopusQuery, headers);
             responseEntity =
                     restTemplate.exchange(nodeUrl, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<List<ScopusArticle>>() {
                     });

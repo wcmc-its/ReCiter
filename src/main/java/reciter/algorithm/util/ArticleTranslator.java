@@ -20,8 +20,12 @@ package reciter.algorithm.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
+
+import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
+import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
+import reciter.model.article.ReCiterArticleFeatures;
 import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleKeywords;
 import reciter.model.article.ReCiterArticleMeshHeading;
@@ -32,7 +36,6 @@ import reciter.model.article.ReCiterMeshHeadingDescriptorName;
 import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.article.ReCiterPublicationTypeScopus;
 import reciter.model.identity.AuthorName;
-import reciter.model.pubmed.MedlineCitationArticleAbstractText;
 import reciter.model.pubmed.MedlineCitationArticleAuthor;
 import reciter.model.pubmed.MedlineCitationCommentsCorrections;
 import reciter.model.pubmed.MedlineCitationDate;
@@ -413,6 +416,8 @@ public class ArticleTranslator {
         if (pubmedArticle.getMedlinecitation().getArticle().getElocationid() != null) {
             reCiterArticle.setDoi(pubmedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid());
         }
+        
+        populateFeatures(reCiterArticle);
 
         return reCiterArticle;
     }
@@ -525,6 +530,78 @@ public class ArticleTranslator {
             }
     	}
     	reCiterArticle.setPublicationTypeCanonical(publicationTypeCanonical);
+    }
+    
+    private static void populateFeatures(ReCiterArticle reCiterArticle) {
+    	ReCiterArticleFeatures reCiterArticleFeatures = new ReCiterArticleFeatures();
+    	int featureCount = reCiterArticleFeatures.getFeatureCount();
+    	
+    	//Journal Feature Name
+		if (reCiterArticle.getJournal().exist()) {
+			reCiterArticleFeatures.setJournalName(reCiterArticle.getJournal().getJournalTitle());
+			featureCount++;
+		}
+		
+		//Co-Author Feature Name
+		if (reCiterArticle.getArticleCoAuthors().exist()) {
+			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+				if(author != null && author.getAuthorName() != null &&
+						author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null && !author.isTargetAuthor() &&
+					(
+					(!author.getAuthorName().getFirstInitial().equals("Y") && !author.getAuthorName().getLastName().equals("Wang"))
+					||
+					(!author.getAuthorName().getFirstInitial().equals("J") && !author.getAuthorName().getLastName().equals("Wang"))	
+					||
+					(!author.getAuthorName().getFirstInitial().equals("J") && !author.getAuthorName().getLastName().equals("Smith"))
+					||
+					(!author.getAuthorName().getFirstInitial().equals("S") && !author.getAuthorName().getLastName().equals("Kim"))
+					||
+					(!author.getAuthorName().getFirstInitial().equals("S") && !author.getAuthorName().getLastName().equals("Lee"))
+					||
+					(!author.getAuthorName().getFirstInitial().equals("J") && !author.getAuthorName().getLastName().equals("Lee"))
+					)
+					) {
+					reCiterArticleFeatures.getCoAuthors().add(author.getAuthorName().getFirstInitial() + "." + author.getAuthorName().getLastName());
+				}
+			}
+			if(!reCiterArticleFeatures.getCoAuthors().isEmpty()) {
+				featureCount = featureCount + reCiterArticleFeatures.getCoAuthors().size();
+			}
+		}
+		
+		//MeshMajor Feature
+		if(reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
+			for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
+				if(MeshMajorStrategy.isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
+						EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 100000L) {
+					reCiterArticleFeatures.getMeshMajor().add(meshHeading.getDescriptorName().getDescriptorName());
+				}
+			}
+			if(!reCiterArticleFeatures.getMeshMajor().isEmpty()) {
+				featureCount = featureCount + reCiterArticleFeatures.getMeshMajor().size();
+			}
+		}
+		
+		if(reCiterArticle.getScopusArticle() != null && reCiterArticle.getScopusArticle().getAuthors().size() == reCiterArticle.getArticleCoAuthors().getNumberOfAuthors()) {
+			int i = 0;
+			for(ReCiterAuthor author: reCiterArticle.getArticleCoAuthors().getAuthors()) {
+				/*if(author.isTargetAuthor()) {
+					break;
+				}*/
+				Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().get(i);
+				if(scopusAuthor != null && scopusAuthor.getAfids() != null) {
+					reCiterArticleFeatures.getAffiliationIds().addAll(scopusAuthor.getAfids());
+				}
+				i++;			
+			}
+			if(!reCiterArticleFeatures.getAffiliationIds().isEmpty()) {
+				featureCount = featureCount + reCiterArticleFeatures.getAffiliationIds().size();
+			}
+			
+		}
+		reCiterArticleFeatures.setFeatureCount(featureCount);
+		reCiterArticle.setReCiterArticleFeatures(reCiterArticleFeatures);
+    			
     }
 }
 

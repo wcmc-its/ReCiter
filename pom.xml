@@ -160,22 +160,6 @@
             <version>1.16.16</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>edu.wcmc.reciter</groupId>
-            <artifactId>reciter-pubmed-model</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>edu.wcmc.reciter</groupId>
-            <artifactId>reciter-scopus-model</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/com.github.derjust/spring-data-dynamodb -->
         <dependency>
             <groupId>com.github.derjust</groupId>
@@ -228,9 +212,46 @@
 	    	<artifactId>amazon-sqs-java-extended-client-lib</artifactId>
 	    	<version>1.0.2</version>
 	    </dependency>
+	    <dependency>
+	    	<groupId>edu.cornell.weill.reciter</groupId>
+	    	<artifactId>reciter-scopus-model</artifactId>
+	    	<version>2.0.3</version>
+	    	<exclusions>
+	    		<exclusion>
+	    			<groupId>org.slf4j</groupId>
+	    			<artifactId>slf4j-simple</artifactId>
+	    		</exclusion>
+	    	</exclusions>
+	    </dependency>
+	    <dependency>
+	    	<groupId>edu.cornell.weill.reciter</groupId>
+	    	<artifactId>reciter-pubmed-model</artifactId>
+	    	<version>2.0.1</version>
+	    	<exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
+	    </dependency>
+	    <dependency>
+	    	<groupId>edu.cornell.weill.reciter</groupId>
+	    	<artifactId>reciter-identity-model</artifactId>
+	    	<version>2.0.1</version>
+	    </dependency>
+	    <dependency>
+	    	<groupId>edu.cornell.weill.reciter</groupId>
+	    	<artifactId>reciter-article-model</artifactId>
+	    	<version>2.0.3</version>
+	    </dependency>
+	    <dependency>
+	    	<groupId>edu.cornell.weill.reciter</groupId>
+	    	<artifactId>reciter-dynamodb-model</artifactId>
+	    	<version>2.0.1</version>
+	    </dependency>
     </dependencies>
     <repositories>
-        <repository>
+        <!-- <repository>
             <id>wcmc-its</id>
             <name>ReCiter-Maven-Repository</name>
             <url>https://github.com/wcmc-its/ReCiter-Maven-Repository/raw/master/snapshots</url>
@@ -238,12 +259,12 @@
                 <enabled>true</enabled>
                 <updatePolicy>always</updatePolicy>
             </snapshots>
-        </repository>
-        <!-- Us this repository for local dynamodb. Change the region accordingly. For details: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.Maven.html -->
+        </repository> -->
+        <!-- Use this repository for local dynamodb. Change the region accordingly. For details: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.Maven.html -->
         <repository>
        		<id>dynamodb-local-oregon</id>
        		<name>DynamoDB Local Release Repository</name>
        		<url>https://s3-us-west-2.amazonaws.com/dynamodb-local/release</url>
-    		</repository>
+    	</repository>
     </repositories>
 </project>
