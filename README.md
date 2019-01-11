@@ -1,7 +1,15 @@
 # ReCiter
 ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiVWFoRUNZQzBqMkJpTGQ4MHNNbUJkclE4OTRVV0Y0SzJBVTBVMmV5NVhyNUdpbXVDblkrcWZkWU9SQWFxV0dUand4d05iVFFlT0Z0bWJsamM1SnRaUFdFPSIsIml2UGFyYW1ldGVyU3BlYyI6ImkzMndTalROWWlXUC8yRW4iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+[![GitHub version](https://badge.fury.io/gh/wcmc-its%2FReCiter.svg)](https://badge.fury.io/gh/wcmc-its%2FReCiter)
+[![codebeat badge](https://codebeat.co/badges/9845c96b-ed87-4b1a-b62c-1e0e8b51bbb8)](https://codebeat.co/projects/github-com-wcmc-its-reciter-master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Pending Pull-Requests](http://githubbadges.herokuapp.com/wcmc-its/ReCiter/pulls.svg?style=flat)](https://github.com/wcmc-its/ReCiter/pulls)
+[![Open Issues](http://githubbadges.herokuapp.com/wcmc-its/ReCiter/issues.svg?style=flat)](https://github.com/wcmc-its/ReCiter/issues)
+[![star this repo](http://githubbadges.com/star.svg?user=wcmc-its&repo=ReCiter&style=flat)](https://github.com/wcmc-its/ReCiter)
+[![fork this repo](http://githubbadges.com/fork.svg?user=wcmc-its&repo=ReCiter&style=flat)](https://github.com/wcmc-its/ReCiter/fork)
 [![Github All Releases](https://img.shields.io/github/downloads/wcmc-its/ReCiter/total.svg)]()
+[![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/wcmc-its/ReCiter/) 
 
 ReCiter is a system for disambiguating author names in publication metadata. The algorithm is described in [Johnson et al. (2014)](https://www.ncbi.nlm.nih.gov/pubmed/24694772). The first functioning version of the algorithm was implemented by Steve Johnson in object-oriented perl, was designed to operate on raw Medline data, and wrote text files as output. This updated version of ReCiter is generalized to operate on data from PubMed, and (optionally) from Scopus. ReCiter uses the same core algorithm as the previous version, but with significant revisions and updates, including new strategies to improve recall by accounting for variations in names, as well as strategies that improve accuracy by leveraging new types of data for disambiguation.
 
