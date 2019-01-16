@@ -18,6 +18,8 @@
  *******************************************************************************/
 package reciter;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,10 +86,72 @@ public class Application {
     
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
+    
+    private String scopusService = System.getenv("SCOPUS_SERVICE");
+    
+    private String pubmedService = System.getenv("PUBMED_SERVICE");
+    
+    
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
+	
+	
+	/**
+	 * This function will check for pubmed and scopus service url provided
+	 */
+	@EventListener(ApplicationReadyEvent.class)
+	public void checkScopusPubmedService() {
+		if(scopusService != null && !scopusService.isEmpty()) {
+			try {
+				URL siteURL = new URL(scopusService);
+				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
+				connection.setRequestMethod("GET");
+				connection.setConnectTimeout(10000);
+				connection.connect();
+	 
+				int code = connection.getResponseCode();
+				if (code == 200) {
+					log.info("The Scopus Service endpoint " + scopusService + " provided is valid and reachable");
+				} else {
+					log.info("The Scopus Service endpoint " + scopusService + " provided is not valid and not reachable");
+				}
+			} catch (Exception e) {
+				log.error("Wrong domain - Exception: " + e.getMessage());
+	 
+			}
+		}
+		
+		if(pubmedService != null && !pubmedService.isEmpty()) {
+			try {
+				URL siteURL = new URL(pubmedService);
+				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
+				connection.setRequestMethod("GET");
+				connection.setConnectTimeout(10000);
+				connection.connect();
+	 
+				int code = connection.getResponseCode();
+				if (code == 200) {
+					log.info("The Pubmed Service endpoint " + pubmedService + " provided is valid and reachable");
+				} else {
+					log.info("The Pubmed Service endpoint " + pubmedService + " provided is not valid and not reachable");
+				}
+			} catch (Exception e) {
+				log.error("Wrong domain - Exception: " + e.getMessage());
+	 
+			}
+		}
+		
+		if(pubmedService == null) {
+			log.warn("ReCiter Application will not run without a pubmed service. Please download from https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git and setup Scopus Service.");
+		}
+		
+		if(scopusService == null) {
+			log.warn("ReCiter Application will not run without a scopus service. Please download from https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool.git and setup Pubmed Service.");
+		}
+	}
+	
 	
 	/**
 	 * This function will load all the necessary data from files folder to dynamodb
