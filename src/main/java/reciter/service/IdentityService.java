@@ -39,4 +39,6 @@ public interface IdentityService {
 
 	void delete(String uid);
 	
+	long getItemCount();
+	
 }

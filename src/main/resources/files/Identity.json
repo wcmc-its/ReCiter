@@ -1,0 +1,1169 @@
+[
+{
+  "identity": {
+    "alternateNames": [
+      {
+        "firstInitial": "P",
+        "firstName": "Paul",
+        "lastName": "Albert",
+        "middleInitial": "J",
+        "middleName": "J."
+      },
+      {
+        "firstInitial": "P",
+        "firstName": "Paul",
+        "lastName": "Albert"
+      }
+    ],
+    "degreeYear": {
+      "bachelorYear": 1997,
+      "doctoralYear": 0
+    },
+    "emails": [
+      "paa2013@med.cornell.edu",
+      "palbert1@gmail.com"
+    ],
+    "grants": [
+      "RR029822"
+    ],
+    "institutions": [
+      "Colgate University",
+      "Weill Cornell Medical College, Cornell University",
+      "Columbia University, Teachers College",
+      "Pratt Institute"
+    ],
+    "knownRelationships": [
+      {
+        "name": {
+          "firstInitial": "G",
+          "firstName": "Grace",
+          "lastName": "Migliorisi"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "grm2001"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jesse",
+          "lastName": "Turner",
+          "middleInitial": "C",
+          "middleName": "C"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jet2013"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "John",
+          "lastName": "Ruffing"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jruffing"
+      },
+      {
+        "name": {
+          "firstInitial": "R",
+          "firstName": "Richard",
+          "lastName": "Hu"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "huh2009"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Mark",
+          "lastName": "Bronnimann"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "meb2001"
+      },
+      {
+        "name": {
+          "firstInitial": "E",
+          "firstName": "Eliza",
+          "lastName": "Chan"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "elc2013"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Dan",
+          "lastName": "Dickinson"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "dwd2001"
+      },
+      {
+        "name": {
+          "firstInitial": "C",
+          "firstName": "Curtis",
+          "lastName": "Cole",
+          "middleInitial": "L",
+          "middleName": "L"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "ccole"
+      },
+      {
+        "name": {
+          "firstInitial": "K",
+          "firstName": "Kenneth",
+          "lastName": "Lee"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "kel2011"
+      },
+      {
+        "name": {
+          "firstInitial": "V",
+          "firstName": "Victor",
+          "lastName": "Brodsky"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "vib9020"
+      },
+      {
+        "name": {
+          "firstInitial": "P",
+          "firstName": "Peter",
+          "lastName": "Michielini",
+          "middleInitial": "C",
+          "middleName": "C"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "pem2010"
+      },
+      {
+        "name": {
+          "firstInitial": "T",
+          "firstName": "Terrie",
+          "lastName": "Wheeler",
+          "middleInitial": "R",
+          "middleName": "Rose"
+        },
+        "type": "MANAGER",
+        "uid": "tew2004"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Mark",
+          "lastName": "Stasiak"
+        },
+        "type": "HR",
+        "uid": "mas2178"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Michelle",
+          "lastName": "Demetres"
+        },
+        "type": "HR",
+        "uid": "mrd2006"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Shauntae",
+          "lastName": "Alexander"
+        },
+        "type": "HR",
+        "uid": "shb2002"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Angela",
+          "lastName": "Reyes"
+        },
+        "type": "HR",
+        "uid": "anr2010"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Juan",
+          "lastName": "Ortiz troncoso"
+        },
+        "type": "HR",
+        "uid": "juo3001"
+      },
+      {
+        "name": {
+          "firstInitial": "C",
+          "firstName": "Colleen",
+          "lastName": "Cuddy"
+        },
+        "type": "HR",
+        "uid": "czc2003"
+      },
+      {
+        "name": {
+          "firstInitial": "R",
+          "firstName": "Ronald",
+          "lastName": "Phillips",
+          "middleInitial": "C",
+          "middleName": "C."
+        },
+        "type": "HR",
+        "uid": "rcphilli"
+      },
+      {
+        "name": {
+          "firstInitial": "R",
+          "firstName": "Raul",
+          "lastName": "Padilla"
+        },
+        "type": "HR",
+        "uid": "rap2022"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Lyubov",
+          "lastName": "Tmanova",
+          "middleInitial": "L",
+          "middleName": "L"
+        },
+        "type": "HR",
+        "uid": "lyt2002"
+      },
+      {
+        "name": {
+          "firstInitial": "K",
+          "firstName": "Kevin",
+          "lastName": "Pain",
+          "middleInitial": "J",
+          "middleName": "J."
+        },
+        "type": "HR",
+        "uid": "kjpain"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Daina",
+          "lastName": "Bouquin"
+        },
+        "type": "HR",
+        "uid": "dab2058"
+      },
+      {
+        "name": {
+          "firstInitial": "P",
+          "firstName": "Peter",
+          "lastName": "Oxley",
+          "middleInitial": "R",
+          "middleName": "Robert"
+        },
+        "type": "HR",
+        "uid": "pro2004"
+      },
+      {
+        "name": {
+          "firstInitial": "R",
+          "firstName": "Rachel",
+          "lastName": "Williamson",
+          "middleInitial": "L",
+          "middleName": "L."
+        },
+        "type": "HR",
+        "uid": "raw2004"
+      },
+      {
+        "name": {
+          "firstInitial": "K",
+          "firstName": "Kenneth",
+          "lastName": "Watson",
+          "middleInitial": "L",
+          "middleName": "L."
+        },
+        "type": "HR",
+        "uid": "klw2003"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Donald",
+          "lastName": "Lasorsa"
+        },
+        "type": "HR",
+        "uid": "dol4001"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Loretta",
+          "lastName": "Merlo"
+        },
+        "type": "HR",
+        "uid": "lamerlo"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jie",
+          "lastName": "Lin"
+        },
+        "type": "HR",
+        "uid": "jil3004"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Alice",
+          "lastName": "Chin"
+        },
+        "type": "HR",
+        "uid": "alc2054"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Allison",
+          "lastName": "Piazza"
+        },
+        "type": "HR",
+        "uid": "alp7016"
+      },
+      {
+        "name": {
+          "firstInitial": "O",
+          "firstName": "Olaniyi",
+          "lastName": "Olaleye"
+        },
+        "type": "HR",
+        "uid": "olo2008"
+      },
+      {
+        "name": {
+          "firstInitial": "T",
+          "firstName": "Theresa",
+          "lastName": "Watkins"
+        },
+        "type": "HR",
+        "uid": "thw2002"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jean",
+          "lastName": "Policard",
+          "middleInitial": "R",
+          "middleName": "R"
+        },
+        "type": "HR",
+        "uid": "jpolicar"
+      },
+      {
+        "name": {
+          "firstInitial": "E",
+          "firstName": "Erik",
+          "lastName": "Siu"
+        },
+        "type": "HR",
+        "uid": "ers2003"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Danita",
+          "lastName": "Norville"
+        },
+        "type": "HR",
+        "uid": "ddefreit"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Drew",
+          "lastName": "Wright"
+        },
+        "type": "HR",
+        "uid": "drw2004"
+      },
+      {
+        "name": {
+          "firstInitial": "W",
+          "firstName": "William",
+          "lastName": "Fisk",
+          "middleInitial": "R",
+          "middleName": "R."
+        },
+        "type": "HR",
+        "uid": "wrfisk"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Sherisse",
+          "lastName": "Brown"
+        },
+        "type": "HR",
+        "uid": "sbrown"
+      },
+      {
+        "name": {
+          "firstInitial": "B",
+          "firstName": "Becky",
+          "lastName": "Baltich nelson"
+        },
+        "type": "HR",
+        "uid": "blb2008"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Diana",
+          "lastName": "Delgado"
+        },
+        "type": "HR",
+        "uid": "did2005"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Joshua",
+          "lastName": "Richardson",
+          "middleInitial": "E",
+          "middleName": "E."
+        },
+        "type": "HR",
+        "uid": "jor2032"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Lisa",
+          "lastName": "Mix"
+        },
+        "type": "HR",
+        "uid": "lim2026"
+      },
+      {
+        "name": {
+          "firstInitial": "T",
+          "firstName": "Terrie",
+          "lastName": "Wheeler",
+          "middleInitial": "R",
+          "middleName": "Rose"
+        },
+        "type": "HR",
+        "uid": "tew2004"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Leonid",
+          "lastName": "Bukhatetsky"
+        },
+        "type": "HR",
+        "uid": "leb2008"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Anna",
+          "lastName": "Opryszko"
+        },
+        "type": "HR",
+        "uid": "alo2011"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Michael",
+          "lastName": "Bales",
+          "middleInitial": "E",
+          "middleName": "Eliot"
+        },
+        "type": "HR",
+        "uid": "meb7002"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Shelia",
+          "lastName": "Sinclair",
+          "middleInitial": "J",
+          "middleName": "J."
+        },
+        "type": "HR",
+        "uid": "sjs2007"
+      },
+      {
+        "name": {
+          "firstInitial": "E",
+          "firstName": "Edsel",
+          "lastName": "Watkins"
+        },
+        "type": "HR",
+        "uid": "ewatkins"
+      }
+    ],
+    "organizationalUnits": [
+      {
+        "organizationalUnitLabel": "Library",
+        "organizationalUnitType": "DEPARTMENT"
+      },
+      {
+        "organizationalUnitLabel": "Library",
+        "organizationalUnitType": "DEPARTMENT"
+      }
+    ],
+    "personTypes": [
+      "academic",
+      "academic-faculty",
+      "academic-faculty-associate",
+      "academic-faculty-weillfulltime",
+      "employee-academic",
+      "employee-exempt",
+      "employee",
+      "affiliate",
+      "affiliate-federated",
+      "affiliate-federated-affiliate"
+    ],
+    "primaryName": {
+      "firstInitial": "P",
+      "firstName": "Paul",
+      "lastName": "Albert",
+      "middleInitial": "J",
+      "middleName": "J"
+    },
+    "pubMedAlias": [],
+    "title": "Associate Librarian",
+    "uid": "paa2013"
+  },
+  "uid": "paa2013"
+},
+{
+  "identity": {
+    "alternateNames": [
+      {
+        "firstInitial": "C",
+        "firstName": "Curtis",
+        "lastName": "Cole",
+        "middleInitial": "L",
+        "middleName": "L."
+      },
+      {
+        "firstInitial": "C",
+        "firstName": "Curtis",
+        "lastName": "Cole",
+        "middleInitial": "L",
+        "middleName": "Leland"
+      }
+    ],
+    "degreeYear": {
+      "bachelorYear": 1986,
+      "doctoralYear": 1994
+    },
+    "emails": [
+      "ccole@med.cornell.edu"
+    ],
+    "grants": [
+      "TR000457",
+      "HS017029",
+      "RR029822",
+      "RR024996",
+      "FD004494"
+    ],
+    "institutions": [
+      "Weill Cornell Medical College, Cornell University",
+      "NewYork-Presbyterian Hospital",
+      "Bowdoin College",
+      "Cornell University Medical College",
+      "Weill Cornell Medical College"
+    ],
+    "knownRelationships": [
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Mary",
+          "lastName": "Yeotsas",
+          "middleInitial": "E",
+          "middleName": "Eleni"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "mey2003"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Alvin",
+          "lastName": "Mushlin",
+          "middleInitial": "I",
+          "middleName": "I"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "aim2001"
+      },
+      {
+        "name": {
+          "firstInitial": "T",
+          "firstName": "Thomas",
+          "lastName": "Campion"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "thc2015"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Stephen",
+          "lastName": "Johnson",
+          "middleInitial": "B",
+          "middleName": "B."
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "johnsos"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Alex",
+          "lastName": "Low"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "all9050"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "John",
+          "lastName": "Leonard",
+          "middleInitial": "P",
+          "middleName": "P"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jpleonar"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Mark",
+          "lastName": "Callahan"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "macallah"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Subroto",
+          "lastName": "Paul"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "pas2022"
+      },
+      {
+        "name": {
+          "firstInitial": "W",
+          "firstName": "Wei-chun",
+          "lastName": "Hsu"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "weh2009"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Adam",
+          "lastName": "Cheriff",
+          "middleInitial": "D",
+          "middleName": "D"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "adc9001"
+      },
+      {
+        "name": {
+          "firstInitial": "E",
+          "firstName": "Elizabeth",
+          "lastName": "Pfoh",
+          "middleInitial": "R",
+          "middleName": "R"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "err2004"
+      },
+      {
+        "name": {
+          "firstInitial": "N",
+          "firstName": "Nathaniel",
+          "lastName": "Hupert"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "nah2005"
+      },
+      {
+        "name": {
+          "firstInitial": "K",
+          "firstName": "Karen",
+          "lastName": "Fischer"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "kfischer"
+      },
+      {
+        "name": {
+          "firstInitial": "V",
+          "firstName": "Vicky",
+          "lastName": "Tiglias"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "vit2007"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "John",
+          "lastName": "Ruffing"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jruffing"
+      },
+      {
+        "name": {
+          "firstInitial": "R",
+          "firstName": "Rina",
+          "lastName": "Dhopeshwarkar",
+          "middleInitial": "V",
+          "middleName": "V."
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "rvd2001"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Lidia",
+          "lastName": "Bernik"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "lsb2003"
+      },
+      {
+        "name": {
+          "firstInitial": "E",
+          "firstName": "Emma",
+          "lastName": "Briggs"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "elb2035"
+      },
+      {
+        "name": {
+          "firstInitial": "N",
+          "firstName": "Nancy",
+          "lastName": "Allendorf"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "naa2043"
+      },
+      {
+        "name": {
+          "firstInitial": "K",
+          "firstName": "Kenneth",
+          "lastName": "Lee"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "kel2011"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Josh",
+          "lastName": "Henninger"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "joh2020"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Samprit",
+          "lastName": "Banerjee"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "sab2028"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Lawrence",
+          "lastName": "Casalino",
+          "middleInitial": "P",
+          "middleName": "Peter"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "lac2021"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "J. travis",
+          "lastName": "Gossey"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jtg9003"
+      },
+      {
+        "name": {
+          "firstInitial": "N",
+          "firstName": "Nisha",
+          "lastName": "Singh"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "nis2036"
+      },
+      {
+        "name": {
+          "firstInitial": "R",
+          "firstName": "Richard",
+          "lastName": "Hu"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "huh2009"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Maggie",
+          "lastName": "Qiu"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "maq2004"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Lucas",
+          "lastName": "Romero"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "lur2011"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Julianne",
+          "lastName": "Imperato-mcginley"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jimperat"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Louis",
+          "lastName": "Wetstein"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "lwetstei"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Samuel",
+          "lastName": "Prasad"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "sap2026"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jyotishman",
+          "lastName": "Pathak"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jyp2001"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jesse",
+          "lastName": "Turner",
+          "middleInitial": "C",
+          "middleName": "C"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jet2013"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Mark",
+          "lastName": "Bronnimann"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "meb2001"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Madhu",
+          "lastName": "Mazumdar"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "mam2073"
+      },
+      {
+        "name": {
+          "firstInitial": "L",
+          "firstName": "Lisa",
+          "lastName": "Kern",
+          "middleInitial": "M",
+          "middleName": "M"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "lmk2003"
+      },
+      {
+        "name": {
+          "firstInitial": "E",
+          "firstName": "Eliza",
+          "lastName": "Chan"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "elc2013"
+      },
+      {
+        "name": {
+          "firstInitial": "P",
+          "firstName": "Paul",
+          "lastName": "Albert",
+          "middleInitial": "J",
+          "middleName": "J"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "paa2013"
+      },
+      {
+        "name": {
+          "firstInitial": "P",
+          "firstName": "Peter",
+          "lastName": "Michielini",
+          "middleInitial": "C",
+          "middleName": "C"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "pem2010"
+      },
+      {
+        "name": {
+          "firstInitial": "G",
+          "firstName": "Grace",
+          "lastName": "Migliorisi"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "grm2001"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Alison",
+          "lastName": "Edwards",
+          "middleInitial": "M",
+          "middleName": "M."
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "ame2009"
+      },
+      {
+        "name": {
+          "firstInitial": "R",
+          "firstName": "Rainu",
+          "lastName": "Kaushal"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "rak2007"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Dan",
+          "lastName": "Dickinson"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "dwd2001"
+      },
+      {
+        "name": {
+          "firstInitial": "V",
+          "firstName": "Victor",
+          "lastName": "Brodsky"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "vib9020"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Abby",
+          "lastName": "Isaacs"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "abi2001"
+      },
+      {
+        "name": {
+          "firstInitial": "A",
+          "firstName": "Art",
+          "lastName": "Sedrakyan"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "ars2013"
+      },
+      {
+        "name": {
+          "firstInitial": "M",
+          "firstName": "Marcos",
+          "lastName": "Davila",
+          "middleInitial": "A",
+          "middleName": "A"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "mzd2016"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jialin",
+          "lastName": "Mao"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jim2012"
+      },
+      {
+        "name": {
+          "firstInitial": "Y",
+          "firstName": "Yolanda",
+          "lastName": "Barron-vaya"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "yob2003"
+      },
+      {
+        "name": {
+          "firstInitial": "S",
+          "firstName": "Sameer",
+          "lastName": "Malhotra"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "sam2032"
+      },
+      {
+        "name": {
+          "firstInitial": "E",
+          "firstName": "Erika",
+          "lastName": "Abramson"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "err9009"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jacob",
+          "lastName": "Weiser"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jaw2018"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jayme",
+          "lastName": "Mendelsohn"
+        },
+        "type": "CO_INVESTIGATOR",
+        "uid": "jam2061"
+      },
+      {
+        "name": {
+          "firstInitial": "D",
+          "firstName": "Daniel",
+          "lastName": "Splitgerber"
+        },
+        "type": "HR",
+        "uid": "das9009"
+      },
+      {
+        "name": {
+          "firstInitial": "P",
+          "firstName": "Paul",
+          "lastName": "Castles"
+        },
+        "type": "HR",
+        "uid": "pac3004"
+      },
+      {
+        "name": {
+          "firstInitial": "J",
+          "firstName": "Jason",
+          "lastName": "Korenkiewicz"
+        },
+        "type": "HR",
+        "uid": "jkorenki"
+      }
+    ],
+    "organizationalUnits": [
+      {
+        "organizationalUnitLabel": "Health Informatics",
+        "organizationalUnitType": "DIVISION"
+      },
+      {
+        "organizationalUnitLabel": "Medicine",
+        "organizationalUnitType": "DEPARTMENT"
+      },
+      {
+        "organizationalUnitLabel": "Healthcare Policy and Research",
+        "organizationalUnitType": "DEPARTMENT"
+      },
+      {
+        "organizationalUnitLabel": "General Internal Medicine",
+        "organizationalUnitType": "DIVISION"
+      },
+      {
+        "organizationalUnitLabel": "Information Technologies and Services",
+        "organizationalUnitType": "DEPARTMENT"
+      },
+      {
+        "organizationalUnitLabel": "Quality and Medical Informatics",
+        "organizationalUnitType": "DIVISION"
+      }
+    ],
+    "personTypes": [
+      "academic",
+      "academic-faculty",
+      "academic-faculty-weillfulltime",
+      "academic-faculty-associate",
+      "employee-nonacademic",
+      "employee-exempt",
+      "employee",
+      "affiliate",
+      "affiliate-nyp",
+      "affiliate-nyp-weillcampus-credentialed"
+    ],
+    "primaryName": {
+      "firstInitial": "C",
+      "firstName": "Curtis",
+      "lastName": "Cole",
+      "middleInitial": "L",
+      "middleName": "L"
+    },
+    "pubMedAlias": [],
+    "title": "Chief Information Officer",
+    "uid": "ccole"
+  },
+  "uid": "ccole"
+}
+]

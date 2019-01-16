@@ -41,6 +41,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.database.dyanmodb.files.IdentityFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixFileImport;
 import reciter.database.dynamodb.model.InstitutionAfid;
@@ -163,6 +164,9 @@ public class Application {
 		
 		ScienceMetrixFileImport scienceMetrixFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixFileImport.class);
 		scienceMetrixFileImport.importScienceMetrix();
+		
+		IdentityFileImport identityFileImport = ApplicationContextHolder.getContext().getBean(IdentityFileImport.class);
+		identityFileImport.importIdentity();
 	}
 	
 	@EventListener(ApplicationReadyEvent.class)

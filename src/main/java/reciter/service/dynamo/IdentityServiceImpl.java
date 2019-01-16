@@ -77,4 +77,9 @@ public class IdentityServiceImpl implements IdentityService {
     public void delete(String uid) {
         identityRepository.deleteById(uid);
     }
+    
+    @Override
+	public long getItemCount() {
+		return identityRepository.count();
+	}
 }

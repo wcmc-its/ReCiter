@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.cornell.weill.reciter</groupId>
     <artifactId>reciter</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>ReCiter</name>
     <description>ReCiter is a publication suggestions engine</description>
     <url>https://github.com/wcmc-its/ReCiter</url>
@@ -42,7 +42,7 @@
 		<connection>scm:git:git://github.com/wcmc-its/ReCiter.git</connection>
 		<developerConnection>scm:git:git@github.com:wcmc-its/ReCiter.git</developerConnection>
 		<url>https://github.com/wcmc-its/ReCiter</url>
-		<tag>1.0-SNAPSHOT</tag>
+		<tag>0.0.1-SNAPSHOT</tag>
 	</scm>
     
     <properties>
