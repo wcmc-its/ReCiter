@@ -2,11 +2,48 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>edu.wcmc.reciter</groupId>
+    <groupId>edu.cornell.weill.reciter</groupId>
     <artifactId>reciter</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <name>ReCiter</name>
-    <description>ReCiter</description>
+    <description>ReCiter is a publication suggestions engine</description>
+    <url>https://github.com/wcmc-its/ReCiter</url>
+    
+    <organization>
+		<url>https://github.com/wcmc-its</url>
+		<name>Weill Cornell Medicine ITS</name>
+	</organization>
+
+	<licenses>
+		<license>
+			<name>The Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Sarbajit Dutta</name>
+			<email>szd2013@med.cornell.edu</email>
+			<organization>Weill Cornell Medicine ITS</organization>
+			<organizationUrl>https://github.com/wcmc-its</organizationUrl>
+			<timezone>GMT-8</timezone>
+		</developer>
+		<developer>
+			<name>Jie Lin</name>
+			<email>jie265@gmail.com</email>
+			<organization>Weill Cornell Medicine ITS</organization>
+			<organizationUrl>https://github.com/wcmc-its</organizationUrl>
+			<timezone>GMT-5</timezone>
+		</developer>
+	</developers>
+    
+    <scm>
+		<connection>scm:git:git://github.com/wcmc-its/ReCiter.git</connection>
+		<developerConnection>scm:git:git@github.com:wcmc-its/ReCiter.git</developerConnection>
+		<url>https://github.com/wcmc-its/ReCiter</url>
+		<tag>1.0-SNAPSHOT</tag>
+	</scm>
     
     <properties>
     		<sqlite4java.version>1.0.392</sqlite4java.version>
