@@ -96,8 +96,11 @@ public class DynamoDbConfig {
     @Value("${aws.dynamoDb.local}")
     private boolean isDynamoDbLocal;
     
-    private static final Long READ_CAPACITY_UNITS = 5L;
-    private static final Long WRITE_CAPACITY_UNITS = 5L;
+    @Value("${aws.dynamodb.settings.table.readcapacityunits}")
+    private Long READ_CAPACITY_UNITS;
+    
+    @Value("${aws.dynamodb.settings.table.writecapacityunits}")
+    private Long WRITE_CAPACITY_UNITS;
 
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
@@ -163,7 +166,19 @@ public class DynamoDbConfig {
 
     @Bean
     public AWSCredentials amazonAWSCredentials() {
-        return new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey);
+    		if(isDynamoDbLocal 
+    				&& 
+    				dynamodbLocalSecretKey != null && !dynamodbLocalSecretKey.isEmpty()
+    				&&
+    				dynamodbLocalAccessKey != null && !dynamodbLocalAccessKey.isEmpty()) {
+    			return new BasicAWSCredentials(dynamodbLocalAccessKey, dynamodbLocalSecretKey);
+    		} else if(!isDynamoDbLocal && amazonAWSAccessKey != null && !amazonAWSAccessKey.isEmpty()
+    				&&
+    				amazonAWSSecretKey != null && !amazonAWSSecretKey.isEmpty()) {
+    			return new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey);
+    		} else {
+    			return new BasicAWSCredentials(null, null);
+    		}
     }
     
     @Bean

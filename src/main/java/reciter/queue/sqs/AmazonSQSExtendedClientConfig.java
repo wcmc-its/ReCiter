@@ -53,14 +53,17 @@ public class AmazonSQSExtendedClientConfig {
     @Value("${aws.s3.region}")
     private String awsS3Region;
     
-    @Autowired
+    @Value("${aws.dynamoDb.local}")
+    private boolean isDynamoDbLocal;
+    
+    @Autowired(required=false)
     private AmazonS3 s3;
     
     @Bean
     @Scope("singleton")
     public AmazonSQS amazonSQSExtendedClient() {
     	
-    	if(isAwsSqs && isAwsSqsExtenedClient) {
+    	if(!isDynamoDbLocal && isAwsSqs && isAwsSqsExtenedClient) {
     		//AmazonS3 s3 = ApplicationContextHolder.getContext().getBean(AmazonS3.class);
     		
     		/*
@@ -107,7 +110,7 @@ public class AmazonSQSExtendedClientConfig {
 					.build(), extendedClientConfig);
     				
     		return sqs;
-    	} else if(isAwsSqs && !isAwsSqsExtenedClient) {
+    	} else if(isAwsSqs && !isAwsSqsExtenedClient && !isDynamoDbLocal) {
     		//regular client
 	    		final AmazonSQS sqs = AmazonSQSClientBuilder
 						  .standard()

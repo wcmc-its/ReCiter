@@ -21,10 +21,10 @@ public class AnalysisServiceImpl implements AnalysisService{
 	@Autowired
 	private AnalysisOutputRepository analysisOutputRepository;
 	
-	@Autowired
+	@Autowired(required=false)
 	private AmazonS3 s3;
 	
-	@Autowired
+	@Autowired(required=false)
 	private DynamoDbS3Operations ddbs3;
 	
     @Value("${aws.s3.use}")
@@ -32,21 +32,27 @@ public class AnalysisServiceImpl implements AnalysisService{
 	
     @Value("${aws.s3.dynamodb.bucketName}")
     private String s3BucketName;
+    
+    @Value("${aws.dynamoDb.local}")
+    private boolean isDynamoDbLocal;
 
 	@Override
 	public void save(AnalysisOutput analysis) {
 		try{
 			analysisOutputRepository.save(analysis);
 		} catch(AmazonDynamoDBException addbe) {
-			if(isS3Use) {
+			if(isS3Use && !isDynamoDbLocal) {
 				log.info("Storing item in s3 since it item size exceeds more than 400kb");
 				ddbs3.saveLargeItem(s3BucketName, analysis.getReCiterFeature(), AnalysisOutput.class.getSimpleName() + "/" + analysis.getUid());
 				analysis.setReCiterFeature(null);
 				analysis.setUsingS3(true);
 				analysisOutputRepository.save(analysis);
+			} else if(isDynamoDbLocal){
+				log.info("You are running dynamodb in local mode. Add AWS access key and secret key to environment variable to enable S3 storage.");
 			} else {
 				log.info("Enable s3 use in application properties file to store larger objects. Set aws.s3.use to true and set aws.s3.dynamodb.bucketName");
 			}
+			
 		}
 	}
 

@@ -39,6 +39,9 @@ public class AmazonS3Config {
     @Value("${aws.s3.dynamodb.bucketName}")
     private String s3BucketName;
     
+    @Value("${aws.dynamoDb.local}")
+    private boolean isDynamoDbLocal;
+    
     /**
      * @return AmazonS3 client object
      */
@@ -46,7 +49,7 @@ public class AmazonS3Config {
     @Scope("singleton")
     public AmazonS3 amazonS3() {
     	
-    	if(isS3Use) {
+    	if(isS3Use && !isDynamoDbLocal) {
 	    	final AmazonS3 s3 = AmazonS3ClientBuilder
 	    						.standard()
 	    						.withCredentials(new AWSStaticCredentialsProvider(new AWSCredentials() {
