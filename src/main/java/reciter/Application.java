@@ -106,7 +106,7 @@ public class Application {
 	public void checkScopusPubmedService() {
 		if(scopusService != null && !scopusService.isEmpty()) {
 			try {
-				URL siteURL = new URL(scopusService);
+				URL siteURL = new URL(scopusService + "/swagger-ui.html");
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
 				connection.setRequestMethod("GET");
 				connection.setConnectTimeout(10000);
@@ -126,7 +126,7 @@ public class Application {
 		
 		if(pubmedService != null && !pubmedService.isEmpty()) {
 			try {
-				URL siteURL = new URL(pubmedService);
+				URL siteURL = new URL(pubmedService  + "/swagger-ui.html");
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
 				connection.setRequestMethod("GET");
 				connection.setConnectTimeout(10000);
