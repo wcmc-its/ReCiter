@@ -11,12 +11,12 @@ phases:
     commands:
       - echo Build started on `date`
       - mvn clean install -Dmaven.test.skip=true
-      - cp target/reciter-1.0-SNAPSHOT.jar .
+      - cp target/reciter-0.0.1-SNAPSHOT.jar .
   post_build:
     commands:
       - echo Build completed on `date`
 artifacts:
   files:
-    - reciter-1.0-SNAPSHOT.jar 
+    - reciter-0.0.1-SNAPSHOT.jar 
     - .ebextensions/**/* 
     - Procfile
