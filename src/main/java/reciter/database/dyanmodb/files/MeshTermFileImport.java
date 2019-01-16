@@ -27,7 +27,7 @@ public class MeshTermFileImport {
 		ObjectMapper mapper = new ObjectMapper();
 		List<MeshTerm> meshTerms = null;
 		try {
-			meshTerms = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/Identity.json"), MeshTerm[].class));
+			meshTerms = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/MeshTerm.json"), MeshTerm[].class));
 		} catch (IOException e) {
 			log.error("IOException", e);
 		}

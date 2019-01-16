@@ -27,7 +27,7 @@ public class InstitutionAfidFileImport {
 		ObjectMapper mapper = new ObjectMapper();
 		List<InstitutionAfid> institutionAfids = null;
 		try {
-			institutionAfids = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/Identity.json"), InstitutionAfid[].class));
+			institutionAfids = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/InstitutionAfid.json"), InstitutionAfid[].class));
 		} catch (IOException e) {
 			log.error("IOException", e);
 		}
