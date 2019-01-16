@@ -39,4 +39,9 @@ public class DynamoDbInstitutionAfidService implements IDynamoDbInstitutionAfidS
         }
         return institutionAfids;
     }
+    
+    @Override
+	public long getItemCount() {
+		return dynamoDbInstitutionAfidRepository.count();
+	}
 }

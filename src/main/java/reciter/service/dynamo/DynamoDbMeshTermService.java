@@ -32,4 +32,9 @@ public class DynamoDbMeshTermService implements IDynamoDbMeshTermService {
         }
         return meshTerms;
     }
+
+	@Override
+	public long getItemCount() {
+		return dynamoMeshTermRepository.count();
+	}
 }

@@ -18,6 +18,8 @@
  *******************************************************************************/
 package reciter;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -40,8 +42,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableAsync;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.extern.slf4j.Slf4j;
 import reciter.database.dyanmodb.files.IdentityFileImport;
+import reciter.database.dyanmodb.files.InstitutionAfidFileImport;
+import reciter.database.dyanmodb.files.MeshTermFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixFileImport;
 import reciter.database.dynamodb.model.InstitutionAfid;
@@ -87,6 +94,9 @@ public class Application {
     
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
+    
+    @Value("${aws.dynamodb.settings.file.import}")
+    private boolean isFileImport;
     
     private String scopusService = System.getenv("SCOPUS_SERVICE");
     
@@ -159,14 +169,24 @@ public class Application {
 	 */
 	@EventListener(ApplicationReadyEvent.class)
 	public void loadDynamoDbTablesAfterStartUp() {
-		ScienceMetrixDepartmentCategoryFileImport scienceMetrixDepartmentCategoryFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixDepartmentCategoryFileImport.class);
-		scienceMetrixDepartmentCategoryFileImport.importScienceMetrixDepartmentCategory();
-		
-		ScienceMetrixFileImport scienceMetrixFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixFileImport.class);
-		scienceMetrixFileImport.importScienceMetrix();
-		
-		IdentityFileImport identityFileImport = ApplicationContextHolder.getContext().getBean(IdentityFileImport.class);
-		identityFileImport.importIdentity();
+		if(isFileImport) {
+			ScienceMetrixDepartmentCategoryFileImport scienceMetrixDepartmentCategoryFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixDepartmentCategoryFileImport.class);
+			scienceMetrixDepartmentCategoryFileImport.importScienceMetrixDepartmentCategory();
+			
+			ScienceMetrixFileImport scienceMetrixFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixFileImport.class);
+			scienceMetrixFileImport.importScienceMetrix();
+			
+			MeshTermFileImport meshTermFileImport = ApplicationContextHolder.getContext().getBean(MeshTermFileImport.class);
+			meshTermFileImport.importMeshTerms();
+			
+			IdentityFileImport identityFileImport = ApplicationContextHolder.getContext().getBean(IdentityFileImport.class);
+			identityFileImport.importIdentity();
+			
+			if(useScopusArticles) {
+				InstitutionAfidFileImport institutionAfidFileImport = ApplicationContextHolder.getContext().getBean(InstitutionAfidFileImport.class);
+				institutionAfidFileImport.importInstitutionAfids();
+			}
+		}
 	}
 	
 	@EventListener(ApplicationReadyEvent.class)
@@ -197,6 +217,16 @@ public class Application {
 	        log.info("Loading ScopusInstitutionalAfids to Engine Parameters");
 	        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
 	        if(instAfids != null && instAfids.size() > 0) {
+	        	ObjectMapper mapper = new ObjectMapper();
+	            try {
+					mapper.writeValue(new File("/Users/szd2013/git/ReCiter/src/main/resources/files/InstitutionAfid.json"), instAfids);
+				} catch (JsonProcessingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 	        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
 	        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
 	        }

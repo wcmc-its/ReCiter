@@ -1,51 +1,46 @@
 package reciter.database.dyanmodb.files;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
-import reciter.database.dynamodb.model.Identity;
-import reciter.service.IdentityService;
+import reciter.database.dynamodb.model.MeshTerm;
+import reciter.service.IDynamoDbMeshTermService;
 
 @Component
 @Slf4j
-public class IdentityFileImport {
-	
+public class MeshTermFileImport {
 	
 	@Autowired
-	private IdentityService identityService;
+	private IDynamoDbMeshTermService meshTermService;
 	
 	/**
 	 * This function imports identity data to identity table
 	 */
-	public void importIdentity() {
+	public void importMeshTerms() {
 		ObjectMapper mapper = new ObjectMapper();
-		List<Identity> identities = null;
+		List<MeshTerm> meshTerms = null;
 		try {
-			identities = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/Identity.json"), Identity[].class));
+			meshTerms = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/Identity.json"), MeshTerm[].class));
 		} catch (IOException e) {
 			log.error("IOException", e);
 		}
-		if(identities != null 
+		if(meshTerms != null 
 				&&
-				identities.size() == identityService.getItemCount()) {
+				meshTerms.size() == meshTermService.getItemCount()) {
 			log.info("The file Identity.json and the Identity table in DynamoDb is isomorphic and hence skipping import.");
 		} else {
-			if(identities != null 
+			if(meshTerms != null 
 					&&
-					!identities.isEmpty()) {
+					!meshTerms.isEmpty()) {
 				log.info("The file Identity.csv and the Identity table in DynamoDb is not isomorphic and hence starting import.");
-				
-				identityService.save(identities.stream().map(identity->identity.getIdentity()).collect(Collectors.toList()));
+				meshTermService.save(meshTerms);
 			}
 		}
 	}
