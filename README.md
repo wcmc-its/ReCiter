@@ -14,22 +14,50 @@
 
 ## Summary
 
-ReCiter is a system for making highly accurate guesses about author identity in publication metadata. ReCiter includes a Java application, a [DynamoDB-hosted database](https://github.com/wcmc-its/ReCiter/wiki/DynamoDB-tables), and a set of RESTful microservices which collectively allow institutions to maintain accurate and up-to-date author publication lists for thousands of people. This software is optimized for disambiguating authorship in PubMed and, optionally, Scopus.
+ReCiter is a system for making highly accurate guesses about author identity in publication metadata. ReCiter includes a Java application, a DynamoDB-hosted database, and a set of RESTful microservices which collectively allow institutions to maintain accurate and up-to-date author publication lists for thousands of people. This software is optimized for disambiguating authorship in PubMed and, optionally, Scopus.
 
 ReCiter rapidly and accurately identifies articles, including those at previous affiliations, by a given person. It does this by leveraging institutionally maintained identity data (e.g., departments, relationships, email addresses, year of degree, etc.) With the more complete and efficient searches that result from combining these types of data, you can save time and your institution can be more productive. If you run ReCiter daily, you can ensure that the desired users are the first to learn when a new publication has hit PubMed.
 
 ReCiter is freely available and open source.  
 
-## Prerequisites
+
+
+## Technical 
+
+### Prerequisites
 - Java 1.8
 - Latest version of Maven
 
-It is not necessary to install ReCiter in order to use this API, however, ReCiter does depend on this application in order to run.
+It is not necessary to install ReCiter in order to use the API.
+
+### Technological stack
+Key technologies include:
+- ReCiter stores data about researchers and publications in **DynamoDB**, which can be hosted on Amazon AWS on installed locally.
+- Its main computation logic is written in **Java**.
+- It employs the **Spring Framework**, a Java-based application framework designed to manage RESTful web services and server requests.
+- ReCiter uses **Swagger**, a toolset that provides a user interface with helpful cues for how to interact with the application's RESTful APIs. 
 
 
-## Architecture
+You may choose to run ReCiter on either:
+- **A server** - ReCiter will run on Linux, Mac OS X, and Windows versions 7 and higher. A minimum of 4GB of RAM is required; 16GB of RAM are recommended. An Internet connection is required to download article data from scholarly databases.
+- **A local machine** - ReCiter's APIs may be run in a browser on any modern machine. The ReCiter server must be accessible to the local machine via a local area network or internet connection.
+
+### Architecture
 
 ![https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram.png](https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram.png)
+
+
+### Code repositories
+
+The ReCiter application depends on the following separate GitHub-hosted repositories:
+- **[PubMed Retrieval](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool)**
+- **[Scopus Retrieval](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool)**
+- **Data models:**
+  - [ReCiter-Identity-Model](https://github.com/wcmc-its/ReCiter-Identity-Model)
+  - [ReCiter-Scopus-Model](https://github.com/wcmc-its/ReCiter-Scopus-Model)
+  - [ReCiter-Article-Model](https://github.com/wcmc-its/ReCiter-Article-Model)
+  - [ReCiter-Dynamodb-Model](https://github.com/wcmc-its/ReCiter-Dynamodb-Model)
+  - [ReCiter-PubMed-Model](https://github.com/wcmc-its/ReCiter-PubMed-Model)
 
 
 
@@ -48,49 +76,14 @@ ReCiter can be installed to run locally on an AWS via a cloud formation template
 
 ### Amazon AWS
 
-Will be provided with forthcoming Cloud Formation Template...
+Info will be provided with forthcoming Cloud Formation Template...
 
 
 ## Configuration
 
-### PubMed API key
-
-As a default, ReCiter works without a PubMed API key, however we recommend that you get an API key issued by NCBI. This allows you to make more requests per second.
-
-Here's how you can get an API key and use it with this application:
-
-1. Get an API key as per [these directions](https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/) from NCBI.
-
-2. Enter the API key into your Environment Variables where field name = `PUBMED_API_KEY`.
-- If you are deploying locally, go to terminal and write `export PUBMED_API_KEY={api-key}`. 
-- If you are deploying to an AWS instance, [add the environment variable](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console) in the Elastic Beanstalk configuration section.
-
-### Scopus key
-
-Use of Scopus is optional.
-
-Scopus API key and instoken
-https://dev.elsevier.com/
-
-
-### Application.properties
-
-All remaining configurations are stored in the (application.properties file)[https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties], which is described [here](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties).
-
-
-
-## Associated repositories
-
-The ReCiter application depends on the following GitHub-hosted repositories:
-- **[PubMed Retrieval](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool)**
-- **[Scopus Retrieval](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool)**
-- **Data models:**
-  - [ReCiter-Identity-Model](https://github.com/wcmc-its/ReCiter-Identity-Model)
-  - [ReCiter-Scopus=-Model](https://github.com/wcmc-its/ReCiter-Scopus-Model)
-  - [ReCiter-Article-Model](https://github.com/wcmc-its/ReCiter-Article-Model)
-  - [ReCiter-Dynamodb-Model](https://github.com/wcmc-its/ReCiter-Dynamodb-Model)
-  - [ReCiter-PubMed-Model](https://github.com/wcmc-its/ReCiter-PubMed-Model)
-
+- **PubMed API key** - Recommended for performance reasons but not necessary. More [here](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/blob/master/README.md#configuring-the-api-key).
+- **Scopus API key and instoken** - Use of Scopus is optional. It can improve overall accuracy by several percent; Scopus is helpful because it has disambiguated organizational affiliation and verbose first name, especially for earlier articles. Use of the Scopus API is available only for Scopus subscribers. More [here](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/blob/master/README.md#configuring-api-key).
+- **Application.properties** - All remaining configurations are stored in the [application.properties file](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties]. More [here](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties).
 
 
 
