@@ -105,7 +105,7 @@ Info will be provided with forthcoming Cloud Formation Template...
 ## Follow up
 
 - Technical questions: contact [Sarbajit Dutta](mailto:szd2013@med.cornell.edu) or [Jie Lin](mailto:jie265@gmail.com)
-- Functional questions: contact [Paul Albert](mailto:paa2013@med.cornell.edu), Michael Bales(mailto:meb7002@med.cornell.edu), or publications@med.cornell.edu.
+- Functional questions: contact [Paul Albert](mailto:paa2013@med.cornell.edu), [Michael Bales](mailto:meb7002@med.cornell.edu), or publications@med.cornell.edu.
 
 You may expect a response within one to two business days. We use GitHub issues to track bugs and feature requests. If you find a bug, please feel free to open an issue.
 
