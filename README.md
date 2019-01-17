@@ -27,18 +27,23 @@ ReCiter is freely available and open source.
 It is not necessary to install ReCiter in order to use this API, however, ReCiter does depend on this application in order to run.
 
 
+## Architecture
+
+![https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram.png](https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram.png)
+
+
+
 ## Installation
 
 ReCiter can be installed to run locally on an AWS via a cloud formation template.
 
 ### Local
 
-- Clone the repository using `git clone https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git`
-- Go to the folder where the repository is installed and navigate to src/main/resources/application.properties and change port and log location accordingly
-- Run `mvn clean install`
-- Optional: if you have the API key for PubMed (see below), then run `export PUBMED_API_KEY={api-key}`
-- Run `mvn spring-boot:run`. You can add additional options if you want like max and min java memory with `export MAVEN_OPTS=-Xmx1024m`
-- Go to http://localhost:<port-number>/swagger-ui.html to test and run any API.
+1. Clone the repository using `git clone https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git`
+2. Go to the folder where the repository is installed and navigate to src/main/resources/application.properties and change port and log location accordingly
+3. Run `mvn clean install`
+4. Run `mvn spring-boot:run`. You can add additional options if you want like max and min java memory with `export MAVEN_OPTS=-Xmx1024m`
+5. Go to `http://localhost:<port-number>/swagger-ui.html` to test and run any API.
 
 
 ### Amazon AWS
@@ -48,9 +53,9 @@ Will be provided with forthcoming Cloud Formation Template...
 
 ## Configuration
 
-### Getting a PubMed API key
+### PubMed API key
 
-As a default, ReCiter works without an API key, however we recommend that you get an API key issued by NCBI. This allows you to make more requests per second.
+As a default, ReCiter works without a PubMed API key, however we recommend that you get an API key issued by NCBI. This allows you to make more requests per second.
 
 Here's how you can get an API key and use it with this application:
 
@@ -58,9 +63,35 @@ Here's how you can get an API key and use it with this application:
 
 2. Enter the API key into your Environment Variables where field name = `PUBMED_API_KEY`.
 - If you are deploying locally, go to terminal and write `export PUBMED_API_KEY={api-key}`. 
-- If you are deploying to an AWS instance, add the environment variable in the Elastic Beanstalk configuration section.
+- If you are deploying to an AWS instance, [add the environment variable](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console) in the Elastic Beanstalk configuration section.
 
-### Getting a Scopus key
+### Scopus key
+
+Use of Scopus is optional.
+
+Scopus API key and instoken
+https://dev.elsevier.com/
+
+
+### Application.properties
+
+All remaining configurations are stored in the (application.properties file)[https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties], which is described [here](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties).
+
+
+
+## Associated repositories
+
+The ReCiter application depends on the following GitHub-hosted repositories:
+- **[PubMed Retrieval](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool)**
+- **[Scopus Retrieval](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool)**
+- **Data models:**
+  - [ReCiter-Identity-Model](https://github.com/wcmc-its/ReCiter-Identity-Model)
+  - [ReCiter-Scopus=-Model](https://github.com/wcmc-its/ReCiter-Scopus-Model)
+  - [ReCiter-Article-Model](https://github.com/wcmc-its/ReCiter-Article-Model)
+  - [ReCiter-Dynamodb-Model](https://github.com/wcmc-its/ReCiter-Dynamodb-Model)
+  - [ReCiter-PubMed-Model](https://github.com/wcmc-its/ReCiter-PubMed-Model)
+
+
 
 
 
