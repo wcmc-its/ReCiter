@@ -12,13 +12,13 @@
 [![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/wcmc-its/ReCiter/) 
 
 
-## Summary
+## Purpose
 
 ReCiter is a system for making highly accurate guesses about author identity in publication metadata. ReCiter includes a Java application, a DynamoDB-hosted database, and a set of RESTful microservices which collectively allow institutions to maintain accurate and up-to-date author publication lists for thousands of people. This software is optimized for disambiguating authorship in PubMed and, optionally, Scopus.
 
 ReCiter rapidly and accurately identifies articles, including those at previous affiliations, by a given person. It does this by leveraging institutionally maintained identity data (e.g., departments, relationships, email addresses, year of degree, etc.) With the more complete and efficient searches that result from combining these types of data, you can save time and your institution can be more productive. If you run ReCiter daily, you can ensure that the desired users are the first to learn when a new publication has hit PubMed.
 
-ReCiter is freely available and open source.  
+ReCiter is freely available and open source under the [Apache 2.0 license](https://opensource.org/licenses/Apache-2.0).  
 
 
 
@@ -50,8 +50,8 @@ You may choose to run ReCiter on either:
 ### Code repositories
 
 The ReCiter application depends on the following separate GitHub-hosted repositories:
-- **[PubMed Retrieval](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool)**
-- **[Scopus Retrieval](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool)**
+- **[PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool)**
+- **[Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool)**
 - **Data models:**
   - [ReCiter-Identity-Model](https://github.com/wcmc-its/ReCiter-Identity-Model)
   - [ReCiter-Scopus-Model](https://github.com/wcmc-its/ReCiter-Scopus-Model)
@@ -81,10 +81,9 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 ## Configuration
 
-- **PubMed API key** - Recommended for performance reasons but not necessary. More [here](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/blob/master/README.md#configuring-the-api-key).
-- **Scopus API key and instoken** - Use of Scopus is optional. It can improve overall accuracy by several percent; Scopus is helpful because it has disambiguated organizational affiliation and verbose first name, especially for earlier articles. Use of the Scopus API is available only for Scopus subscribers. More [here](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/blob/master/README.md#configuring-api-key).
-- **Application.properties** - All remaining configurations are stored in the [application.properties file](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties]. More [here](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties).
-
+- **[PubMed API key](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/blob/master/README.md#configuring-the-api-key)** - Recommended for performance reasons but not necessary. 
+- **[Scopus API key and instoken](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/blob/master/README.md#configuring-api-key)** - Use of Scopus is optional. It can improve overall accuracy by several percent; Scopus is helpful because it has disambiguated organizational affiliation and verbose first name, especially for earlier articles. Use of the Scopus API is available only for Scopus subscribers. 
+- **[Application.properties](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties)** - All remaining configurations are stored here.
 
 
 
@@ -94,24 +93,23 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 
 
+### See also
+
+- Searching Scopus
+- Searching PubMed
 
 
 
 
-## Getting help
 
-- Technical questions: please contact Sarbajit Dutta (szd2013@med.cornell.edu) or Jie Lin (jie265@gmail.com)
-- Functional questions: please contact Paul Albert (paa2013@med.cornell.edu), Michael Bales (meb7002@med.cornell.edu), or publications@med.cornell.edu.
+## Follow up
+
+- Technical questions: contact [Sarbajit Dutta](mailto:szd2013@med.cornell.edu) or [Jie Lin](mailto:jie265@gmail.com)
+- Functional questions: contact [Paul Albert](mailto:paa2013@med.cornell.edu), Michael Bales(mailto:meb7002@med.cornell.edu), or publications@med.cornell.edu.
 
 You may expect a response within one to two business days. We use GitHub issues to track bugs and feature requests. If you find a bug, please feel free to open an issue.
 
-## Contributing
-
-For more information about contributing, please contact Paul Albert (paa2013@med.cornell.edu) or Michael Bales (meb7002@med.cornell.edu).
-
-## License
-
-
+Contributions welcome!
 
 
 
