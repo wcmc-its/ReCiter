@@ -14,9 +14,9 @@
 
 ## Purpose
 
-ReCiter is a system for making highly accurate guesses about author identity in publication metadata. ReCiter includes a Java application, a DynamoDB-hosted database, and a set of RESTful microservices which collectively allow institutions to maintain accurate and up-to-date author publication lists for thousands of people. This software is optimized for disambiguating authorship in PubMed and, optionally, Scopus.
+ReCiter is a highly accurate system for guessing which publications in PubMed a given person has authored. ReCiter includes a Java application, a DynamoDB-hosted database, and a set of RESTful microservices which collectively allow institutions to maintain accurate and up-to-date author publication lists for thousands of people. This software is optimized for disambiguating authorship in PubMed and, optionally, Scopus.
 
-ReCiter rapidly and accurately identifies articles, including those at previous affiliations, by a given person. It does this by leveraging institutionally maintained identity data (e.g., departments, relationships, email addresses, year of degree, etc.) With the more complete and efficient searches that result from combining these types of data, you can save time and your institution can be more productive. If you run ReCiter daily, you can ensure that the desired users are the first to learn when a new publication has hit PubMed.
+ReCiter rapidly and accurately identifies articles, including those at previous affiliations, by a given person. It does this by leveraging institutionally maintained identity data (e.g., departments, relationships, email addresses, year of degree, etc.) With the more complete and efficient searches that result from combining these types of data, you can save time and your institution can be more productive. If you run ReCiter daily, you can ensure that the desired users are the first to learn when a new publication has appeared in PubMed.
 
 ReCiter is freely available and open source under the [Apache 2.0 license](https://opensource.org/licenses/Apache-2.0).  
 
@@ -91,102 +91,18 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 
 
-## Using
+## Key functions
 
 The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs), contains a full description on how to use the ReCiter APIs.
 
-
-### Get a list of articles for a given user
-
-The `/reciter/article-retrieval/by/uid` API is intended for departments and others who are interested in publishing publication data on public-facing webpages. This API does not provide confidential information such as personal email or names of student mentees output by the feature generator API (see below). It will always take into account any existing accepted or rejected articles to improve the accuracy of scoring. Additionally, this API does not allow its user to request a retrieval or analysis refresh.
-
-1. Go to the Swagger interface for ReCiter.
-2. Go to `/reciter/article-retrieval/by/uid`
-3. Click "Try it out."
-4. Enter person's "uid" or user ID.
-5. Optional: enter totalStandardizedArticleScore. This is the minimum score. The default is set to 7.
-6. Optional: enter filterByFeedback. The options are: ALL, ACCEPTED_ONLY, ACCEPTED_AND_NULL, etc. The default is set to ALL.
-7. Click execute.
-
-Sample request URL: 
-```
-http://localhost:5000/reciter/article-retrieval/by/uid?uid=paa2013&totalStandardizedArticleScore=5&filterByFeedback=ALL
-```
-
-
-### Get a list of articles and associated evidence for a given user
-
-The `/reciter/feature-generator/by/uid` API is intended to test accuracy, admins, and integrations with a user interface that displays evidence. It will optionally take into account any existing accepted or rejected articles to improve the accuracy of scoring.
-
-1. Go to the Swagger interface for ReCiter.
-2. Go to `/reciter/feature-generator/by/uid`
-3. Click "Try it out."
-4. Enter person's "uid" or user ID.
-5. Optional: enter totalStandardizedArticleScore. This is the minimum score. The default is set to 7.
-6. Optional: select option in useGoldStandard. AS_EVIDENCE means that the API uses accepted articles to increase the score of articles in the same cluster and rejected articles to decrease the score of articles in the same cluster. The default selection is AS_EVIDENCE.
-7. Optional: select option in filterByFeedback. The options are: ALL, ACCEPTED_ONLY, ACCEPTED_AND_NULL, etc. The default is set to ALL.
-8. Optional: select option in analysisRefreshFlag. The options are: TRUE and FALSE. If TRUE is selected, the scoring (as opposed to the article retrieval) is recomputed.
-9. Optional: under retrievalRefreshFlag, you may choose if you want a complete, partial, or no refresh of existing articles for your user. The options are: ALL_PUBLCATIONS, ONLY_NEWLY_ADDED_PUBLICATIONS, and FALSE. The default is FALSE.
-9. Click execute.
-
-Sample request URL:
-```
-http://localhost:5000/reciter/feature-generator/by/uid?uid=paa2013&totalStandardizedArticleScore=5&useGoldStandard=AS_EVIDENCE&filterByFeedback=ALL&analysisRefreshFlag=false&retrievalRefreshFlag=FALSE
-```
-
-
-
-### Get a list of articles in the Gold Standard
-
-The `/reciter/goldstandard/` API returns accepted PMIDs (knownPMIDs), rejected PMIDs (rejectedPMIDs), and the auditLog from the Gold Standard.
-
-1. Go to the Swagger interface for ReCiter.
-2. Go to `/reciter/goldstandard`
-3. Click "Try it out."
-4. Enter person's "uid" or user ID.
-5. Click execute.
-
-
-Sample request URL:
-```
-http://localhost:5000/reciter/goldstandard/paa2013
-```
-
-
-
-### Return identity data for a given user
-
-The `/reciter/find/identity/by/uid/` API returns identity data rom the Identity table in DynamoDB for a single user.
-
-1. Go to the Swagger interface for ReCiter.
-2. Go to `/reciter/find/identity/by/uid/`
-3. Click "Try it out."
-4. Enter person's "uid" or user ID.
-5. Click execute.
-
-
-Sample request URL:
-```
-http://localhost:5000/reciter/find/identity/by/uid/?uid=paa2013
-```
-
-
-### Return identity data for multiple users
-
-The `/reciter/find/identity/by/uids/` API returns identity data from the Identity table in DynamoDB for multiple users.
-
-1. Go to the Swagger interface for ReCiter.
-2. Go to `/reciter/find/identity/by/uid/`
-3. Click "Try it out."
-4. Enter person's "uid" or user ID.
-5. Click on the dash button to enter a second person.
-6. Enter that second person's uid.
-7. Click execute.
-
-Sample request URL:
-```
-http://wcmc-its-reciter-service.us-east-1.elasticbeanstalk.com/reciter/find/identity/by/uids/?uids=meb7002&uids=paa2013
-```
+|Function |Relevant API(s) |
+| ------------- | ------------- |
+| Add or update identity data for target user(s) from Identity table | [`/reciter/identity/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#) or [`/reciter/save/identities/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#recitersaveidentities) |
+| Retrieve identity data for target user(s) from Identity table | [`/reciter/find/identity/by/uid/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfindidentitybyuid) or [`/reciter/find/identity/by/uids/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfindidentitybyuids) |
+| Update the GoldStandard table (includes both accepted and rejected PMIDs) for target user(s) | [`/reciter/goldstandard/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#recitergoldstandard) |
+| Read from the GoldStandard table (includes both accepted and rejected PMIDs) for target user(s) | [`/reciter/goldstandard/{uid}`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#recitergoldstandarduid)  |
+| Read suggested articles from the Analysis table for target user | [`/reciter/article-retrieval/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterarticle-retrievalbyuid)   | 
+| Read suggested articles and see supporting evidence from the Analysis table for target user | [`/reciter/feature-generator/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfeature-generatorbyuid) | 
 
 
 
