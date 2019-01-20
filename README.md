@@ -20,6 +20,10 @@ ReCiter rapidly and accurately identifies articles, including those at previous 
 
 ReCiter is freely available and open source under the [Apache 2.0 license](https://opensource.org/licenses/Apache-2.0).  
 
+Please see the [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki) for more information.
+
+![https://github.com/wcmc-its/ReCiter/blob/master/files/ReCiter-FeatureGenerator.gif](https://github.com/wcmc-its/ReCiter/blob/master/files/ReCiter-FeatureGenerator.gif)
+
 
 
 ## Technical 
@@ -89,7 +93,7 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 ## Using
 
-
+The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs), contains a full description on how to use the ReCiter APIs.
 
 
 ### Get a list of articles for a given user
