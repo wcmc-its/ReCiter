@@ -88,15 +88,109 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 
 ## Using
- 
-### Getting a count of articles
+
+
+
+
+### Get a list of articles for a given user
+
+The `/reciter/article-retrieval/by/uid` API is intended for departments and others who are interested in publishing publication data on public-facing webpages. This API does not provide confidential information such as personal email or names of student mentees output by the feature generator API (see below). It will always take into account any existing accepted or rejected articles to improve the accuracy of scoring. Additionally, this API does not allow its user to request a retrieval or analysis refresh.
+
+1. Go to the Swagger interface for ReCiter.
+2. Go to `/reciter/article-retrieval/by/uid`
+3. Click "Try it out."
+4. Enter person's "uid" or user ID.
+5. Optional: enter totalStandardizedArticleScore. This is the minimum score. The default is set to 7.
+6. Optional: enter filterByFeedback. The options are: ALL, ACCEPTED_ONLY, ACCEPTED_AND_NULL, etc. The default is set to ALL.
+7. Click execute.
+
+Sample request URL: 
+```
+http://localhost:5000/reciter/article-retrieval/by/uid?uid=paa2013&totalStandardizedArticleScore=5&filterByFeedback=ALL
+```
+
+
+### Get a list of articles and associated evidence for a given user
+
+The `/reciter/feature-generator/by/uid` API is intended to test accuracy, admins, and integrations with a user interface that displays evidence. It will optionally take into account any existing accepted or rejected articles to improve the accuracy of scoring.
+
+1. Go to the Swagger interface for ReCiter.
+2. Go to `/reciter/feature-generator/by/uid`
+3. Click "Try it out."
+4. Enter person's "uid" or user ID.
+5. Optional: enter totalStandardizedArticleScore. This is the minimum score. The default is set to 7.
+6. Optional: select option in useGoldStandard. AS_EVIDENCE means that the API uses accepted articles to increase the score of articles in the same cluster and rejected articles to decrease the score of articles in the same cluster. The default selection is AS_EVIDENCE.
+7. Optional: select option in filterByFeedback. The options are: ALL, ACCEPTED_ONLY, ACCEPTED_AND_NULL, etc. The default is set to ALL.
+8. Optional: select option in analysisRefreshFlag. The options are: TRUE and FALSE. If TRUE is selected, the scoring (as opposed to the article retrieval) is recomputed.
+9. Optional: under retrievalRefreshFlag, you may choose if you want a complete, partial, or no refresh of existing articles for your user. The options are: ALL_PUBLCATIONS, ONLY_NEWLY_ADDED_PUBLICATIONS, and FALSE. The default is FALSE.
+9. Click execute.
+
+Sample request URL:
+```
+http://localhost:5000/reciter/feature-generator/by/uid?uid=paa2013&totalStandardizedArticleScore=5&useGoldStandard=AS_EVIDENCE&filterByFeedback=ALL&analysisRefreshFlag=false&retrievalRefreshFlag=FALSE
+```
+
+
+
+### Get a list of articles in the Gold Standard
+
+The `/reciter/goldstandard/` API returns accepted PMIDs (knownPMIDs), rejected PMIDs (rejectedPMIDs), and the auditLog from the Gold Standard.
+
+1. Go to the Swagger interface for ReCiter.
+2. Go to `/reciter/goldstandard`
+3. Click "Try it out."
+4. Enter person's "uid" or user ID.
+5. Click execute.
+
+
+Sample request URL:
+```
+http://localhost:5000/reciter/goldstandard/paa2013
+```
+
+
+
+### Return identity data for a given user
+
+The `/reciter/find/identity/by/uid/` API returns identity data rom the Identity table in DynamoDB for a single user.
+
+1. Go to the Swagger interface for ReCiter.
+2. Go to `/reciter/find/identity/by/uid/`
+3. Click "Try it out."
+4. Enter person's "uid" or user ID.
+5. Click execute.
+
+
+Sample request URL:
+```
+http://localhost:5000/reciter/find/identity/by/uid/?uid=paa2013
+```
+
+
+### Return identity data for multiple users
+
+The `/reciter/find/identity/by/uids/` API returns identity data from the Identity table in DynamoDB for multiple users.
+
+1. Go to the Swagger interface for ReCiter.
+2. Go to `/reciter/find/identity/by/uid/`
+3. Click "Try it out."
+4. Enter person's "uid" or user ID.
+5. Click on the dash button to enter a second person.
+6. Enter that second person's uid.
+7. Click execute.
+
+Sample request URL:
+```
+http://wcmc-its-reciter-service.us-east-1.elasticbeanstalk.com/reciter/find/identity/by/uids/?uids=meb7002&uids=paa2013
+```
 
 
 
 ### See also
 
-- Searching Scopus
-- Searching PubMed
+- [PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool) - contains several ways you can search PubMed
+- [Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool) - contains several ways you can search Scopus
+
 
 
 
