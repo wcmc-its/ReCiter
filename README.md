@@ -11,6 +11,22 @@
 [![Github All Releases](https://img.shields.io/github/downloads/wcmc-its/ReCiter/total.svg)]()
 [![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/wcmc-its/ReCiter/) 
 
+- [Purpose](#purpose)
+- [Technical](#technical)
+  - [Prerequisites](#prerequisites)
+  - [Technological stack](#technological-stack)
+  - [Architecture](#architecture)
+  - [Code repositories](#code-repositories)
+- [Installation](#installation)
+  - [Local](#local)
+  - [Amazon AWS](#amazon-aws)
+- [Configuration](#configuration)
+- [Functionality](#functionality)
+  - [How ReCiter works](#how-reciter-works)
+  - [Using the APIs](#using-the-apis)
+  - [See also](#see-also)
+- [Follow up](#follow-up)
+
 
 ## Purpose
 
@@ -91,7 +107,21 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 
 
-## Key functions
+## Functionality
+
+### How ReCiter works
+
+The wiki article, [How ReCiter works](https://github.com/wcmc-its/ReCiter/wiki/How-ReCiter-works), contains a more detailed description on the application works. 
+ 
+ - Populate identity information for target users
+ - Optional: populate Gold Standard of already accepted or rejected publications
+ - Lookup candidate articles in PubMed and, optionally, Scopus
+ - Compute suggestions
+ - Retrieve suggestions
+ 
+
+
+### Using the APIs
 
 The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs), contains a full description on how to use the ReCiter APIs.
 
