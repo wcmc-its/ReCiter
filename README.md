@@ -114,7 +114,7 @@ Info will be provided with forthcoming Cloud Formation Template...
 The wiki article, [How ReCiter works](https://github.com/wcmc-its/ReCiter/wiki/How-ReCiter-works), contains a more detailed description on the application works. 
  
  - Populate identity information for target users
- - Optional: populate Gold Standard of already accepted or rejected publications
+ - Optional: populate Gold Standard of already accepted or rejected publications; note that this system currently does not offer a user interface for collecting this feedback
  - Lookup candidate articles in PubMed and, optionally, Scopus
  - Compute suggestions
  - Retrieve suggestions
