@@ -64,7 +64,7 @@ You may choose to run ReCiter on either:
 
 ### Architecture
 
-![https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram.png](https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram.png)
+![https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram-NEW.png](https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram-NEW.png)
 
 
 ### Code repositories
