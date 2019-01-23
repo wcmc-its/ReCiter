@@ -46,7 +46,7 @@ Please see the [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki) for more
 
 ### Prerequisites
 - Java 1.8
-- Latest version of Maven
+- Latest version of Maven. To install Maven, execute `brew install maven` and then `mvn clean install`
 
 It is not necessary to install ReCiter in order to use the API.
 
@@ -87,11 +87,23 @@ ReCiter can be installed to run locally on an AWS via a cloud formation template
 
 ### Local
 
-1. Clone the repository using `git clone https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git`
-2. Go to the folder where the repository is installed and navigate to src/main/resources/application.properties and change port and log location accordingly
-3. Run `mvn clean install`
+1. Clone the repository to a local folder using `git clone https://github.com/wcmc-its/ReCiter.git`
+2. Go to the folder where the repository has been closed and navigate to src/main/resources/application.properties and change port and log location accordingly
+- change `aws.DynamoDb.local=false` to `aws.DynamoDb.local=true`
+- update location of DynamoDB database, e.g., `aws.DynamoDb.local.dbpath=/Users/Paul/Documents/ReCiter/dynamodb_local_latest`
+- change `aws.sqs=true` to `aws.sqs=false`
+- change `aws.sqs.extendedClient=true` to `aws.sqs.extendedClient=false`
+3. Enter ports for server and services in command line. Note that the Scopus service is optional.
+```
+export SERVER_PORT=5000
+export SCOPUS_SERVICE=http://localhost:5001
+export PUBMED_SERVICE=http://localhost:5002
+```
 4. Run `mvn spring-boot:run`. You can add additional options if you want like max and min java memory with `export MAVEN_OPTS=-Xmx1024m`
 5. Go to `http://localhost:<port-number>/swagger-ui.html` to test and run any API.
+
+
+
 
 
 ### Amazon AWS
