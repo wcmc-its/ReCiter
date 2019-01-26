@@ -80,7 +80,7 @@ public class IdentityController {
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/find/identity/by/uid/", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/reciter/find/identity/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity findByUid(@RequestParam String uid) {
         slf4jLogger.info("calling findByUid with size of uids=" + uid);
