@@ -222,10 +222,10 @@ public class Application {
 					mapper.writeValue(new File("/Users/szd2013/git/ReCiter/src/main/resources/files/InstitutionAfid.json"), instAfids);
 				} catch (JsonProcessingException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.error("JSON parsing error occurred while processing InstitutionAfid.json file", e);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.error("IO Error occurred while processing InstitutionAfid.json file", e);
 				}
 	        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
 	        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
