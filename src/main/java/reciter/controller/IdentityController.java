@@ -18,8 +18,9 @@
  *******************************************************************************/
 package reciter.controller;
 
-import java.util.List;
-
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,90 +32,87 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
+
+import java.util.List;
 
 @Controller
 public class IdentityController {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(IdentityController.class);
+    private static final Logger slf4jLogger = LoggerFactory.getLogger(IdentityController.class);
 
-	@Autowired
-	private IdentityService identityService;
-	
-	@ApiOperation(value = "Add an identity to Identity table in DynamoDb", notes = "This api creates an identity in the Identity table in dynamoDb by collecting identity data from different system of records.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Identity creation successful"),
-			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-			})
-	@RequestMapping(value = "/reciter/identity/", method = RequestMethod.POST)
-	@ResponseBody
-	public ResponseEntity addIdentity(@RequestBody Identity identity) {
-		identityService.save(identity);
-		return ResponseEntity.ok().build();
-	}
-	
-	@ApiOperation(value = "Add list of identities to Identity table in DynamoDb", notes = "This api creates list of identities in the Identity table in dynamoDb by collecting identity data from different system of records.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Identity List creation successful"),
-			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-			})
-	@RequestMapping(value = "/reciter/save/identities/", method = RequestMethod.PUT)
-	@ResponseBody
-	public void saveIdentities(@RequestBody List<Identity> identities) {
-		slf4jLogger.info("calling saveIdentities with number of identities=" + identities.size());
-		identityService.save(identities);
-	}
-	
-	@ApiOperation(value = "Search the identity table for a given ID", response = ResponseEntity.class, notes = "This api searches for a given identity in identity table.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Identity found successfully"),
-			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-			})
-	@RequestMapping(value = "/reciter/find/identity/by/uid/", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseEntity findByUid(@RequestParam String uid) {
-		slf4jLogger.info("calling findByUid with size of uids=" + uid);
-		Identity identity = null;
-		try {
-			identity = identityService.findByUid(uid);
-		} catch(NullPointerException ne) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '"  + uid + "' was not found in the Identity table");
-		}
-		return new ResponseEntity<Identity>(identityService.findByUid(uid), HttpStatus.OK);
-	}
-	
-	@ApiOperation(value = "Search the identity table for a list of ID supplied", response = Identity.class, notes = "This api searches for a list of identities in identity table.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Identity List found successfully"),
-			@ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-			})
-	@RequestMapping(value = "/reciter/find/identity/by/uids/", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseEntity findByUids(@RequestParam List<String> uids) {
-		slf4jLogger.info("calling findByUid with size of uids=" + uids);
-		List<Identity> identities = null;
-		try {
-			identities = identityService.findByUids(uids);
-		} catch(NullPointerException ne) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uids provided '"  + uids + "' was not found in the Identity table");
-		}
-		if(identities.size() == 0) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uids provided '"  + uids + "' was not found in the Identity table");
-		}
-		return new ResponseEntity<List<Identity>>(identityService.findByUids(uids), HttpStatus.OK);
-	}
+    @Autowired
+    private IdentityService identityService;
+
+    @ApiOperation(value = "Add an identity to Identity table in DynamoDb", notes = "This api creates an identity in the Identity table in dynamoDb by collecting identity data from different system of records.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Identity creation successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/identity/", method = RequestMethod.POST, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity addIdentity(@RequestBody Identity identity) {
+        identityService.save(identity);
+        return ResponseEntity.ok().build();
+    }
+
+    @ApiOperation(value = "Add list of identities to Identity table in DynamoDb", notes = "This api creates list of identities in the Identity table in dynamoDb by collecting identity data from different system of records.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Identity List creation successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/save/identities/", method = RequestMethod.PUT, produces = "application/json")
+    @ResponseBody
+    public void saveIdentities(@RequestBody List<Identity> identities) {
+        slf4jLogger.info("calling saveIdentities with number of identities=" + identities.size());
+        identityService.save(identities);
+    }
+
+    @ApiOperation(value = "Search the identity table for a given ID", response = ResponseEntity.class, notes = "This api searches for a given identity in identity table.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Identity found successfully"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/find/identity/by/uid/", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity findByUid(@RequestParam String uid) {
+        slf4jLogger.info("calling findByUid with size of uids=" + uid);
+        Identity identity;
+        try {
+            identity = identityService.findByUid(uid);
+        } catch (NullPointerException ne) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
+        }
+        return new ResponseEntity<>(identity, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Search the identity table for a list of ID supplied", response = Identity.class, notes = "This api searches for a list of identities in identity table.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Identity List found successfully"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/find/identity/by/uids/", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity findByUids(@RequestParam List<String> uids) {
+        slf4jLogger.info("calling findByUid with size of uids=" + uids);
+        List<Identity> identities;
+        try {
+            identities = identityService.findByUids(uids);
+        } catch (NullPointerException ne) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uids provided '" + uids + "' was not found in the Identity table");
+        }
+        if (identities.size() == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uids provided '" + uids + "' was not found in the Identity table");
+        }
+        return new ResponseEntity<>(identities, HttpStatus.OK);
+    }
 }
