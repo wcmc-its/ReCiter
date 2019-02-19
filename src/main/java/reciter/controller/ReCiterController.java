@@ -134,8 +134,9 @@ public class ReCiterController {
     
     @Value("${totalArticleScore-standardized-default}")
     private double totalArticleScoreStandardizedDefault;
-
-
+    
+    @Value("${namesIgnoredCoauthors}")
+	private String nameIgnoredCoAuthors;
 
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiResponses(value = {
@@ -767,9 +768,9 @@ public class ReCiterController {
         for (PubMedArticle pubMedArticle : pubMedArticles) {
             long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
             if (map.containsKey(pmid)) {
-                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid)));
+                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid), nameIgnoredCoAuthors));
             } else {
-                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null));
+                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors));
             }
         }
 

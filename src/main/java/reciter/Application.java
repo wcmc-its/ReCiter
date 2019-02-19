@@ -195,13 +195,13 @@ public class Application {
 		log.info("Loading ScienceMetrixJournals to Engine Parameters");
 		List<ScienceMetrix> scienceMetrixJournals = scienceMetrixService.findAll();
         if(scienceMetrixJournals != null && scienceMetrixJournals.size() > 0) {
-        	EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
+        		EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
         }
         
         log.info("Loading ScienceMetrixDepartmentCategories to Engine Parameters");
 		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = scienceMetrixDepartmentCategoryService.findAll();
         if(scienceMetrixDeptCategories != null && scienceMetrixDeptCategories.size() > 0) {
-        	EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
+        		EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
         }
         
         log.info("Loading MeshTermCounts to Engine Parameters");
@@ -217,18 +217,8 @@ public class Application {
 	        log.info("Loading ScopusInstitutionalAfids to Engine Parameters");
 	        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
 	        if(instAfids != null && instAfids.size() > 0) {
-	        	ObjectMapper mapper = new ObjectMapper();
-	            try {
-					mapper.writeValue(new File("/Users/szd2013/git/ReCiter/src/main/resources/files/InstitutionAfid.json"), instAfids);
-				} catch (JsonProcessingException e) {
-					// TODO Auto-generated catch block
-					log.error("JSON parsing error occurred while processing InstitutionAfid.json file", e);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					log.error("IO Error occurred while processing InstitutionAfid.json file", e);
-				}
-	        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
-	        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
+		        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
+		        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
 	        }
         }
 	}
