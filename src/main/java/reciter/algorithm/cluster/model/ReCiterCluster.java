@@ -20,18 +20,12 @@ package reciter.algorithm.cluster.model;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
-import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
 import reciter.engine.ReCiterEngine;
 import reciter.model.article.ReCiterArticle;
@@ -320,9 +314,9 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		} else if(comparisonType.equalsIgnoreCase("meshMajor")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 				for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
-					if(meshHeading != null && MeshMajorStrategy.isMeshMajor(meshHeading)) {
+					if(meshHeading != null && MeshMajorClusteringStrategy.isMeshMajor(meshHeading)) {
 						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getMeshHeadings() != null && 
-								articleList.getMeshHeadings().stream().anyMatch(mesh -> MeshMajorStrategy.isMeshMajor(mesh) && 
+								articleList.getMeshHeadings().stream().anyMatch(mesh -> MeshMajorClusteringStrategy.isMeshMajor(mesh) && 
 								StringUtils.equalsIgnoreCase(mesh.getDescriptorName().getDescriptorName(), meshHeading.getDescriptorName().getDescriptorName()) && 
 								EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
 								EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 4000L

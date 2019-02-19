@@ -11,6 +11,9 @@ import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.clusteringstrategy.article.AbstractClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleMeshHeading;
+import reciter.model.article.ReCiterCitationYNEnum;
+import reciter.model.article.ReCiterMeshHeadingQualifierName;
 
 /**
  * @author szd2013
@@ -60,6 +63,34 @@ public class MeshMajorClusteringStrategy extends AbstractClusteringStrategy {
 			}
 			
 			return clusters;
+		}
+		
+		/**
+		 * <p>
+		 * MeSH major parsing
+		 * <p>
+		 * Easy: no subheading (e.g., for 23919362, �Contracts" is MeSH major)
+		 * <p>
+		 * Single subheading (e.g., for 21740463, "Cold Temperature� is MeSH major)
+		 * <p>
+		 * Harder: Multiple subheadings modifying the same MeSH term. (e.g., for 6358887, "Aspirin" is mesh major even 
+		 * though there are cases where aspirin is not listed as MeSH major.)
+		 * @param meshHeading
+		 * @return
+		 */
+		public static boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
+			// Easy case:
+			if (meshHeading.getDescriptorName().getMajorTopicYN().equals(ReCiterCitationYNEnum.Y.name())) {
+				return true;
+			}
+			// Single subheading or Multiple subheading:
+			for (ReCiterMeshHeadingQualifierName qualifierName : meshHeading.getQualifierNameList()) {
+				if (qualifierName.getMajorTopicYN() == ReCiterCitationYNEnum.Y) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 		
 }
