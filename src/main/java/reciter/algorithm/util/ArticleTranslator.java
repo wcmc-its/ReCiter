@@ -21,7 +21,7 @@ package reciter.algorithm.util;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 
-import reciter.algorithm.evidence.article.mesh.strategy.MeshMajorStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
@@ -54,6 +54,7 @@ import reciter.model.scopus.ScopusArticle;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -73,7 +74,7 @@ public class ArticleTranslator {
      * @param pubmedArticle
      * @return
      */
-    public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle) {
+    public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle, String nameIgnoredCoAuthors) {
 
         // PMID
         long pmid = pubmedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
@@ -417,7 +418,7 @@ public class ArticleTranslator {
             reCiterArticle.setDoi(pubmedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid());
         }
         
-        populateFeatures(reCiterArticle);
+        populateFeatures(reCiterArticle, nameIgnoredCoAuthors);
 
         return reCiterArticle;
     }
@@ -532,7 +533,8 @@ public class ArticleTranslator {
     	reCiterArticle.setPublicationTypeCanonical(publicationTypeCanonical);
     }
     
-    private static void populateFeatures(ReCiterArticle reCiterArticle) {
+    private static void populateFeatures(ReCiterArticle reCiterArticle, String nameIgnoredCoAuthors) {
+    	List<String> ignoredCoAuthorNames = Arrays.asList(nameIgnoredCoAuthors.trim().split("\\s*,\\s*"));
     	ReCiterArticleFeatures reCiterArticleFeatures = new ReCiterArticleFeatures();
     	int featureCount = reCiterArticleFeatures.getFeatureCount();
     	
@@ -546,7 +548,8 @@ public class ArticleTranslator {
 		if (reCiterArticle.getArticleCoAuthors().exist()) {
 			for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				if(author != null && author.getAuthorName() != null &&
-						author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null && !author.isTargetAuthor() &&
+						author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null && !author.isTargetAuthor() 
+						/*&&
 					(
 					(!author.getAuthorName().getFirstInitial().equals("Y") && !author.getAuthorName().getLastName().equals("Wang"))
 					||
@@ -559,9 +562,25 @@ public class ArticleTranslator {
 					(!author.getAuthorName().getFirstInitial().equals("S") && !author.getAuthorName().getLastName().equals("Lee"))
 					||
 					(!author.getAuthorName().getFirstInitial().equals("J") && !author.getAuthorName().getLastName().equals("Lee"))
-					)
+					)*/
 					) {
-					reCiterArticleFeatures.getCoAuthors().add(author.getAuthorName().getFirstInitial() + "." + author.getAuthorName().getLastName());
+					boolean addCoAuthor = true;
+					for(String ignoredCoAuthorName: ignoredCoAuthorNames) {
+						String[] nameArray = ignoredCoAuthorName.split(" ");
+						if(nameArray[1] != null && !nameArray[1].isEmpty() 
+								&&
+								author.getAuthorName().getFirstInitial().equalsIgnoreCase(nameArray[1])
+								&&
+								nameArray[0] != null && !nameArray[0].isEmpty()
+								&&
+								author.getAuthorName().getLastName().equalsIgnoreCase(nameArray[0])) { 
+							addCoAuthor = false;
+							break;
+						}
+					}
+					if(addCoAuthor) {
+						reCiterArticleFeatures.getCoAuthors().add(author.getAuthorName().getFirstInitial() + "." + author.getAuthorName().getLastName());
+					}
 				}
 			}
 			if(!reCiterArticleFeatures.getCoAuthors().isEmpty()) {
@@ -572,7 +591,7 @@ public class ArticleTranslator {
 		//MeshMajor Feature
 		if(reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
 			for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
-				if(MeshMajorStrategy.isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
+				if(MeshMajorClusteringStrategy.isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
 						EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 100000L) {
 					reCiterArticleFeatures.getMeshMajor().add(meshHeading.getDescriptorName().getDescriptorName());
 				}

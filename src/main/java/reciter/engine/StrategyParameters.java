@@ -92,6 +92,12 @@ public class StrategyParameters {
     private boolean isMeshMajor;
 
     private boolean useGoldStandardEvidence;
+    
+    @Value("${namesIgnoredCoauthors}")
+    private String nameIgnoredCoAuthors;
+    
+    @Value("${nameScoringStrategy-excludedSuffixes}")
+    private String nameExcludedSuffixes;
 
     @Value("${cluster.similarity.threshold.score}")
     private double clusterSimilarityThresholdScore;

@@ -1,6 +1,7 @@
 package reciter.algorithm.evidence.targetauthor.name.strategy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,8 @@ import reciter.model.identity.Identity;
 public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ScoreByNameStrategy.class);
+	
+	private final List<String> nameExcludedSuffixes = Arrays.asList(ReCiterArticleScorer.strategyParameters.getNameExcludedSuffixes().trim().split("\\s*,\\s*"));
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
@@ -716,6 +719,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	 */
 	private void sanitizeIdentityAuthorNames(Identity identity, List<AuthorName> sanitizedIdentityAuthorName) {
 		AuthorName identityPrimaryName = new AuthorName();
+		String suffixRegex = generateSuffixRegex();
 		AuthorName additionalName = new AuthorName();
 		String firstName = null;
 		String lastName = null;
@@ -754,7 +758,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				}
 			}
 			if(identity.getPrimaryName().getLastName() != null) {
-				lastName = identity.getPrimaryName().getLastName().replaceAll("[-.,,()\\s]|(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "");
+				//lastName = identity.getPrimaryName().getLastName().replaceAll("[-.,,()\\s]|(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "");
+				lastName = identity.getPrimaryName().getLastName().replaceAll("[-.,,()\\s]|(" + suffixRegex + ")$", "");
 				identityPrimaryName.setLastName(lastName);
 				if(additionalName.getFirstName() != null) {
 					additionalName.setLastName(lastName);
@@ -775,7 +780,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					identityAliasAuthorName.setMiddleName(aliasAuthorName.getMiddleName().replaceAll("[-.\",()\\s]", ""));
 				}
 				if(aliasAuthorName.getLastName() != null) {
-					identityAliasAuthorName.setLastName(aliasAuthorName.getLastName().replaceAll("[-.\",()\\s]|(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", ""));
+					identityAliasAuthorName.setLastName(aliasAuthorName.getLastName().replaceAll("[-.\",()\\s]|(" + suffixRegex + ")$", ""));
 				}
 				
 				if(identityAliasAuthorName.getLastName() != null) {
@@ -786,10 +791,6 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		if(additionalName != null && additionalName.getLastName() != null) {
 			sanitizedIdentityAuthorName.add(additionalName);
 		}
-		
-		
-		
-		
 	}
 	
 	private void sanitizeTargetAuthorNames(ReCiterArticle reCiterArticle, Set<AuthorName> sanitizedAuthorName) {
@@ -884,6 +885,23 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 				
 		}
+	}
+	
+	/**
+	 * This function generates regex of suffix from application.properties file
+	 * @return regex string
+	 */
+	private String generateSuffixRegex() {
+		String suffixRegex = "";
+		String suffixTogether = "";
+		for(String suffix: this.nameExcludedSuffixes) {
+			suffixRegex = suffixRegex + "," + suffix + "|, " + suffix + "|";
+			suffixTogether = suffixTogether + suffix + "|";
+		}
+		if(suffixTogether.endsWith("|")) {
+			suffixTogether = suffixTogether.substring(0, suffixTogether.length() - 1);
+		}
+		return suffixRegex + "," + suffixTogether;
 	}
 		
 	/**
