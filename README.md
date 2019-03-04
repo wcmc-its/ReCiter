@@ -25,6 +25,7 @@
   - [How ReCiter works](#how-reciter-works)
   - [Using the APIs](#using-the-apis)
   - [See also](#see-also)
+- [Future work](#future-work)
 - [Follow up](#follow-up)
 
 
@@ -159,7 +160,9 @@ The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Usin
 
 
 
+## Future work
 
+Both the issue queue and the [Roadmap](https://github.com/wcmc-its/ReCiter/wiki/Roadmap) include some areas where we want to improve ReCiter.
 
 
 ## Follow up
