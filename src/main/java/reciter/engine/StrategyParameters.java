@@ -20,12 +20,23 @@ package reciter.engine;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+
+@Validated
 @Component
 @Getter
 @Setter
+@ConfigurationProperties
+@PropertySource("classpath:application.properties")
 public class StrategyParameters {
 	
 	@Value("${reciter.minimumStorageThreshold}")
@@ -93,15 +104,19 @@ public class StrategyParameters {
 
     private boolean useGoldStandardEvidence;
     
+    @NotEmpty(message = "namesIgnoredCoauthors should not be empty. Its a list of authors separated by commas who are two common in publications. We found these ones which can be ignored \"Wang Y, Wang J, Smith J, Kim S, Lee S, Lee J\". Notice the format is <lastName><space><firstInitial>.")
     @Value("${namesIgnoredCoauthors}")
     private String nameIgnoredCoAuthors;
     
+    @NotEmpty(message = "nameScoringStrategy-excludedSuffixes should not be empty. We recommend these suffixes \"Jr,MD PhD,MD-PhD,PhD,MD,III,II,Sr\". You can add more if you like separated by comma.")
     @Value("${nameScoringStrategy-excludedSuffixes}")
     private String nameExcludedSuffixes;
-
+    
+    @Positive(message = "cluster.similarity.threshold score needs to be a positive number.")
     @Value("${cluster.similarity.threshold.score}")
     private double clusterSimilarityThresholdScore;
-
+    
+    @Positive(message = "clusteringGrants-threshold score needs to be a positive integer number.")
     @Value("${clusteringGrants-threshold}")
     private double clusteringGrantsThreshold;
 
@@ -188,7 +203,7 @@ public class StrategyParameters {
 
     @Value("${strategy.email.emailMatchScore}")
     private double emailMatchScore;
-
+    
     @Value("${strategy.email.default.suffixes}")
     private String defaultSuffixes;
 
@@ -233,7 +248,7 @@ public class StrategyParameters {
 
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitDepartmentMatchingScore}")
     private double organizationalUnitDepartmentMatchingScore;
-
+    
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitModifier}")
     private String organizationalUnitModifier;
 
@@ -272,7 +287,8 @@ public class StrategyParameters {
     
     @Value("${strategy.averageClusteringScoringStrategy.clusterReliabilityScoreFactor}")
     private double clusterReliabilityScoreFactor;
-
+    
+    @NotEmpty(message = "standardizedScoreMapping cannot be empty. Please include a list of numbers delimited by commas.")
     @Value("${standardizedScoreMapping}")
     private String standardizedScoreMapping;
 
@@ -308,29 +324,34 @@ public class StrategyParameters {
 
     @Value("${strategy.authorAffiliationScoringStrategy.nonTargetAuthor-institutionalAffiliation-maxScore}")
     private double nonTargetAuthorInstAfflMatchTypeMaxScore;
-
+    
     @Value("${strategy.authorAffiliationScoringStrategy.homeInstitution-keywords}")
     private String instAfflHomeInstKeywords;
-
+    
     @Value("${strategy.authorAffiliationScoringStrategy.homeInstitution-label}")
     private String instAfflInstLabel;
-
+    
+    @NotEmpty
     @Value("${strategy.authorAffiliationScoringStrategy.homeInstitution-scopusInstitutionIDs}")
     private String instAfflHomeInstScopusInstIDs;
-
+    
     @Value("${strategy.authorAffiliationScoringStrategy.collaboratingInstitutions-scopusInstitutionIDs}")
     private String instAfflCollaboratingInstScopusInstIDs;
-
+    
     @Value("${strategy.authorAffiliationScoringStrategy.collaboratingInstitutions-keywords}")
     private String instAfflCollaboratingInstKeywords;
-
+    
     @Value("${strategy.authorAffiliationScoringStrategy.institutionStopwords}")
     private String instAfflInstitutionStopwords;
     
-    @Value("${searchStrategy-leninent-threshold}")
+    @NotNull
+    @Positive(message = "searchStrategy-strict-threshold should be a positive integer. We recommend a number of 1000.")
+    @Value("${searchStrategy-strict-threshold}")
     private double searchStrategyStrictThreshold;
     
-    @Value("${searchStrategy-strict-threshold}")
+    @NotNull
+    @Positive(message = "searchStrategy-leninent-threshold should be a positive integer. We recommend a number of 2000.")
+    @Value("${searchStrategy-leninent-threshold}")
     private double searchStrategyLeninentThreshold;
     
     @Value("${strategy.journalCategoryScore.journalSubfieldScore}")
