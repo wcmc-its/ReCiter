@@ -114,7 +114,7 @@ public class Application {
 	 */
 	@EventListener(ApplicationReadyEvent.class)
 	public void checkScopusPubmedService() {
-		if(scopusService != null && !scopusService.isEmpty()) {
+		if(useScopusArticles && scopusService != null && !scopusService.isEmpty()) {
 			try {
 				URL siteURL = new URL(scopusService + "/swagger-ui.html");
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
@@ -155,11 +155,15 @@ public class Application {
 		}
 		
 		if(pubmedService == null) {
-			log.warn("ReCiter Application will not run without a pubmed service. Please download from https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git and setup Scopus Service.");
+			log.warn("ReCiter Application will not run without a pubmed service. Please download from https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git and setup Pubmed Service.");
 		}
 		
 		if(scopusService == null) {
-			log.warn("ReCiter Application will not run without a scopus service. Please download from https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool.git and setup Pubmed Service.");
+			if(useScopusArticles) {
+				log.warn("The property `use.scopus.articles` is set to true in application.properties file and hence ReCiter Application needs a scopus service. Please download from https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool.git and setup Scopus Service. If you wish to run without a scopus service set that property to false.");
+			} else {
+				log.warn("ReCiter Application will run without a scopus service. To run with scopus service set property `use.scopus.articles` to true in application.properties file and download scopus service from https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool.git and set it up.");
+			}
 		}
 	}
 	
