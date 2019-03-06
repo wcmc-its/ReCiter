@@ -13,6 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
 
+/**
+ * This class deals with import of InstitutionAfid from files and import it into dynamodb
+ * @author szd2013
+ *
+ */
 @Component
 @Slf4j
 public class InstitutionAfidFileImport {
@@ -34,12 +39,12 @@ public class InstitutionAfidFileImport {
 		if(institutionAfids != null 
 				&&
 				institutionAfids.size() == institutionAfIdService.getItemCount()) {
-			log.info("The file Identity.json and the Identity table in DynamoDb is isomorphic and hence skipping import.");
+			log.info("The file InstitutionAfid.json and the InstitutionAfid table in DynamoDb is isomorphic and hence skipping import.");
 		} else {
 			if(institutionAfids != null 
 					&&
 					!institutionAfids.isEmpty()) {
-				log.info("The file Identity.csv and the Identity table in DynamoDb is not isomorphic and hence starting import.");
+				log.info("The file InstitutionAfid.json and the InstitutionAfid table in DynamoDb is not isomorphic and hence starting import.");
 				
 				institutionAfIdService.save(institutionAfids);
 			}

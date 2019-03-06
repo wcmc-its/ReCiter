@@ -1,9 +1,6 @@
 package reciter.database.dyanmodb.files;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.model.Identity;
 import reciter.service.IdentityService;
 
+/**
+ * This class deals with import of Identity from files and import it into dynamodb
+ * @author szd2013
+ *
+ */
 @Component
 @Slf4j
 public class IdentityFileImport {
@@ -43,7 +45,7 @@ public class IdentityFileImport {
 			if(identities != null 
 					&&
 					!identities.isEmpty()) {
-				log.info("The file Identity.csv and the Identity table in DynamoDb is not isomorphic and hence starting import.");
+				log.info("The file Identity.json and the Identity table in DynamoDb is not isomorphic and hence starting import.");
 				
 				identityService.save(identities.stream().map(identity->identity.getIdentity()).collect(Collectors.toList()));
 			}
