@@ -10,6 +10,7 @@
 [![GitHub issues closed](https://img.shields.io/github/issues-closed-raw/wcmc-its/reciter.svg?maxAge=2592000)](https://github.com/wcmc-its/ReCiter/issues)
 [![star this repo](http://githubbadges.com/star.svg?user=wcmc-its&repo=ReCiter&style=flat)](https://github.com/wcmc-its/ReCiter)
 [![fork this repo](http://githubbadges.com/fork.svg?user=wcmc-its&repo=ReCiter&style=flat)](https://github.com/wcmc-its/ReCiter/fork)
+[![Tags](https://img.shields.io/github/tag/wcmc-its/reciter.svg?style=social)](https://github.com/wcmc-its/ReCiter/releases)
 [![Github All Releases](https://img.shields.io/github/downloads/wcmc-its/ReCiter/total.svg)]()
 [![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/wcmc-its/ReCiter/) 
 
