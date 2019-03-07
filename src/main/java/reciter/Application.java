@@ -160,9 +160,9 @@ public class Application {
 		
 		if(scopusService == null) {
 			if(useScopusArticles) {
-				log.warn("The property `use.scopus.articles` is set to true in application.properties file and hence ReCiter Application needs a scopus service. Please download from https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool.git and setup Scopus Service. If you wish to run without a scopus service set that property to false.");
+				log.warn("The property `use.scopus.articles` is set to `true` in the application.properties file. If you haven't done so already, please be sure to install the ReCiter Scopus Retrieval Tool, located at https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool. If you wish to run ReCiter without the Scopus service, set `use.scopus.articles=false`.");
 			} else {
-				log.warn("ReCiter Application will run without a scopus service. To run with scopus service set property `use.scopus.articles` to true in application.properties file and download scopus service from https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool.git and set it up.");
+				log.warn("The property `use.scopus.articles` is set to `false` in the application.properties file, so it will not be using the ReCiter Scopus Retrieval Tool. To install the ReCiter Scopus Retrieval Tool, you would need to go to https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool and set property `use.scopus.articles=true`.");
 			}
 		}
 	}
