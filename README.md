@@ -87,7 +87,7 @@ The ReCiter application depends on the following separate GitHub-hosted reposito
 
 ## Installation
 
-ReCiter can be installed to run locally on an AWS via a cloud formation template.
+ReCiter can be installed to run locally on an AWS via a cloud formation template. A required dependency is the [PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/). The [Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/) is optional, but can have improve overall accuracy by several percent. 
 
 ### Local
 
@@ -117,7 +117,7 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 ## Configuration
 
-- **[PubMed API key](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/blob/master/README.md#configuring-the-api-key)** - Recommended for performance reasons but not necessary. 
+- **[PubMed API key](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/blob/master/README.md#configuring-the-api-key)** - Recommended for performance reasons but not necessary.  
 - **[Scopus API key and instoken](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/blob/master/README.md#configuring-api-key)** - Use of Scopus is optional. It can improve overall accuracy by several percent; Scopus is helpful because it has disambiguated organizational affiliation and verbose first name, especially for earlier articles. Use of the Scopus API is available only for Scopus subscribers. 
 - **[Application.properties](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties)** - All remaining configurations are stored here.
 
