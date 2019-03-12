@@ -19,6 +19,8 @@
 package reciter.controller;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -139,6 +141,9 @@ public class ReCiterController {
 	private String nameIgnoredCoAuthors;
 
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "GoldStandard creation successful"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -167,6 +172,9 @@ public class ReCiterController {
     }
 
     @ApiOperation(value = "Update the goldstandard by passing  a list of GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing list of GoldStandard model(uid, knownPmids, rejectedPmids).")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "GoldStandard List creation successful"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -190,6 +198,9 @@ public class ReCiterController {
     }
 
     @ApiOperation(value = "Get the goldStandard by passing an uid", notes = "This api gets the goldStandard by passing an uid.")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The goldstandard retrieval for supplied uid is successful"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -206,6 +217,9 @@ public class ReCiterController {
     }
 
     @ApiOperation(value = "Retrieve Articles for all UID in Identity Table", response = ResponseEntity.class, notes = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list for given list of uid"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -234,6 +248,9 @@ public class ReCiterController {
     }
 
     @ApiOperation(value = "Retrieve Articles for an UID.", response = ResponseEntity.class, notes = "This API retrieves candidate articles for a given uid from pubmed and its complementing articles from scopus")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -320,6 +337,9 @@ public class ReCiterController {
     }
 
     @ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence.")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -602,6 +622,9 @@ public class ReCiterController {
     }
     
     @ApiOperation(value = "Article retrieval by UID.", response = ReCiterFeature.class, notes = "This api returns all the publication for a supplied uid.")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),

@@ -18,8 +18,6 @@
  *******************************************************************************/
 package reciter;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -28,22 +26,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import reciter.database.dyanmodb.files.IdentityFileImport;
@@ -56,11 +51,11 @@ import reciter.database.dynamodb.model.MeshTerm;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.EngineParameters;
+import reciter.security.APIKey;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
-import reciter.storage.s3.AmazonS3Config;
 
 @Slf4j
 @SpringBootApplication
@@ -95,12 +90,18 @@ public class Application {
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
     
+    @Value("${spring.security.enabled}")
+    private boolean useAPISecurity;
+    
     @Value("${aws.dynamodb.settings.file.import}")
     private boolean isFileImport;
     
     private String scopusService = System.getenv("SCOPUS_SERVICE");
     
     private String pubmedService = System.getenv("PUBMED_SERVICE");
+    
+	@Autowired 
+	private Environment env;
     
     
 
@@ -226,4 +227,20 @@ public class Application {
 	        }
         }
 	}
+	
+
+
+    /**
+     * @return APIKey
+     */
+    @Bean
+    public APIKey apiKeySetter() {
+    	APIKey apiKey = new APIKey();
+    	apiKey.setAdminApiKey(env.getProperty("ADMIN_API_KEY"));
+    	apiKey.setConsumerApiKey(env.getProperty("CONSUMER_API_KEY"));
+    	if(useAPISecurity && (apiKey.getAdminApiKey() == null || apiKey.getConsumerApiKey() == null)) {
+    		throw new BeanCreationException("The ADMIN_API_KEY and CONSUMER_API_KEY should be set in environment variable. Or mark spring.security.enabled as false in application.propeties file.");
+    	}
+        return apiKey;
+    }
 }
