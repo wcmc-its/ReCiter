@@ -1,5 +1,6 @@
 package reciter.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,7 +25,10 @@ public class APISecurityConfig {
     	
 	    private final String principalRequestHeader = "api-key";
 
-	    private String principalRequestValue = System.getenv("ADMIN_API_KEY");;
+	    private String principalRequestValue = System.getenv("ADMIN_API_KEY");
+	    
+	    @Value("${spring.security.enabled}")
+	    private boolean securityEnabled;
     
 	    @Override
 	    protected void configure(HttpSecurity httpSecurity) throws Exception {
@@ -42,19 +46,24 @@ public class APISecurityConfig {
 	                return authentication;
 	            }
 	        });
-	        httpSecurity.
-	            antMatcher("/reciter/**").
-	            csrf().disable().
-	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+	        if(securityEnabled) {
+		        httpSecurity.
+		            antMatcher("/reciter/**").
+		            csrf().disable().
+		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
+		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+	        }
 	    }
 	    
-/*	    @Override
+	    @Override
 	    public void configure(WebSecurity web) throws Exception {
-	        web
-	        .ignoring()
-	        .antMatchers("/reciter/article-retrieval/**");
-	    }*/
+	    	if(!securityEnabled) {
+		        web
+		        .ignoring()
+		        .antMatchers("/reciter/**");
+	    	} 
+	    }
+	    
     }
     
 	/**
@@ -68,6 +77,9 @@ public class APISecurityConfig {
 		private final String principalRequestHeader = "api-key";
 		
         private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
+        
+        @Value("${security.enabled:true}")
+	    private boolean securityEnabled;
         
     	    @Override
     	    protected void configure(HttpSecurity httpSecurity) throws Exception {
@@ -85,11 +97,23 @@ public class APISecurityConfig {
     	                return authentication;
     	            }
     	        });
-    	        httpSecurity.
-    	            antMatcher("/reciter/article-retrieval/**").
-    	            csrf().disable().
-    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-    	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+    	        
+    	        if(securityEnabled) {
+	    	        httpSecurity.
+	    	            antMatcher("/reciter/article-retrieval/**").
+	    	            csrf().disable().
+	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
+	    	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+    	        }
+    	    }
+    	    
+    	    @Override
+    	    public void configure(WebSecurity web) throws Exception {
+    	    	if(!securityEnabled) {
+    		        web
+    		        .ignoring()
+    		        .antMatchers("/reciter/article-retrieval/**");
+    	    	} 
     	    }
      }
 }
