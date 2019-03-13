@@ -25,14 +25,18 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reciter.ApplicationContextHolder;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.dynamodb.model.ESearchResult;
+import reciter.database.dynamodb.model.QueryType;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.ArticleCountEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.service.ESearchResultService;
 
 public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 	
@@ -93,11 +97,28 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		
+		ESearchResultService eSearchResultService = ApplicationContextHolder.getContext().getBean(ESearchResultService.class);
+		ESearchResult eSearchResult = eSearchResultService.findByUid(identity.getUid());
 		reCiterArticles.forEach(reCiterArticle -> {
 		ArticleCountEvidence articleCountEvidence = new ArticleCountEvidence();
 		if(this.numberOfArticles > 0) {
-			articleCountEvidence.setCountArticlesRetrieved(this.numberOfArticles);
-			articleCountEvidence.setArticleCountScore(-(this.numberOfArticles - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+			if(eSearchResult != null
+					&&
+					eSearchResult.getQueryType() != null 
+					&&
+					(eSearchResult.getQueryType() == QueryType.LENIENT_LOOKUP || eSearchResult.getQueryType() == QueryType.STRICT_COMPOUND_NAME_LOOKUP)) {
+				articleCountEvidence.setCountArticlesRetrieved(this.numberOfArticles);
+				articleCountEvidence.setArticleCountScore(-(this.numberOfArticles - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+			} else if(eSearchResult != null
+					&&
+					eSearchResult.getQueryType() != null 
+					&&
+					eSearchResult.getQueryType() == QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP){//Strict Lookup
+				articleCountEvidence.setCountArticlesRetrieved(ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold());
+				articleCountEvidence.setArticleCountScore(-(ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold() - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+			}
+			
 			reCiterArticle.setArticleCountEvidence(articleCountEvidence);
 			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + articleCountEvidence.toString());
 		

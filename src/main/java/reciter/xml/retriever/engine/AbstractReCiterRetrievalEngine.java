@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
+import reciter.database.dynamodb.model.QueryType;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
@@ -95,7 +96,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	 * @param pubMedArticles
 	 * @param uid
 	 */
-	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults) {
+	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults, QueryType queryType) {
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
 		pubMedService.save(pubMedArticleList);
@@ -116,7 +117,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(eSearchPmids.size() > 0) {
-				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids));
+				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
 			}
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
@@ -124,9 +125,10 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(eSearchPmids.size() > 0) {
-				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids));
+				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
 			} else {
 				eSearchResultDb.setRetrievalDate(new Date());
+				eSearchResultDb.setQueryType(queryType);
 				eSearchResultService.save(eSearchResultDb);
 			}
 		}

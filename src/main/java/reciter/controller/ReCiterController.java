@@ -338,7 +338,8 @@ public class ReCiterController {
 
     @ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header"),
+    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query")
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
@@ -623,7 +624,8 @@ public class ReCiterController {
     
     @ApiOperation(value = "Article retrieval by UID.", response = ReCiterFeature.class, notes = "This api returns all the publication for a supplied uid.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header"),
+    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query")
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
