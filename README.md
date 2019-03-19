@@ -117,8 +117,9 @@ Info will be provided with forthcoming Cloud Formation Template...
 
 ## Configuration
 
-- **[PubMed API key](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/blob/master/README.md#configuring-the-api-key)** - Recommended for performance reasons but not necessary.  
+- **[PubMed API key](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/blob/master/README.md#configuring-the-api-key)** - Recommended for performance reasons and to prevent and limit the likelihood National Library of Medicine will throttle you, but otherwise not necessary.  
 - **[Scopus API key and instoken](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/blob/master/README.md#configuring-api-key)** - Use of Scopus is optional. It can improve overall accuracy by several percent; Scopus is helpful because it has disambiguated organizational affiliation and verbose first name, especially for earlier articles. Use of the Scopus API is available only for Scopus subscribers. 
+- **[Security](https://github.com/wcmc-its/ReCiter/wiki/Implementing-security)** - Each of ReCiter's APIs can be configured to restrict access to only those requests which provide the correct API key.
 - **[Application.properties](https://github.com/wcmc-its/ReCiter/wiki/Configuring-application.properties)** - All remaining configurations are stored here.
 
 
