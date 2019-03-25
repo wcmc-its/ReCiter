@@ -42,6 +42,7 @@ import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameUtils;
+import reciter.utils.ThreadDelay;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 @Component("aliasReCiterRetrievalEngine")
@@ -110,7 +111,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	@Override
 	public boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
-		ExecutorService executorService = Executors.newFixedThreadPool(10);
+		ExecutorService executorService = Executors.newWorkStealingPool(15);//Executors.newFixedThreadPool(10);
 		for (Identity identity : identities) {
 			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate, refreshFlag));
 		}
@@ -150,9 +151,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType);
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}
-		
-		
-		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles = retrievalResult.getPubMedArticles();
@@ -184,7 +182,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType);
 		uniquePmids.addAll(pubMedArticles.keySet());
-		
+
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, false);
@@ -219,11 +217,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				useStrictQueryOnly) {
 			//Check to see if there is an actual need to do query for all steps
 			if(identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 				RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r2.getPubMedArticles());
 				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType);
@@ -233,34 +226,16 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
 			}
 			
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
-			
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r3.getPubMedArticles());
 			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType);
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
-			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
 			
 			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
 				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r4.getPubMedArticles());
 				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType);
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
-				
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 				
 			} else {
 				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
@@ -276,22 +251,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
 			}
 			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
-			
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
 			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType);
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
-			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
 			
 			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
 				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -303,22 +266,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
 			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
-			
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r8.getPubMedArticles());
 			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType);
 			uniquePmids.addAll(r8.getPubMedArticles().keySet());
 			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
 		}
 		
 		
@@ -436,7 +388,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType);
 		uniquePmids.addAll(pubMedArticles.keySet());
-		
+
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, false);
@@ -474,12 +426,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				useStrictQueryOnly) {
 			
 			if(identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
-				
 				RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r2.getPubMedArticles());
 				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType);
@@ -487,23 +433,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			} else {
 				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
 			}
-			
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
-			
+
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r3.getPubMedArticles());
 			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType);
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
-			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
 			
 			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
 				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
@@ -511,11 +445,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType);
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
 				
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					slf4jLogger.error("InterruptedException", e);
-				}
 			} else {
 				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
 			}
@@ -529,23 +458,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
 			}
 			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
-			
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
 			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType);
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
-			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
-			
+
 			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
 				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r7.getPubMedArticles());
@@ -555,13 +472,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
-			
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				slf4jLogger.error("InterruptedException", e);
-			}
-			
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r8.getPubMedArticles());
 			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType);
