@@ -729,7 +729,7 @@ public class ReCiterController {
     }
 
 
-    private synchronized EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
+    private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
         // find identity
         Identity identity = identityService.findByUid(uid);
         ESearchResult eSearchResults = null;
@@ -750,19 +750,19 @@ public class ReCiterController {
             slf4jLogger.info("No such entity exists: ", e);
         }
         slf4jLogger.info("eSearchResults size {}", eSearchResults);
-        //This is when Pubmed returns 0 results.
-        if(eSearchResults == null) {
-        	return null;
-        }
+		/*
+		 * //This is when Pubmed returns 0 results. if(eSearchResults == null) { return
+		 * null; }
+		 */
         Set<Long> pmids = new HashSet<>();
-        
-        for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
-            if (!strategyParameters.isUseGoldStandardEvidence() && StringUtils.equalsIgnoreCase(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
-                slf4jLogger.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
-            } else {
-                pmids.addAll(eSearchPmid.getPmids());
-            }
-
+        if(eSearchResults != null && eSearchResults.getESearchPmids() != null) {
+	        for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
+	            if (!strategyParameters.isUseGoldStandardEvidence() && StringUtils.equalsIgnoreCase(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
+	                slf4jLogger.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
+	            } else {
+	                pmids.addAll(eSearchPmid.getPmids());
+	            }
+	        }
         }
 
         // create a list of pmids to pass to search
