@@ -729,11 +729,12 @@ public class ReCiterController {
     }
 
 
-    private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
+    private synchronized EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
         // find identity
         Identity identity = identityService.findByUid(uid);
         ESearchResult eSearchResults = null;
-        // find search results for this identity
+	        // find search results for this identity
+	        //To Avoid 404 errors when multi threading
         try {
         	eSearchResults = eSearchResultService.findByUid(uid);
             if (eSearchResults == null) {
