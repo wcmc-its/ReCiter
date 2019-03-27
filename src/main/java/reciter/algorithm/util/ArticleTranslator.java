@@ -428,19 +428,19 @@ public class ArticleTranslator {
     	if(reCiterArticle.getPublicationTypeScopus() != null && scopusArticle.getSubType() != null) {
     		if(scopusArticle.getSubType().equalsIgnoreCase("cp")
     				||
-    				(reCiterArticle.getArticleTitle().contains("proceedings") && (reCiterArticle.getArticleTitle().contains("20") || reCiterArticle.getArticleTitle().contains("19")))
+    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("proceedings") && (reCiterArticle.getArticleTitle().contains("20") || reCiterArticle.getArticleTitle().contains("19")))
     				||
-    				(reCiterArticle.getArticleTitle().contains("proceedings") && reCiterArticle.getArticleTitle().contains("symposi"))
+    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("proceedings") && reCiterArticle.getArticleTitle().contains("symposi"))
     				||
-    				(reCiterArticle.getArticleTitle().contains("proceedings") && reCiterArticle.getArticleTitle().contains("congress"))
+    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("proceedings") && reCiterArticle.getArticleTitle().contains("congress"))
     				||
-    				reCiterArticle.getArticleTitle().contains("conference")
+    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("conference"))
     				||
-    				reCiterArticle.getArticleTitle().contains("workshop")
+    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("workshop"))
     				||
-    				reCiterArticle.getArticleTitle().contains("colloqui")
+    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("colloqui"))
     				||
-    				reCiterArticle.getArticleTitle().contains("meeting")) {
+    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("meeting"))) {
     			publicationTypeCanonical = "Conference Paper";
     		} else if(scopusArticle.getSubType().equalsIgnoreCase("re")) {
     			publicationTypeCanonical = "Review";
