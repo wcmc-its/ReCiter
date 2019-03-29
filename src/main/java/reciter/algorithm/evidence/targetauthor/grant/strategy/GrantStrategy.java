@@ -118,16 +118,18 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 	}
 	
 	private void sanitizeIdentityGrants(Identity identity, Set<String> sanitizedIdentityGrants) {
-		for (String identityGrantId : identity.getGrants()) {
-			//Remove leading zeroes
-			//Paul confirmed identity grants(NIH) always starts with alphabets with numbers so excluding the possibility of grants with numbers and leading zeroes e.g. 0012301 
-			if(identityGrantId.matches("^(?i)[A-Z]+0+.*$")) { //This is checking if grant starts with Alphabets with 0 e.g. DP001021 this will be true but not for DP11201
-				int zeroIndex = identityGrantId.indexOf("0");
-				String grantId = identityGrantId.substring(zeroIndex, identityGrantId.length()).replaceAll("^[0]+", "");
-				//identityGrantId.replaceAll("^[A-Z0]+(?!$)/i/g", "");
-				sanitizedIdentityGrants.add(new StringBuilder(identityGrantId.substring(0, zeroIndex) + grantId).insert(2, "-").toString());
-			} else {
-				sanitizedIdentityGrants.add(new StringBuilder(identityGrantId).insert(2, "-").toString());
+		if(identity.getGrants() != null && identity.getGrants().isEmpty()) {
+			for (String identityGrantId : identity.getGrants()) {
+				//Remove leading zeroes
+				//Paul confirmed identity grants(NIH) always starts with alphabets with numbers so excluding the possibility of grants with numbers and leading zeroes e.g. 0012301 
+				if(identityGrantId.matches("^(?i)[A-Z]+0+.*$")) { //This is checking if grant starts with Alphabets with 0 e.g. DP001021 this will be true but not for DP11201
+					int zeroIndex = identityGrantId.indexOf("0");
+					String grantId = identityGrantId.substring(zeroIndex, identityGrantId.length()).replaceAll("^[0]+", "");
+					//identityGrantId.replaceAll("^[A-Z0]+(?!$)/i/g", "");
+					sanitizedIdentityGrants.add(new StringBuilder(identityGrantId.substring(0, zeroIndex) + grantId).insert(2, "-").toString());
+				} else {
+					sanitizedIdentityGrants.add(new StringBuilder(identityGrantId).insert(2, "-").toString());
+				}
 			}
 		}
 	}

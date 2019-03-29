@@ -72,10 +72,13 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			//sum += executeStrategy(reCiterArticle, identity);
-			List<KnownRelationship> relationships = identity.getKnownRelationships();
+			List<KnownRelationship> relationships = new ArrayList<KnownRelationship>();
+			if(identity.getKnownRelationships() != null) {
+				relationships = identity.getKnownRelationships();
+			}
 			List<RelationshipEvidence> relationshipEvidences = new ArrayList<>();
 			
-			if (relationships != null) {
+			if (relationships != null && !relationships.isEmpty()) {
 				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 					Set<String> relationshipTypes = new HashSet<String>();
 					// do not match target author's name
