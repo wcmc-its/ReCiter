@@ -118,7 +118,7 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 	}
 	
 	private void sanitizeIdentityGrants(Identity identity, Set<String> sanitizedIdentityGrants) {
-		if(identity.getGrants() != null && identity.getGrants().isEmpty()) {
+		if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
 			for (String identityGrantId : identity.getGrants()) {
 				//Remove leading zeroes
 				//Paul confirmed identity grants(NIH) always starts with alphabets with numbers so excluding the possibility of grants with numbers and leading zeroes e.g. 0012301 
