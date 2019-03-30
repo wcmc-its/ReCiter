@@ -154,11 +154,15 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 													relationshipEvidenceInList.setRelationshipMatchModifierManagerSeniorAuthor(ReCiterArticleScorer.strategyParameters.getRelationshipMatchModifierManagerSeniorAuthor());
 												}
 											}
-											relationshipEvidenceInList.getRelationshipType().add(authorName.getType().toString());
+											if(authorName.getType() != null) {
+												relationshipEvidenceInList.getRelationshipType().add(authorName.getType().toString());
+											}
 											continue;
 										}
 								} else {
-									relationshipTypes.add(authorName.getType().toString());
+									if(authorName.getType() != null) {
+										relationshipTypes.add(authorName.getType().toString());
+									}
 								}
 								relationshipEvidences.add(relationshipEvidence);
 							}
