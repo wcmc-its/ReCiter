@@ -1,3 +1,6 @@
+
+
+
 package reciter.algorithm.evidence.targetauthor;
 
 import java.util.ArrayList;
@@ -144,29 +147,8 @@ public class TargetAuthorSelection {
 		
 	}
 	
-	//Step 1 : attempt email match if match then automatically its a target author
-	public int checkEmailMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
-		String affiliation = null;
-		for (ReCiterAuthor author : authors) {
-			if (author.getAffiliation() != null && !author.getAffiliation().isEmpty()) {
-				affiliation = author.getAffiliation();
-				if(!identity.getEmails().isEmpty() && affiliation != null) {
-					for(String email: identity.getEmails()) {
-						if(affiliation.contains(email)) {
-							author.setTargetAuthor(true);
-							matchCount++;
-							multipleMarkedTargetAuthor.add(author);
-						}
-					}
-				}
-			}
-			else
-				author.setTargetAuthor(false);
-		}
-		return matchCount;
-	}
 	
-	//Step 2 : Attempt strict last name, strict middle name, and strict first name match
+	//Step 1 : Attempt strict last name, strict middle name, and strict first name match
 	public int checkExactLastMiddleFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -216,7 +198,7 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Step 3 : Attempt strict last name, middle initial, and strict first name match
+	//Step 2 : Attempt strict last name, middle initial, and strict first name match
 	public int checkExactLastMiddleInitialFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -265,7 +247,7 @@ public class TargetAuthorSelection {
 		return count;
 	}
 		
-	//Step 4 : Attempt strict last name and strict first name match
+	//Step 3 : Attempt strict last name and strict first name match
 	public int checkExactLastFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -309,7 +291,7 @@ public class TargetAuthorSelection {
 		}
 		return count;
 	}
-	//Attempt strict last name and partial first name match, in which article is substring of identity
+	// Step 4: Attempt strict last name and partial first name match, in which article is substring of identity
 	public int checkExactLastFirstNamePartialSubstringIdentityMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -354,7 +336,7 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Attempt strict last name and partial first name match, in which identity is substring of article.
+	// Step 5: Attempt strict last name and partial first name match, in which identity is substring of article.
 	public int checkExactLastFirstNamePartialIdentityPartialSubstringMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -399,7 +381,7 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Step 5 : Attempt strict last name and first initial match
+	//Step 6 : Attempt strict last name and first initial match
 	public int checkExactLastFirstInitialNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -444,7 +426,31 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Step 6:Attempt firstInitial to middleInitial, and middleInitial to firstInitial match with strict lastname match
+
+	//Step 7 : attempt email match if match then automatically its a target author
+	public int checkEmailMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+		String affiliation = null;
+		for (ReCiterAuthor author : authors) {
+			if (author.getAffiliation() != null && !author.getAffiliation().isEmpty()) {
+				affiliation = author.getAffiliation();
+				if(!identity.getEmails().isEmpty() && affiliation != null) {
+					for(String email: identity.getEmails()) {
+						if(affiliation.contains(email)) {
+							author.setTargetAuthor(true);
+							matchCount++;
+							multipleMarkedTargetAuthor.add(author);
+						}
+					}
+				}
+			}
+			else
+				author.setTargetAuthor(false);
+		}
+		return matchCount;
+	}
+
+
+	//Step 8: Attempt firstInitial to middleInitial, and middleInitial to firstInitial match with strict lastname match
 	public int checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -509,7 +515,7 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Step 7: Attempt partial last name and exact first initial match
+	//Step 9: Attempt partial last name and exact first initial match
 	public int checkPartialLastNameFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
         int count = 0;
         if(matchCount > 1) {
@@ -559,7 +565,7 @@ public class TargetAuthorSelection {
 	}
 	
 	
-	//Step 8: attempt lastName match from article to identity using all name aliases in identity table
+	//Step 10: attempt lastName match from article to identity using all name aliases in identity table
 	public int checkLastNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -599,7 +605,7 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Step 9: attempt strict firstname match
+	//Step 11: attempt strict firstname match
 	public int checkFirstNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
@@ -639,7 +645,7 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	//Step 10: Attempt full last name match from article to partial last name from identity. (e.g., Somersan-Karakaya)
+	//Step 12: Attempt full last name match from article to partial last name from identity. (e.g., Somersan-Karakaya)
 	public int checkLastNameFullArticleToIdentityPartialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
