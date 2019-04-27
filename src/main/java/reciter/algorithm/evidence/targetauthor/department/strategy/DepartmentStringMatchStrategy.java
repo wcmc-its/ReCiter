@@ -198,6 +198,30 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 											||
 											StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment)
 											||
+										    	StringUtils.containsIgnoreCase(articleAffiliation, "Deprtment of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Deparment of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departmnt of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departmet of " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departament of  " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departement de  " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Dipartimento Di  " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "División de " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departamento de " + identityDepartment)
+											|| 
+											StringUtils.containsIgnoreCase(articleAffiliation, "Departament de " + identityDepartment)
+											||
+											StringUtils.containsIgnoreCase(articleAffiliation, "Divisione di " + identityDepartment)
+											|| 
+											StringUtils.containsIgnoreCase(articleAffiliation, "División de " + identityDepartment)
+											||			
 											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Department")
 											||
 											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Division")
