@@ -3,6 +3,7 @@ package reciter.algorithm.evidence.targetauthor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,8 +14,14 @@ import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 
+/**
+ * @author szd2013
+ * <p>This class identifies target author for a ReCiterArticle based on names in Idenity table<p>
+ *
+ */
 public class TargetAuthorSelection {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(TargetAuthorSelection.class);
@@ -28,13 +35,17 @@ public class TargetAuthorSelection {
 	public void identifyTargetAuthor(List<ReCiterArticle> reciterArticles, Identity identity) {
 		
 		for(ReCiterArticle reciterArticle: reciterArticles) {
-			
-			/*if(reciterArticle.getArticleId() == 25654307) {
+			//Setting this for debug purposes
+			if(reciterArticle.getArticleId() == 15590364) {
 				slf4jLogger.info("here");
-			}*/
+			}
 			ReCiterArticleAuthors authors = reciterArticle.getArticleCoAuthors();
-			Set<ReCiterAuthor> multipleMarkedTargetAuthor = new HashSet<ReCiterAuthor>();
-			if (authors != null) {
+			Set<Entry<ReCiterAuthor, ReCiterAuthor>> sanitizedAritcleAuthors = authors.getSanitizedAuthorMap().entrySet();
+			List<AuthorName> sanitizedIdentityAuthors = new ArrayList<AuthorName>(identity.getSanitizedNames().values());
+			
+			//Set<ReCiterAuthor> multipleMarkedTargetAuthor = new HashSet<ReCiterAuthor>();
+			Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>();
+			if (authors != null && !sanitizedAritcleAuthors.isEmpty()) {
 				int emailMatchcount = 0;
 				int lastMiddleFirstMatchCount = 0;
 				int lastNameMiddleInitialFirstMatchCount = 0;
@@ -48,79 +59,79 @@ public class TargetAuthorSelection {
 				int firstNameMatchCount = 0;
 				int fullLastNameToIdentityPartialMatchCount = 0;
 				
-	            emailMatchcount = checkEmailMatch(authors.getAuthors(), identity, emailMatchcount, multipleMarkedTargetAuthor);
+	            emailMatchcount = checkEmailMatch(sanitizedAritcleAuthors, identity, emailMatchcount, multipleMarkedTargetAuthor);
 	            if(emailMatchcount == 0 || emailMatchcount > 1)
-	            	lastMiddleFirstMatchCount = checkExactLastMiddleFirstNameMatch(authors.getAuthors(), identity, emailMatchcount, multipleMarkedTargetAuthor);
+	            	lastMiddleFirstMatchCount = checkExactLastMiddleFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, emailMatchcount, multipleMarkedTargetAuthor);
 	            if(emailMatchcount == 1) {	
 	            	slf4jLogger.info("Email Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastMiddleFirstMatchCount == 0 || lastMiddleFirstMatchCount > 1)
-	            	lastNameMiddleInitialFirstMatchCount = checkExactLastMiddleInitialFirstNameMatch(authors.getAuthors(), identity, lastMiddleFirstMatchCount, multipleMarkedTargetAuthor);
+	            	lastNameMiddleInitialFirstMatchCount = checkExactLastMiddleInitialFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastMiddleFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastMiddleFirstMatchCount ==1) {
 	            	slf4jLogger.info("Exact Last Name, Middle Name and First Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameMiddleInitialFirstMatchCount == 0 || lastNameMiddleInitialFirstMatchCount > 1)
-	            	lastNameFirstNameMatchCount = checkExactLastFirstNameMatch(authors.getAuthors(), identity, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
+	            	lastNameFirstNameMatchCount = checkExactLastFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameMiddleInitialFirstMatchCount == 1) {
 	            	slf4jLogger.info("Last Name Middle Initial and First Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstNameMatchCount == 0 || lastNameFirstNameMatchCount > 1)
-	            	lastNameFirstNameSubstringIdentityMatchCount = checkExactLastFirstNamePartialSubstringIdentityMatch(authors.getAuthors(), identity, lastNameFirstNameMatchCount, multipleMarkedTargetAuthor);
+	            	lastNameFirstNameSubstringIdentityMatchCount = checkExactLastFirstNamePartialSubstringIdentityMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstNameMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstNameMatchCount == 1) {
 	            	slf4jLogger.info("Last Name First Name exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstNameSubstringIdentityMatchCount == 0 || lastNameFirstNameSubstringIdentityMatchCount > 1)
-	            	lastNameFirstNameIdentitySubstringMatchCount = checkExactLastFirstNamePartialIdentityPartialSubstringMatch(authors.getAuthors(), identity, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
+	            	lastNameFirstNameIdentitySubstringMatchCount = checkExactLastFirstNamePartialIdentityPartialSubstringMatch(authors.getSanitizedAuthorMap().entrySet(), sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstNameSubstringIdentityMatchCount == 1) {
 	            	slf4jLogger.info("Last Name First Name partial match of Identity Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstNameIdentitySubstringMatchCount == 0 || lastNameFirstNameIdentitySubstringMatchCount > 1)
-	            	lastNameFirstInitialMatchCount = checkExactLastFirstInitialNameMatch(authors.getAuthors(), identity, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
+	            	lastNameFirstInitialMatchCount = checkExactLastFirstInitialNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstNameIdentitySubstringMatchCount == 1) {
 	            	slf4jLogger.info("Last Name Identity First name partial of Article Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstInitialMatchCount == 0 || lastNameFirstInitialMatchCount > 1)
-	            	middleToFirstInitialAndFirstInitialToMiddleMatchCount = checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(authors.getAuthors(), identity, lastNameFirstInitialMatchCount, multipleMarkedTargetAuthor);
+	            	middleToFirstInitialAndFirstInitialToMiddleMatchCount = checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstInitialMatchCount == 1) {
 	            	slf4jLogger.info("Last Name First Initial exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 0 || middleToFirstInitialAndFirstInitialToMiddleMatchCount > 1)
-	            	lastNamePartialFirstInitialMatchCount = checkPartialLastNameFirstInitialMatch(authors.getAuthors(), identity, middleToFirstInitialAndFirstInitialToMiddleMatchCount, multipleMarkedTargetAuthor);
+	            	lastNamePartialFirstInitialMatchCount = checkPartialLastNameFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, middleToFirstInitialAndFirstInitialToMiddleMatchCount, multipleMarkedTargetAuthor);
 	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 1) {
 	            	slf4jLogger.info("Middle intial to first initial and first intial to middle initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNamePartialFirstInitialMatchCount == 0 || lastNamePartialFirstInitialMatchCount > 1)
-	            	lastNameMatchCount = checkLastNameExactMatch(authors.getAuthors(), identity, lastNamePartialFirstInitialMatchCount, multipleMarkedTargetAuthor);
+	            	lastNameMatchCount = checkLastNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNamePartialFirstInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNamePartialFirstInitialMatchCount == 1) {
 	            	slf4jLogger.info("Last Name Partial First Initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameMatchCount == 0 || lastNameMatchCount > 1)
-	            	firstNameMatchCount = checkFirstNameExactMatch(authors.getAuthors(), identity, lastNameMatchCount, multipleMarkedTargetAuthor);
+	            	firstNameMatchCount = checkFirstNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameMatchCount == 1) {
 	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(firstNameMatchCount == 0 || firstNameMatchCount > 1)
-	            	fullLastNameToIdentityPartialMatchCount = checkLastNameFullArticleToIdentityPartialMatch(authors.getAuthors(), identity, firstNameMatchCount, multipleMarkedTargetAuthor);
+	            	fullLastNameToIdentityPartialMatchCount = checkLastNameFullArticleToIdentityPartialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameMatchCount, multipleMarkedTargetAuthor);
 	            if(firstNameMatchCount == 1) {
 	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
@@ -145,38 +156,44 @@ public class TargetAuthorSelection {
 	}
 	
 	//Step 1 : attempt email match if match then automatically its a target author
-	public int checkEmailMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkEmailMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, Identity identity, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		String affiliation = null;
-		for (ReCiterAuthor author : authors) {
-			if (author.getAffiliation() != null && !author.getAffiliation().isEmpty()) {
-				affiliation = author.getAffiliation();
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if (originalAuthor.getAffiliation() != null && !originalAuthor.getAffiliation().isEmpty()) {
+				affiliation = originalAuthor.getAffiliation();
 				if(!identity.getEmails().isEmpty() && affiliation != null) {
 					for(String email: identity.getEmails()) {
 						if(affiliation.contains(email)) {
 							author.setTargetAuthor(true);
+							originalAuthor.setTargetAuthor(true);
 							matchCount++;
-							multipleMarkedTargetAuthor.add(author);
+							multipleMarkedTargetAuthor.add(entry);
 						}
 					}
 				}
 			}
-			else
+			else {
 				author.setTargetAuthor(false);
+				originalAuthor.setTargetAuthor(false);
+			}
 		}
 		return matchCount;
 	}
 	
 	//Step 2 : Attempt strict last name, strict middle name, and strict first name match
-	public int checkExactLastMiddleFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkExactLastMiddleFirstNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleName() != null &&
-					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null && identity.getPrimaryName().getMiddleName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleName().trim())) &&
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getMiddleName() != null && alternateName.getFirstName() != null && alternateName.getLastName() != null &&
@@ -186,14 +203,32 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&&
+							sanitizedIdentityName.getMiddleName() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getMiddleName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName().trim()), 
 									ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleName().trim())) &&
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
@@ -204,9 +239,27 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&&
+							sanitizedIdentityName.getMiddleName() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getMiddleName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -217,16 +270,17 @@ public class TargetAuthorSelection {
 	}
 	
 	//Step 3 : Attempt strict last name, middle initial, and strict first name match
-	public int checkExactLastMiddleInitialFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkExactLastMiddleInitialFirstNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null &&
-					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null && identity.getPrimaryName().getMiddleInitial() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) &&
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && alternateName.getMiddleInitial() != null &&
@@ -236,14 +290,32 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&&
+							sanitizedIdentityName.getMiddleInitial() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getMiddleInitial()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleInitial().trim())) &&
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && alternateName.getMiddleInitial() != null &&
@@ -253,9 +325,27 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&&
+							sanitizedIdentityName.getMiddleInitial() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getMiddleInitial()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -266,16 +356,17 @@ public class TargetAuthorSelection {
 	}
 		
 	//Step 4 : Attempt strict last name and strict first name match
-	public int checkExactLastFirstNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkExactLastFirstNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null &&
-					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -283,14 +374,28 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -298,9 +403,23 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -310,16 +429,17 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	//Attempt strict last name and partial first name match, in which article is substring of identity
-	public int checkExactLastFirstNamePartialSubstringIdentityMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkExactLastFirstNamePartialSubstringIdentityMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null &&
-					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -327,14 +447,28 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName()), ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -342,9 +476,23 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName()), ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -355,16 +503,17 @@ public class TargetAuthorSelection {
 	}
 	
 	//Attempt strict last name and partial first name match, in which identity is substring of article.
-	public int checkExactLastFirstNamePartialIdentityPartialSubstringMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkExactLastFirstNamePartialIdentityPartialSubstringMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null &&
-					identity.getPrimaryName().getFirstName() != null && identity.getPrimaryName().getLastName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -372,14 +521,28 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null && alternateName.getLastName() != null && 
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -387,9 +550,23 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -400,16 +577,17 @@ public class TargetAuthorSelection {
 	}
 	
 	//Step 5 : Attempt strict last name and first initial match
-	public int checkExactLastFirstInitialNameMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkExactLastFirstInitialNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null &&
-					identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getLastName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null && alternateName.getLastName() != null &&
 									ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -417,14 +595,28 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstInitial())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
+					/*if((StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) && 
 							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim()))) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstInitial() != null && alternateName.getLastName() != null &&
 									ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()))
@@ -432,9 +624,23 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName()))
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstInitial())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -445,16 +651,17 @@ public class TargetAuthorSelection {
 	}
 	
 	//Step 6:Attempt firstInitial to middleInitial, and middleInitial to firstInitial match with strict lastname match
-	public int checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null && 
-					identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getLastName() != null && identity.getPrimaryName().getMiddleInitial() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null && author.getAuthorName().getMiddleInitial() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
+					/*if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
 							author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 && 
 							identity.getPrimaryName().getMiddleInitial() != null && identity.getPrimaryName().getMiddleInitial().length() > 0 &&
 							identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial().length() > 0 &&
@@ -473,12 +680,33 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 
+							&& 
+							author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 
+							&& 
+							sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null && sanitizedIdentityName.getFirstInitial().length() > 0
+							&&
+							sanitizedIdentityName.getMiddleInitial() != null && sanitizedIdentityName.getMiddleInitial().length() > 0
+							&& 
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getMiddleInitial().trim()))) //FirstInitial to MiddleInitial
+							&&
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstInitial().trim())))//MiddleInitial to First Initial
+							&&
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName().trim())))//Exact lastname match
+						    )) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 				else if(matchCount == 0) {
-					if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
+					/*if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 && 
 							author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 && 
 							identity.getPrimaryName().getMiddleInitial() != null && identity.getPrimaryName().getMiddleInitial().length() > 0 &&
 							identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial().length() > 0 &&
@@ -497,9 +725,30 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0 
+							&& 
+							author.getAuthorName().getMiddleInitial() != null && author.getAuthorName().getMiddleInitial().length() > 0 
+							&& 
+							sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null && sanitizedIdentityName.getFirstInitial().length() > 0
+							&&
+							sanitizedIdentityName.getMiddleInitial() != null && sanitizedIdentityName.getMiddleInitial().length() > 0
+							&& 
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getMiddleInitial().trim()))) //FirstInitial to MiddleInitial
+							&&
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getMiddleInitial().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstInitial().trim())))//MiddleInitial to First Initial
+							&&
+							(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName().trim())))//Exact lastname match
+						    )) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -510,16 +759,17 @@ public class TargetAuthorSelection {
 	}
 	
 	//Step 7: Attempt partial last name and exact first initial match
-	public int checkPartialLastNameFirstInitialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkPartialLastNameFirstInitialMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
         int count = 0;
         if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null &&
-					identity.getPrimaryName().getFirstInitial() != null && identity.getPrimaryName().getLastName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if((ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+					/*if((ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null && 
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).contains(ReCiterStringUtil.deAccent(alternateName.getLastName())))) //Last Name partial Match
 						&&
@@ -530,12 +780,26 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstInitial()))
+							&& 
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 				else if(matchCount == 0) {
-					if((ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+					/*if((ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()).contains(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null && 
 							author.getAuthorName().getLastName().contains(alternateName.getLastName()))) //Last Name partial Match
 						&&
@@ -546,9 +810,23 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
+							&& 
+							sanitizedIdentityName.getLastName() != null
+							&& 
+							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstInitial()))
+							&& 
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -560,36 +838,58 @@ public class TargetAuthorSelection {
 	
 	
 	//Step 8: attempt lastName match from article to identity using all name aliases in identity table
-	public int checkLastNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkLastNameExactMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getLastName() != null && identity.getPrimaryName().getLastName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getLastName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+					/*if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName().trim())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
+					/*if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
 							ReCiterStringUtil.deAccent(author.getAuthorName().getLastName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName())))) {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName().trim())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -600,36 +900,58 @@ public class TargetAuthorSelection {
 	}
 	
 	//Step 9: attempt strict firstname match
-	public int checkFirstNameExactMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkFirstNameExactMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getFirstName() != null && identity.getPrimaryName().getFirstName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim())) ||
+					/*if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null &&
 							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName().trim())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 					
 					
 				}
 				else if(matchCount == 0) {
-					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim())) ||
+					/*if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getFirstName() != null &&
 							ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstName())))) {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&&
+							StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstName().trim()), ReCiterStringUtil.deAccent(sanitizedIdentityName.getFirstName().trim())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
@@ -640,36 +962,58 @@ public class TargetAuthorSelection {
 	}
 	
 	//Step 10: Attempt full last name match from article to partial last name from identity. (e.g., Somersan-Karakaya)
-	public int checkLastNameFullArticleToIdentityPartialMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount, Set<ReCiterAuthor> multipleMarkedTargetAuthor) {
+	public int checkLastNameFullArticleToIdentityPartialMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
 		int count = 0;
 		if(matchCount > 1) {
-			authors = new ArrayList<ReCiterAuthor>(multipleMarkedTargetAuthor);
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
 		}
-		for (ReCiterAuthor author : authors) {
-			if(author.getAuthorName().getLastName() != null && identity.getPrimaryName().getLastName() != null) {
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getLastName() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if(StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())) 
+					/*if(StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())) 
 							||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
 									StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName())))) {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&&
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())))) {
+						author.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						originalAuthor.setTargetAuthor(true);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 				else if(matchCount == 0) {
-					if(StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())) 
+					/*if(StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(identity.getPrimaryName().getLastName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())) 
 							||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> alternateName.getLastName() != null &&
 									StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getLastName()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName())))) {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(author);
 						count++;
+					}*/
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&&
+							StringUtils.containsIgnoreCase(ReCiterStringUtil.deAccent(sanitizedIdentityName.getLastName().trim()), ReCiterStringUtil.deAccent(author.getAuthorName().getLastName().trim())))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
 					}
-					else
+					else {
 						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
 				}
 			}
 		}
