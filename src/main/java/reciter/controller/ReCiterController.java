@@ -60,6 +60,7 @@ import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeatures;
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
@@ -73,6 +74,7 @@ import reciter.service.ScopusService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
+import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 import java.io.IOException;
@@ -794,11 +796,15 @@ public class ReCiterController {
         for (PubMedArticle pubMedArticle : pubMedArticles) {
             long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
             if (map.containsKey(pmid)) {
-                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid), nameIgnoredCoAuthors));
+                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid), nameIgnoredCoAuthors, strategyParameters));
             } else {
-                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors));
+                reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors, strategyParameters));
             }
         }
+        
+        //Sanitize Identity names
+        AuthorNameSanitizationUtils authorNameSanitizationUtils = new AuthorNameSanitizationUtils(strategyParameters);
+        identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
 
         // calculate precision and recall
         EngineParameters parameters = new EngineParameters();
