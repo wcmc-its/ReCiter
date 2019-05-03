@@ -85,10 +85,10 @@ public class AuthorNameSanitizationUtils {
 			for(ReCiterAuthor authorName: reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				AuthorName articleAuthor = new AuthorName();
 				if(authorName.getAuthorName().getFirstName() != null) {
-					articleAuthor.setFirstName(authorName.getAuthorName().getFirstName().replaceAll("[-.\"() ]", ""));
+					articleAuthor.setFirstName(ReCiterStringUtil.deAccent(authorName.getAuthorName().getFirstName().replaceAll("[-.\"() ]", "")));
 				}
 				if(authorName.getAuthorName().getLastName() != null) {
-					articleAuthor.setLastName(authorName.getAuthorName().getLastName().replaceAll("[-.\",()\\s]|(" + generateSuffixRegex() + ")$", ""));
+					articleAuthor.setLastName(ReCiterStringUtil.deAccent(authorName.getAuthorName().getLastName().replaceAll("[-.\",()\\s]|(" + generateSuffixRegex() + ")$", "")));
 				}
 				ReCiterAuthor sanitizedReCiterAuthor = new ReCiterAuthor(articleAuthor, authorName.getAffiliation());
 				sanitizedReCiterAuthor.setRank(authorName.getRank());
@@ -122,38 +122,38 @@ public class AuthorNameSanitizationUtils {
 					if(identity.getPrimaryName().getFirstName().contains("\"") || (identity.getPrimaryName().getFirstName().contains("(") && identity.getPrimaryName().getFirstName().contains(")"))) {
 						firstName = identity.getPrimaryName().getFirstName().replaceAll("[-.,()\\s]", "").replaceAll("\"([^\"]*)\"|(\"([^\"]*)\")|(([a-z]*))/i/g", "");
 						if(firstName !=null) {
-							additionalName.setFirstName(firstName);
+							additionalName.setFirstName(ReCiterStringUtil.deAccent(firstName));
 						}
 						Pattern pattern = Pattern.compile("\"([^\"]*)\"|(\"([^\"]*)\")|(([a-z]*))/i/g");
 						Matcher matcher = pattern.matcher(identity.getPrimaryName().getFirstName());
 						while(matcher.find()) {
-							identityPrimaryName.setFirstName(matcher.group().replaceAll("\"", ""));
+							identityPrimaryName.setFirstName(ReCiterStringUtil.deAccent(matcher.group().replaceAll("\"", "")));
 						}
 					} else {
-						identityPrimaryName.setFirstName(identity.getPrimaryName().getFirstName().replaceAll("[-.,()\\s]", ""));
+						identityPrimaryName.setFirstName(ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstName().replaceAll("[-.,()\\s]", "")));
 					}
 				}
 				if(identity.getPrimaryName().getMiddleName() != null) {
 					if(identity.getPrimaryName().getMiddleName().contains("\"") || (identity.getPrimaryName().getMiddleName().contains("(") && identity.getPrimaryName().getMiddleName().contains(")"))) {
 						middleName = identity.getPrimaryName().getMiddleName().replaceAll("[-.,()\\s]", "").replaceAll("\"([^\"]*)\"|(\"([^\"]*)\")|(([a-z]*))/i/g", "");
 						if(middleName !=null) {
-							additionalName.setMiddleName(middleName);
+							additionalName.setMiddleName(ReCiterStringUtil.deAccent(middleName));
 						}
 						Pattern pattern = Pattern.compile("\"([^\"]*)\"|(\"([^\"]*)\")|(([a-z]*))/i/g");
 						Matcher matcher = pattern.matcher(identity.getPrimaryName().getMiddleName());
 						while(matcher.find()) {
-							identityPrimaryName.setMiddleName(matcher.group().replaceAll("\"", ""));
+							identityPrimaryName.setMiddleName(ReCiterStringUtil.deAccent(matcher.group().replaceAll("\"", "")));
 						}
 					} else {
-						identityPrimaryName.setMiddleName(identity.getPrimaryName().getMiddleName().replaceAll("[-.,()\\s]", ""));
+						identityPrimaryName.setMiddleName(ReCiterStringUtil.deAccent(identity.getPrimaryName().getMiddleName().replaceAll("[-.,()\\s]", "")));
 					}
 				}
 				if(identity.getPrimaryName().getLastName() != null) {
 					//lastName = identity.getPrimaryName().getLastName().replaceAll("[-.,,()\\s]|(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "");
 					lastName = identity.getPrimaryName().getLastName().replaceAll("[-.,,()\\s]|(" + generateSuffixRegex() + ")$", "");
-					identityPrimaryName.setLastName(lastName);
+					identityPrimaryName.setLastName(ReCiterStringUtil.deAccent(lastName));
 					if(additionalName.getFirstName() != null) {
-						additionalName.setLastName(lastName);
+						additionalName.setLastName(ReCiterStringUtil.deAccent(lastName));
 					}
 				}
 				if(identityPrimaryName.getLastName() != null) {
@@ -165,13 +165,13 @@ public class AuthorNameSanitizationUtils {
 				for(AuthorName aliasAuthorName: identity.getAlternateNames()) {
 					AuthorName identityAliasAuthorName = new AuthorName();
 					if(aliasAuthorName.getFirstName() != null) {
-						identityAliasAuthorName.setFirstName(aliasAuthorName.getFirstName().replaceAll("[-.\",()\\s]", ""));
+						identityAliasAuthorName.setFirstName(ReCiterStringUtil.deAccent(aliasAuthorName.getFirstName().replaceAll("[-.\",()\\s]", "")));
 					}
 					if(aliasAuthorName.getMiddleName() != null) {
-						identityAliasAuthorName.setMiddleName(aliasAuthorName.getMiddleName().replaceAll("[-.\",()\\s]", ""));
+						identityAliasAuthorName.setMiddleName(ReCiterStringUtil.deAccent(aliasAuthorName.getMiddleName().replaceAll("[-.\",()\\s]", "")));
 					}
 					if(aliasAuthorName.getLastName() != null) {
-						identityAliasAuthorName.setLastName(aliasAuthorName.getLastName().replaceAll("[-.\",()\\s]|(" + generateSuffixRegex() + ")$", ""));
+						identityAliasAuthorName.setLastName(ReCiterStringUtil.deAccent(aliasAuthorName.getLastName().replaceAll("[-.\",()\\s]|(" + generateSuffixRegex() + ")$", "")));
 					}
 					
 					if(identityAliasAuthorName.getLastName() != null) {
