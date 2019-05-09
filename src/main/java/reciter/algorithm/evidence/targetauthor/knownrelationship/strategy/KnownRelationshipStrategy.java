@@ -101,7 +101,8 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 								sum += 1;
 								reCiterArticle.getKnownRelationship().add(authorName);
 								relationshipEvidence.setRelationshipMatchingScore(ReCiterArticleScorer.strategyParameters.getRelationshipMatchingScore());
-								relationshipEvidence.setRelationshipName(authorName.getName());
+								relationshipEvidence.setRelationshipNameArticle(author.getAuthorName());
+								relationshipEvidence.setRelationshipNameIdenity(authorName.getName());
 								relationshipEvidence.setRelationshipType(relationshipTypes);
 								
 								if(authorName.getType() == RelationshipType.MENTOR) {
@@ -126,12 +127,12 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 								
 								if(relationshipEvidences.size() > 0 
 										&&
-										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipName().getFirstName())
+										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getFirstName())
 												&&
-												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipName().getLastName()))) {
-										RelationshipEvidence relationshipEvidenceInList = relationshipEvidences.stream().filter(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipName().getFirstName())
+												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getLastName()))) {
+										RelationshipEvidence relationshipEvidenceInList = relationshipEvidences.stream().filter(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getFirstName())
 												&&
-												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipName().getLastName())
+												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getLastName())
 												).findFirst().get();
 										
 										if(relationshipEvidenceInList != null) {
