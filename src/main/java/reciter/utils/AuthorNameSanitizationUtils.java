@@ -1,12 +1,20 @@
 package reciter.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -63,6 +71,7 @@ import reciter.model.identity.Identity;
 	"Capetillo Gonzalez de Zarate" --> "CapetilloGonzalezdeZarate"<p>
  *
  */
+@NoArgsConstructor
 public class AuthorNameSanitizationUtils {
 	
 	private StrategyParameters strategyParameters; 
@@ -80,7 +89,7 @@ public class AuthorNameSanitizationUtils {
 	 * Sanitize Article Authors
 	 */
 	public Map<ReCiterAuthor, ReCiterAuthor> sanitizeArticleAuthorNames(ReCiterArticle reCiterArticle) {
-		Map<ReCiterAuthor, ReCiterAuthor> sanitizeArticleAuthors = new HashMap<ReCiterAuthor, ReCiterAuthor>();
+		Map<ReCiterAuthor, ReCiterAuthor> sanitizeArticleAuthors = new LinkedHashMap<ReCiterAuthor, ReCiterAuthor>();
 		if(reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
 			for(ReCiterAuthor authorName: reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				AuthorName articleAuthor = new AuthorName();
@@ -182,8 +191,85 @@ public class AuthorNameSanitizationUtils {
 			if(additionalName != null && additionalName.getLastName() != null) {
 				sanitizedIdentityAuthorName.put(additionalName, additionalName);
 			}
+			if(sanitizedIdentityAuthorName.size() > 1) {
+				checkToIgnoreNameVariants(sanitizedIdentityAuthorName);
+			}
 		}
 		return sanitizedIdentityAuthorName;
+	}
+	
+	/**
+	 * This function checks for if there is other name variant if another complete name exists in Identity
+	 * @param idenityAuthorNames
+	 */
+	public void checkToIgnoreNameVariants(Map<AuthorName, AuthorName> idenityAuthorNames) {
+		Set<Entry<AuthorName, AuthorName>> sanitizedIdentityAuthorNames =  idenityAuthorNames.entrySet();
+		Set<Entry<AuthorName, AuthorName>> sanitizedIdentityAuthorNamesCopy = new HashSet<>(sanitizedIdentityAuthorNames);
+		for(Map.Entry<AuthorName,AuthorName> i : sanitizedIdentityAuthorNamesCopy) {
+			Iterator<Map.Entry<AuthorName,AuthorName>> iterator = idenityAuthorNames.entrySet().iterator();
+			while(iterator.hasNext()) {
+				Map.Entry<AuthorName,AuthorName> j = iterator.next();
+			//for(Map.Entry<AuthorName,AuthorName> j : sanitizedIdentityAuthorNames) {
+				if(!i.getKey().equals(j.getKey())) {
+					if(sanitizedIdentityAuthorNames.size() > 1 
+							&&
+							i.getValue() != null 
+							&& 
+							j.getValue() != null
+							&&
+							i.getValue().getFirstName() != null
+							&&
+							j.getValue() != null
+							&&
+							j.getValue().getFirstName() != null
+							&&
+							j.getValue().getLastName() != null) {
+						if(StringUtils.equalsIgnoreCase(i.getValue().getLastName(), j.getValue().getLastName()) 
+								&& 
+								i.getValue().getFirstName().toLowerCase().startsWith(j.getValue().getFirstName().toLowerCase())) {
+							if(j.getValue().getMiddleName() == null) {
+								iterator.remove();
+								if(iterator.hasNext()) {
+									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
+								}
+							}
+							if(j.getValue().getMiddleName() != null && j.getValue().getMiddleName().trim().isEmpty()) {								
+								iterator.remove();
+								if(iterator.hasNext()) {
+									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
+								}
+							}
+						}
+						//Case - ajdannen - Throw away Andrew J Dannenberg because Andrew Jess Dannenberg exists
+						if(sanitizedIdentityAuthorNames.size() > 1) {
+							if(i.getValue() != null
+									&&
+									j.getValue() != null
+									&&
+									i.getValue().getLastName() != null 
+									&&
+									j.getValue().getLastName() != null 
+									&&
+									i.getValue().getFirstName() != null 
+									&&
+									j.getValue().getFirstName() != null
+									&&
+									i.getValue().getMiddleName() != null 
+									&&
+									j.getValue().getMiddleName() != null
+									&&
+									StringUtils.equalsIgnoreCase(i.getValue().getLastName(), j.getValue().getLastName()) 
+									&& 
+									StringUtils.equalsIgnoreCase(i.getValue().getFirstName(), j.getValue().getFirstName()) 
+									&&
+									i.getValue().getMiddleName().toLowerCase().startsWith(j.getValue().getMiddleName().toLowerCase())) {
+								iterator.remove();
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	
