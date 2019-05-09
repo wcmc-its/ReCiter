@@ -9,6 +9,7 @@ import org.mockito.Spy;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.utils.AuthorNameSanitizationUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TargetAuthorSelectionTest {
