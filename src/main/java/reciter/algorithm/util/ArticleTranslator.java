@@ -20,9 +20,11 @@ package reciter.algorithm.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
+import org.springframework.stereotype.Component;
 
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
+import reciter.engine.StrategyParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleFeatures;
@@ -50,6 +52,7 @@ import reciter.model.pubmed.PubMedArticle;
 import reciter.model.pubmed.PubMedPubDate;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
+import reciter.utils.AuthorNameSanitizationUtils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -58,6 +61,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -66,6 +70,7 @@ import java.util.stream.Collectors;
  *
  * @author jil3004
  */
+@Component
 public class ArticleTranslator {
 
     /**
@@ -74,7 +79,7 @@ public class ArticleTranslator {
      * @param pubmedArticle
      * @return
      */
-    public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle, String nameIgnoredCoAuthors) {
+    public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle, String nameIgnoredCoAuthors, StrategyParameters strategyParameters) {
 
         // PMID
         long pmid = pubmedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
@@ -419,6 +424,11 @@ public class ArticleTranslator {
         }
         
         populateFeatures(reCiterArticle, nameIgnoredCoAuthors);
+        
+      //Add sanitized Author
+	  AuthorNameSanitizationUtils authorNameSanitizationUtils= new AuthorNameSanitizationUtils(strategyParameters);
+	  Map<ReCiterAuthor, ReCiterAuthor> sanitizedAuthorMap = authorNameSanitizationUtils.sanitizeArticleAuthorNames(reCiterArticle);
+	  reCiterArticle.getArticleCoAuthors().setSanitizedAuthorMap(sanitizedAuthorMap);
 
         return reCiterArticle;
     }
