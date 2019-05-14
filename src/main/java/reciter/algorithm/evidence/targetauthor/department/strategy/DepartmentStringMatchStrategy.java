@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -288,6 +289,11 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			}
 			if(orgUnitEvidences.size() > 0) {
 				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
+				//Remove duplicate evidence based on orgUnit matches
+				if(orgUnitEvidences.size() > 1) {
+					Set<Object> seen=new HashSet<>();
+					orgUnitEvidences.removeIf(orgUnitEvidence -> !seen.add(orgUnitEvidence.getIdentityOrganizationalUnit()));
+				}
 				reCiterArticle.setOrganizationalUnitEvidences(orgUnitEvidences);
 			}
 		}
