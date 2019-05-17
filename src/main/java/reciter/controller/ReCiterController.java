@@ -269,11 +269,8 @@ public class ReCiterController {
         LocalDate initial = LocalDate.now();
         LocalDate startDate = initial.withDayOfMonth(1);
         LocalDate endDate = LocalDate.parse("3000-01-01"); 
-        Identity identity;
-
-        try {
-            identity = identityService.findByUid(uid);
-        } catch (NullPointerException ne) {
+        Identity identity = identityService.findByUid(uid);
+        if(identity == null) {
             estimatedTime = System.currentTimeMillis() - startTime;
             slf4jLogger.info("elapsed time: " + estimatedTime);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
@@ -368,9 +365,9 @@ public class ReCiterController {
         EngineOutput engineOutput;
         EngineParameters parameters;
         List<ReCiterArticleFeature> originalFeatures = new ArrayList<ReCiterArticleFeature>();
-        try {
-            identityService.findByUid(uid);
-        } catch (NullPointerException n) {
+        
+        Identity identity = identityService.findByUid(uid);
+        if(identity == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
         AnalysisOutput analysis = analysisService.findByUid(uid.trim());
