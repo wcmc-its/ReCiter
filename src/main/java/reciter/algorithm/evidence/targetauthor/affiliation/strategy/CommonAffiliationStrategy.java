@@ -111,7 +111,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 									for(Integer afid: matchingAfids) {
 										TargetAuthorScopusAffiliation scopusAffiliationEvidence = new TargetAuthorScopusAffiliation();
 										if(reCiterArticle.getScopusArticle().getAffiliations() != null) {
-											Affiliation affiliationScopus = reCiterArticle.getScopusArticle().getAffiliations().stream().filter(affiliation -> affiliation.getAfid() == afid).findFirst().get();
+											Affiliation affiliationScopus = reCiterArticle.getScopusArticle().getAffiliations().stream().filter(affiliation -> affiliation.getAfid() == afid).findFirst().orElse(null);
 											if(affiliationScopus != null
 													&& 
 													affiliationScopus.getAffilname() != null) {
@@ -135,7 +135,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 										for(Integer afid: matchingAfids) {
 											TargetAuthorScopusAffiliation scopusAffiliationEvidence = new TargetAuthorScopusAffiliation();
 											if(reCiterArticle.getScopusArticle().getAffiliations() != null) {
-												Affiliation affiliationScopus = reCiterArticle.getScopusArticle().getAffiliations().stream().filter(affiliation -> affiliation.getAfid() == afid).findFirst().get();
+												Affiliation affiliationScopus = reCiterArticle.getScopusArticle().getAffiliations().stream().filter(affiliation -> affiliation.getAfid() == afid).findFirst().orElse(null);
 												if(affiliationScopus != null 
 														&& 
 														affiliationScopus.getAffilname() != null) {
