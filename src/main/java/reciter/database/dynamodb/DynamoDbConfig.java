@@ -293,6 +293,12 @@ public class DynamoDbConfig {
 	                                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
 	                                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
 	                amazonDynamoDB.createTable(request);
+	                log.info("Waiting for table to be created in AWS.");
+	                try {
+						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
+					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
+						log.error(e.getMessage());
+					}
                 }
                 
             }
