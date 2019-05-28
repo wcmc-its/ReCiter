@@ -62,8 +62,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 				if(scienceMetrix != null) {
 					List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = getScienceMetrixDepartmentCategory(scienceMetrix.getScienceMatrixSubfieldId());
 					List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream().filter(sciMetrixDeptCategory -> 
-					sanitizedIdentityInstitutions.contains(sciMetrixDeptCategory.getPrimaryDepartment().trim())
-					).collect(Collectors.toList());
+					sanitizedIdentityInstitutions.stream().anyMatch(sciMetrixDeptCategory.getPrimaryDepartment().trim()::equalsIgnoreCase)).collect(Collectors.toList());
 					if(matchedOrgUnits.size() > 0) {
 						if(matchedOrgUnits.size() > 1) {
 							ScienceMetrixDepartmentCategory matchedJournal = matchedOrgUnits.stream().max(Comparator.comparing(ScienceMetrixDepartmentCategory::getLogOddsRatio)).orElse(null);
