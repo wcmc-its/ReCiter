@@ -29,6 +29,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
+import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 import reciter.model.pubmed.MedlineCitationJournalISSN;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
@@ -36,7 +37,7 @@ import reciter.service.ScienceMetrixService;
 public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	
 	private static final Logger log = LoggerFactory.getLogger(JournalCategoryStrategy.class);
-	private final List<String> orgUnitSynonym = Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitSynonym().trim().split("\\s*,\\s*"));
+	//private final List<String> orgUnitSynonym = Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitSynonym().trim().split("\\s*,\\s*"));
 	
 	private ScienceMetrixService scienceMetrixService = ApplicationContextHolder.getContext().getBean(ScienceMetrixService.class);
 	
@@ -50,9 +51,9 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		Set<String> sanitizedIdentityInstitutions = new HashSet<String>();
-		Map<String, List<String>> identityOrgUnitToSynonymMap = new HashMap<String, List<String>>();
-		populateSanitizedIdentityInstitutions(identity, sanitizedIdentityInstitutions, identityOrgUnitToSynonymMap);
+		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
+		//Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
+		//populateSanitizedIdentityInstitutions(identity, sanitizedIdentityInstitutions, identityOrgUnitToSynonymMap);
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			if(reCiterArticle.getJournal().getJournalIssn() != null 
 					&&
@@ -62,21 +63,34 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 				if(scienceMetrix != null) {
 					List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = getScienceMetrixDepartmentCategory(scienceMetrix.getScienceMatrixSubfieldId());
 					List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream().filter(sciMetrixDeptCategory -> 
-					sanitizedIdentityInstitutions.stream().anyMatch(sciMetrixDeptCategory.getPrimaryDepartment().trim()::equalsIgnoreCase)).collect(Collectors.toList());
+					sanitizedIdentityInstitutions.stream().map(OrganizationalUnit::getOrganizationalUnitLabel).anyMatch(sciMetrixDeptCategory.getPrimaryDepartment().trim()::equalsIgnoreCase))
+							.collect(Collectors.toList());
 					if(matchedOrgUnits.size() > 0) {
 						if(matchedOrgUnits.size() > 1) {
 							ScienceMetrixDepartmentCategory matchedJournal = matchedOrgUnits.stream().max(Comparator.comparing(ScienceMetrixDepartmentCategory::getLogOddsRatio)).orElse(null);
 							if(matchedJournal != null) {
 								journalCategoryEvidence = new JournalCategoryEvidence();
+								OrganizationalUnit journalSubFieldDepartment = sanitizedIdentityInstitutions.stream()
+								.filter(sanitizedInst -> matchedJournal.getPrimaryDepartment().equalsIgnoreCase(sanitizedInst.getOrganizationalUnitLabel()))
+								.findFirst()
+								.orElse(new OrganizationalUnit(matchedJournal.getPrimaryDepartment(), OrganizationalUnitType.DEPARTMENT));
 								journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedJournal.getScienceMetrixJournalSubfield());
-								journalCategoryEvidence.setJournalSubfieldDepartment(matchedJournal.getPrimaryDepartment());
+								if(journalSubFieldDepartment.getOrganizationalUnitLabel() != null) {
+									journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+								}
 								journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedJournal.getScienceMetrixJournalSubfieldId());
 								journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedJournal.getLogOddsRatio());
 							}
 						} else {
 							journalCategoryEvidence = new JournalCategoryEvidence();
+							OrganizationalUnit journalSubFieldDepartment = sanitizedIdentityInstitutions.stream()
+									.filter(sanitizedInst -> matchedOrgUnits.get(0).getPrimaryDepartment().equalsIgnoreCase(sanitizedInst.getOrganizationalUnitLabel()))
+									.findFirst()
+									.orElse(new OrganizationalUnit(matchedOrgUnits.get(0).getPrimaryDepartment(), OrganizationalUnitType.DEPARTMENT));
 							journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedOrgUnits.get(0).getScienceMetrixJournalSubfield());
-							journalCategoryEvidence.setJournalSubfieldDepartment(matchedOrgUnits.get(0).getPrimaryDepartment());
+							if(journalSubFieldDepartment.getOrganizationalUnitLabel() != null) {
+								journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+							}
 							journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedOrgUnits.get(0).getScienceMetrixJournalSubfieldId());
 							journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedOrgUnits.get(0).getLogOddsRatio());
 						}
@@ -215,7 +229,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	 * @param identity
 	 * @param identityOrgUnitToSynonymMap
 	 */
-	private void populateSanitizedIdentityInstitutions(Identity identity, Set<String> sanitizedIdentityInstitutions, Map<String, List<String>> identityOrgUnitToSynonymMap) {
+	/*private void populateSanitizedIdentityInstitutions(Identity identity, Set<String> sanitizedIdentityInstitutions, Map<String, List<String>> identityOrgUnitToSynonymMap) {
 		List<List<String>> orgUnitSynonym = new ArrayList<List<String>>();
 		if(identity.getOrganizationalUnits() != null
 				&&
@@ -240,6 +254,6 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 				}
 			}
 		}
-	}
+	}*/
 
 }
