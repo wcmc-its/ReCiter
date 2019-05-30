@@ -101,6 +101,9 @@ public class DynamoDbConfig {
     
     @Value("${aws.dynamodb.settings.table.writecapacityunits}")
     private Long WRITE_CAPACITY_UNITS;
+    
+    @Value("${aws.dynamodb.settings.table.create}")
+    private boolean createDynamoDbTable;
 
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
@@ -157,7 +160,13 @@ public class DynamoDbConfig {
     		
     	}
     	if(amazonDynamoDB != null) {
-    		createTables(amazonDynamoDB);
+    		if(createDynamoDbTable) {
+    			log.info("Creating all required dynamodb tables for ReCiter");
+    			createTables(amazonDynamoDB);
+    		} else {
+    			log.info("Skipping table creation for dynamoDB.");
+    			log.warn("This might cause issues with your application if tables are not created. Please set the aws.dynamodb.settings.table.create in application.properties as true if not already created.");
+    		}
     	} else {
     		log.info("aws.dynamoDb.local needs to have a boolean value set in application.propeties");
     	}
@@ -274,7 +283,7 @@ public class DynamoDbConfig {
                                                                                                           .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
                     
                     amazonDynamoDB.createTable(request);
-                	log.info("Waiting for table to be created in AWS.");
+                	log.info("Waiting for table " + tableName + " to be created in AWS.");
                 	try {
 						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
 					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
@@ -293,7 +302,7 @@ public class DynamoDbConfig {
 	                                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
 	                                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
 	                amazonDynamoDB.createTable(request);
-	                log.info("Waiting for table to be created in AWS.");
+	                log.info("Waiting for table " + tableName + " to be created in AWS.");
 	                try {
 						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
 					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
