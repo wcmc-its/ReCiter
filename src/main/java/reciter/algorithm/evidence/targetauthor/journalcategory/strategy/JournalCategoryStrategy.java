@@ -52,8 +52,6 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
-		//Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
-		//populateSanitizedIdentityInstitutions(identity, sanitizedIdentityInstitutions, identityOrgUnitToSynonymMap);
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			if(reCiterArticle.getJournal().getJournalIssn() != null 
 					&&
@@ -120,16 +118,10 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	
 	private List<ScienceMetrixDepartmentCategory> getScienceMetrixDepartmentCategory(String subfieldId) {
 		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategory = null;
-		/*if(subfieldId != null 
-				&& 
-				!subfieldId.isEmpty()) {
-			scienceMetrixDeptCategory = scienceMetrixDepartmentCategoryService.findByScienceMetrixJournalSubfieldId(Long.parseLong(subfieldId));
-		}*/
-		
 		if(subfieldId != null 
 				&& 
 				!subfieldId.isEmpty()) {
-			scienceMetrixDeptCategory = EngineParameters.getScienceMetrixDepartmentCategories().stream().filter(scienceMetrixDepartmentCategory -> 
+			scienceMetrixDeptCategory = EngineParameters.getScienceMetrixDepartmentCategories().parallelStream().filter(scienceMetrixDepartmentCategory -> 
 			scienceMetrixDepartmentCategory.getScienceMetrixJournalSubfieldId() == Integer.parseInt(subfieldId)
 					).collect(Collectors.toList());
 		}
@@ -220,40 +212,4 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 
 		return scienceMetrix;
 	}
-	
-	/**
-	 * This function gets orgUnits from Identity and home organizationalUnitsSynonym if declared in application.properties and return a unique set of Departments.
-	 * It also Substitute any and for & and vise versa in identity.departments Remove any commas or dashes from identity.departments. Remove any commas or dashes from article.affiliation.
-	 * Substitute any Tri-I for Tri-Institutional and vise versa.
-	 * @see <a href="https://github.com/wcmc-its/ReCiter/issues/264">Issue Details</a>
-	 * @param identity
-	 * @param identityOrgUnitToSynonymMap
-	 */
-	/*private void populateSanitizedIdentityInstitutions(Identity identity, Set<String> sanitizedIdentityInstitutions, Map<String, List<String>> identityOrgUnitToSynonymMap) {
-		List<List<String>> orgUnitSynonym = new ArrayList<List<String>>();
-		if(identity.getOrganizationalUnits() != null
-				&&
-				identity.getOrganizationalUnits().size() > 0) {
-			for(String orgUnits: this.orgUnitSynonym) {
-				List<String> synonyms =  Arrays.asList(orgUnits.trim().split("\\s*\\|\\s*"));
-				
-				orgUnitSynonym.add(synonyms);
-			}
-			for(OrganizationalUnit orgUnit: identity.getOrganizationalUnits()) {
-				if(orgUnitSynonym.stream().anyMatch(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel()))) {
-					List<List<String>> matchedOrgUnitSynonym = orgUnitSynonym.stream().filter(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel())).collect(Collectors.toList());
-					for(List<String> orgUnitsynonyms: matchedOrgUnitSynonym) {
-						
-						identityOrgUnitToSynonymMap.put(orgUnit.getOrganizationalUnitLabel(), orgUnitsynonyms);
-						if(orgUnitsynonyms.size() > 0) {
-							sanitizedIdentityInstitutions.addAll(orgUnitsynonyms);
-						}
-					}
-				} else {
-					sanitizedIdentityInstitutions.add(orgUnit.getOrganizationalUnitLabel());
-				}
-			}
-		}
-	}*/
-
 }
