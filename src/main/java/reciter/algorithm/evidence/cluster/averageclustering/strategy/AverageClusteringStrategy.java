@@ -37,7 +37,8 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 					double totalArticleScoreWithoutClustering =  ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getNameScoreTotal()):0) +
 							((reCiterArticle.getEmailEvidence() != null)?reCiterArticle.getEmailEvidence().getEmailMatchScore():0) +
 							reCiterArticle.getGrantEvidenceTotalScore() +
-							reCiterArticle.getRelationshipEvidencesTotalScore() +
+							((reCiterArticle.getRelationshipEvidence() != null)?reCiterArticle.getRelationshipEvidence().getRelationshipEvidenceTotalScore():0) +
+							//reCiterArticle.getRelationshipEvidencesTotalScore() +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearBachelorScore():0) +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearDoctoralScore():0) +
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +
@@ -54,7 +55,8 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 					double totalArticleScoreWithoutClustering = ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getNameScoreTotal()):0) + 
 							((reCiterArticle.getEmailEvidence() != null)?reCiterArticle.getEmailEvidence().getEmailMatchScore():0) + 
 							reCiterArticle.getGrantEvidenceTotalScore() +
-							reCiterArticle.getRelationshipEvidencesTotalScore() +
+							((reCiterArticle.getRelationshipEvidence() != null)?reCiterArticle.getRelationshipEvidence().getRelationshipEvidenceTotalScore():0) +
+							//reCiterArticle.getRelationshipEvidencesTotalScore() +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearBachelorScore():0) +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearDoctoralScore():0) +
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +

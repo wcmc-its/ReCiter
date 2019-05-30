@@ -212,6 +212,12 @@ public class StrategyParameters {
 
     @Value("${strategy.knownrelationships.relationshipMatchingScore}")
     private double relationshipMatchingScore;
+    
+    @Value("${strategy.knownrelationships.relationshipMinimumTotalScore}")
+    private double relationshipMinimumTotalScore;
+    
+    @Value("${strategy.knownrelationships.relationshipNonMatchScore}")
+    private double relationshipNonMatchScore;
 
     @Value("${strategy.knownrelationships.relationshipVerboseMatchModifier}")
     private double relationshipVerboseMatchModifier;
