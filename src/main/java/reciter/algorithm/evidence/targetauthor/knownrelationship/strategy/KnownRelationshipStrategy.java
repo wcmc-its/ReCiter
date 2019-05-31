@@ -73,6 +73,9 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if(reCiterArticle.getArticleId() == 31031568) {
+				log.info("Here");
+			}
 			int relationShipMatchCount = 0;
 			int nonMatchCount = 0;
 			//sum += executeStrategy(reCiterArticle, identity);
@@ -92,7 +95,6 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 						for (KnownRelationship authorName : relationships) {
 							if (authorName.getName().firstInitialLastNameMatch(author.getAuthorName())) {
 								RelationshipPostiveMatch relationshipEvidence = new RelationshipPostiveMatch();
-								relationShipMatchCount++;
 								//if(StringUtils.equalsIgnoreCase(authorName.getName().getFirstName(), author.getAuthorName().getFirstName())) {
 								if(authorName.getName().getFirstName().length() > 1 
 										&&
@@ -109,7 +111,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 								reCiterArticle.getKnownRelationship().add(authorName);
 								relationshipEvidence.setRelationshipMatchingScore(ReCiterArticleScorer.strategyParameters.getRelationshipMatchingScore());
 								relationshipEvidence.setRelationshipNameArticle(author.getAuthorName());
-								relationshipEvidence.setRelationshipNameIdenity(authorName.getName());
+								relationshipEvidence.setRelationshipNameIdentity(authorName.getName());
 								relationshipEvidence.setRelationshipType(relationshipTypes);
 								
 								if(authorName.getType() == RelationshipType.MENTOR) {
@@ -134,12 +136,12 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 								
 								if(relationshipEvidences.size() > 0 
 										&&
-										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getFirstName())
+										relationshipEvidences.stream().anyMatch(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipNameIdentity().getFirstName())
 												&&
-												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getLastName()))) {
-									RelationshipPostiveMatch relationshipEvidenceInList = relationshipEvidences.stream().filter(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getFirstName())
+												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipNameIdentity().getLastName()))) {
+									RelationshipPostiveMatch relationshipEvidenceInList = relationshipEvidences.stream().filter(evidence -> authorName.getName().getFirstName().equalsIgnoreCase(evidence.getRelationshipNameIdentity().getFirstName())
 												&&
-												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipNameIdenity().getLastName())
+												authorName.getName().getLastName().equalsIgnoreCase(evidence.getRelationshipNameIdentity().getLastName())
 												).findFirst().get();
 										
 										if(relationshipEvidenceInList != null) {
@@ -172,6 +174,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 										relationshipTypes.add(authorName.getType().toString());
 									}
 								}
+								relationShipMatchCount++;
 								relationshipEvidences.add(relationshipEvidence);
 							}
 						}
@@ -182,7 +185,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 				reCiterArticle.setKnownCoinvestigatorScore(sum);
 			}
 			if(relationshipEvidences.size() > 0) {
-				relaEvidence.setRelationshipPositiveMatches(relationshipEvidences);
+				relaEvidence.setRelationshipPositiveMatch(relationshipEvidences);
 				relationshipNegativeMatch.setRelationshipNonMatchCount(nonMatchCount);
 				relationshipNegativeMatch.setRelationshipMinimumTotalScore(ReCiterArticleScorer.strategyParameters.getRelationshipMinimumTotalScore());
 				relationshipNegativeMatch.setRelationshipNonMatchScore(ReCiterArticleScorer.strategyParameters.getRelationshipNonMatchScore());
