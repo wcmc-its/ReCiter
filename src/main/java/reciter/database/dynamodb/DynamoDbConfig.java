@@ -308,6 +308,7 @@ public class DynamoDbConfig {
 					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
 						log.error(e.getMessage());
 					}
+	                log.info("Table " + tableName  + " has been created in AWS.");
                 }
                 
             }

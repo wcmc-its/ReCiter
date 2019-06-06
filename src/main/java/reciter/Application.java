@@ -52,6 +52,7 @@ import com.github.bohnman.squiggly.web.SquigglyRequestFilter;
 import com.google.common.collect.Iterables;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
 import reciter.database.dyanmodb.files.InstitutionAfidFileImport;
 import reciter.database.dyanmodb.files.MeshTermFileImport;
@@ -221,16 +222,19 @@ public class Application {
 	public void loadDynamoDbTablesAfterStartUp() {
 		if(isFileImport) {
 			ScienceMetrixDepartmentCategoryFileImport scienceMetrixDepartmentCategoryFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixDepartmentCategoryFileImport.class);
-			scienceMetrixDepartmentCategoryFileImport.importScienceMetrixDepartmentCategory();
+			//scienceMetrixDepartmentCategoryFileImport.importScienceMetrixDepartmentCategory();
 			
 			ScienceMetrixFileImport scienceMetrixFileImport = ApplicationContextHolder.getContext().getBean(ScienceMetrixFileImport.class);
-			scienceMetrixFileImport.importScienceMetrix();
+			//scienceMetrixFileImport.importScienceMetrix();
 			
 			MeshTermFileImport meshTermFileImport = ApplicationContextHolder.getContext().getBean(MeshTermFileImport.class);
-			meshTermFileImport.importMeshTerms();
+			//meshTermFileImport.importMeshTerms();
 			
 			IdentityFileImport identityFileImport = ApplicationContextHolder.getContext().getBean(IdentityFileImport.class);
-			identityFileImport.importIdentity();
+			//identityFileImport.importIdentity();
+			
+			GenderFileImport genderFileImport = ApplicationContextHolder.getContext().getBean(GenderFileImport.class);
+			genderFileImport.importGender();
 			
 			if(useScopusArticles) {
 				InstitutionAfidFileImport institutionAfidFileImport = ApplicationContextHolder.getContext().getBean(InstitutionAfidFileImport.class);
