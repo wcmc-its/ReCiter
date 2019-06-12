@@ -2,8 +2,8 @@ version: 0.2
 # https://docs.aws.amazon.com/codebuild/latest/userguide/getting-started.html
 phases:
   install:
-    commands:
-      - echo Nothing to do in the install phase...
+    runtime-versions:
+      java: openjdk8
   pre_build:
     commands:
       - echo Nothing to do in the pre_build phase...
@@ -11,12 +11,12 @@ phases:
     commands:
       - echo Build started on `date`
       - mvn clean install -Dmaven.test.skip=true
-      - cp target/reciter-0.0.1-SNAPSHOT.jar .
+      - cp target/reciter-1.1.jar .
   post_build:
     commands:
       - echo Build completed on `date`
 artifacts:
   files:
-    - reciter-0.0.1-SNAPSHOT.jar 
+    - reciter-1.1.jar 
     - .ebextensions/**/* 
     - Procfile

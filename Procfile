@@ -1,1 +1,1 @@
-web: java -jar reciter-0.0.1-SNAPSHOT.jar
+web: java -jar reciter-1.1.jar

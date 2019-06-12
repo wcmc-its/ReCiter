@@ -75,6 +75,8 @@ import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameSanitizationUtils;
+import reciter.utils.GenderProbability;
+import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 import java.io.IOException;
@@ -802,7 +804,14 @@ public class ReCiterController {
         //Sanitize Identity names
         AuthorNameSanitizationUtils authorNameSanitizationUtils = new AuthorNameSanitizationUtils(strategyParameters);
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
-
+        
+        //Sanitize Identity Organizational Units(Division and Department)
+        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil(strategyParameters);
+        institutionalSanitizationUtil.populateSanitizedIdentityInstitutions(identity);
+        
+        //Find gender probability
+        GenderProbability.getGenderIdentityProbability(identity);
+        
         // calculate precision and recall
         EngineParameters parameters = new EngineParameters();
         parameters.setIdentity(identity);

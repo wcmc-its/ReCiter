@@ -326,6 +326,10 @@ public class ReCiterFeatureGenerator {
             if (reCiterArticle.getAverageClusteringEvidence() != null) {
                 evidence.setAverageClusteringEvidence(reCiterArticle.getAverageClusteringEvidence());
             }
+            
+            if(reCiterArticle.getGenderEvidence() != null && reCiterArticle.getGenderEvidence().getGenderScoreIdentityArticleDiscrepancy() != null) {
+            	evidence.setGenderEvidence(reCiterArticle.getGenderEvidence());
+            }
             // Clustering Evidence
             //positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
 

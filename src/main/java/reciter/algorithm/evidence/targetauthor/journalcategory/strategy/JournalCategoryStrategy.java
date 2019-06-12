@@ -1,46 +1,30 @@
 package reciter.algorithm.evidence.targetauthor.journalcategory.strategy;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import reciter.ApplicationContextHolder;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.controller.ReCiterController;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
+import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 import reciter.model.pubmed.MedlineCitationJournalISSN;
-import reciter.service.ScienceMetrixDepartmentCategoryService;
-import reciter.service.ScienceMetrixService;
 
 public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	
 	private static final Logger log = LoggerFactory.getLogger(JournalCategoryStrategy.class);
-	private final List<String> orgUnitSynonym = Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitSynonym().trim().split("\\s*,\\s*"));
-	
-	private ScienceMetrixService scienceMetrixService = ApplicationContextHolder.getContext().getBean(ScienceMetrixService.class);
-	
-	private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService = ApplicationContextHolder.getContext().getBean(ScienceMetrixDepartmentCategoryService.class);
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
@@ -50,10 +34,12 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		Set<String> sanitizedIdentityInstitutions = new HashSet<String>();
-		Map<String, List<String>> identityOrgUnitToSynonymMap = new HashMap<String, List<String>>();
-		populateSanitizedIdentityInstitutions(identity, sanitizedIdentityInstitutions, identityOrgUnitToSynonymMap);
+		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
+		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if(reCiterArticle.getArticleId() == 29909994) {
+				log.info("here");
+			}
 			if(reCiterArticle.getJournal().getJournalIssn() != null 
 					&&
 					reCiterArticle.getJournal().getJournalIssn().size() > 0) {
@@ -62,22 +48,63 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 				if(scienceMetrix != null) {
 					List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = getScienceMetrixDepartmentCategory(scienceMetrix.getScienceMatrixSubfieldId());
 					List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream().filter(sciMetrixDeptCategory -> 
-					sanitizedIdentityInstitutions.contains(sciMetrixDeptCategory.getPrimaryDepartment().trim())
-					).collect(Collectors.toList());
+					sanitizedIdentityInstitutions.stream().map(OrganizationalUnit::getOrganizationalUnitLabel).anyMatch(sciMetrixDeptCategory.getPrimaryDepartment().trim()::equalsIgnoreCase))
+							.collect(Collectors.toList());
 					if(matchedOrgUnits.size() > 0) {
 						if(matchedOrgUnits.size() > 1) {
 							ScienceMetrixDepartmentCategory matchedJournal = matchedOrgUnits.stream().max(Comparator.comparing(ScienceMetrixDepartmentCategory::getLogOddsRatio)).orElse(null);
 							if(matchedJournal != null) {
 								journalCategoryEvidence = new JournalCategoryEvidence();
+								OrganizationalUnit journalSubFieldDepartment = sanitizedIdentityInstitutions.stream()
+								.filter(sanitizedInst -> matchedJournal.getPrimaryDepartment().equalsIgnoreCase(sanitizedInst.getOrganizationalUnitLabel()))
+								.findFirst()
+								.orElse(new OrganizationalUnit(matchedJournal.getPrimaryDepartment(), OrganizationalUnitType.DEPARTMENT));
+								String synonymOrgUnitLabel = null;
+								//Finding the synonym
+								if(identityOrgUnitToSynonymMap != null && identityOrgUnitToSynonymMap.size() > 0) {
+									 synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
+											filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(journalSubFieldDepartment.getOrganizationalUnitLabel()))
+											.map(Map.Entry::getKey)
+											.findFirst()
+											.orElse(null);
+								}
+								
 								journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedJournal.getScienceMetrixJournalSubfield());
-								journalCategoryEvidence.setJournalSubfieldDepartment(matchedJournal.getPrimaryDepartment());
+								if(journalSubFieldDepartment.getOrganizationalUnitLabel() != null) {
+									if(synonymOrgUnitLabel != null) {
+										journalCategoryEvidence.setJournalSubfieldDepartment(synonymOrgUnitLabel);
+									} else {
+										journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+									}
+								}
 								journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedJournal.getScienceMetrixJournalSubfieldId());
 								journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedJournal.getLogOddsRatio());
 							}
 						} else {
 							journalCategoryEvidence = new JournalCategoryEvidence();
+							OrganizationalUnit journalSubFieldDepartment = sanitizedIdentityInstitutions.stream()
+									.filter(sanitizedInst -> matchedOrgUnits.get(0).getPrimaryDepartment().equalsIgnoreCase(sanitizedInst.getOrganizationalUnitLabel()))
+									.findFirst()
+									.orElse(new OrganizationalUnit(matchedOrgUnits.get(0).getPrimaryDepartment(), OrganizationalUnitType.DEPARTMENT));
+							
+							String synonymOrgUnitLabel = null;
+							//Finding the synonym
+							if(identityOrgUnitToSynonymMap != null && identityOrgUnitToSynonymMap.size() > 0) {
+								synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
+									filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(journalSubFieldDepartment.getOrganizationalUnitLabel()))
+									.map(Map.Entry::getKey)
+									.findFirst()
+									.orElse(null);
+							}
+							
 							journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedOrgUnits.get(0).getScienceMetrixJournalSubfield());
-							journalCategoryEvidence.setJournalSubfieldDepartment(matchedOrgUnits.get(0).getPrimaryDepartment());
+							if(journalSubFieldDepartment.getOrganizationalUnitLabel() != null) {
+								if(synonymOrgUnitLabel != null) {
+									journalCategoryEvidence.setJournalSubfieldDepartment(synonymOrgUnitLabel);
+								} else {
+									journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+								}
+							}
 							journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedOrgUnits.get(0).getScienceMetrixJournalSubfieldId());
 							journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedOrgUnits.get(0).getLogOddsRatio());
 						}
@@ -107,16 +134,10 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	
 	private List<ScienceMetrixDepartmentCategory> getScienceMetrixDepartmentCategory(String subfieldId) {
 		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategory = null;
-		/*if(subfieldId != null 
-				&& 
-				!subfieldId.isEmpty()) {
-			scienceMetrixDeptCategory = scienceMetrixDepartmentCategoryService.findByScienceMetrixJournalSubfieldId(Long.parseLong(subfieldId));
-		}*/
-		
 		if(subfieldId != null 
 				&& 
 				!subfieldId.isEmpty()) {
-			scienceMetrixDeptCategory = EngineParameters.getScienceMetrixDepartmentCategories().stream().filter(scienceMetrixDepartmentCategory -> 
+			scienceMetrixDeptCategory = EngineParameters.getScienceMetrixDepartmentCategories().parallelStream().filter(scienceMetrixDepartmentCategory -> 
 			scienceMetrixDepartmentCategory.getScienceMetrixJournalSubfieldId() == Integer.parseInt(subfieldId)
 					).collect(Collectors.toList());
 		}
@@ -207,40 +228,4 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 
 		return scienceMetrix;
 	}
-	
-	/**
-	 * This function gets orgUnits from Identity and home organizationalUnitsSynonym if declared in application.properties and return a unique set of Departments.
-	 * It also Substitute any and for & and vise versa in identity.departments Remove any commas or dashes from identity.departments. Remove any commas or dashes from article.affiliation.
-	 * Substitute any Tri-I for Tri-Institutional and vise versa.
-	 * @see <a href="https://github.com/wcmc-its/ReCiter/issues/264">Issue Details</a>
-	 * @param identity
-	 * @param identityOrgUnitToSynonymMap
-	 */
-	private void populateSanitizedIdentityInstitutions(Identity identity, Set<String> sanitizedIdentityInstitutions, Map<String, List<String>> identityOrgUnitToSynonymMap) {
-		List<List<String>> orgUnitSynonym = new ArrayList<List<String>>();
-		if(identity.getOrganizationalUnits() != null
-				&&
-				identity.getOrganizationalUnits().size() > 0) {
-			for(String orgUnits: this.orgUnitSynonym) {
-				List<String> synonyms =  Arrays.asList(orgUnits.trim().split("\\s*\\|\\s*"));
-				
-				orgUnitSynonym.add(synonyms);
-			}
-			for(OrganizationalUnit orgUnit: identity.getOrganizationalUnits()) {
-				if(orgUnitSynonym.stream().anyMatch(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel()))) {
-					List<List<String>> matchedOrgUnitSynonym = orgUnitSynonym.stream().filter(syn -> syn.contains(orgUnit.getOrganizationalUnitLabel())).collect(Collectors.toList());
-					for(List<String> orgUnitsynonyms: matchedOrgUnitSynonym) {
-						
-						identityOrgUnitToSynonymMap.put(orgUnit.getOrganizationalUnitLabel(), orgUnitsynonyms);
-						if(orgUnitsynonyms.size() > 0) {
-							sanitizedIdentityInstitutions.addAll(orgUnitsynonyms);
-						}
-					}
-				} else {
-					sanitizedIdentityInstitutions.add(orgUnit.getOrganizationalUnitLabel());
-				}
-			}
-		}
-	}
-
 }
