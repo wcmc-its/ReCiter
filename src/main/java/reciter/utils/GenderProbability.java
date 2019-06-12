@@ -166,17 +166,13 @@ public class GenderProbability {
 			}
 		}
 		if(!matchingGenders.isEmpty()) {
-			if(matchingGenders.size() > 1) {
-				matchingGenders.forEach(matchGender -> {
-					if(matchGender.getGender() == GenderEnum.F) {
-						matchGender.setProbability(1 - matchGender.getProbability());
-					}
-				});
-				Double avgProbability = matchingGenders.stream().mapToDouble(Gender::getProbability).average().getAsDouble();
-				return new Gender(null, null, null, avgProbability);
-			} else {
-				return matchingGenders.get(0);
-			}
+			matchingGenders.forEach(matchGender -> {
+				if(matchGender.getGender() == GenderEnum.F) {
+					matchGender.setProbability(1 - matchGender.getProbability());
+				}
+			});
+			Double avgProbability = matchingGenders.stream().mapToDouble(Gender::getProbability).average().getAsDouble();
+			return new Gender(null, null, null, avgProbability);
 		}
 		return null;
 	}
