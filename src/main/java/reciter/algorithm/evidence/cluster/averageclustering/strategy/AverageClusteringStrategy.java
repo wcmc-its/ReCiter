@@ -36,9 +36,9 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 				if(ReCiterArticleScorer.strategyParameters.isUseGoldStandardEvidence()) {
 					double totalArticleScoreWithoutClustering =  ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getNameScoreTotal()):0) +
 							((reCiterArticle.getEmailEvidence() != null)?reCiterArticle.getEmailEvidence().getEmailMatchScore():0) +
+							((reCiterArticle.getGenderEvidence() != null && reCiterArticle.getGenderEvidence().getGenderScoreIdentityArticleDiscrepancy() != null)?reCiterArticle.getGenderEvidence().getGenderScoreIdentityArticleDiscrepancy():0) +
 							reCiterArticle.getGrantEvidenceTotalScore() +
 							((reCiterArticle.getRelationshipEvidence() != null)?reCiterArticle.getRelationshipEvidence().getRelationshipEvidenceTotalScore():0) +
-							//reCiterArticle.getRelationshipEvidencesTotalScore() +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearBachelorScore():0) +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearDoctoralScore():0) +
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +
@@ -54,9 +54,9 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 				} else {
 					double totalArticleScoreWithoutClustering = ((reCiterArticle.getAuthorNameEvidence() != null)?(reCiterArticle.getAuthorNameEvidence().getNameScoreTotal()):0) + 
 							((reCiterArticle.getEmailEvidence() != null)?reCiterArticle.getEmailEvidence().getEmailMatchScore():0) + 
+							((reCiterArticle.getGenderEvidence() != null && reCiterArticle.getGenderEvidence().getGenderScoreIdentityArticleDiscrepancy() != null)?reCiterArticle.getGenderEvidence().getGenderScoreIdentityArticleDiscrepancy():0) +
 							reCiterArticle.getGrantEvidenceTotalScore() +
 							((reCiterArticle.getRelationshipEvidence() != null)?reCiterArticle.getRelationshipEvidence().getRelationshipEvidenceTotalScore():0) +
-							//reCiterArticle.getRelationshipEvidencesTotalScore() +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearBachelorScore():0) +
 							((reCiterArticle.getEducationYearEvidence() != null)?reCiterArticle.getEducationYearEvidence().getDiscrepancyDegreeYearDoctoralScore():0) +
 							reCiterArticle.getOrganizationalEvidencesTotalScore() +

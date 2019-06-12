@@ -47,6 +47,9 @@ public class StrategyParameters {
 	
     @Value("${strategy.email}")
     private boolean isEmail;
+    
+    @Value("${strategy.gender}")
+    private boolean isGender;
 
     @Value("${strategy.department}")
     private boolean isDepartment;
@@ -365,4 +368,10 @@ public class StrategyParameters {
     
     @Value("${strategy.journalCategoryScore.journalSubfieldFactorScore}")
     private double journalSubfieldFactorScore;
+    
+    @Value("${strategy.genderStrategyScore.minimumScore}")
+    private double genderStrategyMinScore;
+    
+    @Value("${strategy.genderStrategyScore.rangeScore}")
+    private double genderStrategyRangeScore;
 }
