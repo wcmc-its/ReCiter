@@ -26,7 +26,10 @@ public class GenderProbability {
 	 * Finds the Gender Name and the probability from Gender table and assigns to identity
 	 */
 	public static void getGenderIdentityProbability(Identity identity) {
-		List<Gender> genders = EngineParameters.getGenders();
+		List<Gender> genders = new ArrayList<Gender>();
+		for(Gender gender: EngineParameters.getGenders()) {
+			genders.add(new Gender(gender.getUniqueId(), gender.getName(), gender.getGender(), gender.getProbability()));
+		}
 		List<Gender> matchingGenders = new ArrayList<Gender>();
 		Set<String> identityNames = new HashSet<String>();
 		if(identity.getPrimaryName() != null) {
@@ -36,12 +39,12 @@ public class GenderProbability {
 				String primaryName[] = identity.getPrimaryName().getFirstName().split("\\s+|-");
 				for (int i = 0; i < primaryName.length; i++) {
 					if(primaryName[i].length() >= 2) {
-						identityNames.add(primaryName[i]);
+						identityNames.add(primaryName[i].toLowerCase());
 					}
 				}
 			} else {
 				if(identity.getPrimaryName().getFirstName().length() >= 2) {
-					identityNames.add(identity.getPrimaryName().getFirstName());
+					identityNames.add(identity.getPrimaryName().getFirstName().toLowerCase());
 				}
 			}
 			if(identity.getPrimaryName().getMiddleName() != null && identity.getPrimaryName().getMiddleName().length() >= 2) {
@@ -49,11 +52,11 @@ public class GenderProbability {
 					String primaryName[] = identity.getPrimaryName().getMiddleName().split("\\s+|-");
 					for (int i = 0; i < primaryName.length; i++) {
 						if(primaryName[i].length() >= 2) {
-							identityNames.add(primaryName[i]);
+							identityNames.add(primaryName[i].toLowerCase());
 						}
 					}
 				} else {
-					identityNames.add(identity.getPrimaryName().getMiddleName());
+					identityNames.add(identity.getPrimaryName().getMiddleName().toLowerCase());
 				}
 			}
 		}
@@ -66,12 +69,12 @@ public class GenderProbability {
 					String alternateNameArray[] = alternateName.getFirstName().split("\\s+|-");
 					for (int i = 0; i < alternateNameArray.length; i++) {
 						if(alternateNameArray[i].length() >= 2) {
-							identityNames.add(alternateNameArray[i]);
+							identityNames.add(alternateNameArray[i].toLowerCase());
 						}
 					}
 				} else {
 					if(alternateName.getFirstName().length() >= 2) {
-						identityNames.add(alternateName.getFirstName());
+						identityNames.add(alternateName.getFirstName().toLowerCase());
 					}
 				}
 				if(alternateName.getMiddleName() != null && alternateName.getMiddleName().length() >= 2) {
@@ -79,11 +82,11 @@ public class GenderProbability {
 						String alternateNameArray[] = alternateName.getMiddleName().split("\\s+|-");
 						for (int i = 0; i < alternateNameArray.length; i++) {
 							if(alternateNameArray[i].length() >= 2) {
-								identityNames.add(alternateNameArray[i]);
+								identityNames.add(alternateNameArray[i].toLowerCase());
 							}
 						}
 					} else {
-						identityNames.add(alternateName.getMiddleName());
+						identityNames.add(alternateName.getMiddleName().toLowerCase());
 					}
 				}
 			}
@@ -94,11 +97,9 @@ public class GenderProbability {
 				&&
 				!genders.isEmpty()) {
 			matchingGenders = genders
-				.stream()
+				.parallelStream()
 				.filter(gender ->
-				identityNames
-				.stream()
-				.anyMatch(authorName -> authorName.equalsIgnoreCase(gender.getName()))
+				identityNames.contains(gender.getName().toLowerCase())
 				).collect(Collectors.toList());
 			if(!matchingGenders.isEmpty()) {
 				if(matchingGenders.size() > 1) {
@@ -121,7 +122,10 @@ public class GenderProbability {
 	 * @return Gender match for article
 	 */
 	public static Gender getGenderArticleProbability(ReCiterArticle reCiterArticle) {
-		List<Gender> genders = EngineParameters.getGenders();
+		List<Gender> genders = new ArrayList<Gender>();
+		for(Gender gender: EngineParameters.getGenders()) {
+			genders.add(new Gender(gender.getUniqueId(), gender.getName(), gender.getGender(), gender.getProbability()));
+		}
 		List<Gender> matchingGenders = new ArrayList<Gender>();
 		if(reCiterArticle.getArticleCoAuthors().getAuthors() != null 
 				&& 
