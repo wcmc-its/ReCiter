@@ -35,6 +35,8 @@ import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyCont
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
 import reciter.algorithm.evidence.targetauthor.email.EmailStrategyContext;
 import reciter.algorithm.evidence.targetauthor.email.strategy.EmailStringMatchStrategy;
+import reciter.algorithm.evidence.targetauthor.gender.GenderStrategyContext;
+import reciter.algorithm.evidence.targetauthor.gender.strategy.GenderStrategy;
 import reciter.algorithm.evidence.targetauthor.grant.GrantStrategyContext;
 import reciter.algorithm.evidence.targetauthor.grant.strategy.GrantStrategy;
 import reciter.algorithm.evidence.targetauthor.journalcategory.JournalCategoryStrategyContext;
@@ -150,9 +152,14 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private StrategyContext personTypeStrategyContext;
 	
 	/**
-	 * Accpeted Rejected .
+	 * Accepted Rejected .
 	 */
 	private StrategyContext acceptedRejectedStrategyContext;
+	
+	/**
+	 * Gender Strategy
+	 */
+	private GenderStrategyContext genderStrategyContext;
 
 	/**
 	 * Remove clusters based on cluster information.
@@ -186,6 +193,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.journalCategoryStrategyContext = new JournalCategoryStrategyContext(new JournalCategoryStrategy());
 		this.knownRelationshipsStrategyContext = new KnownRelationshipStrategyContext(new KnownRelationshipStrategy());
 		this.affiliationStrategyContext = new AffiliationStrategyContext(new CommonAffiliationStrategy());
+		this.genderStrategyContext = new GenderStrategyContext(new GenderStrategy());
 
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
@@ -237,6 +245,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		
 		if(strategyParameters.isAverageClustering()) {
 			this.strategyContexts.add(this.averageClusteringStrategyContext);
+		}
+		
+		if(strategyParameters.isGender()) {
+			this.strategyContexts.add(this.genderStrategyContext);
 		}
 	}
 	
@@ -291,6 +303,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			
 			if (strategyParameters.isUseGoldStandardEvidence()) {
 				((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
+			}
+			
+			if(strategyParameters.isGender()) {
+				((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isAverageClustering()) {

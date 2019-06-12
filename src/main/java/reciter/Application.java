@@ -52,17 +52,20 @@ import com.github.bohnman.squiggly.web.SquigglyRequestFilter;
 import com.google.common.collect.Iterables;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
 import reciter.database.dyanmodb.files.InstitutionAfidFileImport;
 import reciter.database.dyanmodb.files.MeshTermFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixFileImport;
+import reciter.database.dynamodb.model.Gender;
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.database.dynamodb.model.MeshTerm;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.EngineParameters;
 import reciter.security.APIKey;
+import reciter.service.GenderService;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
@@ -97,6 +100,9 @@ public class Application {
     
     @Autowired
     private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
+    
+    @Autowired
+    private GenderService genderService;
     
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -232,6 +238,9 @@ public class Application {
 			IdentityFileImport identityFileImport = ApplicationContextHolder.getContext().getBean(IdentityFileImport.class);
 			identityFileImport.importIdentity();
 			
+			GenderFileImport genderFileImport = ApplicationContextHolder.getContext().getBean(GenderFileImport.class);
+			genderFileImport.importGender();
+			
 			if(useScopusArticles) {
 				InstitutionAfidFileImport institutionAfidFileImport = ApplicationContextHolder.getContext().getBean(InstitutionAfidFileImport.class);
 				institutionAfidFileImport.importInstitutionAfids();
@@ -263,6 +272,12 @@ public class Application {
             }
             EngineParameters.setMeshCountMap(meshCountMap);
         }
+        log.info("Loading GenderProbability to Engine Parameters");
+        List<Gender> genders = genderService.findAll();
+        if(genders != null && !genders.isEmpty()) {
+        	EngineParameters.setGenders(genders);
+        }
+        
         if(useScopusArticles) {
 	        log.info("Loading ScopusInstitutionalAfids to Engine Parameters");
 	        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
@@ -271,6 +286,8 @@ public class Application {
 		        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
 	        }
         }
+        
+        log.info("ReCiter is up and ready to use. Please make sure its other components such as Pubmed-Retrieval-Tool is also setup if you wish to do retrieval.");
 	}
 	
 

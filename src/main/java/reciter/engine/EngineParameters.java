@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.engine;
 
+import reciter.database.dynamodb.model.Gender;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.model.article.ReCiterArticle;
@@ -28,12 +29,28 @@ import reciter.model.scopus.ScopusArticle;
 import java.util.List;
 import java.util.Map;
 
-public class EngineParameters {
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
+@Data
+public class EngineParameters {
+	
+	@Getter
+	@Setter
     private static Map<String, Long> meshCountMap;
+	@Getter
+	@Setter
     private static Map<String, List<String>> afiliationNameToAfidMap;
+	@Getter
+	@Setter
     private static List<ScienceMetrix> scienceMetrixJournals;
+	@Getter
+	@Setter
     private static List<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategories;
+	@Getter
+	@Setter
+    private static List<Gender> genders;
     private Identity identity;
     private List<PubMedArticle> pubMedArticles;
     private List<ScopusArticle> scopusArticles;
@@ -41,93 +58,4 @@ public class EngineParameters {
     private List<Long> knownPmids;
     private List<Long> rejectedPmids;
     private double totalStandardzizedArticleScore;
-
-    public static Map<String, Long> getMeshCountMap() {
-        return meshCountMap;
-    }
-
-    public static void setMeshCountMap(Map<String, Long> meshCountMap) {
-        EngineParameters.meshCountMap = meshCountMap;
-    }
-
-    public static Map<String, List<String>> getAfiliationNameToAfidMap() {
-        return afiliationNameToAfidMap;
-    }
-
-    public static void setAfiliationNameToAfidMap(Map<String, List<String>> afiliationNameToAfidMap) {
-        EngineParameters.afiliationNameToAfidMap = afiliationNameToAfidMap;
-    }
-
-    public static List<ScienceMetrix> getScienceMetrixJournals() {
-		return scienceMetrixJournals;
-	}
-
-	public static void setScienceMetrixJournals(List<ScienceMetrix> scienceMetrixJournals) {
-		EngineParameters.scienceMetrixJournals = scienceMetrixJournals;
-	}
-
-	public static List<ScienceMetrixDepartmentCategory> getScienceMetrixDepartmentCategories() {
-		return scienceMetrixDepartmentCategories;
-	}
-
-	public static void setScienceMetrixDepartmentCategories(
-			List<ScienceMetrixDepartmentCategory> scienceMetrixDepartmentCategories) {
-		EngineParameters.scienceMetrixDepartmentCategories = scienceMetrixDepartmentCategories;
-	}
-
-	public Identity getIdentity() {
-        return identity;
-    }
-
-    public void setIdentity(Identity identity) {
-        this.identity = identity;
-    }
-
-    public List<PubMedArticle> getPubMedArticles() {
-        return pubMedArticles;
-    }
-
-    public void setPubMedArticles(List<PubMedArticle> pubMedArticles) {
-        this.pubMedArticles = pubMedArticles;
-    }
-
-    public List<ScopusArticle> getScopusArticles() {
-        return scopusArticles;
-    }
-
-    public void setScopusArticles(List<ScopusArticle> scopusArticles) {
-        this.scopusArticles = scopusArticles;
-    }
-
-    public List<ReCiterArticle> getReciterArticles() {
-        return reciterArticles;
-    }
-
-    public void setReciterArticles(List<ReCiterArticle> reciterArticles) {
-        this.reciterArticles = reciterArticles;
-    }
-
-    public List<Long> getKnownPmids() {
-        return knownPmids;
-    }
-
-    public void setKnownPmids(List<Long> knownPmids) {
-        this.knownPmids = knownPmids;
-    }
-
-    public List<Long> getRejectedPmids() {
-        return rejectedPmids;
-    }
-
-    public void setRejectedPmids(List<Long> rejectedPmids) {
-        this.rejectedPmids = rejectedPmids;
-    }
-
-    public double getTotalStandardzizedArticleScore() {
-        return totalStandardzizedArticleScore;
-    }
-
-    public void setTotalStandardzizedArticleScore(double totalStandardzizedArticleScore) {
-        this.totalStandardzizedArticleScore = totalStandardzizedArticleScore;
-    }
 }

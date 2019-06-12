@@ -1,47 +1,30 @@
 package reciter.algorithm.evidence.targetauthor.journalcategory.strategy;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import reciter.ApplicationContextHolder;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.controller.ReCiterController;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
 import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 import reciter.model.pubmed.MedlineCitationJournalISSN;
-import reciter.service.ScienceMetrixDepartmentCategoryService;
-import reciter.service.ScienceMetrixService;
 
 public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	
 	private static final Logger log = LoggerFactory.getLogger(JournalCategoryStrategy.class);
-	//private final List<String> orgUnitSynonym = Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitSynonym().trim().split("\\s*,\\s*"));
-	
-	private ScienceMetrixService scienceMetrixService = ApplicationContextHolder.getContext().getBean(ScienceMetrixService.class);
-	
-	private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService = ApplicationContextHolder.getContext().getBean(ScienceMetrixDepartmentCategoryService.class);
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
@@ -52,7 +35,11 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
+		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if(reCiterArticle.getArticleId() == 29909994) {
+				log.info("here");
+			}
 			if(reCiterArticle.getJournal().getJournalIssn() != null 
 					&&
 					reCiterArticle.getJournal().getJournalIssn().size() > 0) {
@@ -72,9 +59,23 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 								.filter(sanitizedInst -> matchedJournal.getPrimaryDepartment().equalsIgnoreCase(sanitizedInst.getOrganizationalUnitLabel()))
 								.findFirst()
 								.orElse(new OrganizationalUnit(matchedJournal.getPrimaryDepartment(), OrganizationalUnitType.DEPARTMENT));
+								String synonymOrgUnitLabel = null;
+								//Finding the synonym
+								if(identityOrgUnitToSynonymMap != null && identityOrgUnitToSynonymMap.size() > 0) {
+									 synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
+											filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(journalSubFieldDepartment.getOrganizationalUnitLabel()))
+											.map(Map.Entry::getKey)
+											.findFirst()
+											.orElse(null);
+								}
+								
 								journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedJournal.getScienceMetrixJournalSubfield());
 								if(journalSubFieldDepartment.getOrganizationalUnitLabel() != null) {
-									journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+									if(synonymOrgUnitLabel != null) {
+										journalCategoryEvidence.setJournalSubfieldDepartment(synonymOrgUnitLabel);
+									} else {
+										journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+									}
 								}
 								journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedJournal.getScienceMetrixJournalSubfieldId());
 								journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedJournal.getLogOddsRatio());
@@ -85,9 +86,24 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 									.filter(sanitizedInst -> matchedOrgUnits.get(0).getPrimaryDepartment().equalsIgnoreCase(sanitizedInst.getOrganizationalUnitLabel()))
 									.findFirst()
 									.orElse(new OrganizationalUnit(matchedOrgUnits.get(0).getPrimaryDepartment(), OrganizationalUnitType.DEPARTMENT));
+							
+							String synonymOrgUnitLabel = null;
+							//Finding the synonym
+							if(identityOrgUnitToSynonymMap != null && identityOrgUnitToSynonymMap.size() > 0) {
+								synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
+									filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(journalSubFieldDepartment.getOrganizationalUnitLabel()))
+									.map(Map.Entry::getKey)
+									.findFirst()
+									.orElse(null);
+							}
+							
 							journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedOrgUnits.get(0).getScienceMetrixJournalSubfield());
 							if(journalSubFieldDepartment.getOrganizationalUnitLabel() != null) {
-								journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+								if(synonymOrgUnitLabel != null) {
+									journalCategoryEvidence.setJournalSubfieldDepartment(synonymOrgUnitLabel);
+								} else {
+									journalCategoryEvidence.setJournalSubfieldDepartment(journalSubFieldDepartment.getOrganizationalUnitLabel());
+								}
 							}
 							journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedOrgUnits.get(0).getScienceMetrixJournalSubfieldId());
 							journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedOrgUnits.get(0).getLogOddsRatio());
