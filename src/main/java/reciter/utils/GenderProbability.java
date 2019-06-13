@@ -26,10 +26,7 @@ public class GenderProbability {
 	 * Finds the Gender Name and the probability from Gender table and assigns to identity
 	 */
 	public static void getGenderIdentityProbability(Identity identity) {
-		List<Gender> genders = new ArrayList<Gender>();
-		for(Gender gender: EngineParameters.getGenders()) {
-			genders.add(new Gender(gender.getUniqueId(), gender.getName(), gender.getGender(), gender.getProbability()));
-		}
+		List<Gender> genders = EngineParameters.getGenders();
 		List<Gender> matchingGenders = new ArrayList<Gender>();
 		Set<String> identityNames = new HashSet<String>();
 		if(identity.getPrimaryName() != null) {
@@ -102,17 +99,13 @@ public class GenderProbability {
 				identityNames.contains(gender.getName().toLowerCase())
 				).collect(Collectors.toList());
 			if(!matchingGenders.isEmpty()) {
-				if(matchingGenders.size() > 1) {
+					List<Gender> matchingGendersCopy = new ArrayList<Gender>();
 					matchingGenders.forEach(matchGender -> {
-						if(matchGender.getGender() == GenderEnum.F) {
-							matchGender.setProbability(1 - matchGender.getProbability());
-						}
+						matchingGendersCopy
+						.add(new Gender(matchGender.getUniqueId(), matchGender.getName(), matchGender.getGender(), ((matchGender.getGender() == GenderEnum.F)?(1 - matchGender.getProbability()):matchGender.getProbability())));
 					});
-					Double avgProbability = matchingGenders.stream().mapToDouble(Gender::getProbability).average().getAsDouble();
+					Double avgProbability = matchingGendersCopy.stream().mapToDouble(Gender::getProbability).average().getAsDouble();
 					identity.setGender(new Gender(null, null, null, avgProbability));
-				} else {
-					identity.setGender(matchingGenders.get(0));
-				}
 			}
 		}
 	}
@@ -122,10 +115,7 @@ public class GenderProbability {
 	 * @return Gender match for article
 	 */
 	public static Gender getGenderArticleProbability(ReCiterArticle reCiterArticle) {
-		List<Gender> genders = new ArrayList<Gender>();
-		for(Gender gender: EngineParameters.getGenders()) {
-			genders.add(new Gender(gender.getUniqueId(), gender.getName(), gender.getGender(), gender.getProbability()));
-		}
+		List<Gender> genders = EngineParameters.getGenders();
 		List<Gender> matchingGenders = new ArrayList<Gender>();
 		if(reCiterArticle.getArticleCoAuthors().getAuthors() != null 
 				&& 
@@ -166,12 +156,12 @@ public class GenderProbability {
 			}
 		}
 		if(!matchingGenders.isEmpty()) {
+			List<Gender> matchingGendersCopy = new ArrayList<Gender>();
 			matchingGenders.forEach(matchGender -> {
-				if(matchGender.getGender() == GenderEnum.F) {
-					matchGender.setProbability(1 - matchGender.getProbability());
-				}
+				matchingGendersCopy
+				.add(new Gender(matchGender.getUniqueId(), matchGender.getName(), matchGender.getGender(), ((matchGender.getGender() == GenderEnum.F)?(1 - matchGender.getProbability()):matchGender.getProbability())));
 			});
-			Double avgProbability = matchingGenders.stream().mapToDouble(Gender::getProbability).average().getAsDouble();
+			Double avgProbability = matchingGendersCopy.stream().mapToDouble(Gender::getProbability).average().getAsDouble();
 			return new Gender(null, null, null, avgProbability);
 		}
 		return null;
