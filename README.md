@@ -94,7 +94,7 @@ ReCiter can be installed to run locally on an AWS via a cloud formation template
 ### Local
 
 1. Clone the repository to a local folder using `git clone https://github.com/wcmc-its/ReCiter.git`
-2. Go to the folder where the repository has been closed and navigate to src/main/resources/application.properties and change port and log location accordingly
+2. Go to the folder where the repository has been cloned and navigate to src/main/resources/application.properties and change port and log location accordingly
 - change `aws.DynamoDb.local=false` to `aws.DynamoDb.local=true`
 - update location of DynamoDB database, e.g., `aws.DynamoDb.local.dbpath=/Users/Paul/Documents/ReCiter/dynamodb_local_latest`
 - change `aws.sqs=true` to `aws.sqs=false`
