@@ -52,7 +52,7 @@ Please see the [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki) for more
 
 ### Prerequisites
 - Java 1.8
-- Latest version of Maven. To install Maven, execute `brew install maven` and then `mvn clean install`
+- Latest version of Maven. To install Maven navigate to the directory where ReCiter will be installed, execute `brew install maven` and then `mvn clean install`
 
 It is not necessary to install ReCiter in order to use the API.
 
