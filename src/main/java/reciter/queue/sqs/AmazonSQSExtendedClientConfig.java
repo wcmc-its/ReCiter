@@ -29,7 +29,7 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reciter.ApplicationContextHolder;
 
-@Slf4j
+/*@Slf4j
 @Configuration
 @ComponentScan(basePackages ="reciter.queue.sqs")
 public class AmazonSQSExtendedClientConfig {
@@ -66,11 +66,11 @@ public class AmazonSQSExtendedClientConfig {
     	if(!isDynamoDbLocal && isAwsSqs && isAwsSqsExtendedClient) {
     		//AmazonS3 s3 = ApplicationContextHolder.getContext().getBean(AmazonS3.class);
     		
-    		/*
+    		
              * Set the Amazon S3 bucket name, and then set a lifecycle rule on the
              * bucket to permanently delete objects 14 days after each object's
              * creation date.
-             */
+             
     		final BucketLifecycleConfiguration.Rule expirationRule =
                     new BucketLifecycleConfiguration.Rule();
             expirationRule.withExpirationInDays(7).withStatus("Enabled");
@@ -135,4 +135,4 @@ public class AmazonSQSExtendedClientConfig {
     	return null;
     }
 
-}
+}*/
