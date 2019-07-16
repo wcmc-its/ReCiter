@@ -276,43 +276,16 @@ public class DynamoDbConfig {
                     globalSecondardyIndexes.add(issnIndex);
                     globalSecondardyIndexes.add(eissnIndex);
                     
-					/*CreateTableRequest request =
+					CreateTableRequest request =
 					        new CreateTableRequest()
 					                                .withTableName(tableName)
 					                                .withAttributeDefinitions(attributeDefinitions)
 					                                .withKeySchema(keyTableSchemaElements)
-					                                //.withGlobalSecondaryIndexes(globalSecondardyIndexes)
-					                                .withBillingMode(billingMode)
+					                                .withGlobalSecondaryIndexes(globalSecondardyIndexes)
 					                                .withProvisionedThroughput(
 					                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
-					                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));*/
+					                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
                     
-                    CreateTableRequest request = null;
-	                
-	                if(billingMode != null && billingMode == BillingMode.PAY_PER_REQUEST) {
-	                	request = new CreateTableRequest()
-                                .withTableName(tableName)
-                                .withKeySchema(keyTableSchemaElements)
-                                .withAttributeDefinitions(attributeDefinitions)
-                                .withBillingMode(billingMode);
-	                } else if(billingMode != null && billingMode == BillingMode.PROVISIONED) {
-	                	new CreateTableRequest()
-                        .withTableName(tableName)
-                        .withKeySchema(keyTableSchemaElements)
-                        .withAttributeDefinitions(attributeDefinitions)
-                        .withBillingMode(billingMode)
-                        .withProvisionedThroughput(
-                                                   new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
-                                                                              .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
-	                } else if(isDynamoDbLocal) {
-	                	new CreateTableRequest()
-                        .withTableName(tableName)
-                        .withKeySchema(keyTableSchemaElements)
-                        .withAttributeDefinitions(attributeDefinitions)
-                        .withProvisionedThroughput(
-                                                   new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
-                                                                              .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
-	                }
 	                if(request != null) {
 	                	amazonDynamoDB.createTable(request);
 	                }
