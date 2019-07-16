@@ -50,6 +50,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.Table
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.BillingMode;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
 import com.amazonaws.services.dynamodbv2.model.GlobalSecondaryIndex;
@@ -104,6 +105,9 @@ public class DynamoDbConfig {
     
     @Value("${aws.dynamodb.settings.table.create}")
     private boolean createDynamoDbTable;
+    
+    @Value("${aws.dynamodb.settings.table.billingmode}")
+    private BillingMode billingMode;
 
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
@@ -272,17 +276,46 @@ public class DynamoDbConfig {
                     globalSecondardyIndexes.add(issnIndex);
                     globalSecondardyIndexes.add(eissnIndex);
                     
-                    CreateTableRequest request =
-                            new CreateTableRequest()
-                                                    .withTableName(tableName)
-                                                    .withAttributeDefinitions(attributeDefinitions)
-                                                    .withKeySchema(keyTableSchemaElements)
-                                                    .withGlobalSecondaryIndexes(globalSecondardyIndexes)
-                                                    .withProvisionedThroughput(
-                                                                               new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
-                                                                                                          .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
+					/*CreateTableRequest request =
+					        new CreateTableRequest()
+					                                .withTableName(tableName)
+					                                .withAttributeDefinitions(attributeDefinitions)
+					                                .withKeySchema(keyTableSchemaElements)
+					                                //.withGlobalSecondaryIndexes(globalSecondardyIndexes)
+					                                .withBillingMode(billingMode)
+					                                .withProvisionedThroughput(
+					                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
+					                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));*/
                     
-                    amazonDynamoDB.createTable(request);
+                    CreateTableRequest request = null;
+	                
+	                if(billingMode != null && billingMode == BillingMode.PAY_PER_REQUEST) {
+	                	request = new CreateTableRequest()
+                                .withTableName(tableName)
+                                .withKeySchema(keyTableSchemaElements)
+                                .withAttributeDefinitions(attributeDefinitions)
+                                .withBillingMode(billingMode);
+	                } else if(billingMode != null && billingMode == BillingMode.PROVISIONED) {
+	                	new CreateTableRequest()
+                        .withTableName(tableName)
+                        .withKeySchema(keyTableSchemaElements)
+                        .withAttributeDefinitions(attributeDefinitions)
+                        .withBillingMode(billingMode)
+                        .withProvisionedThroughput(
+                                                   new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
+                                                                              .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
+	                } else if(isDynamoDbLocal) {
+	                	new CreateTableRequest()
+                        .withTableName(tableName)
+                        .withKeySchema(keyTableSchemaElements)
+                        .withAttributeDefinitions(attributeDefinitions)
+                        .withProvisionedThroughput(
+                                                   new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
+                                                                              .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
+	                }
+	                if(request != null) {
+	                	amazonDynamoDB.createTable(request);
+	                }
                 	log.info("Waiting for table " + tableName + " to be created in AWS.");
                 	try {
 						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
@@ -293,15 +326,35 @@ public class DynamoDbConfig {
                 	List<KeySchemaElement> keySchemaElements = new ArrayList<KeySchemaElement>();
 	                keySchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
 	
-	                CreateTableRequest request =
-	                        new CreateTableRequest()
-	                                                .withTableName(tableName)
-	                                                .withKeySchema(keySchemaElements)
-	                                                .withAttributeDefinitions(attributeDefinitions)
-	                                                .withProvisionedThroughput(
-	                                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
-	                                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
-	                amazonDynamoDB.createTable(request);
+	                CreateTableRequest request = null;
+	                
+	                if(billingMode != null && billingMode == BillingMode.PAY_PER_REQUEST) {
+	                	request = new CreateTableRequest()
+                                .withTableName(tableName)
+                                .withKeySchema(keySchemaElements)
+                                .withAttributeDefinitions(attributeDefinitions)
+                                .withBillingMode(billingMode);
+	                } else if(billingMode != null && billingMode == BillingMode.PROVISIONED) {
+	                	new CreateTableRequest()
+                        .withTableName(tableName)
+                        .withKeySchema(keySchemaElements)
+                        .withAttributeDefinitions(attributeDefinitions)
+                        .withBillingMode(billingMode)
+                        .withProvisionedThroughput(
+                                                   new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
+                                                                              .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
+	                } else if(isDynamoDbLocal) {
+	                	new CreateTableRequest()
+                        .withTableName(tableName)
+                        .withKeySchema(keySchemaElements)
+                        .withAttributeDefinitions(attributeDefinitions)
+                        .withProvisionedThroughput(
+                                                   new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
+                                                                              .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
+	                }
+	                if(request != null) {
+	                	amazonDynamoDB.createTable(request);
+	                }
 	                log.info("Waiting for table " + tableName + " to be created in AWS.");
 	                try {
 						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
