@@ -11,12 +11,17 @@ import org.springframework.context.annotation.Scope;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
+import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
+import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 
 import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.DynamoDbConfig;
@@ -41,6 +46,9 @@ public class AmazonS3Config {
     
     @Value("${aws.dynamoDb.local}")
     private boolean isDynamoDbLocal;
+    
+    @Value("${aws.s3.use.dyanmic.bucketName}")
+    private boolean isDynamicBucketName;
     
     /**
      * @return AmazonS3 client object
@@ -74,15 +82,20 @@ public class AmazonS3Config {
     }
     
     private void createBucket(AmazonS3 s3) {
-    	
-    	if(s3.doesBucketExistV2(s3BucketName.toLowerCase())) {
-			log.info(s3BucketName.toLowerCase() + " Bucket Name already exists");
+    	String accountNumber = getAccountIDUsingAccessKey(amazonAWSAccessKey, amazonAWSSecretKey);
+    	String bucketName = s3BucketName.toLowerCase() + "-" + awsS3Region.toLowerCase() + "-" + accountNumber;
+    	if(!isDynamicBucketName) {
+    		bucketName = s3BucketName;
+    	}
+    	if(s3.doesBucketExistV2(bucketName)) {
+			log.info(bucketName.toLowerCase() + " Bucket Name already exists");
 		} else {
 			try {
-				s3.createBucket(s3BucketName.toLowerCase());
+				s3.createBucket(bucketName.toLowerCase());
 			} catch(AmazonS3Exception e) {
 				log.error(e.getErrorMessage());
 			}
+			log.info("Bucket created with name: " + bucketName);
 		}
     }
     
@@ -105,6 +118,14 @@ public class AmazonS3Config {
     				folderName + SUFFIX, emptyContent, metadata);
     	// send request to S3 to create folder
     	client.putObject(putObjectRequest);
+    }
+    
+    private String getAccountIDUsingAccessKey(String accessKey, String secretKey) {
+        AWSSecurityTokenService stsService = AWSSecurityTokenServiceClientBuilder.standard().withCredentials(
+                new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey))).build();
+
+        GetCallerIdentityResult callerIdentity = stsService.getCallerIdentity(new GetCallerIdentityRequest());
+        return callerIdentity.getAccount();
     }
 
 }
