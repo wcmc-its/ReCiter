@@ -230,6 +230,10 @@
 	    </dependency>
 	    <dependency>
 	    	<groupId>com.amazonaws</groupId>
+	    	<artifactId>aws-java-sdk-sts</artifactId>
+	    </dependency>
+	    <dependency>
+	    	<groupId>com.amazonaws</groupId>
 	    	<artifactId>amazon-sqs-java-extended-client-lib</artifactId>
 	    	<version>1.0.2</version>
 	    </dependency>
