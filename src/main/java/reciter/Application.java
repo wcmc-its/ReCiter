@@ -113,6 +113,9 @@ public class Application {
     @Value("${aws.dynamodb.settings.file.import}")
     private boolean isFileImport;
     
+    @Value("${strategy.gender}")
+    private boolean useGenderStrategy;
+    
     private String scopusService = System.getenv("SCOPUS_SERVICE");
     
     private String pubmedService = System.getenv("PUBMED_SERVICE");
@@ -238,8 +241,13 @@ public class Application {
 			IdentityFileImport identityFileImport = ApplicationContextHolder.getContext().getBean(IdentityFileImport.class);
 			identityFileImport.importIdentity();
 			
-			GenderFileImport genderFileImport = ApplicationContextHolder.getContext().getBean(GenderFileImport.class);
-			genderFileImport.importGender();
+			if(useGenderStrategy) {
+				GenderFileImport genderFileImport = ApplicationContextHolder.getContext().getBean(GenderFileImport.class);
+				genderFileImport.importGender();
+			} else {
+				log.info("Gender strategy use is set to false. Please update strategy.gender to true in application.properties file to use it.\n"
+			+ "Its recommened to use this strategy to get better scores.");
+			}
 			
 			if(useScopusArticles) {
 				InstitutionAfidFileImport institutionAfidFileImport = ApplicationContextHolder.getContext().getBean(InstitutionAfidFileImport.class);
@@ -272,10 +280,12 @@ public class Application {
             }
             EngineParameters.setMeshCountMap(meshCountMap);
         }
-        log.info("Loading GenderProbability to Engine Parameters");
-        List<Gender> genders = genderService.findAll();
-        if(genders != null && !genders.isEmpty()) {
-        	EngineParameters.setGenders(genders);
+        if(useGenderStrategy) {
+	        log.info("Loading GenderProbability to Engine Parameters");
+	        List<Gender> genders = genderService.findAll();
+	        if(genders != null && !genders.isEmpty()) {
+	        	EngineParameters.setGenders(genders);
+	        }
         }
         
         if(useScopusArticles) {

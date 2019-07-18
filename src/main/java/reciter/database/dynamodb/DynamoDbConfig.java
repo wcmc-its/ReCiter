@@ -245,15 +245,15 @@ public class DynamoDbConfig {
                 		|| 
                 		tableName.equalsIgnoreCase("PubMedArticle")) {
                 	attributeDefinitions.add(new AttributeDefinition().withAttributeName(keyName).withAttributeType(ScalarAttributeType.N));
-                	if(tableName.equalsIgnoreCase("ScienceMetrix")) {
-                		attributeDefinitions.add(new AttributeDefinition().withAttributeName("issn").withAttributeType(ScalarAttributeType.S));
-                		attributeDefinitions.add(new AttributeDefinition().withAttributeName("eissn").withAttributeType(ScalarAttributeType.S));
-                	}
+					/*if(tableName.equalsIgnoreCase("ScienceMetrix")) {
+						attributeDefinitions.add(new AttributeDefinition().withAttributeName("issn").withAttributeType(ScalarAttributeType.S));
+						attributeDefinitions.add(new AttributeDefinition().withAttributeName("eissn").withAttributeType(ScalarAttributeType.S));
+					}*/
                 } else {
                 	attributeDefinitions.add(new AttributeDefinition().withAttributeName(keyName).withAttributeType(ScalarAttributeType.S));
                 }
                 
-                if(tableName.equalsIgnoreCase("ScienceMetrix")) {
+                /*if(tableName.equalsIgnoreCase("ScienceMetrix")) {
                 	List<GlobalSecondaryIndex> globalSecondardyIndexes = new ArrayList<GlobalSecondaryIndex>();
                 	
                 	List<KeySchemaElement> keyTableSchemaElements = new ArrayList<KeySchemaElement>();
@@ -295,7 +295,7 @@ public class DynamoDbConfig {
 					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
 						log.error(e.getMessage());
 					}
-                } else {
+                } else {*/
                 	List<KeySchemaElement> keySchemaElements = new ArrayList<KeySchemaElement>();
 	                keySchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
 	
@@ -316,28 +316,20 @@ public class DynamoDbConfig {
                         .withProvisionedThroughput(
                                                    new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
                                                                               .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
-	                } else if(isDynamoDbLocal) {
-	                	new CreateTableRequest()
-                        .withTableName(tableName)
-                        .withKeySchema(keySchemaElements)
-                        .withAttributeDefinitions(attributeDefinitions)
-                        .withProvisionedThroughput(
-                                                   new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
-                                                                              .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
-	                }
+	                } 
 	                if(request != null) {
 	                	amazonDynamoDB.createTable(request);
 	                }
-	                log.info("Waiting for table " + tableName + " to be created in AWS.");
+	                	log.info("Waiting for table " + tableName + " to be created in AWS.");
 	                try {
 						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
 					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
 						log.error(e.getMessage());
 					}
-	                log.info("Table " + tableName  + " has been created in AWS.");
-                }
+	                	log.info("Table " + tableName  + " has been created in AWS.");
+	                }
                 
-            }
+            //}
 
         }
     	
