@@ -2938,6 +2938,12 @@
       ]
    },
    {
+      "institution":"NewYork-Presbyterian Queens",
+      "afids":[
+         "60015061"
+      ]
+   },
+   {
       "institution":"Boston University",
       "afids":[
          "60019674"
@@ -4640,6 +4646,12 @@
       ]
    },
    {
+      "institution":"Columbia University Vagelos College of Physicians and Surgeons",
+      "afids":[
+         "60011605"
+      ]
+   },
+   {
       "institution":"St. Luke's Medical Center",
       "afids":[
          "106027896"
@@ -5273,7 +5285,9 @@
          "60072750",
          "60026978",
          "100412089",
-         "60025849"
+         "60025849",
+         "60012732",
+         "107071187"
       ]
    },
    {
@@ -7860,7 +7874,8 @@
       "institution":"Hamad Medical Corporation",
       "afids":[
          "60072743",
-         "60072746"
+         "60072746",
+         "117794255"
       ]
    },
    {
