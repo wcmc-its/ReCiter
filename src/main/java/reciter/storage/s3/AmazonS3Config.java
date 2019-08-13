@@ -47,7 +47,7 @@ public class AmazonS3Config {
     @Value("${aws.dynamoDb.local}")
     private boolean isDynamoDbLocal;
     
-    @Value("${aws.s3.use.dyanmic.bucketName}")
+    @Value("${aws.s3.use.dynamic.bucketName}")
     private boolean isDynamicBucketName;
     
     /**
