@@ -109,12 +109,12 @@ export PUBMED_SERVICE=http://localhost:5002
 5. Go to `http://localhost:<port-number>/swagger-ui.html` to test and run any API.
 
 
-
-
-
 ### Amazon AWS
 
-Info will be provided with forthcoming Cloud Formation Template...
+The [ReCiter CloudFormation](
+https://github.com/wcmc-its/ReCiter-CloudFormation) template allows you to use a simple text file to model and provision, in an automated and secure manner, all the resources needed for your applications across all regions and accounts. This file serves as the single source of truth for your cloud environment.
+
+
 
 
 ## Configuration
