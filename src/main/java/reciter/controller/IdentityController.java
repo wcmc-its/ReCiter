@@ -129,4 +129,30 @@ public class IdentityController {
         }
         return new ResponseEntity<>(identities, HttpStatus.OK);
     }
+    
+    @ApiOperation(value = "Get all identity from Identity table", response = Identity.class, notes = "This api scans identity table and returns all identitites.")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Identities found successfully"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/find/all/identity", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity findAll() {
+        slf4jLogger.info("Scanning for all Identities");
+        List<Identity> identities;
+        try {
+            identities = identityService.findAll();
+        } catch (Exception ne) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Issue with the request" + ne);
+        }
+        if (identities.size() == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Identity table is empty");
+        }
+        return new ResponseEntity<>(identities, HttpStatus.OK);
+    }
 }
