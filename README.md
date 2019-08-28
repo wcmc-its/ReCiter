@@ -99,7 +99,13 @@ ReCiter can be installed to run locally on an AWS via a cloud formation template
 2. Go to the folder where the repository has been cloned and navigate to src/main/resources/application.properties and change port and log location accordingly
 - change `aws.DynamoDb.local=false` to `aws.DynamoDb.local=true`
 - update location of DynamoDB database, e.g., `aws.DynamoDb.local.dbpath=/Users/Paul/Documents/ReCiter/dynamodb_local_latest`
-3. Enter ports for server and services in command line. Note that the Scopus service is optional.
+- By default application security is turned on. If you wish to turn it off you must change the flag to false from `spring.security.enabled=true` to `spring.security.enabled=false`
+- If you have the security as true you must include the following environment variables - 
+```
+export ADMIN_API_KEY=<api-key>
+export CONSUMER_API_KEY=<api-key>
+```
+3. Enter ports for server and services in command line. Note that the Scopus service is optional. You must have [Pubmed Service]((https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/) and optionally [Scopus Service](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/) setup before this step. Enter appropriate hostname and the port numbers.
 ```
 export SERVER_PORT=5000
 export SCOPUS_SERVICE=http://localhost:5001
