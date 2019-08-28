@@ -85,8 +85,9 @@ The ReCiter application depends on the following separate GitHub-hosted reposito
   - [ReCiter-Dynamodb-Model](https://github.com/wcmc-its/ReCiter-Dynamodb-Model)
   - [ReCiter-PubMed-Model](https://github.com/wcmc-its/ReCiter-PubMed-Model)
 
-Additionally, users can install a user interface tool:
-- [Publication Manager](https://github.com/wcmc-its/ReCiter-Publication-Manager)
+Additionally, users can install:
+- [ReCiter Publication Manager](https://github.com/wcmc-its/ReCiter-Publication-Manager) - a user interface tool
+- [ReCiter Machine Learning / Analysis](https://github.com/wcmc-its/ReCiter-MachineLearning-Analysis) - a suite of scripts and tools for retrieving and analyzing data from ReCiter
 
 ## Installation
 
