@@ -105,6 +105,7 @@ ReCiter can be installed to run locally on an AWS via a cloud formation template
 export ADMIN_API_KEY=<api-key>
 export CONSUMER_API_KEY=<api-key>
 ```
+- If you do not have scopus subscription you should mark this value to false. Change `use.scopus.articles=true` to `use.scopus.articles=false`.
 3. Enter ports for server and services in command line. Note that the Scopus service is optional. You must have [Pubmed Service]((https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/) and optionally [Scopus Service](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/) setup before this step. Enter appropriate hostname and the port numbers.
 ```
 export SERVER_PORT=5000
