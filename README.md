@@ -99,8 +99,6 @@ ReCiter can be installed to run locally on an AWS via a cloud formation template
 2. Go to the folder where the repository has been cloned and navigate to src/main/resources/application.properties and change port and log location accordingly
 - change `aws.DynamoDb.local=false` to `aws.DynamoDb.local=true`
 - update location of DynamoDB database, e.g., `aws.DynamoDb.local.dbpath=/Users/Paul/Documents/ReCiter/dynamodb_local_latest`
-- change `aws.sqs=true` to `aws.sqs=false`
-- change `aws.sqs.extendedClient=true` to `aws.sqs.extendedClient=false`
 3. Enter ports for server and services in command line. Note that the Scopus service is optional.
 ```
 export SERVER_PORT=5000
@@ -114,7 +112,7 @@ export PUBMED_SERVICE=http://localhost:5002
 ### Amazon AWS
 
 The [ReCiter CloudFormation](
-https://github.com/wcmc-its/ReCiter-CloudFormation) template allows you to use a simple text file to model and provision, in an automated and secure manner, all the resources needed for your applications across all regions and accounts. This file serves as the single source of truth for your cloud environment.
+https://github.com/wcmc-its/ReCiter-CloudFormation) template allows you to use a simple text file to model and provision, in an automated and secure manner, all the resources needed for your applications across all regions and accounts. This file serves as the single source of truth for your cloud environment. There you will find instruction to install ReCiter and its components.
 
 
 
