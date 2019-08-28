@@ -19,7 +19,7 @@
   - [Prerequisites](#prerequisites)
   - [Technological stack](#technological-stack)
   - [Architecture](#architecture)
-  - [Code repositories](#code-repositories)
+  - [Related code repositories](#related-code-repositories)
 - [Installation](#installation)
   - [Local](#local)
   - [Amazon AWS](#amazon-aws)
@@ -73,7 +73,7 @@ You may choose to run ReCiter on either:
 ![https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram-NEW.png](https://github.com/wcmc-its/ReCiter/blob/master/files/ArchitecturalDiagram-NEW.png)
 
 
-### Code repositories
+### Related code repositories
 
 The ReCiter application depends on the following separate GitHub-hosted repositories:
 - **[PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool)**
@@ -85,7 +85,8 @@ The ReCiter application depends on the following separate GitHub-hosted reposito
   - [ReCiter-Dynamodb-Model](https://github.com/wcmc-its/ReCiter-Dynamodb-Model)
   - [ReCiter-PubMed-Model](https://github.com/wcmc-its/ReCiter-PubMed-Model)
 
-
+Additionally, users can install a user interface tool:
+- [Publication Manager](https://github.com/wcmc-its/ReCiter-Publication-Manager)
 
 ## Installation
 
