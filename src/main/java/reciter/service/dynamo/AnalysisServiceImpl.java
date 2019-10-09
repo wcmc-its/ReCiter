@@ -1,5 +1,9 @@
 package reciter.service.dynamo;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,8 @@ import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.repository.AnalysisOutputRepository;
 import reciter.engine.analysis.ReCiterFeature;
+import reciter.model.identity.Identity;
+import reciter.model.scopus.ScopusArticle;
 import reciter.service.AnalysisService;
 
 @Slf4j
@@ -77,6 +83,25 @@ public class AnalysisServiceImpl implements AnalysisService{
 	@Override
 	public void delete(String uid) {
 		analysisOutputRepository.deleteById(uid);
+	}
+
+	@Override
+	public List<AnalysisOutput> findByUids(List<String> uids) {
+		List<AnalysisOutput> analysisOutputs = null;
+        Iterator<reciter.database.dynamodb.model.AnalysisOutput> iterator = analysisOutputRepository.findAllById(uids).iterator();
+        analysisOutputs = new ArrayList<>(uids.size());
+        while (iterator.hasNext()) {
+        	AnalysisOutput anaOutput = iterator.next();
+        	if(anaOutput != null 
+    				&&
+    				anaOutput.isUsingS3()) {
+        		log.info("Retreving analysis from s3 for " + anaOutput.getUid());
+        		ReCiterFeature reCiterFeature = (ReCiterFeature) ddbs3.retrieveLargeItem(s3BucketName, AnalysisOutput.class.getSimpleName() + "/" + anaOutput.getUid(), ReCiterFeature.class);
+        		anaOutput.setReCiterFeature(reCiterFeature);
+        	}
+        	analysisOutputs.add(anaOutput);
+        }
+        return analysisOutputs;
 	}
 	
 

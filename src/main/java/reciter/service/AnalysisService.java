@@ -18,13 +18,18 @@
  *******************************************************************************/
 package reciter.service;
 
+import java.util.List;
+
 import reciter.database.dynamodb.model.AnalysisOutput;
+import reciter.model.identity.Identity;
 
 public interface AnalysisService {
 
 	void save(AnalysisOutput analysis);
 	
 	AnalysisOutput findByUid(String uid);
+	
+	List<AnalysisOutput> findByUids(List<String> uids);
 	
 	void deleteAll();
 

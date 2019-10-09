@@ -62,7 +62,6 @@ public class IdentityServiceImpl implements IdentityService {
         Iterator<reciter.database.dynamodb.model.Identity> iterator = it.iterator();
         while (iterator.hasNext()) {
             Identity identity = iterator.next().getIdentity();
-            System.out.println("getting identity:" + identity.getUid());
             identities.add(identity);
         }
         return identities;
