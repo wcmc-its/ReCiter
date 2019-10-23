@@ -579,21 +579,23 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		identityAuthorNames.add(identityPrimaryName);
 		
-		for(AuthorName authorName: identity.getAlternateNames()) {
-			authorName.setFirstName(ReCiterStringUtil.deAccent(authorName.getFirstName().replaceAll("[\"()]", "")));
-			authorName.setLastName(ReCiterStringUtil.deAccent(authorName.getLastName().replaceAll("(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "")));
-			if(authorName.getMiddleName() != null) {
-				authorName.setMiddleName(ReCiterStringUtil.deAccent(authorName.getMiddleName()));
+		if(identity.getAlternateNames() != null) {
+			for(AuthorName authorName: identity.getAlternateNames()) {
+				authorName.setFirstName(ReCiterStringUtil.deAccent(authorName.getFirstName().replaceAll("[\"()]", "")));
+				authorName.setLastName(ReCiterStringUtil.deAccent(authorName.getLastName().replaceAll("(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "")));
+				if(authorName.getMiddleName() != null) {
+					authorName.setMiddleName(ReCiterStringUtil.deAccent(authorName.getMiddleName()));
+				}
+				if(authorName.getLastName().contains(" ") || authorName.getLastName().contains("-")
+						||
+						(authorName.getFirstName().contains(" ") || authorName.getFirstName().contains("."))
+						||
+						(authorName.getFirstName().length() ==1 && authorName.getMiddleName() != null)) {
+					identityDerivedNames.addAll(deriveAdditionalName(authorName));
+				}
+				
+				identityAuthorNames.add(authorName);
 			}
-			if(authorName.getLastName().contains(" ") || authorName.getLastName().contains("-")
-					||
-					(authorName.getFirstName().contains(" ") || authorName.getFirstName().contains("."))
-					||
-					(authorName.getFirstName().length() ==1 && authorName.getMiddleName() != null)) {
-				identityDerivedNames.addAll(deriveAdditionalName(authorName));
-			}
-			
-			identityAuthorNames.add(authorName);
 		}
 		identityNames.put(IdentityNameType.ORIGINAL, identityAuthorNames);
 		identityNames.put(IdentityNameType.DERIVED, identityDerivedNames);
