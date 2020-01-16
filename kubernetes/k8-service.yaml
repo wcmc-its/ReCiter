@@ -4,7 +4,7 @@ metadata:
   name: reciter
   namespace: reciter
   annotations:
-    alb.ingress.kubernetes.io/healthcheck-path: /reciter-api/swagger-ui.html
+    alb.ingress.kubernetes.io/healthcheck-path: /reciter/swagger-ui.html
     alb.ingress.kubernetes.io/success-codes: 200-302
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
     alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
