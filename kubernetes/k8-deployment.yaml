@@ -1,0 +1,162 @@
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: reciter
+  namespace: reciter
+  labels:
+    app: reciter
+    environment: dev
+    tier: backend
+    owner: szd2013
+spec:
+  selector:
+    matchLabels:
+      app: reciter
+      environment: dev
+      tier: backend
+      owner: szd2013
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: reciter
+        environment: dev
+        tier: backend
+        owner: szd2013
+    spec:
+      containers:
+      - image: xxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/wcmc/reciter:tag
+        name: reciter
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: ADMIN_API_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: reciter-secrets
+              key: ADMIN_API_KEY
+        - name: CONSUMER_API_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: reciter-secrets
+              key: CONSUMER_API_KEY
+        - name: AMAZON_AWS_ACCESS_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: reciter-secrets
+              key: AMAZON_AWS_ACCESS_KEY
+        - name: AMAZON_AWS_SECRET_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: reciter-secrets
+              key: AMAZON_AWS_SECRET_KEY
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: SERVER_PORT
+        - name: SCOPUS_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: SCOPUS_SERVICE
+        - name: PUBMED_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: PUBMED_SERVICE
+        - name: AMAZON_DYNAMODB_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: AMAZON_DYNAMODB_ENDPOINT
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: AWS_REGION
+        ports:
+        - containerPort: 5000
+          name: reciter
+        resources:
+          requests:
+            memory: 1750m
+            cpu: 0.8
+          limits:
+            memory: 2G
+            cpu: 1
+        livenessProbe:
+          httpGet:
+            path: /swagger-ui.html
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: "/swagger-ui.html"
+            port: 5000
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3
+      - image: nginx:alpine
+        name:  nginx
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 200m
+            memory: 300Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: "/nginx-health"
+            port: 80
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          failureThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: "/nginx-health"
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 1
+          failureThreshold: 1
+          timeoutSeconds: 1
+        volumeMounts:
+          - name:  nginx-conf
+            mountPath:  /etc/nginx/conf.d
+      volumes:
+        - name: nginx-conf  
+          configMap:
+            name: reciter-nginx-configmap
+
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-reciter
+  namespace: reciter
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reciter
+  minReplicas: 3
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
