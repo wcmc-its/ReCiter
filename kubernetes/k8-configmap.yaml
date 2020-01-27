@@ -21,9 +21,13 @@ data:
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Port $server_port;
             proxy_set_header Host $host;
-            proxy_read_timeout 300s;
-            proxy_send_timeout 300s;
-            proxy_connect_timeout 300s;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
             proxy_pass http://localhost:5000;
         }
 
@@ -34,9 +38,13 @@ data:
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Port $server_port;
             proxy_set_header Host $host;
-            proxy_read_timeout 300s;
-            proxy_send_timeout 300s;
-            proxy_connect_timeout 300s;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
         }
 
         location /reciter/webjars {
@@ -47,9 +55,13 @@ data:
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Port $server_port;
             proxy_set_header Host $host;
-            proxy_read_timeout 300s;
-            proxy_send_timeout 300s;
-            proxy_connect_timeout 300s;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
         }
 
         location /reciter/swagger {
@@ -60,9 +72,13 @@ data:
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Port $server_port;
             proxy_set_header Host $host;
-            proxy_read_timeout 300s;
-            proxy_send_timeout 300s;
-            proxy_connect_timeout 300s;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
         }
 
         location /reciter/v2 {
@@ -73,9 +89,13 @@ data:
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Port $server_port;
             proxy_set_header Host $host;
-            proxy_read_timeout 300s;
-            proxy_send_timeout 300s;
-            proxy_connect_timeout 300s;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
         }
 
         location / {
@@ -84,6 +104,13 @@ data:
             proxy_set_header X-Forwarded-Host $server_name;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
         }
 
         location /nginx-health {
@@ -95,16 +122,16 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: env-config
-  namespace: reciter
-  labels:
-    app: reciter
-    environment: dev
-    owner: szd2013
-    tier: backend
+    name: env-config
+    namespace: reciter
+    labels:
+        app: reciter
+        environment: dev
+        owner: szd2013
+        tier: backend
 data:
-  SERVER_PORT: "5000"
-  PUBMED_SERVICE: https://reciter-pubmed.weill.cornell.edu
-  SCOPUS_SERVICE: https://reciter-scopus.weill.cornell.edu
-  AMAZON_DYNAMODB_ENDPOINT: https://dynamodb.us-east-1.amazonaws.com
-  AWS_REGION: us-east-1
+    SERVER_PORT: "5000"
+    PUBMED_SERVICE: https://reciter.weill.cornell.edu/pubmed
+    SCOPUS_SERVICE: https://reciter.weill.cornell.edu/scopus
+    AMAZON_DYNAMODB_ENDPOINT: https://dynamodb.us-east-1.amazonaws.com
+    AWS_REGION: us-east-1
