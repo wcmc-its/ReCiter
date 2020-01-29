@@ -154,7 +154,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 
 				int difference;
 				if (degreeType.equals(DegreeType.BACHELORS)) {
-					if (identity.getDegreeYear().getBachelorYear() != 0) {
+					if (identity.getDegreeYear() != null && identity.getDegreeYear().getBachelorYear() != 0) {
 						difference = year - identity.getDegreeYear().getBachelorYear();
 						reCiterArticle.setBachelorsYearDiscrepancy(difference);
 						educationYearEvidence = new EducationYearEvidence();
@@ -179,7 +179,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						}
 					}
 				} else if (degreeType.equals(DegreeType.DOCTORAL)) {
-					if (identity.getDegreeYear().getDoctoralYear() != 0) {
+					if (identity.getDegreeYear() != null && identity.getDegreeYear().getDoctoralYear() != 0) {
 						int doctoral = identity.getDegreeYear().getDoctoralYear();
 						difference = year - doctoral;
 						reCiterArticle.setDoctoralYearDiscrepancy(difference);

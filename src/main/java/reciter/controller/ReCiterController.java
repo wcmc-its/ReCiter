@@ -315,7 +315,7 @@ public class ReCiterController {
                     identities.add(identity);
             	eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
             	if (eSearchResult != null) {
-            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(eSearchResult.getRetrievalDate()));
+            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(eSearchResult.getRetrievalDate())).minusDays(1);
             	} else {
             		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
             	}

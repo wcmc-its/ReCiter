@@ -105,6 +105,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 			averageClusteringEvidence.setClusterReliabilityScore(roundAvoid(reCiterCluster.getClusterReliabilityScore(),2));
 			averageClusteringEvidence.setClusterScoreModificationOfTotalScore(roundAvoid(-clusterScoreDiscrepancy, 2));
 			averageClusteringEvidence.setTotalArticleScoreWithoutClustering(roundAvoid(reCiterArticle.getTotalArticleScoreWithoutClustering(), 2));
+			averageClusteringEvidence.setClusterIdentifier(reCiterCluster.getClusterID());
 			//Remove accepted rejected score from raw score - https://github.com/wcmc-its/ReCiter/issues/286
 			double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy;
 			reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(totalArticleScoreNonStandardized, 2));
