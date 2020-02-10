@@ -40,7 +40,7 @@ public class PubMedArticleRetriever {
         if (numberOfPubmedArticles == 0) {
             return Collections.emptyList();
         }
-        String nodeUrl = PUBMED_SERVICE + "/pubmed/query-complex/";
+        String nodeUrl = PUBMED_SERVICE.endsWith("/pubmed")?PUBMED_SERVICE + "/query-complex/" :PUBMED_SERVICE + "/pubmed/query-complex/";
         RestTemplate restTemplate = new RestTemplate();
         log.info("Sending web request: for query: " + pubMedQuery + ":" + nodeUrl);
         ResponseEntity<PubMedArticle[]> responseEntity = null;
