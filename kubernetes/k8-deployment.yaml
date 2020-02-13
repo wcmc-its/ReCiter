@@ -19,7 +19,7 @@ spec:
     rollingUpdate:
       maxUnavailable: 0
     type: RollingUpdate
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
@@ -29,7 +29,7 @@ spec:
         owner: szd2013
     spec:
       containers:
-      - image: xxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/wcmc/reciter:tag
+      - image: CONTAINER_IMAGE
         name: reciter
         imagePullPolicy: IfNotPresent
         env:
@@ -83,7 +83,7 @@ spec:
           name: reciter
         resources:
           requests:
-            memory: 1750m
+            memory: 1.7G
             cpu: 0.8
           limits:
             memory: 2G
@@ -151,12 +151,18 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: reciter
-  minReplicas: 3
-  maxReplicas: 6
+  minReplicas: 1
+  maxReplicas: 4
   metrics:
   - type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 70
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 85
