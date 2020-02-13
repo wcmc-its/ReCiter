@@ -2,17 +2,17 @@ apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and befor
 kind: Deployment
 metadata:
   name: reciter
-  namespace: reciter
+  namespace: NAMESPACE
   labels:
     app: reciter
-    environment: dev
+    environment: ENVIRONMENT_LABEL
     tier: backend
     owner: szd2013
 spec:
   selector:
     matchLabels:
       app: reciter
-      environment: dev
+      environment: ENVIRONMENT_LABEL
       tier: backend
       owner: szd2013
   strategy:
@@ -24,7 +24,7 @@ spec:
     metadata:
       labels:
         app: reciter
-        environment: dev
+        environment: ENVIRONMENT_LABEL
         tier: backend
         owner: szd2013
     spec:
@@ -145,7 +145,10 @@ apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
   name: hpa-reciter
-  namespace: reciter
+  namespace: NAMESPACE
+  labels:
+    app: reciter
+    environment: ENVIRONMENT_LABEL
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
