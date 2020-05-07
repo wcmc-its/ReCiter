@@ -161,6 +161,7 @@ public class ArticleTranslator {
 
                     ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, affiliation);
                     reCiterAuthor.setRank(i++);
+                    reCiterAuthor.setOrcid(author.getOrcid());
                     reCiterCoAuthors.addAuthor(reCiterAuthor);
                 }
             }
@@ -202,7 +203,7 @@ public class ArticleTranslator {
                     reCiterMeshHeadingQualifierName.setQualifierName(medlineCitationMeshHeadingQualifierName.getQualifiername());
 
                     ReCiterCitationYNEnum e;
-                    if ("Y".equals(medlineCitationMeshHeadingQualifierName.getMajortopicyn())) {
+                    if ("Y".equals(medlineCitationMeshHeadingQualifierName.getMajortopicyn().getVal())) {
                         e = ReCiterCitationYNEnum.Y;
                     } else {
                         e = ReCiterCitationYNEnum.N;
