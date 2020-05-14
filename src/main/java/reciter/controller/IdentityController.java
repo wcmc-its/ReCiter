@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -143,7 +144,8 @@ public class IdentityController {
     @RequestMapping(value = "/reciter/find/all/identity", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity findAll() {
-        slf4jLogger.info("Scanning for all Identities");
+        StopWatch stopWatch = new StopWatch("Identity All api performance");
+        stopWatch.start("findAllIdentities");
         List<Identity> identities;
         try {
             identities = identityService.findAll();
@@ -153,6 +155,8 @@ public class IdentityController {
         if (identities.size() == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Identity table is empty");
         }
+        stopWatch.stop();
+        slf4jLogger.info(stopWatch.prettyPrint());
         return new ResponseEntity<>(identities, HttpStatus.OK);
     }
 }
