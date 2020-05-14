@@ -48,7 +48,12 @@ public class AmazonS3Config {
     private boolean isDynamoDbLocal;
     
     @Value("${aws.s3.use.dynamic.bucketName}")
-    private boolean isDynamicBucketName;
+	private boolean isDynamicBucketName;
+	
+	/**
+	 * This static variable will hold the s3 bucketName based on dynamic bucket generation
+	 */
+	public static String BUCKET_NAME;
     
     /**
      * @return AmazonS3 client object
@@ -83,19 +88,19 @@ public class AmazonS3Config {
     
     private void createBucket(AmazonS3 s3) {
     	String accountNumber = getAccountIDUsingAccessKey(amazonAWSAccessKey, amazonAWSSecretKey);
-    	String bucketName = s3BucketName.toLowerCase() + "-" + awsS3Region.toLowerCase() + "-" + accountNumber;
+    	BUCKET_NAME = s3BucketName.toLowerCase() + "-" + awsS3Region.toLowerCase() + "-" + accountNumber;
     	if(!isDynamicBucketName) {
-    		bucketName = s3BucketName;
-    	}
-    	if(s3.doesBucketExistV2(bucketName)) {
-			log.info(bucketName.toLowerCase() + " Bucket Name already exists");
+    		BUCKET_NAME = s3BucketName;
+		}
+    	if(s3.doesBucketExistV2(BUCKET_NAME)) {
+			log.info(BUCKET_NAME.toLowerCase() + " Bucket Name already exists");
 		} else {
 			try {
-				s3.createBucket(bucketName.toLowerCase());
+				s3.createBucket(BUCKET_NAME.toLowerCase());
 			} catch(AmazonS3Exception e) {
 				log.error(e.getErrorMessage());
 			}
-			log.info("Bucket created with name: " + bucketName);
+			log.info("Bucket created with name: " + BUCKET_NAME);
 		}
     }
     
