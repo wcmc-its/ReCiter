@@ -3,7 +3,11 @@ package reciter.database.dynamodb;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import reciter.engine.analysis.ReCiterFeature;
+import reciter.model.identity.Identity;
 
 /**
  * This class allows you to store dynamodb items which exceeds dynamodb item limit of 400kb in s3.
@@ -112,6 +117,10 @@ public class DynamoDbS3Operations {
 				ReCiterFeature reCiterFeature = OBJECT_MAPPER.readValue(objectContent, ReCiterFeature.class);
 				return reCiterFeature;
 			}
+			if(objectClass == Identity.class) {
+				List<Identity> identities = Arrays.asList(OBJECT_MAPPER.readValue(objectContent, Identity[].class));
+				return identities;
+			}
 			
 		} catch (IOException | AmazonServiceException e) {
 			log.error(e.getMessage());
@@ -130,5 +139,22 @@ public class DynamoDbS3Operations {
 			log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
 			s3.deleteObject(bucketName.toLowerCase(), keyName);
 		}
+	}
+
+	/**
+	 * This function gets the timestamp of the object that was stored. It assumes versioning is turned off for bucket.
+	 * @param bucketName
+	 * @param keyName
+	 * @return date of the object that was stored
+	 */
+	public Date getObjectSaveTimestamp(String bucketName, String keyName) {
+		try {
+			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
+			Date lastModifedDate = s3Object.getObjectMetadata().getLastModified();
+			return lastModifedDate;
+		} catch (AmazonServiceException e) {
+			log.error(e.getMessage());
+		}
+		return null;
 	}
 }
