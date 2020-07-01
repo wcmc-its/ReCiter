@@ -70,6 +70,8 @@ import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
+import reciter.utils.AffiliationStrategyUtils;
+import reciter.utils.DegreeYearStrategyUtils;
 
 @Slf4j
 @SpringBootApplication
@@ -114,7 +116,13 @@ public class Application {
     private boolean isFileImport;
     
     @Value("${strategy.gender}")
-    private boolean useGenderStrategy;
+	private boolean useGenderStrategy;
+	
+	@Value("${strategy.discrepancyDegreeYear.degreeYearDiscrepancyScore}")
+	private String degreeYearDiscrepancyScore;
+	
+	@Value("${strategy.authorAffiliationScoringStrategy.institutionStopwords}")
+    private String instAfflInstitutionStopwords;
     
     private String scopusService = System.getenv("SCOPUS_SERVICE");
     
@@ -295,8 +303,13 @@ public class Application {
 		        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
 		        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
 	        }
-        }
-        
+		}
+		DegreeYearStrategyUtils degreeYearStrategyUtils = new DegreeYearStrategyUtils();
+		EngineParameters.setDegreeYearDiscrepancyScoreMap(degreeYearStrategyUtils.getDegreeYearDiscrepancyScoreMap(this.degreeYearDiscrepancyScore));
+
+		AffiliationStrategyUtils affiliationStrategyUtils = new AffiliationStrategyUtils();
+		EngineParameters.setRegexForStopWords(affiliationStrategyUtils.constructRegexForStopWords(this.instAfflInstitutionStopwords));
+		
         log.info("ReCiter is up and ready to use. Please make sure its other components such as Pubmed-Retrieval-Tool is also setup if you wish to do retrieval.");
 	}
 	
