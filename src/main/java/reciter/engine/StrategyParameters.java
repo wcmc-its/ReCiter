@@ -237,23 +237,11 @@ public class StrategyParameters {
     @Value("${strategy.knownrelationships.relationshipMatchModifier-Manager-SeniorAuthor}")
     private double relationshipMatchModifierManagerSeniorAuthor;
 
-    @Value("${strategy.discrepancyDegreeYear-BachelorThreshold}")
-    private double discrepancyDegreeYearBachelorThreshold;
+    @Value("${strategy.discrepancyDegreeYear.degreeYearDiscrepancyScore}")
+    private String degreeYearDiscrepancyScore;
 
-    @Value("${strategy.discrepancyDegreeYear-BachelorScore}")
-    private double discrepancyDegreeYearBachelorScore;
-
-    @Value("${strategy.discrepancyDegreeYear-YearWhichPhDStudentsStartedToAuthorMorePapers}")
-    private int discrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers;
-
-    @Value("${strategy.discrepancyDegreeYear-DoctoralThreshold1}")
-    private double discrepancyDegreeYearDoctoralThreshold1;
-
-    @Value("${strategy.discrepancyDegreeYear-DoctoralThreshold2}")
-    private double discrepancyDegreeYearDoctoralThreshold2;
-
-    @Value("${strategy.discrepancyDegreeYear-DoctoralScore}")
-    private double discrepancyDegreeYearDoctoralScore;
+    @Value("${strategy.discrepancyDegreeYear.bacherlorYearWeight}")
+    private int bacherlorYearWeight;
 
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitDepartmentMatchingScore}")
     private double organizationalUnitDepartmentMatchingScore;
