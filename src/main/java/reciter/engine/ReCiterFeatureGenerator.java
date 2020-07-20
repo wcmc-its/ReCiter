@@ -1,23 +1,5 @@
 package reciter.engine;
 
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-import reciter.algorithm.cluster.Clusterer;
-import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.api.parameters.FilterFeedbackType;
-import reciter.api.parameters.UseGoldStandard;
-import reciter.engine.analysis.ReCiterArticleAffiliationFeature;
-import reciter.engine.analysis.ReCiterArticleAuthorFeature;
-import reciter.engine.analysis.ReCiterArticleFeature;
-import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
-import reciter.engine.analysis.ReCiterArticlePublicationType;
-import reciter.engine.analysis.ReCiterFeature;
-import reciter.engine.analysis.evidence.Evidence;
-import reciter.engine.erroranalysis.Analysis;
-import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterAuthor;
-import reciter.model.identity.Identity;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -25,7 +7,30 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import reciter.algorithm.cluster.Clusterer;
+import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
+import reciter.api.parameters.UseGoldStandard;
+import reciter.engine.analysis.ReCiterArticleAffiliationFeature;
+import reciter.engine.analysis.ReCiterArticleAuthorFeature;
+import reciter.engine.analysis.ReCiterArticleFeature;
+import reciter.engine.analysis.ReCiterArticleFeature.ArticleKeyword;
+import reciter.engine.analysis.ReCiterArticleFeature.ArticleKeyword.KeywordType;
+import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
+import reciter.engine.analysis.ReCiterArticlePublicationType;
+import reciter.engine.analysis.ReCiterFeature;
+import reciter.engine.analysis.evidence.Evidence;
+import reciter.engine.erroranalysis.Analysis;
+import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleMeshHeading;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.Identity;
 
 @Data
 @Slf4j
@@ -185,6 +190,20 @@ public class ReCiterFeatureGenerator {
             	reCiterArticleFeature.setPublicationAbstract(reCiterArticle.getPublicationAbstract());
             }
             
+            //article keywords
+            if(reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
+                List<ReCiterArticleFeature.ArticleKeyword> articleKeywords = new ArrayList<>();
+                for (ReCiterArticleMeshHeading reCiterArticleMeshHeading : reCiterArticle.getMeshHeadings()) {
+                    if(MeshMajorClusteringStrategy.isMeshMajor(reCiterArticleMeshHeading)) {
+                        ReCiterArticleFeature.ArticleKeyword articleKeyword = new ArticleKeyword(reCiterArticleMeshHeading.getDescriptorName().getDescriptorName(), KeywordType.MESH_MAJOR);
+                        articleKeywords.add(articleKeyword);
+                    }
+                }
+                if(!articleKeywords.isEmpty()) {
+                    reCiterArticleFeature.setArticleKeywords(articleKeywords);
+                }
+                
+            }
             //scopus doc id
             if(reCiterArticle.getScopusDocId() != null) {
             	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
@@ -257,6 +276,15 @@ public class ReCiterFeatureGenerator {
 
                 // isTargetAuthor
                 reCiterArticleAuthorFeature.setTargetAuthor(reCiterArticleAuthor.isTargetAuthor());
+
+                // Orcid
+                if(reCiterArticleAuthor.getOrcid() != null && !reCiterArticleAuthor.getOrcid().isEmpty()) {
+                    Pattern pattern = Pattern.compile("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}");
+                    Matcher matcher = pattern.matcher(reCiterArticleAuthor.getOrcid());
+                    if(matcher.find()) {
+                        reCiterArticleAuthorFeature.setOrcid(matcher.group());
+                    }
+                }
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }

@@ -1,23 +1,48 @@
 package reciter.service.dynamo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+
+import lombok.extern.slf4j.Slf4j;
+import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.database.dynamodb.repository.IdentityRepository;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
+import reciter.storage.s3.AmazonS3Config;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+@Slf4j
 @Primary
 @Service
 public class IdentityServiceImpl implements IdentityService {
 
     @Autowired
     private IdentityRepository identityRepository;
+
+    @Autowired(required=true)
+    private DynamoDbS3Operations ddbs3;
+    
+    @Value("${aws.s3.use}")
+    private boolean isS3Use;
+    
+    @Value("${aws.dynamoDb.local}")
+    private boolean isDynamoDbLocal;
+
+    @Value("${aws.s3.use.cached.identityAll}")
+    private boolean isIdentityAllS3Caching;
+
+    @Value("${aws.s3.use.cached.identityAll.cacheTime}")
+    private long s3CachingDays;
 
     @Override
     public void save(Collection<Identity> identities) {
@@ -57,13 +82,50 @@ public class IdentityServiceImpl implements IdentityService {
 
     @Override
     public List<Identity> findAll() {
-        Iterable<reciter.database.dynamodb.model.Identity> it = identityRepository.findAll();
-        List<Identity> identities = new ArrayList<>();
-        Iterator<reciter.database.dynamodb.model.Identity> iterator = it.iterator();
-        while (iterator.hasNext()) {
-            Identity identity = iterator.next().getIdentity();
-            System.out.println("getting identity:" + identity.getUid());
-            identities.add(identity);
+        List<Identity> identities = null;
+        if(isS3Use && !isDynamoDbLocal && isIdentityAllS3Caching) {
+            log.info("Getting all identity information from S3");
+            Date lastModifiedDate = ddbs3.getObjectSaveTimestamp(AmazonS3Config.BUCKET_NAME, Identity.class.getSimpleName() + "/" + "identityAll");
+            if(lastModifiedDate != null) {
+                long daysBetween = Duration.between(lastModifiedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().atStartOfDay(), LocalDate.now().atStartOfDay()).toDays();
+                if(daysBetween >= this.s3CachingDays) {
+                    log.info("Storing all identity information in S3 since cache time of " + this.s3CachingDays + " days has been invalidated");
+                    log.info("Scanning Identity table for all identities");
+                    Iterable<reciter.database.dynamodb.model.Identity> it = identityRepository.findAll();
+                    identities = new ArrayList<>();
+                    Iterator<reciter.database.dynamodb.model.Identity> iterator = it.iterator();
+                    while (iterator.hasNext()) {
+                        Identity identity = iterator.next().getIdentity();
+                        identities.add(identity);
+                    }
+                    ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, identities, Identity.class.getSimpleName() + "/" + "identityAll");
+                } else {
+                    identities = (List<Identity>) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME,
+                    Identity.class.getSimpleName() + "/" + "identityAll", Identity.class);
+                }
+            } 
+            if(identities == null || lastModifiedDate == null) {
+                log.info("Scanning Identity table for all identities");
+                Iterable<reciter.database.dynamodb.model.Identity> it = identityRepository.findAll();
+                identities = new ArrayList<>();
+                Iterator<reciter.database.dynamodb.model.Identity> iterator = it.iterator();
+                while (iterator.hasNext()) {
+                    Identity identity = iterator.next().getIdentity();
+                    identities.add(identity);
+                }
+                //Case when putting the object for first time
+                log.info("Storing all identity information for first time in S3");
+                ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, identities, Identity.class.getSimpleName() + "/" + "identityAll");
+            }
+        } else if (!isS3Use || !isIdentityAllS3Caching || isDynamoDbLocal) {
+            log.info("Using Dynamodb scanning of identities since s3 caching is disabled or using dynamodb local.\nTo enable caching set both aws.s3.use and aws.s3.use.cached.identityAll flag to true");
+            Iterable<reciter.database.dynamodb.model.Identity> it = identityRepository.findAll();
+            identities = new ArrayList<>();
+            Iterator<reciter.database.dynamodb.model.Identity> iterator = it.iterator();
+            while (iterator.hasNext()) {
+                Identity identity = iterator.next().getIdentity();
+                identities.add(identity);
+            }
         }
         return identities;
     }

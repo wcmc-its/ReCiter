@@ -261,7 +261,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
 
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
-		String nodeUrl = PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
+		String nodeUrl = PUBMED_SERVICE.endsWith("/pubmed")?PUBMED_SERVICE + "/query-number-pubmed-articles/":PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
 		RestTemplate restTemplate = new RestTemplate();
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<Integer> responseEntity = null;

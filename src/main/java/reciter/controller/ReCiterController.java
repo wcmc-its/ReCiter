@@ -24,6 +24,8 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +64,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeatures;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.model.identity.OrganizationalUnit;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.AnalysisService;
@@ -335,6 +338,100 @@ public class ReCiterController {
         estimatedTime = System.currentTimeMillis() - startTime;
         slf4jLogger.info("elapsed time: " + estimatedTime);
         return ResponseEntity.ok().body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
+    }
+    
+    @ApiOperation(value = "Retrieve pending articles for a group of users.", response = ResponseEntity.class, notes = "Retrieve pending articles for a group of users.")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully retrieved list"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/feature-generator/by/group", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity retrieveBulkFeatureGenerator(@RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
+    		@RequestParam(required = true) Double totalStandardizedArticleScore, @RequestParam(required = true) int maxArticlesPerPerson) {
+    	long startTime = System.currentTimeMillis();
+        long estimatedTime = 0;
+        slf4jLogger.info("Start time is: " + startTime);
+        
+        List<Identity> identities;
+        try {
+            identities = identityService.findAll();
+        } catch (Exception ne) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Issue with the request" + ne);
+        }
+        
+        final double totalScore;
+        
+        if(totalStandardizedArticleScore == null) {
+        	totalScore = totalArticleScoreStandardizedDefault;
+        } else {
+        	totalScore = totalStandardizedArticleScore;
+        }
+        
+        if(identities != null && identities.size() > 0) {
+        	List<String> identitySubset = identities.parallelStream().filter(identity -> 
+        			((personType == null)?
+        			true:
+        			(identity.getPersonTypes() != null
+        			&&
+        			!identity.getPersonTypes().isEmpty() && !Collections.disjoint(identity.getPersonTypes(), personType)))
+        			&&
+        			((organizationalAffiliation == null)?
+        			true:
+        			(identity.getInstitutions() != null
+        			&&
+        			!identity.getInstitutions().isEmpty()
+        			&&
+        			!Collections.disjoint(identity.getInstitutions(), organizationalAffiliation)))
+        			&&
+        			((departmentalAffiliation == null)?
+        			true:		
+        			(identity.getOrganizationalUnits() != null
+        			&&
+        			!identity.getOrganizationalUnits().isEmpty()
+        			&&
+        			!Collections.disjoint(identity.getOrganizationalUnits().stream()
+        					.map(OrganizationalUnit::getOrganizationalUnitLabel)
+        					.collect(Collectors.toList()), departmentalAffiliation))))
+        			.map(Identity::getUid)
+        			.collect(Collectors.toList());
+        	List<AnalysisOutput> analysis = analysisService.findByUids(identitySubset);
+        	if (analysis != null && !analysis.isEmpty()) {
+        		analysis.stream().forEach(anl -> {
+        			if(anl.getReCiterFeature() != null
+        			&& 
+        			anl.getReCiterFeature().getReCiterArticleFeatures() != null
+        			&& 
+        			!anl.getReCiterFeature().getReCiterArticleFeatures().isEmpty()) {
+        				anl.getReCiterFeature().setReCiterArticleFeatures(anl.getReCiterFeature().getReCiterArticleFeatures()
+        						.stream()
+        						.limit(maxArticlesPerPerson)
+        						.collect(Collectors.toList())
+        						.stream()
+        						.filter(article ->
+			    					article.getUserAssertion() == PublicationFeedback.NULL
+			    					&&
+			    					article.getTotalArticleScoreStandardized() >= totalScore)
+        						.collect(Collectors.toList()));
+        			}
+        		});
+            	List<ReCiterFeature> analysisSubset= analysis.parallelStream()
+            			.filter(anl -> anl.getReCiterFeature().getReCiterArticleFeatures() != null && !anl.getReCiterFeature().getReCiterArticleFeatures().isEmpty())
+            			.map(AnalysisOutput::getReCiterFeature)
+            			.collect(Collectors.toList());
+            	
+            	estimatedTime = System.currentTimeMillis() - startTime;
+                slf4jLogger.info("elapsed time: " + estimatedTime);
+                //return new ResponseEntity<>((analysisSubset.size()> maxTotalArticles?analysisSubset.stream().limit(maxTotalArticles).collect(Collectors.toList()):analysisSubset), HttpStatus.OK);
+                return new ResponseEntity<>(analysisSubset, HttpStatus.OK);
+        	}
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There is no publications data for the group. Please wait while feature-generator re-runs tonight.");
     }
 
     @ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence.")

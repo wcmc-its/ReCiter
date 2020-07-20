@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.OrganizationalUnitEvidence;
 import reciter.model.article.ReCiterArticle;
@@ -141,7 +142,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
 											&& 
 											orgUnit.getOrganizationalUnitLabel().length() > 14) {
-										if(StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
+										if(StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(EngineParameters.getRegexForStopWords(), ""), identityDepartment.replaceAll(EngineParameters.getRegexForStopWords(), ""))) {
 											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
 											//identityDepartment: "Center for Integrative Medicine"
 											//departmentMatchingScore: 2
@@ -297,16 +298,6 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			}
 		}
 		return sum;
-	}
-	
-	private String constructRegexForStopWords() {
-		String regex = "(?i)[-,]|(";
-		List<String> stopWords = Arrays.asList(ReCiterArticleScorer.strategyParameters.getInstAfflInstitutionStopwords().trim().split("\\s*,\\s*"));
-		for(String stopwWord: stopWords) {
-			regex = regex + " \\b" + stopwWord + "\\b|" + "\\b" + stopwWord + "\\b" + " |";  
-		}
-		regex = regex.replaceAll("\\|$", "") + ")";
-		return regex;
 	}
 
 	/**

@@ -24,6 +24,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
+import reciter.engine.EngineParameters;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
@@ -140,7 +141,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 		return 0;
 	}
 
-	@Override
+	/* @Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		for(ReCiterArticle reCiterArticle: reCiterArticles) {
 			EducationYearEvidence educationYearEvidence = null;
@@ -265,6 +266,48 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 				}
 			}
 			
+		}
+		return 0;
+	} */
+
+	@Override
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		for(ReCiterArticle reCiterArticle: reCiterArticles) {
+			EducationYearEvidence educationYearEvidence = null;
+			if (reCiterArticle != null 
+					&& reCiterArticle.getPublicationDateStandardized() != null) {
+				LocalDate date = LocalDate.parse(reCiterArticle.getPublicationDateStandardized());
+				int articleYear = date.getYear();
+				if (degreeType.equals(DegreeType.DOCTORAL)) {
+					if (identity.getDegreeYear() != null && identity.getDegreeYear().getDoctoralYear() != 0) {
+						int discrepancyDegreeYearDoctoral = articleYear - identity.getDegreeYear().getDoctoralYear();
+						double degreeYearDiscrepancyScore = EngineParameters.getDegreeYearDiscrepancyScoreMap().get(Double.valueOf(discrepancyDegreeYearDoctoral));
+						educationYearEvidence = new EducationYearEvidence();
+						educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
+						if(identity.getDegreeYear().getBachelorYear() != 0) {
+							educationYearEvidence.setIdentityBachelorYear(identity.getDegreeYear().getBachelorYear());
+						}
+						educationYearEvidence.setArticleYear(articleYear);
+						educationYearEvidence.setDiscrepancyDegreeYearDoctoral(discrepancyDegreeYearDoctoral);
+						educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(degreeYearDiscrepancyScore);
+						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
+					}
+				} else {
+					if (identity.getDegreeYear() != null && identity.getDegreeYear().getBachelorYear() != 0) {
+						int discrepancyDegreeYearBachelor = articleYear - identity.getDegreeYear().getBachelorYear() + ReCiterArticleScorer.strategyParameters.getBacherlorYearWeight();
+						double degreeYearDiscrepancyScore = EngineParameters.getDegreeYearDiscrepancyScoreMap().get(Double.valueOf(discrepancyDegreeYearBachelor));
+						educationYearEvidence = new EducationYearEvidence();
+						educationYearEvidence.setIdentityBachelorYear(identity.getDegreeYear().getBachelorYear());
+						if(identity.getDegreeYear().getDoctoralYear() != 0) {
+							educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
+						}
+						educationYearEvidence.setArticleYear(articleYear);
+						educationYearEvidence.setDiscrepancyDegreeYearBachelor(discrepancyDegreeYearBachelor);
+						educationYearEvidence.setDiscrepancyDegreeYearBachelorScore(degreeYearDiscrepancyScore);
+						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
+					}
+				}
+			}
 		}
 		return 0;
 	}

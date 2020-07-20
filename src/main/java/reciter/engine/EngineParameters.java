@@ -58,4 +58,10 @@ public class EngineParameters {
     private List<Long> knownPmids;
     private List<Long> rejectedPmids;
     private double totalStandardzizedArticleScore;
+    @Getter
+	@Setter
+    private static Map<Double, Double> degreeYearDiscrepancyScoreMap;
+    @Getter
+	@Setter
+    private static String regexForStopWords;
 }

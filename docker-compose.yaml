@@ -1,0 +1,31 @@
+version: '3'
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    restart: always
+    ports:
+    - 80:80
+    - 443:443
+    volumes:
+    - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+    - app
+
+  app:
+    restart: always
+    build: ./
+    working_dir: /app
+    environment: 
+      - ADMIN_API_KEY=api-key
+      - CONSUMER_API_KEY=api-key
+      - AMAZON_AWS_ACCESS_KEY=access-key
+      - AMAZON_AWS_SECRET_KEY=secret-key
+      - SERVER_PORT=5000
+      - SCOPUS_SERVICE=reciter-scopus-url
+      - PUBMED_SERVICE=reciter-pubmed-url
+      - AMAZON_DYNAMODB_ENDPOINT=https://dynamodb.us-east-1.amazonaws.com
+      - AWS_REGION=us-east-1
+    expose:
+      - "5000"
+    command: mvn clean spring-boot:run

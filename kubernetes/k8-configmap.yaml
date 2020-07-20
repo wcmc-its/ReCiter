@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reciter-nginx-configmap
+  namespace: reciter
+  labels:
+    app: reciter
+    environment: dev
+    tier: backend
+    owner: szd2013
+data:
+  nginx.conf: |-
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        location /reciter {
+            rewrite ^/reciter/swagger-ui.html$ /swagger-ui.html break;
+            rewrite ^/reciter/(.*)$ /reciter/$1 break;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Port $server_port;
+            proxy_set_header Host $host;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
+            proxy_pass http://localhost:5000;
+        }
+
+        location /webjars {
+            proxy_pass http://localhost:5000;
+            proxy_redirect off;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Port $server_port;
+            proxy_set_header Host $host;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
+        }
+
+        location /reciter/webjars {
+            rewrite ^/reciter/(.*)$ /$1 break;
+            proxy_pass http://localhost:5000;
+            proxy_redirect off;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Port $server_port;
+            proxy_set_header Host $host;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
+        }
+
+        location /reciter/swagger {
+            rewrite ^/reciter/(.*)$ /$1 break;
+            proxy_pass http://localhost:5000;
+            proxy_redirect off;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Port $server_port;
+            proxy_set_header Host $host;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
+        }
+
+        location /reciter/v2 {
+            rewrite ^/reciter/(.*)$ /$1 break;
+            proxy_pass http://localhost:5000;
+            proxy_redirect off;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Port $server_port;
+            proxy_set_header Host $host;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
+        }
+
+        location / {
+            proxy_pass http://localhost:5000;
+            proxy_set_header Host $host:$server_port;
+            proxy_set_header X-Forwarded-Host $server_name;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            keepalive_timeout 300;
+            send_timeout 300;
+            fastcgi_send_timeout 300; 
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+            proxy_send_timeout 300;
+            proxy_connect_timeout 300;
+        }
+
+        location /nginx-health {
+            access_log off;
+            return 200;
+        }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: env-config
+    namespace: reciter
+    labels:
+        app: reciter
+        environment: dev
+        owner: szd2013
+        tier: backend
+data:
+    SERVER_PORT: "5000"
+    PUBMED_SERVICE: https://reciter.weill.cornell.edu/pubmed
+    SCOPUS_SERVICE: https://reciter.weill.cornell.edu/scopus
+    AMAZON_DYNAMODB_ENDPOINT: https://dynamodb.us-east-1.amazonaws.com
+    AWS_REGION: us-east-1
