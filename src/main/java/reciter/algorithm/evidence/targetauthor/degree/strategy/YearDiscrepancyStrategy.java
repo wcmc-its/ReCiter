@@ -281,6 +281,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 				if (degreeType.equals(DegreeType.DOCTORAL)) {
 					if (identity.getDegreeYear() != null && identity.getDegreeYear().getDoctoralYear() != 0) {
 						int discrepancyDegreeYearDoctoral = articleYear - identity.getDegreeYear().getDoctoralYear();
+						discrepancyDegreeYearDoctoral = (discrepancyDegreeYearDoctoral < -99)?-99:discrepancyDegreeYearDoctoral;
+						discrepancyDegreeYearDoctoral = (discrepancyDegreeYearDoctoral > 100)?100:discrepancyDegreeYearDoctoral;
 						double degreeYearDiscrepancyScore = EngineParameters.getDegreeYearDiscrepancyScoreMap().get(Double.valueOf(discrepancyDegreeYearDoctoral));
 						educationYearEvidence = new EducationYearEvidence();
 						educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
@@ -295,6 +297,8 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 				} else {
 					if (identity.getDegreeYear() != null && identity.getDegreeYear().getBachelorYear() != 0) {
 						int discrepancyDegreeYearBachelor = articleYear - identity.getDegreeYear().getBachelorYear() + ReCiterArticleScorer.strategyParameters.getBacherlorYearWeight();
+						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor < -99)?-99:discrepancyDegreeYearBachelor;
+						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor > 100)?100:discrepancyDegreeYearBachelor;
 						double degreeYearDiscrepancyScore = EngineParameters.getDegreeYearDiscrepancyScoreMap().get(Double.valueOf(discrepancyDegreeYearBachelor));
 						educationYearEvidence = new EducationYearEvidence();
 						educationYearEvidence.setIdentityBachelorYear(identity.getDegreeYear().getBachelorYear());
