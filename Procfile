@@ -1,1 +1,1 @@
-web: java -jar reciter-1.1.jar
+web: java -jar reciter-2.0.0.jar
