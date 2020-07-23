@@ -161,7 +161,7 @@ The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Usin
 |Gold standard | Read from the GoldStandard table (includes both accepted and rejected PMIDs) for target user(s) | [`/reciter/goldstandard/{uid}`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#recitergoldstandarduid)  |
 | Look up candidate articles | Trigger look up of candidate articles for a given user | [`/reciter/retrieve/articles/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterretrievearticlesbyuid)  |
 | Retrieve suggested articles  | Read suggested articles from the Analysis table for target user | [`/reciter/article-retrieval/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterarticle-retrievalbyuid)   | 
-| Retrieve suggested articles | Read suggested articles and see supporting evidence from the Analysis table for target user | [`/reciter/feature-generator/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfeature-generatorbyuid) | 
+| Retrieve suggested articles | Read suggested articles and see supporting evidence from the Analysis table for target user(s) | [`/reciter/feature-generator/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfeature-generatorbyuid) or [`/reciter/feature-generator/by/group`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfeature-generatorbygroup)  | 
 
 
 
