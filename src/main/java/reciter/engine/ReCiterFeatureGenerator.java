@@ -128,7 +128,7 @@ public class ReCiterFeatureGenerator {
         log.info("\n");
         
         // overall accuracy
-	 reCiterFeature.setOverallAccuracy((analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size())	/  
+	 reCiterFeature.setOverallAccuracy(Double.valueOf(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size())	/  
 (analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size() + analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size()));
 	    
         // precision
