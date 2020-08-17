@@ -13,11 +13,11 @@ phases:
         - echo "${BRANCH}"
         - |
           if expr "${BRANCH}" : ".*dev" >/dev/null; then
-            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@APPNAME@'"reciter-dev"'@' -e 's@HPANAME@'"hpa-reciter-dev"'@' -e 's@ENVIRONMENT_LABEL@'"dev"'@' kubernetes/k8-deployment.yaml;
+            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-dev"'@' -e 's@APPNAME@'"reciter-dev"'@' -e 's@HPANAME@'"hpa-reciter-dev"'@' -e 's@ENVIRONMENT_LABEL@'"dev"'@' kubernetes/k8-deployment.yaml;
           fi
         - |
           if expr "${BRANCH}" : ".*master" >/dev/null; then
-            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@APPNAME@'"reciter-prod"'@' -e 's@HPANAME@'"hpa-reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
+            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-prod"'@'  -e 's@APPNAME@'"reciter-prod"'@' -e 's@HPANAME@'"hpa-reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
           fi
         - $(aws ecr get-login --no-include-email)
         - cat ./kubernetes/k8-deployment.yaml
