@@ -3,10 +3,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - curl -sS -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
-      - chmod +x ./kubectl
-      - export PATH=$PWD/:$PATH
-      - apt-get -y install jq
+      - kubectl version --short --client   
   pre_build:
       commands:
         - TAG="$CODEBUILD_BUILD_NUMBER.$(date +%Y-%m-%d.%H.%M.%S).$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
@@ -16,14 +13,13 @@ phases:
         - echo "${BRANCH}"
         - |
           if expr "${BRANCH}" : ".*dev" >/dev/null; then
-            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVIRONMENT_LABEL@'"dev"'@' kubernetes/k8-deployment.yaml;
+            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@APPNAME@'"reciter-dev"'@' -e 's@HPANAME@'"hpa-reciter-dev"'@' -e 's@ENVIRONMENT_LABEL@'"dev"'@' kubernetes/k8-deployment.yaml;
           fi
         - |
           if expr "${BRANCH}" : ".*master" >/dev/null; then
-            sed -i.bak -e 's@NAMESPACE@'"reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
+            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@APPNAME@'"reciter-prod"'@' -e 's@HPANAME@'"hpa-reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
           fi
         - $(aws ecr get-login --no-include-email)
-        - export KUBECONFIG=$HOME/.kube/config
         - cat ./kubernetes/k8-deployment.yaml
   build:
     commands:
@@ -39,12 +35,6 @@ phases:
       - |
         if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
           docker push $REPOSITORY_URI:$TAG
-          CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
-          export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
-          export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
-          export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
-          export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
-          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region us-east-1 --role-arn $EKS_KUBECTL_ROLE_ARN
           kubectl apply -f ./kubernetes/k8-deployment.yaml
-          printf '[{"name":"k8-deployment.yaml","imageUri":"%s"}]' $REPOSITORY_URI:$TAG > build.json
         fi
