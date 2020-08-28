@@ -1,17 +1,17 @@
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: Deployment
 metadata:
-  name: reciter
+  name: APPNAME
   namespace: NAMESPACE
   labels:
-    app: reciter
+    app: APPNAME
     environment: ENVIRONMENT_LABEL
     tier: backend
     owner: szd2013
 spec:
   selector:
     matchLabels:
-      app: reciter
+      app: APPNAME
       environment: ENVIRONMENT_LABEL
       tier: backend
       owner: szd2013
@@ -23,7 +23,7 @@ spec:
   template:
     metadata:
       labels:
-        app: reciter
+        app: APPNAME
         environment: ENVIRONMENT_LABEL
         tier: backend
         owner: szd2013
@@ -56,27 +56,27 @@ spec:
         - name: SERVER_PORT
           valueFrom:
             configMapKeyRef:
-              name: env-config
+              name: ENVCONFIG
               key: SERVER_PORT
         - name: SCOPUS_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: env-config
+              name: ENVCONFIG
               key: SCOPUS_SERVICE
         - name: PUBMED_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: env-config
+              name: ENVCONFIG
               key: PUBMED_SERVICE
         - name: AMAZON_DYNAMODB_ENDPOINT
           valueFrom:
             configMapKeyRef:
-              name: env-config
+              name: ENVCONFIG
               key: AMAZON_DYNAMODB_ENDPOINT
         - name: AWS_REGION
           valueFrom:
             configMapKeyRef:
-              name: env-config
+              name: ENVCONFIG
               key: AWS_REGION
         ports:
         - containerPort: 5000
@@ -144,16 +144,16 @@ spec:
 apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: hpa-reciter
+  name: HPANAME
   namespace: NAMESPACE
   labels:
-    app: reciter
+    app: APPNAME
     environment: ENVIRONMENT_LABEL
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: reciter
+    name: APPNAME
   minReplicas: 1
   maxReplicas: 4
   metrics:
