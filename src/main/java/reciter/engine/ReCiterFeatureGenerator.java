@@ -117,8 +117,8 @@ public class ReCiterFeatureGenerator {
         log.info("Precision=" + analysis.getPrecision());
         log.info("Recall=" + analysis.getRecall());
 
-        double accuracy = ((analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size()) / (analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size() + analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size()));
-
+	double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2.0;
+	    
         log.info("Accuracy=" + accuracy);
 
         log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
@@ -128,8 +128,7 @@ public class ReCiterFeatureGenerator {
         log.info("\n");
         
         // overall accuracy
-	 reCiterFeature.setOverallAccuracy(Double.valueOf(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size())	/  
-(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size() + analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size()));
+        reCiterFeature.setOverallAccuracy((analysis.getPrecision() + analysis.getRecall()) / 2);
 	    
         // precision
         reCiterFeature.setPrecision(analysis.getPrecision());
