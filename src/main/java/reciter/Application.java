@@ -269,13 +269,13 @@ public class Application {
 		
 		log.info("Loading ScienceMetrixJournals to Engine Parameters");
 		List<ScienceMetrix> scienceMetrixJournals = scienceMetrixService.findAll();
-        if(scienceMetrixJournals != null && scienceMetrixJournals.size() > 0) {
+        if(scienceMetrixJournals != null) {
         		EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
         }
         
         log.info("Loading ScienceMetrixDepartmentCategories to Engine Parameters");
 		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = scienceMetrixDepartmentCategoryService.findAll();
-        if(scienceMetrixDeptCategories != null && scienceMetrixDeptCategories.size() > 0) {
+        if(scienceMetrixDeptCategories != null) {
         		EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
         }
         

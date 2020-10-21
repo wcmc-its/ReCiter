@@ -1,9 +1,13 @@
 package reciter.database.dynamodb;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
@@ -25,6 +29,8 @@ import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRep
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.boot.ExitCodeGenerator;
+import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
@@ -63,6 +69,7 @@ import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import com.amazonaws.services.dynamodbv2.util.TableUtils.TableNeverTransitionedToStateException;
 
 import lombok.extern.slf4j.Slf4j;
+import reciter.ApplicationContextHolder;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 
 @Slf4j
@@ -95,7 +102,10 @@ public class DynamoDbConfig {
     private String dynamoDbPath;
     
     @Value("${aws.dynamoDb.local}")
-    private boolean isDynamoDbLocal;
+	private boolean isDynamoDbLocal;
+	
+	@Value("${aws.dynamodb.settings.region}")
+	private String dyanmodbRegion;
     
     @Value("${aws.dynamodb.settings.table.readcapacityunits}")
     private Long READ_CAPACITY_UNITS;
@@ -114,6 +124,7 @@ public class DynamoDbConfig {
     	AmazonDynamoDB amazonDynamoDB = null;
     	
     	if(isDynamoDbLocal) {
+			System.setProperty("sqlite4java.library.path", "native-libs");
     		log.info("Using dynamodb local with port - " + dynamoDbLocalPort + " and dbPath - " + dynamoDbPath);
     		DynamoDBProxyServer server = null;
     		
@@ -156,11 +167,26 @@ public class DynamoDbConfig {
     		
     		 
     	} else {
+			if(StringUtils.isEmpty(dyanmodbRegion)) {
+				log.error("Please set aws.dynamodb.settings.region in application.properties file.");
+				int exitCode = SpringApplication.exit(ApplicationContextHolder.getContext(), new ExitCodeGenerator() {
+					@Override
+					public int getExitCode() {
+							// return the error code
+							return 0;
+						}
+					});
+					 
+					System.exit(exitCode);
+			}
     		log.info("Using dynamodb AWS with endpoint - " + amazonDynamoDBEndpoint);
-    		 amazonDynamoDB = new AmazonDynamoDBClient(amazonAWSCredentials());
-    		if (!StringUtils.isEmpty(amazonDynamoDBEndpoint)) {
+    		 amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
+			 .withRegion(dyanmodbRegion)
+			 .withCredentials(new AWSStaticCredentialsProvider(amazonAWSCredentials()))
+			 .build();
+    		/*if (!StringUtils.isEmpty(amazonDynamoDBEndpoint)) {
                 amazonDynamoDB.setEndpoint(amazonDynamoDBEndpoint);
-            }
+            }*/
     		
     	}
     	if(amazonDynamoDB != null) {
