@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.AmazonServiceException;
@@ -36,6 +37,7 @@ import reciter.model.identity.Identity;
 @Component
 public class DynamoDbS3Operations {
 	
+	@Lazy
 	@Autowired
 	private AmazonS3 s3;
 	
@@ -51,7 +53,7 @@ public class DynamoDbS3Operations {
 	 */
 	public void saveLargeItem(String bucketName, Object object, String keyName) {
 		
-		if(!s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
+		if(s3 != null && bucketName != null && !s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
 			
 			//AmazonS3Config.createFolder(bucketName, AnalysisOutput.class.getName(), s3);
 			String objectContentString = null;
@@ -135,7 +137,7 @@ public class DynamoDbS3Operations {
 	 * @param keyName
 	 */
 	public void deleteLargeItem(String bucketName, String keyName) {
-		if(s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
+		if(s3 != null && bucketName != null && s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
 			log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
 			s3.deleteObject(bucketName.toLowerCase(), keyName);
 		}
