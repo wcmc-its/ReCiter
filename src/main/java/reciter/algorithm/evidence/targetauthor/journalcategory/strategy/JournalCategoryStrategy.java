@@ -17,6 +17,7 @@ import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterJournalCategory;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
 import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
@@ -37,9 +38,6 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
 		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if(reCiterArticle.getArticleId() == 29909994) {
-				log.info("here");
-			}
 			if(reCiterArticle.getJournal().getJournalIssn() != null 
 					&&
 					reCiterArticle.getJournal().getJournalIssn().size() > 0) {
@@ -50,6 +48,13 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 					List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream().filter(sciMetrixDeptCategory -> 
 					sanitizedIdentityInstitutions.stream().map(OrganizationalUnit::getOrganizationalUnitLabel).anyMatch(sciMetrixDeptCategory.getPrimaryDepartment().trim()::equalsIgnoreCase))
 							.collect(Collectors.toList());
+					
+					if(scienceMetrixDeptCategories != null && !scienceMetrixDeptCategories.isEmpty()) {
+						ReCiterJournalCategory reCiterJournalCategory = new ReCiterJournalCategory();
+						reCiterJournalCategory.setJournalCategoryID(scienceMetrixDeptCategories.get(0).getScienceMetrixJournalSubfieldId());
+						reCiterJournalCategory.setJournalCategoryLabel(scienceMetrixDeptCategories.get(0).getScienceMetrixJournalSubfield());
+						reCiterArticle.setJournalCategory(reCiterJournalCategory);
+					}
 					if(matchedOrgUnits.size() > 0) {
 						if(matchedOrgUnits.size() > 1) {
 							ScienceMetrixDepartmentCategory matchedJournal = matchedOrgUnits.stream().max(Comparator.comparing(ScienceMetrixDepartmentCategory::getLogOddsRatio)).orElse(null);
