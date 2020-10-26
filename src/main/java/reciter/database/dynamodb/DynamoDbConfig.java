@@ -26,6 +26,7 @@ import com.amazonaws.services.dynamodbv2.model.ProjectionType;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -168,16 +169,7 @@ public class DynamoDbConfig {
     		 
     	} else {
 			if(StringUtils.isEmpty(dyanmodbRegion)) {
-				log.error("Please set aws.dynamodb.settings.region in application.properties file.");
-				int exitCode = SpringApplication.exit(ApplicationContextHolder.getContext(), new ExitCodeGenerator() {
-					@Override
-					public int getExitCode() {
-							// return the error code
-							return 0;
-						}
-					});
-					 
-					System.exit(exitCode);
+				throw new BeanCreationException("The aws.dynamodb.settings.region is not set in application.propeties file. Please provide a valid  AWS region such as us-east-1 or eu-central-1. For list of valid regions see - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html#Concepts.RegionsAndAvailabilityZones.Availability");
 			}
     		log.info("Using dynamodb AWS with endpoint - " + amazonDynamoDBEndpoint);
     		 amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
