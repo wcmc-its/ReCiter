@@ -309,8 +309,10 @@ public class ReCiterFeatureGenerator {
 
                 ReCiterArticleAffiliationFeature reCiterArticleAffiliationFeature =
                         new ReCiterArticleAffiliationFeature();
-                reCiterArticleAffiliationFeature.setAffiliationStatementLabel(reCiterArticleAuthor.getAffiliation());
-                reCiterArticleAffiliationFeature.setAffiliationStatementLabelSource(InstitutionalAffiliationSource.PUBMED);
+                if(reCiterArticleAuthor.getAffiliation() != null) {
+                    reCiterArticleAffiliationFeature.setAffiliationStatementLabel(reCiterArticleAuthor.getAffiliation());
+                    reCiterArticleAffiliationFeature.setAffiliationStatementLabelSource(InstitutionalAffiliationSource.PUBMED);
+                }
 
                 // affiliation Scopus 
                 if(reCiterArticle.getScopusArticle() != null) {
