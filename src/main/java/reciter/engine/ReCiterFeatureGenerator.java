@@ -316,18 +316,19 @@ public class ReCiterFeatureGenerator {
                 if(reCiterArticle.getScopusArticle() != null) {
                     Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().stream().filter(author -> reCiterArticleAuthor.getRank() == author.getSeq()).findFirst().orElse(null);
                     if(scopusAuthor != null && scopusAuthor.getAfids() != null && !scopusAuthor.getAfids().isEmpty()) {
-                        List<ReCiterArticleAffiliationInstitution> affiliationInstitutions = new ArrayList<>(scopusAuthor.getAfids().size());
+                        List<ReCiterArticleAffiliationFeature.ReCiterArticleAffiliationInstitution> affiliationInstitutions = new ArrayList<>(scopusAuthor.getAfids().size());
                         for(Integer afid: scopusAuthor.getAfids()) {
                             Affiliation affiliationScopus = reCiterArticle.getScopusArticle().getAffiliations()
                                     .stream()
                                     .filter(affiliation -> affiliation.getAfid() == afid)
                                     .findFirst()
                                     .orElse(null);
-                            ReCiterArticleAffiliationInstitution articleAffiliationInstitution = 
-                                reCiterArticleAffiliationFeature.new ReCiterArticleAffiliationInstitution(null, afid, InstitutionalAffiliationSource.SCOPUS);
-                                if(affiliationScopus != null && affiliationScopus.getAffilname() != null)
-                                    articleAffiliationInstitution.setAffiliationInstitutionLabel(affiliationScopus.getAffilname());
-                                affiliationInstitutions.add(articleAffiliationInstitution);
+                            ReCiterArticleAffiliationFeature.ReCiterArticleAffiliationInstitution articleAffiliationInstitution = new ReCiterArticleAffiliationInstitution();
+                            articleAffiliationInstitution.setAffiliationInstitutionSource(InstitutionalAffiliationSource.SCOPUS);
+                            articleAffiliationInstitution.setAffiliationInstitutionId(afid);
+                            if(affiliationScopus != null && affiliationScopus.getAffilname() != null)
+                                articleAffiliationInstitution.setAffiliationInstitutionLabel(affiliationScopus.getAffilname());
+                            affiliationInstitutions.add(articleAffiliationInstitution);
                         }
                         reCiterArticleAffiliationFeature.setAffiliationInstitutions(affiliationInstitutions);
                     }
