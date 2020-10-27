@@ -25,11 +25,15 @@ import reciter.engine.analysis.ReCiterArticleFeature.ArticleKeyword.KeywordType;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
+import reciter.engine.analysis.ReCiterFeatureCluster;
 import reciter.engine.analysis.evidence.Evidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
+import reciter.model.article.ReCiterCitedBy;
+import reciter.model.article.ReCiterCites;
 import reciter.model.identity.Identity;
 
 @Data
@@ -196,7 +200,7 @@ public class ReCiterFeatureGenerator {
                 List<ReCiterArticleFeature.ArticleKeyword> articleKeywords = new ArrayList<>();
                 for (ReCiterArticleMeshHeading reCiterArticleMeshHeading : reCiterArticle.getMeshHeadings()) {
                     if(MeshMajorClusteringStrategy.isMeshMajor(reCiterArticleMeshHeading)) {
-                        ReCiterArticleFeature.ArticleKeyword articleKeyword = new ArticleKeyword(reCiterArticleMeshHeading.getDescriptorName().getDescriptorName(), KeywordType.MESH_MAJOR);
+                        ReCiterArticleFeature.ArticleKeyword articleKeyword = new ArticleKeyword(reCiterArticleMeshHeading.getDescriptorName().getDescriptorName(), KeywordType.MESH_MAJOR, EngineParameters.getMeshCountMap().get(reCiterArticleMeshHeading.getDescriptorName().getDescriptorName()));
                         articleKeywords.add(articleKeyword);
                     }
                 }
@@ -209,7 +213,42 @@ public class ReCiterFeatureGenerator {
             if(reCiterArticle.getScopusDocId() != null) {
             	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
             }
-
+            
+            //ReCiter Cluster
+            ReCiterFeatureCluster reCiterFeatureCluster = new ReCiterFeatureCluster();
+            //Cites
+            if(reCiterArticle.getCommentsCorrectionsPmids() != null && !reCiterArticle.getCommentsCorrectionsPmids().isEmpty()) { 
+                List<Long> cites = new ArrayList<>();
+                ReCiterCites reCiterCites = new ReCiterCites(cites, "pmid");
+                for(Long pmid: reCiterArticle.getCommentsCorrectionsPmids()) {
+                    cites.add(pmid);
+                }
+                reCiterFeatureCluster.setReCiterCites(reCiterCites);
+            }
+            //CitedBy
+            if(reCiterClusterer.getReCiterArticles() != null) {
+                List<Long> citedBy = reCiterClusterer.getReCiterArticles()
+                    .stream()
+                    .filter(article -> article.getCommentsCorrectionsPmids().contains(reCiterArticle.getArticleId()))
+                    .map(ReCiterArticle::getArticleId)
+                    .collect(Collectors.toList());
+                if(citedBy != null && !citedBy.isEmpty()) {
+                    ReCiterCitedBy reCiterCitedBy = new ReCiterCitedBy(citedBy, "pmid");
+                    reCiterFeatureCluster.setReCiterCitedBy(reCiterCitedBy);
+                }
+            }
+            //Grant
+            if(reCiterArticle.getGrantList() != null) {
+                reCiterFeatureCluster.setGrantIdentifiers(reCiterArticle.getGrantList()
+                    .stream()
+                    .map(ReCiterArticleGrant::getGrantID)
+                    .collect(Collectors.toList()));
+            }
+            //Journal Category
+            if(reCiterArticle.getJournalCategory() != null) {
+                reCiterFeatureCluster.setJournalCategory(reCiterArticle.getJournalCategory()); 
+            }
+            reCiterArticleFeature.setReCiterCluster(reCiterFeatureCluster);
             // journal title
             reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
             
