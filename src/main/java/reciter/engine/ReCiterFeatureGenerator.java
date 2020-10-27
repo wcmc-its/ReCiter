@@ -324,7 +324,9 @@ public class ReCiterFeatureGenerator {
                                     .findFirst()
                                     .orElse(null);
                             ReCiterArticleAffiliationInstitution articleAffiliationInstitution = 
-                                reCiterArticleAffiliationFeature.new ReCiterArticleAffiliationInstitution(null, afid, InstitutionalAffiliationSource.SCOPUS);
+                                reCiterArticleAffiliationFeature.new ReCiterArticleAffiliationInstitution();
+                                articleAffiliationInstitution.setAffiliationInstitutionSource(InstitutionalAffiliationSource.SCOPUS);
+                                articleAffiliationInstitution.setAffiliationInstitutionId(afid);
                                 if(affiliationScopus != null && affiliationScopus.getAffilname() != null)
                                     articleAffiliationInstitution.setAffiliationInstitutionLabel(affiliationScopus.getAffilname());
                                 affiliationInstitutions.add(articleAffiliationInstitution);
