@@ -26,7 +26,9 @@ import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.ReCiterFeatureCluster;
+import reciter.engine.analysis.ReCiterArticleAffiliationFeature.ReCiterArticleAffiliationInstitution;
 import reciter.engine.analysis.evidence.Evidence;
+import reciter.engine.analysis.evidence.AffiliationEvidence.InstitutionalAffiliationSource;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleGrant;
@@ -35,6 +37,8 @@ import reciter.model.article.ReCiterAuthor;
 import reciter.model.article.ReCiterCitedBy;
 import reciter.model.article.ReCiterCites;
 import reciter.model.identity.Identity;
+import reciter.model.scopus.Affiliation;
+import reciter.model.scopus.Author;
 
 @Data
 @Slf4j
@@ -301,19 +305,41 @@ public class ReCiterFeatureGenerator {
                 reCiterArticleAuthorFeature.setFirstName(reCiterArticleAuthor.getAuthorName().getFirstName());
                 // initials
                 reCiterArticleAuthorFeature.setInitials(reCiterArticleAuthor.getAuthorName().getFirstInitial());
-                // affiliation
+                // affiliation scopus
 
                 ReCiterArticleAffiliationFeature reCiterArticleAffiliationFeature =
                         new ReCiterArticleAffiliationFeature();
+                reCiterArticleAffiliationFeature.setAffiliationStatementLabel(reCiterArticleAuthor.getAffiliation());
+                reCiterArticleAffiliationFeature.setAffiliationStatementLabelSource(InstitutionalAffiliationSource.PUBMED);
 
-                // affiliation from PubMed
-                reCiterArticleAffiliationFeature.setAffiliationPubmed(reCiterArticleAuthor.getAffiliation());
-
-                // affiliation from Scopus
-                reCiterArticleAffiliationFeature.setAffiliationScopus(reCiterArticleAuthor.getAffiliation());
-
-                // affiliation Scopus id
-
+                // affiliation Scopus 
+                if(reCiterArticle.getScopusArticle() != null) {
+                    Author scopusAuthor = reCiterArticle.getScopusArticle().getAuthors().stream().filter(author -> reCiterArticleAuthor.getRank() == author.getSeq()).findFirst().orElse(null);
+                    if(scopusAuthor != null && scopusAuthor.getAfids() != null && !scopusAuthor.getAfids().isEmpty()) {
+                        List<ReCiterArticleAffiliationInstitution> affiliationInstitutions = new ArrayList<>(scopusAuthor.getAfids().size());
+                        for(Integer afid: scopusAuthor.getAfids()) {
+                            Affiliation affiliationScopus = reCiterArticle.getScopusArticle().getAffiliations()
+                                    .stream()
+                                    .filter(affiliation -> affiliation.getAfid() == afid)
+                                    .findFirst()
+                                    .orElse(null);
+                            ReCiterArticleAffiliationInstitution articleAffiliationInstitution = 
+                                reCiterArticleAffiliationFeature.new ReCiterArticleAffiliationInstitution(null, afid, InstitutionalAffiliationSource.SCOPUS);
+                                if(affiliationScopus != null && affiliationScopus.getAffilname() != null)
+                                    articleAffiliationInstitution.setAffiliationInstitutionLabel(affiliationScopus.getAffilname());
+                                affiliationInstitutions.add(articleAffiliationInstitution);
+                        }
+                        reCiterArticleAffiliationFeature.setAffiliationInstitutions(affiliationInstitutions);
+                    }
+                }
+                //email
+                if(reCiterArticleAuthor.getAffiliation() != null) {
+                    Pattern pattern = Pattern.compile("([a-z0-9_.-]+)@([a-z0-9_.-]+[a-z])", Pattern.CASE_INSENSITIVE);
+                    Matcher matcher = pattern.matcher(reCiterArticleAuthor.getAffiliation());
+                    while(matcher.find()) {
+                        reCiterArticleAuthorFeature.setEmail(matcher.group());
+                    }
+                }
                 // isTargetAuthor
                 reCiterArticleAuthorFeature.setTargetAuthor(reCiterArticleAuthor.isTargetAuthor());
 
@@ -325,6 +351,7 @@ public class ReCiterFeatureGenerator {
                         reCiterArticleAuthorFeature.setOrcid(matcher.group());
                     }
                 }
+                reCiterArticleAuthorFeature.setAffiliations(reCiterArticleAffiliationFeature);
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }
