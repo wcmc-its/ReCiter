@@ -38,7 +38,7 @@ public class AnalysisServiceImpl implements AnalysisService{
 	public void save(AnalysisOutput analysis) {
 		try{
 			analysisOutputRepository.save(analysis);
-		} catch(Exception e) {
+		} catch(AmazonDynamoDBException addbe) {
 			if(isS3Use && !isDynamoDbLocal) {
 				log.info("Storing item in s3 since it item size exceeds more than 400kb");
 				ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, analysis.getReCiterFeature(), AnalysisOutput.class.getSimpleName() + "/" + analysis.getUid());

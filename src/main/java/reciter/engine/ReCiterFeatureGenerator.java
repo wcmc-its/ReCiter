@@ -218,8 +218,8 @@ public class ReCiterFeatureGenerator {
             	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
             }
             
-            //ReCiter Cluster
-            ReCiterFeatureCluster reCiterFeatureCluster = new ReCiterFeatureCluster();
+            //ReCiter Cluster - Commenting out as not necessary at the moment
+            /*ReCiterFeatureCluster reCiterFeatureCluster = new ReCiterFeatureCluster();
             //Cites
             if(reCiterArticle.getCommentsCorrectionsPmids() != null && !reCiterArticle.getCommentsCorrectionsPmids().isEmpty()) { 
                 List<Long> cites = new ArrayList<>();
@@ -252,7 +252,7 @@ public class ReCiterFeatureGenerator {
             if(reCiterArticle.getJournalCategory() != null) {
                 reCiterFeatureCluster.setJournalCategory(reCiterArticle.getJournalCategory()); 
             }
-            reCiterArticleFeature.setReCiterCluster(reCiterFeatureCluster);
+            reCiterArticleFeature.setReCiterCluster(reCiterFeatureCluster);*/
             // journal title
             reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
             
@@ -306,8 +306,8 @@ public class ReCiterFeatureGenerator {
                 // initials
                 reCiterArticleAuthorFeature.setInitials(reCiterArticleAuthor.getAuthorName().getFirstInitial());
                 // affiliation scopus
-
-                ReCiterArticleAffiliationFeature reCiterArticleAffiliationFeature =
+                //Commenting out as not necessary at the moment
+                /*ReCiterArticleAffiliationFeature reCiterArticleAffiliationFeature =
                         new ReCiterArticleAffiliationFeature();
                 if(reCiterArticleAuthor.getAffiliation() != null) {
                     reCiterArticleAffiliationFeature.setAffiliationStatementLabel(reCiterArticleAuthor.getAffiliation());
@@ -335,6 +335,7 @@ public class ReCiterFeatureGenerator {
                         reCiterArticleAffiliationFeature.setAffiliationInstitutions(affiliationInstitutions);
                     }
                 }
+                reCiterArticleAuthorFeature.setAffiliations(reCiterArticleAffiliationFeature);*/
                 //email
                 if(reCiterArticleAuthor.getAffiliation() != null) {
                     Pattern pattern = Pattern.compile("([a-z0-9_.-]+)@([a-z0-9_.-]+[a-z])", Pattern.CASE_INSENSITIVE);
@@ -354,7 +355,7 @@ public class ReCiterFeatureGenerator {
                         reCiterArticleAuthorFeature.setOrcid(matcher.group());
                     }
                 }
-                reCiterArticleAuthorFeature.setAffiliations(reCiterArticleAffiliationFeature);
+                
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
             }
