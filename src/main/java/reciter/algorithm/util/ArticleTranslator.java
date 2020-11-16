@@ -487,13 +487,13 @@ public class ArticleTranslator {
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference, NIH")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Addresses")
+                    reCiterArticle.getPublicationTypePubmed().contains("Address")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Clinical Conference")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Congresses")
+                    reCiterArticle.getPublicationTypePubmed().contains("Congress")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Lectures")) {
+                    reCiterArticle.getPublicationTypePubmed().contains("Lecture")) {
                 publicationTypeCanonical = "PubMed.ConferencePaper";
             } else if(reCiterArticle.getPublicationTypePubmed().contains("Meta-Analysis")
                     ||
@@ -517,7 +517,7 @@ public class ArticleTranslator {
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase IV")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical trial, Controlled")
+                    reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Randomized Controlled Trial")
                     ||
@@ -525,13 +525,17 @@ public class ArticleTranslator {
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Twin Study")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Validation Studies")
+                    reCiterArticle.getPublicationTypePubmed().contains("Validation Study")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Pragmatic Clinical Trial")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Case Reports")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Study")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial Protocol")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Comparative Study")
                     ||
@@ -634,4 +638,3 @@ public class ArticleTranslator {
     			
     }
 }
-
