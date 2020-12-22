@@ -37,7 +37,7 @@ public class ReCiterPubManagerController {
 	
 	@ApiOperation(value = "Authenticate user for ReCiter publications manager", response = Boolean.class, notes = "This api checks for credentials for access to reciter publication manager app.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "User authenticated"),
@@ -59,7 +59,7 @@ public class ReCiterPubManagerController {
 	
 	@ApiOperation(value = "Create user for ReCiter publications manager", response = Boolean.class, notes = "This api create user for reciter publication manager app.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "User created"),
@@ -81,7 +81,7 @@ public class ReCiterPubManagerController {
 	
 	@ApiOperation(value = "Save user feedback for ReCiter publications manager", response = Boolean.class, notes = "This api create saves user feedback for reciter publication manager app.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "User feedback created"),
@@ -104,7 +104,7 @@ public class ReCiterPubManagerController {
 	
 	@ApiOperation(value = "Delete user feedback for ReCiter publications manager", response = Boolean.class, notes = "This api create deletes user feedback for reciter publication manager app.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "User deleted"),
@@ -124,7 +124,7 @@ public class ReCiterPubManagerController {
 	
 	@ApiOperation(value = "Find user feedback for ReCiter publications manager", response = Boolean.class, notes = "This api create find user feedback for reciter publication manager app.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "User deleted"),

@@ -149,7 +149,7 @@ public class ReCiterController {
 
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "GoldStandard creation successful"),
@@ -180,7 +180,7 @@ public class ReCiterController {
 
     @ApiOperation(value = "Update the goldstandard by passing  a list of GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing list of GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "GoldStandard List creation successful"),
@@ -206,7 +206,7 @@ public class ReCiterController {
 
     @ApiOperation(value = "Get the goldStandard by passing an uid", notes = "This api gets the goldStandard by passing an uid.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The goldstandard retrieval for supplied uid is successful"),
@@ -225,7 +225,7 @@ public class ReCiterController {
 
     @ApiOperation(value = "Retrieve Articles for all UID in Identity Table", response = ResponseEntity.class, notes = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list for given list of uid"),
@@ -256,7 +256,7 @@ public class ReCiterController {
 
     @ApiOperation(value = "Retrieve Articles for an UID.", response = ResponseEntity.class, notes = "This API retrieves candidate articles for a given uid from pubmed and its complementing articles from scopus")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list"),
@@ -342,7 +342,7 @@ public class ReCiterController {
     
     @ApiOperation(value = "Retrieve pending articles for a group of users.", response = ResponseEntity.class, notes = "Retrieve pending articles for a group of users.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list"),
@@ -436,8 +436,8 @@ public class ReCiterController {
 
     @ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header"),
-    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class),
+    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
@@ -722,8 +722,8 @@ public class ReCiterController {
     
     @ApiOperation(value = "Article retrieval by UID.", response = ReCiterFeature.class, notes = "This api returns all the publication for a supplied uid.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header"),
-    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class),
+    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),

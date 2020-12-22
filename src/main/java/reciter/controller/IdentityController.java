@@ -50,7 +50,7 @@ public class IdentityController {
 
     @ApiOperation(value = "Add an identity to Identity table in DynamoDb", notes = "This api creates an identity in the Identity table in dynamoDb by collecting identity data from different system of records.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Identity creation successful"),
@@ -67,7 +67,7 @@ public class IdentityController {
 
     @ApiOperation(value = "Add list of identities to Identity table in DynamoDb", notes = "This api creates list of identities in the Identity table in dynamoDb by collecting identity data from different system of records.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Identity List creation successful"),
@@ -84,7 +84,7 @@ public class IdentityController {
 
     @ApiOperation(value = "Search the identity table for a given ID", response = ResponseEntity.class, notes = "This api searches for a given identity in identity table.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Identity found successfully"),
@@ -107,7 +107,7 @@ public class IdentityController {
 
     @ApiOperation(value = "Search the identity table for a list of ID supplied", response = Identity.class, notes = "This api searches for a list of identities in identity table.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Identity List found successfully"),
@@ -133,7 +133,7 @@ public class IdentityController {
     
     @ApiOperation(value = "Get all identity from Identity table", response = Identity.class, notes = "This api scans identity table and returns all identitites.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Identities found successfully"),
