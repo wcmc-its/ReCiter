@@ -24,5 +24,5 @@ import reciter.api.parameters.FilterFeedbackType;
 
 public interface Engine {
 
-	EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore);
+	EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore, double keywordsMax);
 }
