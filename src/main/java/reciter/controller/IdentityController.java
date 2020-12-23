@@ -23,6 +23,8 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +41,10 @@ import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
 
 import java.util.List;
-
+@Slf4j
 @Controller
 public class IdentityController {
 
-    private static final Logger slf4jLogger = LoggerFactory.getLogger(IdentityController.class);
 
     @Autowired
     private IdentityService identityService;
@@ -61,7 +62,11 @@ public class IdentityController {
     @RequestMapping(value = "/reciter/identity/", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public ResponseEntity addIdentity(@RequestBody Identity identity) {
+        StopWatch stopWatch = new StopWatch("Add an identity to Identity table in DynamoDb");
+        stopWatch.start("Add an identity to Identity table in DynamoDb");
         identityService.save(identity);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok().build();
     }
 
@@ -78,8 +83,12 @@ public class IdentityController {
     @RequestMapping(value = "/reciter/save/identities/", method = RequestMethod.PUT, produces = "application/json")
     @ResponseBody
     public void saveIdentities(@RequestBody List<Identity> identities) {
-        slf4jLogger.info("calling saveIdentities with number of identities=" + identities.size());
+        StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
+        stopWatch.start("Add list of identities to Identity table in DynamoDb");
+        log.info("calling saveIdentities with number of identities=" + identities.size());
         identityService.save(identities);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
     }
 
     @ApiOperation(value = "Search the identity table for a given ID", response = ResponseEntity.class, notes = "This api searches for a given identity in identity table.")
@@ -95,13 +104,17 @@ public class IdentityController {
     @RequestMapping(value = "/reciter/find/identity/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity findByUid(@RequestParam String uid) {
-        slf4jLogger.info("calling findByUid with size of uids=" + uid);
+        StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
+        stopWatch.start("Search the identity table for a given ID");
+        log.info("calling findByUid with size of uids=" + uid);
         Identity identity;
         try {
             identity = identityService.findByUid(uid);
         } catch (NullPointerException ne) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return new ResponseEntity<>(identity, HttpStatus.OK);
     }
 
@@ -118,7 +131,9 @@ public class IdentityController {
     @RequestMapping(value = "/reciter/find/identity/by/uids/", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity findByUids(@RequestParam List<String> uids) {
-        slf4jLogger.info("calling findByUid with size of uids=" + uids);
+        StopWatch stopWatch = new StopWatch("Search the identity table for a list of ID supplied");
+        stopWatch.start("Search the identity table for a list of ID supplied");
+        log.info("calling findByUid with size of uids=" + uids);
         List<Identity> identities;
         try {
             identities = identityService.findByUids(uids);
@@ -128,6 +143,8 @@ public class IdentityController {
         if (identities.size() == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uids provided '" + uids + "' was not found in the Identity table");
         }
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return new ResponseEntity<>(identities, HttpStatus.OK);
     }
     
@@ -156,7 +173,7 @@ public class IdentityController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Identity table is empty");
         }
         stopWatch.stop();
-        slf4jLogger.info(stopWatch.prettyPrint());
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return new ResponseEntity<>(identities, HttpStatus.OK);
     }
 }

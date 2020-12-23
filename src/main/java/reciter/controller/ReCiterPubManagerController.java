@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -48,12 +49,19 @@ public class ReCiterPubManagerController {
     @RequestMapping(value = "/reciter/publication/manager/authenticate", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public boolean authenticate(@RequestParam(value = "username") String uid, @RequestParam(value = "password") String password) {
+        StopWatch stopWatch = new StopWatch("Authenticate user for ReCiter publications manager");
+        stopWatch.start("Authenticate user for ReCiter publications manager");
+
         log.info("Authenticating user with username: " + uid);
         
         ApplicationUser appUser = new ApplicationUser(uid, "", password);
         if(applicationUserService.authenticateUser(appUser)) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         	return true;
         }
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return false;
     }
 	
@@ -70,12 +78,18 @@ public class ReCiterPubManagerController {
     @RequestMapping(value = "/reciter/publication/manager/user/create", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public boolean createUser(@RequestParam(value = "username") String uid, @RequestParam(value = "name") String username, @RequestParam(value = "password") String password) {
+        StopWatch stopWatch = new StopWatch("Create user for ReCiter publications manager");
+        stopWatch.start("Create user for ReCiter publications manager");
         log.info("Creating user with username: " + uid);
         
         ApplicationUser appUser = new ApplicationUser(uid, username, password);
         if(applicationUserService.createUser(appUser)) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         	return true;
         }
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return false;
     }
 	
@@ -92,6 +106,8 @@ public class ReCiterPubManagerController {
     @RequestMapping(value = "/reciter/publication/manager/userfeedback/save", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public ResponseEntity saveUserFeedback(@RequestBody UserFeedback userFeedback) {
+        StopWatch stopWatch = new StopWatch("Save user feedback for ReCiter publications manager");
+        stopWatch.start("Save user feedback for ReCiter publications manager");
         log.info("Adding a user feedback for " + userFeedback.getUid());
         if(userFeedback == null) {
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a UserFeedback model");
@@ -99,6 +115,8 @@ public class ReCiterPubManagerController {
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a valid uid to be passed with UserFeedback model");
     	}
         userFeedbackService.save(userFeedback);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(userFeedback);
     }
 	
@@ -115,10 +133,14 @@ public class ReCiterPubManagerController {
     @RequestMapping(value = "/reciter/publication/manager/userfeedback/delete", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteUserFeedback(@RequestParam String uid) {
+        StopWatch stopWatch = new StopWatch("Delete user feedback for ReCiter publications manager");
+        stopWatch.start("Delete user feedback for ReCiter publications manager");
         if(userFeedbackService.findByUid(uid) == null) {
     		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Uid " + uid + " not found");
     	}
         userFeedbackService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok("The user feedback of " + uid + " is deleted");
     }
 	
@@ -135,10 +157,14 @@ public class ReCiterPubManagerController {
     @RequestMapping(value = "/reciter/publication/manager/userfeedback/find", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity findUserFeedback(@RequestParam String uid) {
+        StopWatch stopWatch = new StopWatch("Find user feedback for ReCiter publications manager");
+        stopWatch.start("Find user feedback for ReCiter publications manager");
         if(userFeedbackService.findByUid(uid) == null) {
     		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Uid " + uid + " not found");
     	}
         UserFeedback userFeedback = userFeedbackService.findByUid(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(userFeedback);
     }
 }
