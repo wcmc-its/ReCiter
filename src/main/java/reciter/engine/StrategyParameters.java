@@ -362,4 +362,7 @@ public class StrategyParameters {
     
     @Value("${strategy.genderStrategyScore.rangeScore}")
     private double genderStrategyRangeScore;
+
+    @Value("${reciter.feature.generator.keywordCountMax}")
+    private double keywordCountMax;
 }
