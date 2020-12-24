@@ -415,7 +415,12 @@ public class ReCiterController {
             	List<ReCiterFeature> analysisSubset= analysis.parallelStream()
             			.filter(anl -> anl.getReCiterFeature().getReCiterArticleFeatures() != null && !anl.getReCiterFeature().getReCiterArticleFeatures().isEmpty())
             			.map(AnalysisOutput::getReCiterFeature)
-            			.collect(Collectors.toList());
+                        .collect(Collectors.toList());
+                
+                //Set Count of pending articles. The articles are already filtered by score and FeedBack NULL
+                analysisSubset.forEach(anl -> {
+                    anl.setCountPendingArticles(anl.getReCiterArticleFeatures().size());
+                });
             	
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
