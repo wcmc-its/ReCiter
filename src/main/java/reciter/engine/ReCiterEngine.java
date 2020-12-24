@@ -41,7 +41,7 @@ public class ReCiterEngine implements Engine {
     public static double clutseringGrantsThreshold;
 
     @Override
-    public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore) {
+    public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore, double keywordsMax) {
 
         Identity identity = parameters.getIdentity();
         clusterSimilarityThresholdScore = strategyParameters.getClusterSimilarityThresholdScore();
@@ -76,7 +76,7 @@ public class ReCiterEngine implements Engine {
         }
 
         ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
-                mode, filterScore,
+                mode, filterScore, keywordsMax,
                 clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids());
         engineOutput.setReCiterFeature(reCiterFeature);
         return engineOutput;
