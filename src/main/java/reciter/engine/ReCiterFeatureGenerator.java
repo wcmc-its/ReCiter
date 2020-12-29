@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +61,7 @@ public class ReCiterFeatureGenerator {
 
     public ReCiterFeature computeFeatures(UseGoldStandard mode,
                                           final double filterScore,
+                                          final double keywordsMax,
                                           Clusterer reCiterClusterer,
                                           List<Long> goldStandardPmids,
                                           List<Long> rejectedPmids) {
@@ -116,6 +118,13 @@ public class ReCiterFeatureGenerator {
         }
 
         reCiterFeature.setCountSuggestedArticles(selectedArticles.size());
+
+        //Count of pending publications
+        List<ReCiterArticle> pendingArticles = selectedArticles
+        			.stream()
+        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore && reCiterArticle.getGoldStandard() == 0)
+                    .collect(Collectors.toList());
+        reCiterFeature.setCountPendingArticles(pendingArticles.size());
         
         List<Long> filteredArticles = selectedArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
         
@@ -437,9 +446,42 @@ public class ReCiterFeatureGenerator {
 
             reCiterArticleFeatures.add(reCiterArticleFeature);
         }
+        calculateTopKeywords(reCiterArticleFeatures, reCiterFeature, keywordsMax);
         //Sorting the List in descending order based on TotalScoreNonStandardized
         reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures.stream().sorted(Comparator.comparing(ReCiterArticleFeature::getTotalArticleScoreNonStandardized).reversed()).collect(Collectors.toList()));
 
         return reCiterFeature;
+    }
+
+    private void calculateTopKeywords(List<ReCiterArticleFeature> reCiterArticleFeatures, ReCiterFeature reCiterFeature, double keywordsMax) {
+        
+        Map<String, Long> acceptedArticleKeywords = reCiterArticleFeatures
+            .stream()
+            .filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() != null 
+                && reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+                && reCiterArticleFeature.getArticleKeywords() != null)
+            .flatMap(keyword -> keyword.getArticleKeywords().stream())
+            .map(ReCiterArticleFeature.ArticleKeyword::getKeyword)
+            .collect(Collectors.groupingBy(acceptedKeyword -> acceptedKeyword , Collectors.counting()));
+
+        if(acceptedArticleKeywords != null && !acceptedArticleKeywords.isEmpty()) {
+            //Sort descending by Count and ascending by Keyword
+            LinkedHashMap<String, Long> sortedAcceptedKeywordCount = acceptedArticleKeywords.entrySet().stream()
+                        .sorted(Map.Entry
+                        .<String, Long>comparingByValue().reversed()
+                        .thenComparing(Map.Entry.comparingByKey()))
+                        .limit((long)keywordsMax)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+            
+            List<ReCiterArticleFeature.ArticleKeyword> acceptedKeywords = 
+                sortedAcceptedKeywordCount.entrySet()
+                    .stream()
+                    .map(keyword -> 
+                        new ArticleKeyword(keyword.getKey(), KeywordType.MESH_MAJOR, keyword.getValue()))
+                    .collect(Collectors.toList());
+            
+            reCiterFeature.setArticleKeywordsAcceptedArticles(acceptedKeywords);
+        }
     }
 }

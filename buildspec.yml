@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      java: openjdk8
+      java: openjdk11
   pre_build:
     commands:
       - echo Nothing to do in the pre_build phase...
@@ -11,12 +11,12 @@ phases:
     commands:
       - echo Build started on `date`
       - mvn clean install -Dmaven.test.skip=true
-      - cp target/reciter-2.0.0.jar .
+      - cp target/reciter-2.1.0.jar .
   post_build:
     commands:
       - echo Build completed on `date`
 artifacts:
   files:
-    - reciter-2.0.0.jar 
+    - reciter-2.1.0.jar 
     - .ebextensions/**/* 
     - Procfile

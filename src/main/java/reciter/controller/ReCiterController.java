@@ -18,14 +18,19 @@
  *******************************************************************************/
 package reciter.controller;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import java.io.IOException;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +40,21 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.api.parameters.FilterFeedbackType;
@@ -61,8 +75,6 @@ import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleFeatures;
-import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
 import reciter.model.pubmed.PubMedArticle;
@@ -71,36 +83,17 @@ import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
-import reciter.service.ScienceMetrixDepartmentCategoryService;
-import reciter.service.ScienceMetrixService;
 import reciter.service.ScopusService;
-import reciter.service.dynamo.DynamoDbInstitutionAfidService;
-import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
 import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
-import java.io.IOException;
-import java.sql.Date;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Api(value = "ReCiterController", description = "Operations on ReCiter API.")
+@Slf4j
 @Controller
 public class ReCiterController {
-
-    private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterController.class);
 
     @Autowired
     private ESearchResultService eSearchResultService;
@@ -118,9 +111,6 @@ public class ReCiterController {
     private ScopusService scopusService;
 
     @Autowired
-    private DynamoDbMeshTermService dynamoDbMeshTermService;
-
-    @Autowired
     private StrategyParameters strategyParameters;
 
     @Autowired
@@ -128,15 +118,6 @@ public class ReCiterController {
 
     @Autowired
     private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
-    
-    @Autowired
-    private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
-
-    @Autowired
-    private ScienceMetrixService scienceMetrixService;
-    
-    @Autowired
-    private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -145,11 +126,14 @@ public class ReCiterController {
     private double totalArticleScoreStandardizedDefault;
     
     @Value("${namesIgnoredCoauthors}")
-	private String nameIgnoredCoAuthors;
+    private String nameIgnoredCoAuthors;
+    
+    @Value("${reciter.feature.generator.keywordCountMax}")
+    private double keywordsMax;
 
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "GoldStandard creation successful"),
@@ -160,6 +144,8 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+        StopWatch stopWatch = new StopWatch("Update GoldStandard");
+        stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a GoldStandard model");
     	} else if(goldStandard != null && goldStandard.getUid() == null) {
@@ -174,13 +160,15 @@ public class ReCiterController {
     		}
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
-    	}
+        }
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
     }
 
     @ApiOperation(value = "Update the goldstandard by passing  a list of GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing list of GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "GoldStandard List creation successful"),
@@ -191,6 +179,8 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.PUT, produces = "application/json")
     @ResponseBody
     public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+        StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
+        stopWatch.start("Update GoldStandard with List");
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
@@ -200,13 +190,15 @@ public class ReCiterController {
     		}
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
-    	}
+        }
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
     }
 
     @ApiOperation(value = "Get the goldStandard by passing an uid", notes = "This api gets the goldStandard by passing an uid.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The goldstandard retrieval for supplied uid is successful"),
@@ -217,15 +209,17 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
-        long startTime = System.currentTimeMillis();
-        slf4jLogger.info("Start time is: " + startTime);
+        StopWatch stopWatch = new StopWatch("Get the goldStandard by passing an uid");
+        stopWatch.start("Get the goldStandard by passing an uid");
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
     }
 
     @ApiOperation(value = "Retrieve Articles for all UID in Identity Table", response = ResponseEntity.class, notes = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list for given list of uid"),
@@ -236,8 +230,8 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity retrieveArticles(RetrievalRefreshFlag refreshFlag) {
-        long startTime = System.currentTimeMillis();
-        slf4jLogger.info("Start time is: " + startTime);
+        StopWatch stopWatch = new StopWatch("Retrieve Articles for all UID in Identity Table");
+        stopWatch.start("Retrieve Articles for all UID in Identity Table");
         LocalDate initial = LocalDate.now();
 
         LocalDate startDate = initial.withDayOfMonth(1);
@@ -247,16 +241,16 @@ public class ReCiterController {
         try {
             aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
         } catch (IOException e) {
-            slf4jLogger.info("Failed to retrieve articles.", e);
+            log.info("Failed to retrieve articles.", e);
         }
-        long estimatedTime = System.currentTimeMillis() - startTime;
-        slf4jLogger.info("elapsed time: " + estimatedTime);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok().build();
     }
 
     @ApiOperation(value = "Retrieve Articles for an UID.", response = ResponseEntity.class, notes = "This API retrieves candidate articles for a given uid from pubmed and its complementing articles from scopus")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list"),
@@ -267,17 +261,16 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
-        long startTime = System.currentTimeMillis();
-        long estimatedTime = 0;
-        slf4jLogger.info("Start time is: " + startTime);
+        StopWatch stopWatch = new StopWatch("Retrieve Articles for an UID");
+        stopWatch.start("Retrieve Articles for an UID");
         List<Identity> identities = new ArrayList<>();
         LocalDate initial = LocalDate.now();
         LocalDate startDate = initial.withDayOfMonth(1);
         LocalDate endDate = LocalDate.parse("3000-01-01"); 
         Identity identity = identityService.findByUid(uid);
         if(identity == null) {
-            estimatedTime = System.currentTimeMillis() - startTime;
-            slf4jLogger.info("elapsed time: " + estimatedTime);
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
         //Clean up the ESearchResult Table if set refreshFlag is set
@@ -288,9 +281,9 @@ public class ReCiterController {
             		refreshFlag == null) 
             		&& 
             		eSearchResult != null) {
-                slf4jLogger.info("Using the cached retrieval articles for " + uid + ". Skipping the retrieval process");
-                estimatedTime = System.currentTimeMillis() - startTime;
-                slf4jLogger.info("elapsed time: " + estimatedTime);
+                log.info("Using the cached retrieval articles for " + uid + ". Skipping the retrieval process");
+                stopWatch.stop();
+                log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                 return ResponseEntity.status(HttpStatus.OK).body("The cached results of uid " + uid + " will be used since refreshFlag is not set to true");
             } else if(refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS
             		||
@@ -304,9 +297,9 @@ public class ReCiterController {
                 try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 } catch (IOException e) {
-                    slf4jLogger.info("Failed to retrieve articles.", e);
-                    estimatedTime = System.currentTimeMillis() - startTime;
-                    slf4jLogger.info("elapsed time: " + estimatedTime);
+                    log.info("Failed to retrieve articles.", e);
+                    stopWatch.stop();
+                    log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                 }
 
@@ -323,26 +316,26 @@ public class ReCiterController {
             	try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
                 } catch (IOException e) {
-                    slf4jLogger.info("Failed to retrieve articles.", e);
-                    estimatedTime = System.currentTimeMillis() - startTime;
-                    slf4jLogger.info("elapsed time: " + estimatedTime);
+                    log.info("Failed to retrieve articles.", e);
+                    stopWatch.stop();
+                    log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                 }
             	
             	
             }
         } catch (EmptyResultDataAccessException e) {
-            slf4jLogger.info("No such entity exists: ", e);
+            log.info("No such entity exists: ", e);
         }
 
-        estimatedTime = System.currentTimeMillis() - startTime;
-        slf4jLogger.info("elapsed time: " + estimatedTime);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok().body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
     }
     
     @ApiOperation(value = "Retrieve pending articles for a group of users.", response = ResponseEntity.class, notes = "Retrieve pending articles for a group of users.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list"),
@@ -354,9 +347,8 @@ public class ReCiterController {
     @ResponseBody
     public ResponseEntity retrieveBulkFeatureGenerator(@RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
     		@RequestParam(required = true) Double totalStandardizedArticleScore, @RequestParam(required = true) int maxArticlesPerPerson) {
-    	long startTime = System.currentTimeMillis();
-        long estimatedTime = 0;
-        slf4jLogger.info("Start time is: " + startTime);
+        StopWatch stopWatch = new StopWatch("Retrieve pending articles for a group of users");
+        stopWatch.start("Retrieve pending articles for a group of users");
         
         List<Identity> identities;
         try {
@@ -423,10 +415,15 @@ public class ReCiterController {
             	List<ReCiterFeature> analysisSubset= analysis.parallelStream()
             			.filter(anl -> anl.getReCiterFeature().getReCiterArticleFeatures() != null && !anl.getReCiterFeature().getReCiterArticleFeatures().isEmpty())
             			.map(AnalysisOutput::getReCiterFeature)
-            			.collect(Collectors.toList());
+                        .collect(Collectors.toList());
+                
+                //Set Count of pending articles. The articles are already filtered by score and FeedBack NULL
+                analysisSubset.forEach(anl -> {
+                    anl.setCountPendingArticles(anl.getReCiterArticleFeatures().size());
+                });
             	
-            	estimatedTime = System.currentTimeMillis() - startTime;
-                slf4jLogger.info("elapsed time: " + estimatedTime);
+                stopWatch.stop();
+                log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                 //return new ResponseEntity<>((analysisSubset.size()> maxTotalArticles?analysisSubset.stream().limit(maxTotalArticles).collect(Collectors.toList()):analysisSubset), HttpStatus.OK);
                 return new ResponseEntity<>(analysisSubset, HttpStatus.OK);
         	}
@@ -436,8 +433,8 @@ public class ReCiterController {
 
     @ApiOperation(value = "Feature generation for UID.", response = ReCiterFeature.class, notes = "This api generates all the suggestion for a given uid along with its relevant evidence.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header"),
-    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class),
+    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
@@ -449,9 +446,8 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
-    	long startTime = System.currentTimeMillis();
-        long estimatedTime = 0;
-        slf4jLogger.info("Start time is: " + startTime);
+    	StopWatch stopWatch = new StopWatch("Feature generation for UID");
+        stopWatch.start("Feature generation for UID");
         
         final double totalScore;
         
@@ -467,6 +463,8 @@ public class ReCiterController {
         
         Identity identity = identityService.findByUid(uid);
         if(identity == null) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
         AnalysisOutput analysis = analysisService.findByUid(uid.trim());
@@ -483,6 +481,12 @@ public class ReCiterController {
             } else {
                 knownPmids = goldStandard.getKnownPmids();
             }
+            //Count pending pubs
+            analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+			            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+			            	&&
+                            reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+                            .count());
         	//All the results are filtered based on filterByFeedback
         	if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
 	        	analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
@@ -575,7 +579,9 @@ public class ReCiterController {
 	        	analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 	        	analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
 	        	analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
-        	}
+            }
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
         } else {
             if (useGoldStandard == null) {
@@ -588,6 +594,8 @@ public class ReCiterController {
 
             parameters = initializeEngineParameters(uid, totalStandardizedArticleScore, retrievalRefreshFlag);
             if (parameters == null) {
+                stopWatch.stop();
+                log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                 return ResponseEntity
                         .status(HttpStatus.NOT_FOUND)
                         .body(String.format("The uid provided '%s' does not have any candidate records in " +
@@ -603,7 +611,7 @@ public class ReCiterController {
             	filterScore = parameters.getTotalStandardzizedArticleScore();
             }
             Engine engine = new ReCiterEngine();
-            engineOutput = engine.run(parameters, strategyParameters, filterScore);
+            engineOutput = engine.run(parameters, strategyParameters, filterScore, keywordsMax);
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
             
             //Store Analysis only in evidence mode
@@ -642,7 +650,12 @@ public class ReCiterController {
         ReCiterFeature reCiterOutputFeature = new ReCiterFeature();
         reCiterOutputFeature = engineOutput.getReCiterFeature();
         
-        
+        //Count pending pubs
+        reCiterOutputFeature.setCountPendingArticles(originalFeatures.stream()
+            .filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+            &&
+            reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+            .count());
         //All the results are filtered based on filterByFeedback
         if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
         List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
@@ -715,15 +728,15 @@ public class ReCiterController {
             reCiterOutputFeature.setReCiterArticleFeatures(reCiterFilteredArticles);
             reCiterOutputFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
         }
-        estimatedTime = System.currentTimeMillis() - startTime;
-        slf4jLogger.info("elapsed time: " + estimatedTime);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return new ResponseEntity<>(reCiterOutputFeature, HttpStatus.OK);
     }
     
     @ApiOperation(value = "Article retrieval by UID.", response = ReCiterFeature.class, notes = "This api returns all the publication for a supplied uid.")
     @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header"),
-    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query")
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class),
+    	@ApiImplicitParam(name = "fields", value = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", paramType = "query", dataTypeClass = String.class)
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved list", response = ReCiterFeature.class),
@@ -735,9 +748,8 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/article-retrieval/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity runArticleRetrievalByUid(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
-    	long startTime = System.currentTimeMillis();
-        long estimatedTime = 0;
-        slf4jLogger.info("Start time is: " + startTime);
+    	StopWatch stopWatch = new StopWatch("Feature generation for UID");
+        stopWatch.start("Feature generation for UID");
         
         final double totalScore;
         
@@ -749,6 +761,8 @@ public class ReCiterController {
         try {
         	Identity identity = identityService.findByUid(uid);
             if(identity == null) {
+                stopWatch.stop();
+                log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             	return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
             }
         } catch (NullPointerException n) {
@@ -818,8 +832,8 @@ public class ReCiterController {
 		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 		            	.collect(Collectors.toList()));
         	}
-        	 estimatedTime = System.currentTimeMillis() - startTime;
-             slf4jLogger.info("elapsed time: " + estimatedTime);
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
         } 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There is no publications data for uid " + uid + ". Please wait while feature-generator re-runs tonight.");
@@ -845,9 +859,9 @@ public class ReCiterController {
             
             
         } catch (EmptyResultDataAccessException e) {
-            slf4jLogger.info("No such entity exists: ", e);
+            log.info("No such entity exists: ", e);
         }
-        slf4jLogger.info("eSearchResults size {}", eSearchResults);
+        log.info("eSearchResults size {}", eSearchResults);
 		/*
 		 * //This is when Pubmed returns 0 results. if(eSearchResults == null) { return
 		 * null; }
@@ -856,7 +870,7 @@ public class ReCiterController {
         if(eSearchResults != null && eSearchResults.getESearchPmids() != null) {
 	        for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
 	            if (!strategyParameters.isUseGoldStandardEvidence() && StringUtils.equalsIgnoreCase(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
-	                slf4jLogger.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
+	                log.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
 	            } else {
 	                pmids.addAll(eSearchPmid.getPmids());
 	            }

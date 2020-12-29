@@ -78,19 +78,21 @@ spec:
             configMapKeyRef:
               name: ENVCONFIG
               key: AWS_REGION
+        - name: JAVA_OPTIONS
+          value: "-Xmx2000m"
         ports:
         - containerPort: 5000
           name: reciter
         resources:
           requests:
-            memory: 1.7G
+            memory: 2.6G
             cpu: 0.8
           limits:
-            memory: 2G
+            memory: 2.8G
             cpu: 1
         livenessProbe:
           httpGet:
-            path: /swagger-ui.html
+            path: /reciter/ping
             port: 5000
           initialDelaySeconds: 30
           periodSeconds: 10
@@ -98,7 +100,7 @@ spec:
           timeoutSeconds: 3
         readinessProbe:
           httpGet:
-            path: "/swagger-ui.html"
+            path: /reciter/ping
             port: 5000
           initialDelaySeconds: 45
           periodSeconds: 10

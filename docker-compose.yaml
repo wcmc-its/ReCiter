@@ -6,7 +6,6 @@ services:
     restart: always
     ports:
     - 80:80
-    - 443:443
     volumes:
     - ./nginx/conf.d:/etc/nginx/conf.d
     depends_on:
@@ -26,6 +25,6 @@ services:
       - PUBMED_SERVICE=reciter-pubmed-url
       - AMAZON_DYNAMODB_ENDPOINT=https://dynamodb.us-east-1.amazonaws.com
       - AWS_REGION=us-east-1
+      - JAVA_OPTIONS=-Xmx1000m
     expose:
       - "5000"
-    command: mvn clean spring-boot:run
