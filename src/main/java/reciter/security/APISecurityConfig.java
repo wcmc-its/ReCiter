@@ -61,7 +61,11 @@ public class APISecurityConfig {
 		        web
 		        .ignoring()
 		        .antMatchers("/reciter/**");
-	    	} 
+			}
+			//Added to whitelist ping controller
+			web
+			.ignoring()
+			.antMatchers("/reciter/ping"); 
 	    }
 	    
     }
