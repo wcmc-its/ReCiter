@@ -40,7 +40,7 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 				&& !appUser.getId().isEmpty()
 				&& appUser.getPassword() != null
 				&& !appUser.getPassword().isEmpty()) {
-			ApplicationUser validUser = applicationUserRepository.findById(appUser.getId().trim()).orElseGet(null);
+			ApplicationUser validUser = applicationUserRepository.findById(appUser.getId().trim()).orElseGet(() -> null);
 			if(validUser == null) {
 				return false;
 			}
