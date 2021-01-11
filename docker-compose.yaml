@@ -28,3 +28,17 @@ services:
       - JAVA_OPTIONS=-Xmx1000m
     expose:
       - "5000"
+    #Comment this line when not using dynamodb local
+    depends_on:
+    - dynamo
+  #Comment this section when not using dynamodb local
+  dynamo:
+    image: amazon/dynamodb-local
+    environment:
+      - ./Djava.library.path=./DynamoDBLocal_lib
+    ports:
+      - "8000:8000"
+    volumes:
+      - /Users/sarbajit/Documents/dynamodb_local_latest:/home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "./data"]
