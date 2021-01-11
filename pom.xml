@@ -88,7 +88,8 @@
 	                        <tasks>
 	                            <unzip src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.directory}/${project.build.finalName}" />
 	                            <copy todir="${project.build.directory}/${project.build.finalName}/" overwrite="false">
-	                                <fileset dir="./" includes=".ebextensions/**"/>
+									<fileset dir="./" includes=".ebextensions/**"/>
+									<fileset dir="./" includes="native-libs/**"/>
 	                            </copy>
 	                            <!-- <jar jarfile="${project.build.directory}/${project.build.finalName}.jar" basedir="${project.build.directory}/${project.build.finalName}"/>-->
 	                            <zip compress="false" destfile="${project.build.directory}/${project.build.finalName}.jar" basedir="${project.build.directory}/${project.build.finalName}"/>
@@ -107,12 +108,12 @@
 				<executions>
 						<execution>
 								<id>copy</id>
-								<phase>test-compile</phase>
+								<phase>compile</phase>
 								<goals>
 										<goal>copy-dependencies</goal>
 								</goals>
 								<configuration>
-										<includeScope>test</includeScope>
+										<includeScope></includeScope>
 										<includeTypes>so,dll,dylib</includeTypes>
 										<outputDirectory>${project.basedir}/native-libs</outputDirectory>
 								</configuration>
