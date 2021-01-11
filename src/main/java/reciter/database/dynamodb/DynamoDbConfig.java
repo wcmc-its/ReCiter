@@ -125,18 +125,18 @@ public class DynamoDbConfig {
     	AmazonDynamoDB amazonDynamoDB = null;
     	
     	if(isDynamoDbLocal) {
-			System.setProperty("sqlite4java.library.path", "native-libs");
+			//System.setProperty("sqlite4java.library.path", "native-libs");
     		log.info("Using dynamodb local with port - " + dynamoDbLocalPort + " and dbPath - " + dynamoDbPath);
-    		DynamoDBProxyServer server = null;
+    		//DynamoDBProxyServer server = null;
     		
     		try {
-    			server = ServerRunner.createServerFromCommandLineArgs(new String[]{
+    			/*server = ServerRunner.createServerFromCommandLineArgs(new String[]{
 					"-dbPath", 	this.dynamoDbPath,"-port", this.dynamoDbLocalPort
 				});
-				server.start();
+				server.start();*/
 				
 				amazonDynamoDB = AmazonDynamoDBClientBuilder.standard().withEndpointConfiguration(
-	        			new AwsClientBuilder.EndpointConfiguration("http://localhost:" + this.dynamoDbLocalPort, dynamodbLocalRegion))
+	        			new AwsClientBuilder.EndpointConfiguration("http://docker.for.mac.host.internal:" + this.dynamoDbLocalPort, dynamodbLocalRegion))
 	    				 .withCredentials(new AWSStaticCredentialsProvider(new AWSCredentials() {
 							
 							@Override
