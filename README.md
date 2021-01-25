@@ -54,8 +54,10 @@ Please see the [ReCiter wiki](https://github.com/wcmc-its/ReCiter/wiki) for more
 ## Technical 
 
 ### Prerequisites
-- Java 1.8
+- Java 11
 - Latest version of Maven. To install Maven navigate to the directory where ReCiter will be installed, execute `brew install maven` and then `mvn clean install`
+
+If you want to use Java 8 then update `<java.version>1.8</java.version>` in [pom.xml](https://github.com/wcmc-its/ReCiter/blob/a3d5d4665e8692853ca69f2db0caba0eb56f557d/pom.xml#L49)
 
 It is not necessary to install ReCiter in order to use the API.
 
@@ -116,7 +118,7 @@ export SCOPUS_SERVICE=http://localhost:5001
 export PUBMED_SERVICE=http://localhost:5002
 ```
 4. Run `mvn spring-boot:run`. You can add additional options if you want like max and min java memory with `export MAVEN_OPTS=-Xmx1024m`
-5. Go to `http://localhost:<port-number>/swagger-ui.html` to test and run any API.
+5. Go to `http://localhost:<port-number>/swagger-ui/index.html` or `http://localhost:<port-number>/swagger-ui/` (shorthand swagger url)  to test and run any API.
 
 
 ### Amazon AWS
