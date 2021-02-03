@@ -18,9 +18,9 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.articlesize.strategy;
 
-import static org.hamcrest.CoreMatchers.sameInstance;
-
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import reciter.ApplicationContextHolder;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.dynamodb.model.ESearchPmid;
+import reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.QueryType;
 import reciter.engine.Feature;
@@ -38,6 +40,10 @@ import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.service.ESearchResultService;
 
+/**
+ * @author Sarbajit Dutta
+ * @see <a href= "https://github.com/wcmc-its/ReCiter/issues/228">Article Count Strategy</a>
+ */
 public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ArticleSizeStrategy.class);
@@ -97,19 +103,37 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		
+		//Logic was updated to include lookupType in eSearchPmid so as to only count publications when
+		//ALL_PUBLICATIONS flag is being used and excluding GoldStandard Strategy retrieval type for actual candidate publication count
+		//https://github.com/wcmc-its/ReCiter/issues/455 
 		ESearchResultService eSearchResultService = ApplicationContextHolder.getContext().getBean(ESearchResultService.class);
 		ESearchResult eSearchResult = eSearchResultService.findByUid(identity.getUid());
 		reCiterArticles.forEach(reCiterArticle -> {
 		ArticleCountEvidence articleCountEvidence = new ArticleCountEvidence();
 		if(this.numberOfArticles > 0) {
+			int retrievalArticleCountByLookUpType = 0;
 			if(eSearchResult != null
 					&&
 					eSearchResult.getQueryType() != null 
 					&&
 					(eSearchResult.getQueryType() == QueryType.LENIENT_LOOKUP || eSearchResult.getQueryType() == QueryType.STRICT_COMPOUND_NAME_LOOKUP)) {
-				articleCountEvidence.setCountArticlesRetrieved(this.numberOfArticles);
-				articleCountEvidence.setArticleCountScore(-(this.numberOfArticles - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+				if(eSearchResult.getESearchPmids() != null
+						&&
+						!eSearchResult.getESearchPmids().isEmpty()) {
+							Set<Long> uniqueRetrievalArticle = new HashSet<>();
+							eSearchResult.getESearchPmids().stream()
+							.filter(eSearchPmid -> !eSearchPmid.getRetrievalStrategyName().equalsIgnoreCase("GoldStandardRetrievalStrategy") && eSearchPmid.getLookupType() == RetrievalRefreshFlag.ALL_PUBLICATIONS)
+							.map(ESearchPmid::getPmids)
+							.forEach(uniqueRetrievalArticle::addAll);
+							retrievalArticleCountByLookUpType = uniqueRetrievalArticle.size();
+							if(retrievalArticleCountByLookUpType > 0) {
+								articleCountEvidence.setCountArticlesRetrieved(retrievalArticleCountByLookUpType);
+								articleCountEvidence.setArticleCountScore(-(retrievalArticleCountByLookUpType - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+							} else {
+								articleCountEvidence.setCountArticlesRetrieved(this.numberOfArticles);
+								articleCountEvidence.setArticleCountScore(-(this.numberOfArticles - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+							}
+						}
 			} else if(eSearchResult != null
 					&&
 					eSearchResult.getQueryType() != null 
