@@ -79,14 +79,14 @@ spec:
               name: ENVCONFIG
               key: AWS_REGION
         - name: JAVA_OPTIONS
-          value: "-Xmx2000m"
+          value: "-Xmx2400m"
         ports:
         - containerPort: 5000
           name: reciter
         resources:
           requests:
             memory: 2.6G
-            cpu: 0.8
+            cpu: 1
           limits:
             memory: 2.8G
             cpu: 1

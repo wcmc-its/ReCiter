@@ -87,22 +87,14 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				// If the eSearchResult collection doesn't contain any information regarding this person,
 				// then we'd want to perform a full retrieval because this will be first time that ReCiter
 				// retrieve PubMed and Scopus articles for this person.
-//				List<ESearchResult> results = eSearchResultService.findByUid(identity.getUid());
-//				if (results.isEmpty()) {
 				if(this.refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
 					slf4jLogger.info("Starting full retrieval for uid=[" + identity.getUid() + "].");
-					retrieveData(identity);
-				} else if(refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
+					retrieveData(identity, this.refreshFlag);
+				} else if(this.refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
 					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=["
 						+ startDate + "] endDate=[" + endDate + "].");
-					retrieveDataByDateRange(identity, startDate, endDate);
+					retrieveDataByDateRange(identity, startDate, endDate, this.refreshFlag);
 				}
-//				}
-//				} else {
-//					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=["
-//							+ startDate + " endDate=[" + endDate + "].");
-//					retrieveDataByDateRange(identity, startDate, endDate);
-//				}
 			} catch (IOException e) {
 				slf4jLogger.error("Unabled to retrieve. " + identity.getUid(), e);
 			}
@@ -125,7 +117,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		return true;
 	}
 	
-	private Set<Long> retrieveData(Identity identity) throws IOException {
+	private Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
 		Set<Long> uniquePmids = new HashSet<>();
 		
 		QueryType queryType = null;
@@ -148,7 +140,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
 			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType);
+			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}
 		// Retrieve by email.
@@ -180,7 +172,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}*/
 		
 		// TODO parallelize by putting save in a separate thread.
-		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType);
+		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 		uniquePmids.addAll(pubMedArticles.keySet());
 
 		RetrievalResult r1;
@@ -199,7 +191,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				queryType = QueryType.LENIENT_LOOKUP;
 			}
 			pubMedArticles.putAll(r1.getPubMedArticles());
-			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r1.getPubMedArticles().keySet());
 		} 
 		//toggle useStrictQUery as true if results from Last Name First Initial Strategy is larger than lenientStrategy
@@ -219,7 +211,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if(identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
 				RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r2.getPubMedArticles());
-				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
 				
 			} else {
@@ -228,13 +220,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r3.getPubMedArticles());
-			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
 			
 			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
 				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r4.getPubMedArticles());
-				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
 				
 			} else {
@@ -244,7 +236,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
 				RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r5.getPubMedArticles());
-				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
 				
 			} else {
@@ -253,13 +245,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
-			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
 			
 			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
 				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r7.getPubMedArticles());
-				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
 				
 			} else {
@@ -268,7 +260,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r8.getPubMedArticles());
-			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r8.getPubMedArticles().keySet());
 			
 		}
@@ -331,7 +323,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		return uniquePmids;
 	}
 	
-	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate) throws IOException {
+	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
 		Set<Long> uniquePmids = new HashSet<>();
 		QueryType queryType = null; 
 		String uid = identity.getUid();
@@ -351,7 +343,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
 			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType);
+			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}
 		
@@ -386,7 +378,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}*/
 		
 		// TODO parallelize by putting save in a separate thread.
-		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType);
+		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 		uniquePmids.addAll(pubMedArticles.keySet());
 
 		RetrievalResult r1;
@@ -405,7 +397,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				queryType = QueryType.LENIENT_LOOKUP;
 			}
 			pubMedArticles.putAll(r1.getPubMedArticles());
-			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r1.getPubMedArticles().keySet());
 		}
 		
@@ -428,7 +420,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if(identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
 				RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r2.getPubMedArticles());
-				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
 			} else {
 				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
@@ -436,13 +428,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r3.getPubMedArticles());
-			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
 			
 			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
 				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r4.getPubMedArticles());
-				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
 				
 			} else {
@@ -452,7 +444,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
 				RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r5.getPubMedArticles());
-				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
 			} else {
 				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
@@ -460,13 +452,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
-			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
 
 			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
 				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r7.getPubMedArticles());
-				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults(), queryType);
+				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
 				
 			} else {
@@ -474,7 +466,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			}
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r8.getPubMedArticles());
-			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType);
+			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r8.getPubMedArticles().keySet());
 		}
 		
@@ -539,7 +531,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	@Override
 	public void retrieveByPmids(String uid, List<Long> pmids) throws IOException {
-		if (!pmids.isEmpty()) {
+		//Not being used
+		/*if (!pmids.isEmpty()) {
 			RetrievalResult result = goldStandardRetrievalStrategy.retrievePubMedArticles(pmids);
 			if (result.getPubMedArticles().size() > 0) {
 				savePubMedArticles(result.getPubMedArticles().values(), uid, 
@@ -547,7 +540,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			}
 			List<ScopusArticle> scopusArticles = goldStandardRetrievalStrategy.retrieveScopus(pmids);
 			scopusService.save(scopusArticles);
-		}
+		}*/
 	}
 	
 	/**

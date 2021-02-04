@@ -26,6 +26,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.QueryType;
@@ -96,7 +97,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	 * @param pubMedArticles
 	 * @param uid
 	 */
-	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults, QueryType queryType) {
+	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults, QueryType queryType, RetrievalRefreshFlag refreshFlag) {
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
 		pubMedService.save(pubMedArticleList);
@@ -107,8 +108,16 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
 		ESearchPmid eSearchPmid = null;
-		if(pmids.size() > 0) {
-			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date());
+		if(!pmids.isEmpty()){
+			reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag eSearchPmidRefreshFlag;
+			if(refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
+				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS;
+			} else if(refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
+				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS;
+			} else {
+				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.FALSE;
+			}
+			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
 		if (eSearchResultDb == null) {
@@ -116,7 +125,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			if(eSearchPmid != null) {
 				eSearchPmids.add(eSearchPmid);
 			}
-			if(eSearchPmids.size() > 0) {
+			if(!eSearchPmids.isEmpty()) {
 				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
 			}
 		} else {
@@ -124,7 +133,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			if(eSearchPmid != null) {
 				eSearchPmids.add(eSearchPmid);
 			}
-			if(eSearchPmids.size() > 0) {
+			if(!eSearchPmids.isEmpty()) {
 				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
 			} else {
 				eSearchResultDb.setRetrievalDate(new Date());
