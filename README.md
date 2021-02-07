@@ -63,7 +63,7 @@ It is not necessary to install ReCiter in order to use the API.
 
 ### Technological stack
 Key technologies include:
-- ReCiter stores data about researchers and publications in **DynamoDB**, which can be hosted on Amazon AWS on installed locally.
+- ReCiter stores data about researchers and publications in **DynamoDB**, which can be hosted on Amazon AWS or installed locally.
 - Its main computation logic is written in **Java**.
 - It employs the **Spring Framework**, a Java-based application framework designed to manage RESTful web services and server requests.
 - ReCiter uses **Swagger**, a toolset that provides a user interface with helpful cues for how to interact with the application's RESTful APIs. 
@@ -96,7 +96,7 @@ Additionally, users can install:
 
 ## Installation
 
-ReCiter can be installed to run locally on an AWS via a cloud formation template. A required dependency is the [PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/). The [Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/) is optional, but can have improve overall accuracy by several percent. 
+ReCiter can be installed to run locally or in AWS via a cloud formation template. A required dependency is the [PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/). The [Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/) is optional, but can improve overall accuracy by several percent. 
 
 ### Local
 
