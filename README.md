@@ -63,7 +63,7 @@ It is not necessary to install ReCiter in order to use the API.
 
 ### Technological stack
 Key technologies include:
-- ReCiter stores data about researchers and publications in **DynamoDB**, which can be hosted on Amazon AWS on installed locally.
+- ReCiter stores data about researchers and publications in **DynamoDB**, which can be hosted on Amazon AWS or installed locally.
 - Its main computation logic is written in **Java**.
 - It employs the **Spring Framework**, a Java-based application framework designed to manage RESTful web services and server requests.
 - ReCiter uses **Swagger**, a toolset that provides a user interface with helpful cues for how to interact with the application's RESTful APIs. 
@@ -96,7 +96,7 @@ Additionally, users can install:
 
 ## Installation
 
-ReCiter can be installed to run locally on an AWS via a cloud formation template. A required dependency is the [PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/). The [Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/) is optional, but can have improve overall accuracy by several percent. 
+ReCiter can be installed to run locally or in AWS via a cloud formation template. A required dependency is the [PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool/). The [Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool/) is optional, but can improve overall accuracy by several percent. 
 
 ### Local
 
@@ -177,6 +177,11 @@ The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Usin
 - [Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool) - contains several ways you can search Scopus
 
 
+## Published articles
+
+- Albert PJ, Dutta S, Lin J, Zhu Z, Bales M, Johnson SB, Mansour M, Wright D, Wheeler TR, Cole CL. (2021) ReCiter: An open source, identity-driven, authorship prediction algorithm optimized for academic institutions. PLoS ONE 16(4): e0244641. [https://doi.org/10.1371/journal.pone.0244641](https://doi.org/10.1371/journal.pone.0244641)
+
+![https://github.com/wcmc-its/ReCiter/blob/master/files/plosone.png](https://github.com/wcmc-its/ReCiter/blob/plosone/files/plosone.png)
 
 ## Future work
 
@@ -185,14 +190,9 @@ Both the issue queue and the [Roadmap](https://github.com/wcmc-its/ReCiter/wiki/
 
 ## Follow up
 
-- Technical questions: contact [Sarbajit Dutta](mailto:szd2013@med.cornell.edu) or [Jie Lin](mailto:jie265@gmail.com)
-- Functional questions: contact [Paul Albert](mailto:paa2013@med.cornell.edu), [Michael Bales](mailto:meb7002@med.cornell.edu), or publications@med.cornell.edu.
+- Technical questions: contact [Sarbajit Dutta](mailto:szd2013@med.cornell.edu) or [Jie Lin](mailto:jie265@gmail.com).
+- Functional questions: contact [Paul Albert](mailto:paa2013@med.cornell.edu), [Michael Bales](mailto:meb7002@med.cornell.edu),  or publications@med.cornell.edu.
 
 You may expect a response within one to two business days. We use GitHub issues to track bugs and feature requests. If you find a bug, please feel free to open an issue.
 
 Contributions welcome!
-
-
-
-
-
