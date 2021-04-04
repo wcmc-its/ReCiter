@@ -181,7 +181,7 @@ The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Usin
 
 - Albert PJ, Dutta S, Lin J, Zhu Z, Bales M, Johnson SB, Mansour M, Wright D, Wheeler TR, Cole CL. (2021) ReCiter: An open source, identity-driven, authorship prediction algorithm optimized for academic institutions. PLoS ONE 16(4): e0244641. [https://doi.org/10.1371/journal.pone.0244641](https://doi.org/10.1371/journal.pone.0244641)
 
-![https://github.com/wcmc-its/ReCiter/blob/master/files/plosone.png](https://github.com/wcmc-its/ReCiter/blob/plosone/files/plosone.png)
+![https://github.com/wcmc-its/ReCiter/blob/master/files/plosone.png](https://github.com/wcmc-its/ReCiter/blob/master/files/plosone.png)
 
 ## Future work
 
