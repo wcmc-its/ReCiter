@@ -439,19 +439,17 @@ public class ArticleTranslator {
     	if(reCiterArticle.getPublicationTypeScopus() != null && scopusArticle.getSubType() != null) {
     		if(scopusArticle.getSubType().equalsIgnoreCase("cp")
     				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("proceedings") && (reCiterArticle.getArticleTitle().contains("20") || reCiterArticle.getArticleTitle().contains("19")))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("proceedings") && reCiterArticle.getArticleTitle().contains("symposi"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("proceedings") && reCiterArticle.getArticleTitle().contains("congress"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("conference"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("workshop"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("colloqui"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("meeting"))) {
+                    reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference, NIH")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Address")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Conference")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Congress")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Lecture")) {
     			publicationTypeCanonical = "Conference Paper";
     		} else if(scopusArticle.getSubType().equalsIgnoreCase("re")) {
     			publicationTypeCanonical = "Review";
@@ -494,7 +492,7 @@ public class ArticleTranslator {
                     reCiterArticle.getPublicationTypePubmed().contains("Congress")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Lecture")) {
-                publicationTypeCanonical = "PubMed.ConferencePaper";
+                publicationTypeCanonical = "Conference Paper";
             } else if(reCiterArticle.getPublicationTypePubmed().contains("Meta-Analysis")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Review")
