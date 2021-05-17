@@ -53,6 +53,13 @@ spec:
             secretKeyRef:
               name: reciter-secrets
               key: AMAZON_AWS_SECRET_KEY
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: newrelic-secrets
+              key: NR_LICENSE_KEY
+        - name: NEW_RELIC_APP_NAME
+          value: "ReCiter: Prod"
         - name: SERVER_PORT
           valueFrom:
             configMapKeyRef:
