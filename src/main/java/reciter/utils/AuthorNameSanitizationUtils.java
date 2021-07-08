@@ -266,7 +266,7 @@ public class AuthorNameSanitizationUtils {
 									&& 
 									StringUtils.equalsIgnoreCase(i.getValue().getFirstName(), j.getValue().getFirstName()) 
 									&&
-									i.getValue().getMiddleName().toLowerCase().startsWith(j.getValue().getMiddleName().toLowerCase())) {
+									StringUtils.equalsIgnoreCase(i.getValue().getMiddleName(), j.getValue().getMiddleName())) {
 								iterator.remove();
 								copyIterator.remove();
 							}
