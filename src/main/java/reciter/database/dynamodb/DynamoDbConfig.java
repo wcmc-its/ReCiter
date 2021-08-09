@@ -1,66 +1,24 @@
 package reciter.database.dynamodb;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSCredentialsProviderChain;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClientBuilder;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.exceptions.DynamoDBLocalServiceException;
-import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
-import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
-import com.amazonaws.services.dynamodbv2.local.shared.access.sqlite.AmazonDynamoDBOfflineSQLiteJob;
-import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
-import com.amazonaws.services.dynamodbv2.model.Projection;
-import com.amazonaws.services.dynamodbv2.model.ProjectionType;
-
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.lang3.StringUtils;
-import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.boot.ExitCodeGenerator;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.TableNameOverride;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
+import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.BillingMode;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
-import com.amazonaws.services.dynamodbv2.model.GlobalSecondaryIndex;
 import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
@@ -69,9 +27,17 @@ import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import com.amazonaws.services.dynamodbv2.util.TableUtils.TableNeverTransitionedToStateException;
 
+import org.apache.commons.lang3.StringUtils;
+import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
+import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
+
 import lombok.extern.slf4j.Slf4j;
-import reciter.ApplicationContextHolder;
-import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 
 @Slf4j
 @Configuration
@@ -171,14 +137,10 @@ public class DynamoDbConfig {
 			if(StringUtils.isEmpty(dyanmodbRegion)) {
 				throw new BeanCreationException("The aws.dynamodb.settings.region is not set in application.propeties file. Please provide a valid  AWS region such as us-east-1 or eu-central-1. For list of valid regions see - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html#Concepts.RegionsAndAvailabilityZones.Availability");
 			}
-    		log.info("Using dynamodb AWS with endpoint - " + amazonDynamoDBEndpoint);
     		 amazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
-			 .withRegion(dyanmodbRegion)
-			 .withCredentials(new AWSStaticCredentialsProvider(amazonAWSCredentials()))
+			 .withRegion(System.getenv("AWS_REGION"))
+			 .withCredentials(new DefaultAWSCredentialsProviderChain())
 			 .build();
-    		/*if (!StringUtils.isEmpty(amazonDynamoDBEndpoint)) {
-                amazonDynamoDB.setEndpoint(amazonDynamoDBEndpoint);
-            }*/
     		
     	}
     	if(amazonDynamoDB != null) {
@@ -193,23 +155,6 @@ public class DynamoDbConfig {
     		log.info("aws.dynamoDb.local needs to have a boolean value set in application.propeties");
     	}
         return amazonDynamoDB;
-    }
-
-    @Bean
-    public AWSCredentials amazonAWSCredentials() {
-    		if(isDynamoDbLocal 
-    				&& 
-    				dynamodbLocalSecretKey != null && !dynamodbLocalSecretKey.isEmpty()
-    				&&
-    				dynamodbLocalAccessKey != null && !dynamodbLocalAccessKey.isEmpty()) {
-    			return new BasicAWSCredentials(dynamodbLocalAccessKey, dynamodbLocalSecretKey);
-    		} else if(!isDynamoDbLocal && amazonAWSAccessKey != null && !amazonAWSAccessKey.isEmpty()
-    				&&
-    				amazonAWSSecretKey != null && !amazonAWSSecretKey.isEmpty()) {
-    			return new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey);
-    		} else {
-    			return new BasicAWSCredentials(null, null);
-    		}
     }
     
     @Bean
