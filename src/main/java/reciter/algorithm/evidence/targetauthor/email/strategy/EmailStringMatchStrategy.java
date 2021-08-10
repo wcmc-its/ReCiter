@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy;
 import reciter.engine.Feature;
@@ -91,16 +92,21 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				if (author.isTargetAuthor() && author.getAffiliation() != null) {
 					String affiliation = author.getAffiliation();
 					for (String email : identity.getEmails()) {
-						if (affiliation.contains(email)) {
+						if (affiliation.toLowerCase().contains(email.toLowerCase())) {
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + email + "]");
 							reCiterArticle.getMatchingEmails().add(email);
 							emailEvidence.setEmailMatch(email);
 							emailEvidence.setEmailMatchScore(ReCiterArticleScorer.strategyParameters.getEmailMatchScore());
-						} else if(emailSuffixes.stream().anyMatch(suffix -> affiliation.contains(identity.getUid() + suffix))) {
+							break;
+						} else if(emailSuffixes.stream().anyMatch(suffix -> affiliation.toLowerCase().contains(identity.getUid().toLowerCase() + suffix.toLowerCase()))) {
 							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
 							reCiterArticle.getMatchingEmails().add(email);
 							emailEvidence.setEmailMatch(email);
 							emailEvidence.setEmailMatchScore(ReCiterArticleScorer.strategyParameters.getEmailMatchScore());
+							break;
+						} else {
+							emailEvidence.setEmailMatch(EmailFeatureClusteringStrategy.sanitizeAffiliation(affiliation));
+							emailEvidence.setEmailMatchScore(ReCiterArticleScorer.strategyParameters.getEmailNoMatchScore());
 						}
 					}
 				}
