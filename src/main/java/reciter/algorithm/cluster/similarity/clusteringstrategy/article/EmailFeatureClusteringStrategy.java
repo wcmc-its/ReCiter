@@ -90,7 +90,7 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	}
 	
 	
-	private String sanitizeAffiliation(String affiliation) {
+	public static String sanitizeAffiliation(String affiliation) {
 		Pattern pattern = Pattern.compile("([a-z0-9_.-]+)@([a-z0-9_.-]+[a-z])");
 		Matcher matcher = pattern.matcher(affiliation.toLowerCase());
 		while(matcher.find()) {

@@ -3,16 +3,7 @@ package reciter.storage.s3;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -23,8 +14,13 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+
 import lombok.extern.slf4j.Slf4j;
-import reciter.database.dynamodb.DynamoDbConfig;
 
 @Slf4j
 @Configuration
@@ -65,19 +61,8 @@ public class AmazonS3Config {
     	if(isS3Use && !isDynamoDbLocal) {
 	    	final AmazonS3 s3 = AmazonS3ClientBuilder
 	    						.standard()
-	    						.withCredentials(new AWSStaticCredentialsProvider(new AWSCredentials() {
-									
-									@Override
-									public String getAWSSecretKey() {
-										return amazonAWSSecretKey;
-									}
-									
-									@Override
-									public String getAWSAccessKeyId() {
-										return amazonAWSAccessKey;
-									}
-								}))
-	    						.withRegion(awsS3Region)
+								.withCredentials(new DefaultAWSCredentialsProviderChain())
+	    						.withRegion(System.getenv("AWS_REGION"))
 	    						.build();
 	    	createBucket(s3);
 	    	return s3;
@@ -88,7 +73,7 @@ public class AmazonS3Config {
     
     private void createBucket(AmazonS3 s3) {
     	String accountNumber = getAccountIDUsingAccessKey(amazonAWSAccessKey, amazonAWSSecretKey);
-    	BUCKET_NAME = s3BucketName.toLowerCase() + "-" + awsS3Region.toLowerCase() + "-" + accountNumber;
+    	BUCKET_NAME = s3BucketName.toLowerCase() + "-" + System.getenv("AWS_REGION").toLowerCase() + "-" + accountNumber;
     	if(!isDynamicBucketName) {
     		BUCKET_NAME = s3BucketName;
 		}
@@ -126,9 +111,8 @@ public class AmazonS3Config {
     }
     
     private String getAccountIDUsingAccessKey(String accessKey, String secretKey) {
-        AWSSecurityTokenService stsService = AWSSecurityTokenServiceClientBuilder.standard().withCredentials(
-                new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey))).build();
-
+		AWSSecurityTokenService stsService = AWSSecurityTokenServiceClientBuilder.standard().withCredentials(
+			new DefaultAWSCredentialsProviderChain()).build();
         GetCallerIdentityResult callerIdentity = stsService.getCallerIdentity(new GetCallerIdentityRequest());
         return callerIdentity.getAccount();
     }

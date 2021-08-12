@@ -180,6 +180,9 @@ public class StrategyParameters {
     @Value("${nameMatchMiddleType.identityNull-MatchNotAttempted}")
     private double nameMatchMiddleTypeIdentityNullMatchNotAttemptedScore;
 
+    @Value("${nameMatchModifier.combinedFirstNameLastName}")
+    private double nameMatchModifierCombinedFirstNameLastNameScore;
+
     @Value("${nameMatchModifier.incorrectOrder}")
     private double nameMatchModifierIncorrectOrderScore;
 
@@ -206,6 +209,9 @@ public class StrategyParameters {
 
     @Value("${strategy.email.emailMatchScore}")
     private double emailMatchScore;
+
+    @Value("${strategy.email.emailNoMatchScore}")
+    private double emailNoMatchScore;
     
     @Value("${strategy.email.default.suffixes}")
     private String defaultSuffixes;

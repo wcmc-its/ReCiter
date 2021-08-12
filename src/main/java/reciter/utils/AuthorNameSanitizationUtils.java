@@ -205,12 +205,14 @@ public class AuthorNameSanitizationUtils {
 	public void checkToIgnoreNameVariants(Map<AuthorName, AuthorName> idenityAuthorNames) {
 		Set<Entry<AuthorName, AuthorName>> sanitizedIdentityAuthorNames =  idenityAuthorNames.entrySet();
 		Set<Entry<AuthorName, AuthorName>> sanitizedIdentityAuthorNamesCopy = new HashSet<>(sanitizedIdentityAuthorNames);
-		for(Map.Entry<AuthorName,AuthorName> i : sanitizedIdentityAuthorNamesCopy) {
+		Iterator<Map.Entry<AuthorName,AuthorName>> copyIterator = sanitizedIdentityAuthorNamesCopy.iterator();
+		while(copyIterator.hasNext()) {
+			Map.Entry<AuthorName,AuthorName> i = copyIterator.next();
 			Iterator<Map.Entry<AuthorName,AuthorName>> iterator = idenityAuthorNames.entrySet().iterator();
 			while(iterator.hasNext()) {
 				Map.Entry<AuthorName,AuthorName> j = iterator.next();
 			//for(Map.Entry<AuthorName,AuthorName> j : sanitizedIdentityAuthorNames) {
-				if(!i.getKey().equals(j.getKey())) {
+				if(!i.getValue().equals(j.getValue())) {
 					if(sanitizedIdentityAuthorNames.size() > 1 
 							&&
 							i.getValue() != null 
@@ -227,14 +229,16 @@ public class AuthorNameSanitizationUtils {
 						if(StringUtils.equalsIgnoreCase(i.getValue().getLastName(), j.getValue().getLastName()) 
 								&& 
 								i.getValue().getFirstName().toLowerCase().startsWith(j.getValue().getFirstName().toLowerCase())) {
-							if(j.getValue().getMiddleName() == null) {
+							if(j.getValue().getMiddleName() == null && i.getValue().getMiddleName() == null) {
 								iterator.remove();
+								copyIterator.remove();
 								if(iterator.hasNext()) {
 									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
 								}
 							}
 							if(j.getValue().getMiddleName() != null && j.getValue().getMiddleName().trim().isEmpty()) {								
 								iterator.remove();
+								copyIterator.remove();
 								if(iterator.hasNext()) {
 									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
 								}
@@ -262,8 +266,9 @@ public class AuthorNameSanitizationUtils {
 									&& 
 									StringUtils.equalsIgnoreCase(i.getValue().getFirstName(), j.getValue().getFirstName()) 
 									&&
-									i.getValue().getMiddleName().toLowerCase().startsWith(j.getValue().getMiddleName().toLowerCase())) {
+									StringUtils.equalsIgnoreCase(i.getValue().getMiddleName(), j.getValue().getMiddleName())) {
 								iterator.remove();
+								copyIterator.remove();
 							}
 						}
 					}
