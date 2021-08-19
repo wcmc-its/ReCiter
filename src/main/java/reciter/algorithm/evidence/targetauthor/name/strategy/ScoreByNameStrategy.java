@@ -277,7 +277,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				//Attempt match where identity.firstName is a left-anchored substring of article.firstName
 				//Example: Paul (identity.firstName) = PaulJames (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-exact");
-				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeFullExactScore());
+				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeFullExactScore());
 				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstName");
