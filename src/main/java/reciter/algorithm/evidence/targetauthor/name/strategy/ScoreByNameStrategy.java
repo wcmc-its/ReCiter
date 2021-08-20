@@ -257,19 +257,19 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchModifierScore(ReCiterArticleScorer.strategyParameters.getNameMatchModifierCombinedFirstNameLastNameScore());
 			} else if(identityAuthor.getFirstName() != null 
 					&& 
-					articleAuthorName.getFirstName() != null) {
+					articleAuthorName.getFirstName() != null
+					&&
+					identityAuthorNameOriginal.getFirstName() != null && (identityAuthorNameOriginal.getFirstName().contains(" ") || identityAuthorNameOriginal.getFirstName().contains("-"))) {
 				//Attempt match where identity.firstName + identity.lastName = article.firstName + article.lastName
 				//Example: Landys (identity.firstName) + Lopez quezada (identity.lastName) = Landys Lopez (article.firstName) + Quezada (article.lastName)
-				if(identityAuthorNameOriginal.getFirstName().contains(" ") || identityAuthorNameOriginal.getFirstName().contains("-")) {
-					String identityFirstName[] = identityAuthorNameOriginal.getFirstName().split("[-\\s]");
-					List<Character> combinedName = Arrays.stream(identityFirstName).map(s -> s.charAt(0)).collect(Collectors.toList());
-					String combinedFirstName = combinedName.stream().map(String::valueOf).collect(Collectors.joining());
-					if(StringUtils.equalsIgnoreCase(combinedFirstName, articleAuthorName.getFirstName())) {
-						authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
-						authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeInferredInitialsExactScore());
-						authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
-						authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
-					}
+				String identityFirstName[] = identityAuthorNameOriginal.getFirstName().split("[-\\s]");
+				List<Character> combinedName = Arrays.stream(identityFirstName).map(s -> s.charAt(0)).collect(Collectors.toList());
+				String combinedFirstName = combinedName.stream().map(String::valueOf).collect(Collectors.joining());
+				if(StringUtils.equalsIgnoreCase(combinedFirstName, articleAuthorName.getFirstName())) {
+					authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
+					authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeInferredInitialsExactScore());
+					authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
+					authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 				}
 			} else if(identityAuthor.getFirstName() != null 
 					&&
