@@ -123,8 +123,8 @@ export PUBMED_SERVICE=http://localhost:5002
 
 ### Amazon AWS
 
-The [ReCiter CloudFormation](
-https://github.com/wcmc-its/ReCiter-CloudFormation) template allows you to use a simple text file to model and provision, in an automated and secure manner, all the resources needed for your applications across all regions and accounts. This file serves as the single source of truth for your cloud environment. There you will find instruction to install ReCiter and its components.
+The [ReCiter CDK](
+https://github.com/wcmc-its/ReCiter-CDK) allows to install the entire infrastructure for ReCiter and its components and its highly configurable. There you will find instruction to install ReCiter and its components.
 
 
 
