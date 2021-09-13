@@ -18,15 +18,8 @@
  *******************************************************************************/
 package reciter.controller;
 
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,10 +30,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
-
-import java.util.List;
 @Slf4j
 @Controller
 public class IdentityController {
@@ -107,10 +105,10 @@ public class IdentityController {
         StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
         stopWatch.start("Search the identity table for a given ID");
         log.info("calling findByUid with size of uids=" + uid);
-        Identity identity;
-        try {
-            identity = identityService.findByUid(uid);
-        } catch (NullPointerException ne) {
+        Identity identity = identityService.findByUid(uid);
+        if(identity == null) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
         stopWatch.stop();
