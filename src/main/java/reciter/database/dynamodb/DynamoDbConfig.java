@@ -283,14 +283,16 @@ public class DynamoDbConfig {
 	                if(request != null) {
 	                	amazonDynamoDB.createTable(request);
 	                }
-	                	log.info("Waiting for table " + tableName + " to be created in AWS.");
+	                	log.info("Waiting for DynamoDB table " + tableName + " to be created in AWS.");
 	                try {
 						TableUtils.waitUntilActive(amazonDynamoDB, tableName);
 					} catch (TableNeverTransitionedToStateException | InterruptedException e) {
 						log.error(e.getMessage());
 					}
-	                	log.info("Table " + tableName  + " has been created in AWS.");
-	                }
+	                	log.info("DynamoDB table " + tableName  + " has been created in AWS.");
+	                } else {
+						log.info("DynamoDB table " + tableName + " required for ReCiter is already created.");
+					}
                 
             //}
 
