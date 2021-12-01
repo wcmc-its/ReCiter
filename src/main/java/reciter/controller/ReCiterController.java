@@ -131,6 +131,9 @@ public class ReCiterController {
     @Value("${reciter.feature.generator.keywordCountMax}")
     private double keywordsMax;
 
+    @Value("${reciter.feature.generator.group.uids.maxCount}")
+    private int uidsMaxCount;
+
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiImplicitParams({
     	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
@@ -345,16 +348,26 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/feature-generator/by/group", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity retrieveBulkFeatureGenerator(@RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
+    public ResponseEntity retrieveBulkFeatureGenerator(@RequestParam(required =false, value = "List of uids and has a limit") List<String> uids, @RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
     		@RequestParam(required = true) Double totalStandardizedArticleScore, @RequestParam(required = true) int maxArticlesPerPerson) {
         StopWatch stopWatch = new StopWatch("Retrieve pending articles for a group of users");
         stopWatch.start("Retrieve pending articles for a group of users");
-        
-        List<Identity> identities;
-        try {
-            identities = identityService.findAll();
-        } catch (Exception ne) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Issue with the request" + ne);
+        List<Identity> identities = null;
+        if(uids.size() > uidsMaxCount) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The maximum number of uids allowed is " + uidsMaxCount);
+        }
+        if(uids == null || uids.isEmpty()) {
+            
+            try {
+                identities = identityService.findAll();
+            } catch (Exception ne) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Issue with the request" + ne);
+            }
+            if(identities.size() == 0) {
+                stopWatch.stop();
+                log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The Identity table is empty.");
+            }
         }
         if(identities.size() == 0) {
             stopWatch.stop();
@@ -370,34 +383,42 @@ public class ReCiterController {
         	totalScore = totalStandardizedArticleScore;
         }
         
-        if(identities != null && identities.size() > 0) {
-        	List<String> identitySubset = identities.parallelStream().filter(identity -> 
-        			((personType == null)?
-        			true:
-        			(identity.getPersonTypes() != null
-        			&&
-        			!identity.getPersonTypes().isEmpty() && !Collections.disjoint(identity.getPersonTypes(), personType)))
-        			&&
-        			((organizationalAffiliation == null)?
-        			true:
-        			(identity.getInstitutions() != null
-        			&&
-        			!identity.getInstitutions().isEmpty()
-        			&&
-        			!Collections.disjoint(identity.getInstitutions(), organizationalAffiliation)))
-        			&&
-        			((departmentalAffiliation == null)?
-        			true:		
-        			(identity.getOrganizationalUnits() != null
-        			&&
-        			!identity.getOrganizationalUnits().isEmpty()
-        			&&
-        			!Collections.disjoint(identity.getOrganizationalUnits().stream()
-        					.map(OrganizationalUnit::getOrganizationalUnitLabel)
-        					.collect(Collectors.toList()), departmentalAffiliation))))
-        			.map(Identity::getUid)
-        			.collect(Collectors.toList());
-        	List<AnalysisOutput> analysis = analysisService.findByUids(identitySubset);
+        if((identities != null && !identities.isEmpty()) || (uids != null && !uids.isEmpty())) {
+            List<String> identitySubset = null;
+            if(identities != null && !identities.isEmpty()) {
+                identitySubset = identities.parallelStream().filter(identity -> 
+                        ((personType == null)?
+                        true:
+                        (identity.getPersonTypes() != null
+                        &&
+                        !identity.getPersonTypes().isEmpty() && !Collections.disjoint(identity.getPersonTypes(), personType)))
+                        &&
+                        ((organizationalAffiliation == null)?
+                        true:
+                        (identity.getInstitutions() != null
+                        &&
+                        !identity.getInstitutions().isEmpty()
+                        &&
+                        !Collections.disjoint(identity.getInstitutions(), organizationalAffiliation)))
+                        &&
+                        ((departmentalAffiliation == null)?
+                        true:		
+                        (identity.getOrganizationalUnits() != null
+                        &&
+                        !identity.getOrganizationalUnits().isEmpty()
+                        &&
+                        !Collections.disjoint(identity.getOrganizationalUnits().stream()
+                                .map(OrganizationalUnit::getOrganizationalUnitLabel)
+                                .collect(Collectors.toList()), departmentalAffiliation))))
+                        .map(Identity::getUid)
+                        .collect(Collectors.toList());
+            }
+            List<AnalysisOutput> analysis = null;
+            if(uids != null && !uids.isEmpty()) {
+                analysis = analysisService.findByUids(uids);
+            }  else if(identitySubset != null && !identitySubset.isEmpty()){
+                analysis = analysisService.findByUids(identitySubset);
+            }
         	if (analysis != null && !analysis.isEmpty()) {
         		analysis.stream().forEach(anl -> {
         			if(anl.getReCiterFeature() != null
@@ -407,13 +428,11 @@ public class ReCiterController {
         			!anl.getReCiterFeature().getReCiterArticleFeatures().isEmpty()) {
         				anl.getReCiterFeature().setReCiterArticleFeatures(anl.getReCiterFeature().getReCiterArticleFeatures()
         						.stream()
-        						.limit(maxArticlesPerPerson)
-        						.collect(Collectors.toList())
-        						.stream()
         						.filter(article ->
 			    					article.getUserAssertion() == PublicationFeedback.NULL
 			    					&&
-			    					article.getTotalArticleScoreStandardized() >= totalScore)
+			    					article.getTotalArticleScoreStandardized() >= totalScore)   
+        						.limit(maxArticlesPerPerson) 
         						.collect(Collectors.toList()));
         			}
         		});
@@ -421,11 +440,6 @@ public class ReCiterController {
             			.filter(anl -> anl.getReCiterFeature().getReCiterArticleFeatures() != null && !anl.getReCiterFeature().getReCiterArticleFeatures().isEmpty())
             			.map(AnalysisOutput::getReCiterFeature)
                         .collect(Collectors.toList());
-                
-                //Set Count of pending articles. The articles are already filtered by score and FeedBack NULL
-                analysisSubset.forEach(anl -> {
-                    anl.setCountPendingArticles(anl.getReCiterArticleFeatures().size());
-                });
             	
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
