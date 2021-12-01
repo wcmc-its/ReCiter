@@ -371,4 +371,7 @@ public class StrategyParameters {
 
     @Value("${reciter.feature.generator.keywordCountMax}")
     private double keywordCountMax;
+
+    @Value("${reciter.feature.generator.group.uids.maxCount}")
+    private int uidsMaxCount;
 }
