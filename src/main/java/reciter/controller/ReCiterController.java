@@ -363,7 +363,7 @@ public class ReCiterController {
             } catch (Exception ne) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Issue with the request" + ne);
             }
-            if(identities.size() == 0) {
+            if(identities == null || (identities != null && identities.isEmpty())){
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The Identity table is empty.");
