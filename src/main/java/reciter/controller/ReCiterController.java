@@ -350,10 +350,14 @@ public class ReCiterController {
     @ResponseBody
     public ResponseEntity retrieveBulkFeatureGenerator(@RequestParam(required =false, value = "List of uids and has a limit") List<String> uids, @RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
     		@RequestParam(required = true) Double totalStandardizedArticleScore, @RequestParam(required = true) int maxArticlesPerPerson) {
+        
+        if(uids == null && personType == null && organizationalAffiliation == null && departmentalAffiliation == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please supply either the list of uids or any one of personType, organizationalAffiliation, departmentalAffiliation");
+        }
         StopWatch stopWatch = new StopWatch("Retrieve pending articles for a group of users");
         stopWatch.start("Retrieve pending articles for a group of users");
         List<Identity> identities = null;
-        if(uids.size() > uidsMaxCount) {
+        if(uids != null && uids.size() > uidsMaxCount) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The maximum number of uids allowed is " + uidsMaxCount);
         }
         if(uids == null || uids.isEmpty()) {
