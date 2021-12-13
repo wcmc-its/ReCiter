@@ -1,4 +1,4 @@
-package reciter.configuration;
+/* package reciter.configuration;
 
 import ch.mfrey.jackson.antpathfilter.AntPathFilterMixin;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,3 +20,4 @@ public class CustomDispatcherServlet extends WebMvcConfigurerAdapter {
         extendMessageConverters(messageConverters);
     }
 }
+ */

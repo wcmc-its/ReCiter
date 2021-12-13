@@ -1,4 +1,4 @@
-package reciter.configuration;
+/* package reciter.configuration;
 
 import ch.mfrey.jackson.antpathfilter.AntPathPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -15,3 +15,4 @@ public class PartialResponse extends MappingJacksonValue {
         }
     }
 }
+ */
