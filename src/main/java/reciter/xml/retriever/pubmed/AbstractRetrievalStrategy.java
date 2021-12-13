@@ -50,9 +50,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
 	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
 	private static final int scopusNodeSize = 3;
-	
-	@Autowired
-	private GoldStandardRetrievalStrategy goldStandardRetrievalStrategy;
 
 	public static class RetrievalResult {
 		private final Map<Long, PubMedArticle> pubMedArticles;
