@@ -79,7 +79,6 @@ import reciter.utils.DegreeYearStrategyUtils;
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
-@EnableWebMvc
 @EnableDynamoDBRepositories("reciter.database.dynamodb")
 @ComponentScan("reciter")
 public class Application {
