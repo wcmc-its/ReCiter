@@ -373,12 +373,6 @@ public class ReCiterController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The Identity table is empty.");
             }
         }
-        if(identities.size() == 0) {
-            stopWatch.stop();
-            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The Identity table is empty.");
-        }
-        
         final double totalScore;
         
         if(totalStandardizedArticleScore == null) {
