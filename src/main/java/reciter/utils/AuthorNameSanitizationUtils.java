@@ -235,12 +235,18 @@ public class AuthorNameSanitizationUtils {
 								if(iterator.hasNext()) {
 									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
 								}
+								if(copyIterator.hasNext()) {
+									i = copyIterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
+								}
 							}
 							if(j.getValue().getMiddleName() != null && j.getValue().getMiddleName().trim().isEmpty()) {								
 								iterator.remove();
 								copyIterator.remove();
 								if(iterator.hasNext()) {
 									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
+								}
+								if(copyIterator.hasNext()) {
+									i = copyIterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
 								}
 							}
 						}
@@ -269,6 +275,12 @@ public class AuthorNameSanitizationUtils {
 									StringUtils.equalsIgnoreCase(i.getValue().getMiddleName(), j.getValue().getMiddleName())) {
 								iterator.remove();
 								copyIterator.remove();
+								if(iterator.hasNext()) {
+									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
+								}
+								if(copyIterator.hasNext()) {
+									i = copyIterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
+								}
 							}
 						}
 					}
