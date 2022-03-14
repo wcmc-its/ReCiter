@@ -18,6 +18,17 @@
  *******************************************************************************/
 package reciter.algorithm.util;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 import org.springframework.stereotype.Component;
@@ -53,17 +64,6 @@ import reciter.model.pubmed.PubMedPubDate;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
 import reciter.utils.AuthorNameSanitizationUtils;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Translator that translates a PubmedArticle to ReCiterArticle.
@@ -396,7 +396,8 @@ public class ArticleTranslator {
             Set<Long> commentsCorrectionsPmids = new HashSet<>();
             List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlinecitation().getCommentscorrectionslist();
             for (MedlineCitationCommentsCorrections medlineCitationCommentsCorrections : commentsCorrectionsList) {
-                commentsCorrectionsPmids.add(Long.parseLong(medlineCitationCommentsCorrections.getPmid()));
+                if(medlineCitationCommentsCorrections.getPmid() != null)
+                    commentsCorrectionsPmids.add(Long.parseLong(medlineCitationCommentsCorrections.getPmid()));
             }
             reCiterArticle.setCommentsCorrectionsPmids(commentsCorrectionsPmids);
         }
