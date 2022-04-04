@@ -1,16 +1,17 @@
 package reciter.algorithm.cluster.article.scorer;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
@@ -258,63 +259,161 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
 			long clusterId = entry.getKey();
 			slf4jLogger.info("******************** Cluster " + clusterId + " scoring starts **********************");
+			//Start a executor service
+			ExecutorService executorService = Executors.newWorkStealingPool();
+			List<Callable<Double>> articleScorerCallables = new ArrayList<>();
+			
+
 			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
-			((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+			articleScorerCallables.add(new Callable<Double>() {
+				public Double call() {
+					return ((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+				}
+			});
+			//((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
 
 			if (strategyParameters.isEmail()) {
-				((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isGrant()) {
-				((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isKnownRelationship()) {
-				((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isBachelorsYearDiscrepancy()) {
-				((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isDoctoralYearDiscrepancy()) {
-				((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 
 			if (strategyParameters.isDepartment()) {
-				((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if(strategyParameters.isJournalCategory()) {
-				((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isAffiliation()) {
-				((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isArticleSize()) {
-				((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isPersonType()) {
-				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
 			if (strategyParameters.isUseGoldStandardEvidence()) {
-				((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
+					}
+				});
+				//((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
 			}
 			
 			if(strategyParameters.isGender()) {
-				((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
+				articleScorerCallables.add(new Callable<Double>() {
+					public Double call() {
+						return ((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
+					}
+				});
+				//((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
+			articleScorerCallables.add(new Callable<Double>() {
+				public Double call() {
+					return ((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
+				}
+			});
+			//((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
 			
+			
+			try {
+				executorService.invokeAll(articleScorerCallables)
+				.stream()
+				.map(future -> {
+					try {
+						return future.get();
+					}
+					catch (Exception e) {
+						throw new IllegalStateException(e);
+					}
+				}).forEach(System.out::println);
+			} catch (InterruptedException e) {
+				slf4jLogger.error("Unable to invoke callable.", e);
+			}
+			slf4jLogger.info("Shutting down article scorer Executor service");
+			executorService.shutdown();
+			try {
+				if (!executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS)) {
+					executorService.shutdownNow();
+				} 
+			} catch (InterruptedException e) {
+				executorService.shutdownNow();
+			}
+
 			if (strategyParameters.isAverageClustering()) {
 				((ClusterStrategyContext) averageClusteringStrategyContext).executeStrategy(entry.getValue());
 			}
-			
-			((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
-			
 			
 			slf4jLogger.info("******************** Cluster " + clusterId + " scoring ends **********************");
 		}
