@@ -160,15 +160,13 @@ The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Usin
 |Category |Function |Relevant API(s) |
 | ---- | ------------- | ------------- |
 |Manage identity of target users | Add or update identity data for target user(s) from Identity table | [`/reciter/identity/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciteridentity) or [`/reciter/save/identities/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#recitersaveidentities) |
-|Manage identity of target users | Retrieve identity data for target user(s) from Identity table | [`/reciter/find/identity/by/uid/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfindidentitybyuid) or [`/reciter/find/identity/by/uids/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfindidentitybyuids) |
+|Manage identity of target users | Retrieve identity data for target user(s) from Identity table | [`/reciter/find/identity/by/uid/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfindidentitybyuid) or [`/reciter/find/identity/by/uids/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfindidentitybyuids) or [`/reciter/find/all/identity`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfindallidentity) |
 |Gold standard | Update the GoldStandard table (includes both accepted and rejected PMIDs) for single user | [`/reciter/goldstandard/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs##recitergoldstandard-post) |
 |Gold standard | Update the GoldStandard table (includes both accepted and rejected PMIDs) for mutliple users | [`/reciter/goldstandard/`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs##recitergoldstandard-put) |
 |Gold standard | Read from the GoldStandard table (includes both accepted and rejected PMIDs) for target user(s) | [`/reciter/goldstandard/{uid}`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#recitergoldstandarduid)  |
 | Look up candidate articles | Trigger look up of candidate articles for a given user | [`/reciter/retrieve/articles/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterretrievearticlesbyuid)  |
 | Retrieve suggested articles  | Read suggested articles from the Analysis table for target user | [`/reciter/article-retrieval/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterarticle-retrievalbyuid)   | 
 | Retrieve suggested articles | Read suggested articles and see supporting evidence from the Analysis table for target user(s) | [`/reciter/feature-generator/by/uid`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfeature-generatorbyuid) or [`/reciter/feature-generator/by/group`](https://github.com/wcmc-its/ReCiter/wiki/Using-the-APIs#reciterfeature-generatorbygroup)  | 
-
-
 
 
 ### See also
