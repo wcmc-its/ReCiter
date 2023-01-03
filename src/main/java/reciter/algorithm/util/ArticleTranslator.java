@@ -467,11 +467,7 @@ public class ArticleTranslator {
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Classical Article")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Scientific Integrity Review")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Guideline")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Practice Guideline")) {
+                    reCiterArticle.getPublicationTypePubmed().contains("Scientific Integrity Review")) {
                 publicationTypeCanonical = "Review";
             } else if(reCiterArticle.getPublicationTypePubmed().contains("Case Reports")) {
                 publicationTypeCanonical = "Case Report";
@@ -512,6 +508,13 @@ public class ArticleTranslator {
             }
         }
 
+/*
+
+## The below code uses publication type data from Scopus to infer publication type. Scopus has its virtues but it is commented out 
+## for now so that we rely on PubMed exclusively. The reasoning is:
+## 1. PubMed is freely available
+## 2. More commonly used, and 
+## 3. Less aggressive about mapping publications to what they call "articles" and what we would map to "academic articles."
 
     	if(reCiterArticle.getPublicationTypeScopus() != null && scopusArticle.getSubType() != null) {
     		if(scopusArticle.getSubType().equalsIgnoreCase("cp")
@@ -550,6 +553,7 @@ public class ArticleTranslator {
     			publicationTypeCanonical = "Article";
     		}
     	}
+*/        
     	reCiterArticle.setPublicationTypeCanonical(publicationTypeCanonical);
     }
 	
