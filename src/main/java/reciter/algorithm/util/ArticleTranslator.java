@@ -437,6 +437,82 @@ public class ArticleTranslator {
     
     private static void determinePublicationTypeCanonical(ReCiterArticle reCiterArticle, ScopusArticle scopusArticle) {
     	String publicationTypeCanonical = null;
+
+        if(publicationTypeCanonical == null && reCiterArticle.getPublicationTypePubmed() != null) {
+            if(reCiterArticle.getPublicationTypePubmed().contains("Editorial")) {
+                publicationTypeCanonical = "Editorial Article";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Letter")) {
+                publicationTypeCanonical = "Letter";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Comment")) {
+                publicationTypeCanonical = "Comment";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference, NIH")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Address")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Conference")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Congress")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Lecture")) {
+                publicationTypeCanonical = "Conference Paper";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Guideline")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Practice Guideline")) {
+                publicationTypeCanonical = "Guideline";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Meta-Analysis")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Review")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Classical Article")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Scientific Integrity Review")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Guideline")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Practice Guideline")) {
+                publicationTypeCanonical = "Review";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Case Reports")) {
+                publicationTypeCanonical = "Case Report";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Journal Article")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase I")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase II")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase III")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase IV")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Randomized Controlled Trial")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Multicenter Study")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Twin Study")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Validation Study")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Pragmatic Clinical Trial")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Study")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial Protocol")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Comparative Study")
+                    ||
+                    reCiterArticle.getPublicationTypePubmed().contains("Technical Report")) {
+                publicationTypeCanonical = "Academic Article";
+            } else {
+                publicationTypeCanonical = "Article";
+            }
+        }
+
+
     	if(reCiterArticle.getPublicationTypeScopus() != null && scopusArticle.getSubType() != null) {
     		if(scopusArticle.getSubType().equalsIgnoreCase("cp")
     				||
@@ -474,79 +550,9 @@ public class ArticleTranslator {
     			publicationTypeCanonical = "Article";
     		}
     	}
-    	
-    	if(publicationTypeCanonical == null && reCiterArticle.getPublicationTypePubmed() != null) {
-            if(reCiterArticle.getPublicationTypePubmed().contains("Editorial")) {
-                publicationTypeCanonical = "Editorial Article";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Letter")) {
-                publicationTypeCanonical = "Letter";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Comment")) {
-                publicationTypeCanonical = "Comment";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference, NIH")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Address")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Conference")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Congress")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Lecture")) {
-                publicationTypeCanonical = "Conference Paper";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Meta-Analysis")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Review")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Classical Article")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Scientific Integrity Review")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Guideline")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Practice Guideline")) {
-                publicationTypeCanonical = "Review";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Journal Article")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase I")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase II")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase III")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase IV")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Randomized Controlled Trial")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Multicenter Study")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Twin Study")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Validation Study")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Pragmatic Clinical Trial")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Case Reports")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Study")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial Protocol")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Comparative Study")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Technical Report")) {
-                publicationTypeCanonical = "Academic Article";
-            } else {
-                publicationTypeCanonical = "Article";
-            }
-    	}
     	reCiterArticle.setPublicationTypeCanonical(publicationTypeCanonical);
     }
-    
+	
     private static void populateFeatures(ReCiterArticle reCiterArticle, String nameIgnoredCoAuthors) {
     	List<String> ignoredCoAuthorNames = Arrays.asList(nameIgnoredCoAuthors.trim().split("\\s*,\\s*"));
     	ReCiterArticleFeatures reCiterArticleFeatures = new ReCiterArticleFeatures();
