@@ -8,11 +8,8 @@
 [![Closed Pull-Requests](https://img.shields.io/github/issues-pr-closed-raw/wcmc-its/reciter.svg?color=blue)](https://github.com/wcmc-its/ReCiter/pulls)
 [![GitHub issues open](https://img.shields.io/github/issues-raw/wcmc-its/reciter.svg?maxAge=2592000)](https://github.com/wcmc-its/ReCiter/issues)
 [![GitHub issues closed](https://img.shields.io/github/issues-closed-raw/wcmc-its/reciter.svg?maxAge=2592000)](https://github.com/wcmc-its/ReCiter/issues)
-[![star this repo](http://githubbadges.com/star.svg?user=wcmc-its&repo=ReCiter&style=flat)](https://github.com/wcmc-its/ReCiter)
-[![fork this repo](http://githubbadges.com/fork.svg?user=wcmc-its&repo=ReCiter&style=flat)](https://github.com/wcmc-its/ReCiter/fork)
 [![Tags](https://img.shields.io/github/tag/wcmc-its/reciter.svg?style=social)](https://github.com/wcmc-its/ReCiter/releases)
 [![Github All Releases](https://img.shields.io/github/downloads/wcmc-its/ReCiter/total.svg)]()
-[![Open Source Love](https://badges.frapsoft.com/os/v3/open-source.svg?v=102)](https://github.com/wcmc-its/ReCiter/) 
 
 - [Purpose](#purpose)
 - [Technical](#technical)
@@ -186,11 +183,18 @@ The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Usin
 Both the issue queue and the [Roadmap](https://github.com/wcmc-its/ReCiter/wiki/Roadmap) include some areas where we want to improve ReCiter.
 
 
+## Funding acknolwedgment
+
+Various components in the ReCiter suite of applications has been funded by:
+- The National Institutes of Health National Center for Advancing Translational Sciences through grant number UL1TR002384 
+- National Library of Medicine, National Institutes of Health under a cooperative agreement with Region 7
+- Lyrasis through its Catalyst fund
+
+
 ## Follow up
 
-- Technical questions: contact [Sarbajit Dutta](mailto:szd2013@med.cornell.edu) or [Jie Lin](mailto:jie265@gmail.com).
-- Functional questions: contact [Paul Albert](mailto:paa2013@med.cornell.edu), [Michael Bales](mailto:meb7002@med.cornell.edu),  or publications@med.cornell.edu.
+Please submit any questions to [Paul Albert](mailto:paa2013@med.cornell.edu). You may expect a response within one to two business days. 
 
-You may expect a response within one to two business days. We use GitHub issues to track bugs and feature requests. If you find a bug, please feel free to open an issue.
+We use GitHub issues to track bugs and feature requests. If you find a bug, please feel free to open an issue.
 
 Contributions welcome!
