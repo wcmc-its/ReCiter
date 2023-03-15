@@ -26,6 +26,7 @@
   - [Using the APIs](#using-the-apis)
   - [See also](#see-also)
 - [Future work](#future-work)
+- [Funding acknowledgment](#funding-acknowledgment)
 - [Follow up](#follow-up)
 
 
@@ -78,6 +79,7 @@ You may choose to run ReCiter on either:
 ### Related code repositories
 
 The ReCiter application depends on the following separate GitHub-hosted repositories:
+
 - **[PubMed Retrieval Tool](https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool)**
 - **[Scopus Retrieval Tool](https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool)** (optional)
 - **Data models:**
@@ -87,9 +89,10 @@ The ReCiter application depends on the following separate GitHub-hosted reposito
   - [ReCiter-Dynamodb-Model](https://github.com/wcmc-its/ReCiter-Dynamodb-Model)
   - [ReCiter-PubMed-Model](https://github.com/wcmc-its/ReCiter-PubMed-Model)
 
-Additionally, users can install:
-- [ReCiter Publication Manager](https://github.com/wcmc-its/ReCiter-Publication-Manager) - a user interface tool
-- [ReCiter Machine Learning / Analysis](https://github.com/wcmc-its/ReCiter-MachineLearning-Analysis) - a suite of scripts and tools for retrieving and analyzing data from ReCiter
+Optionally, users can install:
+- [ReCiter Publication Manager](https://github.com/wcmc-its/ReCiter-Publication-Manager) - a powerful user interface / web application that streamlines the process of updating and reporting on the publications of an institution's scholars
+- [ReCiterDB](https://github.com/wcmc-its/ReCiterDB) - the back end data store for Publication Manager; in addition to the schema and stored procedures, this repository contains a set of scripts that retrieve data from ReCiter and imports them into this MySQL database
+
 
 ## Installation
 
@@ -185,7 +188,7 @@ The wiki article, [Using the APIs](https://github.com/wcmc-its/ReCiter/wiki/Usin
 Both the issue queue and the [Roadmap](https://github.com/wcmc-its/ReCiter/wiki/Roadmap) include some areas where we want to improve ReCiter.
 
 
-## Funding acknolwedgment
+## Funding acknowledgment
 
 Various components in the ReCiter suite of applications has been funded by:
 - The National Institutes of Health National Center for Advancing Translational Sciences through grant number UL1TR002384 
