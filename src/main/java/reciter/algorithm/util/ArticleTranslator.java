@@ -1,3 +1,5 @@
+
+
 /*******************************************************************************
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -445,6 +447,10 @@ public class ArticleTranslator {
                 publicationTypeCanonical = "Letter";
             } else if(reCiterArticle.getPublicationTypePubmed().contains("Comment")) {
                 publicationTypeCanonical = "Comment";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Preprint")) {
+                  publicationTypeCanonical = "Preprint";
+            } else if(reCiterArticle.getPublicationTypePubmed().contains("Published Erratum")) {
+                  publicationTypeCanonical = "Erratum";                
             } else if(reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference")
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference, NIH")
@@ -501,6 +507,8 @@ public class ArticleTranslator {
                     ||
                     reCiterArticle.getPublicationTypePubmed().contains("Comparative Study")
                     ||
+					reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial")                    
+            		||
                     reCiterArticle.getPublicationTypePubmed().contains("Technical Report")) {
                 publicationTypeCanonical = "Academic Article";
             } else {
