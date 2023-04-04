@@ -119,11 +119,11 @@ public class ReCiterFeatureGenerator {
 
         reCiterFeature.setCountSuggestedArticles(selectedArticles.size());
 
-        //Count of pending publications
+        // Count of pending publications
         List<ReCiterArticle> pendingArticles = selectedArticles
-        			.stream()
-        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore && reCiterArticle.getGoldStandard() == 0)
-                    .collect(Collectors.toList());
+                .stream()
+                .filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore && reCiterArticle.getGoldStandard() == 0)
+                .collect(Collectors.toList());
         reCiterFeature.setCountPendingArticles(pendingArticles.size());
         
         List<Long> filteredArticles = selectedArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
@@ -133,20 +133,21 @@ public class ReCiterFeatureGenerator {
         log.info("Analysis for uid=[" + identity.getUid() + "]");
         log.info("Precision=" + analysis.getPrecision());
         log.info("Recall=" + analysis.getRecall());
-
-	double accuracy = (analysis.getPrecision() + analysis.getRecall()) / 2.0;
-	    
+        
+        // Calculate accuracy using the new formula
+        double accuracy = (double)(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size()) / (double)(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size() + analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size());
+        
         log.info("Accuracy=" + accuracy);
-
+        
         log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
         log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
         log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
         log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
         log.info("\n");
         
-        // overall accuracy
-        reCiterFeature.setOverallAccuracy((analysis.getPrecision() + analysis.getRecall()) / 2);
-	    
+        // Set overall accuracy using the new formula
+        reCiterFeature.setOverallAccuracy(accuracy);
+
         // precision
         reCiterFeature.setPrecision(analysis.getPrecision());
 
