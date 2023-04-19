@@ -58,190 +58,93 @@ public class TargetAuthorSelection {
 				int lastNameMatchCount = 0;
 				int firstNameMatchCount = 0;
 				int fullLastNameToIdentityPartialMatchCount = 0;
-				int exactLastFirstInitialNameMatchCount = 0;
-				int exactIdentityMiddleNameToArticleLastNameMatchCount = 0;
-				int lastFirstAndFirstLastInitialNameMatchCount = 0;				
-				int firstInitialToInitialLastNameInitialToLastNameMatchCount = 0;
-				int firstNameSubstringIdentityMiddleNameMatchCount = 0;				
-
-
-				// 1. lastMiddleFirstMatchCount
-       
+	            
 	            lastMiddleFirstMatchCount = checkExactLastMiddleFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, emailMatchcount, multipleMarkedTargetAuthor);
-
 	            if(lastMiddleFirstMatchCount == 0 || lastMiddleFirstMatchCount > 1)
 	            	lastNameMiddleInitialFirstMatchCount = checkExactLastMiddleInitialFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastMiddleFirstMatchCount, multipleMarkedTargetAuthor);
-	            if(lastMiddleFirstMatchCount == 1) {
+	            if(lastMiddleFirstMatchCount ==1) {
 	            	slf4jLogger.info("Exact Last Name, Middle Name and First Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-				// 2. lastNameMiddleInitialFirstMatchCount
-            
-	            if(lastMiddleFirstMatchCount == 0 || lastMiddleFirstMatchCount > 1)
-	            	lastNameMiddleInitialFirstMatchCount = checkExactLastFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
-	            if(lastMiddleFirstMatchCount == 1) {
+	            
+	            if(lastNameMiddleInitialFirstMatchCount == 0 || lastNameMiddleInitialFirstMatchCount > 1)
+	            	lastNameFirstNameMatchCount = checkExactLastFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
+	            if(lastNameMiddleInitialFirstMatchCount == 1) {
 	            	slf4jLogger.info("Last Name Middle Initial and First Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-				// 3. lastNameFirstNameMatchCount
 	            
-	            if(lastNameMiddleInitialFirstMatchCount == 0 || lastNameMiddleInitialFirstMatchCount > 1)
-	            	lastNameFirstNameSubstringIdentityMatchCount = checkExactLastFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstNameSubstringIdentityMatchCount, multipleMarkedTargetAuthor);
-	            if(lastNameMiddleInitialFirstMatchCount == 1) {
+	            if(lastNameFirstNameMatchCount == 0 || lastNameFirstNameMatchCount > 1)
+	            	lastNameFirstNameSubstringIdentityMatchCount = checkExactLastFirstNamePartialSubstringIdentityMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstNameMatchCount, multipleMarkedTargetAuthor);
+	            if(lastNameFirstNameMatchCount == 1) {
 	            	slf4jLogger.info("Last Name First Name exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
-				// 4. lastNameFirstNameSubstringIdentityMatchCount
-
-	            if(lastNameFirstNameMatchCount == 0 || lastNameFirstNameMatchCount > 1)
-	            	lastNameFirstNameSubstringIdentityMatchCount = checkExactLastFirstNamePartialIdentityPartialSubstringMatch(authors.getSanitizedAuthorMap().entrySet(), sanitizedIdentityAuthors, lastNameFirstNameSubstringIdentityMatchCount, multipleMarkedTargetAuthor);
-	            if(lastNameFirstNameMatchCount == 1) {
+	            if(lastNameFirstNameSubstringIdentityMatchCount == 0 || lastNameFirstNameSubstringIdentityMatchCount > 1)
+	            	lastNameFirstNameIdentitySubstringMatchCount = checkExactLastFirstNamePartialIdentityPartialSubstringMatch(authors.getSanitizedAuthorMap().entrySet(), sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
+	            if(lastNameFirstNameSubstringIdentityMatchCount == 1) {
 	            	slf4jLogger.info("Last Name First Name partial match of Identity Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-				// 5. lastNameFirstNameIdentitySubstringMatchCount
 	            
-	            if(lastNameFirstNameSubstringIdentityMatchCount == 0 || lastNameFirstNameSubstringIdentityMatchCount > 1)
-	            	lastNameFirstInitialMatchCount = checkExactLastFirstInitialNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstInitialMatchCount, multipleMarkedTargetAuthor);
-	            if(lastNameFirstNameSubstringIdentityMatchCount == 1) {
+	            if(lastNameFirstNameIdentitySubstringMatchCount == 0 || lastNameFirstNameIdentitySubstringMatchCount > 1)
+	            	lastNameFirstInitialMatchCount = checkExactLastFirstInitialNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
+	            if(lastNameFirstNameIdentitySubstringMatchCount == 1) {
 	            	slf4jLogger.info("Last Name Identity First name partial of Article Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-				// 6. lastNameFirstInitialMatchCount
-		            
-	            if(lastNameFirstNameIdentitySubstringMatchCount == 0 || lastNameFirstNameIdentitySubstringMatchCount > 1)
-	            	emailMatchcount = checkExactLastFirstInitialNameMatch(sanitizedAritcleAuthors, identity, emailMatchcount, multipleMarkedTargetAuthor);
-	            if(lastNameFirstNameIdentitySubstringMatchCount == 1) {	
+	            
+	            if(lastNameFirstInitialMatchCount == 0 || lastNameFirstInitialMatchCount > 1)
+	            	emailMatchcount = checkEmailMatch(sanitizedAritcleAuthors, identity, emailMatchcount, multipleMarkedTargetAuthor);
+	            if(lastNameFirstInitialMatchCount == 1) {	
 	            	slf4jLogger.info("Last Name First Initial exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
-				// 7. emailMatchcount
-
 	            if(emailMatchcount == 0 || emailMatchcount > 1)
-	            	middleToFirstInitialAndFirstInitialToMiddleMatchCount = checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, middleToFirstInitialAndFirstInitialToMiddleMatchCount, multipleMarkedTargetAuthor);
+	            	middleToFirstInitialAndFirstInitialToMiddleMatchCount = checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(emailMatchcount == 1) {
 	            	slf4jLogger.info("Email Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-
-				// 8. middleToFirstInitialAndFirstInitialToMiddleMatchCount
 	            
-	            if(emailMatchcount == 0 || emailMatchcount > 1)
-	            	lastNamePartialFirstInitialMatchCount = checkPartialLastNameFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNamePartialFirstInitialMatchCount, multipleMarkedTargetAuthor);
-	            if(emailMatchcount == 1) {
-	            	slf4jLogger.info("Middle initial to first initial and first initial to middle initial Match found for article: " + reciterArticle.getArticleId());
+	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 0 || middleToFirstInitialAndFirstInitialToMiddleMatchCount > 1)
+	            	lastNamePartialFirstInitialMatchCount = checkPartialLastNameFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, middleToFirstInitialAndFirstInitialToMiddleMatchCount, multipleMarkedTargetAuthor);
+	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 1) {
+	            	slf4jLogger.info("Middle intial to first initial and first intial to middle initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-				// 9. lastNamePartialFirstInitialMatchCount
 	            
 	            if(lastNamePartialFirstInitialMatchCount == 0 || lastNamePartialFirstInitialMatchCount > 1)
-	            	lastNameMatchCount = checkLastNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMatchCount, multipleMarkedTargetAuthor);
+	            	lastNameMatchCount = checkLastNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNamePartialFirstInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNamePartialFirstInitialMatchCount == 1) {
 	            	slf4jLogger.info("Last Name Partial First Initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-
-				// 10. lastNameMatchCount
-	            
-	            if(lastNamePartialFirstInitialMatchCount == 0 || lastNamePartialFirstInitialMatchCount > 1)
-	            	firstNameMatchCount = checkLastNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameMatchCount, multipleMarkedTargetAuthor);
-	            if(lastNamePartialFirstInitialMatchCount == 1) {
-	            	slf4jLogger.info("Last Name Partial First Initial Match found for article: " + reciterArticle.getArticleId());
-	            	continue;
-	            }
-
-
-				// 11. firstNameMatchCount
 	            
 	            if(lastNameMatchCount == 0 || lastNameMatchCount > 1)
-	            	fullLastNameToIdentityPartialMatchCount = checkFirstNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, fullLastNameToIdentityPartialMatchCount, multipleMarkedTargetAuthor);
+	            	firstNameMatchCount = checkFirstNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameMatchCount == 1) {
 	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-				// 12. fullLastNameToIdentityPartialMatchCount
-
+	            
 	            if(firstNameMatchCount == 0 || firstNameMatchCount > 1)
-	            	checkLastToFirstFirstToLastNameMatch = checkLastNameFullArticleToIdentityPartialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, checkLastToFirstFirstToLastNameMatch, multipleMarkedTargetAuthor);
+	            	fullLastNameToIdentityPartialMatchCount = checkLastNameFullArticleToIdentityPartialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameMatchCount, multipleMarkedTargetAuthor);
 	            if(firstNameMatchCount == 1) {
-					slf4jLogger.info("Exact identity middle name to article last name match found: " + reciterArticle.getArticleId());
+	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
-
-
-				// 13. checkLastToFirstFirstToLastNameMatch 
-					            				
-				if(exactIdentityMiddleNameToArticleLastNameMatchCount == 0 || exactIdentityMiddleNameToArticleLastNameMatchCount > 1)
-					firstInitialToInitialLastNameInitialToLastNameMatchCount = checkLastToFirstFirstToLastNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstInitialToInitialLastNameInitialToLastNameMatchCount, multipleMarkedTargetAuthor);
-				if(exactIdentityMiddleNameToArticleLastNameMatchCount == 1) {
-					slf4jLogger.info("Exact article first to identity last name and vise versa found for article: " + reciterArticle.getArticleId());
-				continue;
-				}
-				
-
-				// 14. firstInitialToInitialLastNameInitialToLastNameMatchCount
-
-				if(lastToFirstFirstToLastNameMatchCount == 0 || lastToFirstFirstToLastNameMatchCount > 1)
-					lastFirstAndFirstLastInitialNameMatchCount = checkLastFirstAndFirstLastInitialNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastFirstAndFirstLastInitialNameMatchCount, multipleMarkedTargetAuthor);
-				if(lastToFirstFirstToLastNameMatchCount == 1) {
-					slf4jLogger.info("Exact identity lastname to article first name, and identity first initial to article last name initial for article: " + reciterArticle.getArticleId());
-				continue;
-				}
-				
-				// 15. lastFirstAndFirstLastInitialNameMatchCount 
-
-				if(lastToFirstFirstToLastNameMatchCount == 0 || lastToFirstFirstToLastNameMatchCount > 1)
-					firstInitialToInitialLastNameInitialToLastNameMatchCount = checkFirstInitialToInitialLastNameInitialToLastNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstInitialToInitialLastNameInitialToLastNameMatchCount, multipleMarkedTargetAuthor);
-				if(lastToFirstFirstToLastNameMatchCount == 1) {
-					slf4jLogger.info("Identity first name initial to article first name initial, and identity last name initial to article last name initial for article: " + reciterArticle.getArticleId());
-				continue;
-				}
-				
-				// 16. firstInitialToInitialLastNameInitialToLastNameMatchCount
-
-				if(firstNameSubstringIdentityMiddleNameMatchCount == 0 || firstNameSubstringIdentityMiddleNameMatchCount > 1)
-					firstNameSubstringIdentityMiddleNameMatchCount = checkFirstNameSubstringIdentityMiddleNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameSubstringIdentityMiddleNameMatchCount, multipleMarkedTargetAuthor);
-				if(firstNameSubstringIdentityMiddleNameMatchCount == 1) {
-					slf4jLogger.info("Article first name as substring of identity middle name for article: " + reciterArticle.getArticleId());
-				continue;
-				}
-
-
-				// 17. firstNameSubstringIdentityMiddleNameMatchCount	
-
-				if(firstInitialToInitialLastNameInitialToLastNameMatchCount == 0 || firstInitialToInitialLastNameInitialToLastNameMatchCount > 1)
-					firstNameSubstringIdentityMiddleNameMatchCount = checkFirstNameSubstringIdentityMiddleNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameSubstringIdentityMiddleNameMatchCount, multipleMarkedTargetAuthor);
-				if(firstInitialToInitialLastNameInitialToLastNameMatchCount == 1) {
-					slf4jLogger.info("Article first name as substring of identity middle name for article: " + reciterArticle.getArticleId());
-				continue;
-				}
-
-				// 18. No target author matches
-
-				if(firstNameSubstringIdentityMiddleNameMatchCount == 0) {
-					slf4jLogger.info("There was no target author found for " + reciterArticle.getArticleId());
-					assignTargetAuthorFalse(authors.getAuthors());
-				}
-
-				// 19. Multiple target author matches
-
-	            else if(firstNameSubstringIdentityMiddleNameMatchCount > 1) {
+	            
+	            if(fullLastNameToIdentityPartialMatchCount == 0) {
+	            	slf4jLogger.info("There was no target author found for " + reciterArticle.getArticleId());
+	            	assignTargetAuthorFalse(authors.getAuthors());
+	            }
+	            else if(fullLastNameToIdentityPartialMatchCount > 1) {
 	            	slf4jLogger.info(fullLastNameToIdentityPartialMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId());
 	            }
-
-	            // 20. Full last name to partial identity last name
-
-	            if(firstNameSubstringIdentityMiddleNameMatchCount == 1) {
+	            if(fullLastNameToIdentityPartialMatchCount == 1) {
 	            	slf4jLogger.info("Full Last Name match to partial Identity Last Name: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
@@ -252,7 +155,7 @@ public class TargetAuthorSelection {
 		
 	}
 	
-	//Step 7: attempt email match if match then automatically its a target author
+	//Step 7 : attempt email match if match then automatically its a target author
 	/**
 	 * Check for email match from affiliation statement with Identity email
 	 * @param authors
@@ -980,304 +883,6 @@ public class TargetAuthorSelection {
 		return count;
 	}
 	
-	/**
-	 * @param authors
-	 * @param sanitizedIdentityAuthors
-	 * @param matchCount
-	 * @param multipleMarkedTargetAuthor
-	 * @return
-	 */
-	//Step 13: Try matching first to last name, and last to first name
-	public int checkLastToFirstFirstToLastNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
-		int count = 0;
-		if(matchCount > 1) {
-			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
-		}
-		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
-			ReCiterAuthor author = entry.getValue();
-			ReCiterAuthor originalAuthor = entry.getKey();			
-			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null) {
-							if(matchCount > 1 && author.isTargetAuthor()) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
-										&&
-										sanitizedIdentityName.getLastName() != null
-										&& 
-										author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getFirstName())
-										&& 
-										author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-							}
-							else {
-								author.setTargetAuthor(false);
-								originalAuthor.setTargetAuthor(false);
-							}	
-						}
-							else if(matchCount == 0) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
-										&&
-										sanitizedIdentityName.getLastName() != null
-										&& 
-										author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getFirstName())
-										&& 
-										author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName()))) {									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-								else {
-									author.setTargetAuthor(false);
-									originalAuthor.setTargetAuthor(false);
-								}
-							}
-						}
-					}
-					if(matchCount > 1 && count == 0) {
-						return matchCount;
-					}
-					return count;
-				}			
-			
-	/**
-	 * @param authors
-	 * @param sanitizedIdentityAuthors
-	 * @param matchCount
-	 * @param multipleMarkedTargetAuthor
-	 * @return
-	 */
-	//Step 14: Try matching identity middle name to article last name
-	public int checkExactIdentityMiddleNameToArticleLastNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
-		int count = 0;
-		if(matchCount > 1) {
-			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
-		}
-		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
-			ReCiterAuthor author = entry.getValue();
-			ReCiterAuthor originalAuthor = entry.getKey();	
-			if(author.getAuthorName().getMiddleName() != null) {
-							if(matchCount > 1 && author.isTargetAuthor()) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getMiddleName() != null
-										&& 
-										author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getMiddleName()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-							else {
-								author.setTargetAuthor(false);
-								originalAuthor.setTargetAuthor(false);
-							}	
-						}
-							else if(matchCount == 0) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getMiddleName() != null
-										&& 
-										author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getMiddleName()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-								else {
-									author.setTargetAuthor(false);
-									originalAuthor.setTargetAuthor(false);
-								}
-							}
-						}
-					}
-					if(matchCount > 1 && count == 0) {
-						return matchCount;
-					}
-					return count;
-				}				
-			
-			
-	/**
-	 * @param authors
-	 * @param sanitizedIdentityAuthors
-	 * @param matchCount
-	 * @param multipleMarkedTargetAuthor
-	 * @return
-	 */
-	//Step 15: Try matching identity lastname to article first name, and identity first name initial to article last name initial
-	public int checkLastFirstAndFirstLastInitialNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
-		int count = 0;
-		if(matchCount > 1) {
-			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
-		}
-		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
-			ReCiterAuthor author = entry.getValue();
-			ReCiterAuthor originalAuthor = entry.getKey();	
-			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastName() != null) {
-							if(matchCount > 1 && author.isTargetAuthor()) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
-										&&
-										sanitizedIdentityName.getLastName() != null
-										&& 
-										author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
-										&& 
-										author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-							else {
-								author.setTargetAuthor(false);
-								originalAuthor.setTargetAuthor(false);
-							}	
-						}
-							else if(matchCount == 0) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
-										&&
-										sanitizedIdentityName.getLastName() != null
-										&& 
-										author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
-										&& 
-										author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-								else {
-									author.setTargetAuthor(false);
-									originalAuthor.setTargetAuthor(false);
-								}
-							}
-						}
-					}
-					if(matchCount > 1 && count == 0) {
-						return matchCount;
-					}
-					return count;
-				}				
-			
-			
-			
-	/**
-	 * @param authors
-	 * @param sanitizedIdentityAuthors
-	 * @param matchCount
-	 * @param multipleMarkedTargetAuthor
-	 * @return
-	 */
-	//Step 16: Try matching identity first name initial to article first name initial, and identity last name initial to article last name initial
-	public int checkFirstInitialToInitialLastNameInitialToLastNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
-		int count = 0;
-		if(matchCount > 1) {
-			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
-		}
-		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
-			ReCiterAuthor author = entry.getValue();
-			ReCiterAuthor originalAuthor = entry.getKey();			
-			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getLastInitial() != null) {
-							if(matchCount > 1 && author.isTargetAuthor()) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
-										&&
-										sanitizedIdentityName.getLastInitial() != null
-										&&
-										sanitizedIdentityName.getFirstInitial() != null							
-										&& 
-										author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
-										&& 
-										author.getAuthorName().getLastInitial().equalsIgnoreCase(sanitizedIdentityName.getLastInitial()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-							else {
-								author.setTargetAuthor(false);
-								originalAuthor.setTargetAuthor(false);
-							}	
-						}
-							else if(matchCount == 0) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
-										&&
-										sanitizedIdentityName.getLastInitial() != null
-										&&
-										sanitizedIdentityName.getFirstInitial() != null							
-										&& 
-										author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
-										&& 
-										author.getAuthorName().getLastInitial().equalsIgnoreCase(sanitizedIdentityName.getLastInitial()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-								else {
-									author.setTargetAuthor(false);
-									originalAuthor.setTargetAuthor(false);
-								}
-							}
-						}
-					}
-					if(matchCount > 1 && count == 0) {
-						return matchCount;
-					}
-					return count;
-				}				
-			
-			
-			
-	/**
-	 * @param authors
-	 * @param sanitizedIdentityAuthors
-	 * @param matchCount
-	 * @param multipleMarkedTargetAuthor
-	 * @return
-	 */
-	//Step 17: Try matching article first name as substring of identity middle name.
-	public int checkFirstNameSubstringIdentityMiddleNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
-		int count = 0;
-		if(matchCount > 1) {
-			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
-		}
-		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
-			ReCiterAuthor author = entry.getValue();
-			ReCiterAuthor originalAuthor = entry.getKey();			
-			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getMiddleName() != null) {
-							if(matchCount > 1 && author.isTargetAuthor()) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getMiddleName() != null
-										&&
-										author.getAuthorName().getFirstName().containsIgnoreCase(sanitizedIdentityName.getMiddleName()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-							else {
-								author.setTargetAuthor(false);
-								originalAuthor.setTargetAuthor(false);
-							}	
-						}
-							else if(matchCount == 0) {
-								if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getMiddleName() != null
-										&&
-										author.getAuthorName().getFirstName().containsIgnoreCase(sanitizedIdentityName.getMiddleName()))) {
-									author.setTargetAuthor(true);
-									originalAuthor.setTargetAuthor(true);
-									multipleMarkedTargetAuthor.add(entry);
-									count++;
-								}
-								else {
-									author.setTargetAuthor(false);
-									originalAuthor.setTargetAuthor(false);
-								}
-							}
-						}
-					}
-					if(matchCount > 1 && count == 0) {
-						return matchCount;
-					}
-					return count;
-				}				
-
-
 	
 	//Not Used
 	public int checkLastNamePartMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
