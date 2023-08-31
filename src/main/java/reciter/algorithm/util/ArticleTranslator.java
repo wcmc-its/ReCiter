@@ -164,6 +164,7 @@ public class ArticleTranslator {
                     ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, affiliation);
                     reCiterAuthor.setRank(i++);
                     reCiterAuthor.setOrcid(author.getOrcid());
+                    reCiterAuthor.setEqualContrib(author.getEqualContrib());
                     reCiterCoAuthors.addAuthor(reCiterAuthor);
                 }
             }

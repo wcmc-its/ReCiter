@@ -365,6 +365,11 @@ public class ReCiterFeatureGenerator {
                         reCiterArticleAuthorFeature.setOrcid(matcher.group());
                     }
                 }
+                //EqualContrib
+                if(reCiterArticleAuthor.getEqualContrib()!=null && !reCiterArticleAuthor.getEqualContrib().isEmpty())
+                {
+                	reCiterArticleAuthorFeature.setEqualContrib(reCiterArticleAuthor.getEqualContrib());
+                }
                 
 
                 reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
