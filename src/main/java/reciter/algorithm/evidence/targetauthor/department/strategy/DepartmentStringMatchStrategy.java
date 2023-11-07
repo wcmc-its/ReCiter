@@ -107,7 +107,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		reCiterArticle.setDepartmentStrategyScore(score);
 		return score;
 	}
-    
+
+	@Override
         public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
             double sum = 0; // Initialize a sum to accumulate scores, if applicable.
             // Fetch sanitized versions of the identity's organizational units and synonyms.
