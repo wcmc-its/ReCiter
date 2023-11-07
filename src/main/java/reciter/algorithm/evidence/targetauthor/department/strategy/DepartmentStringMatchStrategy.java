@@ -107,199 +107,186 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 		reCiterArticle.setDepartmentStrategyScore(score);
 		return score;
 	}
+    
+        public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+            double sum = 0; // Initialize a sum to accumulate scores, if applicable.
+            // Fetch sanitized versions of the identity's organizational units and synonyms.
+            Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
+            Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
+            // Retrieve the negative match score from the strategy parameters.
+            final double negativeMatchScore = ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentNegativeMatchingScore();
+        
+            // Iterate over each article associated with the identity.
+            for (ReCiterArticle reCiterArticle : reCiterArticles) {
+                List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<>();
+        
+                // Check if the article has co-authors and proceed if not null.
+                if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
+                    // Loop through each author of the article.
+                    for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+                        // Check if the author is the target author and has an affiliation.
+                        if(author.isTargetAuthor() && author.getAffiliation() != null) {
+                            String synonymOrgUnitLabel = null; // Will hold the synonym label for the organizational unit, if one exists.
+                            // Clean the affiliation string for easier matching.
+                            String articleAffiliation = author.getAffiliation().replaceAll("&", "and")
+                                                                .replaceAll("Tri-I", "Tri-Institutional")
+                                                                .replaceAll("[-]", "");
+                            // Proceed if the identity has associated organizational units.
+                            if(identity.getOrganizationalUnits() != null && identity.getOrganizationalUnits().size() > 0) {
+                                // Loop through each of the identity's organizational units.
+                                for(OrganizationalUnit orgUnit : sanitizedIdentityInstitutions) {
+                                    boolean isOrgUnitMatch = false; // Flag to indicate if a match is found.
+                                    OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence(); // Prepare evidence object.
+                                    orgUnitEvidence.setOrganizationalUnitType(orgUnit.getOrganizationalUnitType()); // Set the type of organizational unit.
+                                    // Clean the organizational unit label for easier matching.
+                                    String identityDepartment = orgUnit.getOrganizationalUnitLabel()
+                                                                       .replaceAll("&", "and")
+                                                                       .replaceAll("Tri-I", "Tri-Institutional")
+                                                                       .replaceAll("[-]", "");
+                                    // Check if the organizational unit is of type DEPARTMENT or DIVISION.
+                                    if(orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DEPARTMENT ||
+                                       orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DIVISION) {
+                                        // Check various conditions to ensure a valid match.
+                                        if(orgUnit.getOrganizationalUnitLabel() != null &&
+                                           (StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center") ||
+                                            StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Program") ||
+                                            StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) &&
+                                           orgUnit.getOrganizationalUnitLabel().length() > 14) {
+                                            // Check if the article's affiliation contains the identity's department after cleaning stop words.
+                                            if(StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(EngineParameters.getRegexForStopWords(), ""),
+                                                                             identityDepartment.replaceAll(EngineParameters.getRegexForStopWords(), ""))) {
+                                                // Check if synonyms exist and find a match.
+                                                if(identityOrgUnitToSynonymMap.size() > 0 && identityOrgUnitToSynonymMap.values().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.contains(identityDepartment))) {
+                                                    synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream()
+                                                                         .filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
+                                                                         .map(Map.Entry::getKey)
+                                                                         .findFirst()
+                                                                         .orElse(null);
+                                                    // If a synonym label is found, set it in the evidence.
+                                                    if(synonymOrgUnitLabel != null) {
+                                                        orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
+                                                    } 
+                                                }
+                                                // If no synonym is found, use the original organizational unit label.
+                                                if(synonymOrgUnitLabel == null) {
+                                                    orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+                                                }
+                                                // Set the article's affiliation and the matching score from strategy parameters.
+                                                orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+                                                orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
+                                                // Indicate that a match has been found.
+                                                isOrgUnitMatch = true;
+                                            }
+                                        } 
+                                        // Similar checks for other department-related phrases in the affiliation.
+                                        else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment) ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, "Dept of " + identityDepartment) ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, "Departments of " + identityDepartment) ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, "Divisions of " + identityDepartment) ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment) ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Department") ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Division") ||
+                                                StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Dept")) {
+                                            // Similar synonym checking as above
+                                            if(identityOrgUnitToSynonymMap.size() > 0 && identityOrgUnitToSynonymMap.entrySet().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))) {
+                                                synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream()
+                                                                     .filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
+                                                                     .map(Map.Entry::getKey)
+                                                                     .findFirst()
+                                                                     .orElse(null);
+                                                if(synonymOrgUnitLabel != null) {
+                                                    orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
+                                                }
+                                            }
+                                            if(synonymOrgUnitLabel == null) {
+                                                orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+                                            }
+                                            orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+                                            orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
+                                            isOrgUnitMatch = true;
+                                        }
+                                        // Check if the organizational unit modifier matches the identity's department.
+                                        if(isOrgUnitMatch && Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split("\\s*\\s*")).contains(identityDepartment)) {
+                                            // Synonym checking as above
+                                            if(identityOrgUnitToSynonymMap.size() > 0 && identityOrgUnitToSynonymMap.entrySet().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))) {
+                                                synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream()
+                                                                     .filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
+                                                                     .map(Map.Entry::getKey)
+                                                                     .findFirst()
+                                                                     .orElse(null);
+                                                if(synonymOrgUnitLabel != null) {
+                                                    orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
+                                                }
+                                            }
+                                            if(synonymOrgUnitLabel == null) {
+                                                orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+                                            }
+                                            orgUnitEvidence.setOrganizationalUnitModifier(identityDepartment);
+                                            orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
+                                        }
+                                    } 
+                                    // Check for other organizational unit types, such as PROGRAM.
+                                    else {
+                                        if(articleAffiliation.contains("Program in " + identityDepartment) ||
+                                           articleAffiliation.contains(identityDepartment + " Program") ||
+                                           articleAffiliation.contains(identityDepartment + " Graduate Program")) {
+                                            // Synonym checking as above
+                                            if(identityOrgUnitToSynonymMap.size() > 0 && identityOrgUnitToSynonymMap.entrySet().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))) {
+                                                synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream()
+                                                                     .filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
+                                                                     .map(Map.Entry::getKey)
+                                                                     .findFirst()
+                                                                     .orElse(null);
+                                                if(synonymOrgUnitLabel != null) {
+                                                    orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
+                                                }
+                                            }
+                                            if(synonymOrgUnitLabel == null) {
+                                                orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+                                            }
+                                            orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+                                            orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitProgramMatchingScore());
+                                        }                            }
+                                    // If an organizational unit match or modifier is not found, check for a negative match.
+                                    boolean hasDepartmentKeywords = articleAffiliation.matches("(?i).*(Department of |Division of |Dept of |Departments of |Divisions of |Depts of ).*");
+                                    if(!isOrgUnitMatch && hasDepartmentKeywords && !StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment)) {
+                                        // A negative match is found; set the negative match score.
+                                        orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
+                                        orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
+                                        orgUnitEvidence.setOrganizationalUnitMatchingScore(negativeMatchScore);
+                                        isOrgUnitMatch = true;
+                                    }
+                                    // Add evidence to list if there's a match or a negative match.
+                                    if(orgUnitEvidence.getIdentityOrganizationalUnit() != null && orgUnitEvidence.getArticleAffiliation() != null && orgUnitEvidence.getOrganizationalUnitMatchingScore() != 0) {
+                                        // Check if the evidence is not already present to avoid duplicates.
+                                        if(!orgUnitEvidences.stream().anyMatch(oue -> oue.getIdentityOrganizationalUnit().equals(orgUnit.getOrganizationalUnitLabel()) ||
+                                                                                        oue.getIdentityOrganizationalUnit().equals(identityDepartment))) {
+                                            orgUnitEvidences.add(orgUnitEvidence);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // After processing all authors, log and set organizational unit evidences for the article.
+                if(!orgUnitEvidences.isEmpty()) {
+                    slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
+                    // Remove duplicate evidence based on organizational unit matches.
+                    if(orgUnitEvidences.size() > 1) {
+                        Set<Object> seen = new HashSet<>();
+                        orgUnitEvidences.removeIf(orgUnitEvidence -> !seen.add(orgUnitEvidence.getIdentityOrganizationalUnit()));
+                    }
+                    // Attach the collected evidences to the article.
+                    reCiterArticle.setOrganizationalUnitEvidences(orgUnitEvidences);
+                }
+            }
+            // Return the accumulated sum, if it is used.
+            return sum;
+        }
 
-	@Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		double sum = 0;
-		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
-		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
-		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			List<OrganizationalUnitEvidence> orgUnitEvidences = new ArrayList<OrganizationalUnitEvidence>(); 
-			if (reCiterArticle.getArticleCoAuthors() != null && reCiterArticle.getArticleCoAuthors().getAuthors() != null) {
-				for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
-					if(author.isTargetAuthor() 
-							&& 
-							author.getAffiliation() != null) {
-						
-						String synonymOrgUnitLabel = null;
-						String articleAffiliation = author.getAffiliation().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
-						if(identity.getOrganizationalUnits() != null 
-								&& 
-								identity.getOrganizationalUnits().size() > 0) {
-							//This is for department
-							for(OrganizationalUnit orgUnit: sanitizedIdentityInstitutions) {
-								boolean isOrgUnitMatch = false;
-								OrganizationalUnitEvidence orgUnitEvidence = new OrganizationalUnitEvidence();
-								orgUnitEvidence.setOrganizationalUnitType(orgUnit.getOrganizationalUnitType());
-								String identityDepartment = orgUnit.getOrganizationalUnitLabel().replaceAll("&", "and").replaceAll("Tri-I", "Tri-Institutional").replaceAll("[-,]", "");
-								if(orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DEPARTMENT || orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DIVISION) {
-									if(orgUnit.getOrganizationalUnitLabel() != null 
-											&& 
-											(StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center")
-													||
-													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Program")
-													||
-													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
-											&& 
-											orgUnit.getOrganizationalUnitLabel().length() > 14) {
-										if(StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(EngineParameters.getRegexForStopWords(), ""), identityDepartment.replaceAll(EngineParameters.getRegexForStopWords(), ""))) {
-											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
-											//identityDepartment: "Center for Integrative Medicine"
-											//departmentMatchingScore: 2
-											if(identityOrgUnitToSynonymMap.size() > 0 &&
-													identityOrgUnitToSynonymMap.values().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.contains(identityDepartment))) {
-													synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
-														filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
-														.map(Map.Entry::getKey)
-														.findFirst()
-														.orElse(null);
-													if(synonymOrgUnitLabel != null) {
-														orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
-													} 
-											}
-											if(synonymOrgUnitLabel == null) {
-												orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
-											}
-											orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
-											orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
-											isOrgUnitMatch = true;
-										}
-									}  
-									
-									/*if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
-											&&
-											StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
-										//This is for https://github.com/wcmc-its/ReCiter/issues/251 - Account for possibility that department name may be missing preposition in article.affiliation
-										if(identityOrgUnitToSynonymMap.size() > 0 &&
-												identityOrgUnitToSynonymMap.entrySet().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))) {
-												synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
-													filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
-													.map(Map.Entry::getKey)
-													.findFirst()
-													.orElse(null);
-											if(synonymOrgUnitLabel != null) {
-												orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
-											} 
-										}
-										if(synonymOrgUnitLabel == null) {
-											orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
-										}
-										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
-										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
-										isOrgUnitMatch = true;
-									}*/ else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
-											|| 
-											StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment)
-											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Dept of " + identityDepartment)
-											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Departments of " + identityDepartment)
-											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Divisions of " + identityDepartment)
-											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment)
-											||
-											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Department")
-											||
-											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Division")
-											||
-											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Dept")) {
-										//This addresses https://github.com/wcmc-its/ReCiter/issues/250
-										//articleAffiliation: "Department of Pharmacology, Weill Cornell Medical College. New York, NY 10021, USA. jobuck@med.cornell.edu"
-										//identityDepartment: "Pharmacology"
-										//departmentMatchingScore: 2
-										if(identityOrgUnitToSynonymMap.size() > 0 &&
-												identityOrgUnitToSynonymMap.values().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.contains(identityDepartment))) {
-											 	synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
-													filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
-													.map(Map.Entry::getKey)
-													.findFirst()
-													.orElse(null);
-											if(synonymOrgUnitLabel != null) {
-												orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
-											}
-										}
-										if(synonymOrgUnitLabel == null) {
-											orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
-										}
-										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
-										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
-										isOrgUnitMatch = true;
-									}  
-									
-									//This is added to the modifier should be dependent on the matched score which should be more than 0
-									if(isOrgUnitMatch
-											&&
-											Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifier().trim().split("\\s*,\\s*")).contains(identityDepartment)) {
-										if(identityOrgUnitToSynonymMap.size() > 0 &&
-												identityOrgUnitToSynonymMap.values().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.contains(identityDepartment))) {
-												synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
-													filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
-													.map(Map.Entry::getKey)
-													.findFirst()
-													.orElse(null);
-											if(synonymOrgUnitLabel != null) {
-												orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
-											} 
-										}
-										if(synonymOrgUnitLabel == null) {
-											orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
-										}
-										orgUnitEvidence.setOrganizationalUnitModifier(identityDepartment);
-										orgUnitEvidence.setOrganizationalUnitModifierScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitModifierScore());
-									}
-								} else {
-									if(articleAffiliation.contains("Program in " + identityDepartment) 
-											||
-											articleAffiliation.contains(identityDepartment + " Program")
-											||
-											articleAffiliation.contains(identityDepartment + " Graduate Program")) {
-										if(identityOrgUnitToSynonymMap.size() > 0 &&
-												identityOrgUnitToSynonymMap.values().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.contains(identityDepartment))) {
-												synonymOrgUnitLabel = identityOrgUnitToSynonymMap.entrySet().stream().
-													filter(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))
-													.map(Map.Entry::getKey)
-													.findFirst()
-													.orElse(null);
-											if(synonymOrgUnitLabel != null) {
-												orgUnitEvidence.setIdentityOrganizationalUnit(synonymOrgUnitLabel);
-											} 
-										}
-										if(synonymOrgUnitLabel == null) {
-											orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
-										}
-										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
-										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitProgramMatchingScore());
-									}
-								}
-								if(orgUnitEvidence.getIdentityOrganizationalUnit() == null) {
-									orgUnitEvidence.setIdentityOrganizationalUnit(orgUnit.getOrganizationalUnitLabel());
-								}
-								if(orgUnitEvidence != null && orgUnitEvidence.getIdentityOrganizationalUnit() != null && orgUnitEvidence.getArticleAffiliation() != null && orgUnitEvidence.getOrganizationalUnitMatchingScore() > 0) {
-									if(!orgUnitEvidences.stream().anyMatch(oue -> oue.getIdentityOrganizationalUnit().equals(orgUnit.getOrganizationalUnitLabel()) || 
-											oue.getIdentityOrganizationalUnit().equals(identityDepartment))) {
-										orgUnitEvidences.add(orgUnitEvidence);
-									}
-								}
-							}
-						}
-						
-					}
-				}
-			}
-			if(orgUnitEvidences.size() > 0) {
-				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
-				//Remove duplicate evidence based on orgUnit matches
-				if(orgUnitEvidences.size() > 1) {
-					Set<Object> seen=new HashSet<>();
-					orgUnitEvidences.removeIf(orgUnitEvidence -> !seen.add(orgUnitEvidence.getIdentityOrganizationalUnit()));
-				}
-				reCiterArticle.setOrganizationalUnitEvidences(orgUnitEvidences);
-			}
-		}
-		return sum;
-	}
-
+	
 	/**
 	 * Leverage departmental affiliation string matching for phase two matching.
 	 * 
