@@ -58,38 +58,38 @@ public class KnownRelationshipRetrievalStrategy extends AbstractNameRetrievalStr
 		return pubMedQueryBuilder.build();
 	}
 
-	@Override
-	protected String getStrategySpecificKeyword(Identity identity) {
-		if (identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
-			List<String> nameIgnoredAuthors = Arrays.asList(excludeNames.trim().split("\\s*,\\s*"));
-			Iterator<KnownRelationship> iter = identity.getKnownRelationships().iterator();
-			final KnownRelationship firstRelationship = iter.next(); 
-			String first = null;
-			if(!nameIgnoredAuthors.contains(firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial())) {
-				first = firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[au]";
-			}
-			
-			if (!iter.hasNext()) {
-				return first;
-			}
-			
-			//for more than 1 institutions 
-			final StringBuilder buf = new StringBuilder();
-			if(first != null) {
-				buf.append("(" + first);
-			} 
-			while(iter.hasNext()) {
-				KnownRelationship knownRelationship = iter.next();
-				if(!nameIgnoredAuthors.contains(knownRelationship.getName().getLastName() + " " + knownRelationship.getName().getFirstInitial())) {
-					buf.append(" OR ");
-					buf.append(knownRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[au]");
-				}
-			}
-			buf.append(")");
-			return buf.toString();
-		} else {
-			return null;
-		}
-	}
-
+        @Override
+        protected String getStrategySpecificKeyword(Identity identity) {
+            if (identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
+                List<String> nameIgnoredAuthors = Arrays.asList(excludeNames.trim().split("\\s*,\\s*"));
+                Iterator<KnownRelationship> iter = identity.getKnownRelationships().iterator();
+                final KnownRelationship firstRelationship = iter.next(); 
+                String first = null;
+                if(!nameIgnoredAuthors.contains(firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial())) {
+                    first = firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[au] OR "
+                          + firstRelationship.getName().getLastName() + " " + firstRelationship.getName().getFirstInitial() + "[ir]";
+                }
+                
+                if (!iter.hasNext()) {
+                    return first;
+                }
+                
+                final StringBuilder buf = new StringBuilder();
+                if(first != null) {
+                    buf.append("(" + first);
+                } 
+                while(iter.hasNext()) {
+                    KnownRelationship knownRelationship = iter.next();
+                    if(!nameIgnoredAuthors.contains(knownRelationship.getName().getLastName() + " " + knownRelationship.getName().getFirstInitial())) {
+                        buf.append(" OR ");
+                        buf.append(knownRelationship.getName().getLastName() + " " + knownRelationship.getName().getFirstInitial() + "[au] OR "
+                                 + knownRelationship.getName().getLastName() + " " + knownRelationship.getName().getFirstInitial() + "[ir]");
+                    }
+                }
+                buf.append(")");
+                return buf.toString();
+            } else {
+                return null;
+            }
+        }
 }
