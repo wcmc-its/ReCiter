@@ -150,43 +150,46 @@ public class PubMedQueryType {
 			return p;
 		}
 		
-		public String contsructAuthorQuery() {
-			if (this.identityAuthorNames != null && this.identityAuthorNames.size() > 0) {
+                public String constructAuthorQuery() {
+                    if (this.identityAuthorNames != null && this.identityAuthorNames.size() > 0) {
+                
+                        Iterator<AuthorName> iterator = this.identityAuthorNames.iterator();
+                        final AuthorName first = iterator.next();
+                        String firstName = first.getLastName() + " " + first.getFirstInitial() + "[au] OR " 
+                                         + first.getLastName() + " " + first.getFirstInitial() + "[ir]";
+                        if(this.isAuthorFullNameRequired) {
+                            firstName = first.getLastName() + " " + first.getFirstName() + "[au] OR " 
+                                      + first.getLastName() + " " + first.getFirstName() + "[ir]";
+                        }
+                        if (!iterator.hasNext()) {
+                            return firstName;
+                        }
+                
+                        final StringBuilder buf = new StringBuilder(); 
+                        if (first != null) {
+                            buf.append("(" + firstName);
+                        }
+                
+                        while (iterator.hasNext()) {
+                            buf.append(" OR ");
+                            final AuthorName obj = iterator.next();
+                            if(this.isAuthorFullNameRequired) { 
+                                buf.append(obj.getLastName() + " " + obj.getFirstName() + "[au] OR "
+                                         + obj.getLastName() + " " + obj.getFirstName() + "[ir]");
+                            } else {
+                                buf.append(obj.getLastName() + " " + obj.getFirstInitial() + "[au] OR "
+                                         + obj.getLastName() + " " + obj.getFirstInitial() + "[ir]");
+                            }
+                        }
+                        buf.append(")");
+                        return buf.toString();
+                    } else {
+                        return null;
+                    }
+                }
 
-				// Below is code from Apache's StringUtils class, modified to remove null checks.
-				Iterator<AuthorName> iterator = this.identityAuthorNames.iterator();
 
-				final AuthorName first = iterator.next();
-				String firstName = first.getLastName() + " " + first.getFirstInitial() + "[au]";
-				if(this.isAuthorFullNameRequired) {
-					firstName = first.getLastName() + " " + first.getFirstName() + "[au]";
-				}
-				if (!iterator.hasNext()) {
-					return firstName;
-				}
 
-				// two or more elements
-				final StringBuilder buf = new StringBuilder(); 
-				if (first != null) {
-					buf.append("(" + firstName);
-				}
-
-				while (iterator.hasNext()) {
-					buf.append(" OR ");
-					final AuthorName obj = iterator.next();
-					if(this.isAuthorFullNameRequired) { //For FullName Strict retrieval strategy
-						buf.append(obj.getLastName() + " " + obj.getFirstName() + "[au]");
-					} else {
-						buf.append(obj.getLastName() + " " + obj.getFirstInitial() + "[au]");
-					}
-					
-				}
-				buf.append(")");
-				return buf.toString();
-			} else {
-				return null;
-			}
-		}
 		
 //		private static final int THRESHOLD = 25;
 //
