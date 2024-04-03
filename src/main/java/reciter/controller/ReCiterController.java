@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -497,7 +498,7 @@ public class ReCiterController {
         	}
 			else
 			{
-				finalArticles = new ArrayList<>().add(0);
+				finalArticles = new ArrayList<Long>(Arrays.asList(0L));;
 			}	
 			GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         	List<Long> knownPmids = null;
