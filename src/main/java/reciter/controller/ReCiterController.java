@@ -619,7 +619,7 @@ public class ReCiterController {
 			}
 			else if(analysis.getReCiterFeature()!=null)
 			{
-				analysis.getReCiterFeature().setReCiterArticleFeatures(new ArrayList<String>());
+				analysis.getReCiterFeature().setReCiterArticleFeatures(new ArrayList<reciter.engine.analysis.ReCiterArticleFeature>());
 				analysis.getReCiterFeature().setCountSuggestedArticles(0);
 				analysis.getReCiterFeature().setPrecision(0.0);
 				analysis.getReCiterFeature().setRecall(0.0);
