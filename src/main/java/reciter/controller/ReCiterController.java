@@ -520,7 +520,7 @@ public class ReCiterController {
 				analysis.getReCiterFeature().setCountPendingArticles(0);
 			}
         	//All the results are filtered based on filterByFeedback
-        	if(if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
+        	if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
 			
 				if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
