@@ -18,20 +18,22 @@
  *******************************************************************************/
 package reciter.engine;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.article.scorer.ArticleScorer;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.feedback.article.scorer.ArticleFeedbackScorer;
+import reciter.algorithm.feedback.article.scorer.ReciterFeedbackArticleScorer;
 import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class ReCiterEngine implements Engine {
@@ -58,6 +60,10 @@ public class ReCiterEngine implements Engine {
         ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
         articleScorer.runArticleScorer(clusterer.getClusters(), identity);
 
+        //Feedback scoring
+        ArticleFeedbackScorer feedbackArticleScorer = new ReciterFeedbackArticleScorer(reCiterArticles,identity,parameters,strategyParameters);
+        feedbackArticleScorer.runFeedbackArticleScorer(reCiterArticles,identity);
+        
         log.info(clusterer.toString());
 
         EngineOutput engineOutput = new EngineOutput();
