@@ -374,4 +374,50 @@ public class StrategyParameters {
 
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
+    
+    @Value("${strategy.feedback.score.orcid}")
+    private boolean isFeedbackScoreOrcid;
+    
+    @Value("${strategy.feedback.score.year}")
+    private boolean isFeedbackScoreYear;
+    
+    @Value("${strategy.feedback.score.targetAuthorName}")
+    private boolean isFeedbackScoreTargetAuthorName;
+    
+    @Value("${strategy.feedback.score.orcidCoAuthor}")
+    private boolean isFeedbackScoreOrcidCoAuthor;
+    
+    @Value("${strategy.feedback.score.keyword}")
+    private boolean isFeedbackScoreKeyword;
+
+    @Value("${strategy.feedback.score.institution}")
+    private boolean isFeedbackScoreInstitution;
+    
+    @Value("${strategy.feedback.score.email}")
+    private boolean isFeedbackScoreEmail;
+    
+    @Value("${strategy.feedback.score.coauthorName}")
+    private boolean isFeedbackScoreCoauthorName;
+    
+    @Value("${strategy.feedback.score.organization}")
+    private boolean isFeedbackScoreOrganization;
+    
+    @Value("${strategy.feedback.score.journal}")
+    private boolean isFeedbackScoreJournal;
+    
+    @Value("${strategy.feedback.score.journalsubfield}")
+    private boolean isFeedbackScoreJournalSubField;
+    
+    @Value("${strategy.feedback.score.journalfield}")
+    private boolean isFeedbackScoreJournalField;
+    
+    @Value("${strategy.feedback.score.journaldomain}")
+    private boolean isFeedbackScoreJournalDomain;
+    
+    @Value("${strategy.feedback.score.cites}")
+    private boolean isFeedbackScoreCites;
+    
+    @Value("${strategy.feedback}")
+    private boolean isStrategyFeedback;
+    
 }

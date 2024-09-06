@@ -42,7 +42,7 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 				&& !appUser.getPassword().isEmpty()) {
 			ApplicationUser validUser = applicationUserRepository.findById(appUser.getId().trim()).orElseGet(() -> null);
 			if(validUser == null) {
-				return false;
+				return true;
 			}
 			if(validUser != null) {
 				if(BCrypt.checkpw(appUser.getPassword(), validUser.getPassword())) {

@@ -157,7 +157,7 @@ public class PubMedQueryType {
 				Iterator<AuthorName> iterator = this.identityAuthorNames.iterator();
 
 				final AuthorName first = iterator.next();
-				String firstName = first.getLastName() + " " + first.getFirstInitial() + "[au]";
+				String firstName = first!=null ? first.getLastName() + " " + first.getFirstInitial() + "[au]":"";
 				if(this.isAuthorFullNameRequired) {
 					firstName = first.getLastName() + " " + first.getFirstName() + "[au]";
 				}

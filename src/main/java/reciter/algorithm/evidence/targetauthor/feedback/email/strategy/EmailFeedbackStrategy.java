@@ -1,0 +1,217 @@
+package reciter.algorithm.evidence.targetauthor.feedback.email.strategy;
+
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
+
+import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
+import reciter.engine.EngineParameters;
+import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleFeedbackScore;
+import reciter.model.article.ReCiterAuthor;
+import reciter.model.article.ReCiterCitationYNEnum;
+import reciter.model.article.ReCiterMeshHeadingDescriptorName;
+import reciter.model.identity.Identity;
+
+public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
+
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(EmailFeedbackStrategy.class);
+	//Map<String, List<ReCiterArticle>> feedbackEmailMap = new HashMap<>();
+	List<ReCiterAuthor> listOfAuthors = null;
+	Map<String, List<ReCiterArticleFeedbackScore>> feedbackEmailMap = null;
+	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleEmailsMap = new HashMap<>();
+	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
+	private final int ACCEPTED = 1;
+	private final int REJECTED = -1;
+
+	@Override
+	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
+
+		return 0.0;
+
+	}
+	private String sanitizeAffiliation(ReCiterAuthor author) {
+		 
+		String affiliation = author.getAffiliation().replaceAll(EngineParameters.getRegexForStopWords(),"");
+	 	String emailRegex = "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}";
+		Pattern pattern = Pattern.compile(emailRegex);
+		Matcher matcher = pattern.matcher(affiliation);
+
+		if(matcher.find())
+		{	
+			System.out.println("Email found in a affiliation -> : " + matcher.group());
+			return matcher.group();
+			
+		}	
+		return null;		
+				
+	}
+
+	@Override
+	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+
+		StopWatch stopWatchforEmailFeedback = new StopWatch("Email");
+		stopWatchforEmailFeedback.start("Email");
+		try {
+			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
+			
+			 Map<String, Map<Integer, Long>> emailCountsByArticleStatus = reCiterArticles.stream()
+	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
+	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
+	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.isTargetAuthor())	
+	                	 .flatMap(author -> {
+	                    	String email = sanitizeAffiliation(author);
+
+	                    	List<String> emailList = new ArrayList<>();
+
+	                        // Extract keyword from descriptorName if majorTopicYN is Y
+	                        if(email!=null && !email.isEmpty())
+	                        {
+	                            emailList.add(email);
+	                        }
+	                        
+		                        // Create a stream of (keyword, status) pairs
+	                        return emailList.stream()
+	                            .map(emailEntry -> new AbstractMap.SimpleEntry<>(emailEntry, article.getGoldStandard()));
+	                    })
+	                )
+	                // Count occurrences of each (keyword, status) pair
+	                .collect(Collectors.groupingBy(
+	                    Map.Entry::getKey,
+	                    Collectors.groupingBy(
+	                        Map.Entry::getValue,
+	                        Collectors.counting()
+	                    )
+	                ));
+
+	            // Print results
+			/* emailCountsByArticleStatus.forEach((email, counts) -> {
+	                //int countAccepted = Math.toIntExact(emailCountsByArticleStatus.get(email).get(ACCEPTED));
+	                //int countRejected = Math.toIntExact(emailCountsByArticleStatus.get(email).get(REJECTED));
+	                System.out.println("Email in a Map: Count Accepted and Rejected " + email);// + "-" + countAccepted +" -" + countRejected);
+		               
+	                counts.forEach((status, count) ->
+	                    System.out.println("Artcle Status " + status + ": Articles Count " + count)
+	                );
+	            });*/
+			
+			       reCiterArticles.stream()
+					   .filter(article-> article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size()> 0)
+					   .forEach(article -> {
+
+						   				feedbackEmailMap = new HashMap<>();   
+											
+										   article.getArticleCoAuthors().getAuthors().stream()
+												.filter(author -> author!=null && author.isTargetAuthor() && author.getAffiliation()!=null && !author.getAffiliation().equalsIgnoreCase(""))
+												.forEach(author -> {
+													
+													 int countAccepted = 0;
+													 int countRejected = 0;
+													 double scoreAll = 0.0;
+													 double scoreWithout1Accepted = 0.0;
+													 double scoreWithout1Rejected = 0.0;
+													 
+													 String email = sanitizeAffiliation(author);
+													
+													if(email!=null && !email.equalsIgnoreCase(""))
+													{	
+														
+														if(emailCountsByArticleStatus!=null && emailCountsByArticleStatus.size() > 0)
+														{
+															if(emailCountsByArticleStatus.containsKey(email))
+															{
+																if(emailCountsByArticleStatus.get(email).containsKey(ACCEPTED))
+																	countAccepted = Math.toIntExact(emailCountsByArticleStatus.get(email).get(ACCEPTED));
+																if(emailCountsByArticleStatus.get(email).containsKey(REJECTED))
+																	countRejected = Math.toIntExact(emailCountsByArticleStatus.get(email).get(REJECTED));
+															}
+														}
+														if(countAccepted > 0 || countRejected > 0)
+														{	
+															
+															scoreAll = computeScore(countAccepted , countRejected);
+															scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted,
+																	countRejected);
+															scoreWithout1Rejected = computeScore(countAccepted,
+																	countRejected > 0 ? countRejected - 1 : countRejected);
+															
+															ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),email,
+																	   countAccepted,countRejected,
+																	   scoreAll,scoreWithout1Accepted,
+																	   scoreWithout1Rejected,article.getGoldStandard(),null);
+															
+															feedbackEmailMap.computeIfAbsent(email, k -> new ArrayList<>()).add(feedbackEmail);
+															
+														}
+													
+													}
+												});
+										  // System.out.println("FeedbackEmail Map Keys Size***************"+ feedbackEmailMap.size());
+										  /* feedbackEmailMap.forEach((key,value) -> {
+		         								
+		         								System.out.println("FeedbackEmail Map Key***************"+key);
+		         								System.out.println("Feedback Map List contents are************");
+		         									value.forEach(System.out::println);
+		         							});*/
+										   
+										   double totalScore = feedbackEmailMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
+													.mapToDouble(ReCiterArticleFeedbackScore::getFeedbackScore) // Extract the scores
+													.sum(); // Sum all scores
+											
+											
+											// Sort Map Contents before storing into another Map
+										   feedbackEmailMap.entrySet().stream()
+													.filter(entry -> entry.getKey() != null && entry.getValue() != null)
+													.sorted(Map.Entry.comparingByKey())
+													.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+															(oldValue, newValue) -> oldValue, // merge function
+															LinkedHashMap::new // to maintain insertion order
+													));
+											articleEmailsMap.put(article.getArticleId(), feedbackEmailMap);
+											totalScoresByArticleMap.put(article.getArticleId(), totalScore);
+											article.setEmailFeedbackScore(totalScore);
+											String exportedEmailFeedbackScore = decimalFormat.format(totalScore); 
+											System.out.println("Exported Email article Score***************"+exportedEmailFeedbackScore);
+											article.setExportedEmailFeedbackScore(exportedEmailFeedbackScore);
+					   				});
+							
+							if (articleEmailsMap != null && articleEmailsMap.size() > 0) {
+				
+								// Printing using forEach
+								slf4jLogger.info("********STARTING OF ARTICLE EMAIL SCORING********************");
+								if (articleEmailsMap != null && articleEmailsMap.size() > 0) {
+				
+									String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
+											"subscoreType1", "subscoreValue", "subScoreIndividualScore" };
+									exportItemLevelFeedbackScores(identity.getUid(), "Email", csvHeaders, articleEmailsMap);
+				
+								}
+								slf4jLogger.info("********END OF THE ARTICLE EMAIL SCORING********************\n");
+							} else {
+								slf4jLogger.info("********NO FEEDBACK SCORE FOR THE EMAIL SECTION********************\n");
+							}
+				
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						stopWatchforEmailFeedback.stop();
+						slf4jLogger.info(stopWatchforEmailFeedback.getId() + " took "
+								+ stopWatchforEmailFeedback.getTotalTimeSeconds() + "s"); 
+						return 0;
+					}
+
+}

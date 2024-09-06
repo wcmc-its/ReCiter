@@ -146,7 +146,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles = retrievalResult.getPubMedArticles();
-		
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
@@ -553,20 +552,22 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Set<AuthorName> identityAuthorNames  = new HashSet<AuthorName>();
 		Set<AuthorName> identityDerivedNames = new HashSet<AuthorName>();
 		AuthorName identityPrimaryName = identity.getPrimaryName();
-		identityPrimaryName.setFirstName(ReCiterStringUtil.deAccent(identityPrimaryName.getFirstName().replaceAll("[\"()]", "")));
-		identityPrimaryName.setLastName(ReCiterStringUtil.deAccent(identityPrimaryName.getLastName().replaceAll("(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "")));
-		if(identityPrimaryName.getMiddleName() != null) {
+		if(identityPrimaryName!=null && identityPrimaryName.getFirstName()!=null && identityPrimaryName.getFirstName()!="")
+			identityPrimaryName.setFirstName(ReCiterStringUtil.deAccent(identityPrimaryName.getFirstName().replaceAll("[\"()]", "")));
+		if(identityPrimaryName!=null  && identityPrimaryName.getLastName()!=null && identityPrimaryName.getLastName()!="")
+			identityPrimaryName.setLastName(ReCiterStringUtil.deAccent(identityPrimaryName.getLastName().replaceAll("(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "")));
+		if(identityPrimaryName!=null && identityPrimaryName.getMiddleName()!=null && identityPrimaryName.getMiddleName() != "") {
 			identityPrimaryName.setMiddleName(ReCiterStringUtil.deAccent(identityPrimaryName.getMiddleName()));
 		}
 		
 		//For any name in primaryName or alternateNames, does targetAuthor have a surname, which satisfies these conditions: 
 		//contains a space or dash; if you break up the name at the first space or dash, there would be two strings of four characters or greater
-		if(identityPrimaryName.getLastName().contains(" ") || identityPrimaryName.getLastName().contains("-")
+		if(identityPrimaryName!=null &&(identityPrimaryName.getLastName().contains(" ") || identityPrimaryName.getLastName().contains("-")
 				||
 				(identityPrimaryName.getFirstName().contains(" ") || identityPrimaryName.getFirstName().contains("."))//Cases for W. Clay[firstName] Bracken[lastName]- W.[firstName] Clay[middleName] Bracken[lastName] - W Clay[firstName] Bracken[lastName]
 				||
 				(identityPrimaryName.getFirstName().length() ==1 && identityPrimaryName.getMiddleName() != null)
-				) {
+				)) {
 			identityDerivedNames.addAll(deriveAdditionalName(identityPrimaryName));
 		}
 		

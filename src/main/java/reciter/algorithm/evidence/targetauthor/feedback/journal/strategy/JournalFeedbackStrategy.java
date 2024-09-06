@@ -1,188 +1,141 @@
 package reciter.algorithm.evidence.targetauthor.feedback.journal.strategy;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReciterFeedbackJournal;
+import reciter.model.article.ReCiterArticleFeedbackScore;
+import reciter.model.article.ReCiterFeedbackScoreArticle;
 import reciter.model.identity.Identity;
 
 public class JournalFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
-	
-	Map<String, List<ReciterFeedbackJournal>> feedbackJournalsMap =  new HashMap<>();
-	
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(JournalFeedbackStrategy.class);
+	Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsListMap = null;
+	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleJournalsMap = new HashMap<>();
+	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
+
 	@Override
 	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
-		
+
 		return 0.0;
-		
+
 	}
 
 	@Override
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		
-			System.out.println("reCiterArticles size: " + reCiterArticles.size());
-			
-			for(ReCiterArticle article : reCiterArticles)
-			{
-				int countAccepted = 0;
-				int countRejected = 0;
-				int countNull = 0;
-				double scoreAll=0.0;
-				double scoreWithout1Accepted=0.0;
-				double scoreWithout1Rejected=0.0;
-				if(feedbackJournalsMap!=null && !feedbackJournalsMap.containsKey(article.getJournal().getJournalTitle()))
-				{		
-					for(ReCiterArticle innerArticle : reCiterArticles)
-					{
-						
-						if(article.getJournal()!=null && article.getJournal().getJournalTitle()!=null
-								&& innerArticle.getJournal()!=null && innerArticle.getJournal().getJournalTitle()!=null
-								&& article.getJournal().getJournalTitle().equalsIgnoreCase(innerArticle.getJournal().getJournalTitle())
-											&&	article.getGoldStandard() ==1 && innerArticle.getGoldStandard() == 1)
-						{
-								countAccepted = countAccepted + 1;
-						}
-						else if(article.getJournal()!=null && article.getJournal().getJournalTitle()!=null
-								&& innerArticle.getJournal()!=null && innerArticle.getJournal().getJournalTitle()!=null
-								&& article.getJournal().getJournalTitle().equalsIgnoreCase(innerArticle.getJournal().getJournalTitle())
-											&&	article.getGoldStandard() ==-1 && innerArticle.getGoldStandard() == -1)
-						{
-								countRejected = countRejected + 1;
-						}
-					}
-					
-					scoreAll = (1 / (1 + Math.exp(- (countAccepted - countRejected) / (Math.sqrt(countAccepted + countRejected) + 1)))) - 0.5;
-			        scoreWithout1Accepted = 
-			                (1 / (1 + Math.exp(- ((countAccepted > 0 ? countAccepted - 1 : countAccepted) - countRejected) / (Math.sqrt((countAccepted > 0 ? countAccepted - 1 : countAccepted) + countRejected) + 1)))) - 0.5;
-			        scoreWithout1Rejected = 
-			                (1 / (1 + Math.exp(- (countAccepted - (countRejected > 0 ? countRejected - 1 : countRejected)) / (Math.sqrt(countAccepted + (countRejected > 0 ? countRejected - 1 : countRejected)) + 1)))) - 0.5;
-			        
-					if(feedbackJournalsMap!=null && feedbackJournalsMap.containsKey(article.getJournal().getJournalTitle()))
-					{
-						List<ReciterFeedbackJournal> listofJournals = feedbackJournalsMap.get(article.getJournal().getJournalTitle());
-						ReciterFeedbackJournal feedbackJournal = new ReciterFeedbackJournal();
-						feedbackJournal.setPersonIdentifier(identity.getUid());
-						feedbackJournal.setArticleId(article.getArticleId());
-						feedbackJournal.setJournalTitle(article.getJournal().getJournalTitle());
-						feedbackJournal.setCountAccepted(countAccepted);
-						feedbackJournal.setCountRejected(countRejected);
-						feedbackJournal.setCountNull(countNull);
-						feedbackJournal.setScoreAll(scoreAll);
-						feedbackJournal.setScoreWithout1Accepted(scoreWithout1Accepted);
-						feedbackJournal.setScoreWithout1Rejected(scoreWithout1Rejected);
-						feedbackJournal.setGoldStandard(article.getGoldStandard());
-						
-						listofJournals.add(feedbackJournal);
-					}
-					else
-					{
-						List<ReciterFeedbackJournal> listofJournals = new ArrayList<>();
-						ReciterFeedbackJournal feedbackJournal = new ReciterFeedbackJournal();
-						feedbackJournal.setPersonIdentifier(identity.getUid());
-						feedbackJournal.setArticleId(article.getArticleId());
-						feedbackJournal.setJournalTitle(article.getJournal().getJournalTitle());
-						feedbackJournal.setCountAccepted(countAccepted);
-						feedbackJournal.setCountRejected(countRejected);
-						feedbackJournal.setCountNull(countNull);
-						feedbackJournal.setScoreAll(scoreAll);
-						feedbackJournal.setScoreWithout1Accepted(scoreWithout1Accepted);
-						feedbackJournal.setScoreWithout1Rejected(scoreWithout1Rejected);
-						feedbackJournal.setGoldStandard(article.getGoldStandard());
-						listofJournals.add(feedbackJournal);
-						feedbackJournalsMap.put(article.getJournal().getJournalTitle(),listofJournals);
-						
-					}
-				}
-				
-			}
-			
-			/*feedbackJournalsMap.forEach((key, listOfFeedbackJournals) -> {
-	            System.out.println("Key: " + key);
-	            // Iterate over each element in the list
-	            Collections.sort(listOfFeedbackJournals, (jrt1, jrt2) -> jrt1.getJournalTitle().compareToIgnoreCase(jrt2.getJournalTitle()));
-	            listOfFeedbackJournals.forEach(article -> System.out.println("journal Title:"+article.getJournalTitle() +"CountAccepted Score: " + article.getCountAccepted() + ", CountRejected: " + article.getCountRejected()
-				 + ",CountNull: " + article.getCountNull() + ",scoreAll:" + article.getScoreAll() 
-				 + ",scoreWithout1Accepted:" +article.getScoreWithout1Accepted() + ",ScoreWithout1Rejected:" +  article.getScoreWithout1Rejected()));
-	        });*/
-			
-			//List<ReciterFeedbackJournal> listofJournals =  feedbackJournalsMap.get(identity.getUid());
-			
-			//Updating the score for all the PMID that has same value and USER Assertion
-			//for(ReciterFeedbackJournal feedbackArticle : listofJournals)
-			/*for (Map.Entry<String, List<ReciterFeedbackJournal>> entry : feedbackJournalsMap.entrySet()) 
-			{
-				 String key = entry.getKey();
-				
-				 List<ReciterFeedbackJournal> feedbacklistOfArticles = entry.getValue();
-				
-				 for(ReciterFeedbackJournal feedbackArticle : feedbacklistOfArticles)
-				 {	
-					for(ReCiterArticle article : reCiterArticles)
-					{
-						if(feedbackArticle!=null && feedbackArticle.getJournalTitle().equalsIgnoreCase(article.getJournal().getJournalTitle()) 
-							 && feedbackArticle.getGoldStandard() == article.getGoldStandard() && feedbackArticle.getGoldStandard()==1 && article.getGoldStandard() ==1)
-						{
-								 article.setFeedbackScoreJournal(feedbackArticle.getScoreWithout1Accepted());
-						}
-						else if(feedbackArticle!=null && feedbackArticle.getJournalTitle().equalsIgnoreCase(article.getJournal().getJournalTitle()) 
-								 && feedbackArticle.getGoldStandard() == article.getGoldStandard() && feedbackArticle.getGoldStandard()==-1 && article.getGoldStandard() ==-1)
-						{
-								article.setFeedbackScoreJournal(feedbackArticle.getScoreWithout1Rejected());
-						}
-						else if(feedbackArticle!=null && feedbackArticle.getJournalTitle().equalsIgnoreCase(article.getJournal().getJournalTitle()) 
-								 && feedbackArticle.getGoldStandard() == article.getGoldStandard() && feedbackArticle.getGoldStandard()==0 && article.getGoldStandard() ==0)
-						{
-							article.setFeedbackScoreJournal(feedbackArticle.getScoreAll());
-						}
-					}
-				 }
-				
-			}*/
-			//Prior Java 8
-			//printing reciter article PMIDs and User Assertion and score
-			//Collections.sort(reCiterArticles, (jrt1, jrt2) -> jrt1.getJournal().getJournalTitle().compareToIgnoreCase(jrt2.getJournal().getJournalTitle()));
-			//reCiterArticles.forEach(article -> System.out.println("Prior JAVA 8 : "+ "PMID: "+article.getArticleId() + "User Assertion: "+ article.getGoldStandard() +"journal Title:"+article.getJournal().getJournalTitle() +"Feedback Journal Score: " + article.getFeedbackScoreJournal()));			
 
+		StopWatch stopWatchforArticleFeedbackScore = new StopWatch("Journal");
+		stopWatchforArticleFeedbackScore.start("Journal");
+		try {
+			slf4jLogger.info("reCiterArticles size:", reCiterArticles.size());
 			
 			
 			
-			feedbackJournalsMap.forEach((key, feedbacklistOfArticles) -> {
-	            feedbacklistOfArticles.forEach(feedbackArticle -> {
-	                reCiterArticles.stream()
-	                        .filter(article -> feedbackArticle != null &&
-	                                feedbackArticle.getJournalTitle().equalsIgnoreCase(article.getJournal().getJournalTitle()) &&
-	                                feedbackArticle.getGoldStandard() == article.getGoldStandard() &&
-	                                feedbackArticle.getGoldStandard() == 1 && article.getGoldStandard() == 1)
-	                        .forEach(article -> article.setFeedbackScoreJournal(feedbackArticle.getScoreWithout1Accepted()));
+			// Count articles based on status per journal title
+	        Map<String, Map<Integer, Long>> journalTitleCountByArticleStatus = reCiterArticles.stream()
+	        	.filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isEmpty())	
+	            .collect(Collectors.groupingBy(
+	                article -> article.getJournal().getJournalTitle(),  // Group by journal title
+	                Collectors.groupingBy(
+	                    ReCiterArticle::getGoldStandard,    // Group by status
+	                    Collectors.counting()   // Count articles
+	                )
+	            ));
 
-	                reCiterArticles.stream()
-	                        .filter(article -> feedbackArticle != null &&
-	                                feedbackArticle.getJournalTitle().equalsIgnoreCase(article.getJournal().getJournalTitle()) &&
-	                                feedbackArticle.getGoldStandard() == article.getGoldStandard() &&
-	                                feedbackArticle.getGoldStandard() == -1 && article.getGoldStandard() == -1)
-	                        .forEach(article -> article.setFeedbackScoreJournal(feedbackArticle.getScoreWithout1Rejected()));
-
-	                reCiterArticles.stream()
-	                        .filter(article -> feedbackArticle != null &&
-	                                feedbackArticle.getJournalTitle().equalsIgnoreCase(article.getJournal().getJournalTitle()) &&
-	                                feedbackArticle.getGoldStandard() == article.getGoldStandard() &&
-	                                feedbackArticle.getGoldStandard() == 0 && article.getGoldStandard() == 0)
-	                        .forEach(article -> article.setFeedbackScoreJournal(feedbackArticle.getScoreAll()));
-	            });
+	        // Print the result
+	        journalTitleCountByArticleStatus.forEach((journalTitle, statusCounts) -> {
+	            System.out.println("Journal: " + journalTitle);
+	            statusCounts.forEach((status, count) -> 
+	                System.out.println("Status: " + status + ", Count: " + count)
+	            );
 	        });
 
-	        // Sorting using Comparator.comparing
-	        Collections.sort(reCiterArticles, (jrt1, jrt2) -> jrt1.getJournal().getJournalTitle().compareToIgnoreCase(jrt2.getJournal().getJournalTitle()));
+	        reCiterArticles.stream()
+	        .filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isEmpty())	
+			 	.forEach(article -> {
+			 	
+			 	feedbackJournalsListMap = new HashMap<>();
+			 	int countAccepted = 0;
+			 	int countRejected = 0;
+				double scoreAll = 0.0;
+				double scoreWithout1Accepted = 0.0;
+				double scoreWithout1Rejected = 0.0;
+				
+				     if(journalTitleCountByArticleStatus !=null && journalTitleCountByArticleStatus.size() > 0 &&journalTitleCountByArticleStatus.containsKey(article.getJournal().getJournalTitle()) && journalTitleCountByArticleStatus.get(article.getJournal().getJournalTitle().trim()).containsKey(ACCEPTED))
+				    	 countAccepted = Math.toIntExact(journalTitleCountByArticleStatus.get(article.getJournal().getJournalTitle().trim()).get(ACCEPTED).longValue());
+					 if(journalTitleCountByArticleStatus!=null && journalTitleCountByArticleStatus.size()>0 && journalTitleCountByArticleStatus.containsKey(article.getJournal().getJournalTitle()) && journalTitleCountByArticleStatus.get(article.getJournal().getJournalTitle().trim()).containsKey(REJECTED))
+						 countRejected = Math.toIntExact(journalTitleCountByArticleStatus.get(article.getJournal().getJournalTitle().trim()).get(REJECTED).longValue());
+							
+					if(countAccepted > 0 || countRejected > 0)
+					{	
+						scoreAll = computeScore(countAccepted, countRejected);
+						scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted,
+								countRejected);
+						scoreWithout1Rejected = computeScore(countAccepted,
+								countRejected > 0 ? countRejected - 1 : countRejected);
+	
+						
+						ReCiterArticleFeedbackScore feedbackJournal = populateArticleFeedbackScore(article.getArticleId(),article.getJournal().getJournalTitle(),
+																								   countAccepted,countRejected,
+																								   scoreAll,scoreWithout1Accepted,
+																								   scoreWithout1Rejected,article.getGoldStandard(),null);	
+	
+						feedbackJournalsListMap.computeIfAbsent(article.getJournal().getJournalTitle().trim(), k -> new ArrayList<>()).add(feedbackJournal);
+						
+				
+						feedbackJournalsListMap.entrySet().stream()
+								.filter(entry -> entry.getKey() != null && entry.getValue() != null)
+								.sorted(Map.Entry.comparingByKey())
+								.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+										(oldValue, newValue) -> oldValue, // merge function
+										LinkedHashMap::new // to maintain insertion order
+								));
+						articleJournalsMap.put(article.getArticleId(), feedbackJournalsListMap);
+						totalScoresByArticleMap.putIfAbsent(article.getArticleId(), feedbackJournal.getFeedbackScore());
+						article.setJournalFeedackScore(feedbackJournal.getFeedbackScore());	
+						String exportedJournalFeedackScore = decimalFormat.format(feedbackJournal.getFeedbackScore()); 
+						System.out.println("Exported Journal article Score***************"+exportedJournalFeedackScore);
+						article.setExportedJournalFeedackScore(exportedJournalFeedackScore);
+				 }
+			});
+			 
+			 if (articleJournalsMap != null && articleJournalsMap.size() > 0) {
 
-	        // Printing using forEach
-	        reCiterArticles.forEach(article -> System.out.println("PersonIdentifier: %s" + identity.getUid() + "PMID:%s " + article.getArticleId() + " User Assertion:%s " + article.getGoldStandard() + " Journal Title: %s" + article.getJournal().getJournalTitle() + " Feedback Journal Score: %d\n" + article.getFeedbackScoreJournal()));
-	  
-		return 0;
+					// Printing using forEach
+					slf4jLogger.info("********STARTING OF ARTICLE JOURNAL SCORING********************");
+					if (articleJournalsMap != null && articleJournalsMap.size() > 0) {
+
+						String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
+								"subscoreType1", "subscoreValue", "subScoreIndividualScore" };
+						exportItemLevelFeedbackScores(identity.getUid(), "Journal", csvHeaders, articleJournalsMap);
+
+					}
+					slf4jLogger.info("********END OF THE ARTICLE JOURNAL SCORING********************\n");
+				} else {
+					slf4jLogger.info("********NO FEEDBACK SCORE FOR THE JOURNAL SECTION********************\n");
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		stopWatchforArticleFeedbackScore.stop();
+			slf4jLogger.info(stopWatchforArticleFeedbackScore.getId() + " took "
+					+ stopWatchforArticleFeedbackScore.getTotalTimeSeconds() + "s"); 
+
+		return 0.0;
 	}
+
+	
 }

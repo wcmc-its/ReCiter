@@ -1,195 +1,155 @@
 package reciter.algorithm.evidence.targetauthor.feedback.orcid.strategy;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
+import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.ReciterFeedbackOrcid;
+import reciter.model.article.ReCiterFeedbackScoreArticle;
 import reciter.model.identity.Identity;
 
 public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
-	
-	Map<String, List<ReciterFeedbackOrcid>> feedbackOrcidMap =  new HashMap<>();
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(OrcidFeedbackStrategy.class);
+	Map<String, List<ReCiterArticleFeedbackScore>> feedbackOrcidMap = null;
+	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleOrcidMap = new HashMap<>();
+	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
 	List<ReCiterAuthor> listOfAuthors = null;
+	private static final int ARTICLE_ACCEPTED_GOLD_STANDARD = 1;
+	private static final int ARTICLE_REJECTED_GOLD_STANDARD = -1;
 	
+
 	@Override
 	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
-		
+
 		return 0.0;
-		
+
 	}
+	
+	public static Map<String, Long> countCoAuthorsByOrcid(List<ReCiterArticle> articles, int articleStatus) {
+        return articles.stream()
+                .filter(article -> article!=null && article.getGoldStandard() == articleStatus)
+                .map(ReCiterArticle::getArticleCoAuthors)
+                .filter(Objects::nonNull) 
+                .map(ReCiterArticleAuthors::getAuthors)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(author -> author != null && author.getOrcid() != null && !author.getOrcid().isEmpty() && author.isTargetAuthor())
+                .collect(Collectors.groupingBy(
+                        ReCiterAuthor::getOrcid,
+                        Collectors.counting()
+                ));
+    }
 
 	@Override
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		
-			System.out.println("reCiterArticles size: " + reCiterArticles.size());
+		StopWatch stopWatchforOrcidFeedback = new StopWatch("Orcid");
+		stopWatchforOrcidFeedback.start("Orcid");
+		try {
+			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
 
+			List<ReCiterArticle> filteredArticles = reCiterArticles.stream()
+					.filter(article -> article.getGoldStandard() != 0)
+					 .collect(Collectors.toList());
+		
+			//Count co-authors grouped by ORCID for accepted articles
+			Map<String, Long> acceptedCounts = countCoAuthorsByOrcid(filteredArticles, ARTICLE_ACCEPTED_GOLD_STANDARD);
+	        
+	        // Count co-authors grouped by ORCID for rejected articles
+	        Map<String, Long> rejectedCounts = countCoAuthorsByOrcid(filteredArticles, ARTICLE_REJECTED_GOLD_STANDARD);
 			
-			for(ReCiterArticle article : reCiterArticles)
-				{
-					ReCiterArticleAuthors coAuthors = article.getArticleCoAuthors();
-					listOfAuthors = coAuthors.getAuthors(); 
+	        reCiterArticles.stream()
+			.filter(article-> article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size()>0)
+					.forEach(article->{
+						listOfAuthors  = article.getArticleCoAuthors().getAuthors();
+						feedbackOrcidMap = new HashMap<>();
 					
-						for(ReCiterAuthor author : listOfAuthors) 
-						{
+				listOfAuthors.stream()
+							.filter(author->author != null && author.isTargetAuthor() && author.getOrcid() != null && !author.getOrcid().isEmpty() )
+							.forEach(author -> {
+
+					 int countAccepted = 0;
+					 int countRejected = 0;
+					 double scoreAll = 0.0;
+					 double scoreWithout1Accepted = 0.0;
+					 double scoreWithout1Rejected = 0.0;
+					
+					if(acceptedCounts!=null && acceptedCounts.size() >0 && acceptedCounts.containsKey(author.getOrcid()))
+						countAccepted = Math.toIntExact(acceptedCounts.get(author.getOrcid()));
+	
+					if(rejectedCounts!=null && rejectedCounts.size() > 0 && rejectedCounts.containsKey(author.getOrcid()))
+						countRejected = Math.toIntExact(rejectedCounts.get(author.getOrcid()));
+					
+							scoreAll = computeScore(countAccepted, countRejected);
+							scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted,
+									countRejected);
+							scoreWithout1Rejected = computeScore(countAccepted,
+									countRejected > 0 ? countRejected - 1 : countRejected);
+
 							
-							int countAccepted = 0;
-							int countRejected = 0;
-							int countNull = 0;
-							double scoreAll=0.0;
-							double scoreWithout1Accepted=0.0;
-							double scoreWithout1Rejected=0.0;
+							ReCiterArticleFeedbackScore feedbackScoreOrcid = populateArticleFeedbackScore(article.getArticleId(),author.getOrcid(),
+									   countAccepted,countRejected,
+									   scoreAll,scoreWithout1Accepted,
+									   scoreWithout1Rejected,article.getGoldStandard(),null);	
 		
-			 				if(feedbackOrcidMap!=null && !feedbackOrcidMap.containsKey(author.getOrcid()))
-							{	
-								for(ReCiterAuthor innerAuthor : listOfAuthors)
-								{
-									
-									if(author.getOrcid()!=null && innerAuthor.getOrcid()!=null 	&& author.getOrcid().equalsIgnoreCase(innerAuthor.getOrcid())
-											&& article.getGoldStandard() ==1)
-									{
-											countAccepted = countAccepted + 1;
-									}
-									else if(author.getOrcid()!=null && innerAuthor.getOrcid()!=null 	&& author.getOrcid().equalsIgnoreCase(innerAuthor.getOrcid())
-											&& article.getGoldStandard() == -1)
-									{
-											countRejected = countRejected + 1;
-									}
-								}
-								
-								scoreAll = (1 / (1 + Math.exp(- (countAccepted - countRejected) / (Math.sqrt(countAccepted + countRejected) + 1)))) - 0.5;
-						        scoreWithout1Accepted = 
-						                (1 / (1 + Math.exp(- ((countAccepted > 0 ? countAccepted - 1 : countAccepted) - countRejected) / (Math.sqrt((countAccepted > 0 ? countAccepted - 1 : countAccepted) + countRejected) + 1)))) - 0.5;
-						        scoreWithout1Rejected = 
-						                (1 / (1 + Math.exp(- (countAccepted - (countRejected > 0 ? countRejected - 1 : countRejected)) / (Math.sqrt(countAccepted + (countRejected > 0 ? countRejected - 1 : countRejected)) + 1)))) - 0.5;
-						        
-								if(feedbackOrcidMap!=null && feedbackOrcidMap.containsKey(article.getJournal().getJournalTitle()))
-								{
-									List<ReciterFeedbackOrcid> listofSameOrcidAuthors = feedbackOrcidMap.get(author.getOrcid());
-									ReciterFeedbackOrcid feedbackOrcid = new ReciterFeedbackOrcid();
-									feedbackOrcid.setUid(identity.getUid());
-									feedbackOrcid.setArticleId(article.getArticleId());
-									feedbackOrcid.setOrcid(author.getOrcid());
-									feedbackOrcid.setCountAccepted(countAccepted);
-									feedbackOrcid.setCountRejected(countRejected);
-									feedbackOrcid.setCountNull(countNull);
-									feedbackOrcid.setScoreAll(scoreAll);
-									feedbackOrcid.setScoreWithout1Accepted(scoreWithout1Accepted);
-									feedbackOrcid.setScoreWithout1Rejected(scoreWithout1Rejected);
-									feedbackOrcid.setGoldStandard(article.getGoldStandard());
-									
-									listofSameOrcidAuthors.add(feedbackOrcid);
-								}
-								else
-								{
-									List<ReciterFeedbackOrcid> listofJournals = new ArrayList<>();
-									ReciterFeedbackOrcid feedbackOrcid = new ReciterFeedbackOrcid();
-									feedbackOrcid.setUid(identity.getUid());
-									feedbackOrcid.setArticleId(article.getArticleId());
-									feedbackOrcid.setOrcid(author.getOrcid());
-									feedbackOrcid.setCountAccepted(countAccepted);
-									feedbackOrcid.setCountRejected(countRejected);
-									feedbackOrcid.setCountNull(countNull);
-									feedbackOrcid.setScoreAll(scoreAll);
-									feedbackOrcid.setScoreWithout1Accepted(scoreWithout1Accepted);
-									feedbackOrcid.setScoreWithout1Rejected(scoreWithout1Rejected);
-									feedbackOrcid.setGoldStandard(article.getGoldStandard());
-									listofJournals.add(feedbackOrcid);
-									feedbackOrcidMap.put(author.getOrcid(),listofJournals);
-									
-								}
-							}
-						
-						}
-				}
-			/*feedbackJournalsMap.forEach((key, listOfFeedbackJournals) -> {
-	            System.out.println("Key: " + key);
-	            // Iterate over each element in the list
-	            Collections.sort(listOfFeedbackJournals, (jrt1, jrt2) -> jrt1.getJournalTitle().compareToIgnoreCase(jrt2.getJournalTitle()));
-	            listOfFeedbackJournals.forEach(article -> System.out.println("journal Title:"+article.getJournalTitle() +"CountAccepted Score: " + article.getCountAccepted() + ", CountRejected: " + article.getCountRejected()
-				 + ",CountNull: " + article.getCountNull() + ",scoreAll:" + article.getScoreAll() 
-				 + ",scoreWithout1Accepted:" +article.getScoreWithout1Accepted() + ",ScoreWithout1Rejected:" +  article.getScoreWithout1Rejected()));
-	        });*/
-			
-			//List<ReciterFeedbackJournal> listofJournals =  feedbackJournalsMap.get(identity.getUid());
-			
-			//Updating the score for all the PMID that has same value and USER Assertion
-			//for(ReciterFeedbackJournal feedbackArticle : listofJournals)
-			/*for (Map.Entry<String, List<ReciterFeedbackOrcid>> entry : feedbackOrcidMap.entrySet()) 
-			{
-				 String key = entry.getKey();
-				
-				 List<ReciterFeedbackOrcid> feedbacklistOfOrcid = entry.getValue();
-				
-				 for(ReciterFeedbackOrcid feedbackOrcid : feedbacklistOfOrcid)
-				 {	
-					for(ReCiterArticle article : reCiterArticles)
-					{
-						ReCiterArticleAuthors coAuthors = article.getArticleCoAuthors();
-						List<ReCiterAuthor> listOfAuthors = coAuthors.getAuthors(); 
-						for(ReCiterAuthor author : listOfAuthors)
-						if(feedbackOrcid!=null && feedbackOrcid.getOrcid().equalsIgnoreCase(author.getOrcid()) 
-							 && feedbackOrcid.getGoldStandard() == 1 && article.getGoldStandard() ==1)
-						{
-								 article.setFeedbackScoreOrcid(feedbackOrcid.getScoreWithout1Accepted());
-						}
-						else if(feedbackOrcid!=null && feedbackOrcid.getOrcid().equalsIgnoreCase(author.getOrcid()) 
-								 && feedbackOrcid.getGoldStandard() == 1 && article.getGoldStandard() == -1)
-						{
-								article.setFeedbackScoreOrcid(feedbackOrcid.getScoreWithout1Rejected());
-						}
-						else if(feedbackOrcid!=null && feedbackOrcid.getOrcid().equalsIgnoreCase(author.getOrcid()) 
-								 && feedbackOrcid.getGoldStandard() == 0 && article.getGoldStandard() == 0)
-						{
-							article.setFeedbackScoreJournal(feedbackOrcid.getScoreAll());
-						}
-					}
-				 }
-				
-			}*/
-			//Prior Java 8
-			//printing reciter article PMIDs and User Assertion and score
-			//Collections.sort(reCiterArticles, (jrt1, jrt2) -> jrt1.getJournal().getJournalTitle().compareToIgnoreCase(jrt2.getJournal().getJournalTitle()));
-			//reCiterArticles.forEach(article -> System.out.println("Prior JAVA 8 : "+ "PMID: "+article.getArticleId() + "User Assertion: "+ article.getGoldStandard() +"journal Title:"+article.getJournal().getJournalTitle() +"Feedback Journal Score: " + article.getFeedbackScoreJournal()));			
+							feedbackOrcidMap.computeIfAbsent(author.getOrcid(), k -> new ArrayList<>()).add(feedbackScoreOrcid);	
 
-		
-			feedbackOrcidMap.forEach((key, feedbacklistOfOrcid) -> {
-			    feedbacklistOfOrcid.forEach(feedbackOrcid -> {
-			        reCiterArticles.forEach(article -> {
-			            ReCiterArticleAuthors coAuthors = article.getArticleCoAuthors();
-			            List<ReCiterAuthor> listOfAuthors = coAuthors.getAuthors();
-			            listOfAuthors.forEach(author -> {
-			                if (feedbackOrcid != null &&
-			                        feedbackOrcid.getOrcid().equalsIgnoreCase(author.getOrcid()) &&
-			                        feedbackOrcid.getGoldStandard() == 1 && article.getGoldStandard() == 1) {
-			                    article.setFeedbackScoreOrcid(feedbackOrcid.getScoreWithout1Accepted());
-			                } else if (feedbackOrcid != null &&
-			                        feedbackOrcid.getOrcid().equalsIgnoreCase(author.getOrcid()) &&
-			                        feedbackOrcid.getGoldStandard() == 1 && article.getGoldStandard() == -1) {
-			                    article.setFeedbackScoreOrcid(feedbackOrcid.getScoreWithout1Rejected());
-			                } else if (feedbackOrcid != null &&
-			                        feedbackOrcid.getOrcid().equalsIgnoreCase(author.getOrcid()) &&
-			                        feedbackOrcid.getGoldStandard() == 0 && article.getGoldStandard() == 0) {
-			                    article.setFeedbackScoreJournal(feedbackOrcid.getScoreAll());
-			                }
-			            });
-			        });
-			    });
+
+						//});
+				});
+				double totalScore = feedbackOrcidMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
+						.mapToDouble(score-> score.getFeedbackScore()) // Extract the scores
+						.sum(); // Sum all scores*/
+
+				// Sort Map Contents before storing into another Map
+				feedbackOrcidMap.entrySet().stream()
+						.filter(entry -> entry.getKey() != null && entry.getValue() != null)
+						.sorted(Map.Entry.comparingByKey())
+						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+								(oldValue, newValue) -> oldValue, // merge function
+								LinkedHashMap::new // to maintain insertion order
+						));
+				articleOrcidMap.put(article.getArticleId(), feedbackOrcidMap);
+				totalScoresByArticleMap.put(article.getArticleId(), totalScore);
+				article.setOrcidFeedbackScore(totalScore);
+				String exportedOrcidFeedbackScore = decimalFormat.format(totalScore);
+				System.out.println("Exported OrCid CoAuthor article Score***************"+exportedOrcidFeedbackScore);
+				article.setExportedOrcidFeedbackScore(exportedOrcidFeedbackScore);
 			});
+			if (articleOrcidMap != null && articleOrcidMap.size() > 0) {
 
-	        // Sorting using Comparator.comparing
-	        Collections.sort(listOfAuthors, (jrt1, jrt2) -> jrt1.getOrcid().compareToIgnoreCase(jrt2.getOrcid()));
+				// Printing using forEach
+				slf4jLogger.info("********STARTING OF ARTICLE ORCID SCORING********************");
+				if (articleOrcidMap != null && articleOrcidMap.size() > 0) {
 
-	        // Printing using forEach
-	        reCiterArticles.forEach(article -> System.out.println("PersonIdentifier: %s" + identity.getUid() + "PMID:%s " + article.getArticleId() + " User Assertion:%s " + article.getGoldStandard() + " Orcid : %s" + article.getArticleCoAuthors().getAuthors().get(0).getOrcid() + " Feedback Orcid Score: %d\n" + article.getFeedbackScoreOrcid()));
-		
+					String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
+							"subscoreType1", "subscoreValue", "subScoreIndividualScore" };
+					exportItemLevelFeedbackScores(identity.getUid(), "Orcid", csvHeaders, articleOrcidMap);
+
+				}
+				slf4jLogger.info("********END OF THE ARTICLE ORCID SCORING********************\n");
+			} else {
+				slf4jLogger.info("********NO FEEDBACK SCORE FOR THE ORCID SECTION********************\n");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		stopWatchforOrcidFeedback.stop();
+		slf4jLogger.info(stopWatchforOrcidFeedback.getId() + " took "
+				+ stopWatchforOrcidFeedback.getTotalTimeSeconds() + "s"); 
 		return 0;
 	}
 }

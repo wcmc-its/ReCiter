@@ -889,10 +889,12 @@ public class ReCiterController {
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
         // find identity
         Identity identity = identityService.findByUid(uid);
+        log.info("Identity Service using Uid********************************",uid,identity);
         ESearchResult eSearchResults = null;
 	        // find search results for this identity
 	        //To Avoid 404 errors when multi threading
         try {
+        	
         	eSearchResults = eSearchResultService.findByUid(uid);
             if (eSearchResults == null) {
                 retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
@@ -930,7 +932,6 @@ public class ReCiterController {
             filtered.add(pmid);
             filteredString.add(String.valueOf(pmid));
         }
-
         List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
         if (pubMedArticles == null) {
             return null;
