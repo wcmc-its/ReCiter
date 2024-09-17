@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -17,9 +16,7 @@ import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeed
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackScore;
-import reciter.model.article.ReCiterFeedbackScoreArticle;
 import reciter.model.identity.Identity;
-import reciter.model.pubmed.MedlineCitationJournalISSN;
 import reciter.service.ScienceMetrixService;
 
 public class JournalDomainFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
@@ -57,7 +54,7 @@ public class JournalDomainFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 					double[] scoreAll = {0.0};
 					double[] scoreWithout1Accepted = {0.0};
 					double[] scoreWithout1Rejected = {0.0};
-					//for (MedlineCitationJournalISSN medCitJournalISSN : article.getJournal().getJournalIssn()) {
+	
 					article.getJournal().getJournalIssn().stream()
 						.filter(medCitJournalISSN -> medCitJournalISSN!=null && medCitJournalISSN.getIssn()!=null)
 						.forEach(medCitJournalISSN -> {
@@ -73,8 +70,7 @@ public class JournalDomainFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 								  		.filter(innerArticle -> innerArticle!=null && innerArticle.getJournal()!=null && innerArticle.getJournal()
 												.getJournalIssn()!=null)	
 								  		.forEach(innerArticle -> {
-									/*for (MedlineCitationJournalISSN innerMedCitJournalISSN : innerArticle.getJournal()
-											.getJournalIssn()) {*/
+	
 								  		innerArticle.getJournal().getJournalIssn().stream()
 								  			.filter(innerMedCitJournalISSN -> innerMedCitJournalISSN!=null && innerMedCitJournalISSN.getIssn()!=null)
 								  			.forEach(innerMedCitJournalISSN -> {
@@ -138,23 +134,18 @@ public class JournalDomainFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 			if (articleJournalsMap != null && articleJournalsMap.size() > 0) {
 
 				// Printing using forEach
-				slf4jLogger.info("********STARTING OF ARTICLE COAUTHOR NAME SCORING********************");
-				if (articleJournalsMap != null && articleJournalsMap.size() > 0) {
+				slf4jLogger.info("********EXPORTING OF ARTICLE JOURNAL DOMAIN  SCORING********************");
+				/*if (articleJournalsMap != null && articleJournalsMap.size() > 0) {
 
 					String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
 							"subscoreType1", "subscoreValue", "subScoreIndividualScore" };
 					exportItemLevelFeedbackScores(identity.getUid(), "Journal", csvHeaders, articleJournalsMap);
 
-				}
-				// printing all the article lookup PMID and CoAuthors associated with other
-				// PMIDs.
-				String[] csvHeaders = { "PersonIdentifier", "Pmid", "subscoreType1", "subscoreTotal" };
-				exportConsolidatedFeedbackScores(identity.getUid(), "Journal", csvHeaders,
-						totalScoresByArticleMap);
-
-				slf4jLogger.info("********END OF THE ARTICLE COAUTHOR NAME SCORING********************\n");
+				}*/
+			
+				slf4jLogger.info("********END OF THE ARTICLE JOURNAL DOMAIN  SCORING********************\n");
 			} else {
-				slf4jLogger.info("********NO FEEDBACK SCORE FOR THE COAUTHOR NAME SECTION********************\n");
+				slf4jLogger.info("********NO FEEDBACK SCORE FOR THE JOURNAL DOMAIN  SECTION********************\n");
 			}
 
 		} catch (Exception e) {

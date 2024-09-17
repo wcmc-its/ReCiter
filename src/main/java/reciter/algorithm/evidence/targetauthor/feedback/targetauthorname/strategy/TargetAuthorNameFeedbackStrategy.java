@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -18,16 +17,12 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.ReCiterFeedbackScoreArticle;
-import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 
 public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(TargetAuthorNameFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackTargetAuthorNameMap = null;
-	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleTargetAuthorNameMap = new HashMap<>();
-	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
 	List<ReCiterAuthor> listOfAuthors = null;
 
 	private static final Pattern PATTERN1 = Pattern.compile("^[A-Z] [A-Z]$");
@@ -80,17 +75,6 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 				        )
 				    ));
 			
-			// Print results
-			/*targetAuthorNameCountsByArticleStatus.forEach((orcid, counts) -> {
-		                //int countAccepted = Math.toIntExact(emailCountsByArticleStatus.get(email).get(ACCEPTED));
-		                //int countRejected = Math.toIntExact(emailCountsByArticleStatus.get(email).get(REJECTED));
-		                System.out.println("Author Name in a Map: " + orcid);// + "-" + countAccepted +" -" + countRejected);
-			               
-		                counts.forEach((status, count) ->
-		                    System.out.println("Artcle Status " + status + ": Articles Count " + count)
-		                );
-		            });*/
-
 			reCiterArticles.stream()
 				.filter(article->article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 				.forEach(article->{
@@ -142,10 +126,13 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 										countRejected > 0 ? countRejected - 1 : countRejected);
 								
 								
+								double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+								String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+								
 								ReCiterArticleFeedbackScore feedbackTargetAuthorName = populateArticleFeedbackScore(article.getArticleId(),authorName,
 										   countAccepted,countRejected,
 										   scoreAll,scoreWithout1Accepted,scoreWithout1Rejected,
-										   article.getGoldStandard(),null);
+										   article.getGoldStandard(),feedbackScore,exportedFeedbackScore, "TargetAuthorName");
 
 								feedbackTargetAuthorNameMap.computeIfAbsent(Long.toString(article.getArticleId()), k -> new ArrayList<>()).add(feedbackTargetAuthorName);
 					}
@@ -162,31 +149,13 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 						(oldValue, newValue) -> oldValue, // merge function
 						LinkedHashMap::new // to maintain insertion order
 				));
-				articleTargetAuthorNameMap.put(article.getArticleId(), feedbackTargetAuthorNameMap);
-				totalScoresByArticleMap.put(article.getArticleId(), totalScore);
+				article.addArticleFeedbackScoresMap(feedbackTargetAuthorNameMap);
 				article.setTargetAuthorNameFeedbackScore(totalScore);
 				String exportedTargetAuthorNameFeedbackScore = decimalFormat.format(totalScore);
-				System.out.println("Exported OrCid CoAuthor article Score***************"+exportedTargetAuthorNameFeedbackScore);
 				article.setExportedTargetAuthorNameFeedbackScore(exportedTargetAuthorNameFeedbackScore);
 			});
 
-			 if (articleTargetAuthorNameMap != null && articleTargetAuthorNameMap.size() > 0) {
-					
-					// Printing using forEach
-					slf4jLogger.info("********STARTING OF ARTICLE TARGET AUTHOR NAME SCORING********************");
-					if (articleTargetAuthorNameMap != null && articleTargetAuthorNameMap.size() > 0) {
-
-						String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
-								"subscoreType1", "subscoreValue", "subScoreIndividualScore","UserAssertion" };
-						exportItemLevelFeedbackScores(identity.getUid(), "TargetAuthorName", csvHeaders, articleTargetAuthorNameMap);
-
-					}
-					
-
-					slf4jLogger.info("********END OF THE ARTICLE ORCID COAUTHOR SCORING********************\n");
-				} else {
-					slf4jLogger.info("********NO FEEDBACK SCORE FOR THE ORCID COAUTHOR SECTION********************\n");
-				}
+		
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

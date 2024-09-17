@@ -19,7 +19,6 @@ import reciter.model.article.ReCiterArticleKeywords.Keyword;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterCitationYNEnum;
 import reciter.model.article.ReCiterMeshHeadingDescriptorName;
-import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.identity.Identity;
 
 public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
@@ -27,8 +26,6 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(KeywordFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackKeywordMap = null;
 	List<Keyword> listOfKeywords = null;
-	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleKeywordMap = new HashMap<>();
-	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
 	
 	
 	@Override
@@ -92,14 +89,6 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 	                    )
 	                ));
 
-	            // Print results
-	      /*  keywordCountsByArticleStatus.forEach((keyword, counts) -> {
-	                System.out.println("Keyword in a Map: " + keyword );
-	                counts.forEach((status, count) ->
-	                    System.out.println("Artcle Status " + status + ": Articles Count " + count)
-	                );
-	            });*/
-
 	        
 		        reCiterArticles.stream()
 				   .filter(article-> article!=null && article.getMeshHeadings()!=null && article.getMeshHeadings().size()> 0)
@@ -142,10 +131,13 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 														scoreWithout1Rejected = computeScore(countAccepted,
 																countRejected > 0 ? countRejected - 1 : countRejected);
 														
+														double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+														String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+														
 														ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),keyword,
 																   countAccepted,countRejected,
 																   scoreAll,scoreWithout1Accepted,
-																   scoreWithout1Rejected,article.getGoldStandard(),null);
+																   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Keyword");
 														
 														feedbackKeywordMap.computeIfAbsent(keyword, k -> new ArrayList<>()).add(feedbackEmail);
 														
@@ -153,12 +145,7 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 												
 												}
 											});
-									 /*  feedbackKeywordMap.forEach((key,value) -> {
-	         								
-	         								System.out.println("FeedbackEmail Map Key***************"+key);
-	         								System.out.println("Feedback Map List contents are************");
-	         									value.forEach(System.out::println);
-	         							});*/
+
 									   
 									   double totalScore = feedbackKeywordMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
 												.mapToDouble(score-> score.getFeedbackScore()) // Extract the scores
@@ -173,29 +160,13 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 														(oldValue, newValue) -> oldValue, // merge function
 														LinkedHashMap::new // to maintain insertion order
 												));
-										articleKeywordMap.put(article.getArticleId(), feedbackKeywordMap);
-										totalScoresByArticleMap.put(article.getArticleId(), totalScore);
+										article.addArticleFeedbackScoresMap(feedbackKeywordMap);
 										article.setKeywordFeedackScore(totalScore);
 										String exportedKeywordFeedackScore = decimalFormat.format(totalScore); 
-										System.out.println("Exported Keyword article Score***************"+exportedKeywordFeedackScore);
 										article.setExportedKeywordFeedackScore(exportedKeywordFeedackScore);
 				   				});
 			
-				if (articleKeywordMap != null && articleKeywordMap.size() > 0) {
-
-					// Printing using forEach
-					slf4jLogger.info("********STARTING OF KEYWORD SCORING********************");
-					if (articleKeywordMap != null && articleKeywordMap.size() > 0) {
-
-						String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
-								"subscoreType1", "subscoreValue", "subScoreIndividualScore","GoldStandard" };
-						exportItemLevelFeedbackScores(identity.getUid(), "Keyword", csvHeaders, articleKeywordMap);
-
-					}
-					slf4jLogger.info("********END OF THE KEYWORD SCORING********************\n");
-				} else {
-					slf4jLogger.info("********NO FEEDBACK SCORE FOR THE KEYWORD SECTION********************\n");
-				}
+				
 
 			} catch (Exception e) {
 				e.printStackTrace();

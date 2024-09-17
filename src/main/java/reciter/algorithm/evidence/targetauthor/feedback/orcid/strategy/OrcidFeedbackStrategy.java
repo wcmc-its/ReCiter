@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,18 +17,13 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.ReCiterFeedbackScoreArticle;
 import reciter.model.identity.Identity;
 
 public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(OrcidFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackOrcidMap = null;
-	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleOrcidMap = new HashMap<>();
-	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
 	List<ReCiterAuthor> listOfAuthors = null;
-	private static final int ARTICLE_ACCEPTED_GOLD_STANDARD = 1;
-	private static final int ARTICLE_REJECTED_GOLD_STANDARD = -1;
 	
 
 	@Override
@@ -66,10 +60,10 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 					 .collect(Collectors.toList());
 		
 			//Count co-authors grouped by ORCID for accepted articles
-			Map<String, Long> acceptedCounts = countCoAuthorsByOrcid(filteredArticles, ARTICLE_ACCEPTED_GOLD_STANDARD);
+			Map<String, Long> acceptedCounts = countCoAuthorsByOrcid(filteredArticles, ACCEPTED);
 	        
 	        // Count co-authors grouped by ORCID for rejected articles
-	        Map<String, Long> rejectedCounts = countCoAuthorsByOrcid(filteredArticles, ARTICLE_REJECTED_GOLD_STANDARD);
+	        Map<String, Long> rejectedCounts = countCoAuthorsByOrcid(filteredArticles, REJECTED);
 			
 	        reCiterArticles.stream()
 			.filter(article-> article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size()>0)
@@ -100,15 +94,17 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 									countRejected > 0 ? countRejected - 1 : countRejected);
 
 							
+							double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+							
 							ReCiterArticleFeedbackScore feedbackScoreOrcid = populateArticleFeedbackScore(article.getArticleId(),author.getOrcid(),
 									   countAccepted,countRejected,
 									   scoreAll,scoreWithout1Accepted,
-									   scoreWithout1Rejected,article.getGoldStandard(),null);	
+									   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore, "Orcid");	
 		
 							feedbackOrcidMap.computeIfAbsent(author.getOrcid(), k -> new ArrayList<>()).add(feedbackScoreOrcid);	
+							
 
-
-						//});
 				});
 				double totalScore = feedbackOrcidMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
 						.mapToDouble(score-> score.getFeedbackScore()) // Extract the scores
@@ -122,28 +118,12 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 								(oldValue, newValue) -> oldValue, // merge function
 								LinkedHashMap::new // to maintain insertion order
 						));
-				articleOrcidMap.put(article.getArticleId(), feedbackOrcidMap);
-				totalScoresByArticleMap.put(article.getArticleId(), totalScore);
+				article.addArticleFeedbackScoresMap(feedbackOrcidMap);
 				article.setOrcidFeedbackScore(totalScore);
 				String exportedOrcidFeedbackScore = decimalFormat.format(totalScore);
-				System.out.println("Exported OrCid CoAuthor article Score***************"+exportedOrcidFeedbackScore);
 				article.setExportedOrcidFeedbackScore(exportedOrcidFeedbackScore);
 			});
-			if (articleOrcidMap != null && articleOrcidMap.size() > 0) {
 
-				// Printing using forEach
-				slf4jLogger.info("********STARTING OF ARTICLE ORCID SCORING********************");
-				if (articleOrcidMap != null && articleOrcidMap.size() > 0) {
-
-					String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
-							"subscoreType1", "subscoreValue", "subScoreIndividualScore" };
-					exportItemLevelFeedbackScores(identity.getUid(), "Orcid", csvHeaders, articleOrcidMap);
-
-				}
-				slf4jLogger.info("********END OF THE ARTICLE ORCID SCORING********************\n");
-			} else {
-				slf4jLogger.info("********NO FEEDBACK SCORE FOR THE ORCID SECTION********************\n");
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -2,17 +2,13 @@ package reciter.algorithm.evidence.targetauthor.feedback.email.strategy;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,20 +19,14 @@ import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.ReCiterCitationYNEnum;
-import reciter.model.article.ReCiterMeshHeadingDescriptorName;
 import reciter.model.identity.Identity;
 
 public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(EmailFeedbackStrategy.class);
-	//Map<String, List<ReCiterArticle>> feedbackEmailMap = new HashMap<>();
 	List<ReCiterAuthor> listOfAuthors = null;
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackEmailMap = null;
-	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleEmailsMap = new HashMap<>();
-	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
-	private final int ACCEPTED = 1;
-	private final int REJECTED = -1;
+	
 
 	@Override
 	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
@@ -52,13 +42,8 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 		Matcher matcher = pattern.matcher(affiliation);
 
 		if(matcher.find())
-		{	
-			System.out.println("Email found in a affiliation -> : " + matcher.group());
 			return matcher.group();
-			
-		}	
 		return null;		
-				
 	}
 
 	@Override
@@ -98,18 +83,8 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 	                    )
 	                ));
 
-	            // Print results
-			/* emailCountsByArticleStatus.forEach((email, counts) -> {
-	                //int countAccepted = Math.toIntExact(emailCountsByArticleStatus.get(email).get(ACCEPTED));
-	                //int countRejected = Math.toIntExact(emailCountsByArticleStatus.get(email).get(REJECTED));
-	                System.out.println("Email in a Map: Count Accepted and Rejected " + email);// + "-" + countAccepted +" -" + countRejected);
-		               
-	                counts.forEach((status, count) ->
-	                    System.out.println("Artcle Status " + status + ": Articles Count " + count)
-	                );
-	            });*/
-			
-			       reCiterArticles.stream()
+	
+			 reCiterArticles.stream()
 					   .filter(article-> article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size()> 0)
 					   .forEach(article -> {
 
@@ -149,10 +124,13 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 															scoreWithout1Rejected = computeScore(countAccepted,
 																	countRejected > 0 ? countRejected - 1 : countRejected);
 															
+															double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+															String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+															
 															ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),email,
 																	   countAccepted,countRejected,
 																	   scoreAll,scoreWithout1Accepted,
-																	   scoreWithout1Rejected,article.getGoldStandard(),null);
+																	   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Email");
 															
 															feedbackEmailMap.computeIfAbsent(email, k -> new ArrayList<>()).add(feedbackEmail);
 															
@@ -160,13 +138,7 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 													
 													}
 												});
-										  // System.out.println("FeedbackEmail Map Keys Size***************"+ feedbackEmailMap.size());
-										  /* feedbackEmailMap.forEach((key,value) -> {
-		         								
-		         								System.out.println("FeedbackEmail Map Key***************"+key);
-		         								System.out.println("Feedback Map List contents are************");
-		         									value.forEach(System.out::println);
-		         							});*/
+										 
 										   
 										   double totalScore = feedbackEmailMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
 													.mapToDouble(ReCiterArticleFeedbackScore::getFeedbackScore) // Extract the scores
@@ -181,29 +153,13 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 															(oldValue, newValue) -> oldValue, // merge function
 															LinkedHashMap::new // to maintain insertion order
 													));
-											articleEmailsMap.put(article.getArticleId(), feedbackEmailMap);
-											totalScoresByArticleMap.put(article.getArticleId(), totalScore);
+											article.addArticleFeedbackScoresMap(feedbackEmailMap);
 											article.setEmailFeedbackScore(totalScore);
 											String exportedEmailFeedbackScore = decimalFormat.format(totalScore); 
-											System.out.println("Exported Email article Score***************"+exportedEmailFeedbackScore);
 											article.setExportedEmailFeedbackScore(exportedEmailFeedbackScore);
 					   				});
 							
-							if (articleEmailsMap != null && articleEmailsMap.size() > 0) {
-				
-								// Printing using forEach
-								slf4jLogger.info("********STARTING OF ARTICLE EMAIL SCORING********************");
-								if (articleEmailsMap != null && articleEmailsMap.size() > 0) {
-				
-									String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
-											"subscoreType1", "subscoreValue", "subScoreIndividualScore" };
-									exportItemLevelFeedbackScores(identity.getUid(), "Email", csvHeaders, articleEmailsMap);
-				
-								}
-								slf4jLogger.info("********END OF THE ARTICLE EMAIL SCORING********************\n");
-							} else {
-								slf4jLogger.info("********NO FEEDBACK SCORE FOR THE EMAIL SECTION********************\n");
-							}
+							
 				
 						} catch (Exception e) {
 							e.printStackTrace();

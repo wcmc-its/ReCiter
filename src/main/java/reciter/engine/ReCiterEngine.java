@@ -65,7 +65,6 @@ public class ReCiterEngine implements Engine {
         if(strategyParameters.isStrategyFeedback()) //going forward this will be default scoring and flag can be toggled from application.properties file
         {	
 	        //Feedback scoring
-	        log.info("reCiterArticles size**********:"+reCiterArticles.size());
 	        StopWatch stopWatchforFeedback = new StopWatch("Article Feedback Scorer");
 	        stopWatchforFeedback.start("Article Feedback Scorer");
 	        ArticleFeedbackScorer feedbackArticleScorer = new ReciterFeedbackArticleScorer(reCiterArticles,identity,parameters,strategyParameters);
@@ -78,8 +77,6 @@ public class ReCiterEngine implements Engine {
 	        StopWatch stopWatch = new StopWatch("Article Scorer");
 	        stopWatch.start("Article Scorer");
 	        ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
-	        log.info("Identity*************************",identity);
-	        System.out.println("Identity*********************************"+identity);
 	        articleScorer.runArticleScorer(clusterer.getClusters(), identity);
 	        stopWatch.stop();
 	        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");

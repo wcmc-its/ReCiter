@@ -1,13 +1,11 @@
 package reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.strategy;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,32 +17,19 @@ import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeed
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackScore;
-import reciter.model.article.ReCiterFeedbackScoreArticle;
-import reciter.model.article.ReCiterMeshHeadingDescriptorName;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.MedlineCitationJournalISSN;
 import reciter.service.ScienceMetrixService;
-/*TODO
-ignore following values:
- Clinical Medicine
-Biomedical Research
-General Science & Technology
-General & Internal Medicine
-General Clinical Medicine
-General Chemistry
-General Physics
-General Arts, Humanities & Social Sciences
- 
- */
+
 public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(JournalSubFieldFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = null;
-	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleJournalsMap = new HashMap<>();
-	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
+	//Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleJournalsMap = new HashMap<>();
+	//Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
 	
-	String[] ignoreScienceMetricSubFieldValues = {"Clinical Medicine", "Biomedical Research", "General Science & Technology","General & Internal Medicine",
-			"General Clinical Medicine","General Chemistry","General Physics","General Arts, Humanities & Social Sciences"};
+	/*String[] ignoreScienceMetricSubFieldValues = {"Clinical Medicine", "Biomedical Research", "General Science & Technology","General & Internal Medicine",
+			"General Clinical Medicine","General Chemistry","General Physics","General Arts, Humanities & Social Sciences"};*/
 	
 	ScienceMetrixService scienceMetrixService = ApplicationContextHolder.getContext()
 			.getBean(ScienceMetrixService.class);
@@ -64,7 +49,8 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 			if (scienceMetrix == null)
 				scienceMetrix = scienceMetrixService.findByEissn(medlineCitationJournalIssn.getIssn());
 			if (scienceMetrix != null && scienceMetrix.getScienceMetrixSubfield()!=null &&
-					!scienceMetrix.getScienceMetrixSubfield().equalsIgnoreCase("") && Arrays.stream(ignoreScienceMetricSubFieldValues).noneMatch(scienceMetrix.getScienceMetrixSubfield()::equals))
+					!scienceMetrix.getScienceMetrixSubfield().equalsIgnoreCase("") 
+					/*&& Arrays.stream(ignoreScienceMetricSubFieldValues).noneMatch(scienceMetrix.getScienceMetrixSubfield()::equals)*/)
 				 return scienceMetrix.getScienceMetrixSubfield();
 		}
 		return null;
@@ -166,10 +152,14 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 														System.out.println(" scoreWithout1Accepted ****************"+ scoreWithout1Accepted);
 														System.out.println(" scoreWithout1Rejected ********************" + scoreWithout1Rejected);
 														
+														double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+														String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+														
+														
 														ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),journalSubField,
 																   countAccepted,countRejected,
 																   scoreAll,scoreWithout1Accepted,
-																   scoreWithout1Rejected,article.getGoldStandard(),null);
+																   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Journal SubField");
 														
 														feedbackJournalsSubFieldMap.computeIfAbsent(journalSubField, k -> new ArrayList<>()).add(feedbackEmail);
 														
@@ -198,8 +188,9 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 														(oldValue, newValue) -> oldValue, // merge function
 														LinkedHashMap::new // to maintain insertion order
 												));
-									   articleJournalsMap.put(article.getArticleId(), feedbackJournalsSubFieldMap);
-										totalScoresByArticleMap.put(article.getArticleId(), totalScore);
+									  // articleJournalsMap.put(article.getArticleId(), feedbackJournalsSubFieldMap);
+									   article.addArticleFeedbackScoresMap(feedbackJournalsSubFieldMap);
+										//totalScoresByArticleMap.put(article.getArticleId(), totalScore);
 										article.setJournalSubFieldFeedbackScore(totalScore);
 										String exportedJournalSubFieldFeedbackScore = decimalFormat.format(totalScore); 
 										System.out.println("Exported Journal SubField article Score***************"+exportedJournalSubFieldFeedbackScore);
@@ -208,27 +199,20 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 		        
 		        
 			
-			if (articleJournalsMap != null && articleJournalsMap.size() > 0) {
+			/*if (feedbackJournalsSubFieldMap != null && feedbackJournalsSubFieldMap.size() > 0) {
 
 				// Printing using forEach
 				slf4jLogger.info("********STARTING OF JOURNAL SUBFIELD SCORING********************");
-				if (articleJournalsMap != null && articleJournalsMap.size() > 0) {
+				
 
 					String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
 							"subscoreType1", "subscoreValue", "subScoreIndividualScore" };
-					exportItemLevelFeedbackScores(identity.getUid(), "Journal SubField", csvHeaders, articleJournalsMap);
-
-				}
-				// printing all the article lookup PMID and CoAuthors associated with other
-				// PMIDs.
-				//String[] csvHeaders = { "PersonIdentifier", "Pmid", "subscoreType1", "subscoreTotal" };
-				//exportConsolidatedFeedbackScores(identity.getUid(), "Journal SubField", csvHeaders,
-				//		totalScoresByArticleMap);
-
+					exportArticleItemLevelFeedbackScores(identity.getUid(), "Journal SubField", csvHeaders, feedbackJournalsSubFieldMap);
+	
 				slf4jLogger.info("********END OF THE JOURNAL SUBFIELD SCORING********************\n");
 			} else {
 				slf4jLogger.info("********NO FEEDBACK SCORE FOR THE JOURNAL SUBFIELD SECTION********************\n");
-			}
+			}*/
 			
 		} catch (Exception e) {
 			e.printStackTrace();

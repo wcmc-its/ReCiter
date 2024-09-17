@@ -1,12 +1,12 @@
 package reciter.algorithm.evidence.targetauthor.feedback.institution.strategy;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -15,10 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
-import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.ReCiterFeedbackScoreArticle;
 import reciter.model.identity.Identity;
 
 public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
@@ -30,7 +29,7 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 			"NewYork-Presbyterian", "NYU ", "Pharmaceuticals", "School ", "Sloan Kettering", "Universidad",
 			"Université", "University", "Weill");
 
-	Map<String, List<ReCiterArticle>> feedbackInstitutionMap = new HashMap<>();
+	Map<String, List<ReCiterArticleFeedbackScore>> feedbackInstitutionMap = null;
 	List<ReCiterAuthor> listOfAuthors = null;
 	List<ReCiterArticle> validInstitutions = null;
 
@@ -68,216 +67,194 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 		}
 		return false;
 	}
+	
+	private List<String> sanitizeAffiliation(String affiliation) {
+
+		List<String> institutionList = new ArrayList<>();
+	    // Remove leading numbers and spaces
+	    affiliation = affiliation.replaceAll("^[0-9 ]+", "");
+
+	    // Count occurrences of patterns
+	    Pattern capitalPattern = Pattern.compile("^[A-Z]\\.[A-Z]\\.");
+	    Matcher capitalMatcher = capitalPattern.matcher(affiliation);
+	    int capitalPatternCount = 0;
+
+	    // Iterate over all matches for capital pattern
+	    while (capitalMatcher.find()) {
+	        capitalPatternCount++;
+	    }
+
+	    // Count occurrences of lowercase followed by uppercase
+	    Pattern lowercaseUppercasePattern = Pattern.compile("[a-z][A-Z]");
+	    Matcher lowercaseUppercaseMatcher = lowercaseUppercasePattern.matcher(affiliation);
+	    int lowercaseUppercaseCount = 0;
+
+	    // Iterate over all matches for lowercase-uppercase pattern
+	    while (lowercaseUppercaseMatcher.find()) {
+	        lowercaseUppercaseCount++;
+	    }
+
+	    // If the patterns are below the threshold, process the string
+	    if (capitalPatternCount < 4 && lowercaseUppercaseCount < 3) {
+	        int curPos = 0;
+	        int charLength = affiliation.length();
+	        int maxCharLength = 120;
+
+	        while (curPos <= charLength) {
+	            // Find the next delimiter position
+	            int nextComma = affiliation.indexOf(',', curPos);
+	            int nextPeriod = affiliation.indexOf('.', curPos);
+	            int nextSemicolon = affiliation.indexOf(';', curPos);
+	            int nextParenthesis = affiliation.indexOf('(', curPos);
+
+	            int minPos = getMinPosition(nextComma, nextPeriod, nextSemicolon, nextParenthesis, charLength + 1);
+
+	            String outerArticleInstitution;
+	            if (minPos != charLength + 1) {
+	                outerArticleInstitution = affiliation.substring(curPos, minPos).trim();
+	                curPos = minPos + 1;
+	            } else {
+	                outerArticleInstitution = affiliation.substring(curPos).trim();
+	                curPos = charLength + 1;
+	            }
+
+	            // Check if the extracted institution is valid
+	            if (isValidInstitution(outerArticleInstitution, maxCharLength)) 
+	            	institutionList.add(outerArticleInstitution);
+
+
+	            // Exit loop if end of string is reached
+	            if (curPos > charLength) {
+	                break;
+	            }
+	        }
+	    }
+
+	    return institutionList;
+	}
+
+	
 
 	@Override
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 
 		try {
-			validInstitutions = new ArrayList<>();
-			for (ReCiterArticle article : reCiterArticles) {
-				for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
-					
-					if (author.isTargetAuthor() && author.getAffiliation() != null
-							&& author.getAffiliation().length() < 850) {
+			
+			Map<String, Map<Integer, Long>> instCountsByArticleStatus = reCiterArticles.stream()
+	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
+	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
+	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.isTargetAuthor() && author.getAffiliation().length() < 850)	
+	                	 .flatMap(author -> {
+	                    	List<String> institutionList = sanitizeAffiliation(author.getAffiliation());
+		                        // Create a stream of (keyword, status) pairs
+	                        return institutionList.stream()
+	                            .map(institutionEntry -> new AbstractMap.SimpleEntry<>(institutionEntry, article.getGoldStandard()));
+	                    })
+	                )
+	                // Count occurrences of each (keyword, status) pair
+	                .collect(Collectors.groupingBy(
+	                    Map.Entry::getKey,
+	                    Collectors.groupingBy(
+	                        Map.Entry::getValue,
+	                        Collectors.counting()
+	                    )
+	                ));
+			
 
-						String affiliation = author.getAffiliation().replaceAll(EngineParameters.getRegexForStopWords(),
-								"");
+			
+			 reCiterArticles.stream()
+			   .filter(article-> article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size()> 0)
+			   .forEach(article -> {
 
-						affiliation = affiliation.replaceAll("^[0-9 ]+", "");
-						Pattern pattern = Pattern.compile("^[A-Z]\\.[A-Z]\\.");
-						Matcher matcher = pattern.matcher(affiliation);
-						int capitalPatternCount = 0;
-						// Iterate over all matches
-						while (matcher.find()) {
-							capitalPatternCount++;
-						}
+				   			feedbackInstitutionMap = new HashMap<>();   
+									
+								   article.getArticleCoAuthors().getAuthors().stream()
+										.filter(author -> author!=null && author.isTargetAuthor() && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.getAffiliation().length() < 850)
+										.forEach(author -> {
+											
+											
+											 
+											 List<String> institutionList = sanitizeAffiliation(author.getAffiliation());
+											
+											institutionList.stream()
+														   .filter(institution -> institution!=null && !institution.isEmpty())
+														   .forEach(institution -> {
+															   
+													 int countAccepted = 0;
+													 int countRejected = 0;
+													 double scoreAll = 0.0;
+													 double scoreWithout1Accepted = 0.0;
+													 double scoreWithout1Rejected = 0.0;		   
+													
+													if(instCountsByArticleStatus!=null && instCountsByArticleStatus.size() > 0)
+													{
+														if(instCountsByArticleStatus.containsKey(institution))
+														{
+															if(instCountsByArticleStatus.get(institution).containsKey(ACCEPTED))
+																countAccepted = Math.toIntExact(instCountsByArticleStatus.get(institution).get(ACCEPTED));
+															if(instCountsByArticleStatus.get(institution).containsKey(REJECTED))
+																countRejected = Math.toIntExact(instCountsByArticleStatus.get(institution).get(REJECTED));
+														}
+													}
+													if(countAccepted > 0 || countRejected > 0)
+													{	
+														
+														scoreAll = computeScore(countAccepted , countRejected);
+														scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted,
+																countRejected);
+														scoreWithout1Rejected = computeScore(countAccepted,
+																countRejected > 0 ? countRejected - 1 : countRejected);
+														
+														double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+														String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+														
+														ReCiterArticleFeedbackScore feedbackInst = populateArticleFeedbackScore(article.getArticleId(),institution,
+																   countAccepted,countRejected,
+																   scoreAll,scoreWithout1Accepted,
+																   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Institution");
+														
+														List<ReCiterArticleFeedbackScore> feedbackList = feedbackInstitutionMap.computeIfAbsent(institution, k -> new ArrayList<>());
 
-						int lowercaseUppercaseCount = 0;
-						Pattern pattern1 = Pattern.compile("[a-z][A-Z]");
-						Matcher matcher1 = pattern1.matcher(affiliation);
-						while (matcher1.find()) {
-							lowercaseUppercaseCount++;
-						}
-						if (capitalPatternCount < 4 && lowercaseUppercaseCount < 3) {
-							int curPos = 0;
-							int charLength = author.getAffiliation().length();
-							String curLabel = author.getAffiliation();
-							int maxCharLength = 120;
-							while (curPos <= charLength) {
-								int nextComma = curLabel.indexOf(',', curPos);
-								int nextPeriod = curLabel.indexOf('.', curPos);
-								int nextSemicolon = curLabel.indexOf(';', curPos);
-								int nextParenthesis = curLabel.indexOf('(', curPos);
+														// Check if the list is empty or if the item does not exist in the list
+														if (feedbackList.isEmpty()) {
+														    feedbackList.add(feedbackInst);
+														} else {
+														    for (ReCiterArticleFeedbackScore feedbackInstitution : feedbackList) {
+														        if (feedbackInstitution != null && !feedbackInstitution.getFeedbackScoreFieldValue().equalsIgnoreCase(feedbackInst.getFeedbackScoreFieldValue())) {
+														            // If no match found, add the feedbackOrg
+														            feedbackList.add(feedbackInst);
+														            break; // Exit loop once item is added
+														        }
+														    }
+														}
 
-								int minPos = getMinPosition(nextComma, nextPeriod, nextSemicolon, nextParenthesis,
-										charLength + 1);
+														
 
-								String outerArticleInstitution;
-								if (minPos != charLength + 1) {
-									outerArticleInstitution = curLabel.substring(curPos, minPos).trim();
-									curPos = minPos + 1;
-								} else {
-									outerArticleInstitution = curLabel.substring(curPos).trim();
-									curPos = charLength + 1;
-								}
-
-								if (isValidInstitution(outerArticleInstitution, maxCharLength)) 
-								{
-									ReCiterFeedbackScoreArticle feedbackScoreInstitution = new ReCiterFeedbackScoreArticle();
-									//feedbackScoreInstitution.setPersonIdentifier(identity.getUid());
-									//feedbackScoreInstitution.setArticleId(article.getArticleId());
-									feedbackScoreInstitution.setInstitution(outerArticleInstitution);
-									article.setFeedbackScoreArticle(feedbackScoreInstitution);
-									validInstitutions.add(article);
-
-								}
-							}
-							if (curPos > charLength) {
-								break;
-							}
-						}
-
-					}
-
-				}
-			}
-
-			//for (ReCiterArticle feedbackInst : validInstitutions) {
-			validInstitutions.stream()					
-					.forEach(feedbackInst->{
-				//int countAccepted = 0;
-				final int[] countAccepted = {0};
-				//int countRejected = 0;
-				final int[] countRejected = {0};
-				int countNull = 0;
-				double scoreAll = 0.0;
-				double scoreWithout1Accepted = 0.0;
-				double scoreWithout1Rejected = 0.0;
-				String outerInstitution = feedbackInst.getFeedbackScoreArticle().getInstitution();
-				if (feedbackInstitutionMap != null && !feedbackInstitutionMap.containsKey(outerInstitution)) {
-					//for (ReCiterArticle innerFeedbackInst : validInstitutions) {
-					
-					validInstitutions.stream()
-							.filter(innerFeedbackInst->innerFeedbackInst!=null && innerFeedbackInst.getFeedbackScoreArticle()!=null && innerFeedbackInst.getFeedbackScoreArticle().getInstitution()!=null
-							&& outerInstitution != null && outerInstitution.isEmpty()
-							/*&& innerInstitution != null && innerInstitution.isEmpty()*/)
-							.forEach(innerFeedbackInst->{
-
-						String innerInstitution = innerFeedbackInst.getFeedbackScoreArticle().getInstitution();
-						if (outerInstitution != null && !outerInstitution.equalsIgnoreCase("")
-								&& innerInstitution != null && !innerInstitution.equalsIgnoreCase("")
-								&& outerInstitution.equalsIgnoreCase(innerInstitution)) {
-							if (innerFeedbackInst != null && innerFeedbackInst.getGoldStandard() == 1) {
-
-								countAccepted[0] = countAccepted[0] + 1;
-							} else if (innerFeedbackInst != null && innerFeedbackInst.getGoldStandard() == -1) {
-								countRejected[0] = countRejected[0] + 1;
-							}
-
-						}
-					});
-					scoreAll = computeScore(countAccepted[0], countRejected[0]);
-					scoreWithout1Accepted = computeScore(countAccepted[0] > 0 ? countAccepted[0] - 1 : countAccepted[0],
-							countRejected[0]);
-					scoreWithout1Rejected = computeScore(countAccepted[0],
-							countRejected[0] > 0 ? countRejected[0] - 1 : countRejected[0]);
-
-					List<ReCiterArticle> listofInstitutions = new ArrayList<>();
-					ReCiterFeedbackScoreArticle feedbackScoreInstitution = new ReCiterFeedbackScoreArticle();
-					//feedbackScoreInstitution.setPersonIdentifier(identity.getUid());
-					//feedbackScoreInstitution.setArticleId(feedbackInst.getArticleId());
-					feedbackScoreInstitution.setInstitution(outerInstitution);
-					feedbackScoreInstitution.setAcceptedCount(countAccepted[0]);
-					feedbackScoreInstitution.setRejectedCount(countRejected[0]);
-					feedbackScoreInstitution.setCountNull(countNull);
-					feedbackScoreInstitution.setScoreAll(scoreAll);
-					feedbackScoreInstitution.setScoreWithout1Accepted(scoreWithout1Accepted);
-					feedbackScoreInstitution.setScoreWithout1Rejected(scoreWithout1Rejected);
-					//feedbackScoreInstitution.setGoldStandard(feedbackInst.getGoldStandard());
-					if (feedbackInst.getGoldStandard() == 1) {
-						feedbackScoreInstitution.setFeedbackScoreInstitution(scoreWithout1Accepted);
-					} else if (feedbackInst.getGoldStandard() == -1) {
-						feedbackScoreInstitution.setFeedbackScoreInstitution(scoreWithout1Rejected);
-					} else {
-						feedbackScoreInstitution.setFeedbackScoreInstitution(scoreAll);
-					}
-					feedbackInst.setFeedbackScoreArticle(feedbackScoreInstitution);
-					listofInstitutions.add(feedbackInst);
-					feedbackInstitutionMap.put(outerInstitution, listofInstitutions);
-				} else {
-					List<ReCiterArticle> listofInstitutions = feedbackInstitutionMap
-							.get(outerInstitution);
-
-					Optional<ReCiterArticle> existingFeedbackScoreInstitutionalOptional = Optional
-							.ofNullable(listofInstitutions).filter(list -> !list.isEmpty()).map(list -> list.get(0));
-
-					ReCiterFeedbackScoreArticle feedbackScoreInstitution = new ReCiterFeedbackScoreArticle();
-
-					existingFeedbackScoreInstitutionalOptional.ifPresent(existingInstitution -> {
-						//feedbackScoreInstitution.setPersonIdentifier(identity.getUid());
-						//feedbackScoreInstitution.setArticleId(feedbackInst.getArticleId());
-						feedbackScoreInstitution.setInstitution(outerInstitution);
-						feedbackScoreInstitution.setAcceptedCount(existingInstitution.getFeedbackScoreArticle().getAcceptedCount());
-						feedbackScoreInstitution.setRejectedCount(existingInstitution.getFeedbackScoreArticle().getRejectedCount());
-						feedbackScoreInstitution.setCountNull(existingInstitution.getFeedbackScoreArticle().getCountNull());
-						feedbackScoreInstitution.setScoreAll(existingInstitution.getFeedbackScoreArticle().getScoreAll());
-						feedbackScoreInstitution
-								.setScoreWithout1Accepted(existingInstitution.getFeedbackScoreArticle().getScoreWithout1Accepted());
-						feedbackScoreInstitution
-								.setScoreWithout1Rejected(existingInstitution.getFeedbackScoreArticle().getScoreWithout1Rejected());
-						//feedbackScoreInstitution.setGoldStandard(feedbackInst.getGoldStandard());
-						if (feedbackInst.getGoldStandard() == 1) {
-							feedbackScoreInstitution
-									.setFeedbackScoreInstitution(existingInstitution.getFeedbackScoreArticle().getScoreWithout1Accepted());
-						} else if (feedbackInst.getGoldStandard() == -1) {
-							feedbackScoreInstitution
-									.setFeedbackScoreInstitution(existingInstitution.getFeedbackScoreArticle().getScoreWithout1Rejected());
-						} else {
-							feedbackScoreInstitution.setFeedbackScoreInstitution(existingInstitution.getFeedbackScoreArticle().getScoreAll());
-						}
-						feedbackInst.setFeedbackScoreArticle(feedbackScoreInstitution);
-						Optional.ofNullable(listofInstitutions).ifPresent(list -> list.add(feedbackInst));
-					});
-				}
-
-			});
-
-			// Calculate the total number of values in the map
-			if (feedbackInstitutionMap != null && feedbackInstitutionMap.size() > 0) {
-				//int totalSize = feedbackInstitutionMap.values().stream().mapToInt(List::size).sum();
-
-				// Sorting using Comparator.comparing
-				Map<String, List<ReCiterArticle>> reCiterfeedbackInstitutionMapSortedMap = null;
-				try {
-					reCiterfeedbackInstitutionMapSortedMap = feedbackInstitutionMap.entrySet().stream()
-							.filter(entry -> entry.getKey() != null && entry.getValue() != null)
-							.sorted(Map.Entry.comparingByKey())
-							.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-									(oldValue, newValue) -> oldValue, // merge function
-									LinkedHashMap::new // to maintain insertion order
-							));
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-				// Printing using forEach
-				slf4jLogger.info("********STARTING OF INSTITUTION SCORING********************");
-				reCiterfeedbackInstitutionMapSortedMap.entrySet().stream().forEach(entry -> {
-					entry.getValue().stream().forEach(article -> {
-						String formattedString = String.format(
-								"\nInstitution Title: %s\nPersonIdentifier: %s\nPMID: %s\nUser Assertion: %s\nCount Accepted:%d\nCountRejected:%d\nCountNull:%d\nFeedback Institution Accepted Score: %.3f\nFeedback Institution Rejected Score: %.3f\nFeedback Institution Score All: %.3f\nFeedback Score Institution: %.3f",
-								article.getFeedbackScoreArticle().getInstitution(), identity.toString(), article.getArticleId(),
-								article.getGoldStandard(), article.getFeedbackScoreArticle().getAcceptedCount(), article.getFeedbackScoreArticle().getRejectedCount(),
-								article.getFeedbackScoreArticle().getCountNull(), article.getFeedbackScoreArticle().getScoreWithout1Accepted(),
-								article.getFeedbackScoreArticle().getScoreWithout1Rejected(), article.getFeedbackScoreArticle().getScoreAll(),
-								article.getFeedbackScoreArticle().getFeedbackScoreInstitution());
-						System.out.println(formattedString + "\n");
-					});
-				});
-				slf4jLogger.info("********END OF THE INSTITUTION PMID SCORING********************\n");
-			} else {
-				slf4jLogger.info("********NO FEEDBACK SCORE FOR THE INSTITUTION SECTION********************\n");
-			}
+													}
+											
+											});
+										});
+								   
+								   double totalScore = feedbackInstitutionMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
+											.mapToDouble(ReCiterArticleFeedbackScore::getFeedbackScore) // Extract the scores
+											.sum(); // Sum all scores
+									
+									
+									// Sort Map Contents before storing into another Map
+								   feedbackInstitutionMap.entrySet().stream()
+											.filter(entry -> entry.getKey() != null && entry.getValue() != null)
+											.sorted(Map.Entry.comparingByKey())
+											.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+													(oldValue, newValue) -> oldValue, // merge function
+													LinkedHashMap::new // to maintain insertion order
+											));
+								   article.addArticleFeedbackScoresMap(feedbackInstitutionMap);
+									article.setInstitutionFeedbackScore(totalScore);
+									String exportedInstFeedbackScore = decimalFormat.format(totalScore); 
+									article.setExportedInstitutionFeedbackScore(exportedInstFeedbackScore);
+			   				});
+					 
+		
 
 		} catch (Exception e) {
 			e.printStackTrace();

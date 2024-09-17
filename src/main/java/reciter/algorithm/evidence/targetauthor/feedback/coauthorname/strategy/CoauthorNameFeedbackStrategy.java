@@ -1,13 +1,11 @@
 package reciter.algorithm.evidence.targetauthor.feedback.coauthorname.strategy;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -28,8 +26,6 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(CoauthorNameFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> coauthorNameListMap = null;
 	List<ReCiterAuthor> listOfAuthors = null;
-	Map<Long, Map<String, List<ReCiterArticleFeedbackScore>>> articleCoAuthorsMap = new HashMap<>();
-	Map<Long, Double> totalScoresByArticleMap = new HashMap<>();
 
 	private static final Pattern PATTERN_1 = Pattern.compile("^[A-Z] [A-Z]$");
 	private static final Pattern PATTERN_2 = Pattern.compile("^[A-Z] [A-Z][a-z]");
@@ -76,8 +72,6 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
                 Function.identity(),
                 Collectors.counting()
             ));
-	        System.out.println("Accepted Articles size:"+acceptArticlesCountByCoAuthor.size());
-	        //acceptArticlesCountByCoAuthor.forEach((key, value) -> System.out.println("Accepted and Rejected Articles:"+ key + ": " + value));
 	        
        
 	        Map<String, Long> rejectedArticlesCountByCoAuthor =  rejectedArticles.stream()
@@ -88,8 +82,6 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	                    Function.identity(),
 	                    Collectors.counting()
 	                ));
-	        //rejectedArticlesCountByCoAuthor.forEach((key, value) -> System.out.println("Rejected Articles:"+ key + ": " + value));
-	        System.out.println("Rejected Articles size:"+rejectedArticlesCountByCoAuthor.size());
 	        
 	        Map<Long, Integer> nonTargetAuthorCountsByArticle = reCiterArticles.stream()
 	                .collect(Collectors.toMap(
@@ -107,8 +99,6 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 				coauthorNameListMap = new HashMap<>();
 				Long articleId = article.getArticleId();
 				
-				
-				
 				listOfAuthors.stream()
 				.filter(author -> author != null && !author.isTargetAuthor())
 				.map(author -> processAuthor(author))        // Process each author to get the name
@@ -123,8 +113,6 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 						 double itemScore = 0.0;
 						int updatedCountAccepted = 0;
 						int updatedCountRejected = 0; 
-						String exportedFeedbackScore =null; 
-						
 						
 						if(acceptArticlesCountByCoAuthor!=null && acceptArticlesCountByCoAuthor.size() > 0)
 						{	
@@ -150,9 +138,7 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 							{
 								updatedCountRejected = countRejected-1;
 							}
-							System.out.println("updatedCountAccepted  and updatedCountRejected"+ updatedCountAccepted + "-" +  updatedCountRejected);
 							itemScore = computeScore(updatedCountAccepted , updatedCountRejected);
-							System.out.println("itemScore"+ decimalFormat.format(itemScore));
 						}
 						//Divide item score by count of the coAuthor of the interested article
 						if(nonTargetAuthorCountsByArticle !=null && nonTargetAuthorCountsByArticle.size() > 0)
@@ -161,40 +147,27 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 									&& nonTargetAuthorCountsByArticle.get(articleId) > 0)
 							{
 								int coAuthorsCount = nonTargetAuthorCountsByArticle.get(articleId);
-								System.out.println("article Id and Count and CoAuthorName itemScore "+ articleId + " - " + coAuthorsCount + " - "+ coAuthorName +" - "+  decimalFormat.format(itemScore));
 								if(article.getGoldStandard() == 1 && coAuthorsCount > 0)
 								{
 									sumAccepted = itemScore / coAuthorsCount;
-									exportedFeedbackScore =  decimalFormat.format(sumAccepted);
-									System.out.println("exportedFeedbackScore :-> "+  exportedFeedbackScore);
-									//sumAccepted = Double.parseDouble(String.format("%.3f", sumAccepted));
-									System.out.println("before conversion sumAccepted :-> "+  sumAccepted);
-									System.out.println("After conversion sumAccepted :-> "+  decimalFormat.format(sumAccepted));
 								}
 								if(article.getGoldStandard() == -1 && coAuthorsCount > 0)
 								{
 									sumRejected = itemScore / coAuthorsCount;
-									exportedFeedbackScore =  decimalFormat.format(sumRejected);
-									System.out.println("exportedFeedbackScore :-> "+  exportedFeedbackScore);
-									//sumRejected = Double.parseDouble(String.format("%.3f", sumRejected));
-									System.out.println("before conversion sumRejected :-> "+  sumRejected);
-									System.out.println("After conversion sumRejected :-> "+  decimalFormat.format(sumRejected));
 								}
 								
 							}
 							
 						}
+						double feedbackScore= determineFeedbackScore(article.getGoldStandard(),sumAccepted, sumRejected, itemScore);
+						String exportedFeedbackScore = decimalFormat.format(feedbackScore);
 						ReCiterArticleFeedbackScore coAuthorNameArticle = populateArticleFeedbackScore(article.getArticleId(),coAuthorName,countAccepted,countRejected,
 								   																	itemScore,sumAccepted,
-								   																	sumRejected,article.getGoldStandard(),exportedFeedbackScore);
+								   																	sumRejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"CoAuthorName");
 						
-						System.out.println(" ReCiterArticleFeedbackScore  details -> :  " + coAuthorNameArticle.toString());
 							coauthorNameListMap.computeIfAbsent(coAuthorName, k-> new ArrayList<>()).add(coAuthorNameArticle);
-				});
-				coauthorNameListMap.forEach((key,value) -> {
-					System.out.println("Article Id -> : "+ articleId + "CoAuthorName : - > " +   key);
-					value.forEach(feedbackArticle -> System.out.println("FeedbackScore : -> " + feedbackArticle.getFeedbackScore()));
-					
+							
+							
 				});
 				
 				// Calculate the sum of all scores
@@ -216,30 +189,13 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 								(oldValue, newValue) -> oldValue, // merge function
 								LinkedHashMap::new // to maintain insertion order
 						));
-				articleCoAuthorsMap.put(article.getArticleId(), coauthorNameListMap);
-				totalScoresByArticleMap.put(article.getArticleId(), totalScore);
-				System.out.println("article Id : -> " + articleId +" totalScore : ->" + totalScore);
+				article.addArticleFeedbackScoresMap(coauthorNameListMap);
 				article.setCoAuthorNameFeedbackScore(totalScore);
 				String exportedCoAuthorNameFeedbackScore = decimalFormat.format(totalScore); 
-				System.out.println("Exported CoAuthor article Score***************"+exportedCoAuthorNameFeedbackScore);
 				article.setExportedCoAuthorNameFeedbackScore(exportedCoAuthorNameFeedbackScore);
 				
 	        });
-	        if (coauthorNameListMap != null && coauthorNameListMap.size() > 0) {
-
-				// Printing using forEach
-				slf4jLogger.info("********STARTING OF ARTICLE COAUTHOR NAME SCORING********************");
-				if (articleCoAuthorsMap != null && articleCoAuthorsMap.size() > 0) {
-
-					String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
-							"subscoreType1", "subscoreValue", "subScoreIndividualScore","UserAssertion"  };
-					exportItemLevelFeedbackScores(identity.getUid(), "CoAuthorName", csvHeaders, articleCoAuthorsMap);
-
-				}
-					slf4jLogger.info("********END OF THE ARTICLE COAUTHOR NAME SCORING********************\n");
-			} else {
-				slf4jLogger.info("********NO FEEDBACK SCORE FOR THE COAUTHOR NAME SECTION********************\n");
-			}
+	       
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
