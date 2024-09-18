@@ -18,20 +18,28 @@
  *******************************************************************************/
 package reciter.engine;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StopWatch;
+
 import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.ReCiterClusterer;
 import reciter.algorithm.cluster.article.scorer.ArticleScorer;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.feedback.article.scorer.ArticleFeedbackScorer;
+import reciter.algorithm.feedback.article.scorer.ReciterFeedbackArticleScorer;
 import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
-import java.util.ArrayList;
-import java.util.List;
+
+
 
 @Slf4j
 public class ReCiterEngine implements Engine {
@@ -39,7 +47,7 @@ public class ReCiterEngine implements Engine {
     public static double clusterSimilarityThresholdScore;
 
     public static double clutseringGrantsThreshold;
-
+    
     @Override
     public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore, double keywordsMax) {
 
@@ -54,10 +62,28 @@ public class ReCiterEngine implements Engine {
         // Perform Phase 1 clustering.
         Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);
         clusterer.cluster();
-
-        ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
-        articleScorer.runArticleScorer(clusterer.getClusters(), identity);
-
+ 
+        if(strategyParameters.isStrategyFeedback()) //going forward this will be default scoring and flag can be toggled from application.properties file
+        {	
+	        //Feedback scoring
+	        StopWatch stopWatchforFeedback = new StopWatch("Article Feedback Scorer");
+	        stopWatchforFeedback.start("Article Feedback Scorer");
+	        ArticleFeedbackScorer feedbackArticleScorer = new ReciterFeedbackArticleScorer(reCiterArticles,identity,parameters,strategyParameters);
+	        feedbackArticleScorer.runFeedbackArticleScorer(reCiterArticles,identity);
+	        stopWatchforFeedback.stop();
+	        log.info(stopWatchforFeedback.getId() + " took " + stopWatchforFeedback.getTotalTimeSeconds() + "s");
+        }
+        else
+        {	
+	        StopWatch stopWatch = new StopWatch("Article Scorer");
+	        stopWatch.start("Article Scorer");
+	        ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
+	        articleScorer.runArticleScorer(clusterer.getClusters(), identity);
+	        stopWatch.stop();
+	        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+	        
+        }
+        
         log.info(clusterer.toString());
 
         EngineOutput engineOutput = new EngineOutput();
