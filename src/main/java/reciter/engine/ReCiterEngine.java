@@ -63,7 +63,7 @@ public class ReCiterEngine implements Engine {
         Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);
         clusterer.cluster();
  
-        if(strategyParameters.isStrategyFeedback()) //going forward this will be default scoring and flag can be toggled from application.properties file
+        if(strategyParameters.isUseGoldStandardEvidence()) //useGoldstandardEvidence = true then it runs.
         {	
 	        //Feedback scoring
 	        StopWatch stopWatchforFeedback = new StopWatch("Article Feedback Scorer");
