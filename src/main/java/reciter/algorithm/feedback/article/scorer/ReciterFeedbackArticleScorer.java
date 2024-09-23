@@ -1,8 +1,13 @@
 package reciter.algorithm.feedback.article.scorer;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -22,7 +27,17 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.util.StopWatch;
+
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
@@ -54,6 +69,7 @@ import reciter.algorithm.evidence.targetauthor.feedback.targetauthorname.TargetA
 import reciter.algorithm.evidence.targetauthor.feedback.targetauthorname.strategy.TargetAuthorNameFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.year.YearFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.year.strategy.YearFeedbackStrategy;
+import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.engine.EngineParameters;
 import reciter.engine.StrategyParameters;
 import reciter.model.article.ReCiterArticle;
@@ -61,6 +77,19 @@ import reciter.model.identity.Identity;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
 
+	
+	  @Value("${aws.s3.use}")
+	    private boolean isS3Use;
+	 
+	  @Value("${aws.dynamoDb.local}")
+	    private boolean isDynamoDbLocal;
+	  
+	  @Autowired
+		private AmazonS3 s3;
+	  
+	  @Value("${aws.s3.feedback.score.bucketName}")
+	  private String FeedbackScoreBucketName;
+	
 	private static final Logger log = LoggerFactory.getLogger(ReciterFeedbackArticleScorer.class);
 	private List<ReCiterArticle> reciterArticles;
 	private Identity identity;
@@ -229,87 +258,50 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		// Format the current date and time to a safe string for file names
 		String timestamp = now.format(formatter);
 
+		String[] csvHeaders = { "PersonIdentifier","Pmid","userAssertion","scoreCites","scoreCoAuthorName","scoreEmail",
+    		 	"scoreInstitution","scoreJournal","scoreJournalSubField","scoreKeyword","scoreOrcid","scoreOrcidCoAuthor",
+    		 	"scoreOrganization","scoreTargetAuthorName","scoreYear" };
+		
 		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-consolidated.csv");
 		
-		try ( // Create BufferedWriter
-				BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toFile()));
-				// Create CSVPrinter
-				CSVPrinter csvPrinter = new CSVPrinter(writer,CSVFormat.Builder.create(CSVFormat.DEFAULT)
-		                             .setHeader("PersonIdentifier",
-		                            		 	"Pmid", 
-		                            		 	"userAssertion",
-		                            		 	"scoreCites",
-		                            		 	"scoreCoAuthorName",
-		                            		 	"scoreEmail",
-		                            		 	"scoreInstitution",
-		                            		 	"scoreJournal",
-		                            		 	"scoreJournalSubField",
-		                            		 	"scoreKeyword",
-		                            		 	"scoreOrcid",
-		                            		 	"scoreOrcidCoAuthor",
-		                            		 	"scoreOrganization",
-		                            		 	"scoreTargetAuthorName",
-		                            		 	"scoreYear"
-		                            		 	)
-		                             .build())) {	
-			articleMap.forEach((articleId, article) -> {
-				try {
-					
-							
-						String citiesFeedbackScore = article.getExportedCitesFeedbackScore()!=null? article.getExportedCitesFeedbackScore() :"0" ;
-						String coAuthorFeedbackScore = article.getExportedCoAuthorNameFeedbackScore()!= null?article.getExportedCoAuthorNameFeedbackScore() :"0";
-						String emailFeedbackScore = article.getExportedEmailFeedbackScore()!=null?article.getExportedEmailFeedbackScore():"0";
-						String institutionFeedbackScore = article.getExportedInstitutionFeedbackScore()!=null?article.getExportedInstitutionFeedbackScore():"0" ;
-						String journalFeedbackScore = article.getExportedJournalFeedackScore()!=null?article.getExportedJournalFeedackScore():"0";
-						String journalSubFieldFeedbackScore = article.getExportedJournalSubFieldFeedbackScore()!=null?article.getExportedJournalSubFieldFeedbackScore():"0";
-						String keywordFeedbackScore = article.getExportedKeywordFeedackScore()!=null?article.getExportedKeywordFeedackScore():"0";
-						String orcidFeedbackScore = article.getExportedOrcidFeedbackScore()!=null?article.getExportedOrcidFeedbackScore():"0";
-						String orcidCoAuthorFeedbackScore = article.getExportedOrcidCoAuthorFeedbackScore()!=null?article.getExportedOrcidCoAuthorFeedbackScore():"0";
-						String organizationFeedbackScore = article.getExportedOrganizationFeedbackScore()!=null?article.getExportedOrganizationFeedbackScore():"0";
-						String targetAuthorNameFeedbackScore = article.getExportedTargetAuthorNameFeedbackScore()!=null?article.getExportedOrganizationFeedbackScore():"0";
-						String yearFeedbackScore = article.getExportedYearFeedbackScore();
-						
-						
-						csvPrinter.printRecord(personIdentifier, 
-								articleId, 
-								article.getGoldStandard(),
-								citiesFeedbackScore,
-								coAuthorFeedbackScore,
-								emailFeedbackScore,
-								institutionFeedbackScore,
-								journalFeedbackScore,
-								journalSubFieldFeedbackScore,
-								keywordFeedbackScore,
-								orcidFeedbackScore,
-								orcidCoAuthorFeedbackScore,
-								organizationFeedbackScore,
-								targetAuthorNameFeedbackScore,
-								yearFeedbackScore
-							//	totalFeedbackScoreStr
-								);
-						
-						
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		if(isS3Use && !isDynamoDbLocal) 
+		{	
+			try ( // Create BufferedWriter
+					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		             OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+					// Create CSVPrinter
+					CSVPrinter csvPrinter = new CSVPrinter(writer,CSVFormat.Builder.create(CSVFormat.DEFAULT)
+			                             .setHeader(csvHeaders)
+			                             .build())) {	
+				
+				mapConsolidatedCSVData(articleMap,csvPrinter,personIdentifier);
 
-			});
-			csvPrinter.flush();
-			// byte[] csvData = baos.toByteArray();
-
-			// Upload CSV to S3
-			/*
-			 * String bucketName = "your-bucket-name"; String keyName =
-			 * "data/total_scores.csv"; try (ByteArrayInputStream bais = new
-			 * ByteArrayInputStream(csvData)) { PutObjectRequest putObjectRequest = new
-			 * PutObjectRequest(bucketName, keyName, bais, null);
-			 * s3Client.putObject(putObjectRequest); }
-			 * 
-			 * System.out.println("CSV file uploaded successfully to S3 bucket.");
-			 */
-		} catch (IOException e) {
-			e.printStackTrace();
+				csvPrinter.flush();
+			//	ddbs3.saveLargeItem((String bucketName, Object object, String keyName));;
+				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
+				 
+			} catch (IOException e) {
+				e.printStackTrace();
+				
+			}	
+		}
+		else
+		{
+			try ( // Create BufferedWriter
+					BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toFile()));
+					// Create CSVPrinter
+					CSVPrinter csvPrinter = new CSVPrinter(writer,CSVFormat.Builder.create(CSVFormat.DEFAULT)
+			                             .setHeader(csvHeaders)
+			                             .build())) {	
+				
+				mapConsolidatedCSVData(articleMap,csvPrinter,personIdentifier);
+				csvPrinter.flush();
+				
+			 
+			} catch (IOException e) {
+				e.printStackTrace();
+				
+			}
 		}
 	}
 	protected void exportArticleItemLevelFeedbackScores(String personIdentifier, List<ReCiterArticle> reCiterArticles)
@@ -328,58 +320,137 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		
 		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-itemLevel.csv");
 
-		try ( // Create BufferedWriter
-				BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toFile()));
-				// Create CSVPrinter
-				CSVPrinter csvPrinter = new CSVPrinter(writer,CSVFormat.Builder.create(CSVFormat.DEFAULT)
-                        .setHeader(csvHeaders).build())) {
-
-			
-			reCiterArticles.stream()
-				 .filter(article -> article!=null && article.getArticleFeedbackScoresMap()!=null && article.getArticleFeedbackScoresMap().size() > 0)	
-				.forEach(article -> {
-						try {
-							  
-							
-								article.getArticleFeedbackScoresMap()
-								 .forEach((exportItem,exportedArticleValues) -> { 
-									 exportedArticleValues.forEach(feedbackScore ->{
-											if(feedbackScore.getFeedbackScore() != 0.0)
-											{
-												//String feedbackScore = article.getExportedFeedbackScore();
-												try {
-													csvPrinter.printRecord(personIdentifier, feedbackScore.getArticleId(),
-															feedbackScore.getAcceptedCount(), feedbackScore.getRejectedCount(), feedbackScore.getFeedbackScoreType(),
-															feedbackScore.getFeedbackScoreFieldValue(), feedbackScore.getFeedbackScore(),feedbackScore.getGoldStandard());
-												} catch (IOException e) {
-													// TODO Auto-generated catch block
-													e.printStackTrace();
-												}
-											}
-									 });
-								 });
-							} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-
-					});
-			csvPrinter.flush();
-			// byte[] csvData = baos.toByteArray();
-
-			// Upload CSV to S3
-			/*
-			 * String bucketName = "your-bucket-name"; String keyName =
-			 * "data/total_scores.csv"; try (ByteArrayInputStream bais = new
-			 * ByteArrayInputStream(csvData)) { PutObjectRequest putObjectRequest = new
-			 * PutObjectRequest(bucketName, keyName, bais, null);
-			 * s3Client.putObject(putObjectRequest); }
-			 * 
-			 * System.out.println("CSV file uploaded successfully to S3 bucket.");
-			 */
-		} catch (IOException e) {
-			e.printStackTrace();
+		if(isS3Use && !isDynamoDbLocal) 
+		{
+			try ( // Create BufferedWriter
+					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		             OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+					// Create CSVPrinter
+					CSVPrinter csvPrinter = new CSVPrinter(writer,CSVFormat.Builder.create(CSVFormat.DEFAULT)
+	                        .setHeader(csvHeaders).build())) {
+	
+					mapItemLevelCSVData(reCiterArticles,csvPrinter,personIdentifier);
+				
+				csvPrinter.flush();
+				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try ( // Create BufferedWriter
+					BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toFile()));
+					// Create CSVPrinter
+					CSVPrinter csvPrinter = new CSVPrinter(writer,CSVFormat.Builder.create(CSVFormat.DEFAULT)
+	                        .setHeader(csvHeaders).build())) {
+	
+					mapItemLevelCSVData(reCiterArticles,csvPrinter,personIdentifier);
+				
+				csvPrinter.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
+	}
+	private void uploadCsvToS3(String csvContent,String fileName) {
+       
+
+        // Create InputStream from CSV content
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
+        
+        // Set metadata
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(csvContent.length());
+        metadata.setContentType("text/csv");
+
+        // Upload the CSV file
+        try {
+            PutObjectRequest request = new PutObjectRequest(FeedbackScoreBucketName, fileName, inputStream, metadata);
+            s3.putObject(request);
+            System.out.println("CSV file uploaded successfully to S3 bucket: " + "BUCKET_NAME");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+	private void mapConsolidatedCSVData(Map<Long,ReCiterArticle> articleMap,CSVPrinter csvPrinter,String personIdentifier)
+	{
+		articleMap.forEach((articleId, article) -> {
+			try {
+				
+						
+					String citiesFeedbackScore = article.getExportedCitesFeedbackScore()!=null? article.getExportedCitesFeedbackScore() :"0" ;
+					String coAuthorFeedbackScore = article.getExportedCoAuthorNameFeedbackScore()!= null?article.getExportedCoAuthorNameFeedbackScore() :"0";
+					String emailFeedbackScore = article.getExportedEmailFeedbackScore()!=null?article.getExportedEmailFeedbackScore():"0";
+					String institutionFeedbackScore = article.getExportedInstitutionFeedbackScore()!=null?article.getExportedInstitutionFeedbackScore():"0" ;
+					String journalFeedbackScore = article.getExportedJournalFeedackScore()!=null?article.getExportedJournalFeedackScore():"0";
+					String journalSubFieldFeedbackScore = article.getExportedJournalSubFieldFeedbackScore()!=null?article.getExportedJournalSubFieldFeedbackScore():"0";
+					String keywordFeedbackScore = article.getExportedKeywordFeedackScore()!=null?article.getExportedKeywordFeedackScore():"0";
+					String orcidFeedbackScore = article.getExportedOrcidFeedbackScore()!=null?article.getExportedOrcidFeedbackScore():"0";
+					String orcidCoAuthorFeedbackScore = article.getExportedOrcidCoAuthorFeedbackScore()!=null?article.getExportedOrcidCoAuthorFeedbackScore():"0";
+					String organizationFeedbackScore = article.getExportedOrganizationFeedbackScore()!=null?article.getExportedOrganizationFeedbackScore():"0";
+					String targetAuthorNameFeedbackScore = article.getExportedTargetAuthorNameFeedbackScore()!=null?article.getExportedOrganizationFeedbackScore():"0";
+					String yearFeedbackScore = article.getExportedYearFeedbackScore();
+					
+					
+					csvPrinter.printRecord(personIdentifier, 
+							articleId, 
+							article.getGoldStandard(),
+							citiesFeedbackScore,
+							coAuthorFeedbackScore,
+							emailFeedbackScore,
+							institutionFeedbackScore,
+							journalFeedbackScore,
+							journalSubFieldFeedbackScore,
+							keywordFeedbackScore,
+							orcidFeedbackScore,
+							orcidCoAuthorFeedbackScore,
+							organizationFeedbackScore,
+							targetAuthorNameFeedbackScore,
+							yearFeedbackScore
+						//	totalFeedbackScoreStr
+							);
+					
+					
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		});
+	}
+	private void mapItemLevelCSVData(List<ReCiterArticle> reCiterArticles,CSVPrinter csvPrinter,String personIdentifier)
+	{
+		reCiterArticles.stream()
+		 .filter(article -> article!=null && article.getArticleFeedbackScoresMap()!=null && article.getArticleFeedbackScoresMap().size() > 0)	
+		.forEach(article -> {
+				try {
+					  
+					
+						article.getArticleFeedbackScoresMap()
+						 .forEach((exportItem,exportedArticleValues) -> { 
+							 exportedArticleValues.forEach(feedbackScore ->{
+									if(feedbackScore.getFeedbackScore() != 0.0)
+									{
+										//String feedbackScore = article.getExportedFeedbackScore();
+										try {
+											csvPrinter.printRecord(personIdentifier, feedbackScore.getArticleId(),
+													feedbackScore.getAcceptedCount(), feedbackScore.getRejectedCount(), feedbackScore.getFeedbackScoreType(),
+													feedbackScore.getFeedbackScoreFieldValue(), feedbackScore.getFeedbackScore(),feedbackScore.getGoldStandard());
+										} catch (IOException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
+									}
+							 });
+						 });
+					} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			});
 	}
 }
