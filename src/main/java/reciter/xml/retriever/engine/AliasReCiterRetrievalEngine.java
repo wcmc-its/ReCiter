@@ -146,6 +146,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles = retrievalResult.getPubMedArticles();
+		
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 

@@ -89,6 +89,8 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity));
 		PubMedQuery emailQuery = pubMedQueryBuilder.build();
+
+
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
 		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
 		pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));

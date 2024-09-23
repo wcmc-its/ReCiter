@@ -133,6 +133,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		List<PubMedQueryResult> pubMedQueryResults = new ArrayList<PubMedQueryResult>();
 
 		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
+			
+			
 			if(!useStrictQueryOnly) {
 				slf4jLogger.info("Constructed lenient count query {}", pubMedQueryType.getLenientCountQuery().getQuery());
 				slf4jLogger.info("Constructed lenient query {}", pubMedQueryType.getLenientQuery().getQuery());

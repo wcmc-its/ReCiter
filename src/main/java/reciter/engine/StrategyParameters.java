@@ -416,8 +416,6 @@ public class StrategyParameters {
     
     @Value("${strategy.feedback.score.cites}")
     private boolean isFeedbackScoreCites;
-    
-    @Value("${strategy.feedback}")
-    private boolean isStrategyFeedback;
+
     
 }
