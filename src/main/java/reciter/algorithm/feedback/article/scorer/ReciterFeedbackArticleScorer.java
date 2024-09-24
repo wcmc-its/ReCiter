@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -15,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,6 +37,7 @@ import org.springframework.util.StopWatch;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -78,19 +81,6 @@ import reciter.model.identity.Identity;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
 
-	
-	  @Value("${aws.s3.use}")
-	    private boolean isS3Use;
-	 
-	  @Value("${aws.dynamoDb.local}")
-	    private boolean isDynamoDbLocal;
-	  
-	  @Autowired
-		private AmazonS3 s3;
-	  
-	  @Value("${aws.s3.feedback.score.bucketName}")
-	  private String FeedbackScoreBucketName;
-	
 	private static final Logger log = LoggerFactory.getLogger(ReciterFeedbackArticleScorer.class);
 	private List<ReCiterArticle> reciterArticles;
 	private Identity identity;
@@ -99,8 +89,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	 * Journal Category Score
 	 */
 	private StrategyContext journalStrategyContext;
-	private StrategyContext journalDomainStrategyContext;
-	private StrategyContext journalFieldStrategyContext;
+	//private StrategyContext journalDomainStrategyContext;
+	//private StrategyContext journalFieldStrategyContext;
 	private StrategyContext journalSubFieldStrategyContext;
 	private StrategyContext orcidStrategyContext;
 	private StrategyContext yearStrategyContext;
@@ -112,6 +102,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext emailStrategyContext;
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
+	
+	private Properties properties = new Properties();
+
 	
 	ExecutorService executorService = Executors.newFixedThreadPool(12);
 	
@@ -265,7 +258,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		
 		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-consolidated.csv");
 		
-		if(isS3Use && !isDynamoDbLocal) 
+		if(isS3UploadRequired()) 
 		{	
 			try ( // Create BufferedWriter
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -322,9 +315,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				"subscoreType1", "subscoreValue", "subScoreIndividualScore","UserAssertion" };
 		
 		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-itemLevel.csv");
-		log.warn("Flags**************************",isS3Use,isDynamoDbLocal);
+		log.warn("Flags**************************",isS3UploadRequired());
 
-		if(isS3Use && !isDynamoDbLocal) 
+		if(isS3UploadRequired()) 
 		{
 			try ( // Create BufferedWriter
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -363,7 +356,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	private void uploadCsvToS3(String csvContent,String fileName) {
        
-
+	
+		String FeedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
         // Create InputStream from CSV content
         ByteArrayInputStream inputStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
         
@@ -374,6 +368,13 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
         // Upload the CSV file
         try {
+        	
+        	final AmazonS3 s3 = AmazonS3ClientBuilder
+					.standard()
+					.withCredentials(new DefaultAWSCredentialsProviderChain())
+					.withRegion(System.getenv("AWS_REGION"))
+					.build();
+        	
         	log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
             PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), fileName, inputStream, metadata);
             try{
@@ -469,4 +470,42 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
 			});
 	}
+	
+	private Properties PropertiesLoader(String fileName) {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream(fileName)) {
+            if (input == null) {
+                System.out.println("Sorry, unable to find " + fileName);
+                return null;
+            }
+            // Load the properties file
+            properties.load(input);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return properties;
+    }
+
+    private String getProperty(String key) {
+        return properties.getProperty(key);
+    }
+
+   
+    
+    private boolean isS3UploadRequired()
+    {
+    	  	  
+  		 Properties properties = PropertiesLoader("application.properties");
+
+         // Retrieve properties
+         String awsS3Use = properties.getProperty("aws.s3.use");
+         boolean isS3Use = Boolean.parseBoolean(awsS3Use);
+         String dynamoDDLocal = properties.getProperty("aws.dynamoDb.local");
+         boolean isDynamoDBLocal = Boolean.parseBoolean(dynamoDDLocal);
+         if(isS3Use && !isDynamoDBLocal) 
+        	 return true;
+    	return false;
+    }
+    
+    
+    
 }

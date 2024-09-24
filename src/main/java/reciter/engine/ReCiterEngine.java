@@ -59,10 +59,12 @@ public class ReCiterEngine implements Engine {
 
         Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids());
 
-        // Perform Phase 1 clustering.
+        //Moved to else block and eventually removed 
+       /* // Perform Phase 1 clustering.
         Clusterer clusterer = new ReCiterClusterer(identity, reCiterArticles);
-        clusterer.cluster();
- 
+        clusterer.cluster();*/ 
+        Clusterer clusterer=null;
+        EngineOutput engineOutput = new EngineOutput();
         if(strategyParameters.isUseGoldStandardEvidence()) //useGoldstandardEvidence = true then it runs.
         {	
 	        //Feedback scoring
@@ -75,37 +77,42 @@ public class ReCiterEngine implements Engine {
         }
         else
         {	
+        	clusterer = new ReCiterClusterer(identity, reCiterArticles);
+            clusterer.cluster();
+            
 	        StopWatch stopWatch = new StopWatch("Article Scorer");
 	        stopWatch.start("Article Scorer");
 	        ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
-	        articleScorer.runArticleScorer(clusterer.getClusters(), identity);
+	         articleScorer.runArticleScorer(clusterer.getClusters(), identity);
 	        stopWatch.stop();
 	        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 	        
-        }
         
-        log.info(clusterer.toString());
-
-        EngineOutput engineOutput = new EngineOutput();
-        //engineOutput.setAnalysis(analysis);
-        List<ReCiterCluster> reCiterClusters = new ArrayList<>();
-        for (ReCiterCluster cluster : clusterer.getClusters().values()) {
-            reCiterClusters.add(cluster);
+	        log.info(clusterer.toString());
+	
+	       // EngineOutput engineOutput = new EngineOutput();
+	        //engineOutput.setAnalysis(analysis);
+	        List<ReCiterCluster> reCiterClusters = new ArrayList<>();
+	        for (ReCiterCluster cluster : clusterer.getClusters().values()) {
+	            reCiterClusters.add(cluster);
+	        }
+	        engineOutput.setReCiterClusters(reCiterClusters);
+         
+	        ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
+	        UseGoldStandard mode;
+	        if (strategyParameters.isUseGoldStandardEvidence()) {
+	            mode = UseGoldStandard.AS_EVIDENCE;
+	        } else {
+	            mode = UseGoldStandard.FOR_TESTING_ONLY;
+	        }
+	
+	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
+	                mode, filterScore, keywordsMax,
+	                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids());
+	        engineOutput.setReCiterFeature(reCiterFeature);
+	        return engineOutput;
         }
-        engineOutput.setReCiterClusters(reCiterClusters);
-        ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
-        UseGoldStandard mode;
-        if (strategyParameters.isUseGoldStandardEvidence()) {
-            mode = UseGoldStandard.AS_EVIDENCE;
-        } else {
-            mode = UseGoldStandard.FOR_TESTING_ONLY;
-        }
-
-        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
-                mode, filterScore, keywordsMax,
-                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids());
-        engineOutput.setReCiterFeature(reCiterFeature);
-        return engineOutput;
+        return engineOutput;       
     }
 
 }
