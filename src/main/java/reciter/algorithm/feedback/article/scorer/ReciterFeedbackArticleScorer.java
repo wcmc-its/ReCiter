@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.StopWatch;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
@@ -278,8 +279,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
 				csvPrinter.flush();
 			//	ddbs3.saveLargeItem((String bucketName, Object object, String keyName));;
+				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				 
+				log.warn("Uploading CSV into S3 ends here******************");
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 				
@@ -319,6 +322,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				"subscoreType1", "subscoreValue", "subScoreIndividualScore","UserAssertion" };
 		
 		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-itemLevel.csv");
+		log.warn("Flags**************************",isS3Use,isDynamoDbLocal);
 
 		if(isS3Use && !isDynamoDbLocal) 
 		{
@@ -332,7 +336,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					mapItemLevelCSVData(reCiterArticles,csvPrinter,personIdentifier);
 				
 				csvPrinter.flush();
+				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
+				log.warn("Uploading CSV into S3 ends here******************");
 				
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -368,10 +374,18 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
         // Upload the CSV file
         try {
-	    log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);	
-            PutObjectRequest request = new PutObjectRequest(FeedbackScoreBucketName, fileName, inputStream, metadata);
-            s3.putObject(request);
-            log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+        	log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+            PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), fileName, inputStream, metadata);
+            try{
+				s3.putObject(putObjectRequest);
+			    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+			}
+			catch(AmazonServiceException e) {
+				// The call was transmitted successfully, but Amazon S3 couldn't process 
+	            // it, so it returned an error response.
+				log.error(e.getErrorMessage());
+			}
+        
         } catch (Exception e) {
             e.printStackTrace();
         }
