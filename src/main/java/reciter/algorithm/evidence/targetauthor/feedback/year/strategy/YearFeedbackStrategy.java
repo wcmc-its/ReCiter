@@ -61,12 +61,12 @@ public class YearFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 	            ));
 
 	        // Print the result
-	        yearCountByArticleStatus.forEach((year, statusMap) -> {
+	        /*yearCountByArticleStatus.forEach((year, statusMap) -> {
 	            System.out.println("Year: " + year);
 	            statusMap.forEach((status, count) -> 
 	                System.out.println("  Status " + status + ": " + count)
 	            );
-	        });
+	        });*/
 	        
 	        // Find the minimum year
 	        Optional<Integer> minYear = reCiterArticles.stream()
@@ -127,7 +127,7 @@ public class YearFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 								
 								feedbackYearMap.computeIfAbsent(article.getJournal().getJournalTitle().trim(), k -> new ArrayList<>()).add(feedbackYear);
 								
-								article.getArticleFeedbackScoresMap().entrySet().stream()
+								feedbackYearMap.entrySet().stream()
 								.filter(entry -> entry.getKey() != null && entry.getValue() != null)
 								.sorted(Map.Entry.comparingByKey())
 								.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,

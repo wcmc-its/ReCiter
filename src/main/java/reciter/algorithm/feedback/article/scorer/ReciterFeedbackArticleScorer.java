@@ -51,10 +51,10 @@ import reciter.algorithm.evidence.targetauthor.feedback.institution.InstitutionF
 import reciter.algorithm.evidence.targetauthor.feedback.institution.strategy.InstitutionFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.journal.JournalFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.journal.strategy.JournalFeedbackStrategy;
-import reciter.algorithm.evidence.targetauthor.feedback.journaldomain.JournalDomainFeedbackStrategyContext;
-import reciter.algorithm.evidence.targetauthor.feedback.journaldomain.strategy.JournalDomainFeedbackStrategy;
-import reciter.algorithm.evidence.targetauthor.feedback.journalfield.JournalFieldFeedbackStrategyContext;
-import reciter.algorithm.evidence.targetauthor.feedback.journalfield.strategy.JournalFieldFeedbackStrategy;
+//import reciter.algorithm.evidence.targetauthor.feedback.journaldomain.JournalDomainFeedbackStrategyContext;
+//import reciter.algorithm.evidence.targetauthor.feedback.journaldomain.strategy.JournalDomainFeedbackStrategy;
+//import reciter.algorithm.evidence.targetauthor.feedback.journalfield.JournalFieldFeedbackStrategyContext;
+//import reciter.algorithm.evidence.targetauthor.feedback.journalfield.strategy.JournalFieldFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.JournalSubFieldFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.strategy.JournalSubFieldFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.keyword.KeywordFeedbackStrategyContext;
@@ -112,7 +112,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
 	
-	ExecutorService executorService = Executors.newFixedThreadPool(14);
+	ExecutorService executorService = Executors.newFixedThreadPool(12);
 	
 	public ReciterFeedbackArticleScorer(List<ReCiterArticle> articles,Identity identity,EngineParameters parameters,StrategyParameters strategyParameters)
 	{
@@ -120,8 +120,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.reciterArticles = articles;
 		this.identity = identity;
 		this.journalStrategyContext = new JournalFeedbackStrategyContext(new JournalFeedbackStrategy());
-		this.journalDomainStrategyContext = new JournalDomainFeedbackStrategyContext(new JournalDomainFeedbackStrategy());
-		this.journalFieldStrategyContext = new JournalFieldFeedbackStrategyContext(new JournalFieldFeedbackStrategy());
+		//this.journalDomainStrategyContext = new JournalDomainFeedbackStrategyContext(new JournalDomainFeedbackStrategy());
+		//this.journalFieldStrategyContext = new JournalFieldFeedbackStrategyContext(new JournalFieldFeedbackStrategy());
 		this.journalSubFieldStrategyContext = new JournalSubFieldFeedbackStrategyContext(new JournalSubFieldFeedbackStrategy());
 		this.orcidStrategyContext = new OrcidFeedbackStrategyContext(new OrcidFeedbackStrategy());
 		this.yearStrategyContext = new YearFeedbackStrategyContext(new YearFeedbackStrategy());
@@ -141,13 +141,13 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		if(strategyParameters.isFeedbackScoreJournal()) {
 			futures.add(submitAndLogTime("Journal Category", executorService, journalStrategyContext, reCiterArticles, identity));
 		}
-		if(strategyParameters.isFeedbackScoreJournalDomain()) {
+		/*if(strategyParameters.isFeedbackScoreJournalDomain()) {
 			futures.add(submitAndLogTime("Journal Domain Category", executorService, journalDomainStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreJournalField()) {
+		}*/
+		/*if(strategyParameters.isFeedbackScoreJournalField()) {
 			futures.add(submitAndLogTime("Journal Field Category", executorService, journalFieldStrategyContext, reCiterArticles, identity));
 
-		}
+		}*/
 		if(strategyParameters.isFeedbackScoreJournalSubField()) {
 			futures.add(submitAndLogTime("Journal SubField Category", executorService, journalSubFieldStrategyContext, reCiterArticles, identity));
 
@@ -427,11 +427,12 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		 .filter(article -> article!=null && article.getArticleFeedbackScoresMap()!=null && article.getArticleFeedbackScoresMap().size() > 0)	
 		.forEach(article -> {
 				try {
-					  
+					 
 					
-						article.getArticleFeedbackScoresMap()
-						 .forEach((exportItem,exportedArticleValues) -> { 
-							 exportedArticleValues.forEach(feedbackScore ->{
+					article.getArticleFeedbackScoresMap().stream()
+						  .flatMap(map -> map.entrySet().stream()
+							 .flatMap(entry -> entry.getValue().stream()))
+						 .forEach(feedbackScore -> { 
 									if(feedbackScore.getFeedbackScore() != 0.0)
 									{
 										//String feedbackScore = article.getExportedFeedbackScore();
@@ -445,7 +446,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 										}
 									}
 							 });
-						 });
+							 
 					} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
