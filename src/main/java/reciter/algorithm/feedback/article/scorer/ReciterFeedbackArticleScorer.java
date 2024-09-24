@@ -368,9 +368,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
         // Upload the CSV file
         try {
+	    log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);	
             PutObjectRequest request = new PutObjectRequest(FeedbackScoreBucketName, fileName, inputStream, metadata);
             s3.putObject(request);
-            System.out.println("CSV file uploaded successfully to S3 bucket: " + "BUCKET_NAME");
+            log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
         } catch (Exception e) {
             e.printStackTrace();
         }
