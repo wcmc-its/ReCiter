@@ -65,6 +65,15 @@ public class ReCiterEngine implements Engine {
         clusterer.cluster();*/ 
         Clusterer clusterer=null;
         EngineOutput engineOutput = new EngineOutput();
+        
+        ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
+        UseGoldStandard mode;
+        if (strategyParameters.isUseGoldStandardEvidence()) {
+            mode = UseGoldStandard.AS_EVIDENCE;
+        } else {
+            mode = UseGoldStandard.FOR_TESTING_ONLY;
+        }
+
         if(strategyParameters.isUseGoldStandardEvidence()) //useGoldstandardEvidence = true then it runs.
         {	
 	        //Feedback scoring
@@ -74,6 +83,11 @@ public class ReCiterEngine implements Engine {
 	        feedbackArticleScorer.runFeedbackArticleScorer(reCiterArticles,identity);
 	        stopWatchforFeedback.stop();
 	        log.info(stopWatchforFeedback.getId() + " took " + stopWatchforFeedback.getTotalTimeSeconds() + "s");
+	        
+	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
+	                mode, filterScore, keywordsMax,
+	                reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);
+	        engineOutput.setReCiterFeature(reCiterFeature);
         }
         else
         {	
@@ -98,19 +112,12 @@ public class ReCiterEngine implements Engine {
 	        }
 	        engineOutput.setReCiterClusters(reCiterClusters);
          
-	        ReCiterFeatureGenerator reCiterFeatureGenerator = new ReCiterFeatureGenerator();
-	        UseGoldStandard mode;
-	        if (strategyParameters.isUseGoldStandardEvidence()) {
-	            mode = UseGoldStandard.AS_EVIDENCE;
-	        } else {
-	            mode = UseGoldStandard.FOR_TESTING_ONLY;
-	        }
-	
+	        
 	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
 	                mode, filterScore, keywordsMax,
 	                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids());
 	        engineOutput.setReCiterFeature(reCiterFeature);
-	        return engineOutput;
+	       
         }
         return engineOutput;       
     }

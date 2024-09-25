@@ -44,6 +44,11 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 
 import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.article.acceptedrejected.AcceptedRejectedStrategyContext;
+import reciter.algorithm.evidence.article.acceptedrejected.strategy.AcceptedRejectedStrategy;
+import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
+import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.CitesFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.strategy.CitesFeedbackStrategy;
@@ -102,7 +107,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext emailStrategyContext;
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
-	
+	private StrategyContext feedbackEvidenceStrategyContext;
+
 	private Properties properties = new Properties();
 
 	
@@ -127,6 +133,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.emailStrategyContext = new EmailFeedbackStrategyContext(new EmailFeedbackStrategy());
 		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(new CoauthorNameFeedbackStrategy());
 		this.citesStrategyContext = new CitesFeedbackStrategyContext(new CitesFeedbackStrategy());
+		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
+		
 	}
 	public void runFeedbackArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) 
 	{
@@ -208,7 +216,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	exportArticleItemLevelReport(reCiterArticles, identity);
             // All tasks completed successfully
             exportArticlesConsolidateReport(reCiterArticles, identity);
-        } else {
+         	((ReCiterArticleStrategyContext) feedbackEvidenceStrategyContext).executeStrategy(reCiterArticles);
+	    } else {
             log.error("One or more tasks failed; report generation may be incomplete.");
         }
 

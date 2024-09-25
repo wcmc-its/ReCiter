@@ -43,9 +43,12 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	
 	private String retrieveJournalSubField(MedlineCitationJournalISSN medlineCitationJournalIssn) {
 		 
+		System.out.println("Coming here**************************"+medlineCitationJournalIssn.getIssn());
 		if(medlineCitationJournalIssn!=null && medlineCitationJournalIssn.getIssn()!=null && !medlineCitationJournalIssn.getIssn().isEmpty())
 		{
+			System.out.println("Coming here1**************************"+medlineCitationJournalIssn.getIssn());
 			ScienceMetrix scienceMetrix = scienceMetrixService.findByIssn(medlineCitationJournalIssn.getIssn());
+			System.out.println("Coming here2**************************"+scienceMetrix);
 			if (scienceMetrix == null)
 				scienceMetrix = scienceMetrixService.findByEissn(medlineCitationJournalIssn.getIssn());
 			if (scienceMetrix != null && scienceMetrix.getScienceMetrixSubfield()!=null &&
@@ -71,6 +74,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 		        List<ReCiterArticle> rejectedArticles = groupedByGoldStandard.getOrDefault(-1, Collections.emptyList());
 
 		        Map<String, Long> acceptArticlesCountByJournalSubField =  acceptedArticles.stream()
+		        .filter(article-> article!=null && article.getJournal()!=null && article.getJournal().getJournalIssn()!=null && article.getJournal().getJournalIssn().size() > 0)		
 	            .flatMap(article -> article.getJournal().getJournalIssn().stream())
 	            .filter(journalIssn-> journalIssn!=null)
 	            .map(journalIssn-> retrieveJournalSubField(journalIssn))
@@ -84,6 +88,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 		        
 	       
 		        Map<String, Long> rejectedArticlesCountByJournalSubField =  rejectedArticles.stream()
+		        		.filter(article-> article!=null && article.getJournal()!=null && article.getJournal().getJournalIssn()!=null && article.getJournal().getJournalIssn().size() > 0)
 		        		.flatMap(article -> article.getJournal().getJournalIssn().stream())
 			            .filter(journalIssn-> journalIssn!=null)
 			            .map(journalIssn-> retrieveJournalSubField(journalIssn))

@@ -18,7 +18,6 @@ import reciter.algorithm.cluster.Clusterer;
 import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.api.parameters.UseGoldStandard;
-import reciter.engine.analysis.ReCiterArticleAffiliationFeature;
 import reciter.engine.analysis.ReCiterArticleAuthorFeature;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.engine.analysis.ReCiterArticleFeature.ArticleKeyword;
@@ -26,20 +25,12 @@ import reciter.engine.analysis.ReCiterArticleFeature.ArticleKeyword.KeywordType;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
-import reciter.engine.analysis.ReCiterFeatureCluster;
-import reciter.engine.analysis.ReCiterArticleAffiliationFeature.ReCiterArticleAffiliationInstitution;
 import reciter.engine.analysis.evidence.Evidence;
-import reciter.engine.analysis.evidence.AffiliationEvidence.InstitutionalAffiliationSource;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.ReCiterCitedBy;
-import reciter.model.article.ReCiterCites;
 import reciter.model.identity.Identity;
-import reciter.model.scopus.Affiliation;
-import reciter.model.scopus.Author;
 
 @Data
 @Slf4j
@@ -490,4 +481,321 @@ public class ReCiterFeatureGenerator {
             reCiterFeature.setArticleKeywordsAcceptedArticles(acceptedKeywords);
         }
     }
+    
+	public ReCiterFeature computeFeatures(UseGoldStandard mode, final double filterScore, final double keywordsMax,
+			List<ReCiterArticle> reciterArticles, List<Long> goldStandardPmids, List<Long> rejectedPmids, Identity identity) {
+		
+		List<Long> finalArticles = reciterArticles.stream().map(article -> article.getArticleId())
+				.collect(Collectors.toList());
+
+		ReCiterFeature reCiterFeature = new ReCiterFeature();
+		reCiterFeature.setPersonIdentifier(identity.getUid());
+		reCiterFeature.setDateAdded(new Date()); // TODO Add 'date_added' to identity.
+		reCiterFeature.setDateUpdated(new Date()); // TODO add 'date_updated' to identity.
+		reCiterFeature.setMode(mode);
+
+		Set<Long> pmidsRetrieved = new HashSet<>();
+		
+
+		// in gold standard but not retrieved TODO optimize
+		List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
+		if (goldStandardPmids != null && goldStandardPmids.size() > 0) {
+			for (long pmid : goldStandardPmids) {
+				if (!pmidsRetrieved.contains(pmid)) {
+					inGoldStandardButNotRetrieved.add(pmid);
+				}
+			}
+		}
+		if (rejectedPmids != null && rejectedPmids.size() > 0) {
+			for (long pmid : rejectedPmids) {
+				if (!pmidsRetrieved.contains(pmid)) {
+					inGoldStandardButNotRetrieved.add(pmid);
+				}
+			}
+		}
+		reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+		List<ReCiterArticle> selectedArticles = new ArrayList<>();
+		if (mode == UseGoldStandard.AS_EVIDENCE) {
+			selectedArticles = reciterArticles.stream()
+					.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore
+							|| reCiterArticle.getGoldStandard() == 1 || reCiterArticle.getGoldStandard() == -1)
+					.collect(Collectors.toList());
+		} else {
+			selectedArticles = reciterArticles.stream()
+					.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore)
+					.collect(Collectors.toList());
+		}
+
+		reCiterFeature.setCountSuggestedArticles(selectedArticles.size());
+
+		// Count of pending publications
+		List<ReCiterArticle> pendingArticles = selectedArticles.stream()
+				.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore
+						&& reCiterArticle.getGoldStandard() == 0)
+				.collect(Collectors.toList());
+		reCiterFeature.setCountPendingArticles(pendingArticles.size());
+
+		List<Long> filteredArticles = selectedArticles.stream().map(article -> article.getArticleId())
+				.collect(Collectors.toList());
+
+		Analysis analysis = Analysis.performAnalysis(finalArticles, filteredArticles, goldStandardPmids);
+
+		log.info("Analysis for uid=[" + identity.getUid() + "]");
+		log.info("Precision=" + analysis.getPrecision());
+		log.info("Recall=" + analysis.getRecall());
+
+		// Calculate accuracy using the new formula
+		double accuracy = (double) (analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size())
+				/ (double) (analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size()
+						+ analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size());
+
+		log.info("Accuracy=" + accuracy);
+
+		log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: "
+				+ analysis.getTruePositiveList());
+		log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: "
+				+ analysis.getTrueNegativeList());
+		log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: "
+				+ analysis.getFalsePositiveList());
+		log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: "
+				+ analysis.getFalseNegativeList());
+		log.info("\n");
+
+		// Set overall accuracy using the new formula
+		reCiterFeature.setOverallAccuracy(accuracy);
+
+		// precision
+		reCiterFeature.setPrecision(analysis.getPrecision());
+
+		// recall
+		reCiterFeature.setRecall(analysis.getRecall());
+
+		// "suggestedArticles"
+		List<ReCiterArticleFeature> reCiterArticleFeatures = new ArrayList<>(selectedArticles.size());
+		for (ReCiterArticle reCiterArticle : selectedArticles) {
+			ReCiterArticleFeature reCiterArticleFeature = new ReCiterArticleFeature();
+			reCiterArticleFeature.setPmid(reCiterArticle.getArticleId());
+			reCiterArticleFeature
+					.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreNonStandardized());
+			reCiterArticleFeature.setTotalArticleScoreStandardized(reCiterArticle.getTotalArticleScoreStandardized());
+
+			if (reCiterArticle.getGoldStandard() == 1) {
+				reCiterArticleFeature.setUserAssertion(PublicationFeedback.ACCEPTED);
+			} 
+			else if (reCiterArticle.getGoldStandard() == -1) {
+				reCiterArticleFeature.setUserAssertion(PublicationFeedback.REJECTED);
+			} else if (reCiterArticle.getGoldStandard() == 0) {
+				reCiterArticleFeature.setUserAssertion(PublicationFeedback.NULL);
+			}
+
+			//publicationDateDisplay
+			reCiterArticleFeature.setPublicationDateDisplay(reCiterArticle.getPublicationDateDisplay());
+
+			//publicationDateStandardized
+			reCiterArticleFeature.setPublicationDateStandardized(reCiterArticle.getPublicationDateStandardized());
+
+			//datePublicationAddedToEntrez
+			if (reCiterArticle.getDatePublicationAddedToEntrez() != null) {
+				reCiterArticleFeature.setDatePublicationAddedToEntrez(reCiterArticle.getDatePublicationAddedToEntrez());
+			}
+
+			//Publication type
+			ReCiterArticlePublicationType reCiterPublicationType = ReCiterArticlePublicationType.builder().build();
+
+			if (reCiterArticle.getPublicationTypeCanonical() != null) {
+				reCiterPublicationType.setPublicationTypeCanonical(reCiterArticle.getPublicationTypeCanonical());
+			}
+			if (reCiterArticle.getPublicationTypePubmed() != null) {
+				reCiterPublicationType.setPublicationTypePubMed(reCiterArticle.getPublicationTypePubmed());
+			}
+			if (reCiterArticle.getPublicationTypeScopus() != null) {
+				reCiterPublicationType.setPublicationTypeScopus(reCiterArticle.getPublicationTypeScopus());
+			}
+
+			reCiterArticleFeature.setPublicationType(reCiterPublicationType);
+
+			//times cited
+			if (reCiterArticle.getTimesCited() != null) {
+				reCiterArticleFeature.setTimesCited(reCiterArticle.getTimesCited());
+			}
+
+			//abstract
+			if (reCiterArticle.getPublicationAbstract() != null) {
+				reCiterArticleFeature.setPublicationAbstract(reCiterArticle.getPublicationAbstract());
+			}
+
+			//article keywords
+			if (reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
+				List<ReCiterArticleFeature.ArticleKeyword> articleKeywords = new ArrayList<>();
+				for (ReCiterArticleMeshHeading reCiterArticleMeshHeading : reCiterArticle.getMeshHeadings()) {
+					if (MeshMajorClusteringStrategy.isMeshMajor(reCiterArticleMeshHeading)) {
+						ReCiterArticleFeature.ArticleKeyword articleKeyword = new ArticleKeyword(
+								reCiterArticleMeshHeading.getDescriptorName().getDescriptorName(),
+								KeywordType.MESH_MAJOR, EngineParameters.getMeshCountMap()
+										.get(reCiterArticleMeshHeading.getDescriptorName().getDescriptorName()));
+						articleKeywords.add(articleKeyword);
+					}
+				}
+				if (!articleKeywords.isEmpty()) {
+					reCiterArticleFeature.setArticleKeywords(articleKeywords);
+				}
+
+			}
+			//scopus doc id
+			if (reCiterArticle.getScopusDocId() != null) {
+				reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
+			}
+
+
+			// journal title
+			reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
+
+			//journal issn
+			reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
+
+			// journal title ISO Abbreviation
+			reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal().getIsoAbbreviation());
+
+			// article title
+			reCiterArticleFeature.setArticleTitle(reCiterArticle.getArticleTitle());
+
+			// volume
+			reCiterArticleFeature.setVolume(reCiterArticle.getVolume());
+
+			// issue
+			reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
+
+			
+			// pages
+			reCiterArticleFeature.setPages(reCiterArticle.getPages());
+
+			if (reCiterArticle.getPmcid() != null) {
+				reCiterArticleFeature.setPmcid(reCiterArticle.getPmcid());
+			}
+
+			// doi
+			reCiterArticleFeature.setDoi(reCiterArticle.getDoi());
+
+			// author list
+			List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
+			int i = 1;
+
+			for (ReCiterAuthor reCiterArticleAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
+				ReCiterArticleAuthorFeature reCiterArticleAuthorFeature = new ReCiterArticleAuthorFeature();
+				// rank
+				reCiterArticleAuthorFeature.setRank(i++);
+
+				// lastname
+				reCiterArticleAuthorFeature.setLastName(reCiterArticleAuthor.getAuthorName().getLastName());
+				// first name
+				reCiterArticleAuthorFeature.setFirstName(reCiterArticleAuthor.getAuthorName().getFirstName());
+				// initials
+				reCiterArticleAuthorFeature.setInitials(reCiterArticleAuthor.getAuthorName().getFirstInitial());
+
+				//email
+				if (reCiterArticleAuthor.getAffiliation() != null) {
+					Pattern pattern = Pattern.compile("([a-z0-9_.-]+)@([a-z0-9_.-]+[a-z])", Pattern.CASE_INSENSITIVE);
+					Matcher matcher = pattern.matcher(reCiterArticleAuthor.getAffiliation());
+					while (matcher.find()) {
+						reCiterArticleAuthorFeature.setEmail(matcher.group());
+					}
+				}
+				// isTargetAuthor
+				reCiterArticleAuthorFeature.setTargetAuthor(reCiterArticleAuthor.isTargetAuthor());
+
+				// Orcid
+				if (reCiterArticleAuthor.getOrcid() != null && !reCiterArticleAuthor.getOrcid().isEmpty()) {
+					Pattern pattern = Pattern.compile("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}");
+					Matcher matcher = pattern.matcher(reCiterArticleAuthor.getOrcid());
+					if (matcher.find()) {
+						reCiterArticleAuthorFeature.setOrcid(matcher.group());
+					}
+				}
+				//EqualContrib
+				if (reCiterArticleAuthor.getEqualContrib() != null
+						&& !reCiterArticleAuthor.getEqualContrib().isEmpty()) {
+					reCiterArticleAuthorFeature.setEqualContrib(reCiterArticleAuthor.getEqualContrib());
+				}
+
+				reCiterArticleAuthorFeatures.add(reCiterArticleAuthorFeature);
+			}
+			reCiterArticleFeature.setReCiterArticleAuthorFeatures(reCiterArticleAuthorFeatures);
+
+			Evidence evidence = new Evidence();
+			// Affiliation Evidence
+			if (reCiterArticle.getAffiliationEvidence() != null) {
+				evidence.setAffiliationEvidence(reCiterArticle.getAffiliationEvidence());
+			}
+
+			// AuthorName Evidence (the most complete author name in the article)
+			if (reCiterArticle.getAuthorNameEvidence() != null) {
+				evidence.setAuthorNameEvidence(reCiterArticle.getAuthorNameEvidence());
+			}
+
+			// Grant Evidence
+			if (reCiterArticle.getGrantEvidence() != null) {
+				evidence.setGrantEvidence(reCiterArticle.getGrantEvidence());
+			}
+
+			//Journal Category Evidence
+			if (reCiterArticle.getJournalCategoryEvidence() != null) {
+				evidence.setJournalCategoryEvidence(reCiterArticle.getJournalCategoryEvidence());
+			}
+			// Relationship Evidence
+			if (reCiterArticle.getRelationshipEvidence() != null) {
+				evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());
+			}
+
+			// Education Year Evidence
+			if (reCiterArticle.getEducationYearEvidence() != null) {
+				evidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
+			}
+
+			if(reCiterArticle.getFeedbackEvidence() !=null) {
+				evidence.setFeedbackEvidence(reCiterArticle.getFeedbackEvidence());
+			}
+				
+			/*if (reCiterArticle.getAcceptedRejectedEvidence() != null) {
+				evidence.setAcceptedRejectedEvidence(reCiterArticle.getAcceptedRejectedEvidence());
+			}*/
+
+			if (reCiterArticle.getOrganizationalUnitEvidences() != null) {
+				evidence.setOrganizationalUnitEvidence(reCiterArticle.getOrganizationalUnitEvidences());
+			}
+
+			if (reCiterArticle.getPersonTypeEvidence() != null) {
+				evidence.setPersonTypeEvidence(reCiterArticle.getPersonTypeEvidence());
+			}
+
+			if (reCiterArticle.getEmailEvidence() != null) {
+				evidence.setEmailEvidence(reCiterArticle.getEmailEvidence());
+			}
+
+			if (reCiterArticle.getArticleCountEvidence() != null) {
+				evidence.setArticleCountEvidence(reCiterArticle.getArticleCountEvidence());
+			}
+
+			/*if (reCiterArticle.getAverageClusteringEvidence() != null) {
+				evidence.setAverageClusteringEvidence(reCiterArticle.getAverageClusteringEvidence());
+			}*/
+
+			if (reCiterArticle.getGenderEvidence() != null
+					&& reCiterArticle.getGenderEvidence().getGenderScoreIdentityArticleDiscrepancy() != null) {
+				evidence.setGenderEvidence(reCiterArticle.getGenderEvidence());
+			}
+
+			log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
+			reCiterArticleFeature.setEvidence(evidence);
+
+			reCiterArticleFeatures.add(reCiterArticleFeature);
+		}
+		calculateTopKeywords(reCiterArticleFeatures, reCiterFeature, keywordsMax);
+		
+		//Sorting the List in descending order based on TotalScoreNonStandardized
+		reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures.stream()
+				.sorted(Comparator.comparing(ReCiterArticleFeature::getTotalArticleScoreNonStandardized).reversed())
+				.collect(Collectors.toList()));
+
+		return reCiterFeature;
+	}
 }
