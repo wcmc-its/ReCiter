@@ -470,9 +470,9 @@ public class ReCiterController {
         final double totalScore;
         
         if(totalStandardizedArticleScore == null) {
-        	totalScore = totalArticleScoreStandardizedDefault;
+        	totalScore = totalArticleScoreStandardizedDefault/10; // Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-        	totalScore = totalStandardizedArticleScore;
+        	totalScore = totalStandardizedArticleScore/10; // Configuring the totalScore in multiple of 10's in application.properties file
         }
     	
         EngineOutput engineOutput;
@@ -563,7 +563,7 @@ public class ReCiterController {
 					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore 
+							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
 							&& 
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							||
@@ -988,9 +988,9 @@ public class ReCiterController {
             parameters.setRejectedPmids(goldStandard.getRejectedPmids());
         }
         if (totalStandardizedArticleScore == null) {
-            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault());
+            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault()/10);// Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore);
+            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore/10); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
     }

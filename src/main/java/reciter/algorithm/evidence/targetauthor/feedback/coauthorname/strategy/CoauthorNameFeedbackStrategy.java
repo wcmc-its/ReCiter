@@ -61,8 +61,8 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	            .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
 
 	        // Get lists of articles based on gold standard
-	        List<ReCiterArticle> acceptedArticles = groupedByGoldStandard.getOrDefault(1, Collections.emptyList());
-	        List<ReCiterArticle> rejectedArticles = groupedByGoldStandard.getOrDefault(-1, Collections.emptyList());
+	        List<ReCiterArticle> acceptedArticles = groupedByGoldStandard.getOrDefault(ACCEPTED, Collections.emptyList());
+	        List<ReCiterArticle> rejectedArticles = groupedByGoldStandard.getOrDefault(REJECTED, Collections.emptyList());
 
 	        Map<String, Long> acceptArticlesCountByCoAuthor =  acceptedArticles.stream()
             .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream())

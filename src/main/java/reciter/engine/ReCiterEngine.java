@@ -19,7 +19,10 @@
 package reciter.engine;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StopWatch;
@@ -73,24 +76,22 @@ public class ReCiterEngine implements Engine {
         } else {
             mode = UseGoldStandard.FOR_TESTING_ONLY;
         }
+      
+        //Checking for Accepted and Rejected articles 
+        Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
+	            .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
+		
+		//articles with the user assertion 1
+		int acceptedArticles = groupedByGoldStandard.getOrDefault(1, Collections.emptyList()).size();
+		
+		//articles with the user assertion -1
+		int rejectedArticles = groupedByGoldStandard.getOrDefault(-1, Collections.emptyList()).size();
+        
+		  System.out.println("Accepted articles: " +acceptedArticles +"  and Rejected articles:  "+ rejectedArticles);
 
-        if(strategyParameters.isUseGoldStandardEvidence()) //useGoldstandardEvidence = true then it runs.
-        {	
-	        //Feedback scoring
-	        StopWatch stopWatchforFeedback = new StopWatch("Article Feedback Scorer");
-	        stopWatchforFeedback.start("Article Feedback Scorer");
-	        ArticleFeedbackScorer feedbackArticleScorer = new ReciterFeedbackArticleScorer(reCiterArticles,identity,parameters,strategyParameters);
-	        feedbackArticleScorer.runFeedbackArticleScorer(reCiterArticles,identity);
-	        stopWatchforFeedback.stop();
-	        log.info(stopWatchforFeedback.getId() + " took " + stopWatchforFeedback.getTotalTimeSeconds() + "s");
-	        
-	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
-	                mode, filterScore, keywordsMax,
-	                reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);
-	        engineOutput.setReCiterFeature(reCiterFeature);
-        }
-        else
-        {	
+        if(mode == UseGoldStandard.FOR_TESTING_ONLY || (acceptedArticles ==0 && rejectedArticles == 0))
+        {
+        	System.out.println("Coming into ReCiter Article Scorer Section***********************");
         	clusterer = new ReCiterClusterer(identity, reCiterArticles);
             clusterer.cluster();
             
@@ -98,6 +99,13 @@ public class ReCiterEngine implements Engine {
 	        stopWatch.start("Article Scorer");
 	        ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
 	         articleScorer.runArticleScorer(clusterer.getClusters(), identity);
+	         List<ReCiterArticle> allArticles = clusterer.getClusters().values().stream()
+	 			    .map(ReCiterCluster::getArticleCluster) // Get each list of articles
+	 			    .flatMap(List::stream)                  // Flatten the lists into a single stream
+	 			    .collect(Collectors.toList());
+	 		System.out.println("******************** size of teh list " + allArticles.size());
+	 		if(allArticles!=null && allArticles.size() > 0)
+	 			articleScorer.executePythonScriptForArticleIdentityTotalScore(allArticles,identity);
 	        stopWatch.stop();
 	        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 	        
@@ -117,8 +125,38 @@ public class ReCiterEngine implements Engine {
 	                mode, filterScore, keywordsMax,
 	                clusterer, parameters.getKnownPmids(), parameters.getRejectedPmids());
 	        engineOutput.setReCiterFeature(reCiterFeature);
-	       
+	
+        	
         }
+        else if(strategyParameters.isUseGoldStandardEvidence() && (acceptedArticles > 0 || rejectedArticles > 0)) //useGoldstandardEvidence = true then it runs.
+        {	
+        	System.out.println("Coming into ReCiter Article Feedback Scorer Section***********************");
+        	//Identity Scoring
+        	clusterer = new ReCiterClusterer(identity, reCiterArticles);
+            clusterer.cluster();
+            
+	        StopWatch stopWatch = new StopWatch("Article Scorer");
+	        stopWatch.start("Article Scorer");
+	        ArticleScorer articleScorer = new ReCiterArticleScorer(clusterer.getClusters(), identity, strategyParameters);
+	         articleScorer.runArticleScorer(clusterer.getClusters(), identity);
+	         
+	        stopWatch.stop();
+	        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+	        
+	        //Feedback scoring
+	        StopWatch stopWatchforFeedback = new StopWatch("Article Feedback Scorer");
+	        stopWatchforFeedback.start("Article Feedback Scorer");
+	        ArticleFeedbackScorer feedbackArticleScorer = new ReciterFeedbackArticleScorer(reCiterArticles,identity,parameters,strategyParameters);
+	        feedbackArticleScorer.runFeedbackArticleScorer(reCiterArticles,identity);
+	        stopWatchforFeedback.stop();
+	        log.info(stopWatchforFeedback.getId() + " took " + stopWatchforFeedback.getTotalTimeSeconds() + "s");
+	        log.info("knownPMIDs and Rejected PMIDs**********", parameters.getKnownPmids(), parameters.getRejectedPmids() );
+	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
+	                mode, filterScore, keywordsMax,
+	                reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);
+	        engineOutput.setReCiterFeature(reCiterFeature);
+        }
+       
         return engineOutput;       
     }
 

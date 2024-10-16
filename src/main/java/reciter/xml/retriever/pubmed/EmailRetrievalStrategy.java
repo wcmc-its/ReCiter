@@ -52,39 +52,43 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	 * Concatenate email strings with " or ".
 	 */
 
-	private String constructEmailQuery(Identity identity) {
-    	if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
-	
-        	// Initialize the iterator for the email set
-        	Iterator<String> iterator = identity.getEmails().iterator();
-	
-        	// Enclose the first email in double quotes
-        	final String first = "\"" + iterator.next().replace(',', '.') + "\"";
-        	if (!iterator.hasNext()) {
-            	return first;
-        	}
-	
-        	// For multiple emails, build the query string with double quotes
-        	final StringBuilder buf = new StringBuilder(30); // 30 is approx length of 2 email strings.
-        	buf.append(first);
-	
-        	while (iterator.hasNext()) {
-            	buf.append(" OR ");
-            	final String obj = iterator.next();
-	
-            	// Replace any commas with dots and enclose in double quotes
-            	buf.append("\"" + obj.replace(',', '.') + "\"");
-        	}
-        	return buf.toString();
-    	} else {
-        	return null;
-    	}
+	private String constructEmailQuery(Identity identity) 
+	{
+		if (identity!=null && identity.getEmails() != null && !identity.getEmails().isEmpty()) 
+		{
+
+			// Initialize the iterator for the email set
+			Iterator<String> iterator = identity.getEmails().iterator();
+
+			// Enclose the first email in double quotes
+			final String first = "\"" + iterator.next().replace(',', '.') + "\"";
+			if (!iterator.hasNext()) {
+				return first;
+			}
+
+			// For multiple emails, build the query string with double quotes
+			final StringBuilder buf = new StringBuilder(30); // 30 is approx length of 2 email strings.
+			buf.append(first);
+
+			while (iterator.hasNext()) {
+				buf.append(" OR ");
+				final String obj = iterator.next();
+
+				// Replace any commas with dots and enclose in double quotes
+				buf.append("\"" + obj.replace(',', '.') + "\"");
+			}
+			return buf.toString();
+		} 
+		else 
+			return null;
+		
 	}
 
 
 	
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
+	protected List<PubMedQueryType> buildQuery(Identity identity,
+			Map<IdentityNameType, Set<AuthorName>> identityNames) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity));
@@ -102,13 +106,14 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames,
+			Date startDate, Date endDate) {
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity))
-				.dateRange(true, startDate, endDate);
+		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity)).dateRange(true,
+				startDate, endDate);
 		PubMedQuery emailQuery = pubMedQueryBuilder.build();
-		
+
 		PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder(constructEmailQuery(identity));
 		PubMedQuery emailQueryCount = pubMedQueryBuilderCount.build();
 
@@ -121,7 +126,7 @@ public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 
 		return pubMedQueries;
 	}
-	
+
 	@Override
 	public RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException {
 		throw new UnsupportedOperationException("Does not support retrieval by pmids.");

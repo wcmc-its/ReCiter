@@ -1,5 +1,6 @@
 package reciter.algorithm.feedback.article.scorer;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -7,15 +8,21 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -24,29 +31,29 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.util.StopWatch;
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
-import reciter.algorithm.evidence.article.acceptedrejected.AcceptedRejectedStrategyContext;
-import reciter.algorithm.evidence.article.acceptedrejected.strategy.AcceptedRejectedStrategy;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
@@ -78,15 +85,31 @@ import reciter.algorithm.evidence.targetauthor.feedback.targetauthorname.TargetA
 import reciter.algorithm.evidence.targetauthor.feedback.targetauthorname.strategy.TargetAuthorNameFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.year.YearFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.year.strategy.YearFeedbackStrategy;
-import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.engine.EngineParameters;
 import reciter.engine.StrategyParameters;
+import reciter.engine.analysis.evidence.AffiliationEvidence;
+import reciter.engine.analysis.evidence.ArticleCountEvidence;
+import reciter.engine.analysis.evidence.AuthorNameEvidence;
+import reciter.engine.analysis.evidence.EducationYearEvidence;
+import reciter.engine.analysis.evidence.EmailEvidence;
+import reciter.engine.analysis.evidence.GenderEvidence;
+import reciter.engine.analysis.evidence.JournalCategoryEvidence;
+import reciter.engine.analysis.evidence.NonTargetAuthorScopusAffiliation;
+import reciter.engine.analysis.evidence.RelationshipEvidence;
+import reciter.engine.analysis.evidence.RelationshipNegativeMatch;
+import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
+import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.identity.Identity;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
 
+	
 	private static final Logger log = LoggerFactory.getLogger(ReciterFeedbackArticleScorer.class);
+	private static final int ACCEPTED_ASSERTION =1;
+	private static final int REJECTED_ASSERTION =-1;
+	private static final int PENDING_ASSERTION = 0;
 	private List<ReCiterArticle> reciterArticles;
 	private Identity identity;
 	public static StrategyParameters strategyParameters;
@@ -120,8 +143,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.reciterArticles = articles;
 		this.identity = identity;
 		this.journalStrategyContext = new JournalFeedbackStrategyContext(new JournalFeedbackStrategy());
-		//this.journalDomainStrategyContext = new JournalDomainFeedbackStrategyContext(new JournalDomainFeedbackStrategy());
-		//this.journalFieldStrategyContext = new JournalFieldFeedbackStrategyContext(new JournalFieldFeedbackStrategy());
 		this.journalSubFieldStrategyContext = new JournalSubFieldFeedbackStrategyContext(new JournalSubFieldFeedbackStrategy());
 		this.orcidStrategyContext = new OrcidFeedbackStrategyContext(new OrcidFeedbackStrategy());
 		this.yearStrategyContext = new YearFeedbackStrategyContext(new YearFeedbackStrategy());
@@ -143,13 +164,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		if(strategyParameters.isFeedbackScoreJournal()) {
 			futures.add(submitAndLogTime("Journal Category", executorService, journalStrategyContext, reCiterArticles, identity));
 		}
-		/*if(strategyParameters.isFeedbackScoreJournalDomain()) {
-			futures.add(submitAndLogTime("Journal Domain Category", executorService, journalDomainStrategyContext, reCiterArticles, identity));
-		}*/
-		/*if(strategyParameters.isFeedbackScoreJournalField()) {
-			futures.add(submitAndLogTime("Journal Field Category", executorService, journalFieldStrategyContext, reCiterArticles, identity));
-
-		}*/
 		if(strategyParameters.isFeedbackScoreJournalSubField()) {
 			futures.add(submitAndLogTime("Journal SubField Category", executorService, journalSubFieldStrategyContext, reCiterArticles, identity));
 
@@ -217,6 +231,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
             // All tasks completed successfully
             exportArticlesConsolidateReport(reCiterArticles, identity);
          	((ReCiterArticleStrategyContext) feedbackEvidenceStrategyContext).executeStrategy(reCiterArticles);
+         	executePythonScriptForArticleFeedbackTotal(reCiterArticles,identity);
 	    } else {
             log.error("One or more tasks failed; report generation may be incomplete.");
         }
@@ -280,7 +295,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				mapConsolidatedCSVData(articleMap,csvPrinter,personIdentifier);
 
 				csvPrinter.flush();
-			//	ddbs3.saveLargeItem((String bucketName, Object object, String keyName));;
 				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				log.warn("Uploading CSV into S3 ends here******************");
@@ -324,8 +338,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				"subscoreType1", "subscoreValue", "subScoreIndividualScore","UserAssertion" };
 		
 		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-itemLevel.csv");
-		log.warn("Flags**************************",isS3UploadRequired());
-
+		
 		if(isS3UploadRequired()) 
 		{
 			try ( // Create BufferedWriter
@@ -365,7 +378,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	private void uploadCsvToS3(String csvContent,String fileName) {
        
-	
 		String FeedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
         // Create InputStream from CSV content
         ByteArrayInputStream inputStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
@@ -373,8 +385,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         // Set metadata
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(csvContent.length());
-        metadata.setContentType("text/csv");
-
+       	metadata.setContentType("text/csv");
+     
         // Upload the CSV file
         try {
         	
@@ -498,8 +510,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         return properties.getProperty(key);
     }
 
-   
-    
     private boolean isS3UploadRequired()
     {
     	  	  
@@ -514,7 +524,246 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	 return true;
     	return false;
     }
+      private List<ReCiterArticle> executePythonScriptForArticleFeedbackTotal(List<ReCiterArticle> reCiterArticles, Identity identity) {
     
+    	reCiterArticles.forEach(articleId -> System.out.println("articleId :"+ articleId.getArticleId()));
+    	
+    	//retrieving countAccepted, CountRejected and CountNull 
+		
+		Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
+	            .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
+		
+		//countAccepted
+		int countAccepted = groupedByGoldStandard.getOrDefault(ACCEPTED_ASSERTION, Collections.emptyList()).size();
+		
+		//countRejected
+		int countRejected = groupedByGoldStandard.getOrDefault(REJECTED_ASSERTION, Collections.emptyList()).size();
+		
+    	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.stream()
+														                //.map(ReciterFeedbackArticleScorer::mapToFeedbackScore)
+														                .map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
+														    		    .peek(score -> System.out.println("ReCiter Article feedback Scorer articleId : "+score.getArticleId() +" - "+ score.getFeedbackScoreCites())) //Debugging output
+														                .collect(Collectors.toList());
+	
+    	ObjectMapper objectMapper = new ObjectMapper();
+    	// Define a DateTimeFormatter for safe file name format
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
+
+		// Get current date and time
+		LocalDateTime now = LocalDateTime.now();
+
+		// Format the current date and time to a safe string for file names
+		String timestamp = now.format(formatter);
+
+		String fileName = StringUtils.join(timestamp, "-" , identity.getUid(), "-feedbackIdentityScoringInput.json");
+		String feedbackIdentityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
+        try {
+        	  if(isS3UploadRequired()) 
+        	  {
+        		  File jsonFile = new File(fileName);
+        		  
+        		// Write the User object to the JSON file
+                  objectMapper.writeValue(jsonFile, articleIdentityFeedbackScore);
+                  System.out.println("JSON data written to file successfully: " + jsonFile.getAbsolutePath());
+                  uploadJsonFileIntoS3(fileName, jsonFile);
+
+        	  }
+        	  else
+        	  {	  
+        		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
+	        	  objectMapper.writeValue(jsonFile,articleIdentityFeedbackScore);
+				  System.out.println("JSON written to file successfully."+jsonFile.getAbsolutePath() +"-" + fileName);
+        	  }
+			  NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
+			  JSONArray articlesIdentityFeedbaclScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName);
+			  return mapAuthorshipLikelyhoodScore(reCiterArticles, articlesIdentityFeedbaclScoreTotal);
+			  
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return null;
+    }
+    private static ReCiterArticleFeedbackIdentityScore mapToFeedbackScore(ReCiterArticle article,int countAccepted, int countRejected) {
+   
+        try {
+        	
+        	return new ReCiterArticleFeedbackIdentityScore(
+														    article.getArticleId(),
+														    getFeedbackScore(article.getCitesFeedbackScore()),
+														    getFeedbackScore(article.getCoAuthorNameFeedbackScore()),
+														    getFeedbackScore(article.getEmailFeedbackScore()),
+														    getFeedbackScore(article.getInstitutionFeedbackScore()),
+														    getFeedbackScore(article.getJournalFeedackScore()),
+														    getFeedbackScore(article.getJournalSubFieldFeedbackScore()),
+														    getFeedbackScore(article.getKeywordFeedackScore()),
+														    getFeedbackScore(article.getOrcidFeedbackScore()),
+														    getFeedbackScore(article.getOrcidCoAuthorFeedbackScore()),
+														    getFeedbackScore(article.getOrganizationFeedbackScore()),
+														    getFeedbackScore(article.getTargetAuthorNameFeedbackScore()),
+														    getFeedbackScore(article.getYearFeedbackScore()),
+														    getArticleCountScore(article.getArticleCountEvidence()),
+														    getEducationYearScore(article.getEducationYearEvidence()),
+														    getEmailMatchScore(article.getEmailEvidence()),
+														    getGenderScore(article.getGenderEvidence()),
+														    article.getGrantEvidenceTotalScore(), 
+														    getJournalSubfieldScore(article.getJournalCategoryEvidence()),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchFirstScore),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchLastScore),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
+														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
+														    getRelationshipEvidenceTotalScore(article.getRelationshipEvidence()),
+														    getNegativeMatchScore(article.getRelationshipEvidence()),
+														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
+														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+														    article.getGoldStandard()==1? countAccepted-1 : countAccepted,  
+														    article.getGoldStandard()==-1? countRejected-1: countRejected,
+														    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+
+    }
     
-    
+	// Helper methods
+	private static double getFeedbackScore(Double score) {
+	    return Optional.ofNullable(score).orElse(0.0);
+	}
+
+	private static double getArticleCountScore(ArticleCountEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(ArticleCountEvidence::getArticleCountScore)
+	            .orElse(0.0);
+	}
+
+	private static double getEducationYearScore(EducationYearEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
+	            .orElse(0.0);
+	}
+
+	private static double getEmailMatchScore(EmailEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(EmailEvidence::getEmailMatchScore)
+	            .orElse(0.0);
+	}
+
+	private static double getGenderScore(GenderEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(GenderEvidence::getGenderScoreIdentityArticleDiscrepancy)
+	            .orElse(0.0);
+	}
+
+	private static double getJournalSubfieldScore(JournalCategoryEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(JournalCategoryEvidence::getJournalSubfieldScore)
+	            .orElse(0.0);
+	}
+
+	private static double getNameMatchScore(AuthorNameEvidence evidence, Function<AuthorNameEvidence, Double> scoreFunction) {
+	    return Optional.ofNullable(evidence)
+	            .map(scoreFunction)
+	            .orElse(0.0);
+	}
+
+	private static double getRelationshipEvidenceTotalScore(RelationshipEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(RelationshipEvidence::getRelationshipEvidenceTotalScore)
+	            .orElse(0.0);
+	}
+
+	private static double getNegativeMatchScore(RelationshipEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(RelationshipEvidence::getRelationshipNegativeMatch)
+	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
+	            .orElse(0.0);
+	}
+
+	private static double getNonTargetAuthorInstitutionalAffiliationScore(AffiliationEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(AffiliationEvidence::getScopusNonTargetAuthorAffiliation)
+	            .map(NonTargetAuthorScopusAffiliation::getNonTargetAuthorInstitutionalAffiliationScore)
+	            .orElse(0.0);
+	}
+
+	private static double getTargetAuthorAffiliationScore(AffiliationEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(AffiliationEvidence::getScopusTargetAuthorAffiliation)
+	            .map(affiliations -> affiliations.stream()
+	                    .mapToDouble(TargetAuthorScopusAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
+	                    .sum())
+	            .orElse(0.0);
+	}
+
+	private static double getPubmedTargetAuthorAffiliationScore(AffiliationEvidence evidence) {
+	    return Optional.ofNullable(evidence)
+	            .map(AffiliationEvidence::getPubmedTargetAuthorAffiliation)
+	            .map(TargetAuthorPubmedAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
+	            .orElse(0.0);
+	}
+	
+	private static List<ReCiterArticle> mapAuthorshipLikelyhoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelyhoodScoreArray)
+	{
+		 return reCiterArticles.stream()
+				 				 .filter(Objects::nonNull)
+				 				 .map(article -> findJSONObjectById(authorshipLikelyhoodScoreArray, article))
+						         .filter(Objects::nonNull) // Filter out null values returned from findJSONObjectById
+						         .collect(Collectors.toList()); // Collect the results if needed, or just perform the mapping
+	}
+	// Helper method to find JSONObject by article
+	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
+	    for (int i = 0; i < jsonArray.length(); i++) {
+	        JSONObject jsonObject = jsonArray.getJSONObject(i);
+	        if (jsonObject.getLong("id") == article.getArticleId()) {
+	            article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
+	                    .setScale(3, RoundingMode.DOWN)
+	                    .doubleValue());
+	            return article; // Return the modified article
+	        }
+	    }
+	    if(article!=null)
+	    	article.setAuthorshipLikelihoodScore(0.0);
+	    return article; // Return null if not found
+	}
+	private void uploadJsonFileIntoS3(String keyName,File file)
+	{
+		String FeedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
+        
+		// Upload the python file
+        try {
+        	
+        	final AmazonS3 s3 = AmazonS3ClientBuilder
+					.standard()
+					.withCredentials(new DefaultAWSCredentialsProviderChain())
+					.withRegion(System.getenv("AWS_REGION"))
+					.build();
+        	
+        	log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+        	PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), keyName, file);
+       
+        	// Optionally, set metadata
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType("application/json");
+            putObjectRequest.setMetadata(metadata);
+
+            
+            try{
+				s3.putObject(putObjectRequest);
+			    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+			}
+			catch(AmazonServiceException e) {
+				// The call was transmitted successfully, but Amazon S3 couldn't process 
+	            // it, so it returned an error response.
+				log.error(e.getErrorMessage());
+			}
+        
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+	}
+
 }

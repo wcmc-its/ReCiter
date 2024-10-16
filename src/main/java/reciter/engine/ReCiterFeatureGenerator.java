@@ -1,6 +1,12 @@
 package reciter.engine;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -11,6 +17,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +38,9 @@ import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.evidence.Evidence;
+import reciter.engine.analysis.evidence.FeedbackEvidence;
+import reciter.engine.analysis.evidence.Grant;
+import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
@@ -36,6 +51,8 @@ import reciter.model.identity.Identity;
 @Slf4j
 public class ReCiterFeatureGenerator {
 
+	
+	
     private double precision;
     private double recall;
 
@@ -268,6 +285,9 @@ public class ReCiterFeatureGenerator {
 
             // volume
             reCiterArticleFeature.setVolume(reCiterArticle.getVolume());
+            
+          //authorshipLikelihoodScore
+			reCiterArticleFeature.setAuthorshipLikelihoodScore(reCiterArticle.getAuthorshipLikelihoodScore());
 
             // issue
             reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
@@ -497,6 +517,13 @@ public class ReCiterFeatureGenerator {
 		Set<Long> pmidsRetrieved = new HashSet<>();
 		
 
+        for (ReCiterArticle reCiterArticle : reciterArticles) {
+            pmidsRetrieved.add(reCiterArticle.getArticleId());
+        }
+	    System.out.println("pmids Retrived***************"+pmidsRetrieved.toString());     
+	    System.out.println("goldStandardPmids ***************"+goldStandardPmids.toString());
+	    System.out.println("rejectedPmids ***************"+rejectedPmids.toString());
+	    
 		// in gold standard but not retrieved TODO optimize
 		List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
 		if (goldStandardPmids != null && goldStandardPmids.size() > 0) {
@@ -575,9 +602,12 @@ public class ReCiterFeatureGenerator {
 		for (ReCiterArticle reCiterArticle : selectedArticles) {
 			ReCiterArticleFeature reCiterArticleFeature = new ReCiterArticleFeature();
 			reCiterArticleFeature.setPmid(reCiterArticle.getArticleId());
-			reCiterArticleFeature
-					.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreNonStandardized());
-			reCiterArticleFeature.setTotalArticleScoreStandardized(reCiterArticle.getTotalArticleScoreStandardized());
+			//reCiterArticleFeature
+					//.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreNonStandardized());
+			//reCiterArticleFeature.setTotalArticleScoreStandardized(reCiterArticle.getTotalArticleScoreStandardized());
+			
+			//authorshipLikelihoodScore
+			reCiterArticleFeature.setAuthorshipLikelihoodScore(reCiterArticle.getAuthorshipLikelihoodScore());
 
 			if (reCiterArticle.getGoldStandard() == 1) {
 				reCiterArticleFeature.setUserAssertion(PublicationFeedback.ACCEPTED);
@@ -751,7 +781,7 @@ public class ReCiterFeatureGenerator {
 				evidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
 			}
 
-			if(reCiterArticle.getFeedbackEvidence() !=null) {
+			if(reCiterArticle.getFeedbackEvidence() !=null ) {
 				evidence.setFeedbackEvidence(reCiterArticle.getFeedbackEvidence());
 			}
 				
@@ -798,4 +828,5 @@ public class ReCiterFeatureGenerator {
 
 		return reCiterFeature;
 	}
+	
 }
