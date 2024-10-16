@@ -33,6 +33,13 @@ DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_HOST = os.getenv('DB_HOST')
 DB_NAME = os.getenv('DB_NAME')
 
+def upload_log_to_s3():
+    s3 = boto3.client('s3')
+    bucket_name = args.bucket_name
+    log_file = 'script.log'
+    
+    s3.upload_file(log_file, bucket_name, log_file)
+
 # Function to fetch data from the database and save as 'feedbackIdentityScoringInput.json'
 def fetch_and_save_data():
     try:
@@ -120,6 +127,10 @@ def read_json_file(file_name):
     except Exception as e:
         logging.error(f"Error reading JSON file: {e}")
         sys.exit(1)  # Exit if there's an error in loading the data
+    finally:
+        logging.info("Script finished")
+        # Call the upload function with your S3 bucket name
+        upload_log_to_s3()
 
 def read_file_from_s3(bucket_name, file_name):
     s3 = boto3.client('s3')
@@ -138,6 +149,11 @@ def read_file_from_s3(bucket_name, file_name):
     except Exception as e:
         print(f"Error reading file from S3: {e}")
         return None
+    
+    finally:
+        logging.info("Script finished")
+        # Call the upload function with your S3 bucket name
+        upload_log_to_s3()
 
 def file_exists_in_s3(bucket_name, file_name):
     s3 = boto3.client('s3')
