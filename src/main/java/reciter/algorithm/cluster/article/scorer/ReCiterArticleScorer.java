@@ -406,7 +406,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	  }
         	  NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
 			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName);
-			  return mapAuthorshipLikelyhoodScore(reCiterArticles, articlesIdentityScoreTotal);
+			  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
  		
        
 
@@ -528,7 +528,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .map(TargetAuthorPubmedAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
  	            .orElse(0.0);
  	}
- 	private static List<ReCiterArticle> mapAuthorshipLikelyhoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelyhoodScoreArray)
+ 	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelyhoodScoreArray)
 	{
 		 return reCiterArticles.stream()
 				 				 .filter(Objects::nonNull)
