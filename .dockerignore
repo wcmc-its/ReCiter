@@ -1,4 +1,10 @@
-/src
+/src/main/java
+/src/main/main.iml
+/src/main/resources/files
+/src/main/resources/images
+/src/main/resources/mongo_sample_queries
+/src/main/resources/application.properties
+/src/main/resources/test.xml
 .pom.xml
 /.git
 
