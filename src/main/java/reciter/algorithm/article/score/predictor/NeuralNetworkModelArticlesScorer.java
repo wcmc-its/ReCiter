@@ -26,7 +26,7 @@ public class NeuralNetworkModelArticlesScorer {
 			 	//System.out.println("category and fileName "+ category + " - " + articleScoreModelFileName +" - " + articleDataFilename + " - " + s3BucketName +" -" + isS3UploadRequiredString);
 
 			 	//Prepare to call the Python script
-	            ProcessBuilder processBuilder = new ProcessBuilder("python", articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
+	            ProcessBuilder processBuilder = new ProcessBuilder("python3", articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
 	            processBuilder.redirectErrorStream(true); 
 	            processBuilder.environment().put("PYTHONIOENCODING", "utf-8");
 	            processBuilder.environment().put("TF_CPP_MIN_LOG_LEVEL", "2");
