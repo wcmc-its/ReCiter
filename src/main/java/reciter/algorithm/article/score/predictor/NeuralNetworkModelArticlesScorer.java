@@ -33,7 +33,7 @@ public class NeuralNetworkModelArticlesScorer {
 	            processBuilder.environment().put("TF_ENABLE_ONEDNN_OPTS", "0"); // Optional, to disable oneDNN ops
 	            if(isS3UploadRequiredString!=null && isS3UploadRequiredString.equalsIgnoreCase("true"))
 	            {
-	            	processBuilder.directory(new File("classes/scripts")); 
+	            	processBuilder.directory(new File("/app/scripts")); 
 	            }
 	            else
 	            	processBuilder.directory(new File("src/main/resources/scripts")); // Set the directory where the script is located
