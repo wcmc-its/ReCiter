@@ -31,7 +31,12 @@ public class NeuralNetworkModelArticlesScorer {
 	            processBuilder.environment().put("PYTHONIOENCODING", "utf-8");
 	            processBuilder.environment().put("TF_CPP_MIN_LOG_LEVEL", "2");
 	            processBuilder.environment().put("TF_ENABLE_ONEDNN_OPTS", "0"); // Optional, to disable oneDNN ops
-	            processBuilder.directory(new File("src/main/resources/scripts")); // Set the directory where the script is located
+	            if(isS3UploadRequiredString!=null && isS3UploadRequiredString.equalsIgnoreCase("true"))
+	            {
+	            	processBuilder.directory(new File("classes/scripts")); 
+	            }
+	            else
+	            	processBuilder.directory(new File("src/main/resources/scripts")); // Set the directory where the script is located
 	            
 	            // Start the process
 	            Process process = processBuilder.start();

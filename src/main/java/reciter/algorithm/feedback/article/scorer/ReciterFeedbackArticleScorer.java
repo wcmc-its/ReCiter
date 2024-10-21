@@ -548,7 +548,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String feedbackIdentityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
         try {
-        	  if(isS3UploadRequired()) 
+        	  if(isS3UploadRequired) 
         	  {
         		  File jsonFile = new File(fileName);
         		  
