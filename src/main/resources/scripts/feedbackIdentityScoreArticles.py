@@ -22,6 +22,7 @@ logging.info("Current Working Directory: %s", os.getcwd())
 parser = argparse.ArgumentParser(description="Read a JSON file.")
 parser.add_argument('file_name', type=str, help='The name of the JSON file to read')
 parser.add_argument('bucket_name', type=str, help='The name of the S3 bucket')
+parser.add_argument('useS3Bucket', type=str, help='Flag whether to use S3 Bucket or not')
 
 # Parse the arguments
 args = parser.parse_args()
@@ -127,10 +128,7 @@ def read_json_file(file_name):
     except Exception as e:
         logging.error(f"Error reading JSON file: {e}")
         sys.exit(1)  # Exit if there's an error in loading the data
-    finally:
-        logging.info("Script finished")
-        # Call the upload function with your S3 bucket name
-        upload_log_to_s3()
+    
 
 def read_file_from_s3(bucket_name, file_name):
     s3 = boto3.client('s3')
@@ -174,19 +172,19 @@ def file_exists_in_s3(bucket_name, file_name):
 # Fetch data and save to 'scoring_input.json'
 #data = fetch_and_save_data()
 # Check if the file exists before trying to read it
-if os.path.isfile(args.file_name):
+if args.useS3Bucket == "false" and os.path.isfile(args.file_name):
     logging.info('reading the file from File folder:')
     data = read_json_file(args.file_name)
     if data is not None:
         logging.info(data)
-    elif file_exists_in_s3(args.bucket_name, args.file_name):
-        logging.info(f"The file '{args.file_name}' exists in the bucket '{args.bucket_name}'.")
-        # Proceed to read the file from S3
-        data = read_file_from_s3(args.bucket_name, args.file_name)
-        if data is not None:
-            logging.info(data)
+elif args.useS3Bucket == "true" and file_exists_in_s3(args.bucket_name, args.file_name):
+    logging.info(f"The file '{args.file_name}' exists in the bucket '{args.bucket_name}'.")
+    # Proceed to read the file from S3
+    data = read_file_from_s3(args.bucket_name, args.file_name)
+    if data is not None:
+        logging.info(data)
 else:
-    logging.info(f"Error: The file '{args.file_name}' does not exist locally and the file '{args.file_name}' does not exist in the bucket '{args.bucket_name}'.")
+    logging.info(f"Error: The file '{args.file_name}' does not exist locally and the file '{args.file_name}' does not exist in the bucket '{args.bucket_name}' and useS3Bucket is '{args.useS3Bucket}'.")
 
 
 #data = read_json_file(args)

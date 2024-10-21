@@ -76,7 +76,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 					Long maxFrequencyCount = Collections.max(firstNameFrequencyCounts.entrySet(), Comparator.comparingLong(Map.Entry::getValue)).getValue();
 					if(articleAuthorFirstNames.size() > 0) {
 						double mostCommonNameRatio = (double) maxFrequencyCount.longValue()/articleAuthorFirstNames.size();
-						reCiterCluster.setClusterReliabilityScore(Math.pow(mostCommonNameRatio, ReCiterArticleScorer.strategyParameters.getClusterReliabilityScoreFactor()));
+						//reCiterCluster.setClusterReliabilityScore(Math.pow(mostCommonNameRatio, ReCiterArticleScorer.strategyParameters.getClusterReliabilityScoreFactor()));
 					}
 				}
 			}
@@ -98,17 +98,17 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 			reCiterArticle.setTotalArticleScoreWithoutClustering(reCiterArticle.getTotalArticleScoreWithoutClustering()
 					- (((reCiterArticle.getAcceptedRejectedEvidence() != null && reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) +
 							((reCiterArticle.getAcceptedRejectedEvidence() != null && reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0)));
-			double clusterScoreDiscrepancy = (reCiterArticle.getTotalArticleScoreWithoutClustering() - averageClusterScore) * ReCiterArticleScorer.strategyParameters.getClusterScoreFactor()
-					* ((reCiterCluster.getClusterReliabilityScore()>0)?reCiterCluster.getClusterReliabilityScore():1);
+			/*double clusterScoreDiscrepancy = (reCiterArticle.getTotalArticleScoreWithoutClustering() - averageClusterScore) * ReCiterArticleScorer.strategyParameters.getClusterScoreFactor()
+					* ((reCiterCluster.getClusterReliabilityScore()>0)?reCiterCluster.getClusterReliabilityScore():1);*/
 			AverageClusteringEvidence averageClusteringEvidence = new AverageClusteringEvidence();
 			averageClusteringEvidence.setClusterScoreAverage(roundAvoid(averageClusterScore, 2));
 			averageClusteringEvidence.setClusterReliabilityScore(roundAvoid(reCiterCluster.getClusterReliabilityScore(),2));
-			averageClusteringEvidence.setClusterScoreModificationOfTotalScore(roundAvoid(-clusterScoreDiscrepancy, 2));
+			//averageClusteringEvidence.setClusterScoreModificationOfTotalScore(roundAvoid(-clusterScoreDiscrepancy, 2));
 			averageClusteringEvidence.setTotalArticleScoreWithoutClustering(roundAvoid(reCiterArticle.getTotalArticleScoreWithoutClustering(), 2));
 			averageClusteringEvidence.setClusterIdentifier(reCiterCluster.getClusterID());
 			//Remove accepted rejected score from raw score - https://github.com/wcmc-its/ReCiter/issues/286
-			double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy;
-			reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(totalArticleScoreNonStandardized, 2));
+			//double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy;
+			//reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(totalArticleScoreNonStandardized, 2));
 			reCiterArticle.setAverageClusteringEvidence(averageClusteringEvidence);
 			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
 		});

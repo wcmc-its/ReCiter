@@ -1,6 +1,5 @@
 package reciter.algorithm.feedback.article.scorer;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -8,10 +7,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,8 +27,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -109,7 +103,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private static final Logger log = LoggerFactory.getLogger(ReciterFeedbackArticleScorer.class);
 	private static final int ACCEPTED_ASSERTION =1;
 	private static final int REJECTED_ASSERTION =-1;
-	private static final int PENDING_ASSERTION = 0;
 	private List<ReCiterArticle> reciterArticles;
 	private Identity identity;
 	public static StrategyParameters strategyParameters;
@@ -117,8 +110,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	 * Journal Category Score
 	 */
 	private StrategyContext journalStrategyContext;
-	//private StrategyContext journalDomainStrategyContext;
-	//private StrategyContext journalFieldStrategyContext;
 	private StrategyContext journalSubFieldStrategyContext;
 	private StrategyContext orcidStrategyContext;
 	private StrategyContext yearStrategyContext;
@@ -495,7 +486,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private Properties PropertiesLoader(String fileName) {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(fileName)) {
             if (input == null) {
-                System.out.println("Sorry, unable to find " + fileName);
+                log.error("Sorry, unable to find " + fileName);
                 return null;
             }
             // Load the properties file
@@ -526,8 +517,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
     }
       private List<ReCiterArticle> executePythonScriptForArticleFeedbackTotal(List<ReCiterArticle> reCiterArticles, Identity identity) {
     
-    	reCiterArticles.forEach(articleId -> System.out.println("articleId :"+ articleId.getArticleId()));
-    	
     	//retrieving countAccepted, CountRejected and CountNull 
 		
 		Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
@@ -542,7 +531,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.stream()
 														                //.map(ReciterFeedbackArticleScorer::mapToFeedbackScore)
 														                .map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
-														    		    .peek(score -> System.out.println("ReCiter Article feedback Scorer articleId : "+score.getArticleId() +" - "+ score.getFeedbackScoreCites())) //Debugging output
+														    		   // .peek(score -> System.out.println("ReCiter Article feedback Scorer articleId : "+score.getArticleId() +" - "+ score.getFeedbackScoreCites())) //Debugging output
 														                .collect(Collectors.toList());
 	
     	ObjectMapper objectMapper = new ObjectMapper();
@@ -556,6 +545,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		String timestamp = now.format(formatter);
 
 		String fileName = StringUtils.join(timestamp, "-" , identity.getUid(), "-feedbackIdentityScoringInput.json");
+		boolean isS3UploadRequired = isS3UploadRequired();
 		String feedbackIdentityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
         try {
         	  if(isS3UploadRequired()) 
@@ -564,7 +554,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         		  
         		// Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, articleIdentityFeedbackScore);
-                  System.out.println("JSON data written to file successfully: " + jsonFile.getAbsolutePath());
+                  log.info("JSON data written to file successfully: ", jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
 
         	  }
@@ -572,11 +562,12 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	  {	  
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
 	        	  objectMapper.writeValue(jsonFile,articleIdentityFeedbackScore);
-				  System.out.println("JSON written to file successfully."+jsonFile.getAbsolutePath() +"-" + fileName);
+				  log.info("JSON written to file successfully.", jsonFile.getAbsolutePath() +"-" + fileName);
         	  }
+        	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
-			  JSONArray articlesIdentityFeedbaclScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName);
-			  return mapAuthorshipLikelyhoodScore(reCiterArticles, articlesIdentityFeedbaclScoreTotal);
+			  JSONArray articlesIdentityFeedbaclScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
+			  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbaclScoreTotal);
 			  
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -706,11 +697,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	            .orElse(0.0);
 	}
 	
-	private static List<ReCiterArticle> mapAuthorshipLikelyhoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelyhoodScoreArray)
+	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
 		 return reCiterArticles.stream()
 				 				 .filter(Objects::nonNull)
-				 				 .map(article -> findJSONObjectById(authorshipLikelyhoodScoreArray, article))
+				 				 .map(article -> findJSONObjectById(authorshipLikelihoodScoreArray, article))
 						         .filter(Objects::nonNull) // Filter out null values returned from findJSONObjectById
 						         .collect(Collectors.toList()); // Collect the results if needed, or just perform the mapping
 	}
@@ -719,9 +710,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	            article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
+	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
 	                    .setScale(3, RoundingMode.DOWN)
-	                    .doubleValue());
+	                    .doubleValue());*/
+	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
 	            return article; // Return the modified article
 	        }
 	    }

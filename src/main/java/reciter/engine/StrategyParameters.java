@@ -275,27 +275,8 @@ public class StrategyParameters {
 
     @Value("${strategy.personTypeScoringStrategy.personTypeScore-student-md-new-york}")
     private double personTypeScoreStudentMdNewyork;
-
-    @Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-accepted}")
-    private double acceptedArticleScore;
-
-    @Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-rejected}")
-    private double rejectedArticleScore;
-
-    @Value("${strategy.acceptedRejectedScoringStrategy.feedbackScore-null}")
-    private double feedbackScoreNullScore;
-
-    @Value("${strategy.averageClusteringScoringStrategy.clusterScore-Factor}")
-    private double clusterScoreFactor;
-    
-    @Value("${strategy.averageClusteringScoringStrategy.clusterReliabilityScoreFactor}")
-    private double clusterReliabilityScoreFactor;
-    
-    @NotEmpty(message = "standardizedScoreMapping cannot be empty. Please include a list of numbers delimited by commas.")
-    @Value("${standardizedScoreMapping}")
-    private String standardizedScoreMapping;
-
-    @Value("${totalArticleScore-standardized-default}")
+ 
+    @Value("${authorshipLikelihoodScore}")
     private double totalArticleScoreStandardizedDefault;
 
     @Value("${strategy.authorAffiliationScoringStrategy.targetAuthor-institutionalAffiliation-matchType-positiveMatch-individual-score}")

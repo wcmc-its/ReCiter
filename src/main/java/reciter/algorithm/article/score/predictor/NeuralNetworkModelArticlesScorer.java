@@ -15,7 +15,7 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	private static final Logger log = LoggerFactory.getLogger(NeuralNetworkModelArticlesScorer.class);
 	
-	public JSONArray executeArticleScorePredictor(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName)
+	public JSONArray executeArticleScorePredictor(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString)
 	{
 	
 		StopWatch stopWatch = new StopWatch(category);
@@ -23,10 +23,10 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	    try {
 	    		
-			 	System.out.println("category and fileName "+ category + " - " + articleScoreModelFileName +" - " + articleDataFilename + " - " + s3BucketName);
+			 	//System.out.println("category and fileName "+ category + " - " + articleScoreModelFileName +" - " + articleDataFilename + " - " + s3BucketName +" -" + isS3UploadRequiredString);
 
 			 	//Prepare to call the Python script
-	            ProcessBuilder processBuilder = new ProcessBuilder("python", articleScoreModelFileName,articleDataFilename,s3BucketName);
+	            ProcessBuilder processBuilder = new ProcessBuilder("python", articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
 	            processBuilder.redirectErrorStream(true); 
 	            processBuilder.environment().put("PYTHONIOENCODING", "utf-8");
 	            processBuilder.environment().put("TF_CPP_MIN_LOG_LEVEL", "2");
@@ -49,11 +49,11 @@ public class NeuralNetworkModelArticlesScorer {
                 if (exitCode == 0) {
                     // Process output
                     String jsonOutput = output.toString();
-                    System.out.println("jsonOutput : ->" + jsonOutput);
+                   // System.out.println("jsonOutput : ->" + jsonOutput);
                     
                     return new JSONArray(jsonOutput);
                 } else {
-                    System.out.println("Script execution failed with exit code: " + exitCode);
+                   // System.out.println("Script execution failed with exit code: " + exitCode);
                 }	
 	
 		} catch (IOException | InterruptedException e) {

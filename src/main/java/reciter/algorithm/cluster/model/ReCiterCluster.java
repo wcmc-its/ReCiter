@@ -279,7 +279,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		boolean match = false;
 		if(comparisonType.equalsIgnoreCase("grant")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
-				if(reCiterArticle.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold) {
+				/*if(reCiterArticle.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold) {
 					for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
 						if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
 							match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold
@@ -293,7 +293,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 						}
 						
 					}
-				}
+				}*/
 			}
 		} else if(comparisonType.equalsIgnoreCase("cites")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
@@ -335,9 +335,9 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 					matchCount = reCiterOverlapCount(reCiterArticle.getReCiterArticleFeatures(), reCiterArticleo.getReCiterArticleFeatures());
 					if(matchCount > 0 && reCiterArticle.getReCiterArticleFeatures().getFeatureCount() >= 3 && reCiterArticleo.getReCiterArticleFeatures().getFeatureCount() >= 3) {
 						clusterSimilarityScore = computeClusterSimilarityScore(reCiterArticle.getReCiterArticleFeatures().getFeatureCount(), reCiterArticleo.getReCiterArticleFeatures().getFeatureCount(), matchCount);
-						if(clusterSimilarityScore > ReCiterEngine.clusterSimilarityThresholdScore) {
+						/*if(clusterSimilarityScore > ReCiterEngine.clusterSimilarityThresholdScore) {
 							return 1;
-						}
+						}*/
 					}
 				}
 			}

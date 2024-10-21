@@ -3,14 +3,10 @@ package reciter.algorithm.cluster.article.scorer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -33,17 +29,8 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
-import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.evidence.StrategyContext;
-import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
-import reciter.algorithm.evidence.article.acceptedrejected.AcceptedRejectedStrategyContext;
-import reciter.algorithm.evidence.article.acceptedrejected.strategy.AcceptedRejectedStrategy;
-import reciter.algorithm.evidence.article.standardizedscore.StandardScoreStrategyContext;
-import reciter.algorithm.evidence.article.standardizedscore.strategy.StandardScoreStrategy;
-import reciter.algorithm.evidence.cluster.ClusterStrategyContext;
-import reciter.algorithm.evidence.cluster.averageclustering.AverageClusteringStrategyContext;
-import reciter.algorithm.evidence.cluster.averageclustering.strategy.AverageClusteringStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
@@ -93,8 +80,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterArticleScorer.class);
 
-	/** Cluster selection strategy contexts. */
-
+	
 	/**
 	 * Email Strategy.
 	 */
@@ -156,10 +142,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private StrategyContext articleTitleInEnglishStrategyContext;
 	
-	private StrategyContext averageClusteringStrategyContext;
-	
-	private StrategyContext standardScoreStrategyContext;
-
 	/**
 	 * Education.
 	 */
@@ -195,11 +177,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private GenderStrategyContext genderStrategyContext;
 
-	/**
-	 * Remove clusters based on cluster information.
-	 */
-	private StrategyContext clusterSizeStrategyContext;
-
+	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
@@ -212,13 +190,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	
 	private List<StrategyContext> strategyContexts;
 
-	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
-	
 	public static StrategyParameters strategyParameters;
 	
 	private Properties properties = new Properties();
 	
-	public ReCiterArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity, StrategyParameters strategyParameters) {
+	public ReCiterArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity, StrategyParameters strategyParameters) {
 		
 		ReCiterArticleScorer.strategyParameters = strategyParameters;
 		
@@ -234,15 +210,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
 		this.grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
-		this.acceptedRejectedStrategyContext = new AcceptedRejectedStrategyContext(new AcceptedRejectedStrategy());
-		this.averageClusteringStrategyContext = new AverageClusteringStrategyContext(new AverageClusteringStrategy());
-		this.standardScoreStrategyContext = new StandardScoreStrategyContext(new StandardScoreStrategy());
-		
-		int numArticles = 0;
-		for (ReCiterCluster reCiterCluster : clusters.values()) {
-			numArticles += reCiterCluster.getArticleCluster().size();
-		}
-		this.articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy(numArticles));
+	
+		//ArticleCountScore
+		this.articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy(reCiterArticles.size()));//numArticles));
 		this.personTypeStrategyContext = new PersonTypeStrategyContext(new PersonTypeStrategy());
 
 
@@ -274,27 +244,12 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		this.strategyContexts.add(this.emailStrategyContext);
 
-		// https://github.com/wcmc-its/ReCiter/issues/136
-		if (strategyParameters.isClusterSize()) {
-			this.strategyContexts.add(this.clusterSizeStrategyContext);
-		}
-		
-		if(strategyParameters.isAverageClustering()) {
-			this.strategyContexts.add(this.averageClusteringStrategyContext);
-		}
-		
-		if(strategyParameters.isGender()) {
-			this.strategyContexts.add(this.genderStrategyContext);
-		}
 	}
 	
 
 	@Override
-	public void runArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity) {
-		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
-			long clusterId = entry.getKey();
-			slf4jLogger.info("******************** Cluster " + clusterId + " scoring starts **********************");
-			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
+	public void runArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		
 			((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
 
 			if (strategyParameters.isEmail()) {
@@ -337,38 +292,26 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
 			
-			if (strategyParameters.isUseGoldStandardEvidence()) {
-				((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
-			}
+			
 			
 			if(strategyParameters.isGender()) {
 				((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
-			
-			if (strategyParameters.isAverageClustering()) {
-				((ClusterStrategyContext) averageClusteringStrategyContext).executeStrategy(entry.getValue());
-			}
-			
-			((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
-			
-			slf4jLogger.info("******************** Cluster " + clusterId + " scoring ends **********************");
-		}
-		 
 	
 	}
 	public List<ReCiterArticle> executePythonScriptForArticleIdentityTotalScore(List<ReCiterArticle> reCiterArticles, Identity identity) {
 	    
-    	System.out.println("articles Size :"+ reCiterArticles.size());
+		slf4jLogger.info("articles Size :", reCiterArticles.size());
     	
    	
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityScore = reCiterArticles.stream()
 																		    		    .map(article -> {
 																		    		        ReCiterArticleFeedbackIdentityScore score = mapToIdentityScore(article);
-																		    		        System.out.println("Processing article: " + article + " -> Score: " + score);
+																		    		       // System.out.println("Processing article: " + article + " -> Score: " + score);
 																		    		        return score;
 																		    		    })
 																		    		    .filter(Objects::nonNull) // Optionally filter out nulls
-																		    		    .peek(score -> System.out.println("ReCiter Article Scorer articleId : "+score.getArticleId())) // Debugging output
+																		    		    //.peek(score -> System.out.println("ReCiter Article Scorer articleId : "+score.getArticleId())) // Debugging output
 																		    		    .collect(Collectors.toList());
     	
     	
@@ -384,17 +327,18 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		String timestamp = now.format(formatter);
 
 		String fileName = StringUtils.join(timestamp, "-" , identity.getUid(), "-identityOnlyScoringInput.json");
-		PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
+		//PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
+		boolean isS3UploadRequired = isS3UploadRequired();
 		String identityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
 		
         try {
-        	  if(isS3UploadRequired()) 
+        	  if(isS3UploadRequired) 
         	  {
         		  File jsonFile = new File(fileName);
 
         		// Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, articleIdentityScore);
-                  System.out.println("JSON data written to file successfully: " + jsonFile.getAbsolutePath());
+                 // System.out.println("JSON data written to file successfully: " + jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
 
         	  }
@@ -402,10 +346,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	  {	  
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
 	        	  objectMapper.writeValue(jsonFile,articleIdentityScore);
-				  System.out.println("JSON written to file successfully.");
+				 // System.out.println("JSON written to file successfully.");
         	  }
+              String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
         	  NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
-			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName);
+			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString);
 			  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
  		
        
@@ -418,11 +363,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
    }
     private static ReCiterArticleFeedbackIdentityScore mapToIdentityScore(ReCiterArticle article) {
     	
-    	System.out.println("articleId : "+article.getArticleId() +"CoAuthorName Feedback Score" + article.getCoAuthorNameFeedbackScore());
-        System.out.println("article getDiscrepancyDegreeYearDoctoralScore : " + Optional.ofNullable(article.getEducationYearEvidence())
-                .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
-                .orElse(0.0));
-   
         try {
         	
         	return new ReCiterArticleFeedbackIdentityScore(
@@ -528,11 +468,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .map(TargetAuthorPubmedAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
  	            .orElse(0.0);
  	}
- 	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelyhoodScoreArray)
+ 	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
 		 return reCiterArticles.stream()
 				 				 .filter(Objects::nonNull)
-						         .map(article -> findJSONObjectById(authorshipLikelyhoodScoreArray, article))
+						         .map(article -> findJSONObjectById(authorshipLikelihoodScoreArray, article))
 						         .filter(Objects::nonNull) // Filter out null values returned from findJSONObjectById
 						         .collect(Collectors.toList()); // Collect the results if needed, or just perform the mapping
 	}
@@ -541,9 +481,10 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	            article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
+	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
 	                    .setScale(3, RoundingMode.DOWN)
-	                    .doubleValue());
+	                    .doubleValue());*/
+	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
 	            return article; // Return the modified article
 	        }
 	    }
@@ -569,7 +510,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private Properties PropertiesLoader(String fileName) {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(fileName)) {
             if (input == null) {
-                System.out.println("Sorry, unable to find " + fileName);
+            	slf4jLogger.error("Sorry, unable to find " , fileName);
                 return null;
             }
             // Load the properties file
