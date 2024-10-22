@@ -1,10 +1,31 @@
 FROM adoptopenjdk/openjdk11:alpine-jre
 
-# Install necessary packages and Python 3.11.1
-RUN apk add --no-cache python3=3.11.1-r0 py3-pip
+# Install necessary dependencies for Python 3.11
+RUN apk add --no-cache \
+    curl \
+    bash \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    openssl-dev \
+    bzip2-dev \
+    zlib-dev \
+    readline-dev \
+    sqlite-dev \
+    tk-dev
+
+# Install Python 3.11 from source
+RUN curl -O https://www.python.org/ftp/python/3.11.1/Python-3.11.1.tgz && \
+    tar -xzf Python-3.11.1.tgz && \
+    cd Python-3.11.1 && \
+    ./configure --enable-optimizations && \
+    make altinstall && \
+    cd .. && \
+    rm -rf Python-3.11.1.tgz Python-3.11.1
 
 # Upgrade pip
-RUN python3 -m pip install --upgrade pip
+RUN python3.11 -m ensurepip && \
+    python3.11 -m pip install --no-cache-dir --upgrade pip
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
