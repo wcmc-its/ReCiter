@@ -23,7 +23,7 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	    try {
 	    		
-			 	//System.out.println("category and fileName "+ category + " - " + articleScoreModelFileName +" - " + articleDataFilename + " - " + s3BucketName +" -" + isS3UploadRequiredString);
+			 	log.info("category and fileName "+ category + " - " + articleScoreModelFileName +" - " + articleDataFilename + " - " + s3BucketName +" -" + isS3UploadRequiredString);
 
 			 	//Prepare to call the Python script
 	            ProcessBuilder processBuilder = new ProcessBuilder("python3", articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
@@ -40,12 +40,13 @@ public class NeuralNetworkModelArticlesScorer {
 	            
 	            // Start the process
 	            Process process = processBuilder.start();
-	            
+	            log.info("processes started");
             	// Capture the output
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 StringBuilder output = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
+                	log.info("input stream line*************************",line);
                     output.append(line);
                 }
                 
