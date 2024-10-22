@@ -7,7 +7,7 @@ RUN apk add --no-cache python3 py3-pip
 COPY src/main/resources/scripts/requirements.txt /app/scripts
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r /app/scripts/requirements.txt
 
 # Create application directory
 RUN mkdir -p /app
