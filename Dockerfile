@@ -3,6 +3,9 @@ FROM adoptopenjdk/openjdk11:alpine-jre
 # Install Python
 RUN apk add --no-cache python3 py3-pip
 
+#copy the requirements.txt file
+COPY src/main/resources/scripts/requirements.txt /app/scripts/requirements.txt
+
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
