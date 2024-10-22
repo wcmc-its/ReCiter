@@ -35,11 +35,15 @@ DB_HOST = os.getenv('DB_HOST')
 DB_NAME = os.getenv('DB_NAME')
 
 def upload_log_to_s3():
-    s3 = boto3.client('s3')
-    bucket_name = args.bucket_name
-    log_file = 'scriptIdentity.log'
-    
-    s3.upload_file(log_file, bucket_name, log_file)
+    try:
+        s3 = boto3.client('s3')
+        bucket_name = args.bucket_name
+        log_file = 'scriptIdentity.log'
+        
+        s3.upload_file(log_file, bucket_name, log_file)
+        logging.info(f'Successfully uploaded {log_file} to {bucket_name}')
+    except Exception as e:
+        logging.error(f'Failed to upload {log_file} to {bucket_name}: {str(e)}')
 
 # Function to fetch data from the database and save as 'scoring_input.json'
 def fetch_and_save_data():
