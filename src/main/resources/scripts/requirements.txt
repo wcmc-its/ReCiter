@@ -1,6 +1,4 @@
 scikit-learn
 pandas
-numpy
-joblib
-tensorflow
+jsonlib-python3
 boto3
