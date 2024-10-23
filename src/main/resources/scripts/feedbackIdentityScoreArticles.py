@@ -10,10 +10,11 @@ import tensorflow
 from tensorflow.keras.models import load_model
 import logging
 import argparse
-#import boto3
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 # Set up logging configuration
-logging.basicConfig(filename='script.log', level=logging.INFO, 
+logging.basicConfig(filename='FeedbackIdentityScore.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 logging.info("Current Working Directory: %s", os.getcwd())
@@ -39,10 +40,14 @@ def upload_log_to_s3():
     try:
         s3 = boto3.client('s3')
         bucket_name = args.bucket_name
-        log_file = 'script.log'
+        log_file = 'FeedbackIdentityScore.log'
         
         s3.upload_file(log_file, bucket_name, log_file)
         logging.info(f'Successfully uploaded {log_file} to {bucket_name}')
+    except FileNotFoundError:
+        logging.error(f'The file {log_file} was not found')
+    except NoCredentialsError:
+        logging.error('Credentials not available')    
     except Exception as e:
         logging.error(f'Failed to upload {log_file} to {bucket_name}: {str(e)}')
     
@@ -156,7 +161,7 @@ def read_file_from_s3(bucket_name, file_name):
     finally:
         logging.info("Script finished")
         # Call the upload function with your S3 bucket name
-        #upload_log_to_s3()
+        upload_log_to_s3()
 
 def file_exists_in_s3(bucket_name, file_name):
     s3 = boto3.client('s3')
