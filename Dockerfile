@@ -31,6 +31,9 @@ RUN pip install --no-cache-dir tensorflow==2.12.0  # Adjust the version as neede
 # Stage 2: Build Java application
 FROM adoptopenjdk/openjdk11:alpine-jre AS java-env
 
+# Install Python and necessary dependencies
+RUN apk add --no-cache python3 py3-pip
+
 # Create application directory
 RUN mkdir -p /app
 WORKDIR /app
