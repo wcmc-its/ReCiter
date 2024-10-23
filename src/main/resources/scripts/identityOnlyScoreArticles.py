@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-import numpy as np
+#import numpy as np
 import os
 #from sqlalchemy import create_engine
 import joblib
@@ -10,7 +10,7 @@ from tensorflow.keras.models import load_model
 import logging
 import sys
 import argparse
-import boto3
+#import boto3
 
 # Set up logging configuration
 logging.basicConfig(filename='scriptIdentity.log', level=logging.INFO, 
@@ -130,7 +130,7 @@ def read_file_from_s3(bucket_name, file_key):
     finally:
         logging.info("ScriptIdentity finished")
         # Call the upload function with your S3 bucket name
-        upload_log_to_s3()
+        #upload_log_to_s3()
 
 def file_exists_in_s3(bucket_name, file_key):
     s3 = boto3.client('s3')
