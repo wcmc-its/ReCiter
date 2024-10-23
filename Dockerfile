@@ -42,6 +42,10 @@ COPY ${JAR_FILE} /app/app.jar
 # Copy Python dependencies from the first stage
 COPY --from=python-env /app /app
 
+# Comment this if you do not have NewRelic integration
+RUN wget https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip && \
+    unzip newrelic-java.zip -d /app 
+
 # Expose the desired port
 EXPOSE 5000
 
