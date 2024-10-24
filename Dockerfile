@@ -19,14 +19,14 @@ WORKDIR /app
 # Copy Python scripts
 COPY src/main/resources/scripts /app/scripts
 
-# Copy the requirements.txt file
-COPY src/main/resources/scripts/requirements.txt /app/requirements.txt
-
 # Stage 2: Build Java application
 FROM adoptopenjdk/openjdk11:alpine-jre AS java-env
 
 # Install Python and necessary dependencies
 RUN apk add --no-cache python3 py3-pip
+
+# Copy the requirements.txt file
+COPY src/main/resources/scripts/requirements.txt /app/requirements.txt
 
 # Install Python packages
 RUN pip install --no-cache-dir -r /app/requirements.txt
