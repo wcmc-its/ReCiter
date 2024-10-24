@@ -22,17 +22,17 @@ COPY src/main/resources/scripts /app/scripts
 # Copy the requirements.txt file
 COPY src/main/resources/scripts/requirements.txt /app/requirements.txt
 
-# Install Python packages
-RUN pip install --no-cache-dir -r /app/requirements.txt
-
-# Install TensorFlow
-RUN pip install --no-cache-dir tensorflow==2.12.0  # Adjust the version as needed
-
 # Stage 2: Build Java application
 FROM adoptopenjdk/openjdk11:alpine-jre AS java-env
 
 # Install Python and necessary dependencies
 RUN apk add --no-cache python3 py3-pip
+
+# Install Python packages
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Install TensorFlow
+RUN pip install --no-cache-dir tensorflow==2.12.0  # Adjust the version as needed
 
 # Create application directory
 RUN mkdir -p /app
