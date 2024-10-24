@@ -1,8 +1,8 @@
 FROM adoptopenjdk/openjdk11:slim
 
-# Install Python and necessary system packages
+# Install Python and necessary system packages, and wget
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip libatlas-base-dev libhdf5-dev \
+    python3 python3-pip libatlas-base-dev libhdf5-dev wget unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip and install Python packages
