@@ -9,9 +9,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies for building OpenJDK and update CA certificates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    python3.8 \
-    
-	git \
     wget \
 	unzip \
 	ca-certificates \
@@ -88,6 +85,12 @@ WORKDIR /app
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} /app/app.jar
 
+# Copy OpenJDK to the final image
+COPY --from=build-openjdk /opt/openjdk /opt/openjdk
+
+# Set environment variables for Java
+ENV JAVA_HOME=/opt/openjdk
+ENV PATH="$JAVA_HOME/bin:$PATH"
 # Copy Python scripts
 COPY src/main/resources/scripts /app/scripts
 
