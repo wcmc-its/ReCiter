@@ -52,6 +52,8 @@ public class NeuralNetworkModelArticlesScorer {
                 
                 // Wait for the process to complete
                 int exitCode = process.waitFor();
+                log.info("Script output:\n" + output.toString());
+                log.info("Exited with code: " + exitCode);
                 if (exitCode == 0) {
                     // Process output
                     String jsonOutput = output.toString();

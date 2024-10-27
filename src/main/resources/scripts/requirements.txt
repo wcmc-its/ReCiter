@@ -3,3 +3,4 @@ pandas==2.2.3
 joblib==1.4.2
 boto3==1.35.40
 tensorflow==2.17.0
+six>=1.15.0
