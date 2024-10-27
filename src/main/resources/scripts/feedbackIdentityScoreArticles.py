@@ -165,7 +165,8 @@ def read_file_from_s3(bucket_name, file_name):
 
 def file_exists_in_s3(bucket_name, file_name):
     s3 = boto3.client('s3')
-    
+    logging.info(f"Checking S3 Bucket: {bucket_name}, File: {file_name}")  # Log bucket and file
+
     try:
         # Try to retrieve metadata for the object
         s3.head_object(Bucket=bucket_name, Key=file_name)
@@ -182,6 +183,13 @@ def file_exists_in_s3(bucket_name, file_name):
 # Fetch data and save to 'scoring_input.json'
 #data = fetch_and_save_data()
 # Check if the file exists before trying to read it
+exists = file_exists_in_s3(args.bucket_name, args.file_name)
+if exists:
+    logging.info("File exists in S3.")
+else:
+    logging.info("File does not exist in S3.")
+
+logging.info(f"The bucket flag '{args.useS3Bucket}' exists in the bucket '{args.bucket_name}'.")
 if args.useS3Bucket == "false" and os.path.isfile(args.file_name):
     logging.info('reading the file from File folder:')
     data = read_json_file(args.file_name)
