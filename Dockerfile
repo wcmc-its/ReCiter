@@ -1,6 +1,3 @@
-# Stage 1: Build the Python dependencies
-#FROM python:3.12 AS python-build
-
 # Stage 1: Build OpenJDK11
 FROM ubuntu:20.04 AS build-openjdk
 
@@ -44,13 +41,6 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*												 
 
-# Copy OpenJDK from the build stage
-#COPY --from=build-openjdk /opt/openjdk /opt/openjdk
-
-# Set environment variables for Java
-#ENV JAVA_HOME=/opt/openjdk
-#ENV PATH="$JAVA_HOME/bin:$PATH"
-
 # Set python3.12 as the default python3
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
 
@@ -58,28 +48,19 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
 RUN wget https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py && \
     rm get-pip.py				 
-
-	
 # Set the working directory
-WORKDIR /app
+WORKDIR /app						   
+
 # Copy the requirements file
 COPY src/main/resources/scripts/requirements.txt .
 
 # Install the required Python packages
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
-# Suppress Python warnings (optional)
-#ENV PYTHONWARNINGS="ignore"
-
-# Stage 2: Build the final image with OpenJDK and Python dependencies
-#FROM adoptopenjdk/openjdk11:alpine-jre
-
-# Install Python dependencies
-#RUN apk add --no-cache python3 py3-pip libmagic
-
 # Create the application directory
 RUN mkdir -p /app
 WORKDIR /app
+
 
 # Copy the JAR file
 ARG JAR_FILE=target/*.jar
@@ -91,13 +72,12 @@ COPY --from=build-openjdk /opt/openjdk /opt/openjdk
 # Set environment variables for Java
 ENV JAVA_HOME=/opt/openjdk
 ENV PATH="$JAVA_HOME/bin:$PATH"
+
 # Copy Python scripts
 COPY src/main/resources/scripts /app/scripts
 
-# Copy Python dependencies from the previous stage
-#COPY --from=python-build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-#COPY --from=python-build /usr/local/bin/python3 /usr/local/bin/python3
-#COPY --from=python-build /usr/local/bin/pip /usr/local/bin/pip
+# Give execute permissions to the scripts folder and its contents
+RUN chmod -R +x /app/scripts
 
 # Comment this if you do not have NewRelic integration
 RUN wget https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip && \
@@ -107,5 +87,4 @@ RUN wget https://download.newrelic.com/newrelic/java-agent/newrelic-agent/curren
 EXPOSE 5000
 
 # Command to run the application
-#CMD ["java", "-Djava.security.egd=file:/dev/./urandom", "-XX:+PrintFlagsFinal", "$JAVA_OPTIONS", "-jar", "/app/app.jar"]
 CMD ["java", "-jar", "/app/app.jar"]
