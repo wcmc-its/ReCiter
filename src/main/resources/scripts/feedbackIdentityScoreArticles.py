@@ -3,15 +3,29 @@ import sys
 import pandas as pd
 #import numpy as np
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress INFO and WARNING messages
 #from sqlalchemy import create_engine
 import joblib
 #import pymysql
-import tensorflow
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 import logging
 import argparse
 import boto3
 from botocore.exceptions import NoCredentialsError
+import warnings
+warnings.filterwarnings('ignore')
+try:
+    from urllib3.exceptions import SNIMissingWarning
+except ImportError:
+    # Handle the absence or use an alternative
+    SNIMissingWarning = None
+
+
+tf.get_logger().setLevel('ERROR')  # Set TensorFlow logger to only show errors
+
+# Ignore SNIMissingWarning
+warnings.filterwarnings("ignore", category=UserWarning, message=".*SNI.*")
 
 # Set up logging configuration
 logging.basicConfig(filename='FeedbackIdentityScore.log', level=logging.INFO, 
