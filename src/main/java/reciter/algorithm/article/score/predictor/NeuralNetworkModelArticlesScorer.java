@@ -63,7 +63,7 @@ public class NeuralNetworkModelArticlesScorer {
                 if (exitCode == 0) {
                     // Process output
                     String jsonOutput = output.toString();
-                    
+                    log.info("jsonOutput : ->" + jsonOutput);
                     return new JSONArray(jsonOutput);
                 } 	
 	
