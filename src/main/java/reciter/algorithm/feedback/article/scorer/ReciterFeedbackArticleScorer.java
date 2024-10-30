@@ -529,10 +529,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		int countRejected = groupedByGoldStandard.getOrDefault(REJECTED_ASSERTION, Collections.emptyList()).size();
 		
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.stream()
-														                //.map(ReciterFeedbackArticleScorer::mapToFeedbackScore)
 														                .map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
-														    		   // .peek(score -> System.out.println("ReCiter Article feedback Scorer articleId : "+score.getArticleId() +" - "+ score.getFeedbackScoreCites())) //Debugging output
-														                .collect(Collectors.toList());
+														    		    .collect(Collectors.toList());
 	
     	ObjectMapper objectMapper = new ObjectMapper();
     	// Define a DateTimeFormatter for safe file name format

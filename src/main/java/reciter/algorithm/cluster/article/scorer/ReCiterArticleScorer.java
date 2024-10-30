@@ -307,11 +307,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityScore = reCiterArticles.stream()
 																		    		    .map(article -> {
 																		    		        ReCiterArticleFeedbackIdentityScore score = mapToIdentityScore(article);
-																		    		       // System.out.println("Processing article: " + article + " -> Score: " + score);
 																		    		        return score;
 																		    		    })
 																		    		    .filter(Objects::nonNull) // Optionally filter out nulls
-																		    		    //.peek(score -> System.out.println("ReCiter Article Scorer articleId : "+score.getArticleId())) // Debugging output
 																		    		    .collect(Collectors.toList());
     	
     	
@@ -338,7 +336,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
         		// Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, articleIdentityScore);
-                 // System.out.println("JSON data written to file successfully: " + jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
 
         	  }
@@ -346,7 +343,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	  {	  
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
 	        	  objectMapper.writeValue(jsonFile,articleIdentityScore);
-				 // System.out.println("JSON written to file successfully.");
         	  }
               String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
         	  NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();

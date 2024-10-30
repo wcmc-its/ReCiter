@@ -101,18 +101,14 @@ public class AuthorNameUtils {
 				for (MedlineCitationArticleAuthor medlineCitationArticleAuthor : authorList) {
 					AuthorName authorName = PubMedConverter.extractAuthorName(medlineCitationArticleAuthor);
 					if (authorName != null) {
-						System.out.println("Comparing: " + authorName + ", " + targetAuthor.getPrimaryName());
 						boolean isFullNameMatch = AuthorNameUtils.isFullNameMatch(authorName, targetAuthor.getPrimaryName());
-						System.out.println("is full name match=[" + isFullNameMatch + "]");
 						if (isFullNameMatch) {
-							System.out.println("Found full name match author: " + authorName);
 							foundAuthorWithFullNameMatch = true;
 							break; // Go to the next article.
 						} else {
 							boolean isLastNameAndFirstInitialMatch = AuthorNameUtils.isLastNameAndFirstInitialMatch
 									(authorName, targetAuthor.getPrimaryName());
 							if (isLastNameAndFirstInitialMatch) {
-								System.out.println("Adding likely alternative name=[" + authorName + "]");
 								likelyAlternativeNameList.add(authorName);
 							}
 						}

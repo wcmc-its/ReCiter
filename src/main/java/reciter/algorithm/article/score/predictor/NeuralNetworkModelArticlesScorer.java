@@ -22,11 +22,19 @@ public class NeuralNetworkModelArticlesScorer {
 		stopWatch.start(category);
 	
 	    try {
+	    	    String pythonCommandName ="";
+	    	 	if(isS3UploadRequiredString!=null && isS3UploadRequiredString.equalsIgnoreCase("true"))
+	            {
+	            	pythonCommandName = "python3"; 
+	            }
+	            else
+	            	pythonCommandName = "python";	
+	           
 	    		
 			 	log.info("category and fileName "+ category + " - " + articleScoreModelFileName +" - " + articleDataFilename + " - " + s3BucketName +" -" + isS3UploadRequiredString);
 
 			 	//Prepare to call the Python script
-	            ProcessBuilder processBuilder = new ProcessBuilder("python3", articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
+	            ProcessBuilder processBuilder = new ProcessBuilder(pythonCommandName, articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
 	            processBuilder.redirectErrorStream(true); 
 	            processBuilder.environment().put("PYTHONIOENCODING", "utf-8");
 	            processBuilder.environment().put("TF_CPP_MIN_LOG_LEVEL", "2");
@@ -46,23 +54,18 @@ public class NeuralNetworkModelArticlesScorer {
                 StringBuilder output = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
-                	log.info("input stream line*************************",line);
                     output.append(line);
                 }
                 
                 // Wait for the process to complete
                 int exitCode = process.waitFor();
-                log.info("Script output:\n" + output.toString());
                 log.info("Exited with code: " + exitCode);
                 if (exitCode == 0) {
                     // Process output
                     String jsonOutput = output.toString();
-                   // System.out.println("jsonOutput : ->" + jsonOutput);
                     
                     return new JSONArray(jsonOutput);
-                } else {
-                   // System.out.println("Script execution failed with exit code: " + exitCode);
-                }	
+                } 	
 	
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block

@@ -52,7 +52,6 @@ public class TfIdf {
 	public double idf(Term term, List<Document> documents) {
 		int numberDocuments = documents.size();
 		long numberDocumentsTermAppearsIn = terms.get(term.getTerm()).getDocumentIds().size();
-		System.out.println("term=" + term.getTerm() + " num=" + numberDocuments);
 		if (numberDocumentsTermAppearsIn == 0) {
 			return 0;
 		} else {

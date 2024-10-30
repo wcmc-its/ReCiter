@@ -342,7 +342,6 @@ public class ArticleTranslator {
                         if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
                             if (scopusAuthorFirstName.substring(0, 1).equals(reCiterAuthorFirstInitial)) {
                                 if (scopusAuthorFirstName.length() > reCiterAuthorFirstName.length()) {
-                                    //									System.out.println("[" + scopusAuthorFirstName + "], [" + reCiterAuthorFirstName + "]");
 
                                     if (reCiterAuthorFirstName.length() == 1) {
 

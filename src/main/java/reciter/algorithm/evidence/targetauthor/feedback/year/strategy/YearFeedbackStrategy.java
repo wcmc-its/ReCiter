@@ -60,13 +60,7 @@ public class YearFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 	                )
 	            ));
 
-	        // Print the result
-	        /*yearCountByArticleStatus.forEach((year, statusMap) -> {
-	            System.out.println("Year: " + year);
-	            statusMap.forEach((status, count) -> 
-	                System.out.println("  Status " + status + ": " + count)
-	            );
-	        });*/
+	        
 	        
 	        // Find the minimum year
 	        Optional<Integer> minYear = reCiterArticles.stream()

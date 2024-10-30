@@ -3,13 +3,17 @@ import sys
 import pandas as pd
 #import numpy as np
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress INFO and WARNING messages
-#from sqlalchemy import create_engine
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress INFO, WARNING, and ERROR messages
+#import logging
+#logging.getLogger('absl').setLevel(logging.FATAL)
+#import tensorflow as tf
+#tf.get_logger().setLevel('FATAL')  # Only show fatal errors
+
 import joblib
 #import pymysql
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-import logging
+#import logging
 import argparse
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -43,11 +47,6 @@ parser.add_argument('useS3Bucket', type=str, help='Flag whether to use S3 Bucket
 args = parser.parse_args()
 s3 = boto3.client('s3')
 
-# Database connection details (from environment variables or passed as secure inputs)
-DB_USERNAME = os.getenv('DB_USERNAME')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_HOST = os.getenv('DB_HOST')
-DB_NAME = os.getenv('DB_NAME')
 
 def upload_log_to_s3():
 
@@ -65,80 +64,6 @@ def upload_log_to_s3():
     except Exception as e:
         logging.error(f'Failed to upload {log_file} to {bucket_name}: {str(e)}')
     
-# Function to fetch data from the database and save as 'feedbackIdentityScoringInput.json'
-def fetch_and_save_data():
-    try:
-        engine = create_engine(f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}')
-        with engine.connect() as connection:
-            query = '''
-                SELECT 
-                q.id AS articleId, 
-                scoreCites AS feedbackScoreCites, 
-                scoreCoauthorName AS feedbackScoreCoAuthorName,
-                scoreEmail AS feedbackScoreEmail, 
-                scoreInstitution AS feedbackScoreInstitution,
-                scoreJournal AS feedbackScoreJournal, 
-                scoreJournalSubfield AS feedbackScoreJournalSubField,
-                scoreKeyword AS feedbackScoreKeyword, 
-                scoreOrcid AS feedbackScoreOrcid, 
-                scoreOrcidCoauthor AS feedbackScoreOrcidCoAuthor,
-                scoreOrganization AS feedbackScoreOrganization, 
-                scoreTargetAuthorName AS feedbackScoreTargetAuthorName,
-                scoreYear AS feedbackScoreYear, 
-                s.articleCountScore,
-                s.discrepancyDegreeYearScore,
-                s.emailMatchScore,
-                s.genderScoreIdentityArticleDiscrepancy,
-                s.grantMatchScore,
-                s.journalSubfieldScore,
-                s.nameMatchFirstScore,
-                s.nameMatchLastScore,
-                s.nameMatchMiddleScore,
-                s.nameMatchModifierScore,
-                s.organizationalUnitMatchingScore,
-                s.relationshipEvidenceTotalScore,
-                s.relationshipNonMatchScore,
-                s.scopusNonTargetAuthorInstitutionalAffiliationScore,
-                s.targetAuthorInstitutionalAffiliationMatchTypeScore,
-                s.pubmedTargetAuthorInstitutionalAffiliationMatchTypeScore,  
-                case 
-                  when q.userAssertion = 'ACCEPTED' then countAccepted - 1
-                  else countAccepted
-                 end as countAccepted,
-                case 
-                  when q.userAssertion = 'REJECTED' then countRejected - 1
-                  else countRejected
-                 end as countRejected,                 
-                q.userAssertion
-            FROM 
-                feedback_score_total o 
-            JOIN 
-                scoring_identity s 
-            ON 
-                s.pmid = o.pmid 
-                AND s.personIdentifier = o.personIdentifier
-            JOIN 
-                scoring_overall q
-            ON 
-                q.pmid = o.pmid 
-                AND q.personIdentifier = o.personIdentifier                
-            WHERE 
-                o.userAssertion in ('ACCEPTED','REJECTED')  
-            '''
-            data = pd.read_sql(query, connection)
-        
-        # Convert the dataframe to a JSON format
-        json_data = data.to_dict(orient='records')
-        with open('feedbackIdentityScoringInput.json', 'w') as f:
-            json.dump(json_data, f, indent=4)
-        print("Data formatted and saved as 'feedbackIdentityScoringInput.json'")
-        
-        return data  # Return the DataFrame for further processing
-
-    except Exception as e:
-        print(f"Error retrieving or formatting data: {e}")
-        sys.exit(1)
-
 def read_json_file(file_name):
     try:
         logging.info(f"Script is starting. {file_name}")
@@ -197,11 +122,11 @@ def file_exists_in_s3(bucket_name, file_name):
 # Fetch data and save to 'scoring_input.json'
 #data = fetch_and_save_data()
 # Check if the file exists before trying to read it
-exists = file_exists_in_s3(args.bucket_name, args.file_name)
-if exists:
-    logging.info("File exists in S3.")
-else:
-    logging.info("File does not exist in S3.")
+#exists =  file_exists_in_s3(args.bucket_name, args.file_name)
+#if exists:
+#    logging.info("File exists in S3.")
+#else:
+#    logging.info("File does not exist in S3.")
 
 logging.info(f"The bucket flag '{args.useS3Bucket}' exists in the bucket '{args.bucket_name}'.")
 if args.useS3Bucket == "false" and os.path.isfile(args.file_name):
@@ -222,8 +147,8 @@ else:
 #data = read_json_file(args)
 #json_data = sys.stdin.read()
 #data = json.loads(json_data)
-logging.info(type(data))
-logging.info(f"data read from stdin: {data}")
+#logging.info(type(data))
+#logging.info(f"data read from stdin: {data}")
 #print("data:",data) 
 # Load the pre-trained model and scaler
 model = load_model('feedbackIdentityModel.keras')
@@ -292,50 +217,3 @@ print(json.dumps(scoring_output))
  #   json.dump(scoring_output, json_file, ensure_ascii=False, indent=4)
 #logging.info("Scoring results saved to 'scoringOutput.json'.")
 
-# Function to update the database with the inverted scores
-def load_score_data():
-    try:
-        connection = pymysql.connect(
-            host=DB_HOST, 
-            user=DB_USERNAME, 
-            password=DB_PASSWORD, 
-            database=DB_NAME, 
-            local_infile=True
-        )
-        cursor = connection.cursor()
-
-        # Load data from CSV into a temporary table
-        cwd = os.getcwd()
-        truncate_query = (
-            "TRUNCATE scoring_overall_temp;"
-
-        )
-        cursor.execute(truncate_query)
-
-        load_score_data_query = (
-            f"LOAD DATA LOCAL INFILE '{cwd}/scoringOutput.csv' INTO TABLE scoring_overall_temp "
-            "FIELDS TERMINATED BY ',' ENCLOSED BY '\"' "
-            "IGNORE 1 LINES (id, scoreTotal);"
-        )
-        cursor.execute(load_score_data_query)
-        connection.commit()
-        print("scoringOutput.csv file loaded into scoring_overall_temp.")
-
-        # Update the main table with the new inverted scores
-        update_query = '''
-        UPDATE scoring_overall ft
-        INNER JOIN scoring_overall_temp ftt ON ft.id = ftt.id
-        SET ft.scoreOverall = ftt.scoreTotal;
-        '''
-        cursor.execute(update_query)
-        connection.commit()
-        print("scoreOverall updated with overall feedback, article count, and identity scores.")
-
-    except Exception as e:
-        print(f"Error updating the database: {e}")
-    finally:
-        cursor.close()
-        connection.close()
-
-# Call the function to update the database
-#load_score_data()
