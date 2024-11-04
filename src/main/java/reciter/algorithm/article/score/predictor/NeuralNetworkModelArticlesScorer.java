@@ -49,6 +49,16 @@ public class NeuralNetworkModelArticlesScorer {
 	            // Start the process
 	            Process process = processBuilder.start();
 	            log.info("processes started");
+	            
+	         // Capture error stream
+	            StringBuilder errorOutput = new StringBuilder();
+	            try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+	                String line;
+	                while ((line = errorReader.readLine()) != null) {
+	                    errorOutput.append(line).append(System.lineSeparator());
+	                }
+	            }
+	           
             	// Capture the output
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 StringBuilder output = new StringBuilder();
@@ -56,7 +66,6 @@ public class NeuralNetworkModelArticlesScorer {
                 while ((line = reader.readLine()) != null) {
                     output.append(line);
                 }
-                
                 // Wait for the process to complete
                 int exitCode = process.waitFor();
                 log.info("Exited with code: " + exitCode);
@@ -65,7 +74,9 @@ public class NeuralNetworkModelArticlesScorer {
                     String jsonOutput = output.toString();
                     log.info("jsonOutput : ->" + jsonOutput);
                     return new JSONArray(jsonOutput);
-                } 	
+                }
+                else
+                	 log.info("subprocess error message************",errorOutput);
 	
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block
