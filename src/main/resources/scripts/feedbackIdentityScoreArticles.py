@@ -13,7 +13,7 @@ import joblib
 #import pymysql
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-#import logging
+import logging
 import argparse
 import boto3
 from botocore.exceptions import NoCredentialsError
