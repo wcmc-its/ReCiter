@@ -642,7 +642,6 @@ public class ReCiterController {
             } else if (useGoldStandard == UseGoldStandard.AS_EVIDENCE) {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
-
             parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag);
             if (parameters == null) {
                 stopWatch.stop();
@@ -665,7 +664,7 @@ public class ReCiterController {
             engineOutput = engine.run(parameters, strategyParameters, filterScore, keywordsMax);
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
             
-            //Store Analysis only in evidence mode
+           //Store Analysis only in evidence mode
             if(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null) {
 	            AnalysisOutput analysisOutput = new AnalysisOutput();
 	            if(engineOutput != null) {

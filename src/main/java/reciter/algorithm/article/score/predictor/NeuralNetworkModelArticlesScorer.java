@@ -76,7 +76,7 @@ public class NeuralNetworkModelArticlesScorer {
                     return new JSONArray(jsonOutput);
                 }
                 else
-                	 log.info("subprocess error message************",errorOutput);
+                	 log.info("subprocess error message:",errorOutput);
 	
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block

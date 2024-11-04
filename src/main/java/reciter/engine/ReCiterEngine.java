@@ -79,17 +79,14 @@ public class ReCiterEngine implements Engine {
         	StopWatch stopWatch = new StopWatch("Article Scorer");
 	        stopWatch.start("Article Scorer");
 	        
-        	log.info("Coming into ReCiter Article Scorer Section***********************");
-        
             ArticleScorer articleScorer = new ReCiterArticleScorer(/*clusterer.getClusters()*/reCiterArticles, identity, strategyParameters);
 	         articleScorer.runArticleScorer(reCiterArticles, identity);
-	    	List<ReCiterArticle> reCiterArticleScores = null; 
-	         if(reCiterArticles!=null && reCiterArticles.size() > 0)
-	        	 reCiterArticleScores = articleScorer.executePythonScriptForArticleIdentityTotalScore(reCiterArticles,identity);
+	    	 if(reCiterArticles!=null && reCiterArticles.size() > 0)
+	        	  articleScorer.executePythonScriptForArticleIdentityTotalScore(reCiterArticles,identity);
 	        
 	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
 	                mode, filterScore, keywordsMax,
-	                reCiterArticleScores, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);
+	                reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);
 	        
 	        engineOutput.setReCiterFeature(reCiterFeature);
 	
@@ -106,7 +103,6 @@ public class ReCiterEngine implements Engine {
 	        
 	        ArticleFeedbackScorer feedbackArticleScorer = new ReciterFeedbackArticleScorer(reCiterArticles,identity,parameters,strategyParameters);
 	        feedbackArticleScorer.runFeedbackArticleScorer(reCiterArticles,identity);
-	        log.info("knownPMIDs and Rejected PMIDs**********", parameters.getKnownPmids(), parameters.getRejectedPmids() );
 	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
 	                mode, filterScore, keywordsMax,
 	                reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);

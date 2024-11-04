@@ -297,7 +297,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			if(strategyParameters.isGender()) {
 				((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
 			}
-	
+		
 	}
 	public List<ReCiterArticle> executePythonScriptForArticleIdentityTotalScore(List<ReCiterArticle> reCiterArticles, Identity identity) {
 	    
