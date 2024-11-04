@@ -564,10 +564,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
-			  JSONArray articlesIdentityFeedbaclScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
-			  log.info("articlesIdentityFeedbaclScoreTotal length",articlesIdentityFeedbaclScoreTotal!=null?articlesIdentityFeedbaclScoreTotal.length():0);
-			  if(articlesIdentityFeedbaclScoreTotal!=null && articlesIdentityFeedbaclScoreTotal.length() > 0)
-				  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbaclScoreTotal);
+			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
+			  log.info("articlesIdentityFeedbaclScoreTotal length",articlesIdentityFeedbackScoreTotal!=null?articlesIdentityFeedbackScoreTotal.length():0);
+			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
+				  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
 				  
 			  
 		} catch (IOException e) {

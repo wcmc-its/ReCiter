@@ -94,7 +94,7 @@ def read_file_from_s3(bucket_name, file_name):
         return data
 
     except Exception as e:
-        print(f"Error reading file from S3: {e}")
+        logging.error(f"Error reading file from S3: {e}")
         return None
     
     finally:
