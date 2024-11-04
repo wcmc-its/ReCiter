@@ -83,12 +83,13 @@ public class ReCiterEngine implements Engine {
         
             ArticleScorer articleScorer = new ReCiterArticleScorer(/*clusterer.getClusters()*/reCiterArticles, identity, strategyParameters);
 	         articleScorer.runArticleScorer(reCiterArticles, identity);
-	    	if(reCiterArticles!=null && reCiterArticles.size() > 0)
-	 			articleScorer.executePythonScriptForArticleIdentityTotalScore(reCiterArticles,identity);
+	    	List<ReCiterArticle> reCiterArticleScores = null; 
+	         if(reCiterArticles!=null && reCiterArticles.size() > 0)
+	        	 reCiterArticleScores = articleScorer.executePythonScriptForArticleIdentityTotalScore(reCiterArticles,identity);
 	        
 	        ReCiterFeature reCiterFeature = reCiterFeatureGenerator.computeFeatures(
 	                mode, filterScore, keywordsMax,
-	                reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);
+	                reCiterArticleScores, parameters.getKnownPmids(), parameters.getRejectedPmids(),identity);
 	        
 	        engineOutput.setReCiterFeature(reCiterFeature);
 	
