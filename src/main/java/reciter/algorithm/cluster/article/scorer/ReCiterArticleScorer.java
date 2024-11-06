@@ -11,6 +11,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,6 +24,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -30,7 +36,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
+import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
@@ -194,6 +202,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	
 	private Properties properties = new Properties();
 	
+	ExecutorService executorService = Executors.newFixedThreadPool(12);
+	
 	public ReCiterArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity, StrategyParameters strategyParameters) {
 		
 		ReCiterArticleScorer.strategyParameters = strategyParameters;
@@ -250,53 +260,93 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	@Override
 	public void runArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		
-			((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+		List<Future<?>> futures = new ArrayList<>();
+		
+		
+		//((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+		futures.add(submitAndLogTime("name Category", executorService, nameStrategyContext, reCiterArticles, identity));
 
-			if (strategyParameters.isEmail()) {
-				((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isGrant()) {
-				((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isKnownRelationship()) {
-				((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isBachelorsYearDiscrepancy()) {
-				((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isDoctoralYearDiscrepancy()) {
-				((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
+		if (strategyParameters.isEmail()) {
+			//((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("Email Category", executorService, emailStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isGrant()) {
+			//((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("Grant Category", executorService, grantStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isKnownRelationship()) {
+			//((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("KnownRelationships Category", executorService, knownRelationshipsStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isBachelorsYearDiscrepancy()) {
+			//((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("bachelorsYearDiscrepancy Category", executorService, bachelorsYearDiscrepancyStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isDoctoralYearDiscrepancy()) {
+			//((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("doctoralYearDiscrepancy Category", executorService, doctoralYearDiscrepancyStrategyContext, reCiterArticles, identity));
+		}
 
-			if (strategyParameters.isDepartment()) {
-				((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if(strategyParameters.isJournalCategory()) {
-				((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isAffiliation()) {
-				((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isArticleSize()) {
-				((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isPersonType()) {
-				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			
-			
-			if(strategyParameters.isGender()) {
-				((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
+		if (strategyParameters.isDepartment()) {
+			//((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("departmentStringMatch Category", executorService, departmentStringMatchStrategyContext, reCiterArticles, identity));
+		}
+		
+		if(strategyParameters.isJournalCategory()) {
+			//((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("journalCategory Category", executorService, journalCategoryStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isAffiliation()) {
+			//((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("affiliation Category", executorService, affiliationStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isArticleSize()) {
+			//((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("articleSize Category", executorService, articleSizeStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isPersonType()) {
+			//((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("personType Category", executorService, personTypeStrategyContext, reCiterArticles, identity));
+		}
+		
+		
+		
+		if(strategyParameters.isGender()) {
+			//((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("gender Category", executorService, genderStrategyContext, reCiterArticles, identity));
+		}
+		
+		// Shutdown executorService after submitting all tasks
+        executorService.shutdown();
+        
+        // Wait for all tasks to complete
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        boolean allTasksCompleted = true;
+        // Print execution times from futures
+        for (Future<?> future : futures) {
+            try {
+                future.get(); // Ensure all tasks are completed
+            } catch (InterruptedException | ExecutionException e) {
+            	slf4jLogger.error("Task execution interrupted or encountered an error", e);
+                allTasksCompleted=false;
+            }
+        }
+        if (allTasksCompleted) {
+        	slf4jLogger.error("All Idnetity score strategy contexts have been completed successfully.");
+	    } else {
+	    	slf4jLogger.error("One or more tasks failed; report generation may be incomplete.");
+        }
 		
 	}
 	public List<ReCiterArticle> executePythonScriptForArticleIdentityTotalScore(List<ReCiterArticle> reCiterArticles, Identity identity) {
@@ -554,5 +604,20 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+	}
+	private Future<?> submitAndLogTime(String category, ExecutorService executorService,
+			StrategyContext context,List<ReCiterArticle> reCiterArticles, Identity identity) 
+	{
+
+		return executorService.submit(() -> {
+		StopWatch stopWatch = new StopWatch(category);
+		stopWatch.start(category);
+		if(context instanceof RemoveReCiterArticleStrategyContext)
+			((RemoveReCiterArticleStrategyContext)context).executeStrategy(reCiterArticles, identity);
+		else
+			((TargetAuthorStrategyContext)context).executeStrategy(reCiterArticles, identity);
+		stopWatch.stop();
+		slf4jLogger.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+		});
 	}
 }
