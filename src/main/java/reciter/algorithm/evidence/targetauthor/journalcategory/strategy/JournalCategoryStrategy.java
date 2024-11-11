@@ -37,7 +37,10 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
 		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
-		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+	
+		//	for (ReCiterArticle reCiterArticle : reCiterArticles) {
+		
+		reCiterArticles.forEach(reCiterArticle -> {
 			if(reCiterArticle.getJournal().getJournalIssn() != null 
 					&&
 					reCiterArticle.getJournal().getJournalIssn().size() > 0) {
@@ -127,7 +130,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 				reCiterArticle.setJournalCategoryEvidence(journalCategoryEvidence);
 			}
 
-		}
+	//	}
+	});
 		return 0;
 	}
 
