@@ -3,6 +3,8 @@ package reciter.algorithm.evidence.targetauthor.journalcategory.strategy;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterJournal;
 import reciter.model.article.ReCiterJournalCategory;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
@@ -33,7 +36,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		return 0;
 	}
 
-	@Override
+	/*@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
 		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
@@ -133,8 +136,43 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	//	}
 	});
 		return 0;
-	}
+	}*/
 
+	@Override
+	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
+	    Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
+	    Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
+	    
+	    reCiterArticles.forEach(reCiterArticle -> {
+	    	Optional.ofNullable(reCiterArticle.getJournal())
+	                .map(ReCiterJournal::getJournalIssn)
+	                .filter(issns -> !issns.isEmpty())
+	                .ifPresent(issns -> {
+	                    ScienceMetrix scienceMetrix = checkIssnInScienceMetrix(issns);
+	                    if (scienceMetrix != null) {
+	                        List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = getScienceMetrixDepartmentCategory(scienceMetrix.getScienceMatrixSubfieldId());
+
+	                        // Find matched organizational units
+	                        List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream()
+	                                .filter(sciMetrixDeptCategory ->
+	                                        sanitizedIdentityInstitutions.stream()
+	                                                .map(OrganizationalUnit::getOrganizationalUnitLabel)
+	                                                .anyMatch(label -> label.equalsIgnoreCase(sciMetrixDeptCategory.getPrimaryDepartment().trim()))
+	                                )
+	                                .collect(Collectors.toList());
+
+	                        JournalCategoryEvidence journalCategoryEvidence = createJournalCategoryEvidence(matchedOrgUnits, scienceMetrixDeptCategories, scienceMetrix, identityOrgUnitToSynonymMap, sanitizedIdentityInstitutions);
+
+	                        // Set journal category evidence
+	                        reCiterArticle.setJournalCategoryEvidence(journalCategoryEvidence);
+
+	                        // Logging info
+	                        log.info("Pmid: " + reCiterArticle.getArticleId() + " " + journalCategoryEvidence);
+	                    }
+	                });
+	    });
+	    return 0;
+	}
 	@Override
 	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
 		// TODO Auto-generated method stub
@@ -153,7 +191,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		return scienceMetrixDeptCategory;
 	}
 	
-	private ScienceMetrix checkIssnInScienceMetrix(List<MedlineCitationJournalISSN> journalIssns) {
+	/*private ScienceMetrix checkIssnInScienceMetrix1(List<MedlineCitationJournalISSN> journalIssns) {
 		String issnPrint = null;
 		String issnElectronic = null;
 		String issnLinking = null;
@@ -185,7 +223,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 			}
 		}*/
 		
-		for(ScienceMetrix scienceMetrixJournal: EngineParameters.getScienceMetrixJournals()) {
+		/*for(ScienceMetrix scienceMetrixJournal: EngineParameters.getScienceMetrixJournals()) {
 			if(issnLinking != null) {
 				if(scienceMetrixJournal.getIssn() != null 
 						&&
@@ -236,5 +274,79 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		
 
 		return scienceMetrix;
+	}*/
+	private ScienceMetrix checkIssnInScienceMetrix(List<MedlineCitationJournalISSN> journalIssns) {
+	    // Collect all ISSNs in a list (without worrying about type for now)
+	    List<String> allIssns = journalIssns.stream()
+	            .map(journalIssn -> {
+	                if ("Print".equalsIgnoreCase(journalIssn.getIssntype())) {
+	                    return journalIssn.getIssn().trim();
+	                } else if ("Electronic".equalsIgnoreCase(journalIssn.getIssntype())) {
+	                    return journalIssn.getIssn().trim();
+	                } else if ("Linking".equalsIgnoreCase(journalIssn.getIssntype())) {
+	                    return journalIssn.getIssn().trim();
+	                }
+	                return null;
+	            })
+	            .filter(Objects::nonNull)
+	            .distinct()  // Remove duplicate ISSNs (if any)
+	            .collect(Collectors.toList());
+
+	    // Iterate over all ISSNs and check in ScienceMetrix list
+	    return EngineParameters.getScienceMetrixJournals().stream()
+	            .filter(scienceMetrixJournal -> allIssns.stream()
+	                    .anyMatch(issn -> {
+	                        return Optional.ofNullable(scienceMetrixJournal.getIssn())
+	                                .map(issn::equals)
+	                                .orElse(false) ||
+	                               Optional.ofNullable(scienceMetrixJournal.getEissn())
+	                                       .map(issn::equals)
+	                                       .orElse(false);
+	                    }))
+	            .findFirst()
+	            .orElse(null);  // Return null if no match found
 	}
+	
+	private JournalCategoryEvidence createJournalCategoryEvidence(List<ScienceMetrixDepartmentCategory> matchedOrgUnits,
+            List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories,
+            ScienceMetrix scienceMetrix,
+            Map<String, List<String>> identityOrgUnitToSynonymMap,
+            Set<OrganizationalUnit> sanitizedIdentityInstitutions) 
+			{
+				JournalCategoryEvidence journalCategoryEvidence = new JournalCategoryEvidence();
+				if (!matchedOrgUnits.isEmpty()) {
+				// Process multiple matched units
+				ScienceMetrixDepartmentCategory matchedJournal = matchedOrgUnits.size() > 1
+				? matchedOrgUnits.stream().max(Comparator.comparing(ScienceMetrixDepartmentCategory::getLogOddsRatio)).orElse(null)
+				: matchedOrgUnits.get(0);
+				
+				if (matchedJournal != null) {
+				OrganizationalUnit journalSubFieldDepartment = sanitizedIdentityInstitutions.stream()
+				.filter(inst -> matchedJournal.getPrimaryDepartment().equalsIgnoreCase(inst.getOrganizationalUnitLabel()))
+				.findFirst()
+				.orElse(new OrganizationalUnit(matchedJournal.getPrimaryDepartment(), OrganizationalUnitType.DEPARTMENT));
+				
+				String synonymOrgUnitLabel = Optional.ofNullable(identityOrgUnitToSynonymMap)
+				.flatMap(map -> map.entrySet().stream()
+				.filter(entry -> entry.getValue().contains(journalSubFieldDepartment.getOrganizationalUnitLabel()))
+				.map(Map.Entry::getKey)
+				.findFirst())
+				.orElse(null);
+				
+				journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(matchedJournal.getScienceMetrixJournalSubfield());
+				journalCategoryEvidence.setJournalSubfieldDepartment(Optional.ofNullable(synonymOrgUnitLabel)
+				.orElse(journalSubFieldDepartment.getOrganizationalUnitLabel()));
+				journalCategoryEvidence.setJournalSubfieldScienceMetrixID(matchedJournal.getScienceMetrixJournalSubfieldId());
+				journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldFactorScore() * matchedJournal.getLogOddsRatio());
+				}
+				} else {
+				// No match found, use default scienceMetrix
+				journalCategoryEvidence.setJournalSubfieldScienceMetrixLabel(scienceMetrix.getScienceMetrixSubfield());
+				journalCategoryEvidence.setJournalSubfieldDepartment("NO_MATCH");
+				journalCategoryEvidence.setJournalSubfieldScienceMetrixID(Integer.parseInt(scienceMetrix.getScienceMatrixSubfieldId()));
+				journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldScore());
+				}
+				return journalCategoryEvidence;
+			}
+
 }
