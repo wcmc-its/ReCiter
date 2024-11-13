@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
@@ -144,15 +145,21 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	    Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
 	    
 	    reCiterArticles.forEach(reCiterArticle -> {
+	    	StopWatch stopWatch = new StopWatch("journalcategor strategy executeStrategy ");
+            stopWatch.start("journalcategor strategy executeStrategy");
 	    	Optional.ofNullable(reCiterArticle.getJournal())
 	                .map(ReCiterJournal::getJournalIssn)
 	                .filter(issns -> !issns.isEmpty())
 	                .ifPresent(issns -> {
+	                	
 	                    ScienceMetrix scienceMetrix = checkIssnInScienceMetrix(issns);
+	                    
 	                    if (scienceMetrix != null) {
 	                        List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = getScienceMetrixDepartmentCategory(scienceMetrix.getScienceMatrixSubfieldId());
 
 	                        // Find matched organizational units
+	                        StopWatch stopWatch1 = new StopWatch("journalcategor strategy matchedOrgUnits ");
+	                        stopWatch1.start("journalcategor strategy matchedOrgUnits");
 	                        List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream()
 	                                .filter(sciMetrixDeptCategory ->
 	                                        sanitizedIdentityInstitutions.stream()
@@ -160,6 +167,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	                                                .anyMatch(label -> label.equalsIgnoreCase(sciMetrixDeptCategory.getPrimaryDepartment().trim()))
 	                                )
 	                                .collect(Collectors.toList());
+	                        stopWatch1.stop();
+	             	        log.info(stopWatch1.getId() + " took " + stopWatch1.getTotalTimeSeconds() + "s");
 
 	                        JournalCategoryEvidence journalCategoryEvidence = createJournalCategoryEvidence(matchedOrgUnits, scienceMetrixDeptCategories, scienceMetrix, identityOrgUnitToSynonymMap, sanitizedIdentityInstitutions);
 
@@ -170,6 +179,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	                        log.info("Pmid: " + reCiterArticle.getArticleId() + " " + journalCategoryEvidence);
 	                    }
 	                });
+	    	 stopWatch.stop();
+ 	        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 	    });
 	    return 0;
 	}
@@ -180,6 +191,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	}
 	
 	private List<ScienceMetrixDepartmentCategory> getScienceMetrixDepartmentCategory(String subfieldId) {
+		StopWatch stopWatch = new StopWatch("journalcategory strategy ScienceMetrixDepartmentCategory");
+        stopWatch.start("journalcategory strategy ScienceMetrixDepartmentCategory");
 		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategory = null;
 		if(subfieldId != null 
 				&& 
@@ -188,6 +201,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 			scienceMetrixDepartmentCategory.getScienceMetrixJournalSubfieldId() == Integer.parseInt(subfieldId)
 					).collect(Collectors.toList());
 		}
+		 stopWatch.stop();
+	     log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		return scienceMetrixDeptCategory;
 	}
 	
@@ -276,6 +291,9 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		return scienceMetrix;
 	}*/
 	private ScienceMetrix checkIssnInScienceMetrix(List<MedlineCitationJournalISSN> journalIssns) {
+		
+		StopWatch stopWatch = new StopWatch("journalcategor strategy checkIssnInScienceMetrix ");
+        stopWatch.start("journalcategor strategy checkIssnInScienceMetrix");
 	    // Collect all ISSNs in a list (without worrying about type for now)
 	    List<String> allIssns = journalIssns.stream()
 	            .map(journalIssn -> {
@@ -291,7 +309,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	            .filter(Objects::nonNull)
 	            .distinct()  // Remove duplicate ISSNs (if any)
 	            .collect(Collectors.toList());
-
+	    stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 	    // Iterate over all ISSNs and check in ScienceMetrix list
 	    return EngineParameters.getScienceMetrixJournals().stream()
 	            .filter(scienceMetrixJournal -> allIssns.stream()
@@ -305,6 +324,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	                    }))
 	            .findFirst()
 	            .orElse(null);  // Return null if no match found
+	    
+	    
 	}
 	
 	private JournalCategoryEvidence createJournalCategoryEvidence(List<ScienceMetrixDepartmentCategory> matchedOrgUnits,
@@ -313,6 +334,9 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
             Map<String, List<String>> identityOrgUnitToSynonymMap,
             Set<OrganizationalUnit> sanitizedIdentityInstitutions) 
 			{
+				StopWatch stopWatch = new StopWatch("journalcategory strategy createJournalCategoryEvidence");
+				stopWatch.start("journalcategory strategy createJournalCategoryEvidence");
+				
 				JournalCategoryEvidence journalCategoryEvidence = new JournalCategoryEvidence();
 				if (!matchedOrgUnits.isEmpty()) {
 				// Process multiple matched units
@@ -346,6 +370,9 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 				journalCategoryEvidence.setJournalSubfieldScienceMetrixID(Integer.parseInt(scienceMetrix.getScienceMatrixSubfieldId()));
 				journalCategoryEvidence.setJournalSubfieldScore(ReCiterArticleScorer.strategyParameters.getJournalSubfieldScore());
 				}
+				
+				stopWatch.stop();
+		        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 				return journalCategoryEvidence;
 			}
 
