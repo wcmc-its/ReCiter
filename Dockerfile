@@ -86,8 +86,5 @@ RUN wget https://download.newrelic.com/newrelic/java-agent/newrelic-agent/curren
 
 EXPOSE 5000
 
-ENV JAVA_OPTS="-Xms1024m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=100"
-
 # Command to run the application
-#CMD ["java", "-jar", "/app/app.jar"]
-CMD java $JAVA_OPTS -jar /app/app.jar
+CMD ["java", "-Xms1024m", "-Xmx2g", "-jar", "/app/app.jar"]
