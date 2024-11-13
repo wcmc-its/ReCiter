@@ -144,9 +144,10 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	    Set<OrganizationalUnit> sanitizedIdentityInstitutions = identity.getSanitizedIdentityInstitutions();
 	    Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
 	    
+	    StopWatch stopWatch = new StopWatch("journalcategor strategy executeStrategy ");
+        stopWatch.start("journalcategor strategy executeStrategy");
 	    reCiterArticles.forEach(reCiterArticle -> {
-	    	StopWatch stopWatch = new StopWatch("journalcategor strategy executeStrategy ");
-            stopWatch.start("journalcategor strategy executeStrategy");
+	    	
 	    	Optional.ofNullable(reCiterArticle.getJournal())
 	                .map(ReCiterJournal::getJournalIssn)
 	                .filter(issns -> !issns.isEmpty())
@@ -158,8 +159,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	                        List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = getScienceMetrixDepartmentCategory(scienceMetrix.getScienceMatrixSubfieldId());
 
 	                        // Find matched organizational units
-	                        StopWatch stopWatch1 = new StopWatch("journalcategor strategy matchedOrgUnits ");
-	                        stopWatch1.start("journalcategor strategy matchedOrgUnits");
+	                      
 	                        List<ScienceMetrixDepartmentCategory> matchedOrgUnits = scienceMetrixDeptCategories.stream()
 	                                .filter(sciMetrixDeptCategory ->
 	                                        sanitizedIdentityInstitutions.stream()
@@ -167,8 +167,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	                                                .anyMatch(label -> label.equalsIgnoreCase(sciMetrixDeptCategory.getPrimaryDepartment().trim()))
 	                                )
 	                                .collect(Collectors.toList());
-	                        stopWatch1.stop();
-	             	        log.info(stopWatch1.getId() + " took " + stopWatch1.getTotalTimeSeconds() + "s");
+	                      
 
 	                        JournalCategoryEvidence journalCategoryEvidence = createJournalCategoryEvidence(matchedOrgUnits, scienceMetrixDeptCategories, scienceMetrix, identityOrgUnitToSynonymMap, sanitizedIdentityInstitutions);
 
@@ -309,10 +308,9 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	            .filter(Objects::nonNull)
 	            .distinct()  // Remove duplicate ISSNs (if any)
 	            .collect(Collectors.toList());
-	    stopWatch.stop();
-        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+	   
 	    // Iterate over all ISSNs and check in ScienceMetrix list
-	    return EngineParameters.getScienceMetrixJournals().stream()
+	    Optional<ScienceMetrix> scienceMetrix = Optional.ofNullable(EngineParameters.getScienceMetrixJournals().stream()
 	            .filter(scienceMetrixJournal -> allIssns.stream()
 	                    .anyMatch(issn -> {
 	                        return Optional.ofNullable(scienceMetrixJournal.getIssn())
@@ -323,9 +321,12 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 	                                       .orElse(false);
 	                    }))
 	            .findFirst()
-	            .orElse(null);  // Return null if no match found
+	            .orElse(null));  // Return null if no match found
 	    
+	    stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 	    
+	    return scienceMetrix.get();
 	}
 	
 	private JournalCategoryEvidence createJournalCategoryEvidence(List<ScienceMetrixDepartmentCategory> matchedOrgUnits,
