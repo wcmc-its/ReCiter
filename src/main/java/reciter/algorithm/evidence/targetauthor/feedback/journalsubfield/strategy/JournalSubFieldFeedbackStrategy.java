@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,8 @@ import reciter.service.ScienceMetrixService;
 public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(JournalSubFieldFeedbackStrategy.class);
-	Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = null;
+	//Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = null;
+	private Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = new HashMap<>();
 	
 	ScienceMetrixService scienceMetrixService = ApplicationContextHolder.getContext()
 			.getBean(ScienceMetrixService.class);
@@ -36,7 +38,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 
 	}
 	
-	private String retrieveJournalSubField(MedlineCitationJournalISSN medlineCitationJournalIssn) {
+	/*private String retrieveJournalSubField(MedlineCitationJournalISSN medlineCitationJournalIssn) {
 		 
 		if(medlineCitationJournalIssn!=null && medlineCitationJournalIssn.getIssn()!=null && !medlineCitationJournalIssn.getIssn().isEmpty())
 		{
@@ -48,138 +50,121 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 				 return scienceMetrix.getScienceMetrixSubfield();
 		}
 		return null;
-	}
+	}*/
 
 	@Override
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		try {
-			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
-			
-			
-			
-			Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
-		            .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
+	        slf4jLogger.info("reCiterArticles size: {}", reCiterArticles.size());
 
-		        // Get lists of articles based on gold standard
-		        List<ReCiterArticle> acceptedArticles = groupedByGoldStandard.getOrDefault(1, Collections.emptyList());
-		        List<ReCiterArticle> rejectedArticles = groupedByGoldStandard.getOrDefault(-1, Collections.emptyList());
+	        // Group by gold standard
+	        Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
+	                .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
 
-		        Map<String, Long> acceptArticlesCountByJournalSubField =  acceptedArticles.stream()
-		        .filter(article-> article!=null && article.getJournal()!=null && article.getJournal().getJournalIssn()!=null && article.getJournal().getJournalIssn().size() > 0)		
-	            .flatMap(article -> article.getJournal().getJournalIssn().stream())
-	            .filter(journalIssn-> journalIssn!=null)
-	            .map(journalIssn-> retrieveJournalSubField(journalIssn))
-	            .filter(journalSubField -> journalSubField!=null && !journalSubField.isEmpty()) // Filter out empty strings
-	            .collect(Collectors.groupingBy(
-	                Function.identity(),
-	                Collectors.counting()
-	            ));
-		        
-	       
-		        Map<String, Long> rejectedArticlesCountByJournalSubField =  rejectedArticles.stream()
-		        		.filter(article-> article!=null && article.getJournal()!=null && article.getJournal().getJournalIssn()!=null && article.getJournal().getJournalIssn().size() > 0)
-		        		.flatMap(article -> article.getJournal().getJournalIssn().stream())
-			            .filter(journalIssn-> journalIssn!=null)
-			            .map(journalIssn-> retrieveJournalSubField(journalIssn))
-			            .filter(journalSubField -> journalSubField!=null && !journalSubField.isEmpty()) // Filter out empty strings
-			            .collect(Collectors.groupingBy(
-			                Function.identity(),
-			                Collectors.counting()
-			            ));
-		       
-			
-		        reCiterArticles.stream()
-				   .filter(article-> article!=null && article.getJournal()!=null && article.getJournal().getJournalIssn()!=null && article.getJournal().getJournalIssn().size()> 0)
-				   .forEach(article -> {
-											
-										
-										feedbackJournalsSubFieldMap = new HashMap<>();   
-										
-										article.getJournal().getJournalIssn().stream()
-											.filter(journalIssn -> journalIssn!=null )
-											.forEach(journalIssn -> {
-												
-												 int countAccepted = 0;
-												 int countRejected = 0;
-												 double scoreAll = 0.0;
-												 double scoreWithout1Accepted = 0.0;
-												 double scoreWithout1Rejected = 0.0;
-												 
-												 
-												 
-												 String journalSubField = retrieveJournalSubField(journalIssn);
-												
-												if(journalSubField!=null && !journalSubField.isEmpty())
-												{	
-													//retrieve accepted PMIDs for this email
-													if(acceptArticlesCountByJournalSubField!=null && acceptArticlesCountByJournalSubField.size() > 0)
-													{	
-														if(acceptArticlesCountByJournalSubField.containsKey(journalSubField))
-														{	
-															countAccepted = Math.toIntExact(acceptArticlesCountByJournalSubField.get(journalSubField));
-														}
-													}
-													if(rejectedArticlesCountByJournalSubField!=null && rejectedArticlesCountByJournalSubField.size() > 0)
-													{	
-														if(rejectedArticlesCountByJournalSubField.containsKey(journalSubField))
-														{		
-															countRejected = Math.toIntExact(rejectedArticlesCountByJournalSubField.get(journalSubField));
-														}
-													}
-													
-													
-													
-													if(countAccepted > 0 || countRejected > 0)
-													{	
-														
-														scoreAll = computeScore(countAccepted , countRejected);
-														scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted,
-																countRejected);
-														scoreWithout1Rejected = computeScore(countAccepted,
-																countRejected > 0 ? countRejected - 1 : countRejected);
-														
-														double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
-														String exportedFeedbackScore = decimalFormat.format(feedbackScore);
-														
-														
-														ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),journalSubField,
-																   countAccepted,countRejected,
-																   scoreAll,scoreWithout1Accepted,
-																   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Journal SubField");
-														
-														feedbackJournalsSubFieldMap.computeIfAbsent(journalSubField, k -> new ArrayList<>()).add(feedbackEmail);
-														
-													}
-												
-												}
-											});
-									   
-									   double totalScore = feedbackJournalsSubFieldMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
-												.mapToDouble(score-> score.getFeedbackScore()) // Extract the scores
-												.sum(); // Sum all scores
-										
-										
-										// Sort Map Contents before storing into another Map
-									   feedbackJournalsSubFieldMap.entrySet().stream()
-												.filter(entry -> entry.getKey() != null && entry.getValue() != null)
-												.sorted(Map.Entry.comparingByKey())
-												.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-														(oldValue, newValue) -> oldValue, // merge function
-														LinkedHashMap::new // to maintain insertion order
-												));
-									  // articleJournalsMap.put(article.getArticleId(), feedbackJournalsSubFieldMap);
-									   article.addArticleFeedbackScoresMap(feedbackJournalsSubFieldMap);
-										//totalScoresByArticleMap.put(article.getArticleId(), totalScore);
-										article.setJournalSubFieldFeedbackScore(totalScore);
-										String exportedJournalSubFieldFeedbackScore = decimalFormat.format(totalScore); 
-										article.setExportedJournalSubFieldFeedbackScore(exportedJournalSubFieldFeedbackScore);
-				   				});
-		        
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return 0;
+	        // Get accepted and rejected articles
+	        List<ReCiterArticle> acceptedArticles = groupedByGoldStandard.getOrDefault(1, Collections.emptyList());
+	        List<ReCiterArticle> rejectedArticles = groupedByGoldStandard.getOrDefault(-1, Collections.emptyList());
+
+	        // Prepare counts for accepted and rejected articles
+	        Map<String, Long> acceptArticlesCountByJournalSubField = countArticlesByJournalSubField(acceptedArticles);
+	        Map<String, Long> rejectedArticlesCountByJournalSubField = countArticlesByJournalSubField(rejectedArticles);
+
+	        // Process each article concurrently
+	        feedbackJournalsSubFieldMap = reCiterArticles.parallelStream() // Using parallelStream for concurrent processing
+	                .filter(article -> article != null && article.getJournal() != null && article.getJournal().getJournalIssn() != null && !article.getJournal().getJournalIssn().isEmpty())
+	                .flatMap(article -> article.getJournal().getJournalIssn().stream()
+	                        .filter(Objects::nonNull)
+	                        .map(journalIssn -> processArticle(article, journalIssn, acceptArticlesCountByJournalSubField, rejectedArticlesCountByJournalSubField))
+	                        .filter(Objects::nonNull)
+	                )
+	                .collect(Collectors.groupingBy(ReCiterArticleFeedbackScore::getFeedbackScoreType));
+	        
+	        
+	        // Calculate total scores
+	        double totalScore = feedbackJournalsSubFieldMap.values().stream()
+	                .flatMap(List::stream)
+	                .mapToDouble(ReCiterArticleFeedbackScore::getFeedbackScore)
+	                .sum();
+
+	        // Finalize feedback scores
+	        reCiterArticles.parallelStream().forEach(article -> {
+	            double articleScore = feedbackJournalsSubFieldMap.values().stream()
+	                    .flatMap(List::stream)
+	                    .filter(feedback -> feedback.getArticleId() == article.getArticleId())
+	                    .mapToDouble(ReCiterArticleFeedbackScore::getFeedbackScore)
+	                    .sum();
+
+	            article.setJournalSubFieldFeedbackScore(articleScore);
+	            article.setExportedJournalSubFieldFeedbackScore(decimalFormat.format(articleScore));
+	        });
+
+	        return totalScore;
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return 0;
+
+	}
+	private Map<String, Long> countArticlesByJournalSubField(List<ReCiterArticle> articles) {
+	    return articles.parallelStream() // Use parallelStream for faster processing on large datasets
+	            .filter(article -> article.getJournal() != null && article.getJournal().getJournalIssn() != null && !article.getJournal().getJournalIssn().isEmpty())
+	            .flatMap(article -> article.getJournal().getJournalIssn().stream()
+	                    .filter(Objects::nonNull)
+	                    .map(this::retrieveJournalSubField)
+	                    .filter(Objects::nonNull)
+	                    .filter(subField -> !subField.isEmpty())
+	            )
+	            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 	}
 
+	private ReCiterArticleFeedbackScore processArticle(ReCiterArticle article, MedlineCitationJournalISSN journalIssn,
+	                                                   Map<String, Long> acceptArticlesCountByJournalSubField,
+	                                                   Map<String, Long> rejectedArticlesCountByJournalSubField) {
+
+	    String journalSubField = retrieveJournalSubField(journalIssn);
+	    if (journalSubField == null || journalSubField.isEmpty()) {
+	        return null; // Skip if no valid subfield
+	    }
+
+	    int countAccepted = Math.toIntExact(acceptArticlesCountByJournalSubField.getOrDefault(journalSubField, 0L));
+	    int countRejected =  Math.toIntExact(rejectedArticlesCountByJournalSubField.getOrDefault(journalSubField, 0L));
+
+	    // Compute the scores
+	    double scoreAll = computeScore(countAccepted, countRejected);
+	    double scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted, countRejected);
+	    double scoreWithout1Rejected = computeScore(countAccepted, countRejected > 0 ? countRejected - 1 : countRejected);
+
+	    double feedbackScore = determineFeedbackScore(article.getGoldStandard(), scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+	    String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+
+	    // Create the feedback object
+	    return populateArticleFeedbackScore(
+	            article.getArticleId(),
+	            journalSubField,
+	            Math.toIntExact(countAccepted),
+	            Math.toIntExact(countRejected),
+	            scoreAll,
+	            scoreWithout1Accepted,
+	            scoreWithout1Rejected,
+	            article.getGoldStandard(),
+	            feedbackScore,
+	            exportedFeedbackScore,
+	            "Journal SubField"
+	    );
+	}
+
+	private String retrieveJournalSubField(MedlineCitationJournalISSN journalIssn) {
+	    if (journalIssn == null || journalIssn.getIssn() == null || journalIssn.getIssn().isEmpty()) {
+	        return null;
+	    }
+
+	    ScienceMetrix scienceMetrix = scienceMetrixService.findByIssn(journalIssn.getIssn());
+	    if (scienceMetrix == null) {
+	        scienceMetrix = scienceMetrixService.findByEissn(journalIssn.getIssn());
+	    }
+
+	    return (scienceMetrix != null && scienceMetrix.getScienceMetrixSubfield() != null && !scienceMetrix.getScienceMetrixSubfield().isEmpty())
+	            ? scienceMetrix.getScienceMetrixSubfield()
+	            : null;
+	}	
 }
