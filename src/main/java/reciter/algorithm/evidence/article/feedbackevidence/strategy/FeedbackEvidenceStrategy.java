@@ -39,46 +39,19 @@ public class FeedbackEvidenceStrategy extends AbstractReCiterArticleStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
 			reCiterArticles.stream().forEach(reCiterArticle -> {
 				FeedbackEvidence feedbackEvidence = new FeedbackEvidence();
-				if (reCiterArticle.getCitesFeedbackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreCites(reCiterArticle.getCitesFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getCoAuthorNameFeedbackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreCoAuthorName(reCiterArticle.getCoAuthorNameFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getEmailFeedbackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreEmail(reCiterArticle.getEmailFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getInstitutionFeedbackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreInstitution(reCiterArticle.getInstitutionFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getJournalFeedackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreJournal(reCiterArticle.getJournalFeedackScore() * 100);
-				}
-				if (reCiterArticle.getJournalSubFieldFeedbackScore() != 0) {
-					feedbackEvidence
-							.setFeedbackScoreJournalSubField(reCiterArticle.getJournalSubFieldFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getKeywordFeedackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreKeyword(reCiterArticle.getKeywordFeedackScore() * 100);
-				}
-				if (reCiterArticle.getOrcidFeedbackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreOrcid(reCiterArticle.getOrcidFeedbackScore() * 100);
-				}
- 
-				if (reCiterArticle.getOrcidCoAuthorFeedbackScore() != 0) {
-					feedbackEvidence
-							.setFeedbackScoreOrcidCoAuthor(reCiterArticle.getOrcidCoAuthorFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getOrganizationFeedbackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreOrganization(reCiterArticle.getOrganizationFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getTargetAuthorNameFeedbackScore() != 0) {
-					feedbackEvidence
-							.setFeedbackScoreTargetAuthorName(reCiterArticle.getTargetAuthorNameFeedbackScore() * 100);
-				}
-				if (reCiterArticle.getYearFeedbackScore() != 0) {
-					feedbackEvidence.setFeedbackScoreYear(reCiterArticle.getYearFeedbackScore() * 100);
-				}
+				feedbackEvidence.setFeedbackScoreCites(reCiterArticle.getCitesFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreCoAuthorName(reCiterArticle.getCoAuthorNameFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreEmail(reCiterArticle.getEmailFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreInstitution(reCiterArticle.getInstitutionFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreJournal(reCiterArticle.getJournalFeedackScore()*100);
+				feedbackEvidence.setFeedbackScoreJournalSubField(reCiterArticle.getJournalSubFieldFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreKeyword(reCiterArticle.getKeywordFeedackScore()*100);
+				feedbackEvidence.setFeedbackScoreOrcid(reCiterArticle.getOrcidFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreOrcidCoAuthor(reCiterArticle.getOrcidCoAuthorFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreOrganization(reCiterArticle.getOrganizationFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreTargetAuthorName(reCiterArticle.getTargetAuthorNameFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreYear(reCiterArticle.getYearFeedbackScore()*100);
+				
 				
 				
 				if(feedbackEvidence != null) {
