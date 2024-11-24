@@ -52,7 +52,6 @@ public class AffiliationRetrievalStrategy extends AbstractNameRetrievalStrategy 
 
 	@Override
 	protected String getStrategySpecificKeyword(Identity identity) {
-		//System.out.println(getHomeInstitutionsForPubmed());
 		return getHomeInstitutionsForPubmed();
 	}
 

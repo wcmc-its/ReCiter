@@ -171,7 +171,7 @@ public class TargetAuthorSelection {
 			ReCiterAuthor originalAuthor = entry.getKey();
 			if (originalAuthor.getAffiliation() != null && !originalAuthor.getAffiliation().isEmpty()) {
 				affiliation = originalAuthor.getAffiliation();
-				if(!identity.getEmails().isEmpty() && affiliation != null) {
+				if(identity!=null && identity.getEmails()!=null && !identity.getEmails().isEmpty() && affiliation != null) {
 					for(String email: identity.getEmails()) {
 						if(affiliation.contains(email)) {
 							author.setTargetAuthor(true);

@@ -123,7 +123,7 @@ public class ReCiterController {
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
     
-    @Value("${totalArticleScore-standardized-default}")
+    @Value("${authorshipLikelihoodScore}")
     private double totalArticleScoreStandardizedDefault;
     
     @Value("${namesIgnoredCoauthors}")
@@ -430,7 +430,8 @@ public class ReCiterController {
         						.filter(article ->
 			    					article.getUserAssertion() == PublicationFeedback.NULL
 			    					&&
-			    					article.getTotalArticleScoreStandardized() >= totalScore)   
+			    					//article.getTotalArticleScoreStandardized() >= totalScore)
+			    					article.getAuthorshipLikelihoodScore() >= totalScore)
         						.limit(maxArticlesPerPerson) 
         						.collect(Collectors.toList()));
         			}
@@ -463,16 +464,16 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
+    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         
         final double totalScore;
         
-        if(totalStandardizedArticleScore == null) {
-        	totalScore = totalArticleScoreStandardizedDefault;
+        if(authorshipLikelihoodScore == null) {
+        	totalScore = totalArticleScoreStandardizedDefault/10; // Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-        	totalScore = totalStandardizedArticleScore;
+        	totalScore = authorshipLikelihoodScore/10; // Configuring the totalScore in multiple of 10's in application.properties file
         }
     	
         EngineOutput engineOutput;
@@ -511,7 +512,8 @@ public class ReCiterController {
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
 				analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+								//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
 								.count());
@@ -526,7 +528,8 @@ public class ReCiterController {
 			
 				if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+								//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 								||
@@ -563,7 +566,8 @@ public class ReCiterController {
 					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore 
+							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 							&& 
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							||
@@ -578,7 +582,8 @@ public class ReCiterController {
 					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 							&&
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							||
@@ -605,7 +610,8 @@ public class ReCiterController {
 					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-							.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+							//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+							.filter(reCiterArticleFeature -> reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 							&&
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							.collect(Collectors.toList()));
@@ -636,8 +642,7 @@ public class ReCiterController {
             } else if (useGoldStandard == UseGoldStandard.AS_EVIDENCE) {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
-
-            parameters = initializeEngineParameters(uid, totalStandardizedArticleScore, retrievalRefreshFlag);
+            parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag);
             if (parameters == null) {
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -659,7 +664,7 @@ public class ReCiterController {
             engineOutput = engine.run(parameters, strategyParameters, filterScore, keywordsMax);
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
             
-            //Store Analysis only in evidence mode
+           //Store Analysis only in evidence mode
             if(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null) {
 	            AnalysisOutput analysisOutput = new AnalysisOutput();
 	            if(engineOutput != null) {
@@ -672,7 +677,8 @@ public class ReCiterController {
 	            				
 	            		List<ReCiterArticleFeature> reCiterFilteredArticles = reCiterFeature.getReCiterArticleFeatures()
 		            	.stream()
-		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= strategyParameters.getMinimumStorageThreshold()
+		            	//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= strategyParameters.getMinimumStorageThreshold()
+		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getAuthorshipLikelihoodScore() >= strategyParameters.getMinimumStorageThreshold()
 		            	||
 		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 		            	||
@@ -686,9 +692,13 @@ public class ReCiterController {
 					
 	            }
 				analysisOutput.setUid(uid);
+				/**
+				 * TODO :  This piece of code has been commented to avoid data conflicts in Database as we have the same DynamoDB for Dev and Prod. 
+				 * Will be uncommented out before deploying this to Prod -Mahender
+				 */
 				if(analysisOutput.getReCiterFeature() != null) {
 					analysisService.save(analysisOutput);
-				}
+				} 
             }
         }
         
@@ -697,7 +707,8 @@ public class ReCiterController {
         
         //Count pending pubs
         reCiterOutputFeature.setCountPendingArticles(originalFeatures.stream()
-            .filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+          //  .filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+              .filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
             &&
             reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
             .count());
@@ -705,7 +716,8 @@ public class ReCiterController {
         if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
         List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
         		.stream()
-            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+            	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
             			&&
             			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
             			||
@@ -733,7 +745,8 @@ public class ReCiterController {
         } else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL){
         	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
             		.stream()
-                	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+            		.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
                 			&&
                 			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
                 			||
@@ -745,7 +758,8 @@ public class ReCiterController {
         } else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL){
         	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
             		.stream()
-                	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+            		.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
                 			&&
                 			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
                 			||
@@ -766,7 +780,8 @@ public class ReCiterController {
         } else {
         	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
             		.stream()
-                	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+                	//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+            		.filter(reCiterArticleFeature -> reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
                 			&&
                 			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
                 	.collect(Collectors.toList());
@@ -829,7 +844,8 @@ public class ReCiterController {
         	//All the results are filtered based on filterByFeedback
         	if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
 	        	analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-			            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+			            	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+	        				  .filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 			            	&&
 			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 			            	||
@@ -848,7 +864,8 @@ public class ReCiterController {
 		            	.collect(Collectors.toList()));
         	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
         		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore 
+		            	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore 
+		            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore 
 		            	&& 
 		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 		            	||
@@ -857,7 +874,8 @@ public class ReCiterController {
 		            	.collect(Collectors.toList()));
         	} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
         		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+        				.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 		            	&&
 		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 		            	||
@@ -872,7 +890,8 @@ public class ReCiterController {
 		            	.collect(Collectors.toList()));
         	} else if(filterByFeedback == FilterFeedbackType.NULL) {
         		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+		            	//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
+        				.filter(reCiterArticleFeature -> reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 		            	&&
 		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 		            	.collect(Collectors.toList()));
@@ -984,9 +1003,9 @@ public class ReCiterController {
             parameters.setRejectedPmids(goldStandard.getRejectedPmids());
         }
         if (totalStandardizedArticleScore == null) {
-            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault());
+            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault()/10);// Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore);
+            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore/10); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
     }

@@ -1,28 +1,44 @@
 package reciter.algorithm.cluster.article.scorer;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import org.springframework.util.StopWatch;
 
-import reciter.algorithm.cluster.model.ReCiterCluster;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
-import reciter.algorithm.evidence.article.acceptedrejected.AcceptedRejectedStrategyContext;
-import reciter.algorithm.evidence.article.acceptedrejected.strategy.AcceptedRejectedStrategy;
-import reciter.algorithm.evidence.article.standardizedscore.StandardScoreStrategyContext;
-import reciter.algorithm.evidence.article.standardizedscore.strategy.StandardScoreStrategy;
-import reciter.algorithm.evidence.cluster.ClusterStrategyContext;
-import reciter.algorithm.evidence.cluster.averageclustering.AverageClusteringStrategyContext;
-import reciter.algorithm.evidence.cluster.averageclustering.strategy.AverageClusteringStrategy;
+import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
@@ -48,7 +64,20 @@ import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy
 import reciter.algorithm.evidence.targetauthor.persontype.PersonTypeStrategyContext;
 import reciter.algorithm.evidence.targetauthor.persontype.strategy.PersonTypeStrategy;
 import reciter.engine.StrategyParameters;
+import reciter.engine.analysis.evidence.AffiliationEvidence;
+import reciter.engine.analysis.evidence.ArticleCountEvidence;
+import reciter.engine.analysis.evidence.AuthorNameEvidence;
+import reciter.engine.analysis.evidence.EducationYearEvidence;
+import reciter.engine.analysis.evidence.EmailEvidence;
+import reciter.engine.analysis.evidence.GenderEvidence;
+import reciter.engine.analysis.evidence.JournalCategoryEvidence;
+import reciter.engine.analysis.evidence.NonTargetAuthorScopusAffiliation;
+import reciter.engine.analysis.evidence.RelationshipEvidence;
+import reciter.engine.analysis.evidence.RelationshipNegativeMatch;
+import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
+import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.identity.Identity;
 
 /**
@@ -59,8 +88,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(ReCiterArticleScorer.class);
 
-	/** Cluster selection strategy contexts. */
-
+	
 	/**
 	 * Email Strategy.
 	 */
@@ -122,10 +150,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private StrategyContext articleTitleInEnglishStrategyContext;
 	
-	private StrategyContext averageClusteringStrategyContext;
-	
-	private StrategyContext standardScoreStrategyContext;
-
 	/**
 	 * Education.
 	 */
@@ -161,11 +185,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private GenderStrategyContext genderStrategyContext;
 
-	/**
-	 * Remove clusters based on cluster information.
-	 */
-	private StrategyContext clusterSizeStrategyContext;
-
+	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
@@ -178,11 +198,13 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	
 	private List<StrategyContext> strategyContexts;
 
-	private Set<Long> selectedClusterIds; // List of currently selected cluster ids.
-	
 	public static StrategyParameters strategyParameters;
 	
-	public ReCiterArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity, StrategyParameters strategyParameters) {
+	private Properties properties = new Properties();
+	
+	ExecutorService executorService = Executors.newFixedThreadPool(12);
+	
+	public ReCiterArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity, StrategyParameters strategyParameters) {
 		
 		ReCiterArticleScorer.strategyParameters = strategyParameters;
 		
@@ -198,15 +220,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		// Using the following strategy contexts in sequence to reassign individual articles
 		// to selected clusters.
 		this.grantStrategyContext = new GrantStrategyContext(new GrantStrategy());
-		this.acceptedRejectedStrategyContext = new AcceptedRejectedStrategyContext(new AcceptedRejectedStrategy());
-		this.averageClusteringStrategyContext = new AverageClusteringStrategyContext(new AverageClusteringStrategy());
-		this.standardScoreStrategyContext = new StandardScoreStrategyContext(new StandardScoreStrategy());
-		
-		int numArticles = 0;
-		for (ReCiterCluster reCiterCluster : clusters.values()) {
-			numArticles += reCiterCluster.getArticleCluster().size();
-		}
-		this.articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy(numArticles));
+	
+		//ArticleCountScore
+		this.articleSizeStrategyContext = new ArticleSizeStrategyContext(new ArticleSizeStrategy(reCiterArticles.size()));//numArticles));
 		this.personTypeStrategyContext = new PersonTypeStrategyContext(new PersonTypeStrategy());
 
 
@@ -238,86 +254,370 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		this.strategyContexts.add(this.emailStrategyContext);
 
-		// https://github.com/wcmc-its/ReCiter/issues/136
-		if (strategyParameters.isClusterSize()) {
-			this.strategyContexts.add(this.clusterSizeStrategyContext);
-		}
-		
-		if(strategyParameters.isAverageClustering()) {
-			this.strategyContexts.add(this.averageClusteringStrategyContext);
-		}
-		
-		if(strategyParameters.isGender()) {
-			this.strategyContexts.add(this.genderStrategyContext);
-		}
 	}
 	
 
 	@Override
-	public void runArticleScorer(Map<Long, ReCiterCluster> clusters, Identity identity) {
-		for (Entry<Long, ReCiterCluster> entry : clusters.entrySet()) {
-			long clusterId = entry.getKey();
-			slf4jLogger.info("******************** Cluster " + clusterId + " scoring starts **********************");
-			List<ReCiterArticle> reCiterArticles = entry.getValue().getArticleCluster();
-			((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+	public void runArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) {
+		
+		List<Future<?>> futures = new ArrayList<>();
+		
+		
+		//((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
+		futures.add(submitAndLogTime("name Category", executorService, nameStrategyContext, reCiterArticles, identity));
 
-			if (strategyParameters.isEmail()) {
-				((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isGrant()) {
-				((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isKnownRelationship()) {
-				((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isBachelorsYearDiscrepancy()) {
-				((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isDoctoralYearDiscrepancy()) {
-				((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-
-			if (strategyParameters.isDepartment()) {
-				((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if(strategyParameters.isJournalCategory()) {
-				((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isAffiliation()) {
-				((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isArticleSize()) {
-				((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isPersonType()) {
-				((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isUseGoldStandardEvidence()) {
-				((ReCiterArticleStrategyContext) acceptedRejectedStrategyContext).executeStrategy(reCiterArticles);
-			}
-			
-			if(strategyParameters.isGender()) {
-				((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
-			}
-			
-			if (strategyParameters.isAverageClustering()) {
-				((ClusterStrategyContext) averageClusteringStrategyContext).executeStrategy(entry.getValue());
-			}
-			
-			((ReCiterArticleStrategyContext) standardScoreStrategyContext).executeStrategy(reCiterArticles);
-			
-			
-			slf4jLogger.info("******************** Cluster " + clusterId + " scoring ends **********************");
+		if (strategyParameters.isEmail()) {
+			//((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("Email Category", executorService, emailStrategyContext, reCiterArticles, identity));
 		}
 		
+		if (strategyParameters.isGrant()) {
+			//((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("Grant Category", executorService, grantStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isKnownRelationship()) {
+			//((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("KnownRelationships Category", executorService, knownRelationshipsStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isBachelorsYearDiscrepancy()) {
+			//((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("bachelorsYearDiscrepancy Category", executorService, bachelorsYearDiscrepancyStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isDoctoralYearDiscrepancy()) {
+			//((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("doctoralYearDiscrepancy Category", executorService, doctoralYearDiscrepancyStrategyContext, reCiterArticles, identity));
+		}
+
+		if (strategyParameters.isDepartment()) {
+			//((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("departmentStringMatch Category", executorService, departmentStringMatchStrategyContext, reCiterArticles, identity));
+		}
+		
+		if(strategyParameters.isJournalCategory()) {
+			//((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("journalCategory Category", executorService, journalCategoryStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isAffiliation()) {
+			//((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("affiliation Category", executorService, affiliationStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isArticleSize()) {
+			//((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("articleSize Category", executorService, articleSizeStrategyContext, reCiterArticles, identity));
+		}
+		
+		if (strategyParameters.isPersonType()) {
+			//((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("personType Category", executorService, personTypeStrategyContext, reCiterArticles, identity));
+		}
+		
+		
+		
+		if(strategyParameters.isGender()) {
+			//((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
+			futures.add(submitAndLogTime("gender Category", executorService, genderStrategyContext, reCiterArticles, identity));
+		}
+		
+		// Shutdown executorService after submitting all tasks
+        executorService.shutdown();
+        
+        // Wait for all tasks to complete
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        boolean allTasksCompleted = true;
+        // Print execution times from futures
+        for (Future<?> future : futures) {
+            try {
+                future.get(); // Ensure all tasks are completed
+            } catch (InterruptedException | ExecutionException e) {
+            	slf4jLogger.error("Task execution interrupted or encountered an error", e);
+                allTasksCompleted=false;
+            }
+        }
+        if (allTasksCompleted) {
+        	slf4jLogger.error("All Idnetity score strategy contexts have been completed successfully.");
+	    } else {
+	    	slf4jLogger.error("One or more tasks failed; report generation may be incomplete.");
+        }
+		
+	}
+	public List<ReCiterArticle> executePythonScriptForArticleIdentityTotalScore(List<ReCiterArticle> reCiterArticles, Identity identity) {
+	    
+		slf4jLogger.info("articles Size :", reCiterArticles.size());
+    	
+   	
+    	List<ReCiterArticleFeedbackIdentityScore> articleIdentityScore = reCiterArticles.stream()
+																		    		    .map(article -> {
+																		    		        ReCiterArticleFeedbackIdentityScore score = mapToIdentityScore(article);
+																		    		        return score;
+																		    		    })
+																		    		    .filter(Objects::nonNull) // Optionally filter out nulls
+																		    		    .collect(Collectors.toList());
+    	
+    	
+    	
+    	ObjectMapper objectMapper = new ObjectMapper();
+    	// Define a DateTimeFormatter for safe file name format
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
+
+		// Get current date and time
+		LocalDateTime now = LocalDateTime.now();
+
+		// Format the current date and time to a safe string for file names
+		String timestamp = now.format(formatter);
+
+		String fileName = StringUtils.join(timestamp, "-" , identity.getUid(), "-identityOnlyScoringInput.json");
+		//PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
+		boolean isS3UploadRequired = isS3UploadRequired();
+		String identityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
+		
+        try {
+        	  if(isS3UploadRequired) 
+        	  {
+        		  File jsonFile = new File(fileName);
+
+        		// Write the User object to the JSON file
+                  objectMapper.writeValue(jsonFile, articleIdentityScore);
+                  uploadJsonFileIntoS3(fileName, jsonFile);
+
+        	  }
+        	  else
+        	  {	  
+        		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
+	        	  objectMapper.writeValue(jsonFile,articleIdentityScore);
+        	  }
+              String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
+        	  NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
+			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString);
+			  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
+ 		
+       
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+       return null;
+   }
+    private static ReCiterArticleFeedbackIdentityScore mapToIdentityScore(ReCiterArticle article) {
+    	
+        try {
+        	
+        	return new ReCiterArticleFeedbackIdentityScore(
+														    article.getArticleId(),
+														    getArticleCountScore(article.getArticleCountEvidence()),
+														    getEducationYearScore(article.getEducationYearEvidence()),
+														    getEmailMatchScore(article.getEmailEvidence()),
+														    getGenderScore(article.getGenderEvidence()),
+														    article.getGrantEvidenceTotalScore(), 
+														    getJournalSubfieldScore(article.getJournalCategoryEvidence()),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchFirstScore),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchLastScore),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
+														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
+														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
+														    getRelationshipEvidenceTotalScore(article.getRelationshipEvidence()),
+														    getNegativeMatchScore(article.getRelationshipEvidence()),
+														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
+														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+														    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+
+
+    	
+    }
+ // Helper methods
+    private static double getFeedbackScore(Double score) {
+	    return Optional.ofNullable(score).orElse(0.0);
+	}
+  	private static double getArticleCountScore(ArticleCountEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(ArticleCountEvidence::getArticleCountScore)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getEducationYearScore(EducationYearEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getEmailMatchScore(EmailEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(EmailEvidence::getEmailMatchScore)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getGenderScore(GenderEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(GenderEvidence::getGenderScoreIdentityArticleDiscrepancy)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getJournalSubfieldScore(JournalCategoryEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(JournalCategoryEvidence::getJournalSubfieldScore)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getNameMatchScore(AuthorNameEvidence evidence, Function<AuthorNameEvidence, Double> scoreFunction) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(scoreFunction)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getRelationshipEvidenceTotalScore(RelationshipEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(RelationshipEvidence::getRelationshipEvidenceTotalScore)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getNegativeMatchScore(RelationshipEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(RelationshipEvidence::getRelationshipNegativeMatch)
+ 	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getNonTargetAuthorInstitutionalAffiliationScore(AffiliationEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(AffiliationEvidence::getScopusNonTargetAuthorAffiliation)
+ 	            .map(NonTargetAuthorScopusAffiliation::getNonTargetAuthorInstitutionalAffiliationScore)
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getTargetAuthorAffiliationScore(AffiliationEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(AffiliationEvidence::getScopusTargetAuthorAffiliation)
+ 	            .map(affiliations -> affiliations.stream()
+ 	                    .mapToDouble(TargetAuthorScopusAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
+ 	                    .sum())
+ 	            .orElse(0.0);
+ 	}
+
+ 	private static double getPubmedTargetAuthorAffiliationScore(AffiliationEvidence evidence) {
+ 	    return Optional.ofNullable(evidence)
+ 	            .map(AffiliationEvidence::getPubmedTargetAuthorAffiliation)
+ 	            .map(TargetAuthorPubmedAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
+ 	            .orElse(0.0);
+ 	}
+ 	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
+	{
+		 return reCiterArticles.stream()
+				 				 .filter(Objects::nonNull)
+						         .map(article -> findJSONObjectById(authorshipLikelihoodScoreArray, article))
+						         .filter(Objects::nonNull) // Filter out null values returned from findJSONObjectById
+						         .collect(Collectors.toList()); // Collect the results if needed, or just perform the mapping
+	}
+	// Helper method to find JSONObject by article
+	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
+	    for (int i = 0; i < jsonArray.length(); i++) {
+	        JSONObject jsonObject = jsonArray.getJSONObject(i);
+	        if (jsonObject.getLong("id") == article.getArticleId()) {
+	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
+	                    .setScale(3, RoundingMode.DOWN)
+	                    .doubleValue());*/
+	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
+	            return article; // Return the modified article
+	        }
+	    }
+	    if(article!=null)
+	    	article.setAuthorshipLikelihoodScore(0.0);
+	    return article; // Return null if not found
+	}
+	
+	private boolean isS3UploadRequired()
+    {
+    	  	  
+  		 Properties properties = PropertiesLoader("application.properties");
+
+         // Retrieve properties
+         String awsS3Use = properties.getProperty("aws.s3.use");
+         boolean isS3Use = Boolean.parseBoolean(awsS3Use);
+         String dynamoDDLocal = properties.getProperty("aws.dynamoDb.local");
+         boolean isDynamoDBLocal = Boolean.parseBoolean(dynamoDDLocal);
+         if(isS3Use && !isDynamoDBLocal) 
+        	 return true;
+    	return false;
+    }
+	private Properties PropertiesLoader(String fileName) {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream(fileName)) {
+            if (input == null) {
+            	slf4jLogger.error("Sorry, unable to find " , fileName);
+                return null;
+            }
+            // Load the properties file
+            properties.load(input);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return properties;
+    }
+	private String getProperty(String key) {
+        return properties.getProperty(key);
+    }
+	private void uploadJsonFileIntoS3(String keyName,File file)
+	{
+		String FeedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
+        
+		// Upload the python file
+        try {
+        	
+        	final AmazonS3 s3 = AmazonS3ClientBuilder
+					.standard()
+					.withCredentials(new DefaultAWSCredentialsProviderChain())
+					.withRegion(System.getenv("AWS_REGION"))
+					.build();
+        	
+        	slf4jLogger.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+        	PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), keyName, file);
+       
+        	// Optionally, set metadata
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType("application/json");
+            putObjectRequest.setMetadata(metadata);
+
+            
+            try{
+				s3.putObject(putObjectRequest);
+				slf4jLogger.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+			}
+			catch(AmazonServiceException e) {
+				// The call was transmitted successfully, but Amazon S3 couldn't process 
+	            // it, so it returned an error response.
+				slf4jLogger.error(e.getErrorMessage());
+			}
+        
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+	}
+	private Future<?> submitAndLogTime(String category, ExecutorService executorService,
+			StrategyContext context,List<ReCiterArticle> reCiterArticles, Identity identity) 
+	{
+
+		return executorService.submit(() -> {
+		StopWatch stopWatch = new StopWatch(category);
+		stopWatch.start(category);
+		if(context instanceof RemoveReCiterArticleStrategyContext)
+			((RemoveReCiterArticleStrategyContext)context).executeStrategy(reCiterArticles, identity);
+		else
+			((TargetAuthorStrategyContext)context).executeStrategy(reCiterArticles, identity);
+		stopWatch.stop();
+		slf4jLogger.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+		});
 	}
 }

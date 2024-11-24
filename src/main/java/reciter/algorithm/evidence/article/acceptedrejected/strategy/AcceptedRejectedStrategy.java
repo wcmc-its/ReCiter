@@ -34,13 +34,13 @@ public class AcceptedRejectedStrategy extends AbstractReCiterArticleStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
 			reCiterArticles.stream().forEach(reCiterArticle -> {
 				AcceptedRejectedEvidence acceptedRejectedEvidence = new AcceptedRejectedEvidence();
-				if(reCiterArticle.getGoldStandard() == 1) {
+				/*if(reCiterArticle.getGoldStandard() == 1) {
 					acceptedRejectedEvidence.setFeedbackScoreAccepted(ReCiterArticleScorer.strategyParameters.getAcceptedArticleScore());
 				} else if(reCiterArticle.getGoldStandard() == -1) {
 					acceptedRejectedEvidence.setFeedbackScoreRejected(ReCiterArticleScorer.strategyParameters.getRejectedArticleScore());
 				} else if(reCiterArticle.getGoldStandard() == 0) {
 					acceptedRejectedEvidence.setFeedbackScoreNull(ReCiterArticleScorer.strategyParameters.getFeedbackScoreNullScore());
-				}
+				}*/
 				
 				if(acceptedRejectedEvidence != null) {
 					slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + acceptedRejectedEvidence);

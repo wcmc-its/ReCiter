@@ -15,11 +15,11 @@ public class StandardScoreStrategy extends AbstractReCiterArticleStrategy {
 	
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(AcceptedRejectedStrategy.class);
 	
-	private final String[] standardizedScoreMapping = ReCiterArticleScorer.strategyParameters.getStandardizedScoreMapping().trim().split(",");
+	//private final String[] standardizedScoreMapping = ReCiterArticleScorer.strategyParameters.getStandardizedScoreMapping().trim().split(",");
 	private List<String> standardizedScores;
 	
 	public StandardScoreStrategy() {
-		this.standardizedScores = Arrays.asList(standardizedScoreMapping);
+		//this.standardizedScores = Arrays.asList(standardizedScoreMapping);
 	}
 
 	@Override

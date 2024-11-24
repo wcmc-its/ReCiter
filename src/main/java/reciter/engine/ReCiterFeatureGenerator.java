@@ -14,11 +14,8 @@ import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import reciter.algorithm.cluster.Clusterer;
-import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.api.parameters.UseGoldStandard;
-import reciter.engine.analysis.ReCiterArticleAffiliationFeature;
 import reciter.engine.analysis.ReCiterArticleAuthorFeature;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.engine.analysis.ReCiterArticleFeature.ArticleKeyword;
@@ -26,25 +23,19 @@ import reciter.engine.analysis.ReCiterArticleFeature.ArticleKeyword.KeywordType;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
-import reciter.engine.analysis.ReCiterFeatureCluster;
-import reciter.engine.analysis.ReCiterArticleAffiliationFeature.ReCiterArticleAffiliationInstitution;
 import reciter.engine.analysis.evidence.Evidence;
-import reciter.engine.analysis.evidence.AffiliationEvidence.InstitutionalAffiliationSource;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
-import reciter.model.article.ReCiterCitedBy;
-import reciter.model.article.ReCiterCites;
 import reciter.model.identity.Identity;
-import reciter.model.scopus.Affiliation;
-import reciter.model.scopus.Author;
 
 @Data
 @Slf4j
 public class ReCiterFeatureGenerator {
 
+	
+	
     private double precision;
     private double recall;
 
@@ -62,15 +53,13 @@ public class ReCiterFeatureGenerator {
     public ReCiterFeature computeFeatures(UseGoldStandard mode,
                                           final double filterScore,
                                           final double keywordsMax,
-                                          Clusterer reCiterClusterer,
+                                          List<ReCiterArticle> reCiterArticles,
                                           List<Long> goldStandardPmids,
-                                          List<Long> rejectedPmids) {
-        Map<Long, ReCiterCluster> finalCluster = reCiterClusterer.getClusters();
-        //Select Filter to filter by total score
-        
-        //Set<Long> selection = clusterSelector.getSelectedClusterIds();
-        Identity identity = reCiterClusterer.getIdentity();
-        List<Long> finalArticles = reCiterClusterer.getReCiterArticles().stream().map(article -> article.getArticleId()).collect(Collectors.toList());
+                                          List<Long> rejectedPmids,Identity identity) {
+     
+    	List<Long> finalArticles = reCiterArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
+    	
+            
 
         ReCiterFeature reCiterFeature = new ReCiterFeature();
         reCiterFeature.setPersonIdentifier(identity.getUid());
@@ -79,14 +68,10 @@ public class ReCiterFeatureGenerator {
         reCiterFeature.setMode(mode);
 
         Set<Long> pmidsRetrieved = new HashSet<>();
-        for (ReCiterCluster reCiterCluster : finalCluster.values()) {
-            for (ReCiterArticle reCiterArticle : reCiterCluster.getArticleCluster()) {
+            for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 pmidsRetrieved.add(reCiterArticle.getArticleId());
             }
-        }
-
-       
-
+ 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
         if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
@@ -106,14 +91,15 @@ public class ReCiterFeatureGenerator {
         reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {
-        	selectedArticles = reCiterClusterer.getReCiterArticles()
+        	selectedArticles = reCiterArticles 
         			.stream()
-        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore || reCiterArticle.getGoldStandard() == 1 || reCiterArticle.getGoldStandard() == -1)
+        			.filter(reCiterArticle -> reCiterArticle.getAuthorshipLikelihoodScore() >= filterScore || reCiterArticle.getGoldStandard() == 1 || reCiterArticle.getGoldStandard() == -1)
         			.collect(Collectors.toList());
         } else {
-        	selectedArticles = reCiterClusterer.getReCiterArticles()
+        	
+        	selectedArticles = reCiterArticles
         			.stream()
-        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore)
+        			.filter(reCiterArticle -> reCiterArticle.getAuthorshipLikelihoodScore() >= filterScore)
         			.collect(Collectors.toList());
         }
 
@@ -122,7 +108,7 @@ public class ReCiterFeatureGenerator {
         // Count of pending publications
         List<ReCiterArticle> pendingArticles = selectedArticles
                 .stream()
-                .filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore && reCiterArticle.getGoldStandard() == 0)
+                .filter(reCiterArticle -> reCiterArticle.getAuthorshipLikelihoodScore() >= filterScore && reCiterArticle.getGoldStandard() == 0)
                 .collect(Collectors.toList());
         reCiterFeature.setCountPendingArticles(pendingArticles.size());
         
@@ -146,7 +132,7 @@ public class ReCiterFeatureGenerator {
         log.info("\n");
         
         // Set overall accuracy using the new formula
-        reCiterFeature.setOverallAccuracy(accuracy);
+        reCiterFeature.setOverallAccuracy(Double.isNaN(accuracy)? 0.0:accuracy);
 
         // precision
         reCiterFeature.setPrecision(analysis.getPrecision());
@@ -159,8 +145,9 @@ public class ReCiterFeatureGenerator {
         for (ReCiterArticle reCiterArticle : selectedArticles) {
             ReCiterArticleFeature reCiterArticleFeature = new ReCiterArticleFeature();
             reCiterArticleFeature.setPmid(reCiterArticle.getArticleId());
-            reCiterArticleFeature.setTotalArticleScoreNonStandardized(reCiterArticle.getTotalArticleScoreNonStandardized());
-            reCiterArticleFeature.setTotalArticleScoreStandardized(reCiterArticle.getTotalArticleScoreStandardized());
+       
+            //authorshipLikelihoodScore
+			reCiterArticleFeature.setAuthorshipLikelihoodScore(reCiterArticle.getAuthorshipLikelihoodScore()); 
             // true; false; null. make it Boolean
             // userAssertion TODO get from DB
             //if(goldStandardPmids != null && goldStandardPmids.contains(reCiterArticle.getArticleId())) {
@@ -227,42 +214,7 @@ public class ReCiterFeatureGenerator {
             if(reCiterArticle.getScopusDocId() != null) {
             	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
             }
-            
-            //ReCiter Cluster - Commenting out as not necessary at the moment
-            /*ReCiterFeatureCluster reCiterFeatureCluster = new ReCiterFeatureCluster();
-            //Cites
-            if(reCiterArticle.getCommentsCorrectionsPmids() != null && !reCiterArticle.getCommentsCorrectionsPmids().isEmpty()) { 
-                List<Long> cites = new ArrayList<>();
-                ReCiterCites reCiterCites = new ReCiterCites(cites, "pmid");
-                for(Long pmid: reCiterArticle.getCommentsCorrectionsPmids()) {
-                    cites.add(pmid);
-                }
-                reCiterFeatureCluster.setReCiterCites(reCiterCites);
-            }
-            //CitedBy
-            if(reCiterClusterer.getReCiterArticles() != null) {
-                List<Long> citedBy = reCiterClusterer.getReCiterArticles()
-                    .stream()
-                    .filter(article -> article.getCommentsCorrectionsPmids().contains(reCiterArticle.getArticleId()))
-                    .map(ReCiterArticle::getArticleId)
-                    .collect(Collectors.toList());
-                if(citedBy != null && !citedBy.isEmpty()) {
-                    ReCiterCitedBy reCiterCitedBy = new ReCiterCitedBy(citedBy, "pmid");
-                    reCiterFeatureCluster.setReCiterCitedBy(reCiterCitedBy);
-                }
-            }
-            //Grant
-            if(reCiterArticle.getGrantList() != null) {
-                reCiterFeatureCluster.setGrantIdentifiers(reCiterArticle.getGrantList()
-                    .stream()
-                    .map(ReCiterArticleGrant::getGrantID)
-                    .collect(Collectors.toList()));
-            }
-            //Journal Category
-            if(reCiterArticle.getJournalCategory() != null) {
-                reCiterFeatureCluster.setJournalCategory(reCiterArticle.getJournalCategory()); 
-            }
-            reCiterArticleFeature.setReCiterCluster(reCiterFeatureCluster);*/
+       
             // journal title
             reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
             
@@ -277,7 +229,7 @@ public class ReCiterFeatureGenerator {
 
             // volume
             reCiterArticleFeature.setVolume(reCiterArticle.getVolume());
-
+            
             // issue
             reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
 
@@ -446,6 +398,11 @@ public class ReCiterFeatureGenerator {
             }
             // Clustering Evidence
             //positiveEvidence.setClusteringEvidence(reCiterArticle.getClusteringEvidence());
+            
+            if(mode == UseGoldStandard.AS_EVIDENCE && reCiterArticle.getFeedbackEvidence() !=null ) {
+				evidence.setFeedbackEvidence(reCiterArticle.getFeedbackEvidence());
+			}
+			reCiterArticleFeature.setEvidence(evidence);
 
             log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
             reCiterArticleFeature.setEvidence(evidence);
@@ -454,8 +411,9 @@ public class ReCiterFeatureGenerator {
         }
         calculateTopKeywords(reCiterArticleFeatures, reCiterFeature, keywordsMax);
         //Sorting the List in descending order based on TotalScoreNonStandardized
-        reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures.stream().sorted(Comparator.comparing(ReCiterArticleFeature::getTotalArticleScoreNonStandardized).reversed()).collect(Collectors.toList()));
-
+       // reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures.stream().sorted(Comparator.comparing(ReCiterArticleFeature::getTotalArticleScoreNonStandardized).reversed()).collect(Collectors.toList()));
+        reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures.stream().sorted(Comparator.comparing(ReCiterArticleFeature::getAuthorshipLikelihoodScore).reversed()).collect(Collectors.toList()));
+	
         return reCiterFeature;
     }
 
@@ -490,4 +448,50 @@ public class ReCiterFeatureGenerator {
             reCiterFeature.setArticleKeywordsAcceptedArticles(acceptedKeywords);
         }
     }
+ 
+ //obsolete   
+public ReCiterFeature updateFeedbackFeatures(ReCiterFeature reCiterFeature,final double filterScore, List<ReCiterArticle> reciterArticles, List<Long> goldStandardPmids, List<Long> rejectedPmids, Identity identity) {
+		
+		
+		List<ReCiterArticle> selectedArticles = new ArrayList<>();
+        	selectedArticles = reciterArticles
+        			.stream()
+        			.filter(reCiterArticle -> reCiterArticle.getTotalArticleScoreStandardized() >= filterScore || reCiterArticle.getGoldStandard() == 1 || reCiterArticle.getGoldStandard() == -1)
+        			.collect(Collectors.toList());
+         
+        
+      // "suggestedArticles"
+		List<ReCiterArticleFeature> reCiterArticleFeatures = reCiterFeature.getReCiterArticleFeatures();
+		for (ReCiterArticle reCiterArticle : selectedArticles) {
+			//ReCiterArticleFeature reCiterArticleFeature = new ReCiterArticleFeature();
+
+			for(ReCiterArticleFeature reCiterArticleFeature : reCiterArticleFeatures)
+			{
+				if(reCiterArticle!=null && reCiterArticleFeature!=null && reCiterArticle.getArticleId() == reCiterArticleFeature.getPmid())
+				{	
+					//authorshipLikelihoodScore
+					reCiterArticleFeature.setAuthorshipLikelihoodScore(reCiterArticle.getAuthorshipLikelihoodScore());
+					
+					Evidence evidence = reCiterArticleFeature.getEvidence();
+		
+					//Feedback Evidence
+					if(reCiterArticle.getFeedbackEvidence() !=null ) {
+						evidence.setFeedbackEvidence(reCiterArticle.getFeedbackEvidence());
+					}
+					reCiterArticleFeature.setEvidence(evidence);
+		
+					//reCiterArticleFeatures.add(reCiterArticleFeature);
+					break;
+			   }
+			}
+		}
+		
+		//Sorting the List in descending order based on TotalScoreNonStandardized
+		reCiterFeature.setReCiterArticleFeatures(reCiterArticleFeatures.stream()
+				.sorted(Comparator.comparing(ReCiterArticleFeature::getAuthorshipLikelihoodScore).reversed())
+				.collect(Collectors.toList()));
+
+		return reCiterFeature;
+	}
+	
 }
