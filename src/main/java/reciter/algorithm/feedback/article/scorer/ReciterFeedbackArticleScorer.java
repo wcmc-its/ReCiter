@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;						   
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -258,20 +259,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	protected void exportConsolidatedFeedbackScores(String personIdentifier, Map<Long,ReCiterArticle> articleMap)
 	{
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
-		
-	
-		// Get current date and time
-		LocalDateTime now = LocalDateTime.now();
-		
-		// Format the current date and time to a safe string for file names
-		String timestamp = now.format(formatter);
-
 		String[] csvHeaders = { "PersonIdentifier","Pmid","userAssertion","scoreCites","scoreCoAuthorName","scoreEmail",
     		 	"scoreInstitution","scoreJournal","scoreJournalSubField","scoreKeyword","scoreOrcid","scoreOrcidCoAuthor",
     		 	"scoreOrganization","scoreTargetAuthorName","scoreYear" };
 		
-		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-consolidated.csv");
+		Path filePath = Paths.get(personIdentifier + "_consolidated.csv");
 		
 		if(isS3UploadRequired()) 
 		{	
@@ -287,7 +279,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
 				csvPrinter.flush();
 				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
+				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
+				if(uploadCsvToS3) {
+					 Files.delete(filePath);
+					 log.info("File deleted successfully: " + filePath);
+				}
 				log.warn("Uploading CSV into S3 ends here******************");
 				
 			} catch (IOException e) {
@@ -316,19 +312,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	protected void exportArticleItemLevelFeedbackScores(String personIdentifier, List<ReCiterArticle> reCiterArticles)
 	{
-		// Define a DateTimeFormatter for safe file name format
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
-
-		// Get current date and time
-		LocalDateTime now = LocalDateTime.now();
-
-		// Format the current date and time to a safe string for file names
-		String timestamp = now.format(formatter);
-
+		
 		String[] csvHeaders = { "PersonIdentifier", "Pmid", "CountAccepted", "CountRejected",
 				"subscoreType1", "subscoreValue", "subScoreIndividualScore","UserAssertion" };
 		
-		Path filePath = Paths.get(timestamp + "-" + personIdentifier + "-feedbackScoring-itemLevel.csv");
+		Path filePath = Paths.get(personIdentifier + "_item_level.csv");
 		
 		if(isS3UploadRequired()) 
 		{
@@ -343,7 +331,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				
 				csvPrinter.flush();
 				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
+				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
+				if(uploadCsvToS3) {
+					 Files.delete(filePath);
+					 log.info("File deleted successfully: " + filePath);
+				}
 				log.warn("Uploading CSV into S3 ends here******************");
 				
 			} catch (IOException e) {
@@ -367,7 +359,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		}
 		
 	}
-	private void uploadCsvToS3(String csvContent,String fileName) {
+	private boolean uploadCsvToS3(String csvContent,String fileName) {
        
 		String FeedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
         // Create InputStream from CSV content
@@ -386,21 +378,29 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					.withCredentials(new DefaultAWSCredentialsProviderChain())
 					.withRegion(System.getenv("AWS_REGION"))
 					.build();
-        	
-        	log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
-            PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), fileName, inputStream, metadata);
-            try{
-				s3.putObject(putObjectRequest);
-			    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
-			}
-			catch(AmazonServiceException e) {
-				// The call was transmitted successfully, but Amazon S3 couldn't process 
-	            // it, so it returned an error response.
-				log.error(e.getErrorMessage());
-			}
+			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) {
+        		log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+                PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), fileName, inputStream, metadata);
+                try{
+    				s3.putObject(putObjectRequest);
+    			    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+    			    return true;
+    			}
+    			catch(AmazonServiceException e) {
+    				// The call was transmitted successfully, but Amazon S3 couldn't process 
+    	            // it, so it returned an error response.
+    				log.error(e.getErrorMessage());
+    				return false;
+    			}
+        	}
+        	else {
+        		log.error("S3 bucket does not exist: " + FeedbackScoreBucketName);
+                return false;
+        	}
         
         } catch (Exception e) {
             e.printStackTrace();
+			return false;			 
         }
     }
 	private void mapConsolidatedCSVData(Map<Long,ReCiterArticle> articleMap,CSVPrinter csvPrinter,String personIdentifier)
@@ -533,16 +533,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    		    .collect(Collectors.toList());
 	
     	ObjectMapper objectMapper = new ObjectMapper();
-    	// Define a DateTimeFormatter for safe file name format
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
-
-		// Get current date and time
-		LocalDateTime now = LocalDateTime.now();
-
-		// Format the current date and time to a safe string for file names
-		String timestamp = now.format(formatter);
-
-		String fileName = StringUtils.join(timestamp, "-" , identity.getUid(), "-feedbackIdentityScoringInput.json");
+    	
+		String fileName = StringUtils.join(identity.getUid(), "-feedbackIdentityScoringInput.json");
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String feedbackIdentityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
         try {

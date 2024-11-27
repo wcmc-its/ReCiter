@@ -471,9 +471,9 @@ public class ReCiterController {
         final double totalScore;
         
         if(authorshipLikelihoodScore == null) {
-        	totalScore = totalArticleScoreStandardizedDefault/10; // Configuring the totalScore in multiple of 10's in application.properties file
+        	totalScore = totalArticleScoreStandardizedDefault; // Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-        	totalScore = authorshipLikelihoodScore/10; // Configuring the totalScore in multiple of 10's in application.properties file
+        	totalScore = authorshipLikelihoodScore; // Configuring the totalScore in multiple of 10's in application.properties file
         }
     	
         EngineOutput engineOutput;
@@ -1003,9 +1003,9 @@ public class ReCiterController {
             parameters.setRejectedPmids(goldStandard.getRejectedPmids());
         }
         if (totalStandardizedArticleScore == null) {
-            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault()/10);// Configuring the totalScore in multiple of 10's in application.properties file
+            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault());// Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore/10); // Configuring the totalScore in multiple of 10's in application.properties file
+            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
     }
