@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,9 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
-import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
-import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
@@ -352,7 +349,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	public List<ReCiterArticle> executePythonScriptForArticleIdentityTotalScore(List<ReCiterArticle> reCiterArticles, Identity identity) {
 	    
 		slf4jLogger.info("articles Size :", reCiterArticles.size());
-    	
    	
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityScore = reCiterArticles.stream()
 																		    		    .map(article -> {

@@ -9,11 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;						   
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -281,7 +279,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				if(uploadCsvToS3) {
-					 Files.delete(filePath);
+					 deleteFile(filePath);
 					 log.info("File deleted successfully: " + filePath);
 				}
 				log.warn("Uploading CSV into S3 ends here******************");
@@ -333,7 +331,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				if(uploadCsvToS3) {
-					 Files.delete(filePath);
+					 deleteFile(filePath);
 					 log.info("File deleted successfully: " + filePath);
 				}
 				log.warn("Uploading CSV into S3 ends here******************");
@@ -751,4 +749,27 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         }
 	}
 
+	private void deleteFile(Path filePath) {
+		try {
+			File file = filePath.toFile();
+			if (file.exists()) {
+
+				if (!file.setWritable(true)) {
+					log.info("Failed to set write permission for the file."+filePath);
+				}
+
+				if (Files.deleteIfExists(filePath)) {
+					log.info("File deleted successfully."+filePath);
+				} else {
+					log.info("File deletion failed."+filePath);
+				}
+
+			} else {
+				log.info("File does not exist: " + filePath);
+			}
+		} catch (Exception e) {
+			log.error("An error occurred while deleting the file path " + filePath + ": " + e.getMessage());
+		}
+
+	}									 
 }
