@@ -3,12 +3,15 @@ package reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.strateg
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +28,11 @@ import reciter.service.ScienceMetrixService;
 public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(JournalSubFieldFeedbackStrategy.class);
-	//Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = null;
+	
 	private Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = new HashMap<>();
+	
+	Set<String> filterJournalSubFields = Stream.of("General Science & Technology")
+            .collect(Collectors.toSet());
 	
 	ScienceMetrixService scienceMetrixService = ApplicationContextHolder.getContext()
 			.getBean(ScienceMetrixService.class);
@@ -38,19 +44,6 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 
 	}
 	
-	/*private String retrieveJournalSubField(MedlineCitationJournalISSN medlineCitationJournalIssn) {
-		 
-		if(medlineCitationJournalIssn!=null && medlineCitationJournalIssn.getIssn()!=null && !medlineCitationJournalIssn.getIssn().isEmpty())
-		{
-			ScienceMetrix scienceMetrix = scienceMetrixService.findByIssn(medlineCitationJournalIssn.getIssn());
-			if (scienceMetrix == null)
-				scienceMetrix = scienceMetrixService.findByEissn(medlineCitationJournalIssn.getIssn());
-			if (scienceMetrix != null && scienceMetrix.getScienceMetrixSubfield()!=null &&
-					!scienceMetrix.getScienceMetrixSubfield().equalsIgnoreCase("")) 
-				 return scienceMetrix.getScienceMetrixSubfield();
-		}
-		return null;
-	}*/
 
 	@Override
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
@@ -122,7 +115,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	                                                   Map<String, Long> rejectedArticlesCountByJournalSubField) {
 
 	    String journalSubField = retrieveJournalSubField(journalIssn);
-	    if (journalSubField == null || journalSubField.isEmpty()) {
+	    if (journalSubField == null || journalSubField.isEmpty() || filterJournalSubFields.contains(journalSubField)) {
 	        return null; // Skip if no valid subfield
 	    }
 
