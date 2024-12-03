@@ -332,8 +332,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         boolean allTasksCompleted = true;
         // Print execution times from futures
         
-        reCiterArticles.forEach(article -> System.out.println("grant Evidence*************"+ article.getGenderEvidence() 
-        							+ "\ngrant Evidece totalScore*****************" + article.getGrantEvidenceTotalScore() + "\nGrant List***********" + article.getGrantList()));
+        /*reCiterArticles.forEach(article -> System.out.println("grant Evidence*************"+ article.getGenderEvidence() 
+        							+ "\ngrant Evidece totalScore*****************" + article.getGrantEvidenceTotalScore() + "\nGrant List***********" + article.getGrantList()));*/
         
         for (Future<?> future : futures) {
             try {
