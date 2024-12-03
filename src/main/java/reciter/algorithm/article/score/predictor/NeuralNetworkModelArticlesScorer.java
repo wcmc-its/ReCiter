@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;						   
 
 import org.json.JSONArray;
 import org.slf4j.Logger;
@@ -86,5 +88,28 @@ public class NeuralNetworkModelArticlesScorer {
 		stopWatch.stop();
 		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		return null;
+	}
+	public void deleteFile(Path filePath) {
+		try {
+			File file = filePath.toFile();
+			if (file.exists()) {
+
+				if (!file.setWritable(true)) {
+					log.info("Failed to set write permission for the file."+filePath);
+				}
+
+				if (Files.deleteIfExists(filePath)) {
+					log.info("File deleted successfully."+filePath);
+				} else {
+					log.info("File deletion failed."+filePath);
+				}
+
+			} else {
+				log.info("File does not exist: " + filePath);
+			}
+		} catch (Exception e) {
+			log.error("An error occurred while deleting the file path " + filePath + ": " + e.getMessage());
+		}
+
 	}
 }
