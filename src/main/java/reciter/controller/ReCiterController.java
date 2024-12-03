@@ -471,9 +471,9 @@ public class ReCiterController {
         final double totalScore;
         
         if(authorshipLikelihoodScore == null) {
-        	totalScore = totalArticleScoreStandardizedDefault/10; // Configuring the totalScore in multiple of 10's in application.properties file
+        	totalScore = totalArticleScoreStandardizedDefault; // Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-        	totalScore = authorshipLikelihoodScore/10; // Configuring the totalScore in multiple of 10's in application.properties file
+        	totalScore = authorshipLikelihoodScore; // Configuring the totalScore in multiple of 10's in application.properties file
         }
     	
         EngineOutput engineOutput;
@@ -496,6 +496,7 @@ public class ReCiterController {
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
 				finalArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+				List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
         	}
 			else
 			{
@@ -512,7 +513,6 @@ public class ReCiterController {
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
 				analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-								//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
 								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
@@ -528,7 +528,6 @@ public class ReCiterController {
 			
 				if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-								//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
 								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
@@ -538,8 +537,16 @@ public class ReCiterController {
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 								)
 								.collect(Collectors.toList()));
-					List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(finalArticles, selectedArticles, knownPmids);
+					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						    .map(featureArticle -> {
+						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        return article;
+						    })
+						    .collect(Collectors.toList());
+					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
@@ -548,8 +555,16 @@ public class ReCiterController {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
 							.collect(Collectors.toList()));
-					List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(finalArticles, selectedArticles, knownPmids);
+					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						    .map(featureArticle -> {
+						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        return article;
+						    })
+						    .collect(Collectors.toList());
+					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
@@ -558,8 +573,16 @@ public class ReCiterController {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(finalArticles, selectedArticles, knownPmids);
+					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						    .map(featureArticle -> {
+						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        return article;
+						    })
+						    .collect(Collectors.toList());
+					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
@@ -574,8 +597,16 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 							)
 							.collect(Collectors.toList()));
-					List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(finalArticles, selectedArticles, knownPmids);
+					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						    .map(featureArticle -> {
+						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        return article;
+						    })
+						    .collect(Collectors.toList());
+					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
@@ -590,8 +621,16 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 							)
 							.collect(Collectors.toList()));
-					List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(finalArticles, selectedArticles, knownPmids);
+					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						    .map(featureArticle -> {
+						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        return article;
+						    })
+						    .collect(Collectors.toList());
+					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
@@ -602,8 +641,16 @@ public class ReCiterController {
 							||
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(finalArticles, selectedArticles, knownPmids);
+					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						    .map(featureArticle -> {
+						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        return article;
+						    })
+						    .collect(Collectors.toList());
+					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
@@ -615,8 +662,16 @@ public class ReCiterController {
 							&&
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							.collect(Collectors.toList()));
-					List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(finalArticles, selectedArticles, knownPmids);
+					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
+					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						    .map(featureArticle -> {
+						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        return article;
+						    })
+						    .collect(Collectors.toList());
+					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
 					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
@@ -745,7 +800,6 @@ public class ReCiterController {
         } else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL){
         	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
             		.stream()
-                	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
             		.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
                 			&&
                 			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
@@ -758,7 +812,6 @@ public class ReCiterController {
         } else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL){
         	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
             		.stream()
-                	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
             		.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
                 			&&
                 			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
@@ -780,7 +833,6 @@ public class ReCiterController {
         } else {
         	List<ReCiterArticleFeature> reCiterFilteredArticles = originalFeatures
             		.stream()
-                	//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
             		.filter(reCiterArticleFeature -> reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
                 			&&
                 			reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
@@ -1003,9 +1055,9 @@ public class ReCiterController {
             parameters.setRejectedPmids(goldStandard.getRejectedPmids());
         }
         if (totalStandardizedArticleScore == null) {
-            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault()/10);// Configuring the totalScore in multiple of 10's in application.properties file
+            parameters.setTotalStandardzizedArticleScore(strategyParameters.getTotalArticleScoreStandardizedDefault());// Configuring the totalScore in multiple of 10's in application.properties file
         } else {
-            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore/10); // Configuring the totalScore in multiple of 10's in application.properties file
+            parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
     }

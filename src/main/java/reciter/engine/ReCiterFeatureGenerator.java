@@ -114,7 +114,8 @@ public class ReCiterFeatureGenerator {
         
         List<Long> filteredArticles = selectedArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
         
-        Analysis analysis = Analysis.performAnalysis(finalArticles, filteredArticles, goldStandardPmids);
+       // Analysis analysis = Analysis.performAnalysis(finalArticles, filteredArticles, goldStandardPmids);
+        Analysis analysis = Analysis.performAnalysis(reCiterArticles,goldStandardPmids);
         
         log.info("Analysis for uid=[" + identity.getUid() + "]");
         log.info("Precision=" + analysis.getPrecision());
