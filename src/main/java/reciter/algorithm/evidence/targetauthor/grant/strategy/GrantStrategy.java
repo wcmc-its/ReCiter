@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -82,6 +84,7 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
 			//score += executeStrategy(reCiterArticle, identity);
 			List<Grant> grants = new ArrayList<>();
+			checkForValidGrant(reCiterArticle); // Calling here as we removed the old clustering logic for the Grants
 			for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
 				for (String identityGrantId : sanitizedIdentityGrants) {
 					//log.info("identity grant {}", identityGrantId);
@@ -132,5 +135,41 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 				}
 			}
 		}
+	}
+	private void checkForValidGrant(ReCiterArticle reCiterArticle) {
+		for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
+			if(grant.getGrantID() != null) {
+				String sanitizedGrant = sanitizeGrant(grant.getGrantID().replaceAll("[\\s\\-]", ""));
+				if(sanitizedGrant != null) {
+					grant.setSanitizedGrantID(sanitizedGrant);
+				}
+			}
+		}	
+	}
+	private String sanitizeGrant(String grant) {
+		String fundingAgency = null;
+		String grantId = null;
+		Pattern pattern = Pattern.compile("([a-zA-Z][a-zA-Z]+)");
+		Matcher matcher = pattern.matcher(grant);
+		int matchCount = 0;
+		while(matcher.find()) {
+			matchCount++;
+			if(matchCount == 2) {
+				fundingAgency = matcher.group();
+			}
+			fundingAgency = matcher.group();
+		}
+		
+		matchCount = 0;
+		pattern = Pattern.compile("[0-9]{4,6}");
+		matcher = pattern.matcher(grant);
+		while(matcher.find()) {
+			grantId = matcher.group().replaceFirst("^0*", "");
+		}
+		
+		if(fundingAgency != null && grantId != null) {
+			return fundingAgency + "-" + grantId;
+		}
+		return null;
 	}
 }

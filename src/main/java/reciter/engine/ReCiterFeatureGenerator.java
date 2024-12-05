@@ -121,8 +121,31 @@ public class ReCiterFeatureGenerator {
         log.info("Precision=" + analysis.getPrecision());
         log.info("Recall=" + analysis.getRecall());
         
+        double truePositiveListSize = 0.0;
+        double trueNegativeListSize = 0.0;
+        double falsePositiveListSize = 0.0;
+        double falseNegativeListSize =0.0;
         // Calculate accuracy using the new formula
-        double accuracy = (double)(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size()) / (double)(analysis.getTruePositiveList().size() + analysis.getTrueNegativeList().size() + analysis.getFalsePositiveList().size() + analysis.getFalseNegativeList().size());
+        if(analysis.getTruePositiveList()!=null && analysis.getTruePositiveList().size() > 0)
+        {
+        	truePositiveListSize = analysis.getTruePositiveList().size();
+        }
+        if(analysis.getTrueNegativeList()!=null && analysis.getTrueNegativeList().size() > 0)
+        {
+        	trueNegativeListSize = analysis.getTrueNegativeList().size();
+        }
+        if(analysis.getFalsePositiveList()!=null && analysis.getFalsePositiveList().size() > 0)
+        {
+        	falsePositiveListSize = analysis.getFalsePositiveList().size();
+        }
+        if(analysis.getFalseNegativeList()!=null && analysis.getFalseNegativeList().size() > 0)
+        {
+        	falseNegativeListSize = analysis.getFalseNegativeList().size();
+        }
+        double accuracy =0.0;
+        if((truePositiveListSize + trueNegativeListSize + falsePositiveListSize + falseNegativeListSize) > 0)
+        	accuracy = 
+        		(double)(truePositiveListSize + trueNegativeListSize ) / (double)(truePositiveListSize + trueNegativeListSize + falsePositiveListSize + falseNegativeListSize);
         
         log.info("Accuracy=" + accuracy);
         
