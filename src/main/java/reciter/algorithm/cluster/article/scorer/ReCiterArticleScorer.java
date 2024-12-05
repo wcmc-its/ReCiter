@@ -332,7 +332,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         boolean allTasksCompleted = true;
         // Print execution times from futures
         
-               
+
         for (Future<?> future : futures) {
             try {
                 future.get(); // Ensure all tasks are completed
