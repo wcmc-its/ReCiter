@@ -71,6 +71,7 @@ import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.engine.analysis.evidence.NonTargetAuthorScopusAffiliation;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.engine.analysis.evidence.RelationshipNegativeMatch;
+import reciter.engine.analysis.evidence.RelationshipPostiveMatch;
 import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
 import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
@@ -332,7 +333,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         boolean allTasksCompleted = true;
         // Print execution times from futures
         
-
         for (Future<?> future : futures) {
             try {
                 future.get(); // Ensure all tasks are completed
@@ -342,7 +342,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
             }
         }
         if (allTasksCompleted) {
-        	slf4jLogger.error("All Idnetity score strategy contexts have been completed successfully.");
+        	slf4jLogger.info("All Idnetity score strategy contexts have been completed successfully.");
 	    } else {
 	    	slf4jLogger.error("One or more tasks failed; report generation may be incomplete.");
         }
@@ -429,6 +429,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
 														    getRelationshipEvidenceTotalScore(article.getRelationshipEvidence()),
 														    getNegativeMatchScore(article.getRelationshipEvidence()),
+														    getRelationshipPositiveMatchScore(article.getRelationshipEvidence().getRelationshipPositiveMatch()),
+														    getRelationshipNegativeMatchScore(article.getRelationshipEvidence().getRelationshipNegativeMatch()),
+														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
 														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
 														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
 														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
@@ -517,6 +520,20 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .map(TargetAuthorPubmedAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
  	            .orElse(0.0);
  	}
+ 	
+ 	private static double getRelationshipPositiveMatchScore (List<RelationshipPostiveMatch> evidences) {
+ 		 return Optional.ofNullable(evidences)
+ 	            .filter(list -> !list.isEmpty())  // Check if the list is not empty
+ 	            .map(list -> list.get(0))  // Get the first RelationshipPostiveMatch
+ 	            .map(RelationshipPostiveMatch::getRelationshipMatchingScore)  // Get the matching score
+ 	            .orElse(0.0);  // Return 0.0 if the list is empty or no matching score is found
+ 	}
+
+ 	private static double getRelationshipNegativeMatchScore (RelationshipNegativeMatch negativeEvidence) {
+ 		return Optional.ofNullable(negativeEvidence)
+ 	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
+ 	            .orElse(0.0);
+	}
  	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
 		 return reCiterArticles.stream()

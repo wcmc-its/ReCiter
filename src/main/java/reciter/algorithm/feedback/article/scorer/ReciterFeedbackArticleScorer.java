@@ -90,6 +90,7 @@ import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.engine.analysis.evidence.NonTargetAuthorScopusAffiliation;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.engine.analysis.evidence.RelationshipNegativeMatch;
+import reciter.engine.analysis.evidence.RelationshipPostiveMatch;
 import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
 import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
@@ -531,7 +532,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		int countRejected = groupedByGoldStandard.getOrDefault(REJECTED_ASSERTION, Collections.emptyList()).size();
 		
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.stream()
-														                .map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
+    																	.map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
 														    		    .collect(Collectors.toList());
 	
     	ObjectMapper objectMapper = new ObjectMapper();
@@ -606,6 +607,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
 														    getRelationshipEvidenceTotalScore(article.getRelationshipEvidence()),
 														    getNegativeMatchScore(article.getRelationshipEvidence()),
+														    getRelationshipPositiveMatchScore(article.getRelationshipEvidence().getRelationshipPositiveMatch()),
+														    getRelationshipNegativeMatchScore(article.getRelationshipEvidence().getRelationshipNegativeMatch()),
+														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
 														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
 														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
 														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
@@ -694,6 +698,20 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	    return Optional.ofNullable(evidence)
 	            .map(AffiliationEvidence::getPubmedTargetAuthorAffiliation)
 	            .map(TargetAuthorPubmedAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
+	            .orElse(0.0);
+	}
+	
+	private static double getRelationshipPositiveMatchScore (List<RelationshipPostiveMatch> evidences) {
+		 return Optional.ofNullable(evidences)
+	            .filter(list -> !list.isEmpty())  // Check if the list is not empty
+	            .map(list -> list.get(0))  // Get the first RelationshipPostiveMatch
+	            .map(RelationshipPostiveMatch::getRelationshipMatchingScore)  // Get the matching score
+	            .orElse(0.0);  // Return 0.0 if the list is empty or no matching score is found
+	}
+
+	private static double getRelationshipNegativeMatchScore (RelationshipNegativeMatch negativeEvidence) {
+		return Optional.ofNullable(negativeEvidence)
+	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
 	            .orElse(0.0);
 	}
 	
