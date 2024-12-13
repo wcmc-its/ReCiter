@@ -69,10 +69,9 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Add the repository for Python 3.12 (manual installation)
-RUN curl -sS https://packages.python.org/python/keys.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/python-archive.gpg \
-    && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ppa.list \
-    && apt-get update
-
+RUN curl -fsSL https://packages.debian.org/debian/keys/debian.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/debian-archive.gpg \
+	&& echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ppa.list \
+	&& apt-get update
 
 # Install Python 3.12 (make sure it's available via apt or other suitable source)
 RUN apt-get update && apt-get install -y \
