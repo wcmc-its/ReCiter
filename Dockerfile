@@ -69,7 +69,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Add the repository for Python 3.12 (manual installation)
-RUN curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A6A59DBF2E66F6C | tee /etc/apt/trusted.gpg.d/deadsnakes.asc \
+RUN curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xBA6932366A755776 | tee /etc/apt/trusted.gpg.d/deadsnakes-ppa.asc \
     && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ppa.list \
     && apt-get update
 
