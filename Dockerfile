@@ -23,31 +23,79 @@ FROM ubuntu:20.04
 # Set non-interactive mode
 ENV DEBIAN_FRONTEND=noninteractive						  
 
-# Install Python 3.12 and other required packages
+# Install Python 3.12 and other required packages # commented out as 3.12 is no longer avialble in ppa:deadsnakes/ppa
+#RUN apt-get update && apt-get install -y \
+#    software-properties-common \
+#    && add-apt-repository ppa:deadsnakes/ppa \
+#    && apt-get update && apt-get install -y \
+#    python3.12 \
+#    python3.12-distutils \
+#    wget \
+#    unzip \
+#	libatlas-base-dev \
+#    libhdf5-dev \
+#    libhdf5-serial-dev \
+#    libjpeg-dev \
+#    zlib1g-dev \				   
+   
+#   && apt-get clean \
+#    && rm -rf /var/lib/apt/lists/*												 
+
+# Add PPA and install Python 3.12
+#RUN add-apt-repository ppa:deadsnakes/ppa && \
+#    apt-get update && \
+#    apt-get install -y python3.12 python3.12-dev python3.12-venv
+
+
+# Install dependencies to build Python 3.12 (add any additional dependencies as needed)
 RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    wget \
+    curl \
+    llvm \
+    libncurses5-dev \
+    libncursesw5-dev \
+    xz-utils \
+    tk-dev \
+    libffi-dev \
+    liblzma-dev \
+    python3-openssl \
+    git \
+    && apt-get clean
+
+# Add the repository for Python 3.12 (manual installation)
+RUN curl -sS https://packages.python.org/python/keys.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/python-archive.gpg \
+    && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ppa.list \
+    && apt-get update
+
+
+# Install Python 3.12 (make sure it's available via apt or other suitable source)
+RUN apt-get update && apt-get install -y \
     python3.12 \
     python3.12-distutils \
-    wget \
-    unzip \
-	libatlas-base-dev \
-    libhdf5-dev \
-    libhdf5-serial-dev \
-    libjpeg-dev \
-    zlib1g-dev \				   
-   
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*												 
-
+    python3-pip \
+    python3.12-venv \
+    && apt-get clean
+	
+# Ensure Python 3.12 is used
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
+    && python --version
+	
+	
 # Set python3.12 as the default python3
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+#RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
 
 # Install pip using get-pip.py
 RUN wget https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py && \
     rm get-pip.py				 
+
 # Set the working directory
 WORKDIR /app						   
 
