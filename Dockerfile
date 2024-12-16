@@ -23,13 +23,13 @@ FROM ubuntu:20.04
 # Set non-interactive mode
 ENV DEBIAN_FRONTEND=noninteractive						  
 
-# Install Python 3.12 and other required packages # commented out as 3.12 is no longer avialble in ppa:deadsnakes/ppa
+# Install Python 3.13 and other required packages # commented out as 3.12 is no longer avialble in ppa:deadsnakes/ppa
 #RUN apt-get update && apt-get install -y \
 #    software-properties-common \
 #    && add-apt-repository ppa:deadsnakes/ppa \
 #    && apt-get update && apt-get install -y \
-#    python3.12 \
-#    python3.12-distutils \
+#    python3.13 \
+#    python3.13-distutils \
 #    wget \
 #    unzip \
 #	libatlas-base-dev \
@@ -75,8 +75,8 @@ RUN curl -fsSL https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa/+files/dead
 	
 # Install Python 3.12 (make sure it's available via apt or other suitable source)
 RUN apt-get update && apt-get install -y \
-    python3.12 \
-    python3.12-distutils \
+    python3.13 \
+    python3.13-distutils \
     python3-pip \
     python3.12-venv \
     && apt-get clean
