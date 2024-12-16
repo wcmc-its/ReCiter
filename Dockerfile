@@ -69,9 +69,9 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Add the repository for Python 3.12 (manual installation)
-RUN curl -fsSL https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa/+files/deadsnakes.asc | tee /etc/apt/trusted.gpg.d/deadsnakes-ppa.asc \
-    && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ppa.list \
-    && apt-get update
+#RUN curl -fsSL https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa/+files/deadsnakes.asc | tee /etc/apt/trusted.gpg.d/deadsnakes-ppa.asc \
+#    && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ppa.list \
+#   && apt-get update
 	
 # Install Python 3.12 (make sure it's available via apt or other suitable source)
 RUN apt-get update && apt-get install -y \
@@ -82,10 +82,14 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 	
 # Ensure Python 3.12 is used
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
-    && python --version
-	
+#RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
+#    && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
+#    && python --version
+
+# Ensure Python 3.13 is used as the default python3
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.13 1 \
+    && update-alternatives --install /usr/bin/python python /usr/local/bin/python3.13 1 \
+    && python --version	
 	
 # Set python3.12 as the default python3
 #RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
