@@ -372,7 +372,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		// Format the current date and time to a safe string for file names
 		String timestamp = now.format(formatter);
 
-		String fileName = StringUtils.join(timestamp, "-" , identity.getUid(), "-identityOnlyScoringInput.json");
+		String fileName = StringUtils.join(identity.getUid(), "-identityOnlyScoringInput.json");
 		//PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String identityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
@@ -414,6 +414,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
     	
         try {
         	
+        	 
         	return new ReCiterArticleFeedbackIdentityScore(
 														    article.getArticleId(),
 														    getArticleCountScore(article.getArticleCountEvidence()),
@@ -427,8 +428,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
 														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-														    getRelationshipEvidenceTotalScore(article.getRelationshipEvidence()),
-														    getNegativeMatchScore(article.getRelationshipEvidence()),
 														    getRelationshipPositiveMatchScore(article.getRelationshipEvidence().getRelationshipPositiveMatch()),
 														    getRelationshipNegativeMatchScore(article.getRelationshipEvidence().getRelationshipNegativeMatch()),
 														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
@@ -536,29 +535,35 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	}
  	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
-		 return reCiterArticles.stream()
-				 				 .filter(Objects::nonNull)
-						         .map(article -> findJSONObjectById(authorshipLikelihoodScoreArray, article))
-						         .filter(Objects::nonNull) // Filter out null values returned from findJSONObjectById
-						         .collect(Collectors.toList()); // Collect the results if needed, or just perform the mapping
+ 		
+ 		return reCiterArticles.stream()
+        .filter(Objects::nonNull)  // Make sure the article is not null
+        .map(article -> {
+            // Find the JSON object that corresponds to this article's ID
+        	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
+            // If we find the matching JSON, extract the score and set it
+            if (reCiterArticle == null) {
+            	article.setAuthorshipLikelihoodScore(0.0);
+            }
+            return article;  // Return the article with updated score
+        })
+        .collect(Collectors.toList());  // Collect updated articles into a list
+ 
 	}
+ 	
+ 	
 	// Helper method to find JSONObject by article
 	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
-	                    .setScale(3, RoundingMode.DOWN)
-	                    .doubleValue());*/
-	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
+	        	article.setAuthorshipLikelihoodScore(jsonObject.optDouble("scoreTotal",0.0)*100);
 	            return article; // Return the modified article
 	        }
+
 	    }
-	    if(article!=null)
-	    	article.setAuthorshipLikelihoodScore(0.0);
 	    return article; // Return null if not found
 	}
-	
 	private boolean isS3UploadRequired()
     {
     	  	  

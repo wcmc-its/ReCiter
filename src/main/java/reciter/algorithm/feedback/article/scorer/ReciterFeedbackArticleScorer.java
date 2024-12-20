@@ -605,8 +605,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
 														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-														    getRelationshipEvidenceTotalScore(article.getRelationshipEvidence()),
-														    getNegativeMatchScore(article.getRelationshipEvidence()),
 														    getRelationshipPositiveMatchScore(article.getRelationshipEvidence().getRelationshipPositiveMatch()),
 														    getRelationshipNegativeMatchScore(article.getRelationshipEvidence().getRelationshipNegativeMatch()),
 														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
