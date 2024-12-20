@@ -484,19 +484,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .orElse(0.0);
  	}
 
- 	private static double getRelationshipEvidenceTotalScore(RelationshipEvidence evidence) {
- 	    return Optional.ofNullable(evidence)
- 	            .map(RelationshipEvidence::getRelationshipEvidenceTotalScore)
- 	            .orElse(0.0);
- 	}
-
- 	private static double getNegativeMatchScore(RelationshipEvidence evidence) {
- 	    return Optional.ofNullable(evidence)
- 	            .map(RelationshipEvidence::getRelationshipNegativeMatch)
- 	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
- 	            .orElse(0.0);
- 	}
-
  	private static double getNonTargetAuthorInstitutionalAffiliationScore(AffiliationEvidence evidence) {
  	    return Optional.ofNullable(evidence)
  	            .map(AffiliationEvidence::getScopusNonTargetAuthorAffiliation)
