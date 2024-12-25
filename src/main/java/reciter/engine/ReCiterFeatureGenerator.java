@@ -479,7 +479,11 @@ public class ReCiterFeatureGenerator {
             if (reCiterArticle.getArticleCountEvidence() != null) {
                 evidence.setArticleCountEvidence(reCiterArticle.getArticleCountEvidence());
             }
-
+  
+            if (reCiterArticle.getAuthorCountEvidence() != null) {
+            	evidence.setAuthorCountEvidence(reCiterArticle.getAuthorCountEvidence());
+            }
+            
             if (reCiterArticle.getAverageClusteringEvidence() != null) {
                 evidence.setAverageClusteringEvidence(reCiterArticle.getAverageClusteringEvidence());
             }

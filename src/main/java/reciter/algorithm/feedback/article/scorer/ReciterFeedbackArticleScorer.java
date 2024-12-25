@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,8 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
+import  reciter.algorithm.evidence.author.feedback.authorcount.AuthorCountFeedbackStrategyContext;
+import reciter.algorithm.evidence.author.feedback.authorcount.strategy.AuthorCountFeedbackStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.CitesFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.strategy.CitesFeedbackStrategy;
@@ -82,6 +85,7 @@ import reciter.engine.EngineParameters;
 import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.evidence.AffiliationEvidence;
 import reciter.engine.analysis.evidence.ArticleCountEvidence;
+import reciter.engine.analysis.evidence.AuthorCountEvidence;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.EmailEvidence;
@@ -95,6 +99,7 @@ import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
 import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
+import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
@@ -122,6 +127,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
+	private StrategyContext authorCountStrategyContext;
+	
 
 	private Properties properties = new Properties();
 
@@ -146,6 +153,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(new CoauthorNameFeedbackStrategy());
 		this.citesStrategyContext = new CitesFeedbackStrategyContext(new CitesFeedbackStrategy());
 		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
+		this.authorCountStrategyContext = new AuthorCountFeedbackStrategyContext(new AuthorCountFeedbackStrategy(ReciterFeedbackArticleScorer.strategyParameters));
 		
 	}
 	public void runFeedbackArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) 
@@ -197,6 +205,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			futures.add(submitAndLogTime("Cites Category", executorService, citesStrategyContext, reCiterArticles, identity));
 
 		}
+		futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
 		// Shutdown executorService after submitting all tasks
         executorService.shutdown();
         
@@ -595,6 +604,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    getFeedbackScore(article.getTargetAuthorNameFeedbackScore()),
 														    getFeedbackScore(article.getYearFeedbackScore()),
 														    getArticleCountScore(article.getArticleCountEvidence()),
+														    getAuthorsCountScore(article.getAuthorCountEvidence()),													   
 														    getEducationYearScore(article.getEducationYearEvidence()),
 														    getEmailMatchScore(article.getEmailEvidence()),
 														    getGenderScore(article.getGenderEvidence()),
@@ -632,7 +642,14 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	            .map(ArticleCountEvidence::getArticleCountScore)
 	            .orElse(0.0);
 	}
-
+	
+	private static double getAuthorsCountScore(AuthorCountEvidence evidence)
+	{
+		return Optional.ofNullable(evidence)
+	            .map(AuthorCountEvidence::getAuthorCountScore)
+	            .orElse(0.0);
+	}
+	
 	private static double getEducationYearScore(EducationYearEvidence evidence) {
 	    return Optional.ofNullable(evidence)
 	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
@@ -663,11 +680,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	            .orElse(0.0);
 	}
 
-	private static double getRelationshipEvidenceTotalScore(RelationshipEvidence evidence) {
-	    return Optional.ofNullable(evidence)
-	            .map(RelationshipEvidence::getRelationshipEvidenceTotalScore)
-	            .orElse(0.0);
-	}
 
 	private static double getNegativeMatchScore(RelationshipEvidence evidence) {
 	    return Optional.ofNullable(evidence)

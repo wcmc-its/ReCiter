@@ -168,7 +168,7 @@ df['label'] = df['userAssertion'].apply(lambda x: 1 if x == 'ACCEPTED' else 0)
 
 # Features for prediction
 feature_columns = [ 
-    'articleCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
+    'articleCountScore','authorCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
     'grantMatchScore','journalSubfieldScore','nameMatchFirstScore','nameMatchLastScore','nameMatchMiddleScore',
     'nameMatchModifierScore','organizationalUnitMatchingScore','scopusNonTargetAuthorInstitutionalAffiliationScore',
     'targetAuthorInstitutionalAffiliationMatchTypeScore','pubmedTargetAuthorInstitutionalAffiliationMatchTypeScore',

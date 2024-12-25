@@ -36,6 +36,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.author.authorcount.AuthorCountStrategyContext;
+import reciter.algorithm.evidence.author.authorcount.strategy.AuthorCountStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
@@ -63,6 +65,7 @@ import reciter.algorithm.evidence.targetauthor.persontype.strategy.PersonTypeStr
 import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.evidence.AffiliationEvidence;
 import reciter.engine.analysis.evidence.ArticleCountEvidence;
+import reciter.engine.analysis.evidence.AuthorCountEvidence;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.EmailEvidence;
@@ -76,6 +79,7 @@ import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
 import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
+import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
 /**
@@ -183,7 +187,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private GenderStrategyContext genderStrategyContext;
 
-	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
@@ -193,6 +196,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private StrategyContext citationStrategyContext;
 	
 	private StrategyContext coCitationStrategyContext;
+	
+	private StrategyContext authorCountStrategyContext;
 	
 	private List<StrategyContext> strategyContexts;
 
@@ -226,6 +231,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
 		this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+		
+		this.authorCountStrategyContext = new AuthorCountStrategyContext(new AuthorCountStrategy(ReCiterArticleScorer.strategyParameters));
 
 		this.strategyContexts = new ArrayList<StrategyContext>();
 		
@@ -251,7 +258,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		this.strategyContexts.add(this.emailStrategyContext);
-
+		this.strategyContexts.add(this.authorCountStrategyContext);
 	}
 	
 
@@ -313,7 +320,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			//((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("personType Category", executorService, personTypeStrategyContext, reCiterArticles, identity));
 		}
-		
+		futures.add(submitAndLogTime("authorCount Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
 		
 		
 		if(strategyParameters.isGender()) {
@@ -400,7 +407,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	  }
               String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
  			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString);
-			  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
+ 			  if(articlesIdentityScoreTotal!=null && articlesIdentityScoreTotal.length() > 0 )
+					  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
  		
        
 
@@ -418,6 +426,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	return new ReCiterArticleFeedbackIdentityScore(
 														    article.getArticleId(),
 														    getArticleCountScore(article.getArticleCountEvidence()),
+														    getAuthorsCountScore(article.getAuthorCountEvidence()),
 														    getEducationYearScore(article.getEducationYearEvidence()),
 														    getEmailMatchScore(article.getEmailEvidence()),
 														    getGenderScore(article.getGenderEvidence()),
@@ -453,7 +462,33 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .map(ArticleCountEvidence::getArticleCountScore)
  	            .orElse(0.0);
  	}
+  	
+  	private static double getAuthorsCountScore(AuthorCountEvidence evidence)
+	{
+  		 return Optional.ofNullable(evidence)
+  	            .map(AuthorCountEvidence::getAuthorCountScore)
+  	            .orElse(0.0);
+	}
 
+	 // Function to calculate likelihood adjustment
+    private static Function<Double, Double> calculateLikelihoodAdjustment = authorCount -> {
+        // Baseline likelihood (at authorCountThreshold)
+    	
+        double y_baseline = strategyParameters.getInCoefficent() * Math.log(strategyParameters.getAuthorCountThreshold()) + strategyParameters.getConstantCoefficeint();
+
+        // Likelihood for the given author count
+        double y = authorCount > 0 ? strategyParameters.getInCoefficent() * Math.log(authorCount) + strategyParameters.getConstantCoefficeint() : y_baseline;
+
+        // Adjustment is scaled by gamma
+        return strategyParameters.getAuthorCountAdjustmentGamma() * (y - y_baseline);
+    };
+
+    // Function to calculate adjusted article count score
+    private static Function<Double, Double> calculateAdjustedArticleCountScore = authorCount -> {
+        // Apply the likelihood adjustment function
+        return calculateLikelihoodAdjustment.apply(authorCount);
+    };
+	
  	private static double getEducationYearScore(EducationYearEvidence evidence) {
  	    return Optional.ofNullable(evidence)
  	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)

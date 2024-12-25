@@ -169,7 +169,7 @@ feature_columns = [
     'feedbackScoreInstitution', 'feedbackScoreJournal', 'feedbackScoreJournalSubField',
     'feedbackScoreKeyword', 'feedbackScoreOrcid', 'feedbackScoreOrcidCoAuthor',
     'feedbackScoreOrganization', 'feedbackScoreTargetAuthorName', 'feedbackScoreYear', 
-    'articleCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
+    'articleCountScore','authorCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
     'grantMatchScore','journalSubfieldScore','nameMatchFirstScore','nameMatchLastScore','nameMatchMiddleScore',
     'nameMatchModifierScore','organizationalUnitMatchingScore','scopusNonTargetAuthorInstitutionalAffiliationScore',
     'targetAuthorInstitutionalAffiliationMatchTypeScore','pubmedTargetAuthorInstitutionalAffiliationMatchTypeScore',
