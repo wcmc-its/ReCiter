@@ -161,7 +161,6 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 															meshCount = meshCounts.get(keyword);
 															factor = calculateFactor(meshCount);
 															feedbackScore = feedbackScore * factor;
-															System.out.println("Keyword : " + keyword + "Score:" + feedbackScore);
 														}
 														
 														String exportedFeedbackScore = decimalFormat.format(feedbackScore);
