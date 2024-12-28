@@ -147,7 +147,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.targetAuthorNameStrategyContext = new TargetAuthorNameFeedbackStrategyContext(new TargetAuthorNameFeedbackStrategy());
 		this.organizationStrategyContext = new OrganizationFeedbackStrategyContext(new OrganizationFeedbackStrategy());
 		this.orcidCoAuthorStrategyContext = new OrcidCoauthorFeedbackStrategyContext(new OrcidCoauthorFeedbackStrategy());
-		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(new KeywordFeedbackStrategy());
+		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(new KeywordFeedbackStrategy(strategyParameters));
 		this.institutionStrategyContext = new InstitutionFeedbackStrategyContext(new InstitutionFeedbackStrategy());
 		this.emailStrategyContext = new EmailFeedbackStrategyContext(new EmailFeedbackStrategy());
 		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(new CoauthorNameFeedbackStrategy());

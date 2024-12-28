@@ -411,5 +411,12 @@ public class StrategyParameters {
     @Value("${strategy.articleCountScoringStrategy.constantCoefficient}")
     private double constantCoefficeint;
     
-   
+    @Value("${strategy.feedback.keywordCountBaseline}")
+    private long keywordCountBaseline;
+    
+    @Value("${strategy.feedback.keywordLogBase}")
+    private int keywordLogBase;
+    
+    @Value("${strategy.feedback.keywordOffset}")
+    private double keywordOffset;
 }

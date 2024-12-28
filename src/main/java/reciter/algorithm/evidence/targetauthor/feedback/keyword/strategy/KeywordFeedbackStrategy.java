@@ -12,7 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
+import reciter.ApplicationContextHolder;
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
+import reciter.database.dynamodb.model.MeshTerm;
+import reciter.engine.StrategyParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.article.ReCiterArticleKeywords.Keyword;
@@ -20,13 +23,24 @@ import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterCitationYNEnum;
 import reciter.model.article.ReCiterMeshHeadingDescriptorName;
 import reciter.model.identity.Identity;
+import reciter.service.dynamo.DynamoDbMeshTermService;
 
 public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(KeywordFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackKeywordMap = null;
 	List<Keyword> listOfKeywords = null;
+	List<MeshTerm> listOfMeshTerms = new ArrayList<>();
+	Map<String, Long> meshCounts = null;
 	
+	public static StrategyParameters strategyParameters;
+	
+	DynamoDbMeshTermService meshTermService = ApplicationContextHolder.getContext()
+			.getBean(DynamoDbMeshTermService.class);
+	
+	public KeywordFeedbackStrategy(StrategyParameters strategyParameters) {
+		this.strategyParameters = strategyParameters;
+	}
 	
 	@Override
 	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
@@ -56,6 +70,14 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 		stopWatchforCoAuthorFeedback.start("keyword");
 		try {
 			
+			// if listofMeshTerms list is empty then make a dynamoDB call to populate the list to use in the calculation
+				listOfMeshTerms = retrieveMeshTermCount();
+				 // Create a Map with the keyword as key and the count as value
+				meshCounts = listOfMeshTerms.stream()
+								            .collect(Collectors.toMap(
+								                MeshTerm::getMesh,    // Use the keyword as the key
+								                MeshTerm::getCount      // Use the count as the value
+								            ));
 			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
 			
 			
@@ -132,6 +154,16 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 																countRejected > 0 ? countRejected - 1 : countRejected);
 														
 														double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
+														long meshCount = 0;
+														double factor = 0.0;
+														if(meshCounts!=null && meshCounts.containsKey(keyword))
+														{	
+															meshCount = meshCounts.get(keyword);
+															factor = calculateFactor(meshCount);
+															feedbackScore = feedbackScore * factor;
+															System.out.println("Keyword : " + keyword + "Score:" + feedbackScore);
+														}
+														
 														String exportedFeedbackScore = decimalFormat.format(feedbackScore);
 														
 														ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),keyword,
@@ -177,5 +209,24 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 			
 		return 0;
 	}
+	private List<MeshTerm> retrieveMeshTermCount() {
+	    
+		return meshTermService.findAll();
+	}
+	public static double calculateFactor(double keywordCount) {
+        double logBase = strategyParameters.getKeywordLogBase();
+        double baseline = strategyParameters.getKeywordCountBaseline();
+        double keywordOffset = strategyParameters.getKeywordOffset();
 
+        // Ensure keywordCount is at least 1 for the logarithmic calculation (to avoid division by zero)
+        double adjustedKeywordCount = Math.max(1, keywordCount);
+
+        // Calculate the log value
+        double logValue = Math.log(baseline / adjustedKeywordCount) / Math.log(logBase); // LOG base conversion
+
+        // Calculate factor and ensure it is not less than 0
+        double factor = Math.max(logValue + keywordOffset, 0);
+
+        return factor;
+    }
 }
