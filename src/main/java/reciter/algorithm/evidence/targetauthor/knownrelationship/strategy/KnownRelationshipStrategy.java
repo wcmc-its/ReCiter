@@ -80,6 +80,9 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			}
 			long relationShipMatchCount = 0;
 			long nonMatchCount = 0;
+			long identityRelationShipCount = 0;
+			final long[] relationShipVerboseMatchCount = {0};
+			
 			//sum += executeStrategy(reCiterArticle, identity);
 			List<KnownRelationship> relationships = new ArrayList<KnownRelationship>();
 			if(identity.getKnownRelationships() != null) {
@@ -103,6 +106,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 										author.getAuthorName().getFirstName().startsWith(authorName.getName().getFirstName())) {
 									relationshipEvidence.setRelationshipMatchType("verbose");
 									relationshipEvidence.setRelationshipVerboseMatchModifierScore(ReCiterArticleScorer.strategyParameters.getRelationshipVerboseMatchModifier());
+									relationShipVerboseMatchCount[0]++;
 								} else {
 									relationshipEvidence.setRelationshipMatchType("initial");
 								}
@@ -183,9 +187,24 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 					}
 					
 				}
-				nonMatchCount = reCiterArticle.getArticleCoAuthors().getAuthors().stream().filter(author -> !author.isTargetAuthor()).count() - relationShipMatchCount;
+				nonMatchCount = reCiterArticle.getArticleCoAuthors().getAuthors().stream().filter(author -> !author.isTargetAuthor()).count() - relationShipVerboseMatchCount[0];
 				reCiterArticle.setKnownCoinvestigatorScore(sum);
 			}
+			relationshipEvidences.stream().forEach(relationShipEvidence -> relationShipEvidence.setRelationshipMatchingCount(relationShipVerboseMatchCount[0]));
+			identityRelationShipCount = identity.getKnownRelationships().stream().distinct().count();
+			if(relationShipVerboseMatchCount!=null && relationShipVerboseMatchCount.length > 0)
+			{
+				double relationshipPositiveMatchingScore = Math.pow((relationShipVerboseMatchCount[0] > 0 ? relationShipVerboseMatchCount[0]+ 1 : 1) / (double)(identityRelationShipCount > 0 ? identityRelationShipCount + 1 : 1), 0.5);
+				//relationshipEvidences.stream().forEach(relationShipEvidence -> relationShipEvidence.setRelationshipMatchingScore(relationshipPositiveMatchingScore));
+				
+				relaEvidence.setRelationshipPositiveMatchScore(relationshipPositiveMatchingScore);
+			}
+			double relationshipNegativeMatchingScore = Math.pow((nonMatchCount > 0 ? nonMatchCount+ 1 : 1) / (double)(identityRelationShipCount > 0 ? identityRelationShipCount + 1 : 1), 0.5);
+			//relationshipEvidences.stream().forEach(relationShipEvidence -> relationShipEvidence.setRelationshipMatchingScore(relationshipNegativeMatchingScore));
+			
+			relaEvidence.setRelationshipNegativeMatchScore(relationshipNegativeMatchingScore);
+			relaEvidence.setRelationshipIdentityCount(identityRelationShipCount);
+			
 			relaEvidence.setRelationshipPositiveMatch(relationshipEvidences);
 			relationshipNegativeMatch.setRelationshipNonMatchCount(nonMatchCount);
 			relationshipNegativeMatch.setRelationshipMinimumTotalScore(ReCiterArticleScorer.strategyParameters.getRelationshipMinimumTotalScore());
@@ -197,14 +216,14 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 					+ relationShipEvidence.getRelationshipMatchModifierManagerSeniorAuthor()
 					+ relationShipEvidence.getRelationshipMatchModifierManager()).sum();
 			totalRelationshipScore = totalRelationshipScore + (nonMatchCount * ReCiterArticleScorer.strategyParameters.getRelationshipNonMatchScore());
-			if(totalRelationshipScore <= ReCiterArticleScorer.strategyParameters.getRelationshipMinimumTotalScore()) {
+			/*if(totalRelationshipScore <= ReCiterArticleScorer.strategyParameters.getRelationshipMinimumTotalScore()) {
 				relaEvidence.setRelationshipEvidenceTotalScore(ReCiterArticleScorer.strategyParameters.getRelationshipMinimumTotalScore());
 			} else {
 				relaEvidence.setRelationshipEvidenceTotalScore(BigDecimal.valueOf(totalRelationshipScore).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
-			}
-			relaEvidence.setRelationshipNegativeMatch(relationshipNegativeMatch);
-			reCiterArticle.setRelationshipEvidence(relaEvidence);
+			}*/
+			//relaEvidence.setRelationshipNegativeMatch(relationshipNegativeMatch);
 			
+			reCiterArticle.setRelationshipEvidence(relaEvidence);
 			log.info("Pmid: " + reCiterArticle.getArticleId() + " " + relaEvidence.toString());
 		}
 		return sum;

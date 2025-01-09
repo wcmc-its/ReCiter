@@ -24,11 +24,21 @@ import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.evidence.Evidence;
+import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.utils.JsonUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+
 
 @Data
 @Slf4j
@@ -111,8 +121,7 @@ public class ReCiterFeatureGenerator {
                 .filter(reCiterArticle -> reCiterArticle.getAuthorshipLikelihoodScore() >= filterScore && reCiterArticle.getGoldStandard() == 0)
                 .collect(Collectors.toList());
         reCiterFeature.setCountPendingArticles(pendingArticles.size());
-        
-        List<Long> filteredArticles = selectedArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
+       // List<Long> filteredArticles = selectedArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
         
        // Analysis analysis = Analysis.performAnalysis(finalArticles, filteredArticles, goldStandardPmids);
         Analysis analysis = Analysis.performAnalysis(reCiterArticles,goldStandardPmids);
@@ -381,7 +390,65 @@ public class ReCiterFeatureGenerator {
             }
             // Relationship Evidence
             if (reCiterArticle.getRelationshipEvidence() != null) {
-                evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());
+            
+            /**
+             * TODO : remove the relationshipEvidenceTotalScore from the response. currently it is displaying as 0 	
+             */
+            	 // Create an ObjectMapper
+              /*  ObjectMapper objectMapper = new ObjectMapper();
+                
+                objectMapper.addMixIn(RelationshipEvidence.class, RelationshipEvidenceMixIn.class);
+                
+                // Create a FilterProvider to exclude the 'relationshipEvidenceTotalScore' property dynamically during serialization
+                SimpleFilterProvider filters = new SimpleFilterProvider()
+                        .addFilter("dynamicFilter", SimpleBeanPropertyFilter.serializeAllExcept("relationshipEvidenceTotalScore"));
+
+                // Set the filter provider to the ObjectMapper
+                objectMapper.setFilterProvider(filters);
+                
+                RelationshipEvidence releationshipEvidence = null;
+               	String relationshipEvidenceJson = null;
+               	RelationshipEvidence result =null;
+				try 
+				{
+					relationshipEvidenceJson = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
+					System.out.println("relationshipEvidenceJson***************"+relationshipEvidenceJson);
+					releationshipEvidence = objectMapper.readValue(relationshipEvidenceJson, RelationshipEvidence.class);
+					System.out.println("relationshipEvidenceJson***************"+releationshipEvidence.toString());
+					
+					// The object remains as RelationshipEvidence
+		            // Serialize the object back to JSON (field 'relationshipEvidenceTotalScore' will be excluded)
+		            result = objectMapper.convertValue(releationshipEvidence, RelationshipEvidence.class);
+		            System.out.println("Final result***************"+releationshipEvidence.toString());
+					
+				} catch (JsonMappingException e) {
+					e.printStackTrace();
+				} catch (JsonProcessingException e) {
+					e.printStackTrace();
+				}*/
+            	
+            	/* RelationshipEvidence deserializedEvidence=null;
+				try 
+				{
+					// Use the Jackson ObjectMapper
+			        ObjectMapper objectMapper = JsonUtils.configureObjectMapper();
+			        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+			        // Serialize to JSON (with relationshipEvidenceTotalScore completely ignored)
+			        String jsonResponse = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
+			        
+			        // Print the JSON response (you should not see the `relationshipEvidenceTotalScore` field here)
+			        System.out.println("Serialized JSON: " + jsonResponse);
+
+			        // Deserialize back into a RelationshipEvidence instance
+			        deserializedEvidence = objectMapper.readValue(jsonResponse, RelationshipEvidence.class);
+
+			        // The object itself is unchanged, and relationshipEvidenceTotalScore is still set to 0.0
+			        System.out.println("Deserialized Object: " + deserializedEvidence);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}*/
+                evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());//deserializedEvidence);
             }
 
             // Education Year Evidence
@@ -412,7 +479,11 @@ public class ReCiterFeatureGenerator {
             if (reCiterArticle.getArticleCountEvidence() != null) {
                 evidence.setArticleCountEvidence(reCiterArticle.getArticleCountEvidence());
             }
-
+  
+            if (reCiterArticle.getAuthorCountEvidence() != null) {
+            	evidence.setAuthorCountEvidence(reCiterArticle.getAuthorCountEvidence());
+            }
+            
             if (reCiterArticle.getAverageClusteringEvidence() != null) {
                 evidence.setAverageClusteringEvidence(reCiterArticle.getAverageClusteringEvidence());
             }

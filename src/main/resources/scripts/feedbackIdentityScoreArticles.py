@@ -169,12 +169,11 @@ feature_columns = [
     'feedbackScoreInstitution', 'feedbackScoreJournal', 'feedbackScoreJournalSubField',
     'feedbackScoreKeyword', 'feedbackScoreOrcid', 'feedbackScoreOrcidCoAuthor',
     'feedbackScoreOrganization', 'feedbackScoreTargetAuthorName', 'feedbackScoreYear', 
-    'articleCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
+    'articleCountScore','authorCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
     'grantMatchScore','journalSubfieldScore','nameMatchFirstScore','nameMatchLastScore','nameMatchMiddleScore',
-    'nameMatchModifierScore','organizationalUnitMatchingScore','relationshipEvidenceTotalScore',
-    'relationshipNonMatchScore','scopusNonTargetAuthorInstitutionalAffiliationScore',
+    'nameMatchModifierScore','organizationalUnitMatchingScore','scopusNonTargetAuthorInstitutionalAffiliationScore',
     'targetAuthorInstitutionalAffiliationMatchTypeScore','pubmedTargetAuthorInstitutionalAffiliationMatchTypeScore',
-    'countAccepted','countRejected'
+    'relationshipPositiveMatchScore', 'relationshipNegativeMatchScore', 'relationshipIdentityCount','countAccepted','countRejected'
 ]
 
 # Check which feature columns are actually present in the DataFrame

@@ -131,7 +131,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 		slf4jLogger.info("Query size: " + pubMedQueries.size());
 		List<PubMedQueryResult> pubMedQueryResults = new ArrayList<PubMedQueryResult>();
-
+		int handler = 0;
 		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
 			
 			
@@ -140,7 +140,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				slf4jLogger.info("Constructed lenient query {}", pubMedQueryType.getLenientQuery().getQuery());
 				//PubMedQuery encodedInitialQuery = pubMedQueryType.getLenientQuery().getQuery();
 				PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
-				int handler = getNumberOfResults(encodedInitialCountQuery);
+				handler = getNumberOfResults(encodedInitialCountQuery);
 
 				// check number of PubMed results returned by initial query.
 				// If it's greater than the threshold, query using the strict query.
@@ -176,7 +176,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 					}
 					pubMedQueryType.getLenientQuery().setUsed(true);
 				}
-			} else {
+			} else if((getRetrievalStrategyName()!=null && getRetrievalStrategyName().equalsIgnoreCase("FirstNameInitialRetrievalStrategy") && handler > 0)
+					|| getRetrievalStrategyName()!=null && !getRetrievalStrategyName().equalsIgnoreCase("FirstNameInitialRetrievalStrategy")){ // added condition to prevent executing strict strategy query for the first Name initial when lenient query returns 0 records.
 				PubMedQuery constructedStrictCountQuery = pubMedQueryType.getStrictCountQuery().getQuery();
 				slf4jLogger.info("Constructed strict count query {}", constructedStrictCountQuery);
 				slf4jLogger.info("Constructed strict query {}", pubMedQueryType.getStrictQuery().getQuery());

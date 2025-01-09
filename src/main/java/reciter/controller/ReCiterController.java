@@ -1001,7 +1001,6 @@ public class ReCiterController {
             filtered.add(pmid);
             filteredString.add(String.valueOf(pmid));
         }
-
         List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
         if (pubMedArticles == null) {
             return null;

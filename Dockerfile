@@ -29,7 +29,6 @@ RUN apt-get update && apt-get install -y \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update && apt-get install -y \
     python3.12 \
-    python3.12-distutils \
     wget \
     unzip \
 	libatlas-base-dev \
@@ -37,7 +36,6 @@ RUN apt-get update && apt-get install -y \
     libhdf5-serial-dev \
     libjpeg-dev \
     zlib1g-dev \				   
-   
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*												 
 

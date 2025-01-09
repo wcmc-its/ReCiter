@@ -36,6 +36,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.algorithm.evidence.author.authorcount.AuthorCountStrategyContext;
+import reciter.algorithm.evidence.author.authorcount.strategy.AuthorCountStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.AffiliationStrategyContext;
 import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffiliationStrategy;
@@ -63,6 +65,7 @@ import reciter.algorithm.evidence.targetauthor.persontype.strategy.PersonTypeStr
 import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.evidence.AffiliationEvidence;
 import reciter.engine.analysis.evidence.ArticleCountEvidence;
+import reciter.engine.analysis.evidence.AuthorCountEvidence;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.engine.analysis.evidence.EducationYearEvidence;
 import reciter.engine.analysis.evidence.EmailEvidence;
@@ -71,10 +74,12 @@ import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.engine.analysis.evidence.NonTargetAuthorScopusAffiliation;
 import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.engine.analysis.evidence.RelationshipNegativeMatch;
+import reciter.engine.analysis.evidence.RelationshipPostiveMatch;
 import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
 import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
+import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 
 /**
@@ -182,7 +187,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private GenderStrategyContext genderStrategyContext;
 
-	
 	//	private StrategyContext boardCertificationStrategyContext;
 	//
 	//	private StrategyContext degreeStrategyContext;
@@ -192,6 +196,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private StrategyContext citationStrategyContext;
 	
 	private StrategyContext coCitationStrategyContext;
+	
+	private StrategyContext authorCountStrategyContext;
 	
 	private List<StrategyContext> strategyContexts;
 
@@ -225,6 +231,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
 		this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
 		this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+		
+		this.authorCountStrategyContext = new AuthorCountStrategyContext(new AuthorCountStrategy(ReCiterArticleScorer.strategyParameters));
 
 		this.strategyContexts = new ArrayList<StrategyContext>();
 		
@@ -250,7 +258,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
 		// Re-run these evidence types (could have been removed or not processed in sequence).
 		this.strategyContexts.add(this.emailStrategyContext);
-
+		this.strategyContexts.add(this.authorCountStrategyContext);
 	}
 	
 
@@ -312,7 +320,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			//((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("personType Category", executorService, personTypeStrategyContext, reCiterArticles, identity));
 		}
-		
+		futures.add(submitAndLogTime("authorCount Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
 		
 		
 		if(strategyParameters.isGender()) {
@@ -332,7 +340,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         boolean allTasksCompleted = true;
         // Print execution times from futures
         
-
         for (Future<?> future : futures) {
             try {
                 future.get(); // Ensure all tasks are completed
@@ -342,7 +349,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
             }
         }
         if (allTasksCompleted) {
-        	slf4jLogger.error("All Idnetity score strategy contexts have been completed successfully.");
+        	slf4jLogger.info("All Idnetity score strategy contexts have been completed successfully.");
 	    } else {
 	    	slf4jLogger.error("One or more tasks failed; report generation may be incomplete.");
         }
@@ -372,7 +379,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		// Format the current date and time to a safe string for file names
 		String timestamp = now.format(formatter);
 
-		String fileName = StringUtils.join(timestamp, "-" , identity.getUid(), "-identityOnlyScoringInput.json");
+		String fileName = StringUtils.join(identity.getUid(), "-identityOnlyScoringInput.json");
 		//PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String identityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
@@ -400,7 +407,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	  }
               String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
  			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString);
-			  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
+ 			  if(articlesIdentityScoreTotal!=null && articlesIdentityScoreTotal.length() > 0 )
+					  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
  		
        
 
@@ -414,9 +422,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
     	
         try {
         	
+        	 
         	return new ReCiterArticleFeedbackIdentityScore(
 														    article.getArticleId(),
 														    getArticleCountScore(article.getArticleCountEvidence()),
+														    getAuthorsCountScore(article.getAuthorCountEvidence()),
 														    getEducationYearScore(article.getEducationYearEvidence()),
 														    getEmailMatchScore(article.getEmailEvidence()),
 														    getGenderScore(article.getGenderEvidence()),
@@ -427,8 +437,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
 														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-														    getRelationshipEvidenceTotalScore(article.getRelationshipEvidence()),
-														    getNegativeMatchScore(article.getRelationshipEvidence()),
+														    getRelationshipPositiveMatchScore(article.getRelationshipEvidence().getRelationshipPositiveMatch()),
+														    getRelationshipNegativeMatchScore(article.getRelationshipEvidence().getRelationshipNegativeMatch()),
+														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
 														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
 														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
 														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
@@ -451,7 +462,33 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .map(ArticleCountEvidence::getArticleCountScore)
  	            .orElse(0.0);
  	}
+  	
+  	private static double getAuthorsCountScore(AuthorCountEvidence evidence)
+	{
+  		 return Optional.ofNullable(evidence)
+  	            .map(AuthorCountEvidence::getAuthorCountScore)
+  	            .orElse(0.0);
+	}
 
+	 // Function to calculate likelihood adjustment
+    private static Function<Double, Double> calculateLikelihoodAdjustment = authorCount -> {
+        // Baseline likelihood (at authorCountThreshold)
+    	
+        double y_baseline = strategyParameters.getInCoefficent() * Math.log(strategyParameters.getAuthorCountThreshold()) + strategyParameters.getConstantCoefficeint();
+
+        // Likelihood for the given author count
+        double y = authorCount > 0 ? strategyParameters.getInCoefficent() * Math.log(authorCount) + strategyParameters.getConstantCoefficeint() : y_baseline;
+
+        // Adjustment is scaled by gamma
+        return strategyParameters.getAuthorCountAdjustmentGamma() * (y - y_baseline);
+    };
+
+    // Function to calculate adjusted article count score
+    private static Function<Double, Double> calculateAdjustedArticleCountScore = authorCount -> {
+        // Apply the likelihood adjustment function
+        return calculateLikelihoodAdjustment.apply(authorCount);
+    };
+	
  	private static double getEducationYearScore(EducationYearEvidence evidence) {
  	    return Optional.ofNullable(evidence)
  	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
@@ -482,19 +519,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .orElse(0.0);
  	}
 
- 	private static double getRelationshipEvidenceTotalScore(RelationshipEvidence evidence) {
- 	    return Optional.ofNullable(evidence)
- 	            .map(RelationshipEvidence::getRelationshipEvidenceTotalScore)
- 	            .orElse(0.0);
- 	}
-
- 	private static double getNegativeMatchScore(RelationshipEvidence evidence) {
- 	    return Optional.ofNullable(evidence)
- 	            .map(RelationshipEvidence::getRelationshipNegativeMatch)
- 	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
- 	            .orElse(0.0);
- 	}
-
  	private static double getNonTargetAuthorInstitutionalAffiliationScore(AffiliationEvidence evidence) {
  	    return Optional.ofNullable(evidence)
  	            .map(AffiliationEvidence::getScopusNonTargetAuthorAffiliation)
@@ -517,31 +541,51 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .map(TargetAuthorPubmedAffiliation::getTargetAuthorInstitutionalAffiliationMatchTypeScore)
  	            .orElse(0.0);
  	}
+ 	
+ 	private static double getRelationshipPositiveMatchScore (List<RelationshipPostiveMatch> evidences) {
+ 		 return Optional.ofNullable(evidences)
+ 	            .filter(list -> !list.isEmpty())  // Check if the list is not empty
+ 	            .map(list -> list.get(0))  // Get the first RelationshipPostiveMatch
+ 	            .map(RelationshipPostiveMatch::getRelationshipMatchingScore)  // Get the matching score
+ 	            .orElse(0.0);  // Return 0.0 if the list is empty or no matching score is found
+ 	}
+
+ 	private static double getRelationshipNegativeMatchScore (RelationshipNegativeMatch negativeEvidence) {
+ 		return Optional.ofNullable(negativeEvidence)
+ 	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
+ 	            .orElse(0.0);
+	}
  	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
-		 return reCiterArticles.stream()
-				 				 .filter(Objects::nonNull)
-						         .map(article -> findJSONObjectById(authorshipLikelihoodScoreArray, article))
-						         .filter(Objects::nonNull) // Filter out null values returned from findJSONObjectById
-						         .collect(Collectors.toList()); // Collect the results if needed, or just perform the mapping
+ 		
+ 		return reCiterArticles.stream()
+        .filter(Objects::nonNull)  // Make sure the article is not null
+        .map(article -> {
+            // Find the JSON object that corresponds to this article's ID
+        	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
+            // If we find the matching JSON, extract the score and set it
+            if (reCiterArticle == null) {
+            	article.setAuthorshipLikelihoodScore(0.0);
+            }
+            return article;  // Return the article with updated score
+        })
+        .collect(Collectors.toList());  // Collect updated articles into a list
+ 
 	}
+ 	
+ 	
 	// Helper method to find JSONObject by article
 	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
-	                    .setScale(3, RoundingMode.DOWN)
-	                    .doubleValue());*/
-	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
+	        	article.setAuthorshipLikelihoodScore(jsonObject.optDouble("scoreTotal",0.0)*100);
 	            return article; // Return the modified article
 	        }
+
 	    }
-	    if(article!=null)
-	    	article.setAuthorshipLikelihoodScore(0.0);
 	    return article; // Return null if not found
 	}
-	
 	private boolean isS3UploadRequired()
     {
     	  	  

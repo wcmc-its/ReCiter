@@ -399,4 +399,24 @@ public class StrategyParameters {
     private boolean isFeedbackScoreCites;
 
     
+    @Value("${strategy.articleCountScoringStrategy.authorCountThreshold}")
+    private int authorCountThreshold;
+    
+    @Value("${strategy.articleCountScoringStrategy.authorCountAdjustmentGamma}")
+    private double authorCountAdjustmentGamma;
+    
+    @Value("${strategy.articleCountScoringStrategy.lnCoefficient}")
+    private double inCoefficent;
+    
+    @Value("${strategy.articleCountScoringStrategy.constantCoefficient}")
+    private double constantCoefficeint;
+    
+    @Value("${strategy.feedback.keywordCountBaseline}")
+    private long keywordCountBaseline;
+    
+    @Value("${strategy.feedback.keywordLogBase}")
+    private int keywordLogBase;
+    
+    @Value("${strategy.feedback.keywordOffset}")
+    private double keywordOffset;
 }

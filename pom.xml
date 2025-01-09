@@ -23,6 +23,13 @@
 
 	<developers>
 		<developer>
+			<name>Mahender Reddy Jangari</name>
+			<email>mrj4001@med.cornell.edu</email>
+			<organization>Weill Cornell Medicine ITS</organization>
+			<organizationUrl>https://github.com/wcmc-its</organizationUrl>
+			<timezone>GMT-5.5</timezone>
+		</developer>
+		<developer>
 			<name>Sarbajit Dutta</name>
 			<email>szd2013@med.cornell.edu</email>
 			<organization>Weill Cornell Medicine ITS</organization>
@@ -35,13 +42,6 @@
 			<organization>Weill Cornell Medicine ITS</organization>
 			<organizationUrl>https://github.com/wcmc-its</organizationUrl>
 			<timezone>GMT-5</timezone>
-		</developer>
-		<developer>
-			<name>Mahender Reddy Jangari</name>
-			<email>mrj4001@med.cornell.edu</email>
-			<organization>Weill Cornell Medicine ITS</organization>
-			<organizationUrl>https://github.com/wcmc-its</organizationUrl>
-			<timezone>GMT-5.5</timezone>
 		</developer>
 	</developers>
     
@@ -315,7 +315,7 @@
 	    <dependency>
 	    	<groupId>edu.cornell.weill.reciter</groupId>
 	    	<artifactId>reciter-article-model</artifactId>
-	    	<version>2.0.26</version>
+	    	<version>2.0.30</version>
 	    </dependency>
 	    <dependency>
 	    	<groupId>edu.cornell.weill.reciter</groupId>

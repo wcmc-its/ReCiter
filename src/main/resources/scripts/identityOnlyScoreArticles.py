@@ -168,11 +168,11 @@ df['label'] = df['userAssertion'].apply(lambda x: 1 if x == 'ACCEPTED' else 0)
 
 # Features for prediction
 feature_columns = [ 
-    'articleCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
+    'articleCountScore','authorCountScore','discrepancyDegreeYearScore','emailMatchScore','genderScoreIdentityArticleDiscrepancy',
     'grantMatchScore','journalSubfieldScore','nameMatchFirstScore','nameMatchLastScore','nameMatchMiddleScore',
-    'nameMatchModifierScore','organizationalUnitMatchingScore','relationshipEvidenceTotalScore',
-    'relationshipNonMatchScore','scopusNonTargetAuthorInstitutionalAffiliationScore',
-    'targetAuthorInstitutionalAffiliationMatchTypeScore','pubmedTargetAuthorInstitutionalAffiliationMatchTypeScore'
+    'nameMatchModifierScore','organizationalUnitMatchingScore','scopusNonTargetAuthorInstitutionalAffiliationScore',
+    'targetAuthorInstitutionalAffiliationMatchTypeScore','pubmedTargetAuthorInstitutionalAffiliationMatchTypeScore',
+	'relationshipPositiveMatchScore', 'relationshipNegativeMatchScore', 'relationshipIdentityCount'
 ]
 # Check which feature columns are actually present in the DataFrame
 missing_columns = [col for col in feature_columns if col not in df.columns]
