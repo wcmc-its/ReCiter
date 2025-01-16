@@ -165,7 +165,10 @@ public class PubMedQueryType {
 				
 				
 				if(this.isAuthorFullNameRequired) {
-					firstName = first.getLastName() + " " + first.getFirstName() + "[au]";
+					if((first.getLastName().contains(" ") || first.getLastName().contains("-")) || (first.getFirstName().contains(" ") || first.getFirstName().contains("-")))
+						firstName =  "\"" +first.getLastName() + " " + first.getFirstName() + "\"[au]";
+					else
+						firstName =  first.getLastName() + " " + first.getFirstName() + "[au]";
 				}
 				if (!iterator.hasNext()) {
 					return firstName;
