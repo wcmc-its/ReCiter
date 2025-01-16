@@ -419,4 +419,7 @@ public class StrategyParameters {
     
     @Value("${strategy.feedback.keywordOffset}")
     private double keywordOffset;
+    
+    @Value("${targetAuthorMissingPenaltyPercent}")
+    private double targetAuthorMissingPenaltyPercent;
 }

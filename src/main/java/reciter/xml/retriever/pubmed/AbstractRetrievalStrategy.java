@@ -166,7 +166,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 						}
 						pubMedQueryType.getStrictQuery().setUsed(true);
 					}
-				} else {
+				} else if(handler > 0) {
 					List<PubMedArticle> result = retrievePubMed(pubMedQueryType.getLenientQuery().getQuery(), handler);
 					for (PubMedArticle pubMedArticle : result) {
 						long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
@@ -176,8 +176,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 					}
 					pubMedQueryType.getLenientQuery().setUsed(true);
 				}
-			} else if((getRetrievalStrategyName()!=null && getRetrievalStrategyName().equalsIgnoreCase("FirstNameInitialRetrievalStrategy") && handler > 0)
-					|| getRetrievalStrategyName()!=null && !getRetrievalStrategyName().equalsIgnoreCase("FirstNameInitialRetrievalStrategy")){ // added condition to prevent executing strict strategy query for the first Name initial when lenient query returns 0 records.
+			} else if(handler > 0){ // added condition to prevent executing strict strategy query for the first Name initial when lenient query returns 0 records.
 				PubMedQuery constructedStrictCountQuery = pubMedQueryType.getStrictCountQuery().getQuery();
 				slf4jLogger.info("Constructed strict count query {}", constructedStrictCountQuery);
 				slf4jLogger.info("Constructed strict query {}", pubMedQueryType.getStrictQuery().getQuery());
@@ -260,6 +259,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
 		String nodeUrl = PUBMED_SERVICE.endsWith("/pubmed")?PUBMED_SERVICE + "/query-number-pubmed-articles/":PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
+		
 		RestTemplate restTemplate = new RestTemplate();
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<Integer> responseEntity = null;

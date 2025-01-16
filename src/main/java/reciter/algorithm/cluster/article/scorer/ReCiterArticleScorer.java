@@ -437,8 +437,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
 														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-														    getRelationshipPositiveMatchScore(article.getRelationshipEvidence().getRelationshipPositiveMatch()),
-														    getRelationshipNegativeMatchScore(article.getRelationshipEvidence().getRelationshipNegativeMatch()),
+														    article.getRelationshipEvidence().getRelationshipPositiveMatchScore(),
+														    article.getRelationshipEvidence().getRelationshipNegativeMatchScore(),
 														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
 														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
 														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
@@ -542,19 +542,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	            .orElse(0.0);
  	}
  	
- 	private static double getRelationshipPositiveMatchScore (List<RelationshipPostiveMatch> evidences) {
- 		 return Optional.ofNullable(evidences)
- 	            .filter(list -> !list.isEmpty())  // Check if the list is not empty
- 	            .map(list -> list.get(0))  // Get the first RelationshipPostiveMatch
- 	            .map(RelationshipPostiveMatch::getRelationshipMatchingScore)  // Get the matching score
- 	            .orElse(0.0);  // Return 0.0 if the list is empty or no matching score is found
- 	}
-
- 	private static double getRelationshipNegativeMatchScore (RelationshipNegativeMatch negativeEvidence) {
- 		return Optional.ofNullable(negativeEvidence)
- 	            .map(RelationshipNegativeMatch::getRelationshipNonMatchScore)
- 	            .orElse(0.0);
-	}
  	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
  		
@@ -563,10 +550,21 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         .map(article -> {
             // Find the JSON object that corresponds to this article's ID
         	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
-            // If we find the matching JSON, extract the score and set it
-            if (reCiterArticle == null) {
-            	article.setAuthorshipLikelihoodScore(0.0);
-            }
+            // count the targetAuthors per article
+        	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
+                     .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
+                     .count();  // Count them
+        	 	slf4jLogger.info("Article: " + article.getArticleId() + ", Target Author Count: " + targetAuthorCount);
+                 //if the targetAuthorCount is zero then impose the penality in the article authorshipLikelyhood score.
+                 article.setTargetAuthorCount(targetAuthorCount);
+                 if(targetAuthorCount == 0)
+                 {
+                	 article.setAuthorshipLikelihoodScore(strategyParameters.getTargetAuthorMissingPenaltyPercent() * article.getAuthorshipLikelihoodScore());
+                	 article.setTargetAuthorCountPenalty(strategyParameters.getTargetAuthorMissingPenaltyPercent() - article.getAuthorshipLikelihoodScore());
+                 }
+                 else if (reCiterArticle == null) {
+	            	article.setAuthorshipLikelihoodScore(0.0);
+	            }
             return article;  // Return the article with updated score
         })
         .collect(Collectors.toList());  // Collect updated articles into a list

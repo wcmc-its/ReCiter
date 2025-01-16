@@ -157,7 +157,13 @@ public class PubMedQueryType {
 				Iterator<AuthorName> iterator = this.identityAuthorNames.iterator();
 
 				final AuthorName first = iterator.next();
-				String firstName = first!=null ? first.getLastName() + " " + first.getFirstInitial() + "[au]":"";
+				String firstName="";
+				if(first.getLastName().contains(" ") || first.getLastName().contains("-"))
+					firstName = first != null ? "\"" + first.getLastName() + " " + first.getFirstInitial() + "\"[au]" : "";
+				else
+				   firstName = first!=null ? first.getLastName() + " " + first.getFirstInitial() + "[au]":"";
+				
+				
 				if(this.isAuthorFullNameRequired) {
 					firstName = first.getLastName() + " " + first.getFirstName() + "[au]";
 				}
@@ -176,9 +182,11 @@ public class PubMedQueryType {
 					final AuthorName obj = iterator.next();
 					if(this.isAuthorFullNameRequired) { //For FullName Strict retrieval strategy
 						buf.append(obj.getLastName() + " " + obj.getFirstName() + "[au]");
-					} else {
-						buf.append(obj.getLastName() + " " + obj.getFirstInitial() + "[au]");
+					} else if(obj.getLastName().contains(" ") || obj.getLastName().contains("-")) {
+						buf.append("\"" + obj.getLastName() + " " + obj.getFirstInitial() + "\"[au]");
 					}
+					else
+						buf.append(obj.getLastName() + " " + obj.getFirstInitial() + "[au]");
 					
 				}
 				buf.append(")");
