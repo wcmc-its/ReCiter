@@ -469,8 +469,8 @@ public class ReCiterController {
         stopWatch.start("Feature generation for UID");
         
         final double totalScore;
-        log.info("authorshipLikelihoodScore :",authorshipLikelihoodScore);
-	log.info("totalArticleScoreStandardizedDefault :",totalArticleScoreStandardizedDefault);        
+        System.out.println("authorshipLikelihoodScore :"+authorshipLikelihoodScore);
+	System.out.println("totalArticleScoreStandardizedDefault :"+totalArticleScoreStandardizedDefault);        
 	if(authorshipLikelihoodScore == null) {
         	totalScore = totalArticleScoreStandardizedDefault; // Configuring the totalScore in multiple of 10's in application.properties file
         } else {
