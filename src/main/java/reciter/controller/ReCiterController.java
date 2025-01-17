@@ -513,11 +513,24 @@ public class ReCiterController {
             //Count pending pubs
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
-				analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+				/*analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
-								.count());
+								.count());*/
+				
+				analysis.getReCiterFeature().setCountPendingArticles(
+					    analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+					        .filter(reCiterArticleFeature -> {
+					            // Print the AuthorshipLikelihoodScore
+					            System.out.println("reCiterArticleFeature.getAuthorshipLikelihoodScore()" + reCiterArticleFeature.getAuthorshipLikelihoodScore() + 
+					            		"totalScore"+ totalScore);
+					            
+					            // Return the condition for the filter
+					            return reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore &&
+					                   reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL;
+					        })
+					        .count());
 			}
 			else if(analysis.getReCiterFeature()!=null)
 			{
@@ -528,7 +541,7 @@ public class ReCiterController {
 			{
 			
 				if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
-					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+					/*analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
@@ -537,7 +550,23 @@ public class ReCiterController {
 								||
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 								)
-								.collect(Collectors.toList()));
+								.collect(Collectors.toList()));*/
+					
+					analysis.getReCiterFeature().setReCiterArticleFeatures(
+						    analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+						        .peek(reCiterArticleFeature -> 
+						            System.out.println("AuthorshipLikelihoodScore: " + reCiterArticleFeature.getAuthorshipLikelihoodScore() + "totalScore :"+totalScore)
+						            
+						        )
+						        .filter(reCiterArticleFeature -> 
+						            (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore && 
+						            reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
+						            || reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
+						            || reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
+						        )
+						        .collect(Collectors.toList())
+						);
+					
 					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
 					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 						    .map(featureArticle -> {
