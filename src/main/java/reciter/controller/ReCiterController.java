@@ -469,13 +469,11 @@ public class ReCiterController {
         stopWatch.start("Feature generation for UID");
         
         final double totalScore;
-        
         if(authorshipLikelihoodScore == null) {
         	totalScore = totalArticleScoreStandardizedDefault; // Configuring the totalScore in multiple of 10's in application.properties file
         } else {
         	totalScore = authorshipLikelihoodScore; // Configuring the totalScore in multiple of 10's in application.properties file
         }
-    	
         EngineOutput engineOutput;
         EngineParameters parameters;
         List<ReCiterArticleFeature> originalFeatures = new ArrayList<ReCiterArticleFeature>();
@@ -517,6 +515,8 @@ public class ReCiterController {
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
 								.count());
+				
+				
 			}
 			else if(analysis.getReCiterFeature()!=null)
 			{
@@ -537,6 +537,8 @@ public class ReCiterController {
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 								)
 								.collect(Collectors.toList()));
+					
+					
 					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
 					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 						    .map(featureArticle -> {

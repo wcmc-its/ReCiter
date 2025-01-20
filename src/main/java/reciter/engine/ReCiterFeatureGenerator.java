@@ -497,11 +497,12 @@ public class ReCiterFeatureGenerator {
             if(mode == UseGoldStandard.AS_EVIDENCE && reCiterArticle.getFeedbackEvidence() !=null ) {
 				evidence.setFeedbackEvidence(reCiterArticle.getFeedbackEvidence());
 			}
-			reCiterArticleFeature.setEvidence(evidence);
-
+            evidence.setTargetAuthorCount(reCiterArticle.getTargetAuthorCount());
+            evidence.setTargetAuthorCountPenalty(reCiterArticle.getTargetAuthorCountPenalty());
+            
             log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
             reCiterArticleFeature.setEvidence(evidence);
-
+ 
             reCiterArticleFeatures.add(reCiterArticleFeature);
         }
         calculateTopKeywords(reCiterArticleFeatures, reCiterFeature, keywordsMax);
