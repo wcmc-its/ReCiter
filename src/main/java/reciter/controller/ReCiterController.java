@@ -847,6 +847,13 @@ public class ReCiterController {
         return new ResponseEntity<>(reCiterOutputFeature, HttpStatus.OK);
     }
     
+    // This API is exposed over a custom domain as an HTTP API to the external world and does not need to be on Swagger.   
+    @RequestMapping(value = "/reciter/article-retrieval/by/uid/{uid}", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity runArticleRetrievalByUid(@PathVariable String uid) throws IOException {
+        return runArticleRetrievalByUid(uid, null,null);
+    }
+    
     @ApiOperation(value = "Article retrieval by UID.", response = ReCiterFeature.class, notes = "This api returns all the publication for a supplied uid.")
     @ApiImplicitParams({
     	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class),
