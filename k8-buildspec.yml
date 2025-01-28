@@ -18,7 +18,7 @@ phases:
         # Retrieve Docker credentials from Secrets Manager
         - export DOCKER_USERNAME=$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_CREDENTIALS --query 'SecretString' --output text | jq -r .username)
         - export DOCKER_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_CREDENTIALS --query 'SecretString' --output text | jq -r .password)
-        - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+        - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin -q
         - echo "Docker login successful - ${BRANCH}"
         - TAG="$CODEBUILD_BUILD_NUMBER.$(date +%Y-%m-%d.%H.%M.%S).$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
         - echo $TAG
