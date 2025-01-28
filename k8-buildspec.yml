@@ -3,7 +3,7 @@ version: 0.2
 
 env:
   secrets-manager:
-    DOCKER_HUB_CREDENTIALS: "docker-hub-credentials"
+    DOCKER_HUB_CREDENTIALS: $DOCKER_HUB_CREDENTIALS_ARN # Reference environment variable for the secret ARN
     
 phases:
   install:
