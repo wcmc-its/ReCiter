@@ -46,6 +46,8 @@ phases:
         if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
           docker build --tag $REPOSITORY_URI:$TAG .
           docker push $REPOSITORY_URI:$TAG
+          # Clear the Docker login credentials by removing config.json
+          rm -f ~/.docker/config.json
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region us-east-1 --role-arn $EKS_KUBECTL_ROLE_ARN
         fi
         if expr "${BRANCH}" : ".*master" >/dev/null; then
