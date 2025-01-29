@@ -25,6 +25,7 @@ phases:
         - echo "DOCKER_PASSWORD is set"
 
         # Check if the password is empty
+        - |
           if [ -z "$DOCKER_PASSWORD" ]; then
           echo "Error: DOCKER_PASSWORD is empty"
           exit 1
