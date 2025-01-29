@@ -18,9 +18,6 @@ phases:
         # Retrieve Docker credentials from Secrets Manager
         - export DOCKER_USERNAME=$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_CREDENTIALS --query 'SecretString' --output text | jq -r .username)
         - export DOCKER_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_CREDENTIALS --query 'SecretString' --output text | jq -r .password)
-        #- docker_login_secret=$(aws secretsmanager get-secret-value --secret-id $DOCKER_CREDENTIALS --query SecretString --output text)
-        #- export DOCKER_USERNAME=$(echo $docker_login_secret | jq -r .username)
-        #- export DOCKER_PASSWORD=$(echo $docker_login_secret | jq -r .password)
         - echo "Docker username from secrets: $DOCKER_USERNAME"
         - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
         - echo "Docker login successful - ${BRANCH}"
