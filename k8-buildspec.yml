@@ -21,8 +21,8 @@ phases:
         - export DOCKER_USERNAME=$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_CREDENTIALS --query 'SecretString' --output text | jq -r .username)
         - export DOCKER_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_CREDENTIALS --query 'SecretString' --output text | jq -r .password)
         # Debugging: Verify the values are being set correctly
-          echo "Docker username from secrets: $DOCKER_USERNAME"
-          echo "DOCKER_PASSWORD is set"
+        - echo "Docker username from secrets: $DOCKER_USERNAME"
+        - echo "DOCKER_PASSWORD is set"
 
         # Check if the password is empty
           if [ -z "$DOCKER_PASSWORD" ]; then
