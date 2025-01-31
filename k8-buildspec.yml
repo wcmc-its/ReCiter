@@ -46,8 +46,6 @@ phases:
         if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
           docker build --tag $REPOSITORY_URI:$TAG .
           docker push $REPOSITORY_URI:$TAG
-          # Log out from the Docker registry to clear credentials
-          docker logout $REPOSITORY_URI
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region us-east-1 --role-arn $EKS_KUBECTL_ROLE_ARN
         fi
         if expr "${BRANCH}" : ".*master" >/dev/null; then
@@ -55,4 +53,6 @@ phases:
         fi
         if expr "${BRANCH}" : ".*dev" >/dev/null; then
           kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME
+          # Log out from the Docker registry to clear credentials
+          docker logout $REPOSITORY_URI
         fi
