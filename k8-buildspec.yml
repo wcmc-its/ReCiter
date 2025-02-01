@@ -47,6 +47,8 @@ phases:
           # Check if Docker is installed
           echo "Checking if Docker is installed"
           which docker  
+          # Check for docker daemon 
+          sudo systemctl status docker
           docker build --tag $REPOSITORY_URI:$TAG .
           docker push $REPOSITORY_URI:$TAG
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region us-east-1 --role-arn $EKS_KUBECTL_ROLE_ARN
