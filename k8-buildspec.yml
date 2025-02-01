@@ -46,9 +46,13 @@ phases:
         if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
           # Check if Docker is installed
           echo "Checking if Docker is installed"
-          which docker  
-          # Check for docker daemon 
-          sudo systemctl status docker
+          docker --version
+          which docker 
+          # Verify Docker access by running a simple Docker command
+          echo "Checking if Docker is accessible..."
+          docker info
+          docker ps
+  
           docker build --tag $REPOSITORY_URI:$TAG .
           docker push $REPOSITORY_URI:$TAG
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region us-east-1 --role-arn $EKS_KUBECTL_ROLE_ARN
