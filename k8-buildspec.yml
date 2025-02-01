@@ -54,5 +54,5 @@ phases:
         if expr "${BRANCH}" : ".*dev" >/dev/null; then
           kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME
           # Log out from the Docker registry to clear credentials
-          docker logout $REPOSITORY_URI
+          #docker logout $REPOSITORY_URI
         fi
