@@ -491,8 +491,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	
  	private static double getEducationYearScore(EducationYearEvidence evidence) {
  	    return Optional.ofNullable(evidence)
- 	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
- 	            .orElse(0.0);
+ 	    				.map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
+ 	    				.filter(score -> score != 0.0)  
+ 	    				.orElseGet(() -> Optional.ofNullable(evidence)
+                                 				 .map(EducationYearEvidence::getDiscrepancyDegreeYearBachelorScore)
+                                 				 .orElse(0.0));
  	}
 
  	private static double getEmailMatchScore(EmailEvidence evidence) {

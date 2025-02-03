@@ -576,7 +576,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
 			  log.info("articlesIdentityFeedbaclScoreTotal length",articlesIdentityFeedbackScoreTotal!=null?articlesIdentityFeedbackScoreTotal.length():0);
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
-				  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
+			  {  
+				  List<ReCiterArticle> articlesScores =  mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
+			  		articlesScores.forEach(article -> log.info("articleId :", article.getArticleId(), "authorshipLikelihoodScore : ", article.getAuthorshipLikelihoodScore() ));
+			  	 return articlesScores;	
+			  }  	
 				  
 			  
 		} catch (IOException e) {
@@ -653,7 +657,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private static double getEducationYearScore(EducationYearEvidence evidence) {
 	    return Optional.ofNullable(evidence)
 	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
-	            .orElse(0.0);
+	            .filter(score -> score != 0.0)  
+	            .orElseGet(() -> Optional.ofNullable(evidence)
+	                                      .map(EducationYearEvidence::getDiscrepancyDegreeYearBachelorScore)
+	                                      .orElse(0.0));   
 	}
 
 	private static double getEmailMatchScore(EmailEvidence evidence) {
@@ -711,6 +718,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				 				 .map(article -> {
 				 					 // Find the JSON object that corresponds to this article's ID
 				 		        	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
+				 		        	log.info("After setting the score to article***",reCiterArticle.getAuthorshipLikelihoodScore());
 				 		            // count the targetAuthors per article
 				 		        	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
 				 		                     .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
@@ -736,11 +744,14 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
+	        log.info("ArticleId from JSONArray: ", jsonObject.getLong("id") , ", Article Id from ReCiterArticle: " , article.getArticleId());
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
 	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
 	                    .setScale(3, RoundingMode.DOWN)
 	                    .doubleValue());*/
+	        	log.info("both articleIds are matching and Score is ***",jsonObject.getDouble("scoreTotal"));
 	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
+	        	log.info("After setting the score to article***",article.getAuthorshipLikelihoodScore());
 	            return article; // Return the modified article
 	        }
 	    }

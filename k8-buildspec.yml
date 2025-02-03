@@ -9,6 +9,21 @@ phases:
       - java -version 
   pre_build:
       commands:
+        # Fetch Docker credentials from AWS Secrets Manager
+        - echo "Fetching Docker credentials from AWS Secrets Manager"
+        - SECRET=$(aws secretsmanager get-secret-value --secret-id docker-hub-credentials --query "SecretString" --output text)
+      
+        # Extract username and password from the JSON response
+        - DOCKER_USERNAME=$(echo $SECRET | sed -n 's/.*"username":"\([^"]*\)".*/\1/p')
+        - DOCKER_PASSWORD=$(echo $SECRET | sed -n 's/.*"password":"\([^"]*\)".*/\1/p')
+      
+        # Print the Docker username to the CodeBuild log
+        - echo "Docker Username $DOCKER_USERNAME"
+        
+        # Log in to Docker registry
+        - echo "Logging in to Docker registry"
+        - echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
+       
         - TAG="$CODEBUILD_BUILD_NUMBER.$(date +%Y-%m-%d.%H.%M.%S).$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
         - echo $TAG
         - sed -i.bak -e 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:$TAG"'@' kubernetes/k8-deployment.yaml
@@ -31,6 +46,8 @@ phases:
         if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
           docker build --tag $REPOSITORY_URI:$TAG .
           docker push $REPOSITORY_URI:$TAG
+          # Log out from the Docker registry to clear credentials
+          docker logout $REPOSITORY_URI
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region us-east-1 --role-arn $EKS_KUBECTL_ROLE_ARN
         fi
         if expr "${BRANCH}" : ".*master" >/dev/null; then
@@ -38,4 +55,5 @@ phases:
         fi
         if expr "${BRANCH}" : ".*dev" >/dev/null; then
           kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME
+          
         fi
