@@ -40,6 +40,7 @@ public class S3UserLogHandler {
 
     @PostConstruct
     public void init() {
+    	System.out.println("S3 Bucket***************"+apiLogsBucketName);
         if (apiLogsBucketRegion != null && !apiLogsBucketRegion.isEmpty()) {
             s3Client = AmazonS3ClientBuilder
                     .standard()
@@ -60,11 +61,11 @@ public class S3UserLogHandler {
     public void writeUserLog(UserLog userLog, String date) throws IOException {
         String logFilePath = getLogFilePath(date);
         List<UserLog> logs = new ArrayList<>();
-
+        System.out.println("bucket exists"+apiLogsBucketName);
         // Check if file already exists
         if (s3Client.doesObjectExist(apiLogsBucketName, logFilePath)) {
             try {
-            	System.out.println("bucker exists"+apiLogsBucketName);
+            	System.out.println("bucket exists"+apiLogsBucketName);
                 // If the file exists, download it and append the new log
                 S3Object object = s3Client.getObject(apiLogsBucketName, logFilePath);
                 try (InputStream inputStream = object.getObjectContent()) {
@@ -81,10 +82,10 @@ public class S3UserLogHandler {
         }
         // Add the new log entry
         logs.add(userLog);
-
+        logs.forEach(log -> System.out.println("log entries are*****************"+ log));
         // Convert the list of logs to JSON
         String jsonLogs = objectMapper.writeValueAsString(logs);
-
+        System.out.println("jsonLogs***********************"+jsonLogs);
         // Upload the updated logs back to S3
         InputStream updatedInputStream = new ByteArrayInputStream(jsonLogs.getBytes());
         PutObjectRequest request = new PutObjectRequest(apiLogsBucketName, logFilePath, updatedInputStream, new ObjectMetadata());
