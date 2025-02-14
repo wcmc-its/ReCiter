@@ -25,7 +25,6 @@ import javax.annotation.PostConstruct;
 @Service
 public class S3UserLogHandler {
 
-    private static final String BUCKET_NAME = "LogsConsumerAPI";
     private AmazonS3 s3Client;
     private final ObjectMapper objectMapper;
 
@@ -63,10 +62,11 @@ public class S3UserLogHandler {
         List<UserLog> logs = new ArrayList<>();
 
         // Check if file already exists
-        if (s3Client.doesObjectExist(BUCKET_NAME, logFilePath)) {
+        if (s3Client.doesObjectExist(apiLogsBucketName, logFilePath)) {
             try {
+            	System.out.println("bucker exists"+apiLogsBucketName);
                 // If the file exists, download it and append the new log
-                S3Object object = s3Client.getObject(BUCKET_NAME, logFilePath);
+                S3Object object = s3Client.getObject(apiLogsBucketName, logFilePath);
                 try (InputStream inputStream = object.getObjectContent()) {
                     // Read existing logs
                     UserLog[] existingLogs = objectMapper.readValue(inputStream, UserLog[].class);
@@ -79,7 +79,6 @@ public class S3UserLogHandler {
                 e.printStackTrace();
             }
         }
-
         // Add the new log entry
         logs.add(userLog);
 
@@ -88,7 +87,7 @@ public class S3UserLogHandler {
 
         // Upload the updated logs back to S3
         InputStream updatedInputStream = new ByteArrayInputStream(jsonLogs.getBytes());
-        PutObjectRequest request = new PutObjectRequest(BUCKET_NAME, logFilePath, updatedInputStream, new ObjectMetadata());
+        PutObjectRequest request = new PutObjectRequest(apiLogsBucketName, logFilePath, updatedInputStream, new ObjectMetadata());
         s3Client.putObject(request);
 
         System.out.println("Log entry added successfully for user " + userLog.getClientId());
