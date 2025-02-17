@@ -61,7 +61,8 @@ public class S3UserLogHandler {
     public void writeUserLog(UserLog userLog, String date) throws IOException {
         String logFilePath = getLogFilePath(date);
         List<UserLog> logs = new ArrayList<>();
-        System.out.println("bucket exists"+apiLogsBucketName);
+        System.out.println("logFilePath************"+logFilePath);
+        System.out.println("bucket exists*************"+apiLogsBucketName);
         // Check if file already exists
         if (s3Client.doesObjectExist(apiLogsBucketName, logFilePath)) {
             try {

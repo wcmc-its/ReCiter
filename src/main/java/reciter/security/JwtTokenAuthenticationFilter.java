@@ -106,11 +106,12 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				// Set the authentication in the security context
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 				
-				System.out.println("Write the userlog details to S3 bucket here*************************" + request.getRequestURI() + request.getParameter("uid"));
+				System.out.println("Write the userlog details to S3 bucket here*************************" + request.getRequestURI() +" - "+ request.getParameter("uid"));
+				
 				
 				// Create a new UserLog entry
                 UserLog userLog = new UserLog(clientId, clientName,request.getRequestURI(),request.getParameter("uid"),LocalDateTime.now().toString());
-                
+                System.out.println("Details of the userLog*******************"+userLog.toString());
                 // Get the current date as a string in yyyy-MM-dd format
                 String date = Instant.now().toString().split("T")[0];
                 
