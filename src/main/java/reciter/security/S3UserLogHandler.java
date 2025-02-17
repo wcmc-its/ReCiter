@@ -54,7 +54,7 @@ public class S3UserLogHandler {
 
     // Path format: transactions/YYYY-MM-DD/logs.json
     private String getLogFilePath(String date) {
-    	return String.format("%s%s.json", "/", date);
+    	return String.format("%s.json", date);
     }
 
     // Method to create or append user log entry to the log file
@@ -81,6 +81,8 @@ public class S3UserLogHandler {
                 e.printStackTrace();
             }
         }
+        else
+        	System.out.println("No bucket or File exists"+apiLogsBucketName + logFilePath);
         // Add the new log entry
         logs.add(userLog);
         logs.forEach(log -> System.out.println("log entries are*****************"+ log));
