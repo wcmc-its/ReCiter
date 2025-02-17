@@ -63,10 +63,11 @@ public class S3UserLogHandler {
         List<UserLog> logs = new ArrayList<>();
         System.out.println("logFilePath************"+logFilePath);
         System.out.println("bucket exists*************"+apiLogsBucketName);
+        System.out.println("Bucket and Files exists in S3" + s3Client.doesObjectExist(apiLogsBucketName, logFilePath));
         // Check if file already exists
         if (s3Client.doesObjectExist(apiLogsBucketName, logFilePath)) {
             try {
-            	System.out.println("bucket exists"+apiLogsBucketName);
+            	System.out.println("bucket exists inside**"+apiLogsBucketName);
                 // If the file exists, download it and append the new log
                 S3Object object = s3Client.getObject(apiLogsBucketName, logFilePath);
                 try (InputStream inputStream = object.getObjectContent()) {
