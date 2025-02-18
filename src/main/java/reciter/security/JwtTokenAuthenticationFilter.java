@@ -4,15 +4,12 @@ import java.io.IOException;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.Iterator;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,14 +49,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		System.out.println("MyCustomFilter is called************************");
-		// Example: Log the request method and URI
-		String method = request.getMethod();
-		String uri = request.getRequestURI();
-		System.out.println("Request Method: " + method + " | Request URI: " + uri);
 
 		String token = extractToken(request);
-		System.out.println("token**************" + token);
 
 		if (StringUtils.hasText(token)) {
 			try {
@@ -70,18 +61,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				
 				String clientId = decodedJWT.getClaim("client_id").asString();
 				
-				System.out.println("Client Id : " + clientId);
-				
 				JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
-				
-				System.out.println("secretsJson pretty : " + secretsJson.toPrettyString());
-				
-				System.out.println("cogintoRegion : " + cogintoRegion);
-				
-				System.out.println("Node Type: " + secretsJson.getNodeType());
-				
-				System.out.println("Issuer: " + JWT.decode(token).getIssuer());
-				
+
 				try
 				{
 					// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
@@ -106,12 +87,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				// Set the authentication in the security context
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 				
-				System.out.println("Write the userlog details to S3 bucket here*************************" + request.getRequestURI() +" - "+ request.getParameter("uid"));
-				
-				
 				// Create a new UserLog entry
                 UserLog userLog = new UserLog(clientId, clientName,request.getRequestURI(),request.getParameter("uid"),LocalDateTime.now().toString());
-                System.out.println("Details of the userLog*******************"+userLog.toString());
                 // Get the current date as a string in yyyy-MM-dd format
                 String date = Instant.now().toString().split("T")[0];
                 
@@ -144,9 +121,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		filterChain.doFilter(request, response);
-		// Custom logic after the response has been processed by all filters
-		// (post-processing)
-		System.out.println("Response Status: " + response.getStatus());
 	}
 
 	// Extract token from Authorization header
@@ -167,18 +141,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		{
 			String clientId = JWT.decode(token).getClaim("client_id").asString();
 			
-			System.out.println("Client Id : " + clientId);
-			
 			JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
-			
-			System.out.println("secretsJson pretty : " + secretsJson.toPrettyString());
-			
-			System.out.println("cogintoRegion : " + cogintoRegion);
-			
-			System.out.println("Node Type: " + secretsJson.getNodeType());
-			
-			System.out.println("Issuer: " + JWT.decode(token).getIssuer());
-			
 			try
 			{
 				// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
@@ -191,36 +154,18 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				e.printStackTrace();
 			}
 			
-			 // Get an iterator for the field names (keys) in the JsonNode
-	        Iterator<String> fieldNames = secretsJson.fieldNames();
-	
-	        // Print all field names (keys)
-	        while (fieldNames.hasNext()) {
-	            String fieldName = fieldNames.next();
-	            System.out.println("Key: " + fieldName);
-	        }
-	        
-	        System.out.println("STR_USER_POOL_ID1tr : " + secretsJson.get(STR_USER_POOL_ID).getNodeType());
-			
-	        
-			System.out.println("STR_USER_POOL_ID2 : " + ((JsonNode)secretsJson.get(STR_USER_POOL_ID)).asText());
-			
 			String tokenSignInUrl = getTokenSigningKeyUrl(cogintoRegion,secretsJson.get(STR_USER_POOL_ID).asText());
 			
 			String issuer = getIssuerFromToken(cogintoRegion,secretsJson.get(STR_USER_POOL_ID).asText());
 						
-			System.out.println("tokenSignInUrl : " + tokenSignInUrl);
-			
 			RSAPublicKey publicKey = getPublicKeyFromJWKSet(token,tokenSignInUrl);
 	
 			JWTVerifier verifier = JWT.require(Algorithm.RSA256(publicKey, null))
 					.withIssuer(issuer).build();
-			System.out.println("Verifier : " +  verifier);
 			
 			return verifier.verify(token);
 		}
 		catch (JWTVerificationException jwtve) {
-            System.out.println("Invalid JWT Token: " + jwtve.getMessage());
             throw jwtve;
         }
 		catch(Exception e)
@@ -233,16 +178,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	// Fetch the public key from Cognito's JWK set
 	private RSAPublicKey getPublicKeyFromJWKSet(String token,String tokenSignInUrl) throws Exception {
 		String jwks = fetchJWKSet(tokenSignInUrl);
-		System.out.println("jwks are**********************"+jwks);
 		JWKSet jwkSet = JWKSet.parse(jwks);
 
 		String kid = JWT.decode(token).getKeyId(); // Get the key ID from the JWT header
-		System.out.println("kid**********************"+kid);
 		JWK jwk = jwkSet.getKeyByKeyId(kid);
 		
 		if (jwk != null && jwk instanceof RSAKey) {
 			RSAKey rsaKey = (RSAKey) jwk;
-			System.out.println("RSAKey**********************"+rsaKey.toRSAPublicKey());
 			return rsaKey.toRSAPublicKey(); // Return the public RSA key
 		} else {
 			throw new Exception("Unable to find matching key ID in JWK Set");

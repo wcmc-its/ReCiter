@@ -1,8 +1,6 @@
 package reciter.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -81,16 +79,11 @@ public class APISecurityConfig {
 	@Order(1)
     public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
-		private final String principalRequestHeader = "Authorization";//"api-key";
-		
-        private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
-        
-        private final JwtTokenAuthenticationFilter filter;
+	    private final JwtTokenAuthenticationFilter filter;
         
         @Value("${security.enabled:true}")
 	    private boolean securityEnabled;
         
-        @Autowired
         public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter)
         {
         	this.filter = filter;
@@ -98,12 +91,8 @@ public class APISecurityConfig {
         
     	    @Override
     	    protected void configure(HttpSecurity httpSecurity) throws Exception {
-    	    //    JwtTokenAuthenticationFilter filter = new JwtTokenAuthenticationFilter();
-    	    	System.out.println("configure method from ConsumerAPISecurity Called*****************");
-    	    	System.out.println("securityEnabled*****************"+securityEnabled);
     	    	if(securityEnabled) {
-    	    		System.out.println("coming inside if condition*****************"+securityEnabled);
-	    	        httpSecurity.
+        	        httpSecurity.
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).

@@ -1,26 +1,25 @@
 package reciter.security;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class S3UserLogHandler {
@@ -40,7 +39,6 @@ public class S3UserLogHandler {
 
     @PostConstruct
     public void init() {
-    	System.out.println("S3 Bucket***************"+apiLogsBucketName);
         if (apiLogsBucketRegion != null && !apiLogsBucketRegion.isEmpty()) {
             s3Client = AmazonS3ClientBuilder
                     .standard()
@@ -61,14 +59,20 @@ public class S3UserLogHandler {
     public void writeUserLog(UserLog userLog, String date) throws IOException {
         String logFilePath = getLogFilePath(date);
         List<UserLog> logs = new ArrayList<>();
-        System.out.println("logFilePath************"+logFilePath);
-        System.out.println("bucket exists*************"+apiLogsBucketName);
-        boolean isObjectexists = s3Client.doesObjectExist(apiLogsBucketName, logFilePath);
-        System.out.println("Bucket and Files exists in S3" + isObjectexists);
+        try
+        {
+        	boolean isObjectexists = s3Client.doesObjectExist(apiLogsBucketName, logFilePath);
+        }
+        catch (AmazonS3Exception e) {
+            if (e.getStatusCode() == 404) {
+                System.out.println("Object does not exist.");
+            } else {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
         // Check if file already exists
         if (s3Client.doesObjectExist(apiLogsBucketName, logFilePath)) {
             try {
-            	System.out.println("bucket exists inside**"+apiLogsBucketName);
                 // If the file exists, download it and append the new log
                 S3Object object = s3Client.getObject(apiLogsBucketName, logFilePath);
                 try (InputStream inputStream = object.getObjectContent()) {
@@ -83,20 +87,15 @@ public class S3UserLogHandler {
                 e.printStackTrace();
             }
         }
-        else
-        	System.out.println("No bucket or File exists"+apiLogsBucketName + logFilePath);
         // Add the new log entry
         logs.add(userLog);
-        logs.forEach(log -> System.out.println("log entries are*****************"+ log));
         // Convert the list of logs to JSON
         String jsonLogs = objectMapper.writeValueAsString(logs);
-        System.out.println("jsonLogs***********************"+jsonLogs);
         // Upload the updated logs back to S3
         InputStream updatedInputStream = new ByteArrayInputStream(jsonLogs.getBytes());
         PutObjectRequest request = new PutObjectRequest(apiLogsBucketName, logFilePath, updatedInputStream, new ObjectMetadata());
         s3Client.putObject(request);
 
-        System.out.println("Log entry added successfully for user " + userLog.getClientId());
     }
 }
 
