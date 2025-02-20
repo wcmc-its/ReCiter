@@ -23,6 +23,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -191,7 +192,7 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 				reCiterArticle.setKnownCoinvestigatorScore(sum);
 			}
 			relationshipEvidences.stream().forEach(relationShipEvidence -> relationShipEvidence.setRelationshipMatchingCount(relationShipVerboseMatchCount[0]));
-			identityRelationShipCount = identity.getKnownRelationships().stream().distinct().count();
+			identityRelationShipCount = Optional.ofNullable(identity.getKnownRelationships()).map(relations -> relations.stream().distinct().count()).orElse(0L);
 			if(relationShipVerboseMatchCount!=null && relationShipVerboseMatchCount.length > 0)
 			{
 				double relationshipPositiveMatchingScore = Math.pow((relationShipVerboseMatchCount[0] > 0 ? relationShipVerboseMatchCount[0]+ 1 : 1) / (double)(identityRelationShipCount > 0 ? identityRelationShipCount + 1 : 1), 0.5);
