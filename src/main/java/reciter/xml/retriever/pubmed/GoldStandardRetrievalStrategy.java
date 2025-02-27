@@ -19,10 +19,11 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,8 +31,6 @@ import org.springframework.stereotype.Component;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
-import reciter.model.pubmed.PubMedArticle;
-import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
@@ -52,10 +51,26 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 	
 	protected List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> unqiuePmids) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-		List<Long> goldStandardPmids = dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids();
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
+		List<PubMedQueryType> pubMedQueries = new ArrayList<>();
+
+		// Defensive check for UID
+		String uid = identity.getUid();
+		if (uid == null || uid.trim().isEmpty()) {
+			throw new IllegalArgumentException("Identity UID is missing or blank.");
+		}
+		uid = uid.trim();
+
+		// Retrieve the gold standard record safely
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
+		List<Long> goldStandardPmids = new ArrayList<>();
+		if (goldStandard != null && goldStandard.getKnownPmids() != null) {
+			goldStandardPmids.addAll(goldStandard.getKnownPmids());
+		}
+		
+		// Remove PMIDs that are already processed
 		goldStandardPmids.removeAll(unqiuePmids);
+
+		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
 		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
@@ -69,27 +84,25 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	@Override
 	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
+		List<PubMedQueryType> pubMedQueries = new ArrayList<>();
 
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
-		List<Long> goldStandardPmids = new ArrayList<Long>();
-		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null 
-				&& 
-				goldStandard.getKnownPmids() != null 
-				&& 
-				goldStandard.getKnownPmids().size() > 0) {
-			goldStandardPmids = goldStandard.getKnownPmids();
+		// Defensive check for UID
+		String uid = identity.getUid();
+		if (uid == null || uid.trim().isEmpty()) {
+			throw new IllegalArgumentException("Identity UID is missing or blank.");
 		}
-		
-		if(goldStandard != null 
-				&&
-				goldStandard.getRejectedPmids() != null
-				&&
-				goldStandard.getRejectedPmids().size() > 0) {
+		uid = uid.trim();
+
+		List<Long> goldStandardPmids = new ArrayList<>();
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
+		if (goldStandard != null && goldStandard.getKnownPmids() != null) {
+			goldStandardPmids.addAll(goldStandard.getKnownPmids());
+		}
+		if (goldStandard != null && goldStandard.getRejectedPmids() != null) {
 			goldStandardPmids.addAll(goldStandard.getRejectedPmids());
 		}
 		
+		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
 		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
@@ -104,23 +117,21 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	@Override
 	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
+		List<PubMedQueryType> pubMedQueries = new ArrayList<>();
 		
-		List<Long> goldStandardPmids = new ArrayList<Long>();
-		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null 
-				&& 
-				goldStandard.getKnownPmids() != null 
-				&& 
-				goldStandard.getKnownPmids().size() > 0) {
-			goldStandardPmids = goldStandard.getKnownPmids();
+		// Defensive check for UID
+		String uid = identity.getUid();
+		if (uid == null || uid.trim().isEmpty()) {
+			throw new IllegalArgumentException("Identity UID is missing or blank.");
 		}
-		
-		if(goldStandard != null 
-				&&
-				goldStandard.getRejectedPmids() != null
-				&&
-				goldStandard.getRejectedPmids().size() > 0) {
+		uid = uid.trim();
+
+		List<Long> goldStandardPmids = new ArrayList<>();
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
+		if (goldStandard != null && goldStandard.getKnownPmids() != null) {
+			goldStandardPmids.addAll(goldStandard.getKnownPmids());
+		}
+		if (goldStandard != null && goldStandard.getRejectedPmids() != null) {
 			goldStandardPmids.addAll(goldStandard.getRejectedPmids());
 		}
 

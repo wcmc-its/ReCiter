@@ -18,10 +18,7 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
-import java.time.LocalDate;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -36,38 +33,55 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 @Component("firstNameInitialRetrievalStrategy")
 public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
-	private static final String retrievalStrategyName = "FirstNameInitialRetrievalStrategy";
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(FirstNameInitialRetrievalStrategy.class);
+    private static final String retrievalStrategyName = "FirstNameInitialRetrievalStrategy";
+    private final static Logger slf4jLogger = LoggerFactory.getLogger(FirstNameInitialRetrievalStrategy.class);
 
-	@Override
-	public String getRetrievalStrategyName() {
-		return retrievalStrategyName;
-	}
+    @Override
+    public String getRetrievalStrategyName() {
+        return retrievalStrategyName;
+    }
 
-	@Override
-	protected String getStrategySpecificKeyword(Identity identity) {
-		return null;
-	}
+    @Override
+    protected String getStrategySpecificKeyword(Identity identity) {
+        // This strategy does not require a specific keyword.
+        return null;
+    }
 
-	@Override
-	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
-		PubMedQueryBuilder pubMedQueryBuilder = 
-				new PubMedQueryBuilder()
-					.author(true, false, identitynames);
-		
-		PubMedQuery query = pubMedQueryBuilder.build();
-		slf4jLogger.info(retrievalStrategyName + " produced query=[" + query + "]");
-		return query;
-	}
-	
-	@Override
-	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
-			Date endDate) {
-		PubMedQueryBuilder pubMedQueryBuilder = 
-				new PubMedQueryBuilder()
-					.author(true, false, identitynames)
-					.dateRange(true, startDate, endDate);
-		
-		return pubMedQueryBuilder.build();
-	}
+    @Override
+    protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
+        // Defensive checks: Ensure identity and identitynames are valid.
+        if (identity == null) {
+            throw new IllegalArgumentException("Identity is null.");
+        }
+        if (identitynames == null || identitynames.isEmpty()) {
+            throw new IllegalArgumentException("Identity names set is null or empty.");
+        }
+        
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder()
+                    .author(true, false, identitynames);
+        
+        PubMedQuery query = pubMedQueryBuilder.build();
+        slf4jLogger.info(retrievalStrategyName + " produced query=[" + query + "]");
+        return query;
+    }
+
+    @Override
+    protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate, Date endDate) {
+        // Defensive checks: Ensure identity, identitynames, and date range parameters are valid.
+        if (identity == null) {
+            throw new IllegalArgumentException("Identity is null.");
+        }
+        if (identitynames == null || identitynames.isEmpty()) {
+            throw new IllegalArgumentException("Identity names set is null or empty.");
+        }
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Start date or end date is null.");
+        }
+        
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder()
+                    .author(true, false, identitynames)
+                    .dateRange(true, startDate, endDate);
+        
+        return pubMedQueryBuilder.build();
+    }
 }

@@ -74,7 +74,7 @@ public class SecondInitialRetrievalStrategy extends AbstractNameRetrievalStrateg
 				return first;
 			}
 			
-			Iterator<AuthorName> iter = identity.getAlternateNames().iterator();
+			Iterator<AuthorName> iter = (identity.getAlternateNames() != null ? identity.getAlternateNames() : Collections.emptySet()).iterator();
 			
 			final StringBuilder buf = new StringBuilder();
 			if(first != null) {

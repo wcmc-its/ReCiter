@@ -31,49 +31,75 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 @Component("grantRetrievalStrategy")
 public class GrantRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
-	private static final String retrievalStrategyName = "GrantRetrievalStrategy";
+    private static final String retrievalStrategyName = "GrantRetrievalStrategy";
 
-	@Override
-	public String getRetrievalStrategyName() {
-		return retrievalStrategyName;
-	}
+    @Override
+    public String getRetrievalStrategyName() {
+        return retrievalStrategyName;
+    }
 
-	@Override
-	protected String getStrategySpecificKeyword(Identity identity) {
-		if (identity.getGrants() != null && !identity.getGrants().isEmpty()) {
-			StringBuilder sb = new StringBuilder();
-			int i = 0;
-			for (String grant : identity.getGrants()) {
-				if (i != identity.getGrants().size() - 1) {
-					sb.append(grant + "[Grant Number] OR ");
-				} else {
-					sb.append(grant + "[Grant Number]");
-				}
-				i++;
-			}
-			return "(" + sb.toString() + ")";
-		} else {
-			return null;
-		}
-	}
+    /**
+     * Constructs a grant query string by concatenating valid grant numbers.
+     * Each valid grant is appended with "[Grant Number]" and separated by " OR ".
+     * 
+     * @param identity the identity object containing grants
+     * @return a query string or null if no valid grant information exists
+     * @throws IllegalArgumentException if the identity is null
+     */
+    @Override
+    protected String getStrategySpecificKeyword(Identity identity) {
+        if (identity == null) {
+            throw new IllegalArgumentException("Identity is null.");
+        }
+        if (identity.getGrants() == null || identity.getGrants().isEmpty()) {
+            return null;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        int validCount = 0;
+        for (String grant : identity.getGrants()) {
+            count++;
+            if (grant == null || grant.trim().isEmpty()) {
+                continue;
+            }
+            // Append each valid grant with the "[Grant Number]" suffix.
+            sb.append(grant.trim()).append("[Grant Number]");
+            validCount++;
+            // Append " OR " if there are more grants to process
+            if (count < identity.getGrants().size()) {
+                sb.append(" OR ");
+            }
+        }
+        String keyword = sb.toString();
+        // If no valid grant strings were found, return null.
+        if (keyword.trim().isEmpty() || validCount == 0) {
+            return null;
+        }
+        return "(" + keyword + ")";
+    }
 
-	@Override
-	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
-		PubMedQueryBuilder pubMedQueryBuilder = 
-				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-				.author(true, false, identitynames);
+    @Override
+    protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
+        String keyword = getStrategySpecificKeyword(identity);
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("No valid grant keyword could be constructed from the identity grants.");
+        }
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(keyword)
+                .author(true, false, identitynames);
+        return pubMedQueryBuilder.build();
+    }
 
-		return pubMedQueryBuilder.build();
-	}
-
-	@Override
-	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
-			Date endDate) {
-		PubMedQueryBuilder pubMedQueryBuilder = 
-				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-				.author(true, false, identitynames)
-				.dateRange(true, startDate, endDate);
-
-		return pubMedQueryBuilder.build();
-	}
+    @Override
+    protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
+            Date endDate) {
+        String keyword = getStrategySpecificKeyword(identity);
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("No valid grant keyword could be constructed from the identity grants.");
+        }
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(keyword)
+                .author(true, false, identitynames)
+                .dateRange(true, startDate, endDate);
+        return pubMedQueryBuilder.build();
+    }
 }

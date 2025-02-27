@@ -35,100 +35,104 @@ import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
-/**
- * There are no differences between initial query and the strict query.
- */
 @Component("emailRetrievalStrategy")
 public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
 
-	private static final String retrievalStrategyName = "EmailRetrievalStrategy";
+    private static final String retrievalStrategyName = "EmailRetrievalStrategy";
 
-	@Override
-	public String getRetrievalStrategyName() {
-		return retrievalStrategyName;
-	}
+    @Override
+    public String getRetrievalStrategyName() {
+        return retrievalStrategyName;
+    }
 
-	/**
-	 * Concatenate email strings with " or ".
-	 */
+    /**
+     * Concatenates email strings with " OR " and encloses each in double quotes.
+     * Also replaces any commas with periods.
+     * 
+     * @param identity The identity object containing email addresses.
+     * @return A string query built from the email addresses.
+     * @throws IllegalArgumentException if the identity is null or if no valid email is found.
+     */
+    private String constructEmailQuery(Identity identity) {
+        if (identity == null) {
+            throw new IllegalArgumentException("Identity is null.");
+        }
+        if (identity.getEmails() != null && !identity.getEmails().isEmpty()) {
+            Iterator<String> iterator = identity.getEmails().iterator();
+            String firstEmail = iterator.next();
+            if (firstEmail == null || firstEmail.trim().isEmpty()) {
+                throw new IllegalArgumentException("Email cannot be null or empty.");
+            }
+            // Enclose the first email in double quotes and replace commas with dots
+            final String first = "\"" + firstEmail.replace(',', '.') + "\"";
+            if (!iterator.hasNext()) {
+                return first;
+            }
+            final StringBuilder buf = new StringBuilder(30); // approximate length for two emails.
+            buf.append(first);
+            while (iterator.hasNext()) {
+                String email = iterator.next();
+                if (email == null || email.trim().isEmpty()) {
+                    continue; // skip invalid email entries
+                }
+                buf.append(" OR ");
+                buf.append("\"").append(email.replace(',', '.').trim()).append("\"");
+            }
+            return buf.toString();
+        } else {
+            return null;
+        }
+    }
 
-	private String constructEmailQuery(Identity identity) 
-	{
-		if (identity!=null && identity.getEmails() != null && !identity.getEmails().isEmpty()) 
-		{
+    @Override
+    protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
+        List<PubMedQueryType> pubMedQueries = new ArrayList<>();
 
-			// Initialize the iterator for the email set
-			Iterator<String> iterator = identity.getEmails().iterator();
+        String emailQueryString = constructEmailQuery(identity);
+        if (emailQueryString == null || emailQueryString.trim().isEmpty()) {
+            throw new IllegalArgumentException("No valid email query could be constructed from the identity.");
+        }
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(emailQueryString);
+        PubMedQuery emailQuery = pubMedQueryBuilder.build();
 
-			// Enclose the first email in double quotes
-			final String first = "\"" + iterator.next().replace(',', '.') + "\"";
-			if (!iterator.hasNext()) {
-				return first;
-			}
+        PubMedQueryType pubMedQueryType = new PubMedQueryType();
+        pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
+        pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
+        pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQuery));
+        pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQuery));
+        pubMedQueries.add(pubMedQueryType);
 
-			// For multiple emails, build the query string with double quotes
-			final StringBuilder buf = new StringBuilder(30); // 30 is approx length of 2 email strings.
-			buf.append(first);
+        return pubMedQueries;
+    }
 
-			while (iterator.hasNext()) {
-				buf.append(" OR ");
-				final String obj = iterator.next();
+    @Override
+    protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames,
+            Date startDate, Date endDate) {
+        List<PubMedQueryType> pubMedQueries = new ArrayList<>();
 
-				// Replace any commas with dots and enclose in double quotes
-				buf.append("\"" + obj.replace(',', '.') + "\"");
-			}
-			return buf.toString();
-		} 
-		else 
-			return null;
-		
-	}
+        String emailQueryString = constructEmailQuery(identity);
+        if (emailQueryString == null || emailQueryString.trim().isEmpty()) {
+            throw new IllegalArgumentException("No valid email query could be constructed from the identity.");
+        }
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(emailQueryString)
+                .dateRange(true, startDate, endDate);
+        PubMedQuery emailQuery = pubMedQueryBuilder.build();
 
+        PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder(emailQueryString);
+        PubMedQuery emailQueryCount = pubMedQueryBuilderCount.build();
 
-	
-	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity,
-			Map<IdentityNameType, Set<AuthorName>> identityNames) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
+        PubMedQueryType pubMedQueryType = new PubMedQueryType();
+        pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
+        pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
+        pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQueryCount));
+        pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQueryCount));
+        pubMedQueries.add(pubMedQueryType);
 
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity));
-		PubMedQuery emailQuery = pubMedQueryBuilder.build();
+        return pubMedQueries;
+    }
 
-
-		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
-		pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
-		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQuery));
-		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQuery));
-		pubMedQueries.add(pubMedQueryType);
-
-		return pubMedQueries;
-	}
-
-	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames,
-			Date startDate, Date endDate) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(constructEmailQuery(identity)).dateRange(true,
-				startDate, endDate);
-		PubMedQuery emailQuery = pubMedQueryBuilder.build();
-
-		PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder(constructEmailQuery(identity));
-		PubMedQuery emailQueryCount = pubMedQueryBuilderCount.build();
-
-		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		pubMedQueryType.setLenientQuery(new PubMedQueryResult(emailQuery));
-		pubMedQueryType.setStrictQuery(new PubMedQueryResult(emailQuery));
-		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(emailQueryCount));
-		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(emailQueryCount));
-		pubMedQueries.add(pubMedQueryType);
-
-		return pubMedQueries;
-	}
-
-	@Override
-	public RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException {
-		throw new UnsupportedOperationException("Does not support retrieval by pmids.");
-	}
+    @Override
+    public RetrievalResult retrievePubMedArticles(List<Long> pmids) throws IOException {
+        throw new UnsupportedOperationException("Does not support retrieval by pmids.");
+    }
 }

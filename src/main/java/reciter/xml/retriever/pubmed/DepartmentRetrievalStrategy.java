@@ -21,7 +21,6 @@ package reciter.xml.retriever.pubmed;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -35,57 +34,75 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 @Component("departmentRetrievalStrategy")
 public class DepartmentRetrievalStrategy extends AbstractNameRetrievalStrategy {
 
-	private static final String retrievalStrategyName = "DepartmentRetrievalStrategy";
-	
-	@Override
-	public String getRetrievalStrategyName() {
-		return retrievalStrategyName;
-	}
+    private static final String retrievalStrategyName = "DepartmentRetrievalStrategy";
+    
+    @Override
+    public String getRetrievalStrategyName() {
+        return retrievalStrategyName;
+    }
 
-	@Override
-	protected String getStrategySpecificKeyword(Identity identity) {
-		if (identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
-			Iterator<OrganizationalUnit> iter = identity.getOrganizationalUnits().iterator();
-			final OrganizationalUnit firstDepartment = iter.next(); 
-			final String first	= firstDepartment.getOrganizationalUnitLabel() + "[affiliation]";
-			if (!iter.hasNext()) {
-				return first;
-			}
-			
-			//for more than 1 institutions 
-			final StringBuilder buf = new StringBuilder();
-			if(first != null) {
-				buf.append("(" + first);
-			} 
-			while(iter.hasNext()) {
-				OrganizationalUnit orgUnit = iter.next();
-				buf.append(" OR ");
-				buf.append(orgUnit.getOrganizationalUnitLabel() + "[affiliation]");
-			}
-			buf.append(")");
-			return buf.toString();
-		} else {
-			return null;
-		}
-	}
+    @Override
+    protected String getStrategySpecificKeyword(Identity identity) {
+        if (identity == null) {
+            throw new IllegalArgumentException("Identity is null.");
+        }
+        if (identity.getOrganizationalUnits() == null || identity.getOrganizationalUnits().isEmpty()) {
+            return null;
+        }
+        
+        Iterator<OrganizationalUnit> iter = identity.getOrganizationalUnits().iterator();
+        OrganizationalUnit firstDepartment = iter.next();
+        if (firstDepartment == null || firstDepartment.getOrganizationalUnitLabel() == null ||
+            firstDepartment.getOrganizationalUnitLabel().trim().isEmpty()) {
+            throw new IllegalArgumentException("First organizational unit or its label is missing.");
+        }
+        
+        final String first = firstDepartment.getOrganizationalUnitLabel().trim() + "[affiliation]";
+        // If only one organizational unit exists, return its keyword.
+        if (!iter.hasNext()) {
+            return first;
+        }
+        
+        // For more than one organizational unit, build a combined query.
+        final StringBuilder buf = new StringBuilder();
+        buf.append("(").append(first);
+        while (iter.hasNext()) {
+            OrganizationalUnit orgUnit = iter.next();
+            if (orgUnit == null || orgUnit.getOrganizationalUnitLabel() == null ||
+                orgUnit.getOrganizationalUnitLabel().trim().isEmpty()) {
+                // Skip any invalid organizational unit entries.
+                continue;
+            }
+            buf.append(" OR ");
+            buf.append(orgUnit.getOrganizationalUnitLabel().trim()).append("[affiliation]");
+        }
+        buf.append(")");
+        return buf.toString();
+    }
 
-	@Override
-	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
-		PubMedQueryBuilder pubMedQueryBuilder = 
-				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-					.author(true, false, identitynames);
-		
-		return pubMedQueryBuilder.build();
-	}
-	
-	@Override
-	protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
-			Date endDate) {
-		PubMedQueryBuilder pubMedQueryBuilder = 
-				new PubMedQueryBuilder(getStrategySpecificKeyword(identity))
-					.author(true, false, identitynames)
-					.dateRange(true, startDate, endDate);
-		
-		return pubMedQueryBuilder.build();
-	}
+    @Override
+    protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity) {
+        String keyword = getStrategySpecificKeyword(identity);
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("No valid department keyword could be generated from the identity organizational units.");
+        }
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(keyword)
+                    .author(true, false, identitynames);
+        
+        return pubMedQueryBuilder.build();
+    }
+    
+    @Override
+    protected PubMedQuery buildNameQuery(Set<AuthorName> identitynames, Identity identity, Date startDate,
+            Date endDate) {
+        String keyword = getStrategySpecificKeyword(identity);
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("No valid department keyword could be generated from the identity organizational units.");
+        }
+        PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder(keyword)
+                    .author(true, false, identitynames)
+                    .dateRange(true, startDate, endDate);
+        
+        return pubMedQueryBuilder.build();
+    }
 }
