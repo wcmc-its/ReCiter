@@ -1,19 +1,5 @@
 package reciter.storage.s3;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -21,6 +7,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityRequest;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityResponse;
+
 
 @Slf4j
 @Configuration
@@ -52,18 +51,18 @@ public class AmazonS3Config {
 	public static String BUCKET_NAME;
     
     /**
-     * @return AmazonS3 client object
+     * @return S3Client client object
      */
     @Bean
     @Scope("singleton")
-    public AmazonS3 amazonS3() {
+    public S3Client amazonS3() {
     	
     	if(isS3Use && !isDynamoDbLocal) {
-	    	final AmazonS3 s3 = AmazonS3ClientBuilder
-	    						.standard()
-								.withCredentials(new DefaultAWSCredentialsProviderChain())
-	    						.withRegion(System.getenv("AWS_REGION"))
-	    						.build();
+    		final S3Client s3 = S3Client.builder()
+    			    .credentialsProvider(DefaultCredentialsProvider.create())
+    			    .region(Region.of(System.getenv("AWS_REGION"))) 
+    			    .build();
+	    	
 	    	createBucket(s3);
 	    	return s3;
     	}
@@ -71,22 +70,29 @@ public class AmazonS3Config {
     	return null;		
     }
     
-    private void createBucket(AmazonS3 s3) {
+    private void createBucket(S3Client s3) {
     	String accountNumber = getAccountIDUsingAccessKey(amazonAWSAccessKey, amazonAWSSecretKey);
     	BUCKET_NAME = s3BucketName.toLowerCase() + "-" + System.getenv("AWS_REGION").toLowerCase() + "-" + accountNumber;
     	if(!isDynamicBucketName) {
     		BUCKET_NAME = s3BucketName;
 		}
-    	if(s3.doesBucketExistV2(BUCKET_NAME)) {
-			log.info(BUCKET_NAME.toLowerCase() + " Bucket Name already exists");
-		} else {
-			try {
-				s3.createBucket(BUCKET_NAME.toLowerCase());
-			} catch(AmazonS3Exception e) {
-				log.error(e.getErrorMessage());
-			}
-			log.info("Bucket created with name: " + BUCKET_NAME);
-		}
+    	try {
+            // Check if the bucket exists
+            s3.headBucket(HeadBucketRequest.builder().bucket(BUCKET_NAME).build());
+            log.info(BUCKET_NAME.toLowerCase() + " Bucket Name already exists");
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                // Bucket does not exist, create it
+                try {
+                    s3.createBucket(CreateBucketRequest.builder().bucket(BUCKET_NAME.toLowerCase()).build());
+                    log.info("Bucket created with name: " + BUCKET_NAME);
+                } catch (S3Exception createEx) {
+                    log.error("Error creating bucket: " + createEx.getMessage());
+                }
+            } else {
+                log.error("Error checking bucket existence: " + e.getMessage());
+            }
+        }
     }
     
     /**
@@ -95,26 +101,35 @@ public class AmazonS3Config {
      * @param folderName
      * @param client
      */
-    public static void createFolder(String bucketName, String folderName, AmazonS3 client) {
+    public static void createFolder(String bucketName, String folderName, S3Client client) {
     	final String SUFFIX = "/";
     	
-    	// create meta-data for your folder and set content-length to 0
-    	ObjectMetadata metadata = new ObjectMetadata();
-    	metadata.setContentLength(0);
-    	// create empty content
-    	InputStream emptyContent = new ByteArrayInputStream(new byte[0]);
-    	// create a PutObjectRequest passing the folder name suffixed by /
-    	PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName,
-    				folderName + SUFFIX, emptyContent, metadata);
-    	// send request to S3 to create folder
-    	client.putObject(putObjectRequest);
+    	
+    	 // Create an empty folder 
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+            .bucket(bucketName)
+            .key(folderName + SUFFIX) 
+            .contentLength(0L)
+            .build();
+    	
+        // Use an empty body to simulate folder creation
+        PutObjectResponse response = client.putObject(putObjectRequest, RequestBody.fromBytes(new byte[0]));
+        
+        if (response.sdkHttpResponse().isSuccessful()) {
+        	log.info("Folder created: " + folderName);
+        } else {
+        	log.error("Failed to create folder: " + folderName);
+        }
     }
     
-    private String getAccountIDUsingAccessKey(String accessKey, String secretKey) {
-		AWSSecurityTokenService stsService = AWSSecurityTokenServiceClientBuilder.standard().withCredentials(
-			new DefaultAWSCredentialsProviderChain()).build();
-        GetCallerIdentityResult callerIdentity = stsService.getCallerIdentity(new GetCallerIdentityRequest());
-        return callerIdentity.getAccount();
-    }
+	private String getAccountIDUsingAccessKey(String accessKey, String secretKey) {
+		try (StsClient stsClient = StsClient.builder().credentialsProvider(DefaultCredentialsProvider.create())
+				.build()) {
 
+			GetCallerIdentityResponse callerIdentity = stsClient
+					.getCallerIdentity(GetCallerIdentityRequest.builder().build());
+			return callerIdentity.account();
+		}
+	}
+    
 }

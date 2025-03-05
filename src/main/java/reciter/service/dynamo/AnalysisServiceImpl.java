@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +16,7 @@ import reciter.database.dynamodb.repository.AnalysisOutputRepository;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.service.AnalysisService;
 import reciter.storage.s3.AmazonS3Config;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 @Slf4j
 @Service("AnalysisOutputService")
@@ -38,7 +38,7 @@ public class AnalysisServiceImpl implements AnalysisService{
 	public void save(AnalysisOutput analysis) {
 		try{
 			analysisOutputRepository.save(analysis);
-		} catch(AmazonDynamoDBException addbe) {
+		} catch(DynamoDbException addbe) {
 			if(isS3Use && !isDynamoDbLocal) {
 				log.info("Storing item in s3 since it item size exceeds more than 400kb");
 				ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, analysis.getReCiterFeature(), AnalysisOutput.class.getSimpleName() + "/" + analysis.getUid());

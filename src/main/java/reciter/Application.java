@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,14 +42,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.bohnman.squiggly.Squiggly;
 import com.github.bohnman.squiggly.web.RequestSquigglyContextProvider;
-import com.github.bohnman.squiggly.web.SquigglyRequestFilter;
 import com.google.common.collect.Iterables;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
@@ -79,18 +76,11 @@ import reciter.utils.DegreeYearStrategyUtils;
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
-@EnableDynamoDBRepositories("reciter.database.dynamodb")
+//@EnableDynamoDBRepositories("reciter.database.dynamodb")
 @ComponentScan("reciter")
 public class Application {
 
-//	@Bean
-//	public BCryptPasswordEncoder bCryptPasswordEncoder() {
-//		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-//		String password = "reciter";
-//		String hashedPassword = encoder.encode(password);
-//		System.out.println("password:" + hashedPassword);
-//		return new BCryptPasswordEncoder();
-//	}
+
 	
     @Autowired
     private DynamoDbMeshTermService dynamoDbMeshTermService;
@@ -133,16 +123,18 @@ public class Application {
 	private Environment env;
 	
 	
-	@Bean
-    public FilterRegistrationBean squigglyRequestFilter() {
-        FilterRegistrationBean filter = new FilterRegistrationBean();
+	
+
+    @Bean
+    public FilterRegistrationBean<SquigglyRequestFilter> squigglyRequestFilter() {
+        FilterRegistrationBean<SquigglyRequestFilter> filter = new FilterRegistrationBean<>();
         filter.setFilter(new SquigglyRequestFilter());
         filter.setOrder(1);
         return filter;
     }
     
     
-
+	
 	public static void main(String[] args) {
 		ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
 		
@@ -150,16 +142,11 @@ public class Application {
 	            .values();
 		
 		Squiggly.init(objectMappers, new RequestSquigglyContextProvider() {
-            @Override
-            protected String customizeFilter(String filter, HttpServletRequest request, Class beanClass) {
-
-                /*// OPTIONAL: automatically wrap filter expressions in items{} when the object is a ListResponse
-                if (filter != null && ListResponse.class.isAssignableFrom(beanClass)) {
-                    filter = "items[" + filter + "]";
-                }*/
-
-                return filter;
-            }
+			
+				protected String customizeFilter(String filter, HttpServletRequest request, Class<?> beanClass) {
+					return filter;
+				}
+           
         });
 
         ObjectMapper objectMapper = Iterables.getFirst(objectMappers, null);

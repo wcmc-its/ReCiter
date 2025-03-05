@@ -1,19 +1,17 @@
 package reciter.service.dynamo;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
 
 import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.repository.PubMedArticleRepository;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.PubMedService;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 @Slf4j
 @Service("pubMedService")
