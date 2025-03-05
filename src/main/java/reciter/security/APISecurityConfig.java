@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableWebSecurity
 public class APISecurityConfig {
@@ -78,37 +79,26 @@ public class APISecurityConfig {
 	@Order(1)
     public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
-		private final String principalRequestHeader = "api-key";
-		
-        private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
+	    private final JwtTokenAuthenticationFilter filter;
         
         @Value("${security.enabled:true}")
 	    private boolean securityEnabled;
         
+        public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter)
+        {
+        	this.filter = filter;
+        }
+        
     	    @Override
     	    protected void configure(HttpSecurity httpSecurity) throws Exception {
-    	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
-    	        filter.setAuthenticationManager(new AuthenticationManager() {
-    	
-    	            @Override
-    	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-    	                String principal = (String) authentication.getPrincipal();
-    	                if (!principalRequestValue.equals(principal))
-    	                {
-    	                    throw new BadCredentialsException("The API key was not found or not the expected value.");
-    	                }
-    	                authentication.setAuthenticated(true);
-    	                return authentication;
-    	            }
-    	        });
-    	        
-    	        if(securityEnabled) {
-	    	        httpSecurity.
+    	    	if(securityEnabled) {
+        	        httpSecurity.
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-	    	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+	    	            and().addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class).authorizeRequests().anyRequest().authenticated();
     	        }
+    	    	
     	    }
     	    
     	    @Override
@@ -120,4 +110,5 @@ public class APISecurityConfig {
     	    	} 
     	    }
      }
+	
 }
