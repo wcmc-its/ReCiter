@@ -134,13 +134,14 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		int handler = 0;
 		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
 			
-			
+			PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
+			handler = getNumberOfResults(encodedInitialCountQuery);
 			if(!useStrictQueryOnly) {
 				slf4jLogger.info("Constructed lenient count query {}", pubMedQueryType.getLenientCountQuery().getQuery());
 				slf4jLogger.info("Constructed lenient query {}", pubMedQueryType.getLenientQuery().getQuery());
 				//PubMedQuery encodedInitialQuery = pubMedQueryType.getLenientQuery().getQuery();
-				PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
-				handler = getNumberOfResults(encodedInitialCountQuery);
+				//PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
+				//handler = getNumberOfResults(encodedInitialCountQuery);
 
 				// check number of PubMed results returned by initial query.
 				// If it's greater than the threshold, query using the strict query.
