@@ -21,6 +21,7 @@ package reciter.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -37,6 +38,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
 @Slf4j
@@ -46,6 +48,9 @@ public class IdentityController {
 
     @Autowired
     private IdentityService identityService;
+    
+    @Value("${identity.dynamodb.mandatory.fields}")
+    private String mandatoryFields;
 
     @ApiOperation(value = "Add an identity to Identity table in DynamoDb", notes = "This api creates an identity in the Identity table in dynamoDb by collecting identity data from different system of records.")
     @ApiImplicitParams({
@@ -62,6 +67,15 @@ public class IdentityController {
     public ResponseEntity addIdentity(@RequestBody Identity identity) {
         StopWatch stopWatch = new StopWatch("Add an identity to Identity table in DynamoDb");
         stopWatch.start("Add an identity to Identity table in DynamoDb");
+     // Validate the mandatory fields
+        try
+        {
+        	validateMandatoryFields(identity);
+        }
+        catch(IllegalArgumentException iae)
+        {
+        	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(iae.getLocalizedMessage());
+        }
         identityService.save(identity);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -84,6 +98,12 @@ public class IdentityController {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
         stopWatch.start("Add list of identities to Identity table in DynamoDb");
         log.info("calling saveIdentities with number of identities=" + identities.size());
+     
+        for(Identity identity : identities)
+        {	
+        	// Validate the mandatory fields
+        	validateMandatoryFields(identity);
+        }	
         identityService.save(identities);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -173,5 +193,50 @@ public class IdentityController {
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return new ResponseEntity<>(identities, HttpStatus.OK);
+    }
+    
+    public String[] getMandatoryFields() {
+        return mandatoryFields.split(",");
+    }
+    
+    // Validate the mandatory fields based on application.properties
+    private void validateMandatoryFields(Identity identity) {
+        String[] mandatoryFields = getMandatoryFields();
+
+     // Validate each AuthorName in the alternateNames list
+        if (identity.getAlternateNames() == null || identity.getAlternateNames().isEmpty()) {
+            throw new IllegalArgumentException("Field 'alternateNames' is required but not provided.");
+        }
+        List<AuthorName> listofAuthorNames = identity.getAlternateNames();
+        
+        if (identity.getUid() == null || identity.getUid().isEmpty()) {
+            throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
+        }
+  
+        for (AuthorName authorName : listofAuthorNames) {
+            // Ensure each field is present and valid
+        	
+            for (String field : mandatoryFields) {
+                switch (field) {
+                    case "firstName":
+                        if (authorName.getFirstName() == null || authorName.getFirstName().isEmpty()) {
+                            throw new IllegalArgumentException("Field 'firstName' in AuthorName is required but not provided.");
+                        }
+                        break;
+
+                    case "lastName":
+                        if (authorName.getLastName() == null || authorName.getLastName().isEmpty()) {
+                            throw new IllegalArgumentException("Field 'lastName' in AuthorName is required but not provided.");
+                        }
+                        break;
+
+                    case "firstInitial":
+                        if (authorName.getFirstInitial() == null || authorName.getFirstInitial().isEmpty()) {
+                            throw new IllegalArgumentException("Field 'firstInitial' in AuthorName is required but not provided.");
+                        }
+                        break;
+                }
+            }
+        }
     }
 }
