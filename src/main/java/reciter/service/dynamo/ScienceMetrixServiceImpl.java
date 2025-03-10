@@ -1,18 +1,16 @@
 package reciter.service.dynamo;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import reciter.database.dynamodb.model.InstitutionAfid;
-import reciter.database.dynamodb.model.ScienceMetrix;
-import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
-import reciter.database.dynamodb.repository.ScienceMetrixRepository;
-import reciter.service.ScienceMetrixService;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import reciter.database.dynamodb.model.ScienceMetrix;
+import reciter.database.dynamodb.repository.ScienceMetrixRepository;
+import reciter.service.ScienceMetrixService;
 
 @Service
 public class ScienceMetrixServiceImpl implements ScienceMetrixService {
@@ -32,7 +30,7 @@ public class ScienceMetrixServiceImpl implements ScienceMetrixService {
 
     @Override
     public ScienceMetrix findBySmsid(Long smsid) {
-        return scienceMetrixRepository.findById(smsid).orElseGet(() -> null);
+        return scienceMetrixRepository.findById(smsid);
     }
     
     @Override

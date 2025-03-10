@@ -7,6 +7,7 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -63,13 +64,17 @@ public class DynamoDbConfig {
 	@Value("${aws.dynamodb.settings.table.billingmode}")
 	private BillingMode billingMode;
 	
+	
 	@Bean
 	public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient dynamoDbClient) {
 		return DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDbClient).build();
 	}
 	
+	
+	
+	
 	@Bean
-	public DynamoDbClient dynamoDbClient() {
+	public DynamoDbClient dynamoDbClient1() {
 		DynamoDbClient dynamoDbClient = null;
 
 		if (isDynamoDbLocal) {

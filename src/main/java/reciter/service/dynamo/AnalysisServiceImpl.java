@@ -21,7 +21,6 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 @Slf4j
 @Service("AnalysisOutputService")
 public class AnalysisServiceImpl implements AnalysisService{
-	
 	@Autowired
 	private AnalysisOutputRepository analysisOutputRepository;
 	

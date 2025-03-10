@@ -25,15 +25,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -81,21 +80,22 @@ import reciter.utils.DegreeYearStrategyUtils;
 public class Application {
 
 
-	
-    @Autowired
-    private DynamoDbMeshTermService dynamoDbMeshTermService;
-	
-    @Autowired
-    private ScienceMetrixService scienceMetrixService;
-    
-    @Autowired
-    private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
-    
-    @Autowired
-    private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
-    
-    @Autowired
-    private GenderService genderService;
+	@Autowired
+	private DynamoDbMeshTermService dynamoDbMeshTermService;
+
+	@Autowired
+	@Qualifier("scienceMetrixServiceImpl")
+	private ScienceMetrixService scienceMetrixService;
+
+	@Autowired
+	private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
+
+	@Autowired
+	private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
+
+	@Autowired
+	private GenderService genderService;
+	 
     
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -125,14 +125,12 @@ public class Application {
 	
 	
 
-    @Bean
-    public FilterRegistrationBean<SquigglyRequestFilter> squigglyRequestFilter() {
-        FilterRegistrationBean<SquigglyRequestFilter> filter = new FilterRegistrationBean<>();
-        filter.setFilter(new SquigglyRequestFilter());
-        filter.setOrder(1);
-        return filter;
-    }
-    
+	/*
+	 * @Bean public FilterRegistrationBean<SquigglyRequestFilter>
+	 * squigglyRequestFilter() { FilterRegistrationBean<SquigglyRequestFilter>
+	 * filter = new FilterRegistrationBean<>(); filter.setFilter(new
+	 * SquigglyRequestFilter()); filter.setOrder(1); return filter; }
+	 */    
     
 	
 	public static void main(String[] args) {
@@ -257,15 +255,18 @@ public class Application {
 		
 		log.info("Loading ScienceMetrixJournals to Engine Parameters");
 		List<ScienceMetrix> scienceMetrixJournals = scienceMetrixService.findAll();
-        if(scienceMetrixJournals != null) {
-        		EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
-        }
-        
+		if (scienceMetrixJournals != null) {
+			EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
+		}
+
         log.info("Loading ScienceMetrixDepartmentCategories to Engine Parameters");
-		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = scienceMetrixDepartmentCategoryService.findAll();
-        if(scienceMetrixDeptCategories != null) {
-        		EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
-        }
+		
+		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = scienceMetrixDepartmentCategoryService
+				.findAll();
+		if (scienceMetrixDeptCategories != null) {
+			EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
+		}
+		 
         
         log.info("Loading MeshTermCounts to Engine Parameters");
         if (EngineParameters.getMeshCountMap() == null) {
@@ -278,19 +279,24 @@ public class Application {
         }
         if(useGenderStrategy) {
 	        log.info("Loading GenderProbability to Engine Parameters");
-	        List<Gender> genders = genderService.findAll();
-	        if(genders != null && !genders.isEmpty()) {
-	        	EngineParameters.setGenders(genders);
-	        }
+			
+			List<Gender> genders = genderService.findAll();
+			if (genders != null && !genders.isEmpty()) {
+				EngineParameters.setGenders(genders);
+			}
+
         }
         
         if(useScopusArticles) {
 	        log.info("Loading ScopusInstitutionalAfids to Engine Parameters");
-	        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
-	        if(instAfids != null && instAfids.size() > 0) {
-		        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
-		        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
-	        }
+			
+			List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
+			if (instAfids != null && instAfids.size() > 0) {
+				Map<String, List<String>> institutionAfids = instAfids.stream()
+						.collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
+				EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
+			}
+			 
 		}
 		DegreeYearStrategyUtils degreeYearStrategyUtils = new DegreeYearStrategyUtils();
 		EngineParameters.setDegreeYearDiscrepancyScoreMap(degreeYearStrategyUtils.getDegreeYearDiscrepancyScoreMap(this.degreeYearDiscrepancyScore));
