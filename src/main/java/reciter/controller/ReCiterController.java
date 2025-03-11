@@ -465,7 +465,7 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
-    	StopWatch stopWatch = new StopWatch("Feature generation for UID");
+    	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
         
         final double totalScore;

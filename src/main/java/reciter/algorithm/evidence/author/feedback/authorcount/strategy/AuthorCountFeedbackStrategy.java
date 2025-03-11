@@ -47,9 +47,9 @@ public class AuthorCountFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 	
 	@Override
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		StopWatch stopWatchforCitesFeedback = new StopWatch("Cites");
-		stopWatchforCitesFeedback.start("Cites");
-		reCiterArticles.forEach(reCiterArticle -> {
+		StopWatch stopWatchforCitesFeedback = new StopWatch("AuthorsCount");
+		stopWatchforCitesFeedback.start("AuthorsCount");
+		reCiterArticles.stream().forEach(reCiterArticle -> {
 			
 			int authorCount = reCiterArticle.getArticleCoAuthors().getAuthors().size();
 	  		AuthorCountEvidence authorCountEvidence = new AuthorCountEvidence();

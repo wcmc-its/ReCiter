@@ -205,7 +205,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			futures.add(submitAndLogTime("Cites Category", executorService, citesStrategyContext, reCiterArticles, identity));
 
 		}
-		futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
+		//futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
 		// Shutdown executorService after submitting all tasks
         executorService.shutdown();
         
@@ -744,11 +744,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
-	        log.info("ArticleId from JSONArray: ", jsonObject.getLong("id") , ", Article Id from ReCiterArticle: " , article.getArticleId());
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
-	                    .setScale(3, RoundingMode.DOWN)
-	                    .doubleValue());*/
 	        	log.info("both articleIds are matching and Score is ***",jsonObject.getDouble("scoreTotal"));
 	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
 	        	log.info("After setting the score to article***",article.getAuthorshipLikelihoodScore());
