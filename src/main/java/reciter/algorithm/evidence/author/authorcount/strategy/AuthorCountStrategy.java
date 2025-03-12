@@ -54,7 +54,7 @@ public class AuthorCountStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		
-			reCiterArticles.stream().forEach(reCiterArticle -> {
+			reCiterArticles.forEach(reCiterArticle -> {
 				
 				int authorCount = reCiterArticle.getArticleCoAuthors().getAuthors().size();
 		  		AuthorCountEvidence authorCountEvidence = new AuthorCountEvidence();

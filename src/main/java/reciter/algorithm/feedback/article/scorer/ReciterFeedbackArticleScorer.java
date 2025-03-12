@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -50,8 +48,6 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
-import  reciter.algorithm.evidence.author.feedback.authorcount.AuthorCountFeedbackStrategyContext;
-import reciter.algorithm.evidence.author.feedback.authorcount.strategy.AuthorCountFeedbackStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.CitesFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.strategy.CitesFeedbackStrategy;
@@ -92,9 +88,6 @@ import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.engine.analysis.evidence.GenderEvidence;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.engine.analysis.evidence.NonTargetAuthorScopusAffiliation;
-import reciter.engine.analysis.evidence.RelationshipEvidence;
-import reciter.engine.analysis.evidence.RelationshipNegativeMatch;
-import reciter.engine.analysis.evidence.RelationshipPostiveMatch;
 import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
 import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
@@ -127,13 +120,13 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
-	private StrategyContext authorCountStrategyContext;
+	
 	
 
 	private Properties properties = new Properties();
 
 	
-	ExecutorService executorService = Executors.newFixedThreadPool(12);
+	ExecutorService executorService = Executors.newWorkStealingPool(13);
 	
 	public ReciterFeedbackArticleScorer(List<ReCiterArticle> articles,Identity identity,EngineParameters parameters,StrategyParameters strategyParameters)
 	{
@@ -153,7 +146,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(new CoauthorNameFeedbackStrategy());
 		this.citesStrategyContext = new CitesFeedbackStrategyContext(new CitesFeedbackStrategy());
 		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
-		this.authorCountStrategyContext = new AuthorCountFeedbackStrategyContext(new AuthorCountFeedbackStrategy(ReciterFeedbackArticleScorer.strategyParameters));
+		
 		
 	}
 	public void runFeedbackArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) 
