@@ -2,9 +2,7 @@ package reciter.database.dynamodb.repository;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
-
 import reciter.database.dynamodb.model.MeshTerm;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -24,8 +22,6 @@ public class DynamoMeshTermRepository
         myEntityTable.putItem(entity);
     }
     
-    
-    
     public void saveAll(List<MeshTerm> entities) {
         entities.forEach(entity -> myEntityTable.putItem(entity));
     }
@@ -39,10 +35,8 @@ public class DynamoMeshTermRepository
         return myEntityTable.scan().items();
     }
 
-
     public void deleteById(String id) {
     	MeshTerm entity = new MeshTerm();
-        //entity.setId(id);
         myEntityTable.deleteItem(entity);
     }
 

@@ -5,9 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Repository;
-
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -27,7 +25,6 @@ public class ScienceMetrixDepartmentCategoryRepository  {
 	        .collect(Collectors.toList());
 	}
 
-	
 	private final DynamoDbTable<ScienceMetrixDepartmentCategory> myEntityTable;
 
     public ScienceMetrixDepartmentCategoryRepository(DynamoDbEnhancedClient enhancedClient) {
@@ -51,10 +48,8 @@ public class ScienceMetrixDepartmentCategoryRepository  {
         return myEntityTable.scan().items();
     }
 
-
     public void deleteById(String id) {
     	ScienceMetrixDepartmentCategory entity = new ScienceMetrixDepartmentCategory();
-        //entity.setId(id);
         myEntityTable.deleteItem(entity);
     }
     
@@ -79,6 +74,4 @@ public class ScienceMetrixDepartmentCategoryRepository  {
         }
         return entities;
     }
-    
-  
 }

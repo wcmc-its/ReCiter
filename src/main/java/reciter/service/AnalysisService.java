@@ -21,7 +21,7 @@ package reciter.service;
 import java.util.List;
 
 import reciter.database.dynamodb.model.AnalysisOutput;
-import reciter.model.identity.Identity;
+
 
 public interface AnalysisService {
 

@@ -1,7 +1,6 @@
 package reciter.service.dynamo;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,7 +23,7 @@ public class GenderServiceImpl implements GenderService {
 	}
 
 	@Override
-	public void save(Collection<Gender> genders) {
+	public void save(List<Gender> genders) {
 		genderRepository.saveAll(genders);
 		
 	}

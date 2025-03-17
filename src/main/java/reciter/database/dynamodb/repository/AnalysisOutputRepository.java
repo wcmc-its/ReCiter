@@ -3,9 +3,7 @@ package reciter.database.dynamodb.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
-
 import reciter.database.dynamodb.model.AnalysisOutput;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -42,7 +40,6 @@ public class AnalysisOutputRepository  {
 
     public void deleteById(String id) {
     	AnalysisOutput entity = new AnalysisOutput();
-        //entity.setId(id);
         myEntityTable.deleteItem(entity);
     }
     

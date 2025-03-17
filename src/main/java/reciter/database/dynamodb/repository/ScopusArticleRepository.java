@@ -41,7 +41,6 @@ public class ScopusArticleRepository {
 
     public void deleteById(String id) {
     	ScopusArticle entity = new ScopusArticle();
-        //entity.setId(id);
         myEntityTable.deleteItem(entity);
     }
     

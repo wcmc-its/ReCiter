@@ -18,9 +18,9 @@
  *******************************************************************************/
 package reciter.xml.retriever.engine;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,7 +117,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			} else {
 				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.FALSE;
 			}
-			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
+			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName,Instant.now(), eSearchPmidRefreshFlag);
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
 		if (eSearchResultDb == null) {
@@ -126,7 +126,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(!eSearchPmids.isEmpty()) {
-				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
+				eSearchResultService.save(new ESearchResult(uid, Instant.now(), eSearchPmids, queryType));
 			}
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
@@ -134,9 +134,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(!eSearchPmids.isEmpty()) {
-				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
+				eSearchResultService.save(new ESearchResult(uid, Instant.now(), eSearchPmids, queryType));
 			} else {
-				eSearchResultDb.setRetrievalDate(new Date());
+				eSearchResultDb.setRetrievalDate(Instant.now());
 				eSearchResultDb.setQueryType(queryType);
 				eSearchResultService.save(eSearchResultDb);
 			}

@@ -3,9 +3,7 @@ package reciter.database.dynamodb.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
-
 import reciter.database.dynamodb.model.ESearchResult;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -17,9 +15,11 @@ public class ESearchResultRepository  {
 	
 	private final DynamoDbTable<ESearchResult> myEntityTable;
 
-    public ESearchResultRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.myEntityTable = enhancedClient.table("ESearchResult", TableSchema.fromBean(ESearchResult.class));
-    }
+	public ESearchResultRepository(DynamoDbEnhancedClient enhancedClient) {
+
+		this.myEntityTable = enhancedClient.table("ESearchResult", TableSchema.fromBean(ESearchResult.class));
+
+	}
     
     public void save(ESearchResult entity) {
         myEntityTable.putItem(entity);
@@ -39,11 +39,10 @@ public class ESearchResultRepository  {
     }
 
 
-    public void deleteById(String id) {
-    	ESearchResult entity = new ESearchResult();
-        //entity.setId(id);
-        myEntityTable.deleteItem(entity);
-    }
+	public void deleteById(String id) {
+		ESearchResult entity = new ESearchResult();
+		myEntityTable.deleteItem(entity);
+	}
     
     public void deleteAll() {
         myEntityTable.scan().items().forEach(entity -> myEntityTable.deleteItem(entity));

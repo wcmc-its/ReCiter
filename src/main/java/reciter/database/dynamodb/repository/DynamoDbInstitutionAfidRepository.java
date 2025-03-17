@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
-
 import reciter.database.dynamodb.model.InstitutionAfid;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -15,11 +13,12 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 @Repository
 public class DynamoDbInstitutionAfidRepository {
+	
 	private final DynamoDbTable<InstitutionAfid> myEntityTable;
 
-    public DynamoDbInstitutionAfidRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.myEntityTable = enhancedClient.table("InstitutionAfid", TableSchema.fromBean(InstitutionAfid.class));
-    }
+	public DynamoDbInstitutionAfidRepository(DynamoDbEnhancedClient enhancedClient) {
+		this.myEntityTable = enhancedClient.table("InstitutionAfid", TableSchema.fromBean(InstitutionAfid.class));
+	}
     
     public void save(InstitutionAfid entity) {
         myEntityTable.putItem(entity);
@@ -38,10 +37,8 @@ public class DynamoDbInstitutionAfidRepository {
         return myEntityTable.scan().items();
     }
 
-
     public void deleteById(String id) {
     	InstitutionAfid entity = new InstitutionAfid();
-        //entity.setId(id);
         myEntityTable.deleteItem(entity);
     }
     

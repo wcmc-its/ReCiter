@@ -1,6 +1,5 @@
 package reciter.service;
 
-import java.util.Collection;
 import java.util.List;
 
 import reciter.database.dynamodb.model.Gender;
@@ -9,7 +8,7 @@ public interface GenderService {
 	
 	void save(Gender gender);
 	
-	void save(Collection<Gender> genders);
+	void save(List<Gender> genders);
 	
 	Gender findByUid(String uid);
 

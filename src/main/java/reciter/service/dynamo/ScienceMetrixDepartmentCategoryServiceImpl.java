@@ -8,10 +8,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.database.dynamodb.repository.ScienceMetrixDepartmentCategoryRepository;
-import reciter.model.identity.Identity;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
 
 @Service

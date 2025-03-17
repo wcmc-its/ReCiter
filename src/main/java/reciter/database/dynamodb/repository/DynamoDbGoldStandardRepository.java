@@ -3,9 +3,7 @@ package reciter.database.dynamodb.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
-
 import reciter.database.dynamodb.model.GoldStandard;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -15,11 +13,12 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 @Repository
 public class DynamoDbGoldStandardRepository {
 	
-	 private final DynamoDbTable<GoldStandard> myEntityTable;
+	 	private final DynamoDbTable<GoldStandard> myEntityTable;
 
-	    public DynamoDbGoldStandardRepository(DynamoDbEnhancedClient enhancedClient) {
-	        this.myEntityTable = enhancedClient.table("GoldStandard", TableSchema.fromBean(GoldStandard.class));
-	    }
+		public DynamoDbGoldStandardRepository(DynamoDbEnhancedClient enhancedClient) {
+			this.myEntityTable = enhancedClient.table("GoldStandard", TableSchema.fromBean(GoldStandard.class));
+
+		}
 
 	    public void save(GoldStandard entity) {
 	        myEntityTable.putItem(entity);

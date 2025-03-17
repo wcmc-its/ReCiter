@@ -3,7 +3,6 @@ package reciter.database.dynamodb.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
 import reciter.database.dynamodb.model.Identity;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -36,10 +35,8 @@ public class IdentityRepository {
         return myEntityTable.scan().items();
     }
 
-
     public void deleteById(String id) {
     	Identity entity = new Identity();
-        //entity.setId(id);
         myEntityTable.deleteItem(entity);
     }
     
@@ -64,5 +61,4 @@ public class IdentityRepository {
         }
         return entities;
     }
-
 }
