@@ -30,7 +30,7 @@ public class ScienceMetrixServiceImpl implements ScienceMetrixService {
 
     @Override
     public ScienceMetrix findBySmsid(Long smsid) {
-        return scienceMetrixRepository.findById(smsid);
+        return scienceMetrixRepository.findBySmsid(smsid);
     }
     
     @Override

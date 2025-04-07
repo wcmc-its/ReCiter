@@ -20,8 +20,6 @@ package reciter.service;
 
 import reciter.database.dynamodb.model.ESearchResult;
 
-import java.util.List;
-
 public interface ESearchResultService {
 
 	void save(ESearchResult eSearchResult);
