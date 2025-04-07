@@ -3,67 +3,69 @@ package reciter.database.dynamodb.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
+
 import reciter.database.dynamodb.model.Gender;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 @Repository
 public class GenderRepository {
-	
-	private final DynamoDbTable<Gender> myEntityTable;
 
-    public GenderRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.myEntityTable = enhancedClient.table("Gender", TableSchema.fromBean(Gender.class));
-    }
-    
-    public void save(Gender entity) {
-        myEntityTable.putItem(entity);
-    }
-    
-    public void saveAll(List<Gender> entities) {
-    	entities.forEach(entity -> myEntityTable.putItem(entity));
-    }
-    
-    public Optional<Gender> findById(String id) {
-        return Optional.ofNullable(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(id))));
-    }
-    
-    public Iterable<Gender> findAll() {
-        return myEntityTable.scan().items();
-    }
+	private final DynamoDbTable<Gender> genderTable;
 
-    public void deleteById(String id) {
-    	Gender entity = new Gender();
-        myEntityTable.deleteItem(entity);
-    }
-    
-    public void deleteAll() {
-        myEntityTable.scan().items().forEach(entity -> myEntityTable.deleteItem(entity));
-    }
+	public GenderRepository(DynamoDbEnhancedClient enhancedClient) {
+		this.genderTable = enhancedClient.table("Gender", TableSchema.fromBean(Gender.class));
+	}
 
-    public List<Gender> findBySomeAttribute(String attributeValue) {
-        return myEntityTable.query(r -> r.queryConditional(QueryConditional.keyEqualTo(k -> k.partitionValue(attributeValue))))
-                .items()
-                .stream()
-                .toList();
-    }
-    public long count() {
-        return myEntityTable.scan().items().spliterator().getExactSizeIfKnown();
-    }
-    
-    public List<Gender> findAllById(List<String> uids) {
-        List<Gender> entities = new ArrayList<>();
-        for (String uid : uids) {
-            entities.add(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
-        }
-        return entities;
-    }
-    
-    public boolean existsById(String genderSource) {
-    	Gender entity = myEntityTable.getItem(r -> r.key(k -> k.partitionValue(genderSource)));
-        return entity != null;  
-    }
+	public void save(Gender gender) {
+		genderTable.putItem(gender);
+	}
+
+	public void saveAll(List<Gender> genders) {
+		genders.forEach(gender -> genderTable.putItem(gender));
+	}
+
+	public Optional<Gender> findById(String id) {
+		return Optional.ofNullable(genderTable.getItem(r -> r.key(k -> k.partitionValue(id))));
+	}
+
+	public Iterable<Gender> findAll() {
+		return genderTable.scan().items();
+	}
+
+	public void deleteById(String id) {
+		Gender gender = new Gender();
+		gender.setName(id);
+		genderTable.deleteItem(gender);
+	}
+
+	public void deleteAll() {
+		genderTable.scan().items().forEach(entity -> genderTable.deleteItem(entity));
+	}
+
+	@SuppressWarnings("unused")
+	public long count() {
+		long count = 0;
+
+		for (Gender gender : genderTable.scan().items()) {
+			count++;
+		}
+		return count;
+	}
+
+	public List<Gender> findAllById(List<String> uids) {
+		List<Gender> entities = new ArrayList<>();
+		for (String uid : uids) {
+			entities.add(genderTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+		}
+		return entities;
+	}
+
+	public boolean existsById(String genderSource) {
+		Gender gender = genderTable.getItem(r -> r.key(k -> k.partitionValue(genderSource)));
+		return gender != null;
+	}
 }

@@ -6,11 +6,11 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
+import reciter.database.dynamodb.model.ScopusArticle;
 import reciter.database.dynamodb.model.UserFeedback;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 	
 @Repository
 public class UserFeedbackRepository {
@@ -41,6 +41,7 @@ public class UserFeedbackRepository {
 
     public void deleteById(String id) {
     	UserFeedback entity = new UserFeedback();
+    	entity.setUid(id);
         myEntityTable.deleteItem(entity);
     }
     
@@ -48,14 +49,13 @@ public class UserFeedbackRepository {
         myEntityTable.scan().items().forEach(entity -> myEntityTable.deleteItem(entity));
     }
 
-    public List<UserFeedback> findBySomeAttribute(String attributeValue) {
-        return myEntityTable.query(r -> r.queryConditional(QueryConditional.keyEqualTo(k -> k.partitionValue(attributeValue))))
-                .items()
-                .stream()
-                .toList();
-    }
     public long getItemCount() {
-        return myEntityTable.scan().items().spliterator().getExactSizeIfKnown();
+    	long count = 0;
+
+		for (UserFeedback item : myEntityTable.scan().items()) {
+			count++;
+		}
+		return count;
     }
     
     public List<UserFeedback> findAllById(List<String> uids) {

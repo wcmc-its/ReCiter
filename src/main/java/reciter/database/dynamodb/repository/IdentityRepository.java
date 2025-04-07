@@ -3,62 +3,63 @@ package reciter.database.dynamodb.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
+
 import reciter.database.dynamodb.model.Identity;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 @Repository
 public class IdentityRepository {
-	private final DynamoDbTable<Identity> myEntityTable;
+	private final DynamoDbTable<Identity> identityTable;
 
-    public IdentityRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.myEntityTable = enhancedClient.table("Identity", TableSchema.fromBean(Identity.class));
-    }
-    
-    public void save(Identity entity) {
-        myEntityTable.putItem(entity);
-    }
-    
-    public void saveAll(List<Identity> entities) {
-        entities.forEach(entity -> myEntityTable.putItem(entity));
-    }
+	public IdentityRepository(DynamoDbEnhancedClient enhancedClient) {
+		this.identityTable = enhancedClient.table("Identity", TableSchema.fromBean(Identity.class));
+	}
 
-    public Optional<Identity> findById(String id) {
-        return Optional.ofNullable(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(id))));
-    }
-    
-    
-    public Iterable<Identity> findAll() {
-        return myEntityTable.scan().items();
-    }
+	public void save(Identity identity) {
+		identityTable.putItem(identity);
+	}
 
-    public void deleteById(String id) {
-    	Identity entity = new Identity();
-        myEntityTable.deleteItem(entity);
-    }
-    
-    public void deleteAll() {
-        myEntityTable.scan().items().forEach(entity -> myEntityTable.deleteItem(entity));
-    }
+	public void saveAll(List<Identity> identities) {
+		identities.forEach(identity -> identityTable.putItem(identity));
+	}
 
-    public List<Identity> findBySomeAttribute(String attributeValue) {
-        return myEntityTable.query(r -> r.queryConditional(QueryConditional.keyEqualTo(k -> k.partitionValue(attributeValue))))
-                .items()
-                .stream()
-                .toList();
-    }
-    public long count() {
-        return myEntityTable.scan().items().spliterator().getExactSizeIfKnown();
-    }
-    
-    public List<Identity> findAllById(List<String> uids) {
-        List<Identity> entities = new ArrayList<>();
-        for (String uid : uids) {
-            entities.add(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
-        }
-        return entities;
-    }
+	public Optional<Identity> findById(String id) {
+		return Optional.ofNullable(identityTable.getItem(r -> r.key(k -> k.partitionValue(id))));
+	}
+
+	public Iterable<Identity> findAll() {
+		return identityTable.scan().items();
+	}
+
+	public void deleteById(String id) {
+		Identity identity = new Identity();
+		identity.setUid(id);
+		identityTable.deleteItem(identity);
+	}
+
+	public void deleteAll() {
+		identityTable.scan().items().forEach(identity -> identityTable.deleteItem(identity));
+	}
+
+	@SuppressWarnings("unused")
+	public long count() {
+		long count = 0;
+
+		for (Identity identity : identityTable.scan().items()) {
+			count++;
+		}
+		return count;
+	}
+
+	public List<Identity> findAllById(List<String> uids) {
+		List<Identity> identities = new ArrayList<>();
+		for (String uid : uids) {
+			identities.add(identityTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+		}
+		return identities;
+	}
 }

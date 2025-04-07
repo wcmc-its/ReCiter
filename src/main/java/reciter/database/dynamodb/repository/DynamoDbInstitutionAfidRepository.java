@@ -1,66 +1,49 @@
 package reciter.database.dynamodb.repository;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
+
 import reciter.database.dynamodb.model.InstitutionAfid;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 @Repository
 public class DynamoDbInstitutionAfidRepository {
-	
-	private final DynamoDbTable<InstitutionAfid> myEntityTable;
+
+	private final DynamoDbTable<InstitutionAfid> institutionAfidTable;
 
 	public DynamoDbInstitutionAfidRepository(DynamoDbEnhancedClient enhancedClient) {
-		this.myEntityTable = enhancedClient.table("InstitutionAfid", TableSchema.fromBean(InstitutionAfid.class));
+		this.institutionAfidTable = enhancedClient.table("InstitutionAfid",
+				TableSchema.fromBean(InstitutionAfid.class));
 	}
-    
-    public void save(InstitutionAfid entity) {
-        myEntityTable.putItem(entity);
-    }
-    
-    public void saveAll(Collection<InstitutionAfid> institutionAfids) {
-        institutionAfids.forEach(entity -> myEntityTable.putItem(entity));
-    }
 
-    public Optional<InstitutionAfid> findById(String id) {
-        return Optional.ofNullable(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(id))));
-    }
-    
-    
-    public Iterable<InstitutionAfid> findAll() {
-        return myEntityTable.scan().items();
-    }
+	public void save(InstitutionAfid institutionAfid) {
+		institutionAfidTable.putItem(institutionAfid);
+	}
 
-    public void deleteById(String id) {
-    	InstitutionAfid entity = new InstitutionAfid();
-        myEntityTable.deleteItem(entity);
-    }
-    
-    public void deleteAll() {
-        myEntityTable.scan().items().forEach(entity -> myEntityTable.deleteItem(entity));
-    }
+	public void saveAll(Collection<InstitutionAfid> institutionAfids) {
+		institutionAfids.forEach(institutionAfid -> institutionAfidTable.putItem(institutionAfid));
+	}
 
-    public List<InstitutionAfid> findBySomeAttribute(String attributeValue) {
-        return myEntityTable.query(r -> r.queryConditional(QueryConditional.keyEqualTo(k -> k.partitionValue(attributeValue))))
-                .items()
-                .stream()
-                .toList();
-    }
-    public long count() {
-        return myEntityTable.scan().items().spliterator().getExactSizeIfKnown();
-    }
-    
-    public List<InstitutionAfid> findAllById(List<String> uids) {
-        List<InstitutionAfid> entities = new ArrayList<>();
-        for (String uid : uids) {
-            entities.add(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
-        }
-        return entities;
-    }
+	public Optional<InstitutionAfid> findById(String id) {
+		return Optional.ofNullable(institutionAfidTable.getItem(r -> r.key(k -> k.partitionValue(id))));
+	}
+
+	public Iterable<InstitutionAfid> findAll() {
+		return institutionAfidTable.scan().items();
+	}
+
+	@SuppressWarnings("unused")
+	public long count() {
+		long count = 0;
+
+		for (InstitutionAfid institutionAfid : institutionAfidTable.scan().items()) {
+			count++;
+		}
+		return count;
+	}
+
 }

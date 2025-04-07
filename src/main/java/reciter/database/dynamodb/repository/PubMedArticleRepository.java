@@ -3,62 +3,50 @@ package reciter.database.dynamodb.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
+
 import reciter.database.dynamodb.model.PubMedArticle;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 @Repository
-public class PubMedArticleRepository{
-	
-	private final DynamoDbTable<PubMedArticle> myEntityTable;
+public class PubMedArticleRepository {
 
-    public PubMedArticleRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.myEntityTable = enhancedClient.table("PubMedArticle", TableSchema.fromBean(PubMedArticle.class));
-    }
-    
-    public void save(PubMedArticle entity) {
-        myEntityTable.putItem(entity);
-    }
-    
-    public void saveAll(List<PubMedArticle> entities) {
-        entities.forEach(entity -> myEntityTable.putItem(entity));
-    }
+	private final DynamoDbTable<PubMedArticle> pubMedArticleTable;
 
-    public Optional<PubMedArticle> findById(Long pmid) {
-        return Optional.ofNullable(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(pmid))));
-    }
-    
-    public Iterable<PubMedArticle> findAll() {
-        return myEntityTable.scan().items();
-    }
+	public PubMedArticleRepository(DynamoDbEnhancedClient enhancedClient) {
+		this.pubMedArticleTable = enhancedClient.table("PubMedArticle", TableSchema.fromBean(PubMedArticle.class));
+	}
 
-    public void deleteById(String id) {
-    	PubMedArticle entity = new PubMedArticle();
-        myEntityTable.deleteItem(entity);
-    }
-    
-    public void deleteAll() {
-        myEntityTable.scan().items().forEach(entity -> myEntityTable.deleteItem(entity));
-    }
+	public void save(PubMedArticle pubMedArticle) {
+		pubMedArticleTable.putItem(pubMedArticle);
+	}
 
-    public List<PubMedArticle> findBySomeAttribute(String attributeValue) {
-        return myEntityTable.query(r -> r.queryConditional(QueryConditional.keyEqualTo(k -> k.partitionValue(attributeValue))))
-                .items()
-                .stream()
-                .toList();
-    }
-    public long getItemCount() {
-        return myEntityTable.scan().items().spliterator().getExactSizeIfKnown();
-    }
-    
-    public List<PubMedArticle> findAllById(List<Long> pmids) {
-        List<PubMedArticle> entities = new ArrayList<>();
-        for (Long uid : pmids) {
-            entities.add(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
-        }
-        return entities;
-    }
+	public void saveAll(List<PubMedArticle> pubMedArticles) {
+		pubMedArticles.forEach(pubMedArticle -> pubMedArticleTable.putItem(pubMedArticle));
+	}
+
+	public Optional<PubMedArticle> findById(Long pmid) {
+		return Optional.ofNullable(pubMedArticleTable.getItem(r -> r.key(k -> k.partitionValue(pmid))));
+	}
+
+	@SuppressWarnings("unused")
+	public long getItemCount() {
+		long count = 0;
+
+		for (PubMedArticle pubMedArticle : pubMedArticleTable.scan().items()) {
+			count++;
+		}
+		return count;
+	}
+
+	public List<PubMedArticle> findAllById(List<Long> pmids) {
+		List<PubMedArticle> pubMedArticles = new ArrayList<>();
+		for (Long uid : pmids) {
+			pubMedArticles.add(pubMedArticleTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+		}
+		return pubMedArticles;
+	}
 }
