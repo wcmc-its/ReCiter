@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.GoldStandardAuditLog;
+import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.repository.DynamoDbGoldStandardRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,39 +78,31 @@ public class DynamoDbGoldStandardRepositoryTest {
         assertEquals(goldStandard, retrievedGoldStandard);
     }
 
+    
     @Test
     public void testFindAll() {
         // Create test data
-        long beforeCount = 2L; // Mock initial count
         GoldStandard goldStandard1 = new GoldStandard("uid3", Arrays.asList(333L, 444L), Arrays.asList(777L), null);
         GoldStandard goldStandard2 = new GoldStandard("uid4", Arrays.asList(555L, 666L), Arrays.asList(888L), null);
-        List<GoldStandard> goldStandardList = Arrays.asList(
-            goldStandard1, 
-            goldStandard2,
-            new GoldStandard("existing1", Arrays.asList(100L), Arrays.asList(200L), null),
-            new GoldStandard("existing2", Arrays.asList(300L), Arrays.asList(400L), null)
-        );
+		List<GoldStandard> goldStandardList = Arrays.asList(goldStandard1, goldStandard2);
         
         // Mock findAll and getItemCount
-        when(goldStandardRepository.findAll()).thenReturn(goldStandardList);
-        when(goldStandardRepository.getItemCount()).thenReturn(beforeCount + 2);
+		when(goldStandardRepository.findAll()).thenReturn(goldStandardList);
+        when(goldStandardRepository.getItemCount()).thenReturn((long) goldStandardList.size());
 
-        // Save the objects (mocked)
-        goldStandardRepository.save(goldStandard1);
-        goldStandardRepository.save(goldStandard2);
-        verify(goldStandardRepository).save(goldStandard1);
-        verify(goldStandardRepository).save(goldStandard2);
-
-        // Retrieve all GoldStandard objects
-        Iterable<GoldStandard> goldStandards = goldStandardRepository.findAll();
-
-        int count = 0;
-        for (GoldStandard gs : goldStandards) {
-            count++;
-        }
-
-        // Assert that the number of retrieved items is correct
-        assertEquals(beforeCount + 2, count);
+        Iterable<GoldStandard> retrieved = goldStandardRepository.findAll();
+        long count = goldStandardRepository.getItemCount();
+        
+        
+        List<GoldStandard> goldStandardListFromIterable = new ArrayList<>();
+        retrieved.forEach(goldStandardListFromIterable::add);
+        
+        // Verify interactions
+        verify(goldStandardRepository).findAll();
+        verify(goldStandardRepository).getItemCount();
+        
+        // Assert that the size of the list matches the expected count
+        assertEquals(count, goldStandardListFromIterable.size());
     }
 
     @Test

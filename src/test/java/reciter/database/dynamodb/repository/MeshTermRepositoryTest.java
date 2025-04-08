@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import reciter.database.dynamodb.model.ApplicationUser;
 import reciter.database.dynamodb.model.MeshTerm;
 import reciter.database.dynamodb.repository.DynamoMeshTermRepository;
 
@@ -27,20 +28,22 @@ public class MeshTermRepositoryTest {
     public void setUp() {
         // No setup needed for individual tests as we'll mock the responses directly
     }
-
+ 
     @Test
     public void save() {
         // Create test data
         MeshTerm meshTerm = new MeshTerm("Mahesh12354", 40L);
         
         // Mock the save and findById behavior
-        when(dynamoMeshTermRepository.findById("Mahesh")).thenReturn(Optional.of(meshTerm));
+        when(dynamoMeshTermRepository.findById("Mahesh12354")).thenReturn(Optional.of(meshTerm));
         
         // Call the save method
         dynamoMeshTermRepository.save(meshTerm);
         
         // Verify save was called
         verify(dynamoMeshTermRepository).save(meshTerm);
+        MeshTerm mesh=dynamoMeshTermRepository.findById("Mahesh12354").orElse(null);
+        assertEquals(meshTerm, mesh);
     }
 
     @Test
