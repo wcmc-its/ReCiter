@@ -14,33 +14,33 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 @Repository
 public class ScopusArticleRepository {
 
-	private final DynamoDbTable<ScopusArticle> myEntityTable;
+	private final DynamoDbTable<ScopusArticle> scopusArticleTable;
 
 	public ScopusArticleRepository(DynamoDbEnhancedClient enhancedClient) {
-		this.myEntityTable = enhancedClient.table("ScopusArticle", TableSchema.fromBean(ScopusArticle.class));
+		this.scopusArticleTable = enhancedClient.table("ScopusArticle", TableSchema.fromBean(ScopusArticle.class));
 	}
 
-	public void save(ScopusArticle entity) {
-		myEntityTable.putItem(entity);
+	public void save(ScopusArticle scopusArticle) {
+		scopusArticleTable.putItem(scopusArticle);
 	}
 
-	public void saveAll(List<ScopusArticle> entities) {
-		entities.forEach(entity -> myEntityTable.putItem(entity));
+	public void saveAll(List<ScopusArticle> scopusArticles) {
+		scopusArticles.forEach(scopusArticle -> scopusArticleTable.putItem(scopusArticle));
 	}
 
 	public Optional<ScopusArticle> findById(String id) {
-		return Optional.ofNullable(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(id))));
+		return Optional.ofNullable(scopusArticleTable.getItem(r -> r.key(k -> k.partitionValue(id))));
 	}
 
 	public void deleteAll() {
-		myEntityTable.scan().items().forEach(entity -> myEntityTable.deleteItem(entity));
+		scopusArticleTable.scan().items().forEach(scopusArticle -> scopusArticleTable.deleteItem(scopusArticle));
 	}
 
 	public List<ScopusArticle> findAllById(List<String> uids) {
-		List<ScopusArticle> entities = new ArrayList<>();
+		List<ScopusArticle> scopusArticles = new ArrayList<>();
 		for (String uid : uids) {
-			entities.add(myEntityTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			scopusArticles.add(scopusArticleTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
 		}
-		return entities;
+		return scopusArticles;
 	}
 }

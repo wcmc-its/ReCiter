@@ -63,7 +63,6 @@ public class ScienceMetrixDepartmentCategoryRepository {
 	}
 
 	public List<ScienceMetrixDepartmentCategory> findByAttribute(String attributeName, long value) {
-		// Convert the long value to a string and then to AttributeValue using .n()
 		Map<String, AttributeValue> expressionValues = Map.of(":value",
 				AttributeValue.builder().n(String.valueOf(value)).build());
 
@@ -72,7 +71,6 @@ public class ScienceMetrixDepartmentCategoryRepository {
 
 		ScanEnhancedRequest scanRequest = ScanEnhancedRequest.builder().filterExpression(filterExpression).build();
 
-		// Return the list of items instead of just the first one
 		return scienceMetrixDepartmentCategoryTable.scan(scanRequest).items().stream().collect(Collectors.toList());
 	}
 
