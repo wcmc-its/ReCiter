@@ -63,26 +63,32 @@ public class APISecurityConfig {
      * This will intercept and request for consumer api and authenticate its api key
      */
     @Configuration
-    public static class ConsumerApiSecurityConfig {
+public static class ConsumerApiSecurityConfig {
         
         private final String principalRequestHeader = "api-key";
         private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
+
+        private final JwtTokenAuthenticationFilter filter;
         
         @Value("${security.enabled:true}")
         private boolean securityEnabled;
         
+        public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter) {
+            this.filter = filter;
+        }
+
         @Bean
         @Order(1)
         public SecurityFilterChain consumerFilterChain(HttpSecurity http) throws Exception {
             if (!securityEnabled) {
                 http.csrf(csrf -> csrf.disable())
                     .securityMatcher("/reciter/article-retrieval/**")
-                    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                    .authorizeRequests(auth -> auth.anyRequest().permitAll());
                 return http.build();
             }
             
-            APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
-            filter.setAuthenticationManager(authentication -> {
+            APIKeyAuthFilter apiKeyAuthFilter = new APIKeyAuthFilter(principalRequestHeader);
+            apiKeyAuthFilter.setAuthenticationManager(authentication -> {
                 String principal = (String) authentication.getPrincipal();
                 if (principal == null || !principalRequestValue.equals(principal)) {
                     throw new BadCredentialsException("The API key was not found or not the expected value.");
@@ -94,10 +100,11 @@ public class APISecurityConfig {
             http.csrf(csrf -> csrf.disable())
                 .securityMatcher("/reciter/article-retrieval/**")
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeRequests(auth -> auth.anyRequest().authenticated());
                 
             return http.build();
         }
     }
+	
 }

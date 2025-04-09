@@ -42,8 +42,6 @@ import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
-import  reciter.algorithm.evidence.author.feedback.authorcount.AuthorCountFeedbackStrategyContext;
-import reciter.algorithm.evidence.author.feedback.authorcount.strategy.AuthorCountFeedbackStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.CitesFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.strategy.CitesFeedbackStrategy;
@@ -124,13 +122,13 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
-	private StrategyContext authorCountStrategyContext;
+	
 	
 
 	private Properties properties = new Properties();
 
 	
-	ExecutorService executorService = Executors.newFixedThreadPool(12);
+	ExecutorService executorService = Executors.newWorkStealingPool(13);
 	
 	public ReciterFeedbackArticleScorer(List<ReCiterArticle> articles,Identity identity,EngineParameters parameters,StrategyParameters strategyParameters)
 	{
@@ -150,7 +148,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(new CoauthorNameFeedbackStrategy());
 		this.citesStrategyContext = new CitesFeedbackStrategyContext(new CitesFeedbackStrategy());
 		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
-		this.authorCountStrategyContext = new AuthorCountFeedbackStrategyContext(new AuthorCountFeedbackStrategy(ReciterFeedbackArticleScorer.strategyParameters));
+		
 		
 	}
 	public void runFeedbackArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) 
@@ -202,7 +200,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			futures.add(submitAndLogTime("Cites Category", executorService, citesStrategyContext, reCiterArticles, identity));
 
 		}
-		futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
+		//futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
 		// Shutdown executorService after submitting all tasks
         executorService.shutdown();
         
@@ -575,7 +573,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
 			  log.info("articlesIdentityFeedbaclScoreTotal length",articlesIdentityFeedbackScoreTotal!=null?articlesIdentityFeedbackScoreTotal.length():0);
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
-				  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
+			  {  
+				  List<ReCiterArticle> articlesScores =  mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
+			  		articlesScores.forEach(article -> log.info("articleId :", article.getArticleId(), "authorshipLikelihoodScore : ", article.getAuthorshipLikelihoodScore() ));
+			  	 return articlesScores;	
+			  }  	
 				  
 			  
 		} catch (IOException e) {
@@ -652,7 +654,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private static double getEducationYearScore(EducationYearEvidence evidence) {
 	    return Optional.ofNullable(evidence)
 	            .map(EducationYearEvidence::getDiscrepancyDegreeYearDoctoralScore)
-	            .orElse(0.0);
+	            .filter(score -> score != 0.0)  
+	            .orElseGet(() -> Optional.ofNullable(evidence)
+	                                      .map(EducationYearEvidence::getDiscrepancyDegreeYearBachelorScore)
+	                                      .orElse(0.0));   
 	}
 
 	private static double getEmailMatchScore(EmailEvidence evidence) {
@@ -710,6 +715,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				 				 .map(article -> {
 				 					 // Find the JSON object that corresponds to this article's ID
 				 		        	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
+				 		        	log.info("After setting the score to article***",reCiterArticle.getAuthorshipLikelihoodScore());
 				 		            // count the targetAuthors per article
 				 		        	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
 				 		                     .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
@@ -736,10 +742,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	            /*article.setAuthorshipLikelihoodScore(BigDecimal.valueOf(jsonObject.getDouble("scoreTotal")*100)
-	                    .setScale(3, RoundingMode.DOWN)
-	                    .doubleValue());*/
+	        	log.info("both articleIds are matching and Score is ***",jsonObject.getDouble("scoreTotal"));
 	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
+	        	log.info("After setting the score to article***",article.getAuthorshipLikelihoodScore());
 	            return article; // Return the modified article
 	        }
 	    }

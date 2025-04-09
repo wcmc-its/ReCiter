@@ -43,7 +43,6 @@ public class IdentityServiceImpl implements IdentityService {
 
     @Value("${aws.s3.use.cached.identityAll.cacheTime}")
     private long s3CachingDays;
-
     @Override
     public void save(Collection<Identity> identities) {
         List<reciter.database.dynamodb.model.Identity> identitiesDynamos = new ArrayList<>();
