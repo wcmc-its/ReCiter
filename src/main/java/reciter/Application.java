@@ -33,6 +33,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -75,7 +76,6 @@ import reciter.utils.DegreeYearStrategyUtils;
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
-//@EnableDynamoDBRepositories("reciter.database.dynamodb")
 @ComponentScan("reciter")
 public class Application {
 
@@ -122,15 +122,13 @@ public class Application {
 	@Autowired 
 	private Environment env;
 	
-	
-	
-
-	/*
-	 * @Bean public FilterRegistrationBean<SquigglyRequestFilter>
-	 * squigglyRequestFilter() { FilterRegistrationBean<SquigglyRequestFilter>
-	 * filter = new FilterRegistrationBean<>(); filter.setFilter(new
-	 * SquigglyRequestFilter()); filter.setOrder(1); return filter; }
-	 */    
+	@Bean
+	public FilterRegistrationBean<SquigglyRequestFilter> squigglyRequestFilter() {
+		FilterRegistrationBean<SquigglyRequestFilter> filter = new FilterRegistrationBean<>();
+		filter.setFilter(new SquigglyRequestFilter());
+		filter.setOrder(1);
+		return filter;
+	}
     
 	
 	public static void main(String[] args) {
