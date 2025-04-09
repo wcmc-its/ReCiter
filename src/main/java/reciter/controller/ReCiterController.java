@@ -40,13 +40,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
+import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -145,7 +139,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description  = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description  = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/goldstandard", produces = "application/json")
     @ResponseBody
     public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
@@ -180,7 +174,7 @@ public class ReCiterController {
     		@ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
     		@ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.PUT, produces = "application/json")
+    @PutMapping(value = "/reciter/goldstandard", produces = "application/json")
     @ResponseBody
     public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
@@ -210,7 +204,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/goldstandard/{uid}", produces = "application/json")
     @ResponseBody
     public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Get the goldStandard by passing an uid");
@@ -231,7 +225,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/retrieve/articles/", produces = "application/json")
     @ResponseBody
     public ResponseEntity retrieveArticles(RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for all UID in Identity Table");
@@ -262,7 +256,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/retrieve/articles/by/uid", produces = "application/json")
     @ResponseBody
     public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for an UID");
@@ -347,7 +341,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/feature-generator/by/group", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/feature-generator/by/group", produces = "application/json")
     @ResponseBody
     public ResponseEntity retrieveBulkFeatureGenerator(@RequestBody(required = false) List<String> uids, @RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
     		@RequestParam(required = true) Double totalStandardizedArticleScore, @RequestParam(required = true) int maxArticlesPerPerson) {
@@ -462,9 +456,9 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found"),
             @ApiResponse(responseCode = "500", description = "The uid provided was not found in the Identity table")
     })
-    @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/feature-generator/by/uid", produces = "application/json")
     @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
+    public ResponseEntity runFeatureGenerator(@RequestParam String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         
@@ -859,9 +853,9 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found"),
             @ApiResponse(responseCode = "500", description = "The uid provided was not found in the Identity table")
     })
-    @RequestMapping(value = "/reciter/article-retrieval/by/uid", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/article-retrieval/by/uid", produces = "application/json")
     @ResponseBody
-    public ResponseEntity runArticleRetrievalByUid(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
+    public ResponseEntity runArticleRetrievalByUid(@RequestParam String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         

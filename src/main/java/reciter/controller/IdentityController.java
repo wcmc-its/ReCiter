@@ -25,12 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
+import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -41,6 +36,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
+
 @Slf4j
 @Controller
 public class IdentityController {
@@ -59,7 +55,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/identity/", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/identity/", produces = "application/json")
     @ResponseBody
     public ResponseEntity addIdentity(@RequestBody Identity identity) {
         StopWatch stopWatch = new StopWatch("Add an identity to Identity table in DynamoDb");
@@ -80,7 +76,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/save/identities/", method = RequestMethod.PUT, produces = "application/json")
+    @PutMapping(value = "/reciter/save/identities/", produces = "application/json")
     @ResponseBody
     public void saveIdentities(@RequestBody List<Identity> identities) {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
@@ -101,7 +97,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/find/identity/by/uid", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/find/identity/by/uid", produces = "application/json")
     @ResponseBody
     public ResponseEntity findByUid(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
@@ -128,7 +124,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/find/identity/by/uids/", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/find/identity/by/uids/", produces = "application/json")
     @ResponseBody
     public ResponseEntity findByUids(@RequestParam List<String> uids) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a list of ID supplied");
@@ -158,7 +154,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/find/all/identity", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/find/all/identity", produces = "application/json")
     @ResponseBody
     public ResponseEntity findAll() {
         StopWatch stopWatch = new StopWatch("Identity All api performance");

@@ -5,12 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
+import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -46,7 +41,7 @@ public class ReCiterPubManagerController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/publication/manager/authenticate", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/publication/manager/authenticate", produces = "application/json")
     @ResponseBody
     public boolean authenticate(@RequestParam(value = "username") String uid, @RequestParam(value = "password") String password) {
         StopWatch stopWatch = new StopWatch("Authenticate user for ReCiter publications manager");
@@ -75,7 +70,7 @@ public class ReCiterPubManagerController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/publication/manager/user/create", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/publication/manager/user/create", produces = "application/json")
     @ResponseBody
     public boolean createUser(@RequestParam(value = "username") String uid, @RequestParam(value = "name") String username, @RequestParam(value = "password") String password) {
         StopWatch stopWatch = new StopWatch("Create user for ReCiter publications manager");
@@ -103,7 +98,7 @@ public class ReCiterPubManagerController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/publication/manager/userfeedback/save", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/publication/manager/userfeedback/save", produces = "application/json")
     @ResponseBody
     public ResponseEntity saveUserFeedback(@RequestBody UserFeedback userFeedback) {
         StopWatch stopWatch = new StopWatch("Save user feedback for ReCiter publications manager");
@@ -130,7 +125,7 @@ public class ReCiterPubManagerController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/publication/manager/userfeedback/delete", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/publication/manager/userfeedback/delete", produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteUserFeedback(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Delete user feedback for ReCiter publications manager");
@@ -154,7 +149,7 @@ public class ReCiterPubManagerController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/publication/manager/userfeedback/find", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/reciter/publication/manager/userfeedback/find", produces = "application/json")
     @ResponseBody
     public ResponseEntity findUserFeedback(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Find user feedback for ReCiter publications manager");

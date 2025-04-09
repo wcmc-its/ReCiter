@@ -1,8 +1,12 @@
 package reciter.database.dynamodb.repository;
 
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reciter.database.dynamodb.model.Gender;
 import reciter.database.dynamodb.model.GenderEnum;
 import reciter.database.dynamodb.model.Identity;
-import reciter.database.dynamodb.repository.IdentityRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class IdentityRepositoryTest {

@@ -1,7 +1,9 @@
 package reciter.database.dynamodb.repository;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -13,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.database.dynamodb.model.InstitutionAfid;
-import reciter.database.dynamodb.repository.DynamoDbInstitutionAfidRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class DynamoDbInstitutionAfidRepositoryTest {

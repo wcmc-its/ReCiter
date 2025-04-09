@@ -20,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.database.dynamodb.model.AnalysisOutput;
-import reciter.database.dynamodb.repository.AnalysisOutputRepository;
 import reciter.engine.analysis.ReCiterFeature;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,19 +27,25 @@ public class AnalysisOutputRepositoryTest {
 
     @Mock
     private AnalysisOutputRepository analysisOutputRepository;
-
+    
+    private AnalysisOutput analysisOutput;
+    private  AnalysisOutput analysisOutput2;
+    
     @BeforeEach
     public void setUp() {
-        // No need to call MockitoAnnotations.openMocks(this), MockitoExtension will do it automatically
+    	 ReCiterFeature reciter = new ReCiterFeature("abc", Instant.now(), Instant.now(), null, null, null, null, null, 15, 20, null, null);
+         analysisOutput = new AnalysisOutput();
+         analysisOutput.setUid("12345");
+         analysisOutput.setReCiterFeature(reciter);
+        
+         ReCiterFeature reciter2 = new ReCiterFeature("analysis2", Instant.now(), Instant.now(), null, null, null, null, null, 5, 10, null, null);
+         analysisOutput2 = new AnalysisOutput();
+         analysisOutput2.setReCiterFeature(reciter2);
+         analysisOutput2.setUid("124xyz");		
     }
 
     @Test
     public void testSave() {
-        // Arrange
-        ReCiterFeature reciter = new ReCiterFeature("abc", Instant.now(), Instant.now(), null, null, null, null, null, 15, 20, null, null);
-        AnalysisOutput analysisOutput = new AnalysisOutput();
-        analysisOutput.setUid("12345");
-        analysisOutput.setReCiterFeature(reciter);
 
         // Mock the repository's save method to do nothing (since it's void)
         doNothing().when(analysisOutputRepository).save(any(AnalysisOutput.class));
@@ -54,42 +59,26 @@ public class AnalysisOutputRepositoryTest {
 
     @Test
     public void testFindById() {
-        // Arrange
-        ReCiterFeature reciter = new ReCiterFeature("analysis2", Instant.now(), Instant.now(), null, null, null, null, null, 15, 20, null, null);
-        AnalysisOutput analysisOutput = new AnalysisOutput();
-        analysisOutput.setUid("12347");
-        analysisOutput.setReCiterFeature(reciter);
-
+       
         // Mock the repository's findById method
-        when(analysisOutputRepository.findById("12347")).thenReturn(Optional.of(analysisOutput));
+        when(analysisOutputRepository.findById("12345")).thenReturn(Optional.of(analysisOutput));
 
         // Act
-        Optional<AnalysisOutput> retrievedAnalysisOutput = analysisOutputRepository.findById("12347");
+        Optional<AnalysisOutput> retrievedAnalysisOutput = analysisOutputRepository.findById("12345");
 
         // Verify that the repository's findById method was called
-        verify(analysisOutputRepository, times(1)).findById("12347");
+        verify(analysisOutputRepository, times(1)).findById("12345");
 
         // Assert the retrieved object is present and equals the saved one
         assertTrue(retrievedAnalysisOutput.isPresent());
         assertEquals(analysisOutput, retrievedAnalysisOutput.get());
     }
 
-    @Test
+    @SuppressWarnings("unused")
+	@Test
     public void testFindAll() {
-        // Arrange
-        ReCiterFeature reciter1 = new ReCiterFeature("analysis1", Instant.now(), Instant.now(), null, null, null, null, null, 151, 200, null, null);
-        ReCiterFeature reciter2 = new ReCiterFeature("analysis2", Instant.now(), Instant.now(), null, null, null, null, null, 5, 10, null, null);
-
-        AnalysisOutput analysisOutput1 = new AnalysisOutput();
-        analysisOutput1.setReCiterFeature(reciter1);
-        analysisOutput1.setUid("123abc");
-
-        AnalysisOutput analysisOutput2 = new AnalysisOutput();
-        analysisOutput2.setReCiterFeature(reciter2);
-        analysisOutput2.setUid("124xyz");
-
         // Mock the repository's findAll method
-        when(analysisOutputRepository.findAll()).thenReturn(Arrays.asList(analysisOutput1, analysisOutput2));
+        when(analysisOutputRepository.findAll()).thenReturn(Arrays.asList(analysisOutput, analysisOutput2));
 
         // Act
         Iterable<AnalysisOutput> analysisOutputs = analysisOutputRepository.findAll();
@@ -146,30 +135,18 @@ public class AnalysisOutputRepositoryTest {
 
     @Test
     public void testFindAllById() {
-        // Arrange
-        ReCiterFeature reciter1 = new ReCiterFeature("text1abc", Instant.now(), Instant.now(), null, null, null, null, null, 11, 230, null, null);
-        ReCiterFeature reciter2 = new ReCiterFeature("text2abc", Instant.now(), Instant.now(), null, null, null, null, null, 15, 14, null, null);
-
-        AnalysisOutput analysisOutput1 = new AnalysisOutput();
-        analysisOutput1.setReCiterFeature(reciter1);
-        analysisOutput1.setUid("qw123");
-
-        AnalysisOutput analysisOutput2 = new AnalysisOutput();
-        analysisOutput2.setReCiterFeature(reciter2);
-        analysisOutput2.setUid("zx123");
-
         // Mock the repository's findAllById method
-        when(analysisOutputRepository.findAllById(List.of("qw123", "zx123"))).thenReturn(Arrays.asList(analysisOutput1, analysisOutput2));
+        when(analysisOutputRepository.findAllById(List.of("12345", "124xyz"))).thenReturn(Arrays.asList(analysisOutput, analysisOutput2));
 
         // Act
-        List<AnalysisOutput> analysisOutputs = analysisOutputRepository.findAllById(List.of("qw123", "zx123"));
+        List<AnalysisOutput> analysisOutputs = analysisOutputRepository.findAllById(List.of("12345", "124xyz"));
 
         // Verify that the repository's findAllById method was called
-        verify(analysisOutputRepository, times(1)).findAllById(List.of("qw123", "zx123"));
+        verify(analysisOutputRepository, times(1)).findAllById(List.of("12345", "124xyz"));
 
         // Assert that the correct number of objects is returned and matches the expected UIDs
         assertEquals(2, analysisOutputs.size());
-        assertEquals("qw123", analysisOutputs.get(0).getUid());
-        assertEquals("zx123", analysisOutputs.get(1).getUid());
+        assertEquals("12345", analysisOutputs.get(0).getUid());
+        assertEquals("124xyz", analysisOutputs.get(1).getUid());
     }
 }

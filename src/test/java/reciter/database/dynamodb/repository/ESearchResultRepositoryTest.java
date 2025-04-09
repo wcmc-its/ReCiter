@@ -1,7 +1,11 @@
 package reciter.database.dynamodb.repository;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -16,9 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
-import reciter.database.dynamodb.model.Identity;
 import reciter.database.dynamodb.model.QueryType;
-import reciter.database.dynamodb.repository.ESearchResultRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class ESearchResultRepositoryTest {

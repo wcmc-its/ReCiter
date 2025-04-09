@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.database.dynamodb.model.ScopusArticle;
-import reciter.database.dynamodb.repository.ScopusArticleRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class ScopusArticleRepositoryTest {

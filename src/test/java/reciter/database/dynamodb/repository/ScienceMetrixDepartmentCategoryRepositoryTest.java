@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
-import reciter.database.dynamodb.repository.ScienceMetrixDepartmentCategoryRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class ScienceMetrixDepartmentCategoryRepositoryTest {
