@@ -3,7 +3,10 @@ package reciter.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -12,12 +15,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-
 import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.model.ApplicationUser;
 import reciter.service.ApplicationUserService;
@@ -43,7 +40,7 @@ public class ReCiterPubManagerController {
     })
     @PostMapping(value = "/reciter/publication/manager/authenticate", produces = "application/json")
     @ResponseBody
-    public boolean authenticate(@RequestParam(value = "username") String uid, @RequestParam(value = "password") String password) {
+    public boolean authenticate(@RequestParam(value = "username") String uid, @RequestParam String password) {
         StopWatch stopWatch = new StopWatch("Authenticate user for ReCiter publications manager");
         stopWatch.start("Authenticate user for ReCiter publications manager");
 

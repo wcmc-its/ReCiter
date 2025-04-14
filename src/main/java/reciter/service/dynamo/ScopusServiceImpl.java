@@ -52,11 +52,13 @@ public class ScopusServiceImpl implements ScopusService {
 
     @Override
     public List<ScopusArticle> findByPmids(List<String> pmids) {
-        List<ScopusArticle> scopusArticles = null;
+    	List<ScopusArticle> scopusArticles = new ArrayList<>(pmids.size());
         Iterator<reciter.database.dynamodb.model.ScopusArticle> iterator = scopusRepository.findAllById(pmids).iterator();
-        scopusArticles = new ArrayList<>(pmids.size());
         while (iterator.hasNext()) {
-            scopusArticles.add(iterator.next().getScopusArticle());
+            reciter.database.dynamodb.model.ScopusArticle article = iterator.next();
+            if (article != null && article.getScopusArticle() != null) {
+                scopusArticles.add(article.getScopusArticle());
+            }
         }
         return scopusArticles;
     }

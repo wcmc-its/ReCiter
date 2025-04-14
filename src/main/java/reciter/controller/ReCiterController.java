@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -322,7 +321,7 @@ public class ReCiterController {
             	
             	
             }
-        } catch (EmptyResultDataAccessException e) {
+        } catch (Exception e) {
             log.info("No such entity exists: ", e);
         }
 
@@ -458,7 +457,7 @@ public class ReCiterController {
     })
     @GetMapping(value = "/reciter/feature-generator/by/uid", produces = "application/json")
     @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
+    public ResponseEntity runFeatureGenerator(@RequestParam String uid, Double authorshipLikelihoodScore , UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         
@@ -972,7 +971,7 @@ public class ReCiterController {
             }
             
             
-        } catch (EmptyResultDataAccessException e) {
+        } catch (Exception e) {
             log.info("No such entity exists: ", e);
         }
         log.info("eSearchResults size {}", eSearchResults);
