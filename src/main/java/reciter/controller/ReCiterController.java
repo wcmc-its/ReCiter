@@ -140,7 +140,7 @@ public class ReCiterController {
     })
     @PostMapping(value = "/reciter/goldstandard", produces = "application/json")
     @ResponseBody
-    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
@@ -175,7 +175,7 @@ public class ReCiterController {
     })
     @PutMapping(value = "/reciter/goldstandard", produces = "application/json")
     @ResponseBody
-    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
         stopWatch.start("Update GoldStandard with List");
     	if(goldStandardUpdateFlag == null ||
@@ -226,7 +226,7 @@ public class ReCiterController {
     })
     @GetMapping(value = "/reciter/retrieve/articles/", produces = "application/json")
     @ResponseBody
-    public ResponseEntity retrieveArticles(RetrievalRefreshFlag refreshFlag) {
+    public ResponseEntity retrieveArticles(@RequestParam(required = false) RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for all UID in Identity Table");
         stopWatch.start("Retrieve Articles for all UID in Identity Table");
         LocalDate initial = LocalDate.now();
@@ -257,7 +257,7 @@ public class ReCiterController {
     })
     @GetMapping(value = "/reciter/retrieve/articles/by/uid", produces = "application/json")
     @ResponseBody
-    public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
+    public ResponseEntity retrieveArticlesByUid(@RequestParam(required = false) String uid,@RequestParam(required = false) RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for an UID");
         stopWatch.start("Retrieve Articles for an UID");
         List<Identity> identities = new ArrayList<>();
@@ -457,7 +457,12 @@ public class ReCiterController {
     })
     @GetMapping(value = "/reciter/feature-generator/by/uid", produces = "application/json")
     @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam String uid, Double authorshipLikelihoodScore , UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
+    public ResponseEntity runFeatureGenerator(@RequestParam String uid,
+    		@RequestParam(required = false)	Double authorshipLikelihoodScore ,
+    		@RequestParam(required = false) UseGoldStandard useGoldStandard, 
+    		@RequestParam(required = false) FilterFeedbackType filterByFeedback, 
+    		@RequestParam(required = false) boolean analysisRefreshFlag,
+    		@RequestParam(required = false) RetrievalRefreshFlag retrievalRefreshFlag) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         
@@ -856,7 +861,7 @@ public class ReCiterController {
     })
     @GetMapping(value = "/reciter/article-retrieval/by/uid", produces = "application/json")
     @ResponseBody
-    public ResponseEntity runArticleRetrievalByUid(@RequestParam String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
+    public ResponseEntity runArticleRetrievalByUid(@RequestParam String uid, @RequestParam(required = false) Double totalStandardizedArticleScore,@RequestParam(required = false) FilterFeedbackType filterByFeedback) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         
