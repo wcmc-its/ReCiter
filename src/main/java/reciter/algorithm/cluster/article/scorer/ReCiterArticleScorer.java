@@ -205,7 +205,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	
 	private Properties properties = new Properties();
 	
-	ExecutorService executorService = Executors.newFixedThreadPool(12);
+	ExecutorService executorService = Executors.newWorkStealingPool(13);
 	
 	public ReCiterArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity, StrategyParameters strategyParameters) {
 		

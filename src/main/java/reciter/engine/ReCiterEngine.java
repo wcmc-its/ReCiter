@@ -75,7 +75,8 @@ public class ReCiterEngine implements Engine {
         
 		 log.info("Accepted articles: " +acceptedArticles +"  and Rejected articles:  "+ rejectedArticles);
 
-        if(mode == UseGoldStandard.FOR_TESTING_ONLY || (acceptedArticles ==0 && rejectedArticles == 0))
+		 
+        if(mode == UseGoldStandard.FOR_TESTING_ONLY || (acceptedArticles == 0 && rejectedArticles == 0))
         {
         	StopWatch stopWatch = new StopWatch("Article Scorer");
 	        stopWatch.start("Article Scorer");

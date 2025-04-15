@@ -465,7 +465,7 @@ public class ReCiterController {
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
-    	StopWatch stopWatch = new StopWatch("Feature generation for UID");
+    	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
         
         final double totalScore;
@@ -474,6 +474,8 @@ public class ReCiterController {
         } else {
         	totalScore = authorshipLikelihoodScore; // Configuring the totalScore in multiple of 10's in application.properties file
         }
+        System.out.println("totalScore from the request" + totalScore);
+        log.info("totalScore from the request" , totalScore);
         EngineOutput engineOutput;
         EngineParameters parameters;
         List<ReCiterArticleFeature> originalFeatures = new ArrayList<ReCiterArticleFeature>();
@@ -845,13 +847,6 @@ public class ReCiterController {
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return new ResponseEntity<>(reCiterOutputFeature, HttpStatus.OK);
-    }
-    
-    // This API is exposed over a custom domain as an HTTP API to the external world and does not need to be on Swagger.   
-    @RequestMapping(value = "/reciter/article-retrieval/by/uid/{uid}", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity runArticleRetrievalByUid(@PathVariable String uid) throws IOException {
-        return runArticleRetrievalByUid(uid, null,null);
     }
     
     @ApiOperation(value = "Article retrieval by UID.", response = ReCiterFeature.class, notes = "This api returns all the publication for a supplied uid.")
