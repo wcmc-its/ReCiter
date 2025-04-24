@@ -17,7 +17,7 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	private static final Logger log = LoggerFactory.getLogger(NeuralNetworkModelArticlesScorer.class);
 	
-	public JSONArray executeArticleScorePredictor(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString)
+	public JSONArray executeArticleScorePredictor(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String isLinuxEnvFlag)
 	{
 	
 		StopWatch stopWatch = new StopWatch(category);
@@ -25,7 +25,7 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	    try {
 	    	    String pythonCommandName ="";
-	    	 	if(isS3UploadRequiredString!=null && isS3UploadRequiredString.equalsIgnoreCase("true"))
+	    	 	if(isS3UploadRequiredString!=null && isS3UploadRequiredString.equalsIgnoreCase("true") || "true".equalsIgnoreCase(isLinuxEnvFlag))
 	            {
 	            	pythonCommandName = "python3"; 
 	            }

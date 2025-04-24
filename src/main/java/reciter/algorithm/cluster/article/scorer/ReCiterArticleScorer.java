@@ -383,6 +383,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		//PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String identityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
+		String isLinuxEnvFlag = getProperty("python.isLinux");
 		
         try {
 			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																			   
@@ -406,7 +407,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	        	  objectMapper.writeValue(jsonFile,articleIdentityScore);
         	  }
               String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
- 			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString);
+ 			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString,isLinuxEnvFlag);
  			  if(articlesIdentityScoreTotal!=null && articlesIdentityScoreTotal.length() > 0 )
 					  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
  		

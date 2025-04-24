@@ -546,6 +546,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		String fileName = StringUtils.join(identity.getUid(), "-feedbackIdentityScoringInput.json");
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String feedbackIdentityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
+		String isLinuxEnvFlag = getProperty("python.isLinux");
         try {
 			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																			   
         	  if(isS3UploadRequired) 
@@ -570,7 +571,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  
-			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
+			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString,isLinuxEnvFlag);
 			  log.info("articlesIdentityFeedbaclScoreTotal length",articlesIdentityFeedbackScoreTotal!=null?articlesIdentityFeedbackScoreTotal.length():0);
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
 			  {  
