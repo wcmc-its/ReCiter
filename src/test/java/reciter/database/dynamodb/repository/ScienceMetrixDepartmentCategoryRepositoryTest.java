@@ -122,6 +122,6 @@ public class ScienceMetrixDepartmentCategoryRepositoryTest {
         verify(repository).count();
         
         // Assert that the count matches the expected value
-        assertTrue(count != 0, "count should not be zero");
+        assertTrue("count should not be zero", count != 0);
     }
 }
