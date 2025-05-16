@@ -19,6 +19,7 @@
 package reciter.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -102,7 +103,15 @@ public class IdentityController {
         for(Identity identity : identities)
         {	
         	// Validate the mandatory fields
-        	validateMandatoryFields(identity);
+        	try
+        	{
+        		validateMandatoryFields(identity);
+        	}
+        	catch(IllegalArgumentException iae)
+            {
+            	//return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(iae.getLocalizedMessage());
+            	iae.printStackTrace();
+            }
         }	
         identityService.save(identities);
         stopWatch.stop();
@@ -204,12 +213,12 @@ public class IdentityController {
         String[] mandatoryFields = getMandatoryFields();
 
      // Validate each AuthorName in the alternateNames list
-        if (identity.getAlternateNames() == null || identity.getAlternateNames().isEmpty()) {
+        if (identity ==null || identity.getAlternateNames() == null || identity.getAlternateNames().isEmpty()) {
             throw new IllegalArgumentException("Field 'alternateNames' is required but not provided.");
         }
         List<AuthorName> listofAuthorNames = identity.getAlternateNames();
         
-        if (identity.getUid() == null || identity.getUid().isEmpty()) {
+        if (identity ==null || identity.getUid() == null || identity.getUid().isEmpty()) {
             throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
         }
   
