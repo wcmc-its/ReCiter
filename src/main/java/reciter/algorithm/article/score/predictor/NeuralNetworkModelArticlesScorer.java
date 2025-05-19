@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.security.AwsSecretsManagerService;
+import reciter.utils.PropertiesUtils;
 
 
 public class NeuralNetworkModelArticlesScorer {
@@ -40,12 +41,13 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	private static final String LAMBDA_NAME = "lambdaFunctionName";
 	
-	private static final String LAMBA_FUNCTION_INVOCATION_URL = "/2015-03-31/functions/function/invocations";
+	private static final String LAMBDA_FUNCTION_INVOCATION_URL = "local.lambda.function.invocation.url";
 	
+	private static final String LAMBDA_FUNCTION_REGION = "aws.secretsmanager.region";
 	
     private AwsSecretsManagerService awsSecretsManagerService; // Inject the service to get the secret
 	
-	private String reciterScoringSecretName = System.getenv("aws.secretsmanager.reciterscoring.secretName");
+    private String RECITER_SCORING_SECRET_NAME = "aws.secretsmanager.reciterscoring.secretName";
 	
 	private String reciterScoringServiceUrl = System.getenv("RECITERSCORING_SERVICE_URL");
 	
@@ -63,11 +65,12 @@ public class NeuralNetworkModelArticlesScorer {
 		
 		 if (isS3UploadRequiredString!=null && !isS3UploadRequiredString.equalsIgnoreCase("") && (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) 
 			{  
-			 authorshipLikelihoodScore = callLocalLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
+			 	authorshipLikelihoodScore = callLocalLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
 	        } else {
-	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(reciterScoringSecretName); 
+	        	log.info("Getting Secret Name from the Properties", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
+	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
 	        	ObjectMapper mapper = new ObjectMapper();
-	        	Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);//readValues(secretValueJson, new TypeReference<Map<String, String>>() {});
+	        	Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);
 	        	authorshipLikelihoodScore = callAwsLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString,secretMap.get(LAMBDA_NAME));
 	        }
 		
@@ -138,7 +141,7 @@ public class NeuralNetworkModelArticlesScorer {
 		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		return authorshipLikelihoodScore;
 	}
-	public void deleteFile(Path filePath) {
+	/*public void deleteFile(Path filePath) {
 		try {
 			File file = filePath.toFile();
 			if (file.exists()) {
@@ -160,7 +163,7 @@ public class NeuralNetworkModelArticlesScorer {
 			log.error("An error occurred while deleting the file path " + filePath + ": " + e.getMessage());
 		}
 
-	}
+	}*/
 	
 	
 	
@@ -189,7 +192,7 @@ public class NeuralNetworkModelArticlesScorer {
 			HttpURLConnection conn=null;
 			try {
 
-				url = new URL(reciterScoringServiceUrl + LAMBA_FUNCTION_INVOCATION_URL);
+				url = new URL(reciterScoringServiceUrl + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL));
 				conn = (HttpURLConnection) url.openConnection();
 				if(conn!=null)
 				{	
@@ -261,14 +264,15 @@ public class NeuralNetworkModelArticlesScorer {
 		 */
 	    private JSONArray callAwsLambda(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
 	       
-	    	log.info("reciterScoringServiceUrl",reciterScoringServiceUrl);
+	    	log.info("LambdaFunctionName",lambdaFunctionName);
+	    	log.info("LambdaFunctionRegion",PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
 			log.info("category",category);
 			log.info("articleScoreModelFileName",articleScoreModelFileName);
 			log.info("articleDataFilename",articleDataFilename);
 			log.info("s3BucketName",s3BucketName);
 			log.info("isS3UploadRequiredString",isS3UploadRequiredString);
 	    	AWSLambda client = AWSLambdaClientBuilder.standard()
-	                .withRegion(Regions.US_EAST_1) // replace with your region
+	                .withRegion(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)) 
 	                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
 	                .build();
 
@@ -310,5 +314,6 @@ public class NeuralNetworkModelArticlesScorer {
 	            e.printStackTrace();
 	        }
 	        return null;
-	    }	
+	    }
+	   
 }
