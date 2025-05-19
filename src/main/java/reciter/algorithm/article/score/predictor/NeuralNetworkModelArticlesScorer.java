@@ -43,7 +43,7 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	private static final String LAMBDA_FUNCTION_INVOCATION_URL = "local.lambda.function.invocation.url";
 	
-	private static final String LAMBDA_FUNCTION_REGION = "aws.secretsmanager.region";
+	private static final String LAMBDA_FUNCTION_REGION = "aws.lambda.region";
 	
     private AwsSecretsManagerService awsSecretsManagerService; // Inject the service to get the secret
 	
@@ -67,7 +67,7 @@ public class NeuralNetworkModelArticlesScorer {
 			{  
 			 	authorshipLikelihoodScore = callLocalLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
 	        } else {
-	        	log.info("Getting Secret Name from the Properties", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
+	        	log.info("Getting Secret Name from the Properties: {}", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
 	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
 	        	ObjectMapper mapper = new ObjectMapper();
 	        	Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);
@@ -264,13 +264,13 @@ public class NeuralNetworkModelArticlesScorer {
 		 */
 	    private JSONArray callAwsLambda(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
 	       
-	    	log.info("LambdaFunctionName",lambdaFunctionName);
-	    	log.info("LambdaFunctionRegion",PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
-			log.info("category",category);
-			log.info("articleScoreModelFileName",articleScoreModelFileName);
-			log.info("articleDataFilename",articleDataFilename);
-			log.info("s3BucketName",s3BucketName);
-			log.info("isS3UploadRequiredString",isS3UploadRequiredString);
+	    	log.info("LambdaFunctionName: {}",lambdaFunctionName);
+	    	log.info("LambdaFunctionRegion: {}",PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
+			log.info("category: {}",category);
+			log.info("articleScoreModelFileName: {}",articleScoreModelFileName);
+			log.info("articleDataFilename: {}",articleDataFilename);
+			log.info("s3BucketName:{}",s3BucketName);
+			log.info("isS3UploadRequiredString:{}",isS3UploadRequiredString);
 	    	AWSLambda client = AWSLambdaClientBuilder.standard()
 	                .withRegion(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)) 
 	                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
@@ -300,17 +300,17 @@ public class NeuralNetworkModelArticlesScorer {
 	        try {
 	            InvokeResult result = client.invoke(request);
 	            String response = new String(result.getPayload().array(), StandardCharsets.UTF_8);
-	            log.info("AWS Lambda Response: " , response);
+	            log.info("AWS Lambda Response: {}" , response);
 	            JsonNode json = mapper.readTree(response.toString());
 		        String authorshipLikelihoodScore = mapper.writeValueAsString(json.get("authorshiplikelihoodScores"));
-		        log.info("AWS Lambda Response: ",authorshipLikelihoodScore);
+		        log.info("AWS Lambda Response: {}",authorshipLikelihoodScore);
 		        int returnCode = Integer.parseInt(mapper.writeValueAsString(json.get("returncode")));
 		        log.info("returnCode: ",returnCode);
 		        if(returnCode==0)
 		        	return new JSONArray(authorshipLikelihoodScore);;
 	          
 	        } catch (Exception e) {
-	            log.error("Lambda invocation failed: " , e.getMessage());
+	            log.error("Lambda invocation failed: {}" , e.getMessage());
 	            e.printStackTrace();
 	        }
 	        return null;
