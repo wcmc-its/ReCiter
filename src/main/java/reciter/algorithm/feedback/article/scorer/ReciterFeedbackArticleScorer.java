@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -275,13 +274,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
 				csvPrinter.flush();
 				NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																	  
-				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				/*if(uploadCsvToS3) {
-					 nnmodel. deleteFile(filePath);
-					 log.info("File deleted successfully: " + filePath);
-				}*/
-				log.warn("Uploading CSV into S3 ends here******************");
+				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -327,14 +320,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					mapItemLevelCSVData(reCiterArticles,csvPrinter,personIdentifier);
 				
 				csvPrinter.flush();
-				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				/*NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
-				if(uploadCsvToS3) {
-					 nnmodel.deleteFile(filePath);
-					 log.info("File deleted successfully: " + filePath);
-				}*/
-				log.warn("Uploading CSV into S3 ends here******************");
+				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				
 			} catch (IOException e) {
 				e.printStackTrace();

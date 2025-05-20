@@ -1,15 +1,12 @@
 package reciter.algorithm.article.score.predictor;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,14 +17,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.security.AwsSecretsManagerService;
@@ -141,31 +136,6 @@ public class NeuralNetworkModelArticlesScorer {
 		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		return authorshipLikelihoodScore;
 	}
-	/*public void deleteFile(Path filePath) {
-		try {
-			File file = filePath.toFile();
-			if (file.exists()) {
-
-				if (!file.setWritable(true)) {
-					log.info("Failed to set write permission for the file."+filePath);
-				}
-
-				if (Files.deleteIfExists(filePath)) {
-					log.info("File deleted successfully."+filePath);
-				} else {
-					log.info("File deletion failed."+filePath);
-				}
-
-			} else {
-				log.info("File does not exist: " + filePath);
-			}
-		} catch (Exception e) {
-			log.error("An error occurred while deleting the file path " + filePath + ": " + e.getMessage());
-		}
-
-	}*/
-	
-	
 	
 	// Helper method to find JSONObject by article
 		private static void findJSONObjectById(JSONArray jsonArray, long articleId) {
@@ -191,7 +161,6 @@ public class NeuralNetworkModelArticlesScorer {
 			URL url=null;
 			HttpURLConnection conn=null;
 			try {
-
 				url = new URL(reciterScoringServiceUrl + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL));
 				conn = (HttpURLConnection) url.openConnection();
 				if(conn!=null)
@@ -233,7 +202,6 @@ public class NeuralNetworkModelArticlesScorer {
 				 
 				    // Now it's safe to read the response
 			        int responseCode = conn.getResponseCode();
-				    
 			     // Read response from Lambda
 			        StringBuilder response = new StringBuilder();
 			        

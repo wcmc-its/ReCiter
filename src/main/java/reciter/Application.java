@@ -223,10 +223,8 @@ public class Application {
 			}
 		}
 		
-		
 		if(reciterScoringService != null && !reciterScoringService.isEmpty()) 
 		{
-			System.out.println("Checking for the service**********************************");
 			String urlString = "http://localhost:"+ reciterScoringPortNumber +"/2015-03-31/functions/function/invocations";
 	        String payload = "{}";  // Empty payload, as Lambda doesn't require specific input for health check
 	        
