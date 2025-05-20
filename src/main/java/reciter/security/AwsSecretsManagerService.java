@@ -1,16 +1,13 @@
 package reciter.security;
 
-import java.util.Map;
-
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
@@ -20,18 +17,17 @@ import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRespon
 @Service
 public class AwsSecretsManagerService {
 
+	private static final Logger log = LoggerFactory.getLogger(AwsSecretsManagerService.class);
+	
 	private static final ObjectMapper objectMapper = new ObjectMapper();  
   
-    @Value("${aws.secretsmanager.secretName}")
-    private String secretName;
-
-    public JsonNode getClientSecret(String clientId) {
+    public JsonNode getSecrets(String secretName) {
         // Initialize the Secrets Manager client
         SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
 
-        System.out.println("secretName pulled from application.properties"+secretName);
+        log.info("secretName pulled from application.properties",secretName);
         // Fetch the secret from AWS Secrets Manager
         GetSecretValueRequest valueRequest = GetSecretValueRequest.builder()
                 .secretId(secretName)
@@ -39,20 +35,12 @@ public class AwsSecretsManagerService {
 
         GetSecretValueResponse valueResponse = secretsManagerClient.getSecretValue(valueRequest);
         
-        System.out.println("valueResponse : "+valueResponse);
         
         // Assuming the secret is in JSON format, parse the client secrets from it
         JsonNode clientSecrets = parseJsonSecrets(valueResponse.secretString());
-        
-        //Printing Client Id, Secret and ClientName
-        ObjectNode objectNode = (ObjectNode) clientSecrets;
-        clientSecrets.fieldNames().forEachRemaining(fieldName -> {
-            JsonNode value = objectNode.get(fieldName);
-            System.out.println("fieldName" + fieldName + ": " + value);
-        });
-
-        return clientSecrets.get(clientId);  // Return the client secret based on the clientId
-    }
+     
+        return clientSecrets;  // Return the client secret based on the clientId
+     }
 
     private JsonNode parseJsonSecrets(String secretJson) {
  
@@ -80,6 +68,25 @@ public class AwsSecretsManagerService {
         return null; 
     }
     
-   
+    public String getSecretKeyPairs(String secretName) {
+        // Initialize the Secrets Manager client
+        SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build();
+
+        log.info("secretName pulled from application.properties",secretName);
+        // Fetch the secret from AWS Secrets Manager
+        GetSecretValueRequest valueRequest = GetSecretValueRequest.builder()
+                .secretId(secretName)
+                .build();
+
+        GetSecretValueResponse valueResponse = secretsManagerClient.getSecretValue(valueRequest);
+        
+        
+        // Assuming the secret is in JSON format, parse the client secrets from it
+        String clientSecrets = valueResponse.secretString();
+     
+        return clientSecrets;  // Return the client secret based on the clientId
+     }
 }
 

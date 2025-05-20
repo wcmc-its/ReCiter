@@ -2,15 +2,12 @@ package reciter.algorithm.cluster.article.scorer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
@@ -73,14 +76,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import reciter.utils.PropertiesUtils;
 
 /**
  * @author szd2013
@@ -202,8 +198,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private List<StrategyContext> strategyContexts;
 
 	public static StrategyParameters strategyParameters;
-	
-	private Properties properties = new Properties();
 	
 	ExecutorService executorService = Executors.newWorkStealingPool(13);
 	
@@ -382,8 +376,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		String fileName = StringUtils.join(identity.getUid(), "-identityOnlyScoringInput.json");
 		//PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
 		boolean isS3UploadRequired = isS3UploadRequired();
-		String identityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
-		String isLinuxEnvFlag = getProperty("python.isLinux");
+		String identityS3BucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
 		
         try {
 			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																			   
@@ -394,11 +387,11 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         		// Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, articleIdentityScore);
                   boolean uploadJsonFileIntoS3 = uploadJsonFileIntoS3(fileName, jsonFile);
-                  if(uploadJsonFileIntoS3) {
+                 /* if(uploadJsonFileIntoS3) {
                 	  
                 	  nnmodel.deleteFile(jsonFile.toPath());
                 	  slf4jLogger.info("File deleted successfully: " + jsonFile);
- 				}
+ 				}*/
 
         	  }
         	  else
@@ -407,7 +400,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	        	  objectMapper.writeValue(jsonFile,articleIdentityScore);
         	  }
               String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
- 			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString,isLinuxEnvFlag);
+ 			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString);
  			  if(articlesIdentityScoreTotal!=null && articlesIdentityScoreTotal.length() > 0 )
 					  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
  		
@@ -592,79 +585,57 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private boolean isS3UploadRequired()
     {
     	  	  
-  		 Properties properties = PropertiesLoader("application.properties");
-
          // Retrieve properties
-         String awsS3Use = properties.getProperty("aws.s3.use");
+         String awsS3Use = PropertiesUtils.get("aws.s3.use");
          boolean isS3Use = Boolean.parseBoolean(awsS3Use);
-         String dynamoDDLocal = properties.getProperty("aws.dynamoDb.local");
+         String dynamoDDLocal = PropertiesUtils.get("aws.dynamoDb.local");
          boolean isDynamoDBLocal = Boolean.parseBoolean(dynamoDDLocal);
          if(isS3Use && !isDynamoDBLocal) 
         	 return true;
     	return false;
     }
-	private Properties PropertiesLoader(String fileName) {
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream(fileName)) {
-            if (input == null) {
-            	slf4jLogger.error("Sorry, unable to find " , fileName);
-                return null;
-            }
-            // Load the properties file
-            properties.load(input);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return properties;
-    }
-	private String getProperty(String key) {
-        return properties.getProperty(key);
-    }
+	
 	private boolean uploadJsonFileIntoS3(String keyName,File file)
 	{
-		String feedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
+		String FeedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         
 		// Upload the python file
         try {
         	
+        	final AmazonS3 s3 = AmazonS3ClientBuilder
+					.standard()
+					.withCredentials(new DefaultAWSCredentialsProviderChain())
+					.withRegion(System.getenv("AWS_REGION"))
+					.build();
+			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) 
+			{												
         	
-        	final S3Client s3 = S3Client.builder()
-    			    .credentialsProvider(DefaultCredentialsProvider.create())
-    			    .region(Region.of(System.getenv("AWS_REGION"))) 
-    			    .build();
-        	
-        	try {
-                HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
-                        .bucket(feedbackScoreBucketName)
-                        .build();
-
-                s3.headBucket(headBucketRequest); // If successful, the bucket exists
-                slf4jLogger.info("Uploading files to S3 bucket ",feedbackScoreBucketName);
-                
-                // Upload file
-	            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-	                    .bucket(feedbackScoreBucketName.toLowerCase())
-	                    .key(keyName)
-	                    .contentType("application/json")
-	                    .build();
+	        	slf4jLogger.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+	        	PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), keyName, file);
+	       
+	        	// Optionally, set metadata
+	            ObjectMetadata metadata = new ObjectMetadata();
+	            metadata.setContentType("application/json");
+	            putObjectRequest.setMetadata(metadata);
+	
 	            
-	            PutObjectResponse putObjectResponse = s3.putObject(putObjectRequest, RequestBody.fromFile(Paths.get(file.getAbsolutePath())));
-	            if (putObjectResponse.sdkHttpResponse().isSuccessful()) {
-	            	slf4jLogger.info("CSV file uploaded successfully to S3 bucket: " + feedbackScoreBucketName );
-	                return true;
-	            } else {
-	            	slf4jLogger.error("Failed to upload JSON file to S3.");
-	                return false;
-	            }
-            } catch (S3Exception e) {
-                if (e.statusCode() == 404) {
-                    slf4jLogger.error("S3 bucket does not exist: " + feedbackScoreBucketName);
-                    return false;
-                }else {
-                	slf4jLogger.error(e.getMessage());
-                	return false;
-                }
-            }
-    
+	            try{
+					s3.putObject(putObjectRequest);
+					slf4jLogger.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+				}
+				catch(AmazonServiceException e) {
+					// The call was transmitted successfully, but Amazon S3 couldn't process 
+		            // it, so it returned an error response.
+					slf4jLogger.error(e.getErrorMessage());
+					 return false;
+				}
+	            return true;
+			}
+        	else 
+        	{
+        		slf4jLogger.error("S3 bucket does not exist: " + FeedbackScoreBucketName);
+                return false;
+        	}
         
         } catch (Exception e) {
             e.printStackTrace();

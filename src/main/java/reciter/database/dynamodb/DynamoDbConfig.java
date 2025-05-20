@@ -110,8 +110,8 @@ public class DynamoDbConfig {
 			try {
 
 				dynamoDbClient = DynamoDbClient.builder().httpClient(ApacheHttpClient.create())
-						.endpointOverride(URI.create("http://localhost:" + dynamoDbLocalPort))
-						//.endpointOverride(URI.create("http://dynamodb:" + dynamoDbLocalPort))
+						//.endpointOverride(URI.create("http://localhost:" + dynamoDbLocalPort))
+						.endpointOverride(URI.create("http://dynamodb:" + dynamoDbLocalPort))
 						.region(Region.of(dynamodbLocalRegion)) 
 						.credentialsProvider(StaticCredentialsProvider.create(
 								AwsBasicCredentials.create(dynamodbLocalAccessKey, dynamodbLocalSecretKey)))

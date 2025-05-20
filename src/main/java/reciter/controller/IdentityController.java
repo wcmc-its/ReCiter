@@ -26,7 +26,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -100,7 +106,15 @@ public class IdentityController {
         for(Identity identity : identities)
         {	
         	// Validate the mandatory fields
-        	validateMandatoryFields(identity);
+        	try
+        	{
+        		validateMandatoryFields(identity);
+        	}
+        	catch(IllegalArgumentException iae)
+            {
+            	//return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(iae.getLocalizedMessage());
+            	iae.printStackTrace();
+            }
         }	
         identityService.save(identities);
         stopWatch.stop();
@@ -202,12 +216,12 @@ public class IdentityController {
         String[] mandatoryFields = getMandatoryFields();
 
      // Validate each AuthorName in the alternateNames list
-        if (identity.getAlternateNames() == null || identity.getAlternateNames().isEmpty()) {
+        if (identity ==null || identity.getAlternateNames() == null || identity.getAlternateNames().isEmpty()) {
             throw new IllegalArgumentException("Field 'alternateNames' is required but not provided.");
         }
         List<AuthorName> listofAuthorNames = identity.getAlternateNames();
         
-        if (identity.getUid() == null || identity.getUid().isEmpty()) {
+        if (identity ==null || identity.getUid() == null || identity.getUid().isEmpty()) {
             throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
         }
   

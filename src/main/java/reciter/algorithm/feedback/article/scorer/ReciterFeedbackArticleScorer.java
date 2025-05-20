@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -35,6 +34,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
@@ -88,14 +93,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import reciter.utils.PropertiesUtils;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
 
@@ -122,11 +120,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
-	
-	
-
-	private Properties properties = new Properties();
-
 	
 	ExecutorService executorService = Executors.newWorkStealingPool(13);
 	
@@ -284,10 +277,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																	  
 				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				if(uploadCsvToS3) {
+				/*if(uploadCsvToS3) {
 					 nnmodel. deleteFile(filePath);
 					 log.info("File deleted successfully: " + filePath);
-				}
+				}*/
 				log.warn("Uploading CSV into S3 ends here******************");
 				
 			} catch (IOException e) {
@@ -336,11 +329,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				csvPrinter.flush();
 				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
+				/*NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
 				if(uploadCsvToS3) {
 					 nnmodel.deleteFile(filePath);
 					 log.info("File deleted successfully: " + filePath);
-				}
+				}*/
 				log.warn("Uploading CSV into S3 ends here******************");
 				
 			} catch (IOException e) {
@@ -358,8 +351,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					mapItemLevelCSVData(reCiterArticles,csvPrinter,personIdentifier);
 				
 				csvPrinter.flush();
-				NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
-				nnmodel.deleteFile(filePath);																	  
+				//NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
+				//nnmodel.deleteFile(filePath);																	  
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -368,45 +361,43 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	private boolean uploadCsvToS3(String csvContent,String fileName) {
        
-		String feedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
-		 byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
+		String FeedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         // Create InputStream from CSV content
         ByteArrayInputStream inputStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
         
+        // Set metadata
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(csvContent.length());
+       	metadata.setContentType("text/csv");
+     
         // Upload the CSV file
         try {
         	
-        	final S3Client s3 = S3Client.builder()
-        			 .credentialsProvider(DefaultCredentialsProvider.create())
-     	            .region(Region.of(System.getenv("AWS_REGION")))
-     	            .build();
-        			
-        	// Check if the bucket exists
-	        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
-	                .bucket(feedbackScoreBucketName)
-	                .build();
-	        try {
-				s3.headBucket(headBucketRequest);
-				log.info("Uploading CSV file to S3 bucket: " + feedbackScoreBucketName);
-			} catch (S3Exception e) {
-				if (e.statusCode() == 404) {
-					log.error("S3 bucket does not exist: " + feedbackScoreBucketName);
-				} else {
-					log.error("Error checking bucket existence: " + e.getMessage());
-				}
-				return false;
-			}
-	        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-					.bucket(feedbackScoreBucketName.toLowerCase()).key(fileName).contentType("text/csv").build();
-	        PutObjectResponse putObjectResponse = s3.putObject(putObjectRequest, RequestBody.fromBytes(csvBytes));
-	        
-	        if (putObjectResponse.sdkHttpResponse().isSuccessful()) {
-                log.info("CSV file uploaded successfully to S3 bucket: " + feedbackScoreBucketName);
-                return true;
-            } else {
-                log.error("Failed to upload CSV file to S3.");
+        	final AmazonS3 s3 = AmazonS3ClientBuilder
+					.standard()
+					.withCredentials(new DefaultAWSCredentialsProviderChain())
+					.withRegion(System.getenv("AWS_REGION"))
+					.build();
+			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) {
+        		log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+                PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), fileName, inputStream, metadata);
+                try{
+    				s3.putObject(putObjectRequest);
+    			    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+    			    return true;
+    			}
+    			catch(AmazonServiceException e) {
+    				// The call was transmitted successfully, but Amazon S3 couldn't process 
+    	            // it, so it returned an error response.
+    				log.error(e.getErrorMessage());
+    				return false;
+    			}
+        	}
+        	else {
+        		log.error("S3 bucket does not exist: " + FeedbackScoreBucketName);
                 return false;
-            }
+        	}
+        
         } catch (Exception e) {
             e.printStackTrace();
 			return false;			 
@@ -492,33 +483,13 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			});
 	}
 	
-	private Properties PropertiesLoader(String fileName) {
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream(fileName)) {
-            if (input == null) {
-                log.error("Sorry, unable to find " + fileName);
-                return null;
-            }
-            // Load the properties file
-            properties.load(input);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return properties;
-    }
-
-    private String getProperty(String key) {
-        return properties.getProperty(key);
-    }
-
     private boolean isS3UploadRequired()
     {
     	  	  
-  		 Properties properties = PropertiesLoader("application.properties");
-
-         // Retrieve properties
-         String awsS3Use = properties.getProperty("aws.s3.use");
+  	     // Retrieve properties
+         String awsS3Use = PropertiesUtils.get("aws.s3.use");
          boolean isS3Use = Boolean.parseBoolean(awsS3Use);
-         String dynamoDDLocal = properties.getProperty("aws.dynamoDb.local");
+         String dynamoDDLocal = PropertiesUtils.get("aws.dynamoDb.local");
          boolean isDynamoDBLocal = Boolean.parseBoolean(dynamoDDLocal);
          if(isS3Use && !isDynamoDBLocal) 
         	 return true;
@@ -545,8 +516,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
     	
 		String fileName = StringUtils.join(identity.getUid(), "-feedbackIdentityScoringInput.json");
 		boolean isS3UploadRequired = isS3UploadRequired();
-		String feedbackIdentityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
-		String isLinuxEnvFlag = getProperty("python.isLinux");
+		String feedbackIdentityS3BucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         try {
 			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																			   
         	  if(isS3UploadRequired) 
@@ -559,7 +529,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
                   boolean uploadJsonFileIntoS3 = uploadJsonFileIntoS3(fileName, jsonFile);
                   
                   if(uploadJsonFileIntoS3) {
-                	  nnmodel.deleteFile(jsonFile.toPath());
+                	//  nnmodel.deleteFile(jsonFile.toPath());
  					 log.info("File deleted successfully: " + jsonFile);
  				}
         	  }
@@ -571,7 +541,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  
-			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString,isLinuxEnvFlag);
+			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
 			  log.info("articlesIdentityFeedbaclScoreTotal length",articlesIdentityFeedbackScoreTotal!=null?articlesIdentityFeedbackScoreTotal.length():0);
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
 			  {  
@@ -755,43 +725,45 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	private boolean uploadJsonFileIntoS3(String keyName,File file)
 	{
-		String feedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
+		String FeedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         
 		// Upload the python file
-		 try (S3Client s3 = S3Client.builder()
-		            .credentialsProvider(DefaultCredentialsProvider.create())
-		            .region(Region.of(System.getenv("AWS_REGION")))
-		            .build()) {
-			// Check if the bucket exists
-		        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
-		                .bucket(feedbackScoreBucketName)
-		                .build();
-		        try {
-					s3.headBucket(headBucketRequest);
-					log.info("Uploading files to S3 bucket: " + feedbackScoreBucketName);
-				} catch (S3Exception e) {
-					if (e.statusCode() == 404) {
-						log.error("S3 bucket does not exist: " + feedbackScoreBucketName);
-						return false;
-					}
-				}
-		        // Upload file
-	            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-	                    .bucket(feedbackScoreBucketName.toLowerCase())
-	                    .key(keyName)
-	                    .contentType("application/json") // Set metadata
-	                    .build();
-	            PutObjectResponse putObjectResponse = s3.putObject(putObjectRequest, RequestBody.fromFile(Paths.get(file.getAbsolutePath())));
-
-	            if (putObjectResponse.sdkHttpResponse().isSuccessful()) {
-	                log.info("JSON file uploaded successfully to S3 bucket: " + feedbackScoreBucketName);
-	                return true;
-	            } else {
-	                log.error("Failed to upload JSON file to S3.");
-	                return false;
-	            }
+        try {
+        	
+        	final AmazonS3 s3 = AmazonS3ClientBuilder
+					.standard()
+					.withCredentials(new DefaultAWSCredentialsProviderChain())
+					.withRegion(System.getenv("AWS_REGION"))
+					.build();
+        	
+			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) 
+			{												
+	        	log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+	        	PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), keyName, file);
+	       
+	        	// Optionally, set metadata
+	            ObjectMetadata metadata = new ObjectMetadata();
+	            metadata.setContentType("application/json");
+	            putObjectRequest.setMetadata(metadata);
+	
 	            
-			
+	            try{
+					s3.putObject(putObjectRequest);
+				    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
+					return true;   
+				}
+				catch(AmazonServiceException e) {
+					// The call was transmitted successfully, but Amazon S3 couldn't process 
+		            // it, so it returned an error response.
+					log.error(e.getErrorMessage());
+					 return false;
+				}
+			}
+        	else {
+        		log.error("S3 bucket does not exist: " + FeedbackScoreBucketName);
+                return false;
+        	}
+        
         } catch (Exception e) {
             e.printStackTrace();
 			return false;			 

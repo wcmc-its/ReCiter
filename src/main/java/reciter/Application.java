@@ -43,6 +43,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.bohnman.squiggly.Squiggly;
 import com.github.bohnman.squiggly.web.RequestSquigglyContextProvider;
@@ -119,8 +120,13 @@ public class Application {
     
     private String pubmedService = System.getenv("PUBMED_SERVICE");
     
+    private String reciterScoringService = System.getenv("RECITERSCORING_SERVICE_URL");
+    
 	@Autowired 
 	private Environment env;
+	
+	@Value("${aws.reciterscoring.service.portNo}")
+	private String reciterScoringPortNumber;
 	
 	@Bean
 	public FilterRegistrationBean<SquigglyRequestFilter> squigglyRequestFilter() {
@@ -201,6 +207,45 @@ public class Application {
 			}
 		}
 		
+		
+		if(reciterScoringService != null && !reciterScoringService.isEmpty()) 
+		{
+			String urlString = "http://localhost:"+ reciterScoringPortNumber +"/2015-03-31/functions/function/invocations";
+	        String payload = "{}";  // Empty payload, as Lambda doesn't require specific input for health check
+	        
+	        ObjectMapper mapper = new ObjectMapper();
+	        
+	        Map<String, Object> payloadMap = new HashMap<>();
+	        payloadMap.put("category", "test");
+	        payloadMap.put("file_Name", "test");
+	        payloadMap.put("useS3Bucket", "feedbackScore");
+	        payloadMap.put("bucket_name", false);
+	        
+	        String payloadJson=null;
+			try {
+				payloadJson = mapper.writeValueAsString(payloadMap);
+			} catch (JsonProcessingException e) {
+				log.error("ReCiter---Scoring payload: Failed to serialize payload map to JSON "+e.getMessage());
+			}
+	        
+	        try {
+		            URL url = new URL(urlString);
+		            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		            connection.setRequestMethod("POST");
+		            connection.setRequestProperty("Content-Type", "application/json");
+		            connection.setDoOutput(true);
+		            connection.getOutputStream().write(payloadJson.getBytes("UTF-8"));
+		            int responseCode = connection.getResponseCode();
+		            if (responseCode == 200) {
+						log.info("The reciterScoring Service endpoint " + reciterScoringService + " provided is valid and reachable");
+					} else {
+						log.info("The ReciterScoring Service endpoint " + reciterScoringService + " provided is not valid and not reachable");
+					}
+	        }catch (Exception e) {
+				log.error("ReCiter---Scoring Container is not running. Please start the service: " + e.getMessage());
+			}
+		}
+		
 		if(pubmedService == null) {
 			log.warn("ReCiter Application will not run without a pubmed service. Please download from https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git and setup Pubmed Service.");
 		}
@@ -211,6 +256,9 @@ public class Application {
 			} else {
 				log.warn("The property `use.scopus.articles` is set to `false` in the application.properties file, so it will not be using the ReCiter Scopus Retrieval Tool. To install the ReCiter Scopus Retrieval Tool, you would need to go to https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool and set property `use.scopus.articles=true`.");
 			}
+		}
+		if(reciterScoringService == null || reciterScoringService.isEmpty()) {
+			log.warn("ReCiter Application will not run without a ReCiterScoring service. Please download from https://github.com/wcmc-its/ReCiter---Scoring.git and setup ReCiter---Scoring Service.");
 		}
 	}
 	

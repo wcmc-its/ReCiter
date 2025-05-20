@@ -44,7 +44,9 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	@Value("${aws.congito.userpool.region}")
     private String cogintoRegion;
-	    
+	
+	@Value("${aws.secretsmanager.consumer.secretName}")
+	private String consumerSecretName;
 	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -197,9 +199,9 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	// Fetch the Issuer URL from Secrets Manager
     private JsonNode getClientSecretsFromSecretsManager(String clientId) {
-    	JsonNode secretValueJson = awsSecretsManagerService.getClientSecret(clientId); 
-        if (secretValueJson != null) {
-            return secretValueJson; 
+    	JsonNode secretValueJson = awsSecretsManagerService.getSecrets(consumerSecretName); 
+        if (secretValueJson != null && clientId!=null && !clientId.equalsIgnoreCase("")) {
+            return secretValueJson.get(clientId); 
         }
         return null;
     }

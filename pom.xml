@@ -412,6 +412,17 @@
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
 		</dependency>
+		
+		 <dependency>
+		  <groupId>com.amazonaws</groupId>
+		  <artifactId>aws-java-sdk-lambda</artifactId>
+		  <version>1.12.742</version> <!-- Use the latest available version -->
+		</dependency>
+		<dependency>
+		  <groupId>com.amazonaws</groupId>
+		  <artifactId>aws-java-sdk-core</artifactId>
+		  <version>1.12.742</version>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
