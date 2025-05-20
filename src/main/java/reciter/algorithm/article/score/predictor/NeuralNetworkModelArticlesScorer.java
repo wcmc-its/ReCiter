@@ -301,10 +301,10 @@ public class NeuralNetworkModelArticlesScorer {
 	            InvokeResult result = client.invoke(request);
 	            String response = new String(result.getPayload().array(), StandardCharsets.UTF_8);
 	            log.info("AWS Lambda Response: {}" , response);
-	            JsonNode json = mapper.readTree(response.toString());
-		        String authorshipLikelihoodScore = mapper.writeValueAsString(json.get("authorshiplikelihoodScores"));
-		        log.info("AWS Lambda Response: {}",authorshipLikelihoodScore);
-		        int returnCode = Integer.parseInt(mapper.writeValueAsString(json.get("returncode")));
+	            JSONObject outer = new JSONObject(response);
+	            String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
+		        log.info("AWS Lambda authorshipLikelihoodScore Response: {}",authorshipLikelihoodScore);
+		        int returnCode = outer.getInt("returncode");
 		        log.info("returnCode: ",returnCode);
 		        if(returnCode==0)
 		        	return new JSONArray(authorshipLikelihoodScore);;
