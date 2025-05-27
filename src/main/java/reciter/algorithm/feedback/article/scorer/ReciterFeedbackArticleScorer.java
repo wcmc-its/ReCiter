@@ -57,10 +57,6 @@ import reciter.algorithm.evidence.targetauthor.feedback.institution.InstitutionF
 import reciter.algorithm.evidence.targetauthor.feedback.institution.strategy.InstitutionFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.journal.JournalFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.journal.strategy.JournalFeedbackStrategy;
-//import reciter.algorithm.evidence.targetauthor.feedback.journaldomain.JournalDomainFeedbackStrategyContext;
-//import reciter.algorithm.evidence.targetauthor.feedback.journaldomain.strategy.JournalDomainFeedbackStrategy;
-//import reciter.algorithm.evidence.targetauthor.feedback.journalfield.JournalFieldFeedbackStrategyContext;
-//import reciter.algorithm.evidence.targetauthor.feedback.journalfield.strategy.JournalFieldFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.JournalSubFieldFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.strategy.JournalSubFieldFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.keyword.KeywordFeedbackStrategyContext;
@@ -337,8 +333,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					mapItemLevelCSVData(reCiterArticles,csvPrinter,personIdentifier);
 				
 				csvPrinter.flush();
-				//NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
-				//nnmodel.deleteFile(filePath);																	  
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -424,7 +418,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 							organizationFeedbackScore,
 							targetAuthorNameFeedbackScore,
 							yearFeedbackScore
-						//	totalFeedbackScoreStr
 							);
 					
 					
@@ -665,13 +658,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				 				 .map(article -> {
 				 					 // Find the JSON object that corresponds to this article's ID
 				 		        	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
-				 		        	log.info("After setting the score to article***",reCiterArticle.getAuthorshipLikelihoodScore());
-				 		            // count the targetAuthors per article
+					 		            // count the targetAuthors per article
 				 		        	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
 				 		                     .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
 				 		                     .count();  // Count them
-				 		        	 	log.info("Article: " + article.getArticleId() + ", Target Author Count: " + targetAuthorCount);
-				 		                 //if the targetAuthorCount is zero then impose the penality in the article authorshipLikelyhood score.
+					 		                 //if the targetAuthorCount is zero then impose the penality in the article authorshipLikelyhood score.
 				 		                 article.setTargetAuthorCount(targetAuthorCount);
 				 		                 if(targetAuthorCount == 0)
 				 		                 {

@@ -54,6 +54,7 @@ public class NeuralNetworkModelArticlesScorer {
 	public JSONArray executeArticleScorePredictor(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException
 	{
 	
+		
 		StopWatch stopWatch = new StopWatch(category);
 		stopWatch.start(category);
 		JSONArray authorshipLikelihoodScore;
