@@ -460,7 +460,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r7.getPubMedArticles());
 				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
-				
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
@@ -525,6 +524,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			scopusService.save(scopusArticlesByDoi);
 		}
 		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
+		
 	}
 	
 	
