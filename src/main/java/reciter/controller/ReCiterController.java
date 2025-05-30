@@ -463,7 +463,7 @@ public class ReCiterController {
     		@RequestParam(required = false) FilterFeedbackType filterByFeedback, 
     		@RequestParam(required = false) boolean analysisRefreshFlag,
     		@RequestParam(required = false) RetrievalRefreshFlag retrievalRefreshFlag) {
-    	StopWatch stopWatch = new StopWatch("Feature generation for UID");
+    	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
         
         final double totalScore;

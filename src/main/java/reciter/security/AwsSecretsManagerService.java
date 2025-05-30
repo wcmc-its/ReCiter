@@ -2,6 +2,7 @@ package reciter.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +14,7 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
+import software.amazon.awssdk.regions.Region;
 
 @Service
 public class AwsSecretsManagerService {
@@ -20,14 +22,19 @@ public class AwsSecretsManagerService {
 	private static final Logger log = LoggerFactory.getLogger(AwsSecretsManagerService.class);
 	
 	private static final ObjectMapper objectMapper = new ObjectMapper();  
-  
+	
+	
+	@Value("${aws.secretsmanager.region}")
+    private String secretManagerRegion;
+	
     public JsonNode getSecrets(String secretName) {
         // Initialize the Secrets Manager client
         SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
+        		.region(Region.of(secretManagerRegion)) 
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
 
-        log.info("secretName pulled from application.properties",secretName);
+        log.info("secretName pulled from application.properties" + secretName);
         // Fetch the secret from AWS Secrets Manager
         GetSecretValueRequest valueRequest = GetSecretValueRequest.builder()
                 .secretId(secretName)
@@ -74,7 +81,7 @@ public class AwsSecretsManagerService {
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
 
-        log.info("secretName pulled from application.properties",secretName);
+        log.info("secretName pulled from application.properties" + secretName);
         // Fetch the secret from AWS Secrets Manager
         GetSecretValueRequest valueRequest = GetSecretValueRequest.builder()
                 .secretId(secretName)

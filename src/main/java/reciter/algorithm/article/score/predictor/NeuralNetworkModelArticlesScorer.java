@@ -23,7 +23,6 @@ import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.security.AwsSecretsManagerService;
@@ -39,7 +38,7 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	private static final String LAMBDA_FUNCTION_INVOCATION_URL = "local.lambda.function.invocation.url";
 	
-	private static final String LAMBDA_FUNCTION_REGION = "aws.secretsmanager.region";
+	private static final String LAMBDA_FUNCTION_REGION = "aws.lambda.region";
 	
     private AwsSecretsManagerService awsSecretsManagerService; // Inject the service to get the secret
 	
@@ -54,29 +53,29 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	public JSONArray executeArticleScorePredictor(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException
 	{
-
+	
 		StopWatch stopWatch = new StopWatch(category);
 		stopWatch.start(category);
 		JSONArray authorshipLikelihoodScore;
-
-		if (isS3UploadRequiredString != null && !isS3UploadRequiredString.equalsIgnoreCase("")
-				&& (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) {
-			authorshipLikelihoodScore = callLocalLambda(category, articleScoreModelFileName, articleDataFilename,
-					s3BucketName, isS3UploadRequiredString);
-		} else {
-			log.info("Getting Secret Name from the Properties", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
-			String secretValueJson = this.awsSecretsManagerService
-					.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
-			ObjectMapper mapper = new ObjectMapper();
-			Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);
-			authorshipLikelihoodScore = callAwsLambda(category, articleScoreModelFileName, articleDataFilename,
-					s3BucketName, isS3UploadRequiredString, secretMap.get(LAMBDA_NAME));
-		}
+		
+		 if (isS3UploadRequiredString!=null && !isS3UploadRequiredString.equalsIgnoreCase("") && (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) 
+			{  
+			 	authorshipLikelihoodScore = callLocalLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
+	        } else {
+	        	log.info("Getting Secret Name from the Properties: {}", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
+	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
+	        	ObjectMapper mapper = new ObjectMapper();
+	        	Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);
+	        	authorshipLikelihoodScore = callAwsLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString,secretMap.get(LAMBDA_NAME));
+	        }
+		
+		
+	  
 		stopWatch.stop();
 		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		return authorshipLikelihoodScore;
 	}
-
+	
 	// Helper method to find JSONObject by article
 		private static void findJSONObjectById(JSONArray jsonArray, long articleId) {
 		    for (int i = 0; i < jsonArray.length(); i++) {
@@ -101,7 +100,6 @@ public class NeuralNetworkModelArticlesScorer {
 			URL url=null;
 			HttpURLConnection conn=null;
 			try {
-
 				url = new URL(reciterScoringServiceUrl + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL));
 				conn = (HttpURLConnection) url.openConnection();
 				if(conn!=null)
@@ -128,32 +126,40 @@ public class NeuralNetworkModelArticlesScorer {
 			try {
 				payload = mapper.writeValueAsString(payloadMap);
 			} catch (JsonProcessingException e) {
-				log.error("Failed to serialize payload map to JSON callLocalLambda call "+e.getMessage());
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 	        
 			try {
 				 if(conn!=null)
-					{
-						try (OutputStream os = conn.getOutputStream()) {
-							os.write(payload.getBytes(StandardCharsets.UTF_8));
-						}
-						int responseCode = conn.getResponseCode();
-						StringBuilder response = new StringBuilder();
-
-						try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-							String output;
-							while ((output = reader.readLine()) != null) {
-								response.append(output);
-							}
-						}
-						JSONObject outer = new JSONObject(response.toString());
-						String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
-						int returnCode = outer.getInt("returncode");
-						JSONArray scoringArray = new JSONArray(authorshipLikelihoodScore);
-
-						if (returnCode == 0)
-							return scoringArray;
-					}
+				 {	 
+				    // Write payload to Lambda container
+				    try (OutputStream os = conn.getOutputStream()) {
+				        os.write(payload.getBytes(StandardCharsets.UTF_8));
+				    }
+				    // Read response from Lambda container
+				 
+				    // Now it's safe to read the response
+			        int responseCode = conn.getResponseCode();
+			     // Read response from Lambda
+			        StringBuilder response = new StringBuilder();
+			        
+			        try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+				        String output;
+				        while ((output = reader.readLine()) != null) {
+				            response.append(output);
+				           
+				        }
+				    }
+			     // Parse the response
+			        JSONObject outer = new JSONObject(response.toString());
+			        String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
+			        int returnCode = outer.getInt("returncode");
+			        JSONArray scoringArray = new JSONArray(authorshipLikelihoodScore);
+			        
+			        if(returnCode==0)
+			        	return scoringArray;
+				}
 
 			} catch (IOException | RuntimeException e) {
 			    e.printStackTrace(); // You may want to log this properly
@@ -165,13 +171,13 @@ public class NeuralNetworkModelArticlesScorer {
 		 */
 	    private JSONArray callAwsLambda(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
 	       
-	    	log.info("LambdaFunctionName",lambdaFunctionName);
-	    	log.info("LambdaFunctionRegion",PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
-			log.info("category",category);
-			log.info("articleScoreModelFileName",articleScoreModelFileName);
-			log.info("articleDataFilename",articleDataFilename);
-			log.info("s3BucketName",s3BucketName);
-			log.info("isS3UploadRequiredString",isS3UploadRequiredString);
+	    	log.info("LambdaFunctionName: {}",lambdaFunctionName);
+	    	log.info("LambdaFunctionRegion: {}",PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
+			log.info("category: {}",category);
+			log.info("articleScoreModelFileName: {}",articleScoreModelFileName);
+			log.info("articleDataFilename: {}",articleDataFilename);
+			log.info("s3BucketName:{}",s3BucketName);
+			log.info("isS3UploadRequiredString:{}",isS3UploadRequiredString);
 	    	AWSLambda client = AWSLambdaClientBuilder.standard()
 	                .withRegion(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)) 
 	                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
@@ -201,17 +207,17 @@ public class NeuralNetworkModelArticlesScorer {
 	        try {
 	            InvokeResult result = client.invoke(request);
 	            String response = new String(result.getPayload().array(), StandardCharsets.UTF_8);
-	            log.info("AWS Lambda Response: " , response);
-	            JsonNode json = mapper.readTree(response.toString());
-		        String authorshipLikelihoodScore = mapper.writeValueAsString(json.get("authorshiplikelihoodScores"));
-		        log.info("AWS Lambda Response: ",authorshipLikelihoodScore);
-		        int returnCode = Integer.parseInt(mapper.writeValueAsString(json.get("returncode")));
+	            log.info("AWS Lambda Response: {}" , response);
+	            JSONObject outer = new JSONObject(response);
+	            String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
+		        log.info("AWS Lambda authorshipLikelihoodScore Response: {}",authorshipLikelihoodScore);
+		        int returnCode = outer.getInt("returncode");
 		        log.info("returnCode: ",returnCode);
 		        if(returnCode==0)
 		        	return new JSONArray(authorshipLikelihoodScore);;
 	          
 	        } catch (Exception e) {
-	            log.error("Lambda invocation failed: " , e.getMessage());
+	            log.error("Lambda invocation failed: {}" , e.getMessage());
 	            e.printStackTrace();
 	        }
 	        return null;

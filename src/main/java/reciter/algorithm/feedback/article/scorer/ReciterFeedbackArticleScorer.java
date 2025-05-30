@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -275,13 +274,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
 				csvPrinter.flush();
 				NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																	  
-				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				/*if(uploadCsvToS3) {
-					 nnmodel. deleteFile(filePath);
-					 log.info("File deleted successfully: " + filePath);
-				}*/
-				log.warn("Uploading CSV into S3 ends here******************");
+				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -327,14 +320,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					mapItemLevelCSVData(reCiterArticles,csvPrinter,personIdentifier);
 				
 				csvPrinter.flush();
-				log.warn("Uploading CSV into S3 starts here******************",outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				boolean uploadCsvToS3 = uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
-				/*NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
-				if(uploadCsvToS3) {
-					 nnmodel.deleteFile(filePath);
-					 log.info("File deleted successfully: " + filePath);
-				}*/
-				log.warn("Uploading CSV into S3 ends here******************");
+				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -526,12 +512,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         		// Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, articleIdentityFeedbackScore);
                   log.info("JSON data written to file successfully: ", jsonFile.getAbsolutePath());
-                  boolean uploadJsonFileIntoS3 = uploadJsonFileIntoS3(fileName, jsonFile);
-                  
-                  if(uploadJsonFileIntoS3) {
-                	//  nnmodel.deleteFile(jsonFile.toPath());
- 					 log.info("File deleted successfully: " + jsonFile);
- 				}
+                  uploadJsonFileIntoS3(fileName, jsonFile);
         	  }
         	  else
         	  {	  
@@ -542,11 +523,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  
 			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
-			  log.info("articlesIdentityFeedbaclScoreTotal length",articlesIdentityFeedbackScoreTotal!=null?articlesIdentityFeedbackScoreTotal.length():0);
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
 			  {  
 				  List<ReCiterArticle> articlesScores =  mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
-			  		articlesScores.forEach(article -> log.info("articleId :", article.getArticleId(), "authorshipLikelihoodScore : ", article.getAuthorshipLikelihoodScore() ));
 			  	 return articlesScores;	
 			  }  	
 				  
@@ -713,9 +692,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	        	log.info("both articleIds are matching and Score is ***",jsonObject.getDouble("scoreTotal"));
 	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
-	        	log.info("After setting the score to article***",article.getAuthorshipLikelihoodScore());
 	            return article; // Return the modified article
 	        }
 	    }
