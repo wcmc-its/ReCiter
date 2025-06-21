@@ -2,14 +2,12 @@ package reciter.algorithm.cluster.article.scorer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,15 +70,13 @@ import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.engine.analysis.evidence.GenderEvidence;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.engine.analysis.evidence.NonTargetAuthorScopusAffiliation;
-import reciter.engine.analysis.evidence.RelationshipEvidence;
-import reciter.engine.analysis.evidence.RelationshipNegativeMatch;
-import reciter.engine.analysis.evidence.RelationshipPostiveMatch;
 import reciter.engine.analysis.evidence.TargetAuthorPubmedAffiliation;
 import reciter.engine.analysis.evidence.TargetAuthorScopusAffiliation;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.utils.PropertiesUtils;
 
 /**
  * @author szd2013
@@ -202,8 +198,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private List<StrategyContext> strategyContexts;
 
 	public static StrategyParameters strategyParameters;
-	
-	private Properties properties = new Properties();
 	
 	ExecutorService executorService = Executors.newWorkStealingPool(13);
 	
@@ -380,9 +374,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		String timestamp = now.format(formatter);
 
 		String fileName = StringUtils.join(identity.getUid(), "-identityOnlyScoringInput.json");
-		//PropertiesLoader("application.properties");// loading application.properties before retrieving specific property;
 		boolean isS3UploadRequired = isS3UploadRequired();
-		String identityS3BucketName = getProperty("aws.s3.feedback.score.bucketName");
+		String identityS3BucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
 		
         try {
 			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																			   
@@ -392,14 +385,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
         		// Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, articleIdentityScore);
-                  boolean uploadJsonFileIntoS3 = uploadJsonFileIntoS3(fileName, jsonFile);
-                  if(uploadJsonFileIntoS3) {
-                	  
-                	  nnmodel.deleteFile(jsonFile.toPath());
-                	  slf4jLogger.info("File deleted successfully: " + jsonFile);
- 				}
-
-        	  }
+                  uploadJsonFileIntoS3(fileName, jsonFile);
+         	  }
         	  else
         	  {	  
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
@@ -421,29 +408,27 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
     private static ReCiterArticleFeedbackIdentityScore mapToIdentityScore(ReCiterArticle article) {
     	
         try {
-        	
-        	 
-        	return new ReCiterArticleFeedbackIdentityScore(
-														    article.getArticleId(),
-														    getArticleCountScore(article.getArticleCountEvidence()),
-														    getAuthorsCountScore(article.getAuthorCountEvidence()),
-														    getEducationYearScore(article.getEducationYearEvidence()),
-														    getEmailMatchScore(article.getEmailEvidence()),
-														    getGenderScore(article.getGenderEvidence()),
-														    article.getGrantEvidenceTotalScore(), 
-														    getJournalSubfieldScore(article.getJournalCategoryEvidence()),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchFirstScore),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchLastScore),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
-														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-														    article.getRelationshipEvidence().getRelationshipPositiveMatchScore(),
-														    article.getRelationshipEvidence().getRelationshipNegativeMatchScore(),
-														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
-														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
-														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
-														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
-														    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
+	    		return new ReCiterArticleFeedbackIdentityScore(
+															    article.getArticleId(),
+															    getArticleCountScore(article.getArticleCountEvidence()),
+															    getAuthorsCountScore(article.getAuthorCountEvidence()),
+															    getEducationYearScore(article.getEducationYearEvidence()),
+															    getEmailMatchScore(article.getEmailEvidence()),
+															    getGenderScore(article.getGenderEvidence()),
+															    article.getGrantEvidenceTotalScore(), 
+															    getJournalSubfieldScore(article.getJournalCategoryEvidence()),
+															    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchFirstScore),
+															    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchLastScore),
+															    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
+															    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
+															    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
+															    article.getRelationshipEvidence().getRelationshipPositiveMatchScore(),
+															    article.getRelationshipEvidence().getRelationshipNegativeMatchScore(),
+															    article.getRelationshipEvidence().getRelationshipIdentityCount(),
+															    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
+															    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+															    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+															    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -473,12 +458,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 // Function to calculate likelihood adjustment
     private static Function<Double, Double> calculateLikelihoodAdjustment = authorCount -> {
         // Baseline likelihood (at authorCountThreshold)
-    	
         double y_baseline = strategyParameters.getInCoefficent() * Math.log(strategyParameters.getAuthorCountThreshold()) + strategyParameters.getConstantCoefficeint();
-
         // Likelihood for the given author count
         double y = authorCount > 0 ? strategyParameters.getInCoefficent() * Math.log(authorCount) + strategyParameters.getConstantCoefficeint() : y_baseline;
-
         // Adjustment is scaled by gamma
         return strategyParameters.getAuthorCountAdjustmentGamma() * (y - y_baseline);
     };
@@ -590,37 +572,19 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	}
 	private boolean isS3UploadRequired()
     {
-    	  	  
-  		 Properties properties = PropertiesLoader("application.properties");
-
          // Retrieve properties
-         String awsS3Use = properties.getProperty("aws.s3.use");
+         String awsS3Use = PropertiesUtils.get("aws.s3.use");
          boolean isS3Use = Boolean.parseBoolean(awsS3Use);
-         String dynamoDDLocal = properties.getProperty("aws.dynamoDb.local");
+         String dynamoDDLocal = PropertiesUtils.get("aws.dynamoDb.local");
          boolean isDynamoDBLocal = Boolean.parseBoolean(dynamoDDLocal);
          if(isS3Use && !isDynamoDBLocal) 
         	 return true;
     	return false;
     }
-	private Properties PropertiesLoader(String fileName) {
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream(fileName)) {
-            if (input == null) {
-            	slf4jLogger.error("Sorry, unable to find " , fileName);
-                return null;
-            }
-            // Load the properties file
-            properties.load(input);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return properties;
-    }
-	private String getProperty(String key) {
-        return properties.getProperty(key);
-    }
+	
 	private boolean uploadJsonFileIntoS3(String keyName,File file)
 	{
-		String FeedbackScoreBucketName = getProperty("aws.s3.feedback.score.bucketName");
+		String FeedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         
 		// Upload the python file
         try {

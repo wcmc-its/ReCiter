@@ -245,7 +245,7 @@ public class ReCiterController {
         try {
             aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
         } catch (IOException e) {
-            log.info("Failed to retrieve articles.", e);
+            log.error("Failed to retrieve articles."+e);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -301,7 +301,7 @@ public class ReCiterController {
                 try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 } catch (IOException e) {
-                    log.info("Failed to retrieve articles.", e);
+                    log.error("Failed to retrieve articles."+ e);
                     stopWatch.stop();
                     log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
@@ -320,16 +320,16 @@ public class ReCiterController {
             	try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
                 } catch (IOException e) {
-                    log.info("Failed to retrieve articles.", e);
+                    log.error("Failed to retrieve articles."+e);
                     stopWatch.stop();
-                    log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+                    log.error(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                 }
             	
             	
             }
         } catch (EmptyResultDataAccessException e) {
-            log.info("No such entity exists: ", e);
+            log.error("No such entity exists: "+e);
         }
 
         stopWatch.stop();
@@ -474,8 +474,7 @@ public class ReCiterController {
         } else {
         	totalScore = authorshipLikelihoodScore; // Configuring the totalScore in multiple of 10's in application.properties file
         }
-        System.out.println("totalScore from the request" + totalScore);
-        log.info("totalScore from the request" , totalScore);
+        log.info("totalScore from the request" + totalScore);
         EngineOutput engineOutput;
         EngineParameters parameters;
         List<ReCiterArticleFeature> originalFeatures = new ArrayList<ReCiterArticleFeature>();
@@ -979,7 +978,7 @@ public class ReCiterController {
             
             
         } catch (EmptyResultDataAccessException e) {
-            log.info("No such entity exists: ", e);
+            log.error("No such entity exists: "+ e);
         }
         log.info("eSearchResults size {}", eSearchResults);
 		/*

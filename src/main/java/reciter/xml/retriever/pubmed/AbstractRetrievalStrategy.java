@@ -151,7 +151,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 					slf4jLogger.info("Constructed strict query {}", pubMedQueryType.getStrictQuery().getQuery());
 	//				String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
 					int strictSearchHandler = getNumberOfResults(constructedStrictCountQuery);
-	
+					slf4jLogger.info("strictSearchHandler : {}", strictSearchHandler);
 					pubMedQueryType.getStrictQuery().setNumResult(strictSearchHandler);
 	
 					// only retrieve articles if number is less than threshold, otherwise the article download
@@ -180,9 +180,10 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 				PubMedQuery constructedStrictCountQuery = pubMedQueryType.getStrictCountQuery().getQuery();
 				slf4jLogger.info("Constructed strict count query {}", constructedStrictCountQuery);
 				slf4jLogger.info("Constructed strict query {}", pubMedQueryType.getStrictQuery().getQuery());
+	
 //				String strictQuery = URLEncoder.encode(constructedStrictQuery, "UTF-8");
 				int strictSearchHandler = getNumberOfResults(constructedStrictCountQuery);
-
+				slf4jLogger.info("strictSearchHandler in else if handler >0 :{}", strictSearchHandler);
 				pubMedQueryType.getStrictQuery().setNumResult(strictSearchHandler);
 
 				// only retrieve articles if number is less than threshold, otherwise the article download
@@ -204,6 +205,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		slf4jLogger.info("Found " + pubMedArticles.size() + " PubMed articles for " + identity.getUid() 
 		+ " using retrieval strategy [" + getRetrievalStrategyName() + "]");
+		
+		slf4jLogger.info("pubMedQueryResults : {}", pubMedQueryResults.size());
 
 		return new RetrievalResult(pubMedArticles, pubMedQueryResults);
 	}

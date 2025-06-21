@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +23,12 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+
+
 @Service
 public class S3UserLogHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(S3UserLogHandler.class);
     private AmazonS3 s3Client;
     private final ObjectMapper objectMapper;
 
@@ -65,9 +70,9 @@ public class S3UserLogHandler {
         }
         catch (AmazonS3Exception e) {
             if (e.getStatusCode() == 404) {
-                System.out.println("Object does not exist.");
+                log.warn("Object does not exist.");
             } else {
-                System.out.println("Error: " + e.getMessage());
+                log.error("Error: " + e.getMessage());
             }
         }
         // Check if file already exists

@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
@@ -74,7 +75,7 @@ public class SecondInitialRetrievalStrategy extends AbstractNameRetrievalStrateg
 				return first;
 			}
 			
-			Iterator<AuthorName> iter = identity.getAlternateNames().iterator();
+			Iterator<AuthorName> iter =  identity.getAlternateNames() != null ? identity.getAlternateNames().iterator() : Collections.emptyIterator();
 			
 			final StringBuilder buf = new StringBuilder();
 			if(first != null) {
