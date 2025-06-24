@@ -44,7 +44,7 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 		if (PATTERN_1.matcher(authorFirstname).matches() || PATTERN_2.matcher(authorFirstname).matches()) {
 			return authorFirstname + " " + authorLastname;
 		} else {
-			return authorFirstname.split(" ")[0] + " " + authorLastname;
+			return authorFirstname + " " + authorLastname;
 		}
 	}
 

@@ -73,9 +73,11 @@ public class APISecurityConfig {
     
 	/**
 	 * @author szd2013
-	 * This will intercept and request for consumer api and authenticate its api key
+	 * This will intercept and request for consumer api and authenticate its api key 
+	 * This code will be restored once the cognito pool is created for other applications to use reciter. 
+	 * For now it will continue with static API Key.
 	 */
-	@Configuration
+	/*@Configuration
 	@Order(1)
     public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
@@ -109,6 +111,52 @@ public class APISecurityConfig {
     		        .antMatchers("/reciter/article-retrieval/**");
     	    	} 
     	    }
-     }
+     }*/
+	 @Configuration
+	 @Order(1)
+	 public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
+	    	
+			private final String principalRequestHeader = "api-key";
+			
+	        private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
+	        
+	        @Value("${security.enabled:true}")
+		    private boolean securityEnabled;
+	        
+	    	    @Override
+	    	    protected void configure(HttpSecurity httpSecurity) throws Exception {
+	    	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
+	    	        filter.setAuthenticationManager(new AuthenticationManager() {
+	    	
+	    	            @Override
+	    	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+	    	                String principal = (String) authentication.getPrincipal();
+	    	                if (!principalRequestValue.equals(principal))
+	    	                {
+	    	                    throw new BadCredentialsException("The API key was not found or not the expected value.");
+	    	                }
+	    	                authentication.setAuthenticated(true);
+	    	                return authentication;
+	    	            }
+	    	        });
+	    	        
+	    	        if(securityEnabled) {
+		    	        httpSecurity.
+		    	            antMatcher("/reciter/article-retrieval/**").
+		    	            csrf().disable().
+		    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
+		    	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+	    	        }
+	    	    }
+	    	    
+	    	    @Override
+	    	    public void configure(WebSecurity web) throws Exception {
+	    	    	if(!securityEnabled) {
+	    		        web
+	    		        .ignoring()
+	    		        .antMatchers("/reciter/article-retrieval/**");
+	    	    	} 
+	    	    }
+	     }
 	
 }
