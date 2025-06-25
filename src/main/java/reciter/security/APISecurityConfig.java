@@ -63,48 +63,48 @@ public class APISecurityConfig {
      * This will intercept and request for consumer api and authenticate its api key
      */
     @Configuration
-public static class ConsumerApiSecurityConfig {
-        
-        private final String principalRequestHeader = "api-key";
-        private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
+    public static class ConsumerApiSecurityConfig {
+            
+            private final String principalRequestHeader = "api-key";
+            private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
 
-        private final JwtTokenAuthenticationFilter filter;
-        
-        @Value("${security.enabled:true}")
-        private boolean securityEnabled;
-        
-        public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter) {
-            this.filter = filter;
-        }
+            private final JwtTokenAuthenticationFilter filter;
+            
+            @Value("${security.enabled:true}")
+            private boolean securityEnabled;
+            
+            public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter) {
+                this.filter = filter;
+            }
 
-        @Bean
-        @Order(1)
-        public SecurityFilterChain consumerFilterChain(HttpSecurity http) throws Exception {
-            if (!securityEnabled) {
+            @Bean
+            @Order(1)
+            public SecurityFilterChain consumerFilterChain(HttpSecurity http) throws Exception {
+                if (!securityEnabled) {
+                    http.csrf(csrf -> csrf.disable())
+                        .securityMatcher("/reciter/article-retrieval/**")
+                        .authorizeRequests(auth -> auth.anyRequest().permitAll());
+                    return http.build();
+                }
+                
+                APIKeyAuthFilter apiKeyAuthFilter = new APIKeyAuthFilter(principalRequestHeader);
+                apiKeyAuthFilter.setAuthenticationManager(authentication -> {
+                    String principal = (String) authentication.getPrincipal();
+                    if (principal == null || !principalRequestValue.equals(principal)) {
+                        throw new BadCredentialsException("The API key was not found or not the expected value.");
+                    }
+                    authentication.setAuthenticated(true);
+                    return authentication;
+                });
+                
                 http.csrf(csrf -> csrf.disable())
                     .securityMatcher("/reciter/article-retrieval/**")
-                    .authorizeRequests(auth -> auth.anyRequest().permitAll());
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                    .authorizeRequests(auth -> auth.anyRequest().authenticated());
+                    
                 return http.build();
             }
-            
-            APIKeyAuthFilter apiKeyAuthFilter = new APIKeyAuthFilter(principalRequestHeader);
-            apiKeyAuthFilter.setAuthenticationManager(authentication -> {
-                String principal = (String) authentication.getPrincipal();
-                if (principal == null || !principalRequestValue.equals(principal)) {
-                    throw new BadCredentialsException("The API key was not found or not the expected value.");
-                }
-                authentication.setAuthenticated(true);
-                return authentication;
-            });
-            
-            http.csrf(csrf -> csrf.disable())
-                .securityMatcher("/reciter/article-retrieval/**")
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeRequests(auth -> auth.anyRequest().authenticated());
-                
-            return http.build();
         }
+    	
     }
-	
-}
