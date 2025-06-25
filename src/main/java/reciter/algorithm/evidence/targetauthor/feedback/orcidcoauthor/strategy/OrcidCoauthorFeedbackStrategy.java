@@ -140,7 +140,49 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 									
 									
 								}
-								scoreAll = computeScore(sumAccepted, sumRejected);
+								else
+								{
+									int orcidCountAccepted=0;
+									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
+									{	
+										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
+										{	
+											orcidCountAccepted  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
+											if(orcidCountAccepted > 0)
+											{	
+												weightageScore = 1.0 / (double)orcidCountAccepted; 
+												
+											}
+										}
+										if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
+												&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
+												nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(ACCEPTED))
+											countAccepted = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(ACCEPTED));
+										sumAccepted = weightageScore * countAccepted;
+									}
+									
+									int orcidCountRejected=0;
+									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
+									{	
+										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
+										{
+											orcidCountRejected  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
+											if(orcidCountRejected > 0)
+											{	
+												weightageScore = 1.0 / (double)orcidCountRejected; 
+												
+											}
+										}
+									}
+									if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
+											&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
+											nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(REJECTED))
+										countRejected = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(REJECTED));
+									
+									sumRejected =  weightageScore * countRejected;
+									scoreAll = computeScore(sumAccepted, sumRejected);
+								}
+								
 				
 							double feedbackScore= determineFeedbackScore(0,0.0, 0.0, scoreAll);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
