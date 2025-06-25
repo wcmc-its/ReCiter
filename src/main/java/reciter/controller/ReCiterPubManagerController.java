@@ -1,11 +1,10 @@
 package reciter.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,7 +21,7 @@ import reciter.service.ApplicationUserService;
 
 @Tag(name = "ReCiterPubManagerController", description = "Operations on ReCiter publication manager.")
 @Slf4j
-@Controller
+@RestController
 public class ReCiterPubManagerController {
 	
 	@Autowired
@@ -39,7 +38,6 @@ public class ReCiterPubManagerController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PostMapping(value = "/reciter/publication/manager/authenticate", produces = "application/json")
-    @ResponseBody
     public boolean authenticate(@RequestParam(value = "username") String uid, @RequestParam String password) {
         StopWatch stopWatch = new StopWatch("Authenticate user for ReCiter publications manager");
         stopWatch.start("Authenticate user for ReCiter publications manager");
@@ -68,7 +66,6 @@ public class ReCiterPubManagerController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PostMapping(value = "/reciter/publication/manager/user/create", produces = "application/json")
-    @ResponseBody
     public boolean createUser(@RequestParam(value = "username") String uid, @RequestParam(value = "name") String username, @RequestParam(value = "password") String password) {
         StopWatch stopWatch = new StopWatch("Create user for ReCiter publications manager");
         stopWatch.start("Create user for ReCiter publications manager");

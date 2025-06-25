@@ -448,7 +448,7 @@ public class ReCiterControllerTest {
 
 	@Test
 	public void testRetrieveArticlesWithoutRefreshFlag() throws IOException {
-		LocalDate testDate = LocalDate.of(2025, 5, 5);
+		LocalDate testDate = LocalDate.of(2025, 6, 5);
 		// Arrange
 		when(identityService.findAll()).thenReturn(identityList);
 

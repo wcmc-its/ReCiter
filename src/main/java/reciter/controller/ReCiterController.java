@@ -35,9 +35,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -86,7 +86,7 @@ import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Tag(name = "ReCiterController", description = "Operations on ReCiter API.")
 @Slf4j
-@Controller
+@RestController
 public class ReCiterController {
 
     @Autowired
@@ -139,7 +139,6 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description  = "The resource you were trying to reach is not found")
     })
     @PostMapping(value = "/reciter/goldstandard", produces = "application/json")
-    @ResponseBody
     public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
@@ -174,7 +173,6 @@ public class ReCiterController {
     		@ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PutMapping(value = "/reciter/goldstandard", produces = "application/json")
-    @ResponseBody
     public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
         stopWatch.start("Update GoldStandard with List");
@@ -204,7 +202,6 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/goldstandard/{uid}", produces = "application/json")
-    @ResponseBody
     public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Get the goldStandard by passing an uid");
         stopWatch.start("Get the goldStandard by passing an uid");
@@ -225,7 +222,6 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/retrieve/articles/", produces = "application/json")
-    @ResponseBody
     public ResponseEntity retrieveArticles(@RequestParam(required = false) RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for all UID in Identity Table");
         stopWatch.start("Retrieve Articles for all UID in Identity Table");
@@ -238,7 +234,7 @@ public class ReCiterController {
         try {
             aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
         } catch (IOException e) {
-            log.info("Failed to retrieve articles.", e);
+            log.error("Failed to retrieve articles."+e);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -256,7 +252,6 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/retrieve/articles/by/uid", produces = "application/json")
-    @ResponseBody
     public ResponseEntity retrieveArticlesByUid(@RequestParam(required = false) String uid,@RequestParam(required = false) RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for an UID");
         stopWatch.start("Retrieve Articles for an UID");
@@ -294,7 +289,7 @@ public class ReCiterController {
                 try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 } catch (IOException e) {
-                    log.info("Failed to retrieve articles.", e);
+                    log.error("Failed to retrieve articles."+ e);
                     stopWatch.stop();
                     log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
@@ -313,16 +308,14 @@ public class ReCiterController {
             	try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
                 } catch (IOException e) {
-                    log.info("Failed to retrieve articles.", e);
+                    log.error("Failed to retrieve articles."+e);
                     stopWatch.stop();
-                    log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+                    log.error(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                 }
-            	
-            	
             }
-        } catch (Exception e) {
-            log.info("No such entity exists: ", e);
+        } catch (EmptyResultDataAccessException e) {
+            log.error("No such entity exists: "+e);
         }
 
         stopWatch.stop();
@@ -341,7 +334,6 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PostMapping(value = "/reciter/feature-generator/by/group", produces = "application/json")
-    @ResponseBody
     public ResponseEntity retrieveBulkFeatureGenerator(@RequestBody(required = false) List<String> uids, @RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
     		@RequestParam(required = true) Double totalStandardizedArticleScore, @RequestParam(required = true) int maxArticlesPerPerson) {
         
@@ -456,7 +448,6 @@ public class ReCiterController {
             @ApiResponse(responseCode = "500", description = "The uid provided was not found in the Identity table")
     })
     @GetMapping(value = "/reciter/feature-generator/by/uid", produces = "application/json")
-    @ResponseBody
     public ResponseEntity runFeatureGenerator(@RequestParam String uid,
     		@RequestParam(required = false)	Double authorshipLikelihoodScore ,
     		@RequestParam(required = false) UseGoldStandard useGoldStandard, 
@@ -472,8 +463,7 @@ public class ReCiterController {
         } else {
         	totalScore = authorshipLikelihoodScore; // Configuring the totalScore in multiple of 10's in application.properties file
         }
-        System.out.println("totalScore from the request" + totalScore);
-        log.info("totalScore from the request" , totalScore);
+        log.info("totalScore from the request" + totalScore);
         EngineOutput engineOutput;
         EngineParameters parameters;
         List<ReCiterArticleFeature> originalFeatures = new ArrayList<ReCiterArticleFeature>();
@@ -860,7 +850,6 @@ public class ReCiterController {
             @ApiResponse(responseCode = "500", description = "The uid provided was not found in the Identity table")
     })
     @GetMapping(value = "/reciter/article-retrieval/by/uid", produces = "application/json")
-    @ResponseBody
     public ResponseEntity runArticleRetrievalByUid(@RequestParam String uid, @RequestParam(required = false) Double totalStandardizedArticleScore,@RequestParam(required = false) FilterFeedbackType filterByFeedback) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
@@ -974,10 +963,8 @@ public class ReCiterController {
             	retrieveArticlesByUid(uid, retrievalRefreshFlag);
             	eSearchResults = eSearchResultService.findByUid(uid);
             }
-            
-            
-        } catch (Exception e) {
-            log.info("No such entity exists: ", e);
+        } catch (EmptyResultDataAccessException e) {
+            log.error("No such entity exists: "+ e);
         }
         log.info("eSearchResults size {}", eSearchResults);
 		/*

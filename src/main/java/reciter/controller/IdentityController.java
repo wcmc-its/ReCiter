@@ -24,14 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -46,7 +45,7 @@ import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
 
 @Slf4j
-@Controller
+@RestController
 public class IdentityController {
 
 
@@ -67,7 +66,6 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PostMapping(value = "/reciter/identity/", produces = "application/json")
-    @ResponseBody
     public ResponseEntity addIdentity(@RequestBody Identity identity) {
         StopWatch stopWatch = new StopWatch("Add an identity to Identity table in DynamoDb");
         stopWatch.start("Add an identity to Identity table in DynamoDb");
@@ -97,7 +95,6 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PutMapping(value = "/reciter/save/identities/", produces = "application/json")
-    @ResponseBody
     public void saveIdentities(@RequestBody List<Identity> identities) {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
         stopWatch.start("Add list of identities to Identity table in DynamoDb");
@@ -132,7 +129,6 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/find/identity/by/uid", produces = "application/json")
-    @ResponseBody
     public ResponseEntity findByUid(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
         stopWatch.start("Search the identity table for a given ID");
@@ -159,7 +155,6 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/find/identity/by/uids/", produces = "application/json")
-    @ResponseBody
     public ResponseEntity findByUids(@RequestParam List<String> uids) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a list of ID supplied");
         stopWatch.start("Search the identity table for a list of ID supplied");
@@ -189,7 +184,6 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/find/all/identity", produces = "application/json")
-    @ResponseBody
     public ResponseEntity findAll() {
         StopWatch stopWatch = new StopWatch("Identity All api performance");
         stopWatch.start("findAllIdentities");

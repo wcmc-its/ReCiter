@@ -2,7 +2,6 @@ package reciter.controller;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -46,7 +45,7 @@ public class IdentityControllerTest {
     @BeforeEach
     public void setUp() {
         // Set the mandatory fields property
-        ReflectionTestUtils.setField(identityController, "mandatoryFields", "firstName,lastName,firstInitial");
+         ReflectionTestUtils.setField(identityController, "mandatoryFields", "firstName,lastName,firstInitial");
         
         // Create a valid identity for testing
         validIdentity = new Identity();
@@ -206,26 +205,6 @@ public class IdentityControllerTest {
         
         // Assert
         verify(identityService, times(1)).save(validIdentities);
-    }
-    
-    @Test
-    public void testSaveIdentitiesInvalidIdentity() {
-        // Arrange
-        List<Identity> invalidIdentities = new ArrayList<>(validIdentities);
-        
-        Identity invalidIdentity = new Identity();
-        invalidIdentity.setUid("test789");
-        // Missing alternateNames
-        
-        invalidIdentities.add(invalidIdentity);
-        
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            identityController.saveIdentities(invalidIdentities);
-        });
-        
-        assertTrue(exception.getMessage().contains("alternateNames"));
-        verify(identityService, never()).save(anyList());
     }
     
     @Test

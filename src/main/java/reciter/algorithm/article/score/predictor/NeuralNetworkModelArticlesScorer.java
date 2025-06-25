@@ -67,7 +67,12 @@ public class NeuralNetworkModelArticlesScorer {
 	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
 	        	ObjectMapper mapper = new ObjectMapper();
 	        	Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);
-	        	authorshipLikelihoodScore = callAwsLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString,secretMap.get(LAMBDA_NAME));
+	        	//reading the ENV_CONTEXT from the EKS deployment file.
+	        	String env = System.getenv("ENV_CONTEXT");
+	        	String lambdaKey = env+LAMBDA_NAME;
+	        	String lambdaFunction = secretMap.get(lambdaKey);
+	        	log.info("lambdaFunction Name:" + lambdaFunction);
+	        	authorshipLikelihoodScore = callAwsLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString,lambdaFunction);
 	        }
 		
 		
