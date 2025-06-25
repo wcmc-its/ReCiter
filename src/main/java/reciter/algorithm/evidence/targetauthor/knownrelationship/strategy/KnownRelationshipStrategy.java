@@ -76,9 +76,6 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		double sum = 0;
 		for (ReCiterArticle reCiterArticle : reCiterArticles) {
-			if(reCiterArticle.getArticleId() == 25119024) {
-				log.info("Here");
-			}
 			long relationShipMatchCount = 0;
 			long nonMatchCount = 0;
 			long identityRelationShipCount = 0;
