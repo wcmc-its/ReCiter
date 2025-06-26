@@ -195,7 +195,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 								}
 								
 							slf4jLogger.info("sumAccepted :" + sumAccepted + "\nSumRejected : " + sumRejected +"\n ScoreAll :" + scoreAll);
-							double feedbackScore= determineFeedbackScore(article.getGoldStandard(),sumAccepted, sumRejected, scoreAll);
+							double feedbackScore= determineFeedbackScore(0,0.0,0.0, scoreAll);
 							slf4jLogger.info("Feedback Score:"+feedbackScore);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
 							slf4jLogger.info("exportedFeedbackScore:"+exportedFeedbackScore);
