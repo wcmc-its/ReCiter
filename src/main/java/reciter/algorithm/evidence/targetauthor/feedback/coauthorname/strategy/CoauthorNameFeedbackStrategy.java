@@ -134,9 +134,12 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 							{
 								updatedCountAccepted = countAccepted - 1;
 							}
-							if(article.getGoldStandard() == -1)
+							else if(article.getGoldStandard() == -1)
 							{
 								updatedCountRejected = countRejected-1;
+							}else {
+								updatedCountAccepted=countAccepted;
+								updatedCountRejected=countRejected;
 							}
 							itemScore = computeScore(updatedCountAccepted , updatedCountRejected);
 						}
