@@ -49,7 +49,10 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                    .count()
 	            ));
 	        
-
+	        nonTargetAuthorOrcidCountPerPmid.forEach((key, value) -> {
+	        	slf4jLogger.info("nonTargetAuthorOrcidCountPerPmid : " + key + " = " + value);
+	        });
+	        
 	        Map<String, Map<Integer, Long>> nonTargetAuthororcidCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
@@ -73,6 +76,13 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                    )
 	                ));
 	        
+	        nonTargetAuthororcidCountsByArticleStatus.forEach((outerKey, innerMap) -> {
+	        	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus : " + outerKey);
+	            innerMap.forEach((innerKey, value) -> {
+	            	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus innerMap  :  " + innerKey + " = " + value);
+	            });
+	        });
+	        
 	        reCiterArticles.stream()
 	        		.filter(article->article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null)
 	        		.forEach(article->{
@@ -93,7 +103,8 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 					
 							 int countAccepted = 0;
 							 int countRejected = 0;
-			
+							 
+							 slf4jLogger.info("artice GoldStadard : "+ article.getGoldStandard());
 								if(article!=null && article.getGoldStandard()==1)
 								{
 									int orcidCount=0;
@@ -140,11 +151,54 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 									
 									
 								}
-								scoreAll = computeScore(sumAccepted, sumRejected);
-				
-							double feedbackScore= determineFeedbackScore(0,0.0, 0.0, scoreAll);
+								else
+								{
+									int orcidCountAccepted=0;
+									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
+									{	
+										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
+										{	
+											orcidCountAccepted  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
+											if(orcidCountAccepted > 0)
+											{	
+												weightageScore = 1.0 / (double)orcidCountAccepted; 
+												
+											}
+										}
+										if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
+												&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
+												nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(ACCEPTED))
+											countAccepted = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(ACCEPTED));
+										sumAccepted = weightageScore * countAccepted;
+									}
+									
+									int orcidCountRejected=0;
+									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
+									{	
+										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
+										{
+											orcidCountRejected  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
+											if(orcidCountRejected > 0)
+											{	
+												weightageScore = 1.0 / (double)orcidCountRejected; 
+												
+											}
+										}
+									}
+									if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
+											&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
+											nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(REJECTED))
+										countRejected = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(REJECTED));
+									
+									sumRejected =  weightageScore * countRejected;
+									scoreAll = computeScore(sumAccepted, sumRejected);
+								}
+								
+							slf4jLogger.info("sumAccepted :" + sumAccepted + "\nSumRejected : " + sumRejected +"\n ScoreAll :" + scoreAll);
+							double feedbackScore= determineFeedbackScore(0,0.0,0.0, scoreAll);
+							slf4jLogger.info("Feedback Score:"+feedbackScore);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
-						
+							slf4jLogger.info("exportedFeedbackScore:"+exportedFeedbackScore);
 							ReCiterArticleFeedbackScore feedbackOrcid = populateArticleFeedbackScore(article.getArticleId(),author.getOrcid(),
 									   countAccepted,countRejected,
 									   scoreAll,0.0,
