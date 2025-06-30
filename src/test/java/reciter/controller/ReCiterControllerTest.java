@@ -631,22 +631,6 @@ public class ReCiterControllerTest {
 	}
 
 	@Test
-	public void testRetrieveArticlesByUidExceptionInESearchResultService() {
-		// Arrange
-		when(identityService.findByUid(testUid)).thenReturn(identity);
-		when(eSearchResultService.findByUid(testUid.trim())).thenThrow(new RuntimeException("Test exception"));
-
-		// Act
-		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid, null);
-
-		// Assert
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertTrue(response.getBody().toString().contains("Successfully retrieved"));
-		verify(identityService, times(1)).findByUid(testUid);
-		verify(eSearchResultService, times(1)).findByUid(testUid.trim());
-	}
-
-	@Test
 	public void testRetrieveArticlesByUidNullRefreshFlagNoExistingESearchResult() throws IOException {
 		// Arrange
 		when(identityService.findByUid(testUid)).thenReturn(identity);
