@@ -448,12 +448,12 @@ public class ReCiterControllerTest {
 
 	@Test
 	public void testRetrieveArticlesWithoutRefreshFlag() throws IOException {
-		LocalDate testDate = LocalDate.of(2025, 6, 5);
+		LocalDate now = LocalDate.now();
 		// Arrange
 		when(identityService.findAll()).thenReturn(identityList);
 
-		LocalDate startDate = testDate.withDayOfMonth(1);
-		LocalDate endDate = testDate.withDayOfMonth(testDate.lengthOfMonth());
+		LocalDate startDate = now.withDayOfMonth(1);
+		LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
 
 		// Act
 		ResponseEntity<?> response = reCiterController.retrieveArticles(null);
