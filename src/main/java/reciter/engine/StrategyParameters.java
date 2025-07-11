@@ -93,11 +93,11 @@ public class StrategyParameters {
     @Value("${strategy.averageclustering}")
     private boolean isAverageClustering;
 
-    @Value("${strategy.bachelors.year.discrepancy}")
-    private boolean isBachelorsYearDiscrepancy;
+   // @Value("${strategy.bachelors.year.discrepancy}")
+   // private boolean isBachelorsYearDiscrepancy;
 
-    @Value("${strategy.doctoral.year.discrepancy}")
-    private boolean isDoctoralYearDiscrepancy;
+   // @Value("${strategy.doctoral.year.discrepancy}")
+   // private boolean isDoctoralYearDiscrepancy;
 
     @Value("${strategy.cluster.size}")
     private boolean isClusterSize;
@@ -422,4 +422,7 @@ public class StrategyParameters {
     
     @Value("${targetAuthorMissingPenaltyPercent}")
     private double targetAuthorMissingPenaltyPercent;
+    
+    @Value("${strategy.education.year.discrepancy}")
+    private boolean isEducationYearDiscrepancy;
 }

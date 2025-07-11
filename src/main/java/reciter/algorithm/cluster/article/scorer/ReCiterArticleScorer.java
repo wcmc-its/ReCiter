@@ -136,12 +136,14 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	/**
 	 * Year Discrepancy (Bachelors).
 	 */
-	private StrategyContext bachelorsYearDiscrepancyStrategyContext;
+	//private StrategyContext bachelorsYearDiscrepancyStrategyContext;
 
 	/**
 	 * Year Discrepancy (Doctoral).
 	 */
-	private StrategyContext doctoralYearDiscrepancyStrategyContext;
+	//private StrategyContext doctoralYearDiscrepancyStrategyContext; 
+	
+	private StrategyContext  educationYearDiscrepancyStrategyContext;  
 
 	/**
 	 * Discounts Articles not in English.
@@ -223,8 +225,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.personTypeStrategyContext = new PersonTypeStrategyContext(new PersonTypeStrategy());
 
 
-		this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
-		this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+		//this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
+		//this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+	    this.educationYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy());
 		
 		this.authorCountStrategyContext = new AuthorCountStrategyContext(new AuthorCountStrategy(ReCiterArticleScorer.strategyParameters));
 
@@ -238,12 +241,16 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			this.strategyContexts.add(this.articleSizeStrategyContext);
 		}
 
-		if (strategyParameters.isBachelorsYearDiscrepancy()) {
+/*		if (strategyParameters.isBachelorsYearDiscrepancy()) {
 			this.strategyContexts.add(this.bachelorsYearDiscrepancyStrategyContext);
 		}
 		
 		if (strategyParameters.isDoctoralYearDiscrepancy()) {
 			this.strategyContexts.add(this.doctoralYearDiscrepancyStrategyContext);
+		}
+		*/
+		if (strategyParameters.isEducationYearDiscrepancy()) {
+			this.strategyContexts.add(this.educationYearDiscrepancyStrategyContext);
 		}
 		
 		if(strategyParameters.isPersonType()) {
@@ -280,7 +287,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			futures.add(submitAndLogTime("KnownRelationships Category", executorService, knownRelationshipsStrategyContext, reCiterArticles, identity));
 		}
 		
-		if (strategyParameters.isBachelorsYearDiscrepancy()) {
+/*		if (strategyParameters.isBachelorsYearDiscrepancy()) {
 			//((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("bachelorsYearDiscrepancy Category", executorService, bachelorsYearDiscrepancyStrategyContext, reCiterArticles, identity));
 		}
@@ -288,6 +295,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		if (strategyParameters.isDoctoralYearDiscrepancy()) {
 			//((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("doctoralYearDiscrepancy Category", executorService, doctoralYearDiscrepancyStrategyContext, reCiterArticles, identity));
+		}*/
+		if (strategyParameters.isEducationYearDiscrepancy()) {
+			futures.add(submitAndLogTime("educationYearDiscrepancy Category", executorService, educationYearDiscrepancyStrategyContext, reCiterArticles, identity));
 		}
 
 		if (strategyParameters.isDepartment()) {
