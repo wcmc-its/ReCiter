@@ -225,8 +225,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.personTypeStrategyContext = new PersonTypeStrategyContext(new PersonTypeStrategy());
 
 
-		//this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
-		//this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+		//this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy());
+	   // this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy());
 	    this.educationYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy());
 		
 		this.authorCountStrategyContext = new AuthorCountStrategyContext(new AuthorCountStrategy(ReCiterArticleScorer.strategyParameters));
