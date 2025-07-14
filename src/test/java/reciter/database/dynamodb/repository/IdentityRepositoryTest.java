@@ -18,9 +18,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import reciter.database.dynamodb.model.Gender;
-import reciter.database.dynamodb.model.GenderEnum;
 import reciter.database.dynamodb.model.Identity;
+import reciter.model.identity.Gender;
+import reciter.model.identity.GenderEnum;
 
 @ExtendWith(MockitoExtension.class)
 public class IdentityRepositoryTest {
@@ -35,7 +35,7 @@ public class IdentityRepositoryTest {
     public void setUp() {
         // Create common test data
         identity1 = new Identity();
-        Gender gender1 = new Gender("vr12345", "abc", GenderEnum.M, 5.0);
+        Gender gender1 = new Gender("vr67890",  "jag", GenderEnum.M, 5.0);
         identity1.setUid("vr12345");
         reciter.model.identity.Identity identityData1 = new reciter.model.identity.Identity();
         identityData1.setUid("vr12345");
