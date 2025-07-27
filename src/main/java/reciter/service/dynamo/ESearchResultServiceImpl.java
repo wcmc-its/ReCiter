@@ -23,20 +23,6 @@ public class ESearchResultServiceImpl implements ESearchResultService {
         return eSearchResultRepository.findById(uid).orElseGet(() -> null);
     }
 
-    @Override
-    public boolean pushESearchResult(ESearchResult eSearchResult) {
-        return false;
-    }
-
-    @Override
-    public void update(ESearchResult eSearchResult) {
-
-    }
-
-    @Override
-    public boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName) {
-        return false;
-    }
 
 	@Override
 	public void deleteAll() {

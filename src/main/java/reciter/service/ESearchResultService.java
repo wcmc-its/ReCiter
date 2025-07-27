@@ -26,12 +26,6 @@ public interface ESearchResultService {
 
 	ESearchResult findByUid(String uid);
 
-	boolean pushESearchResult(ESearchResult eSearchResult);
-
-	void update(ESearchResult eSearchResult);
-	
-	boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName);
-	
 	void deleteAll();
 
 	void delete(String uid);
