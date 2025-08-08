@@ -33,6 +33,7 @@ public class APISecurityConfig {
     
 	    @Override
 	    protected void configure(HttpSecurity httpSecurity) throws Exception {
+	    	 System.out.println("Coming into this AdminApiSecurityConfig configure2******************");
 	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
 	        filter.setAuthenticationManager(new AuthenticationManager() {
 	
@@ -58,6 +59,7 @@ public class APISecurityConfig {
 	    
 	    @Override
 	    public void configure(WebSecurity web) throws Exception {
+	    	System.out.println("Coming into this AdminApiSecurityConfig configure1******************");
 	    	if(!securityEnabled) {
 		        web
 		        .ignoring()
@@ -112,10 +114,17 @@ public class APISecurityConfig {
     	    	} 
     	    }
      }*/
+	/**
+	 * @author mjangari
+	 * This will intercept and request for consumer api and authenticate its api key 
+	 * This code will be restored once the cognito pool is created for other applications to use reciter. 
+	 * For now it will continue with static API Key.
+	 */
 	 @Configuration
 	 @Order(1)
 	 public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
 	    	
+		 
 			private final String principalRequestHeader = "api-key";
 			
 	        private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
@@ -125,12 +134,16 @@ public class APISecurityConfig {
 	        
 	    	    @Override
 	    	    protected void configure(HttpSecurity httpSecurity) throws Exception {
+	    	    	
+	    	    	System.out.println("Coming into this ConsumerApiSecurityConfig configure2******************");
+	    	    	
 	    	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
 	    	        filter.setAuthenticationManager(new AuthenticationManager() {
 	    	
 	    	            @Override
 	    	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 	    	                String principal = (String) authentication.getPrincipal();
+	    	                System.out.println("principal in Consumer API******************"+principal);
 	    	                if (!principalRequestValue.equals(principal))
 	    	                {
 	    	                    throw new BadCredentialsException("The API key was not found or not the expected value.");
@@ -142,15 +155,18 @@ public class APISecurityConfig {
 	    	        
 	    	        if(securityEnabled) {
 		    	        httpSecurity.
+		    	        	requestMatcher(new ApiKeyRequestMatcher()).
 		    	            antMatcher("/reciter/article-retrieval/**").
 		    	            csrf().disable().
 		    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
 		    	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
 	    	        }
+	    	        
 	    	    }
 	    	    
 	    	    @Override
 	    	    public void configure(WebSecurity web) throws Exception {
+	    	    	System.out.println("Coming into this ConsumerApiSecurityConfig configure1******************");
 	    	    	if(!securityEnabled) {
 	    		        web
 	    		        .ignoring()
@@ -158,5 +174,48 @@ public class APISecurityConfig {
 	    	    	} 
 	    	    }
 	     }
+	 
 	
+	 /**
+		 * @author mjangari
+		 * This will intercept and request for consumer api and authenticate its api key 
+		 * This code will be restored once the cognito pool is created for other applications to use reciter. 
+		 * For now it will continue with static API Key.
+		 */
+		@Configuration
+		@Order(2)
+	    public static class JWTTokenAPISecurityConfig extends WebSecurityConfigurerAdapter {
+	    	
+	        @Value("${security.enabled:true}")
+		    private boolean securityEnabled;
+	        
+    	    @Override
+    	    protected void configure(HttpSecurity httpSecurity) throws Exception {
+    	    	
+    	        JwtTokenAuthenticationFilter filter = new JwtTokenAuthenticationFilter();
+    	    	System.out.println("configure method from JWTTokenAPISecurityConfig Called*****************");
+    	    	System.out.println("securityEnabled*****************"+securityEnabled);
+    	    	if(securityEnabled) {
+    	    		System.out.println("coming inside if condition*****************"+securityEnabled);
+	    	        httpSecurity.
+	    	        	requestMatcher(new BearerTokenRequestMatcher()).
+	    	            antMatcher("/reciter/article-retrieval/**").
+	    	            csrf().disable().
+	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
+	    	            and().addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class).authorizeRequests().anyRequest().authenticated();
+	    	        
+	    	        
+    	        }
+    	    	
+    	    }
+    	    
+    	    @Override
+    	    public void configure(WebSecurity web) throws Exception {
+    	    	if(!securityEnabled) {
+    		        web
+    		        .ignoring()
+    		        .antMatchers("/reciter/article-retrieval/**");
+    	    	} 
+    	    }
+	     }
 }

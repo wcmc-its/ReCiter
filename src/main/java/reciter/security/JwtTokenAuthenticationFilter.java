@@ -31,6 +31,9 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 
+/**
+ * @author mjangari
+ */
 @Component
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
@@ -48,12 +51,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	@Value("${aws.secretsmanager.consumer.secretName}")
 	private String consumerSecretName;
 	
+		
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
 		String token = extractToken(request);
-
+        System.out.println("token**********************"+token);
 		if (StringUtils.hasText(token)) {
 			try {
 				
@@ -62,7 +66,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 				
 				String clientId = decodedJWT.getClaim("client_id").asString();
-				
+				 System.out.println("clientId**********************"+clientId);
 				JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
 
 				try
@@ -78,7 +82,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				}
 				
 				String clientName = secretsJson.get("clientName").asText();
-				
+				 System.out.println("clientName**********************"+clientName);
 				// Create an authentication object
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 						decodedJWT.getSubject(), null, null);
