@@ -143,7 +143,7 @@ public class APISecurityConfig {
 	    	            @Override
 	    	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 	    	                String principal = (String) authentication.getPrincipal();
-	    	                System.out.println("principal in Consumer API******************"+principal);
+	    	                System.out.println("principal in Consumer API******************"+principalRequestValue.equals(principal));
 	    	                if (!principalRequestValue.equals(principal))
 	    	                {
 	    	                    throw new BadCredentialsException("The API key was not found or not the expected value.");
