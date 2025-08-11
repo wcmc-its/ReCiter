@@ -14,14 +14,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@EnableWebSecurity
+//@EnableWebSecurity
 public class APISecurityConfig {
     
 	/**
 	 * @author szd2013
 	 * This will intercept and request for admin api and authenticate its api key
 	 */
-	@Configuration
+	//@Configuration
     public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
 	    private final String principalRequestHeader = "api-key";
@@ -120,7 +120,7 @@ public class APISecurityConfig {
 	 * This code will be restored once the cognito pool is created for other applications to use reciter. 
 	 * For now it will continue with static API Key.
 	 */
-	 @Configuration
+	 //@Configuration
 	 @Order(1)
 	 public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
 	    	
@@ -182,7 +182,7 @@ public class APISecurityConfig {
 		 * This code will be restored once the cognito pool is created for other applications to use reciter. 
 		 * For now it will continue with static API Key.
 		 */
-		@Configuration
+		//@Configuration
 		@Order(2)
 	    public static class JWTTokenAPISecurityConfig extends WebSecurityConfigurerAdapter {
 	    	
