@@ -5,6 +5,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Enumeration;
+import java.util.Optional;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -143,8 +144,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	            String header = headerNames.nextElement();
 	            System.out.println(header + ": " + request.getHeader(header));
 	        }
-			String header = request.getHeader("Authorization");
-			System.out.println("Authorization**************************"+header);
+	        String header = Optional.ofNullable(request.getHeader("Authorization")).orElse(request.getHeader("authorization"));
+	        System.out.println("Authorization**************************"+header);
 			if (header != null && header.startsWith("Bearer ")) {
 				System.out.println("header after Bearer**************************"+header.substring(7));
 				return header.substring(7); // Remove "Bearer " prefix
