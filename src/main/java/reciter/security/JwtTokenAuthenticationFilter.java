@@ -133,7 +133,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	// Extract token from Authorization header
 	private String extractToken(HttpServletRequest request) {
-		System.out.println("\nHeaders:************************");
+		System.out.println("\nHeaders:************************"+request.getHeaderNames().hasMoreElements());
 		Enumeration<String> headerNames = request.getHeaderNames();
 		if (headerNames == null || !headerNames.hasMoreElements()) {
 		    System.out.println("No headers found in the request.");
@@ -144,7 +144,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	            String header = headerNames.nextElement();
 	            System.out.println(header + ": " + request.getHeader(header));
 	        }
-	        String header = Optional.ofNullable(request.getHeader("Authorization")).orElse(request.getHeader("authorization"));
+	        String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
 	        System.out.println("Authorization**************************"+header);
 			if (header != null && header.startsWith("Bearer ")) {
 				System.out.println("header after Bearer**************************"+header.substring(7));
