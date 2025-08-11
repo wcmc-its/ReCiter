@@ -134,17 +134,24 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	private String extractToken(HttpServletRequest request) {
 		System.out.println("\nHeaders:************************");
 		Enumeration<String> headerNames = request.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String header = headerNames.nextElement();
-            System.out.println(header + ": " + request.getHeader(header));
-        }
-		String header = request.getHeader("Authorization");
-		System.out.println("Authorization**************************"+header);
-		if (header != null && header.startsWith("Bearer ")) {
-			System.out.println("header after Bearer**************************"+header.substring(7));
-			return header.substring(7); // Remove "Bearer " prefix
+		if (headerNames == null || !headerNames.hasMoreElements()) {
+		    System.out.println("No headers found in the request.");
+		}
+		else
+		{	
+	        while (headerNames.hasMoreElements()) {
+	            String header = headerNames.nextElement();
+	            System.out.println(header + ": " + request.getHeader(header));
+	        }
+			String header = request.getHeader("Authorization");
+			System.out.println("Authorization**************************"+header);
+			if (header != null && header.startsWith("Bearer ")) {
+				System.out.println("header after Bearer**************************"+header.substring(7));
+				return header.substring(7); // Remove "Bearer " prefix
+			}
 		}
 		return null;
+		
 	}
 
 	// Verify JWT token using the public key from JWK set
