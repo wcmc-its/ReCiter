@@ -40,7 +40,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final String STR_USER_POOL_ID = "userPoolID";	
-	
+	    
 	@Autowired
     private AwsSecretsManagerService awsSecretsManagerService; // Inject the service to get the secret
 
@@ -53,7 +53,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	@Value("${aws.secretsmanager.consumer.secretName}")
 	private String consumerSecretName;
 	
-		
+	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {

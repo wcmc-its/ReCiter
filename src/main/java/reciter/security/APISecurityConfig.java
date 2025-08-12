@@ -1,10 +1,11 @@
 package reciter.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,7 +15,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.auth0.jwt.JWT;
 
 @EnableWebSecurity(debug = true)
 public class APISecurityConfig {
@@ -23,39 +25,69 @@ public class APISecurityConfig {
 	 * @author szd2013
 	 * This will intercept and request for admin api and authenticate its api key
 	 */
-	/*@Configuration
+	@Configuration
     public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
 	    private final String principalRequestHeader = "api-key";
+	    private final String authorizationHeader = "Authorization"; 
 
 	    private String principalRequestValue = System.getenv("ADMIN_API_KEY");
+	    private String principalConsumerRequestValue = System.getenv("CONSUMER_API_KEY");
 	    
 	    @Value("${spring.security.enabled}")
 	    private boolean securityEnabled;
     
 	    @Override
 	    protected void configure(HttpSecurity httpSecurity) throws Exception {
-	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
+	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader,authorizationHeader);
+	        
+	        String[] clientId = {};
+	        String[] principal= {};
+	        
 	        filter.setAuthenticationManager(new AuthenticationManager() {
 	
 	            @Override
 	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-	                String principal = (String) authentication.getPrincipal();
-	                if (!principalRequestValue.equals(principal))
-	                {
-	                    throw new BadCredentialsException("The API key was not found or not the expected value.");
+	                principal[0] = (String) authentication.getPrincipal();
+	                HttpServletRequest request = (HttpServletRequest) authentication.getDetails();
+	                String apiKey = request.getHeader("api-key");
+	                String authHeader = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
+	                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	                	
+	                	String token = authHeader.substring(7);
+	                	clientId[0] = JWT.decode(token).getClaim("client_id").asString();
+	                	if(clientId[0] !=null && !clientId[0].equalsIgnoreCase(""))
+	                		   authentication.setAuthenticated(true);
+	                	else
+	                		 throw new BadCredentialsException("Client_id was not found in JWT token or expired token ");
 	                }
-	                authentication.setAuthenticated(true);
+	                else if(apiKey!=null && !apiKey.equalsIgnoreCase(""))
+	                {	
+		                if (!principalRequestValue.equals(principal) && !principalConsumerRequestValue.equals(principal))
+		                {
+		                    throw new BadCredentialsException("The API key was not found or not the expected value.");
+		                }
+		                authentication.setAuthenticated(true);
+	                } 
 	                return authentication;
 	            }
 	        });
-	        if(securityEnabled) {
+	        if(securityEnabled && principalRequestValue.equals(principal[0])) {
 		        httpSecurity.
 		            antMatcher("/reciter/**").
 		            csrf().disable().
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
 		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
 	        }
+	        else if(clientId[0]!=null && clientId.length > 1 || principalConsumerRequestValue.equals(principal))
+	        {
+	        	 httpSecurity.
+		            antMatcher("/reciter/article-retrieval/**").
+		            csrf().disable().
+		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
+		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+	        }
+	        	
 	    }
 	    
 	    @Override
@@ -70,15 +102,19 @@ public class APISecurityConfig {
 			web
 			.ignoring()
 			.antMatchers("/reciter/ping"); 
+			
+			 web
+		        .ignoring()
+		        .antMatchers("/reciter/article-retrieval/**");
 	    }
 	    
-    }*/
+    }
     
 	/**
 	 * @author szd2013
 	 * This will intercept and request for consumer api and authenticate its api key
 	 */
-	@Configuration
+/*	@Configuration
 	@Order(1)
     public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
@@ -105,7 +141,7 @@ public class APISecurityConfig {
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-	    	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+	    	            and().addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class).authorizeRequests().anyRequest().authenticated();
     	        }
     	    	
     	    }
@@ -118,6 +154,6 @@ public class APISecurityConfig {
     		        .antMatchers("/reciter/article-retrieval/**");
     	    	} 
     	    }
-     }
+     }*/
 	
 }
