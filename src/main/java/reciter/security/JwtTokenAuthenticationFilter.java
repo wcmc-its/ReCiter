@@ -59,7 +59,9 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		String token = extractToken(request);
-    	if (StringUtils.hasText(token)) {
+		String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
+        System.out.println("token**********************"+token);
+		if (StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) {
 			try {
 				
 				// Verify the token
@@ -67,6 +69,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 				
 				String clientId = decodedJWT.getClaim("client_id").asString();
+				 System.out.println("clientId**********************"+clientId);
 				JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
 
 				try
@@ -82,6 +85,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				}
 				
 				String clientName = secretsJson.get("clientName").asText();
+				 System.out.println("clientName**********************"+clientName);
 				// Create an authentication object
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 						decodedJWT.getSubject(), null, null);
@@ -131,15 +135,26 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	// Extract token from Authorization header
 	private String extractToken(HttpServletRequest request) {
 		Enumeration<String> headerNames = request.getHeaderNames();
-		while (headerNames.hasMoreElements()) {
-			String header = headerNames.nextElement();
-			System.out.println(header + ": " + request.getHeader(header));
+		if (headerNames == null || !headerNames.hasMoreElements()) {
+		    System.out.println("No headers found in the request.");
 		}
-		String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
-		if (header != null && header.startsWith("Bearer ")) {
-			return header.substring(7); // Remove "Bearer " prefix
+		else
+		{	
+	        while (headerNames.hasMoreElements()) {
+	            String header = headerNames.nextElement();
+	            System.out.println(header + ": " + request.getHeader(header));
+	        }
+	        String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
+	        Optional<String> apiKeyHeader = Optional.ofNullable(request.getHeader("api-key"));
+			if (header != null && header.startsWith("Bearer ")) {
+				return header.substring(7); // Remove "Bearer " prefix
+			}
+			else if(apiKeyHeader.isPresent())
+			{	
+				return apiKeyHeader.get();
+			}
 		}
-	return null;
+		return null;
 		
 	}
 

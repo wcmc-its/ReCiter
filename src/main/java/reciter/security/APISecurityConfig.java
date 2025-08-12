@@ -23,8 +23,7 @@ public class APISecurityConfig {
 	 * @author szd2013
 	 * This will intercept and request for admin api and authenticate its api key
 	 */
-	@Configuration
-	@Order(1)
+	/*@Configuration
     public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
 	    private final String principalRequestHeader = "api-key";
@@ -73,14 +72,14 @@ public class APISecurityConfig {
 			.antMatchers("/reciter/ping"); 
 	    }
 	    
-    }
+    }*/
     
 	/**
 	 * @author szd2013
 	 * This will intercept and request for consumer api and authenticate its api key
 	 */
 	@Configuration
-	@Order(2)
+	@Order(1)
     public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
 		//private final String principalRequestHeader = "Authorization";//"api-key";
