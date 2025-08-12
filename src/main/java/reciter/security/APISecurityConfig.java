@@ -52,7 +52,6 @@ public class APISecurityConfig {
 	        });
 	        if(securityEnabled) {
 		        httpSecurity.
-		        	requestMatcher(request -> request.getHeader("api-key") != null).
 		            antMatcher("/reciter/**").
 		            csrf().disable().
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
@@ -88,27 +87,26 @@ public class APISecurityConfig {
 		
         //private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
         
-       // private final JwtTokenAuthenticationFilter filter;
+        private final JwtTokenAuthenticationFilter filter;
         
         @Value("${security.enabled:true}")
 	    private boolean securityEnabled;
         
-        /*@Autowired
+        @Autowired
         public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter)
         {
         	this.filter = filter;
-        }*/
+        }
         
     	    @Override
     	    protected void configure(HttpSecurity httpSecurity) throws Exception {
     	    	if(securityEnabled) {
     	    		System.out.println("coming inside if condition*****************"+securityEnabled);
     	          httpSecurity.
-	    	        	requestMatcher(request -> request.getHeader("Authorization") != null && request.getHeader("api-key") == null).
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-	    	            and()/*.addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class)*/.authorizeRequests().anyRequest().authenticated();
+	    	            and().addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class).authorizeRequests().anyRequest().authenticated();
     	        }
     	    	
     	    }
