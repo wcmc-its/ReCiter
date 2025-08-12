@@ -105,7 +105,7 @@ public class APISecurityConfig {
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-	    	            and().addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class).authorizeRequests().anyRequest().authenticated();
+	    	            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
     	        }
     	    	
     	    }
