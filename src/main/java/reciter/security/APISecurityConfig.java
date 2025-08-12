@@ -16,7 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 public class APISecurityConfig {
     
 	/**
@@ -36,7 +36,6 @@ public class APISecurityConfig {
     
 	    @Override
 	    protected void configure(HttpSecurity httpSecurity) throws Exception {
-	    	 System.out.println("Coming into this AdminApiSecurityConfig configure2******************");
 	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
 	        filter.setAuthenticationManager(new AuthenticationManager() {
 	
@@ -102,8 +101,6 @@ public class APISecurityConfig {
         
     	    @Override
     	    protected void configure(HttpSecurity httpSecurity) throws Exception {
-    	    	System.out.println("configure method from ConsumerAPISecurity Called*****************");
-    	    	System.out.println("securityEnabled*****************"+securityEnabled);
     	    	if(securityEnabled) {
     	    		System.out.println("coming inside if condition*****************"+securityEnabled);
     	          httpSecurity.
