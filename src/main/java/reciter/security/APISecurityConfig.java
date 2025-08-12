@@ -24,6 +24,7 @@ public class APISecurityConfig {
 	 * This will intercept and request for admin api and authenticate its api key
 	 */
 	@Configuration
+	@Order(1)
     public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
 	    private final String principalRequestHeader = "api-key";
@@ -52,6 +53,7 @@ public class APISecurityConfig {
 	        });
 	        if(securityEnabled) {
 		        httpSecurity.
+		        	requestMatcher(request -> request.getHeader("api-key") != null).
 		            antMatcher("/reciter/**").
 		            csrf().disable().
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
@@ -80,7 +82,7 @@ public class APISecurityConfig {
 	 * This will intercept and request for consumer api and authenticate its api key
 	 */
 	@Configuration
-	@Order(1)
+	@Order(2)
     public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
 		//private final String principalRequestHeader = "Authorization";//"api-key";
@@ -105,7 +107,7 @@ public class APISecurityConfig {
     	    	if(securityEnabled) {
     	    		System.out.println("coming inside if condition*****************"+securityEnabled);
     	          httpSecurity.
-	    	        	requestMatcher(request -> request.getHeader("api-key") == null).
+	    	        	requestMatcher(request -> request.getHeader("Authorization") != null && request.getHeader("api-key") == null).
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
