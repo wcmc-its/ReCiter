@@ -105,7 +105,7 @@ public class APISecurityConfig {
     	    	if(securityEnabled) {
     	    		System.out.println("coming inside if condition*****************"+securityEnabled);
     	          httpSecurity.
-	    	        	requestMatcher(request -> request.getHeader("Authorization") != null).
+	    	        	//requestMatcher(request -> request.getHeader("Authorization") != null).
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
