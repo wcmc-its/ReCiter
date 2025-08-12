@@ -59,8 +59,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		String token = extractToken(request);
-        System.out.println("token**********************"+token);
-		if (StringUtils.hasText(token)) {
+    	if (StringUtils.hasText(token)) {
 			try {
 				
 				// Verify the token
@@ -68,7 +67,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 				
 				String clientId = decodedJWT.getClaim("client_id").asString();
-				 System.out.println("clientId**********************"+clientId);
 				JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
 
 				try
@@ -84,7 +82,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				}
 				
 				String clientName = secretsJson.get("clientName").asText();
-				 System.out.println("clientName**********************"+clientName);
 				// Create an authentication object
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 						decodedJWT.getSubject(), null, null);
@@ -133,25 +130,16 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	// Extract token from Authorization header
 	private String extractToken(HttpServletRequest request) {
-		System.out.println("\nHeaders:************************"+request.getHeaderNames().hasMoreElements());
 		Enumeration<String> headerNames = request.getHeaderNames();
-		if (headerNames == null || !headerNames.hasMoreElements()) {
-		    System.out.println("No headers found in the request.");
+		while (headerNames.hasMoreElements()) {
+			String header = headerNames.nextElement();
+			System.out.println(header + ": " + request.getHeader(header));
 		}
-		else
-		{	
-	        while (headerNames.hasMoreElements()) {
-	            String header = headerNames.nextElement();
-	            System.out.println(header + ": " + request.getHeader(header));
-	        }
-	        String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
-	        System.out.println("Authorization**************************"+header);
-			if (header != null && header.startsWith("Bearer ")) {
-				System.out.println("header after Bearer**************************"+header.substring(7));
-				return header.substring(7); // Remove "Bearer " prefix
-			}
+		String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
+		if (header != null && header.startsWith("Bearer ")) {
+			return header.substring(7); // Remove "Bearer " prefix
 		}
-		return null;
+	return null;
 		
 	}
 

@@ -83,33 +83,33 @@ public class APISecurityConfig {
 	@Order(1)
     public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
-		private final String principalRequestHeader = "Authorization";//"api-key";
+		//private final String principalRequestHeader = "Authorization";//"api-key";
 		
-        private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
+        //private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
         
-        private final JwtTokenAuthenticationFilter filter;
+       // private final JwtTokenAuthenticationFilter filter;
         
         @Value("${security.enabled:true}")
 	    private boolean securityEnabled;
         
-        @Autowired
+        /*@Autowired
         public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter)
         {
         	this.filter = filter;
-        }
+        }*/
         
     	    @Override
     	    protected void configure(HttpSecurity httpSecurity) throws Exception {
-    	    //    JwtTokenAuthenticationFilter filter = new JwtTokenAuthenticationFilter();
     	    	System.out.println("configure method from ConsumerAPISecurity Called*****************");
     	    	System.out.println("securityEnabled*****************"+securityEnabled);
     	    	if(securityEnabled) {
     	    		System.out.println("coming inside if condition*****************"+securityEnabled);
-	    	        httpSecurity.
+    	          httpSecurity.
+	    	        	requestMatcher(request -> request.getHeader("Authorization") != null).
 	    	            antMatcher("/reciter/article-retrieval/**").
 	    	            csrf().disable().
 	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-	    	            and().addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class).authorizeRequests().anyRequest().authenticated();
+	    	            and()/*.addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class)*/.authorizeRequests().anyRequest().authenticated();
     	        }
     	    	
     	    }
