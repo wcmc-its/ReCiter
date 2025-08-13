@@ -25,7 +25,8 @@ import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EnableWebSecurity
-public class APISecurityConfig {
+@Configuration
+public class APISecurityConfig extends WebSecurityConfigurerAdapter {
     
 	private static final Logger log = LoggerFactory.getLogger(APISecurityConfig.class);
 	/**
@@ -34,10 +35,10 @@ public class APISecurityConfig {
 	 * @author mjangari
 	 * Refactored the class to support Admin API key and Cognito JWT Token. 
 	 */
-	@Configuration
-    public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
+	//@Configuration
+    //public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
-		 private static final Logger log = LoggerFactory.getLogger(AdminApiSecurityConfig.class);
+		 //private static final Logger log = LoggerFactory.getLogger(AdminApiSecurityConfig.class);
 		 
 		private final String principalRequestHeader = "api-key";
 	    private final String authorizationHeader = "Authorization"; 
@@ -157,7 +158,7 @@ public class APISecurityConfig {
 	        return null;
 	    }
 	    
-    }
+    //}
 	
 	
 	

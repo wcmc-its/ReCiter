@@ -36,7 +36,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 /**
  * @author mjangari
  */
-@Component
+//@Component
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final String STR_USER_POOL_ID = "userPoolID";	
