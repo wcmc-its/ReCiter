@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -160,6 +161,9 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	    
     //}
 	
-	
+	    @PostConstruct
+	    public void init() {
+	        System.out.println(">>>>> APISecurityConfig initialized <<<<<");
+	    }
 	
 }
