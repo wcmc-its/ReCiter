@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +34,9 @@ public class APISecurityConfig {
 	@Configuration
     public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
     	
-	    private final String principalRequestHeader = "api-key";
+		 private static final Logger log = LoggerFactory.getLogger(AdminApiSecurityConfig.class);
+		 
+		private final String principalRequestHeader = "api-key";
 	    private final String authorizationHeader = "Authorization"; 
 
 	    private String principalRequestValue = System.getenv("ADMIN_API_KEY");
@@ -49,6 +53,7 @@ public class APISecurityConfig {
 	    @Value("${aws.secretsmanager.consumer.secretName}")
 		private String consumerSecretName;
 	    
+	    
 	    @Override
 	    protected void configure(HttpSecurity httpSecurity) throws Exception {
 	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader,authorizationHeader);
@@ -60,12 +65,13 @@ public class APISecurityConfig {
 	
 	            @Override
 	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+	            	log.info("Coming into authenticate method in APISecurityConfig.");
 	                principal[0] = (String) authentication.getPrincipal();
 	                request[0] = (HttpServletRequest) authentication.getDetails();
 	                String apiKey = request.length > 0 ? request[0].getHeader("api-key") : "";
 	                String authHeader = request.length > 0? Optional.ofNullable(request[0].getHeader("Authorization")).orElseGet(() -> request[0].getHeader("authorization")):"";
 	                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	                	System.out.println("Authorization found in Headers****************");
+	                	log.info("Authorization token received from the Client.");
 	                	String token = authHeader.substring(7);
 	                	clientId[0] = JWT.decode(token).getClaim("client_id").asString();
 	                	if(clientId.length > 0 && clientId[0] !=null && !clientId[0].equalsIgnoreCase(""))
@@ -75,7 +81,7 @@ public class APISecurityConfig {
 	                }
 	                else if(apiKey!=null && !apiKey.equalsIgnoreCase(""))
 	                {	
-	                	System.out.println("api-key found in Headers****************");
+	                	log.info("api-key token received from the Client.");
 		                if (principal.length >0 && !principalRequestValue.equals(principal[0]))
 		                {
 		                    throw new BadCredentialsException("The API key was not found or not the expected value.");
@@ -85,26 +91,29 @@ public class APISecurityConfig {
 	                return authentication;
 	            }
 	        });
+	        JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId[0]);
+       	 	String clientName = secretsJson.get("clientName").asText();
+       	 	String clientIdInToken = secretsJson.get("clientName").asText();
 	        if(securityEnabled && principal.length > 0 && principalRequestValue.equals(principal[0])) {
+	        	log.info("api-key matched.");
 		        httpSecurity.
 		            antMatcher("/reciter/**").
 		            csrf().disable().
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
 		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
 	        }
-	        else if(clientId.length > 0 && clientId[0]!=null)
+	        else if(clientId.length > 0 && clientId[0]!=null && clientId[0].equalsIgnoreCase(clientIdInToken))
 	        {
-	        	 System.out.println("Authorization  found and requet came from reciter.consumer host************");
+	        	log.info("Authorization token matched *");
 	        	 httpSecurity.
 		            antMatcher("/reciter/article-retrieval/**").
 		            csrf().disable().
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
 		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
 	        	 
-	        	 	JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId[0]);
-		        	 String clientName = secretsJson.get("clientName").asText();
 		        	 // Create a new UserLog entry
 	                UserLog userLog = new UserLog(clientId.length >0 ? clientId[0]:"", clientName,request.length >0? request[0].getRequestURI():"",request.length >0 ? request[0].getParameter("uid"):"",LocalDateTime.now().toString());
+	                log.info("S3 bucket entries***"+userLog.toString());
 	                // Get the current date as a string in yyyy-MM-dd format
 	                String date = Instant.now().toString().split("T")[0];
 	                
@@ -116,7 +125,6 @@ public class APISecurityConfig {
 	    
 	    @Override
 	    public void configure(WebSecurity web) throws Exception {
-	    	System.out.println("Coming into this AdminApiSecurityConfig configure1******************");
 	    	if(!securityEnabled) {
 		        web
 		        .ignoring()
