@@ -27,9 +27,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 @EnableWebSecurity
 public class APISecurityConfig {
     
+	private static final Logger log = LoggerFactory.getLogger(APISecurityConfig.class);
 	/**
 	 * @author szd2013
 	 * This will intercept and request for admin api and authenticate its api key
+	 * @author mjangari
+	 * Refactored the class to support Admin API key and Cognito JWT Token. 
 	 */
 	@Configuration
     public static class AdminApiSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -65,13 +68,13 @@ public class APISecurityConfig {
 	
 	            @Override
 	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-	            	log.info("Coming into authenticate method in APISecurityConfig.");
+	            	log.warn("Coming into authenticate method in APISecurityConfig.");
 	                principal[0] = (String) authentication.getPrincipal();
 	                request[0] = (HttpServletRequest) authentication.getDetails();
 	                String apiKey = request.length > 0 ? request[0].getHeader("api-key") : "";
 	                String authHeader = request.length > 0? Optional.ofNullable(request[0].getHeader("Authorization")).orElseGet(() -> request[0].getHeader("authorization")):"";
 	                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	                	log.info("Authorization token received from the Client.");
+	                	log.warn("Authorization token received from the Client.");
 	                	String token = authHeader.substring(7);
 	                	clientId[0] = JWT.decode(token).getClaim("client_id").asString();
 	                	if(clientId.length > 0 && clientId[0] !=null && !clientId[0].equalsIgnoreCase(""))
@@ -81,7 +84,7 @@ public class APISecurityConfig {
 	                }
 	                else if(apiKey!=null && !apiKey.equalsIgnoreCase(""))
 	                {	
-	                	log.info("api-key token received from the Client.");
+	                	log.warn("api-key token received from the Client.");
 		                if (principal.length >0 && principalRequestValue!=null && !principalRequestValue.equals(principal[0]))
 		                {
 		                    throw new BadCredentialsException("The API key was not found or not the expected value.");
@@ -99,7 +102,7 @@ public class APISecurityConfig {
 	        if(secretsJson!=null && secretsJson.has("client_id"))
        	 	 	clientIdInToken = secretsJson.get("client_id").asText();
 	        if(securityEnabled && principal.length > 0 && principalRequestValue!=null && principalRequestValue.equals(principal[0])) {
-	        	log.info("api-key matched.");
+	        	log.warn("api-key matched.");
 		        httpSecurity.
 		            antMatcher("/reciter/**").
 		            csrf().disable().
@@ -108,7 +111,7 @@ public class APISecurityConfig {
 	        }
 	        else if(clientId.length > 0 && clientId[0]!=null && clientId[0].equalsIgnoreCase(clientIdInToken))
 	        {
-	        	log.info("Authorization token matched *");
+	        	log.warn("Authorization token matched *");
 	        	 httpSecurity.
 		            antMatcher("/reciter/article-retrieval/**").
 		            csrf().disable().
@@ -117,13 +120,14 @@ public class APISecurityConfig {
 	        	 
 		        	 // Create a new UserLog entry
 	                UserLog userLog = new UserLog(clientId.length >0 ? clientId[0]:"", clientName,request.length >0? request[0].getRequestURI():"",request.length >0 ? request[0].getParameter("uid"):"",LocalDateTime.now().toString());
-	                log.info("S3 bucket entries***"+userLog.toString());
+	                log.warn("S3 bucket entries***"+userLog.toString());
 	                // Get the current date as a string in yyyy-MM-dd format
 	                String date = Instant.now().toString().split("T")[0];
 	                
 	                // Write the user log entry to the S3 bucket
 	                s3UserLogHandler.writeUserLog(userLog, date);
-		        }
+		    }
+	        log.warn("HttpSecurity configuration complete");
 	        	
 	    }
 	    
