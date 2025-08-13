@@ -56,14 +56,14 @@ public class APISecurityConfig {
 	                	
 	                	String token = authHeader.substring(7);
 	                	clientId[0] = JWT.decode(token).getClaim("client_id").asString();
-	                	if(clientId[0] !=null && !clientId[0].equalsIgnoreCase(""))
+	                	if(clientId.length > 0 && clientId[0] !=null && !clientId[0].equalsIgnoreCase(""))
 	                		   authentication.setAuthenticated(true);
 	                	else
 	                		 throw new BadCredentialsException("Client_id was not found in JWT token or expired token ");
 	                }
 	                else if(apiKey!=null && !apiKey.equalsIgnoreCase(""))
 	                {	
-		                if (!principalRequestValue.equals(principal) && !principalConsumerRequestValue.equals(principal))
+		                if (principal.length >0 && !principalRequestValue.equals(principal[0]) && !principalConsumerRequestValue.equals(principal[0]))
 		                {
 		                    throw new BadCredentialsException("The API key was not found or not the expected value.");
 		                }
@@ -72,14 +72,14 @@ public class APISecurityConfig {
 	                return authentication;
 	            }
 	        });
-	        if(securityEnabled && principalRequestValue.equals(principal[0])) {
+	        if(securityEnabled && principal.length > 0 && principalRequestValue.equals(principal[0])) {
 		        httpSecurity.
 		            antMatcher("/reciter/**").
 		            csrf().disable().
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
 		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
 	        }
-	        else if(clientId[0]!=null && clientId.length > 1 || principalConsumerRequestValue.equals(principal))
+	        else if(clientId.length > 0 && clientId[0]!=null || principal.length >0 && principalConsumerRequestValue.equals(principal[0]))
 	        {
 	        	 httpSecurity.
 		            antMatcher("/reciter/article-retrieval/**").
