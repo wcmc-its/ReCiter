@@ -1,9 +1,12 @@
 package reciter.security;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,8 +20,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
 import com.auth0.jwt.JWT;
+import com.fasterxml.jackson.databind.JsonNode;
 
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 public class APISecurityConfig {
     
 	/**
@@ -32,28 +36,36 @@ public class APISecurityConfig {
 	    private final String authorizationHeader = "Authorization"; 
 
 	    private String principalRequestValue = System.getenv("ADMIN_API_KEY");
-	    private String principalConsumerRequestValue = System.getenv("CONSUMER_API_KEY");
 	    
 	    @Value("${spring.security.enabled}")
 	    private boolean securityEnabled;
+	    
+	    @Autowired
+	    private AwsSecretsManagerService awsSecretsManagerService; // Inject the service to get the secret
     
+	    @Autowired
+		private S3UserLogHandler s3UserLogHandler;
+
+	    @Value("${aws.secretsmanager.consumer.secretName}")
+		private String consumerSecretName;
+	    
 	    @Override
 	    protected void configure(HttpSecurity httpSecurity) throws Exception {
 	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader,authorizationHeader);
 	        
-	        String[] clientId = {};
-	        String[] principal= {};
-	        
+	        final String[] clientId = {};
+	        final String[] principal= {};
+	        final HttpServletRequest[] request = {};
 	        filter.setAuthenticationManager(new AuthenticationManager() {
 	
 	            @Override
 	            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 	                principal[0] = (String) authentication.getPrincipal();
-	                HttpServletRequest request = (HttpServletRequest) authentication.getDetails();
-	                String apiKey = request.getHeader("api-key");
-	                String authHeader = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
+	                request[0] = (HttpServletRequest) authentication.getDetails();
+	                String apiKey = request.length > 0 ? request[0].getHeader("api-key") : "";
+	                String authHeader = request.length > 0? Optional.ofNullable(request[0].getHeader("Authorization")).orElseGet(() -> request[0].getHeader("authorization")):"";
 	                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	                	
+	                	System.out.println("Authorization found in Headers****************");
 	                	String token = authHeader.substring(7);
 	                	clientId[0] = JWT.decode(token).getClaim("client_id").asString();
 	                	if(clientId.length > 0 && clientId[0] !=null && !clientId[0].equalsIgnoreCase(""))
@@ -63,7 +75,8 @@ public class APISecurityConfig {
 	                }
 	                else if(apiKey!=null && !apiKey.equalsIgnoreCase(""))
 	                {	
-		                if (principal.length >0 && !principalRequestValue.equals(principal[0]) && !principalConsumerRequestValue.equals(principal[0]))
+	                	System.out.println("api-key found in Headers****************");
+		                if (principal.length >0 && !principalRequestValue.equals(principal[0]))
 		                {
 		                    throw new BadCredentialsException("The API key was not found or not the expected value.");
 		                }
@@ -79,14 +92,25 @@ public class APISecurityConfig {
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
 		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
 	        }
-	        else if(clientId.length > 0 && clientId[0]!=null || principal.length >0 && principalConsumerRequestValue.equals(principal[0]))
+	        else if(clientId.length > 0 && clientId[0]!=null)
 	        {
+	        	 System.out.println("Authorization  found and requet came from reciter.consumer host************");
 	        	 httpSecurity.
 		            antMatcher("/reciter/article-retrieval/**").
 		            csrf().disable().
 		            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
 		            and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
-	        }
+	        	 
+	        	 	JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId[0]);
+		        	 String clientName = secretsJson.get("clientName").asText();
+		        	 // Create a new UserLog entry
+	                UserLog userLog = new UserLog(clientId.length >0 ? clientId[0]:"", clientName,request.length >0? request[0].getRequestURI():"",request.length >0 ? request[0].getParameter("uid"):"",LocalDateTime.now().toString());
+	                // Get the current date as a string in yyyy-MM-dd format
+	                String date = Instant.now().toString().split("T")[0];
+	                
+	                // Write the user log entry to the S3 bucket
+	                s3UserLogHandler.writeUserLog(userLog, date);
+		        }
 	        	
 	    }
 	    
@@ -108,52 +132,17 @@ public class APISecurityConfig {
 		        .antMatchers("/reciter/article-retrieval/**");
 	    }
 	    
+	 // Fetch the Issuer URL from Secrets Manager
+	    private JsonNode getClientSecretsFromSecretsManager(String clientId) {
+	    	JsonNode secretValueJson = awsSecretsManagerService.getSecrets(consumerSecretName); 
+	        if (secretValueJson != null && clientId!=null && !clientId.equalsIgnoreCase("")) {
+	            return secretValueJson.get(clientId); 
+	        }
+	        return null;
+	    }
+	    
     }
-    
-	/**
-	 * @author szd2013
-	 * This will intercept and request for consumer api and authenticate its api key
-	 */
-/*	@Configuration
-	@Order(1)
-    public static class ConsumerApiSecurityConfig extends WebSecurityConfigurerAdapter {
-    	
-		//private final String principalRequestHeader = "Authorization";//"api-key";
-		
-        //private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
-        
-        private final JwtTokenAuthenticationFilter filter;
-        
-        @Value("${security.enabled:true}")
-	    private boolean securityEnabled;
-        
-        @Autowired
-        public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter)
-        {
-        	this.filter = filter;
-        }
-        
-    	    @Override
-    	    protected void configure(HttpSecurity httpSecurity) throws Exception {
-    	    	if(securityEnabled) {
-    	    		System.out.println("coming inside if condition*****************"+securityEnabled);
-    	          httpSecurity.
-	    	            antMatcher("/reciter/article-retrieval/**").
-	    	            csrf().disable().
-	    	            sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-	    	            and().addFilterBefore(filter,UsernamePasswordAuthenticationFilter.class).authorizeRequests().anyRequest().authenticated();
-    	        }
-    	    	
-    	    }
-    	    
-    	    @Override
-    	    public void configure(WebSecurity web) throws Exception {
-    	    	if(!securityEnabled) {
-    		        web
-    		        .ignoring()
-    		        .antMatchers("/reciter/article-retrieval/**");
-    	    	} 
-    	    }
-     }*/
+	
+	
 	
 }
