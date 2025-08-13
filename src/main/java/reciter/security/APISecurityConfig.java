@@ -58,8 +58,8 @@ public class APISecurityConfig {
 	    protected void configure(HttpSecurity httpSecurity) throws Exception {
 	        APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader,authorizationHeader);
 	        
-	        final String[] clientId = {};
-	        final String[] principal= {};
+	        final String[] clientId = new String[1];
+	        final String[] principal= new String[1];
 	        final HttpServletRequest[] request = {};
 	        filter.setAuthenticationManager(new AuthenticationManager() {
 	
@@ -82,7 +82,7 @@ public class APISecurityConfig {
 	                else if(apiKey!=null && !apiKey.equalsIgnoreCase(""))
 	                {	
 	                	log.info("api-key token received from the Client.");
-		                if (principal.length >0 && !principalRequestValue.equals(principal[0]))
+		                if (principal.length >0 && principalRequestValue!=null && !principalRequestValue.equals(principal[0]))
 		                {
 		                    throw new BadCredentialsException("The API key was not found or not the expected value.");
 		                }
@@ -92,9 +92,13 @@ public class APISecurityConfig {
 	            }
 	        });
 	        JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId[0]);
-       	 	String clientName = secretsJson.get("clientName").asText();
-       	 	String clientIdInToken = secretsJson.get("clientName").asText();
-	        if(securityEnabled && principal.length > 0 && principalRequestValue.equals(principal[0])) {
+       	 	String clientName =null;
+       	 	String clientIdInToken=null;
+	        if(secretsJson!=null && secretsJson.has("clientName"))
+	        	clientName = secretsJson.get("clientName").asText();
+	        if(secretsJson!=null && secretsJson.has("client_id"))
+       	 	 	clientIdInToken = secretsJson.get("client_id").asText();
+	        if(securityEnabled && principal.length > 0 && principalRequestValue!=null && principalRequestValue.equals(principal[0])) {
 	        	log.info("api-key matched.");
 		        httpSecurity.
 		            antMatcher("/reciter/**").
