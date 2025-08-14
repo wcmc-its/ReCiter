@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -38,6 +39,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 /**
  * @author mjangari
  */
+@Component
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final Logger log = LoggerFactory.getLogger(JwtTokenAuthenticationFilter.class);
