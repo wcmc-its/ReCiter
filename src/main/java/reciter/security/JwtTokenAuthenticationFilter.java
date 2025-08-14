@@ -114,36 +114,15 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
                 // Write the user log entry to the S3 bucket
                 s3UserLogHandler.writeUserLog(userLog, date);
 
-			} catch (JWTVerificationException e) {
-				if (!response.isCommitted()) 
-				{	
-					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					response.setContentType("application/json");
-					response.setCharacterEncoding("UTF-8");
-					String jsonResponse = "{"
-					        + "\"status\": 401,"
-					        + "\"error\": \"Unauthorized\","
-					        + "\"message\": \"Invalid token. Please regenerate the token again.\""
-					        + "}";
-					response.getWriter().write(jsonResponse);
-					response.getWriter().flush();
-				}
-				return;
-			} catch (Exception e) {
-				if (!response.isCommitted()) 
-				{	
-					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					response.setContentType("application/json");
-					response.setCharacterEncoding("UTF-8");
-					String jsonResponse = "{"
-					        + "\"status\": 401,"
-					        + "\"error\": \"Unauthorized\","
-					        + "\"message\": " + e.getMessage()
-					        + "}";
-					response.getWriter().write(jsonResponse);
-					response.getWriter().flush();
-				}
-				return;
+			} 
+			catch (JWTVerificationException e) 
+			{
+				 writeJsonErrorResponse(response, "Invalid token. Please regenerate the token again.");
+				 return;
+			} 
+			catch (Exception e) {
+				 writeJsonErrorResponse(response, e.getMessage());
+				 return;
 			}
 		}
 		else if(path.startsWith("/reciter/"))
@@ -152,26 +131,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	        .filter(key -> !key.isEmpty())
 	        .ifPresent(apiKey -> {
 	        	 if (!apiKey.equals(principalRequestValue)) {
-	        		 if (!response.isCommitted()) 
-        		 	 {
-	        			 	response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		    				response.setContentType("application/json");
-		    				response.setCharacterEncoding("UTF-8");
-		    				String jsonResponse = "{"
-		    				        + "\"status\": 401,"
-		    				        + "\"error\": \"Unauthorized\","
-		    				        + "\"message\": \"Invalid API Key.\""
-		    				        + "}";
-		    				try {
-								response.getWriter().write(jsonResponse);
-								response.getWriter().flush(); 
-								
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-	        		 }
-	    			 return;
+	        		 	writeJsonErrorResponse(response, "Invalid Api Key.");
+	        		    return;
 	                }
 	                UsernamePasswordAuthenticationToken auth =
 	                        new UsernamePasswordAuthenticationToken("reciter-internal-user", null, Collections.emptyList());
@@ -281,5 +242,29 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     public static String getIssuerFromToken(String region, String userPoolId) {
         // Construct the JWKS URL for the given region and user pool ID
         return "https://cognito-idp." + region + ".amazonaws.com/" + userPoolId;
+    }
+    
+    private void writeJsonErrorResponse(HttpServletResponse response, String message) {
+        if (response.isCommitted()) return;
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        // Safely escape the message to avoid breaking JSON
+        String escapedMessage = message.replace("\"", "\\\"");
+
+        String jsonResponse = "{"
+            + "\"status\": 401,"
+            + "\"error\": \"Unauthorized\","
+            + "\"message\": \"" + escapedMessage + "\""
+            + "}";
+
+        try {
+            response.getWriter().write(jsonResponse);
+            response.getWriter().flush();
+        } catch (IOException ioEx) {
+            ioEx.printStackTrace(); // Log safely
+        }
     }
 }
