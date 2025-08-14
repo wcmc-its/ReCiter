@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Optional;
 
@@ -12,12 +13,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -36,10 +38,13 @@ import com.nimbusds.jose.jwk.RSAKey;
 /**
  * @author mjangari
  */
-@Component
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
+	private static final Logger log = LoggerFactory.getLogger(JwtTokenAuthenticationFilter.class);
+	
 	private static final String STR_USER_POOL_ID = "userPoolID";	
+	
+	private String principalRequestValue = System.getenv("ADMIN_API_KEY");
 	    
 	@Autowired
     private AwsSecretsManagerService awsSecretsManagerService; // Inject the service to get the secret
@@ -60,8 +65,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 		String token = extractToken(request);
 		String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
-        System.out.println("token**********************"+token);
-		if (StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) {
+		
+        
+        String path = request.getRequestURI();
+        log.info("Requested URI Path"+path);
+        
+		if (path.startsWith("/reciter/article-retrieval/") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
+		{
 			try {
 				
 				// Verify the token
@@ -69,7 +79,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 				
 				String clientId = decodedJWT.getClaim("client_id").asString();
-				 System.out.println("clientId**********************"+clientId);
+				log.info("clientId"+clientId);
 				JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
 
 				try
@@ -85,7 +95,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				}
 				
 				String clientName = secretsJson.get("clientName").asText();
-				 System.out.println("clientName**********************"+clientName);
+				log.info("clientName"+clientName);
 				// Create an authentication object
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 						decodedJWT.getSubject(), null, null);
@@ -114,6 +124,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				        + "\"message\": \"Invalid token. Please regenerate the token again.\""
 				        + "}";
 				response.getWriter().write(jsonResponse);
+				response.getWriter().flush(); 
 				return;
 			} catch (Exception e) {
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -125,10 +136,39 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				        + "\"message\": " + e.getMessage()
 				        + "}";
 				response.getWriter().write(jsonResponse);
+				response.getWriter().flush(); 
 				return;
 			}
 		}
+		else if(path.startsWith("/reciter/"))
+		{
+			Optional.ofNullable(request.getHeader("api-key"))
+	        .filter(key -> !key.isEmpty())
+	        .ifPresent(apiKey -> {
+	        	 if (!apiKey.equals(principalRequestValue)) {
+	                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	    				response.setContentType("application/json");
+	    				response.setCharacterEncoding("UTF-8");
+	    				String jsonResponse = "{"
+	    				        + "\"status\": 401,"
+	    				        + "\"error\": \"Unauthorized\","
+	    				        + "\"message\": \"Invalid API Key.\""
+	    				        + "}";
+	    				try {
+							response.getWriter().write(jsonResponse);
+							response.getWriter().flush(); 
+							return;
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+	                }
+	                UsernamePasswordAuthenticationToken auth =
+	                        new UsernamePasswordAuthenticationToken("reciter-internal-user", null, Collections.emptyList());
+	                SecurityContextHolder.getContext().setAuthentication(auth);
 
+	        });
+		}
 		filterChain.doFilter(request, response);
 	}
 
@@ -136,23 +176,18 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	private String extractToken(HttpServletRequest request) {
 		Enumeration<String> headerNames = request.getHeaderNames();
 		if (headerNames == null || !headerNames.hasMoreElements()) {
-		    System.out.println("No headers found in the request.");
+			log.info("No headers found in the request.");
 		}
 		else
 		{	
 	        while (headerNames.hasMoreElements()) {
 	            String header = headerNames.nextElement();
-	            System.out.println(header + ": " + request.getHeader(header));
 	        }
 	        String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
-	        Optional<String> apiKeyHeader = Optional.ofNullable(request.getHeader("api-key"));
-			if (header != null && header.startsWith("Bearer ")) {
+	 		if (header != null && header.startsWith("Bearer ")) {
 				return header.substring(7); // Remove "Bearer " prefix
 			}
-			else if(apiKeyHeader.isPresent())
-			{	
-				return apiKeyHeader.get();
-			}
+			
 		}
 		return null;
 		
