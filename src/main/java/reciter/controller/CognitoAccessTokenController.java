@@ -20,7 +20,7 @@ import reciter.service.aws.CognitoTokenService;
 @RequestMapping("/reciter")
 public class CognitoAccessTokenController {
 
-private static final Logger log = LoggerFactory.getLogger(CognitoAccessTokenController.class);
+	private static final Logger log = LoggerFactory.getLogger(CognitoAccessTokenController.class);
 	
 	@Autowired
     private AwsSecretsManagerService awsSecretsManagerService; 
@@ -29,11 +29,12 @@ private static final Logger log = LoggerFactory.getLogger(CognitoAccessTokenCont
     private CognitoTokenService cognitoTokenService; 
 	
 	
-    @GetMapping("/getAccessToken")
+    @GetMapping("/generate-access-token")
     @ResponseBody
     public ResponseEntity<String> generateAccessToken(@RequestParam(value = "clientName") String clientName) {
        
-    	 ResponseEntity<String> tokenResponse = cognitoTokenService.getCognitoAccessToken(clientName);
+    	ResponseEntity<String> tokenResponse = cognitoTokenService.getCognitoAccessToken(clientName);
+    	log.info("Token Response",tokenResponse);
 		return tokenResponse;
     }
 }

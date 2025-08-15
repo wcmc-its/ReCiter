@@ -40,6 +40,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 			httpSecurity.antMatcher("/reciter/**").csrf().disable().sessionManagement()
 					.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 					.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class).authorizeRequests()
+					.antMatchers("/reciter/generate-access-token").permitAll()
 					.anyRequest().authenticated();
 		}
 
@@ -51,7 +52,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 			web.ignoring().antMatchers("/reciter/**");
 		}
 		// Added to whitelist ping controller and Access Token
-		web.ignoring().antMatchers("/reciter/ping","/reciter/getAccessToken");
+		web.ignoring().antMatchers("/reciter/ping");
 		
 	}
 }
