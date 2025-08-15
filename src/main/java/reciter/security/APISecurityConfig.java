@@ -50,7 +50,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 		if (!securityEnabled) {
 			web.ignoring().antMatchers("/reciter/**");
 		}
-		// Added to whitelist ping controller
+		// Added to whitelist ping controller and Access Token
 		web.ignoring().antMatchers("/reciter/ping","/reciter/getAccessToken");
 		
 	}

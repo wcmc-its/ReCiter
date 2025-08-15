@@ -1,5 +1,7 @@
 package reciter.service.aws;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -9,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import reciter.security.APISecurityConfig;
 import reciter.security.AwsSecretsManagerService;
 
 import java.nio.charset.StandardCharsets;
@@ -23,6 +26,7 @@ import java.util.stream.StreamSupport;
 @Service
 public class CognitoTokenService {
 
+		private static final Logger log = LoggerFactory.getLogger(CognitoTokenService.class);
 	 	private final RestTemplate restTemplate = new RestTemplate();
 	 	private final String CLIENT_ID ="clientID";
 	 	private final String CLIENT_NAME ="clientName";
@@ -41,9 +45,10 @@ public class CognitoTokenService {
 	    	
 	    	
 	    	JsonNode secretsJson = getClientSecretsFromSecretsManager();
+	    	log.info("Secrets JSON Node :", secretsJson.fieldNames());
 	    	
 	    	Map<String, String> clientSecretMap = extractClientSecret(secretsJson, clientName);
-			
+	    	clientSecretMap.forEach((key,value) -> log.info("secretsName:",key));
 			
 			String clientID = clientSecretMap.get(CLIENT_ID)!=null?clientSecretMap.get(CLIENT_ID) :"";
 			String userPoolID = clientSecretMap.get(USER_POOL_ID)!=null?clientSecretMap.get(USER_POOL_ID):"" ;
