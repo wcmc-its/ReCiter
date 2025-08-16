@@ -103,9 +103,33 @@ public class CognitoTokenService {
 	    	System.out.println("clientName********************"+clientName);
 	        Map<String, String> extractedJson = null;
 
-	        try {
-	            ObjectMapper objectMapper = new ObjectMapper();
-
+	         try { 
+	            	// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper 
+	            	ObjectMapper objectMapper = new ObjectMapper(); 
+	            	secretsJson = objectMapper.readTree(secretsJson.asText()); 
+	            	
+	            	Iterator<Map.Entry<String, JsonNode>> fields = secretsJson.fields(); 
+	            	while (fields.hasNext()) 
+	            	{ 
+	            		System.out.println("coming into while loop********************"+fields);
+	            		Map.Entry<String, JsonNode> entry = fields.next(); 
+	            		String key = entry.getKey(); 
+	            		System.out.println("Key********************"+key);
+	            		JsonNode secretValueJsonNode = entry.getValue();
+	            		Map<String, String> valueFields = objectMapper.convertValue(secretValueJsonNode, Map.class);
+	            		if(valueFields!=null && valueFields.size() > 0) 
+	            		{ 
+	            			String clientNameValue = valueFields.get(CLIENT_NAME);
+	            			System.out.println("clientNameValue********************"+clientNameValue);
+	            			if(clientNameValue!=null && clientNameValue.equalsIgnoreCase(clientName))
+	            			{ 
+	            				extractedJson = valueFields; 
+	            			 } 
+	            		 } 
+	            	 } 
+	            	/*} catch(Exception e) { e.printStackTrace(); }
+	            
+	            
 	            // Parse the outer secret value (if stored as JSON string)
 	            secretsJson = objectMapper.readTree(secretsJson.asText());
 
@@ -121,7 +145,7 @@ public class CognitoTokenService {
 	                .filter(map -> map.containsKey(CLIENT_NAME)
 	                        && clientName.equalsIgnoreCase(String.valueOf(map.get(CLIENT_NAME))))
 	                .findFirst()
-	                .orElse(null);
+	                .orElse(null);*/
 	            
 	            	System.out.println("extractedJson********************"+extractedJson!=null && extractedJson.size()>0?extractedJson.size():0);
 
