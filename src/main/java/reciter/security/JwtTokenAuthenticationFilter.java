@@ -70,12 +70,12 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		
         
         String path = request.getRequestURI();
-        log.info("Requested URI Path"+path);
+        
         
 		if (path.startsWith("/reciter/article-retrieval/") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
 		{
 			try {
-				
+				log.info("Requested URI Path"+path);
 				// Verify the token
 				DecodedJWT decodedJWT = verifyJWT(token);
 
@@ -129,6 +129,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		}
 		else if(path.startsWith("/reciter/"))
 		{
+			log.info("Requested URI Path"+path);
 			Optional.ofNullable(request.getHeader("api-key"))
 	        .filter(key -> !key.isEmpty())
 	        .ifPresent(apiKey -> {

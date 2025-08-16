@@ -43,9 +43,9 @@ public class CognitoTokenService {
 	 	
 	    public ResponseEntity<String> getCognitoAccessToken(String clientName) {
 	    	
-	    	
 	    	JsonNode secretsJson = getClientSecretsFromSecretsManager();
-	    	log.info("Secrets JSON Node :", secretsJson.fieldNames());
+	    	log.warn("Secrets JSON Node :", secretsJson.fieldNames());
+	    	log.warn("clientName :", clientName);
 	    	
 	    	Map<String, String> clientSecretMap = extractClientSecret(secretsJson, clientName);
 	    	clientSecretMap.forEach((key,value) -> log.info("secretsName:",key));
@@ -90,10 +90,14 @@ public class CognitoTokenService {
 	    
 	 // Fetch the Issuer URL from Secrets Manager
 	    private JsonNode getClientSecretsFromSecretsManager() {
-	    	JsonNode secretValueJson = awsSecretsManagerService.getSecrets(consumerSecretName); 
+	    	log.warn("consumerSecretName********************",consumerSecretName);
+	    	JsonNode secretValueJson = awsSecretsManagerService.getSecrets(consumerSecretName);
+	    	log.warn("secretValueJson size********************",secretValueJson.size());
 	        return secretValueJson;
 	    }
 	    public Map<String, String> extractClientSecret(JsonNode secretsJson, String clientName) {
+	    	log.warn("secretsJson inside extractClientSecret********************",secretsJson);
+	    	log.warn("clientName********************",clientName);
 	        Map<String, String> extractedJson = null;
 
 	        try {
