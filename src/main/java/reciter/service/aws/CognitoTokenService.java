@@ -48,7 +48,9 @@ public class CognitoTokenService {
 	    	System.out.println("clientName :"+ clientName);
 	    	
 	    	Map<String, String> clientSecretMap = extractClientSecret(secretsJson, clientName);
-	    	clientSecretMap.forEach((key,value) -> System.out.println("secretsName:"+key));
+	    	System.out.println("clientSecretMap :"+ clientSecretMap.size());
+	    	if(clientSecretMap!=null && clientSecretMap.size()>0)
+	    		clientSecretMap.forEach((key,value) -> System.out.println("secretsName:"+key));
 			
 			String clientID = clientSecretMap.get(CLIENT_ID)!=null?clientSecretMap.get(CLIENT_ID) :"";
 			String userPoolID = clientSecretMap.get(USER_POOL_ID)!=null?clientSecretMap.get(USER_POOL_ID):"" ;
@@ -96,7 +98,7 @@ public class CognitoTokenService {
 	        return secretValueJson;
 	    }
 	    public Map<String, String> extractClientSecret(JsonNode secretsJson, String clientName) {
-	    	System.out.println("secretsJson inside extractClientSecret********************"+secretsJson);
+	    	System.out.println("secretsJson inside extractClientSecret********************"+secretsJson.size());
 	    	System.out.println("clientName********************"+clientName);
 	        Map<String, String> extractedJson = null;
 
@@ -115,6 +117,8 @@ public class CognitoTokenService {
 	                        && clientName.equalsIgnoreCase(String.valueOf(map.get(CLIENT_NAME))))
 	                .findFirst()
 	                .orElse(null);
+	            
+	            System.out.println("extractedJson********************"+extractedJson.size());
 
 	        } catch (Exception e) {
 	            e.printStackTrace();
