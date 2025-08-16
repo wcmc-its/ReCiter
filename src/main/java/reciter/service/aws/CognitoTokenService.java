@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class CognitoTokenService {
@@ -111,14 +112,16 @@ public class CognitoTokenService {
 	            // Convert fields iterator to stream
 	            extractedJson = StreamSupport.stream(
 	                    Spliterators.spliteratorUnknownSize(secretsJson.fields(), Spliterator.ORDERED), false)
-	                .map(Entry::getValue)
-	                .map(valueNode -> objectMapper.convertValue(valueNode, Map.class))
+	            	.peek(map -> log.debug("Checking map: {}", map))	
+	            	.map(Entry::getValue)
+	                .map(valueNode -> objectMapper.convertValue(valueNode, new TypeReference<Map<String, String>>() {}))
+	                .peek(map -> log.info("Inspecting secret map: {}", map))
 	                .filter(map -> map.containsKey(CLIENT_NAME)
 	                        && clientName.equalsIgnoreCase(String.valueOf(map.get(CLIENT_NAME))))
 	                .findFirst()
 	                .orElse(null);
 	            
-	            System.out.println("extractedJson********************"+extractedJson.size());
+	            	System.out.println("extractedJson********************"+extractedJson!=null && extractedJson.size()>0?extractedJson.size():0);
 
 	        } catch (Exception e) {
 	            e.printStackTrace();
