@@ -28,6 +28,8 @@ public class AwsSecretsManagerService {
     private String secretManagerRegion;
 	
     public JsonNode getSecrets(String secretName) {
+    	
+    	log.info("Resolved AWS credentials: "+DefaultCredentialsProvider.create().resolveCredentials());
         // Initialize the Secrets Manager client
         SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
         		.region(Region.of(secretManagerRegion)) 
