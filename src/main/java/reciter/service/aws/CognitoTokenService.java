@@ -112,10 +112,12 @@ public class CognitoTokenService {
 	            // Convert fields iterator to stream
 	            extractedJson = StreamSupport.stream(
 	                    Spliterators.spliteratorUnknownSize(secretsJson.fields(), Spliterator.ORDERED), false)
-	            	.peek(map -> log.debug("Checking map: {}", map))	
-	            	.map(Entry::getValue)
-	                .map(valueNode -> objectMapper.convertValue(valueNode, new TypeReference<Map<String, String>>() {}))
-	                .peek(map -> log.info("Inspecting secret map: {}", map))
+	                .map(Map.Entry::getValue) // Extracts each inner JsonNode
+	                .map(valueNode -> objectMapper.convertValue(valueNode, new TypeReference<Map<String, String>>() {})) // Converts JsonNode -> Map<String, String>
+	                .peek(map -> {
+	                    log.info("Inspecting secret map: {}", map);
+	                    log.info("Available CLIENT_NAME in map: {}", map.get(CLIENT_NAME));
+	                }) // 👈 Add your debug peek here
 	                .filter(map -> map.containsKey(CLIENT_NAME)
 	                        && clientName.equalsIgnoreCase(String.valueOf(map.get(CLIENT_NAME))))
 	                .findFirst()
