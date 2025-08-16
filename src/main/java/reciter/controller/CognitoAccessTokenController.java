@@ -34,7 +34,7 @@ public class CognitoAccessTokenController {
     public ResponseEntity<String> generateAccessToken(@RequestParam(value = "clientName") String clientName) {
        
     	ResponseEntity<String> tokenResponse = cognitoTokenService.getCognitoAccessToken(clientName);
-    	log.info("Token Response"+tokenResponse);
+    	System.out.println("Token Response"+tokenResponse);
 		return tokenResponse;
     }
 }

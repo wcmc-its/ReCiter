@@ -29,7 +29,7 @@ public class AwsSecretsManagerService {
 	
     public JsonNode getSecrets(String secretName) {
     	
-    	log.info("Resolved AWS credentials: "+DefaultCredentialsProvider.create().resolveCredentials());
+    	System.out.println("Resolved AWS credentials: "+DefaultCredentialsProvider.create().resolveCredentials());
         // Initialize the Secrets Manager client
         SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
         		.region(Region.of(secretManagerRegion)) 
@@ -83,7 +83,7 @@ public class AwsSecretsManagerService {
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
 
-        log.info("secretName pulled from application.properties" + secretName);
+        log.info("secretName1 pulled from application.properties" + secretName);
         // Fetch the secret from AWS Secrets Manager
         GetSecretValueRequest valueRequest = GetSecretValueRequest.builder()
                 .secretId(secretName)

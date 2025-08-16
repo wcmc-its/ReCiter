@@ -44,11 +44,11 @@ public class CognitoTokenService {
 	    public ResponseEntity<String> getCognitoAccessToken(String clientName) {
 	    	
 	    	JsonNode secretsJson = getClientSecretsFromSecretsManager();
-	    	log.warn("Secrets JSON Node :"+ secretsJson.fieldNames());
-	    	log.warn("clientName :"+ clientName);
+	    	System.out.println("Secrets JSON Node :"+ secretsJson.fieldNames());
+	    	System.out.println("clientName :"+ clientName);
 	    	
 	    	Map<String, String> clientSecretMap = extractClientSecret(secretsJson, clientName);
-	    	clientSecretMap.forEach((key,value) -> log.info("secretsName:",key));
+	    	clientSecretMap.forEach((key,value) -> System.out.println("secretsName:"+key));
 			
 			String clientID = clientSecretMap.get(CLIENT_ID)!=null?clientSecretMap.get(CLIENT_ID) :"";
 			String userPoolID = clientSecretMap.get(USER_POOL_ID)!=null?clientSecretMap.get(USER_POOL_ID):"" ;
@@ -90,14 +90,14 @@ public class CognitoTokenService {
 	    
 	 // Fetch the Issuer URL from Secrets Manager
 	    private JsonNode getClientSecretsFromSecretsManager() {
-	    	log.warn("consumerSecretName********************"+ consumerSecretName);
+	    	System.out.println("consumerSecretName********************"+ consumerSecretName);
 	    	JsonNode secretValueJson = awsSecretsManagerService.getSecrets(consumerSecretName);
-	    	log.warn("secretValueJson size********************"+secretValueJson.size());
+	    	System.out.println("secretValueJson size********************"+secretValueJson.size());
 	        return secretValueJson;
 	    }
 	    public Map<String, String> extractClientSecret(JsonNode secretsJson, String clientName) {
-	    	log.warn("secretsJson inside extractClientSecret********************"+secretsJson);
-	    	log.warn("clientName********************"+clientName);
+	    	System.out.println("secretsJson inside extractClientSecret********************"+secretsJson);
+	    	System.out.println("clientName********************"+clientName);
 	        Map<String, String> extractedJson = null;
 
 	        try {

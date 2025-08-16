@@ -129,7 +129,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		}
 		else if(path.startsWith("/reciter/"))
 		{
-			log.info("Requested URI Path"+path);
+			log.info("Requested URI Path in else"+path);
 			Optional.ofNullable(request.getHeader("api-key"))
 	        .filter(key -> !key.isEmpty())
 	        .ifPresent(apiKey -> {
