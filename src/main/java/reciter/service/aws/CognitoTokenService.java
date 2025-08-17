@@ -1,28 +1,27 @@
 package reciter.service.aws;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import reciter.security.APISecurityConfig;
 import reciter.security.AwsSecretsManagerService;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.StreamSupport;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class CognitoTokenService {
@@ -44,19 +43,18 @@ public class CognitoTokenService {
 	 	
 	    public ResponseEntity<String> getCognitoAccessToken(String clientName) {
 	    	
-	    	JsonNode secretsJson = getClientSecretsFromSecretsManager();
+	    	JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientName);
 	    	System.out.println("Secrets JSON Node :"+ secretsJson.fieldNames());
 	    	System.out.println("clientName :"+ clientName);
 	    	
-	    	Map<String, String> clientSecretMap = extractClientSecret(secretsJson, clientName);
-	    	System.out.println("clientSecretMap :"+ clientSecretMap.size());
-	    	if(clientSecretMap!=null && clientSecretMap.size()>0)
-	    		clientSecretMap.forEach((key,value) -> System.out.println("secretsName:"+key));
-			
-			String clientID = clientSecretMap.get(CLIENT_ID)!=null?clientSecretMap.get(CLIENT_ID) :"";
-			String userPoolID = clientSecretMap.get(USER_POOL_ID)!=null?clientSecretMap.get(USER_POOL_ID):"" ;
-			String scope = clientSecretMap.get(SCOPE)!=null?clientSecretMap.get(SCOPE):"";
-			String clientSecret = clientSecretMap.get(CLIENT_SECRET)!=null?clientSecretMap.get(CLIENT_SECRET):"";
+	    	String clientID = secretsJson.get(CLIENT_ID)!=null?secretsJson.get(CLIENT_ID).asText() :"";
+	    	System.out.println("clientID :"+ clientID);
+			String userPoolID = secretsJson.get(USER_POOL_ID)!=null?secretsJson.get(USER_POOL_ID).asText():"" ;
+			System.out.println("userPoolID :"+ userPoolID);
+			String scope = secretsJson.get(SCOPE)!=null?secretsJson.get(SCOPE).asText():"";
+			System.out.println("scope :"+ scope);
+			String clientSecret = secretsJson.get(CLIENT_SECRET)!=null?secretsJson.get(CLIENT_SECRET).asText():"";
+			System.out.println("clientSecret :"+ clientSecret);
 	    	
 	        String tokenEndpoint = "https://" + userPoolID + "/oauth2/token";
 
@@ -89,70 +87,5 @@ public class CognitoTokenService {
 	        } else {
 	            throw new RuntimeException("Failed to get token: " + response.getStatusCode() + " - " + response.getBody());
 	        }
-	    }
-	    
-	 // Fetch the Issuer URL from Secrets Manager
-	    private JsonNode getClientSecretsFromSecretsManager() {
-	    	System.out.println("consumerSecretName********************"+ consumerSecretName);
-	    	JsonNode secretValueJson = awsSecretsManagerService.getSecrets(consumerSecretName);
-	    	System.out.println("secretValueJson size********************"+secretValueJson.size());
-	        return secretValueJson;
-	    }
-	    public Map<String, String> extractClientSecret(JsonNode secretsJson, String clientName) {
-	    	System.out.println("secretsJson inside extractClientSecret********************"+secretsJson.size());
-	    	System.out.println("clientName********************"+clientName);
-	        Map<String, String> extractedJson = null;
-
-	         try { 
-	            	// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper 
-	            	ObjectMapper objectMapper = new ObjectMapper(); 
-	            	secretsJson = objectMapper.readTree(secretsJson.asText()); 
-	            	
-	            	Iterator<Map.Entry<String, JsonNode>> fields = secretsJson.fields(); 
-	            	while (fields.hasNext()) 
-	            	{ 
-	            		System.out.println("coming into while loop********************"+fields);
-	            		Map.Entry<String, JsonNode> entry = fields.next(); 
-	            		String key = entry.getKey(); 
-	            		System.out.println("Key********************"+key);
-	            		JsonNode secretValueJsonNode = entry.getValue();
-	            		Map<String, String> valueFields = objectMapper.convertValue(secretValueJsonNode, Map.class);
-	            		if(valueFields!=null && valueFields.size() > 0) 
-	            		{ 
-	            			String clientNameValue = valueFields.get(CLIENT_NAME);
-	            			System.out.println("clientNameValue********************"+clientNameValue);
-	            			if(clientNameValue!=null && clientNameValue.equalsIgnoreCase(clientName))
-	            			{ 
-	            				extractedJson = valueFields; 
-	            			 } 
-	            		 } 
-	            	 } 
-	            	/*} catch(Exception e) { e.printStackTrace(); }
-	            
-	            
-	            // Parse the outer secret value (if stored as JSON string)
-	            secretsJson = objectMapper.readTree(secretsJson.asText());
-
-	            // Convert fields iterator to stream
-	            extractedJson = StreamSupport.stream(
-	                    Spliterators.spliteratorUnknownSize(secretsJson.fields(), Spliterator.ORDERED), false)
-	                .map(Map.Entry::getValue) // Extracts each inner JsonNode
-	                .map(valueNode -> objectMapper.convertValue(valueNode, new TypeReference<Map<String, String>>() {})) // Converts JsonNode -> Map<String, String>
-	                .peek(map -> {
-	                    log.info("Inspecting secret map: {}", map);
-	                    log.info("Available CLIENT_NAME in map: {}", map.get(CLIENT_NAME));
-	                }) // 👈 Add your debug peek here
-	                .filter(map -> map.containsKey(CLIENT_NAME)
-	                        && clientName.equalsIgnoreCase(String.valueOf(map.get(CLIENT_NAME))))
-	                .findFirst()
-	                .orElse(null);*/
-	            
-	            	System.out.println("extractedJson********************"+extractedJson!=null && extractedJson.size()>0?extractedJson.size():0);
-
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        }
-
-	        return extractedJson;
 	    }
 }

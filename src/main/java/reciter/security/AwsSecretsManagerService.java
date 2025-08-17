@@ -1,5 +1,7 @@
 package reciter.security;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,14 +29,27 @@ public class AwsSecretsManagerService {
 	@Value("${aws.secretsmanager.region}")
     private String secretManagerRegion;
 	
+	public Optional<SecretsManagerClient> createSecretsManagerClient()
+	{
+		return Optional.of(
+				    SecretsManagerClient.builder()
+				        .region(Region.of(secretManagerRegion))
+				        .credentialsProvider(DefaultCredentialsProvider.create())
+				        .build()
+				);
+	}
+	
     public JsonNode getSecrets(String secretName) {
     	
     	System.out.println("Resolved AWS credentials: "+DefaultCredentialsProvider.create().resolveCredentials());
         // Initialize the Secrets Manager client
-        SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
+        /*SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
         		.region(Region.of(secretManagerRegion)) 
                 .credentialsProvider(DefaultCredentialsProvider.create())
-                .build();
+                .build();*/
+    	
+    	SecretsManagerClient secretsManagerClient = createSecretsManagerClient() 
+    												.orElseThrow(() -> new IllegalStateException("SecretsManagerClient could not be created: region is missing"));
 
         log.info("secretName pulled from application.properties" + secretName);
         // Fetch the secret from AWS Secrets Manager
@@ -79,9 +94,13 @@ public class AwsSecretsManagerService {
     
     public String getSecretKeyPairs(String secretName) {
         // Initialize the Secrets Manager client
-        SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
+        /*SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
                 .credentialsProvider(DefaultCredentialsProvider.create())
-                .build();
+                .build();*/
+    	
+    	SecretsManagerClient secretsManagerClient = createSecretsManagerClient() 
+				.orElseThrow(() -> new IllegalStateException("SecretsManagerClient could not be created: region is missing"));
+
 
         log.info("secretName1 pulled from application.properties" + secretName);
         // Fetch the secret from AWS Secrets Manager
@@ -97,5 +116,25 @@ public class AwsSecretsManagerService {
      
         return clientSecrets;  // Return the client secret based on the clientId
      }
+    
+    public JsonNode getSecretValueFromSecretsManager(String secretName, String secretKey) {
+    	JsonNode secretValueJson = getSecrets(secretName); 
+        if (secretValueJson != null && secretKey!=null && !secretKey.equalsIgnoreCase("")) {
+        	try
+			{
+				// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
+	            ObjectMapper objectMapper = new ObjectMapper();
+	            JsonNode secretsJson = objectMapper.readTree(secretValueJson.asText());
+	            return secretsJson.get(secretKey); 
+	
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+           
+        }
+        return null;
+    }
 }
 

@@ -82,7 +82,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				
 				String clientId = decodedJWT.getClaim("client_id").asString();
 				log.info("clientId"+clientId);
-				JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
+				JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
 
 				try
 				{
@@ -174,19 +174,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		{
 			String clientId = JWT.decode(token).getClaim("client_id").asString();
 			
-			JsonNode secretsJson = getClientSecretsFromSecretsManager(clientId);
-			try
-			{
-				// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
-	            ObjectMapper objectMapper = new ObjectMapper();
-	            secretsJson = objectMapper.readTree(secretsJson.asText());
-	
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-			
+			JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
 			String tokenSignInUrl = getTokenSigningKeyUrl(cogintoRegion,secretsJson.get(STR_USER_POOL_ID).asText());
 			
 			String issuer = getIssuerFromToken(cogintoRegion,secretsJson.get(STR_USER_POOL_ID).asText());
@@ -230,15 +218,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		return restTemplate.getForObject(tokenSignInUrl, String.class); // Fetch JWKS
 	}
 
-	// Fetch the Issuer URL from Secrets Manager
-    private JsonNode getClientSecretsFromSecretsManager(String clientId) {
-    	JsonNode secretValueJson = awsSecretsManagerService.getSecrets(consumerSecretName); 
-        if (secretValueJson != null && clientId!=null && !clientId.equalsIgnoreCase("")) {
-            return secretValueJson.get(clientId); 
-        }
-        return null;
-    }
-    public static String getTokenSigningKeyUrl(String region, String userPoolId) {
+	public static String getTokenSigningKeyUrl(String region, String userPoolId) {
         // Construct the JWKS URL for the given region and user pool ID
         return "https://cognito-idp." + region + ".amazonaws.com/" + userPoolId + "/.well-known/jwks.json";
     }
