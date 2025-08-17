@@ -186,10 +186,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			String tokenSignInUrl = getTokenSigningKeyUrl(cogintoRegion,clientIdSecretValues.get(STR_USER_POOL_ID)!=null?clientIdSecretValues.get(STR_USER_POOL_ID).asText():"");
+	    	
+	    	String userPoolID = clientIdSecretValues.get(STR_USER_POOL_ID)!=null? cogintoRegion + "_" + clientIdSecretValues.get(STR_USER_POOL_ID).asText():"";
+	    	
+			String tokenSignInUrl = getTokenSigningKeyUrl(cogintoRegion,userPoolID);
 			
-			String issuer = getIssuerFromToken(cogintoRegion,clientIdSecretValues.get(STR_USER_POOL_ID)!=null?clientIdSecretValues.get(STR_USER_POOL_ID).asText():"");
-						
+			String issuer = getIssuerFromToken(cogintoRegion,userPoolID);
+			
 			RSAPublicKey publicKey = getPublicKeyFromJWKSet(token,tokenSignInUrl);
 	
 			JWTVerifier verifier = JWT.require(Algorithm.RSA256(publicKey, null))
