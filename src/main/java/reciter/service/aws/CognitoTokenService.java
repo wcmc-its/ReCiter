@@ -40,6 +40,8 @@ public class CognitoTokenService {
 	 	@Value("${aws.secretsmanager.consumer.secretName}")
 		private String consumerSecretName;
 	 	
+	 	@Value("${aws.congito.userpool.region}")
+		private String cognitoPoolRegion;
 	 	
 	    public ResponseEntity<String> getCognitoAccessToken(String clientName) {
 	    	
@@ -66,10 +68,11 @@ public class CognitoTokenService {
 			System.out.println("scope :"+ scope);
 			String clientSecret = clientIdSecretValues.get(CLIENT_SECRET)!=null?clientIdSecretValues.get(CLIENT_SECRET).asText():"";
 			System.out.println("clientSecret :"+ clientSecret);
-	    	
+			System.out.println("cognitoPoolRegion :"+ cognitoPoolRegion);
 				
-	        String tokenEndpoint = "https://" + userPoolID + ".auth.us-east-1.amazoncognito.com/oauth2/token";
+	        String tokenEndpoint = "https://" + cognitoPoolRegion +  userPoolID + ".auth.us-east-1.amazoncognito.com/oauth2/token";
 
+	        System.out.println("tokenEndpoint :"+ tokenEndpoint);
 	        // Encode clientId:clientSecret in base64 for Basic Auth
 	        String auth = clientID + ":" + clientSecret;
 	        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
