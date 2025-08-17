@@ -49,7 +49,12 @@ public class CognitoTokenService {
 	    	
 	    	JsonNode clientIdSecretValues =null;
 	    	JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientName);
-	    	
+	    	if(secretsJson == null)
+	    	{
+	    		 return ResponseEntity
+	                     .status(HttpStatus.BAD_REQUEST)  // Set status to 400 (Bad Request)
+	                     .body("Unauthorized or Client Name does not exist: " + clientName);
+	    	}
 	    	JsonNode clientIdSecrets = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,secretsJson.asText());
 	    	ObjectMapper objectMapper = new ObjectMapper();
 	    	try {

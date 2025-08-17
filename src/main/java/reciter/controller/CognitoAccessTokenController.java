@@ -10,13 +10,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import reciter.security.AwsSecretsManagerService;
 import reciter.service.aws.CognitoTokenService;
 
-@Controller
+@RestController
 @RequestMapping("/reciter")
 public class CognitoAccessTokenController {
 
@@ -30,11 +32,15 @@ public class CognitoAccessTokenController {
 	
 	
     @GetMapping("/generate-access-token")
-    @ResponseBody
     public ResponseEntity<String> generateAccessToken(@RequestParam(value = "clientName") String clientName) {
        
+    	if(clientName == null || clientName.equalsIgnoreCase(""))
+    	{
+    		 return ResponseEntity
+                     .status(HttpStatus.BAD_REQUEST)  // Set status to 400 (Bad Request)
+                     .body("The 'clientName' is required and cannot be empty.");
+    	}
     	ResponseEntity<String> tokenResponse = cognitoTokenService.getCognitoAccessToken(clientName);
-    	System.out.println("Token Response"+tokenResponse);
-		return tokenResponse;
+ 		return tokenResponse;
     }
 }
