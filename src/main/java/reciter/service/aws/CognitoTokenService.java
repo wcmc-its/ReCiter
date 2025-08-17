@@ -48,7 +48,7 @@ public class CognitoTokenService {
 	    	System.out.println("clientName :"+ clientName);
 	    	
 	    	JsonNode clientIdSecrets = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,secretsJson.asText());
-	    	
+	    	System.out.println("clientIdSecrets Node :"+ clientIdSecrets);
 	    	String clientID = clientIdSecrets.get(CLIENT_ID)!=null?clientIdSecrets.get(CLIENT_ID).asText() :"";
 	    	System.out.println("clientID :"+ clientID);
 			String userPoolID = clientIdSecrets.get(USER_POOL_ID)!=null?clientIdSecrets.get(USER_POOL_ID).asText():"" ;
