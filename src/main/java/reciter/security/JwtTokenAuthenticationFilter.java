@@ -175,6 +175,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 			String clientId = JWT.decode(token).getClaim("client_id").asString();
 			
 			JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
+			System.out.println("secretsJson in VerufyJWT*************"+secretsJson);
 			String tokenSignInUrl = getTokenSigningKeyUrl(cogintoRegion,secretsJson.get(STR_USER_POOL_ID).asText());
 			
 			String issuer = getIssuerFromToken(cogintoRegion,secretsJson.get(STR_USER_POOL_ID).asText());
