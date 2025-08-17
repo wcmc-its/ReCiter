@@ -43,19 +43,28 @@ public class CognitoTokenService {
 	 	
 	    public ResponseEntity<String> getCognitoAccessToken(String clientName) {
 	    	
+	    	JsonNode clientIdSecretValues =null;
 	    	JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientName);
 	    	System.out.println("Secrets JSON Node :"+ secretsJson);
 	    	System.out.println("clientName :"+ clientName);
 	    	
 	    	JsonNode clientIdSecrets = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,secretsJson.asText());
+	    	ObjectMapper objectMapper = new ObjectMapper();
+	    	try {
+				 clientIdSecretValues = objectMapper.readTree(clientIdSecrets.asText());
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    	
 	    	System.out.println("clientIdSecrets Node :"+ clientIdSecrets);
-	    	String clientID = clientIdSecrets.get(CLIENT_ID)!=null?clientIdSecrets.get(CLIENT_ID).asText() :"";
+	    	String clientID = clientIdSecretValues.get(CLIENT_ID)!=null?clientIdSecretValues.get(CLIENT_ID).asText() :"";
 	    	System.out.println("clientID :"+ clientID);
-			String userPoolID = clientIdSecrets.get(USER_POOL_ID)!=null?clientIdSecrets.get(USER_POOL_ID).asText():"" ;
+			String userPoolID = clientIdSecretValues.get(USER_POOL_ID)!=null?clientIdSecretValues.get(USER_POOL_ID).asText():"" ;
 			System.out.println("userPoolID :"+ userPoolID);
-			String scope = clientIdSecrets.get(SCOPE)!=null?clientIdSecrets.get(SCOPE).asText():"";
+			String scope = clientIdSecretValues.get(SCOPE)!=null?clientIdSecretValues.get(SCOPE).asText():"";
 			System.out.println("scope :"+ scope);
-			String clientSecret = clientIdSecrets.get(CLIENT_SECRET)!=null?clientIdSecrets.get(CLIENT_SECRET).asText():"";
+			String clientSecret = clientIdSecretValues.get(CLIENT_SECRET)!=null?clientIdSecretValues.get(CLIENT_SECRET).asText():"";
 			System.out.println("clientSecret :"+ clientSecret);
 	    	
 	        String tokenEndpoint = "https://" + userPoolID + "/oauth2/token";
