@@ -47,13 +47,15 @@ public class CognitoTokenService {
 	    	System.out.println("Secrets JSON Node :"+ secretsJson);
 	    	System.out.println("clientName :"+ clientName);
 	    	
-	    	String clientID = secretsJson.get(CLIENT_ID)!=null?secretsJson.get(CLIENT_ID).asText() :"";
+	    	JsonNode clientIdSecrets = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,secretsJson.asText());
+	    	
+	    	String clientID = clientIdSecrets.get(CLIENT_ID)!=null?clientIdSecrets.get(CLIENT_ID).asText() :"";
 	    	System.out.println("clientID :"+ clientID);
-			String userPoolID = secretsJson.get(USER_POOL_ID)!=null?secretsJson.get(USER_POOL_ID).asText():"" ;
+			String userPoolID = clientIdSecrets.get(USER_POOL_ID)!=null?clientIdSecrets.get(USER_POOL_ID).asText():"" ;
 			System.out.println("userPoolID :"+ userPoolID);
-			String scope = secretsJson.get(SCOPE)!=null?secretsJson.get(SCOPE).asText():"";
+			String scope = clientIdSecrets.get(SCOPE)!=null?clientIdSecrets.get(SCOPE).asText():"";
 			System.out.println("scope :"+ scope);
-			String clientSecret = secretsJson.get(CLIENT_SECRET)!=null?secretsJson.get(CLIENT_SECRET).asText():"";
+			String clientSecret = clientIdSecrets.get(CLIENT_SECRET)!=null?clientIdSecrets.get(CLIENT_SECRET).asText():"";
 			System.out.println("clientSecret :"+ clientSecret);
 	    	
 	        String tokenEndpoint = "https://" + userPoolID + "/oauth2/token";
