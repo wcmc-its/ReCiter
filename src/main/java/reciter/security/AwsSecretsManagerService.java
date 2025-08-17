@@ -121,22 +121,8 @@ public class AwsSecretsManagerService {
     	JsonNode secretValueJson = getSecrets(secretName); 
     	System.out.println("jsonNode in Secrets********************"+secretValueJson);
         if (secretValueJson != null && secretKey!=null && !secretKey.equalsIgnoreCase("")) {
-        	try
-			{
-				// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
-	            ObjectMapper objectMapper = new ObjectMapper();
-	            JsonNode secretsJson = objectMapper.readTree(secretValueJson.asText());
-
-	        	System.out.println("secretsJson in Secrets********************"+secretsJson.get(secretKey));
-	            return secretsJson.get(secretKey); 
-	
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-           
-        }
+        	return secretValueJson.get(secretKey); 
+	    }
         return null;
     }
 }
