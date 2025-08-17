@@ -67,7 +67,8 @@ public class CognitoTokenService {
 			String clientSecret = clientIdSecretValues.get(CLIENT_SECRET)!=null?clientIdSecretValues.get(CLIENT_SECRET).asText():"";
 			System.out.println("clientSecret :"+ clientSecret);
 	    	
-	        String tokenEndpoint = "https://" + userPoolID + "/oauth2/token";
+				
+	        String tokenEndpoint = "https://" + userPoolID + ".auth.us-east-1.amazoncognito.com/oauth2/token";
 
 	        // Encode clientId:clientSecret in base64 for Basic Auth
 	        String auth = clientID + ":" + clientSecret;
