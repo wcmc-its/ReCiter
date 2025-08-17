@@ -34,7 +34,7 @@ public class AwsSecretsManagerService {
 	{
 		return Optional.of(
 				    SecretsManagerClient.builder()
-				        .region(Region.of(secretManagerRegion))
+				        .region(secretManagerRegion!=null ?Region.of(secretManagerRegion):Region.of("us-east-1")) // in any case if SecretsManager is null then read from the us-east-1 region
 				        .credentialsProvider(DefaultCredentialsProvider.create())
 				        .build()
 				);
