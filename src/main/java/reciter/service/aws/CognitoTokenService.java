@@ -22,14 +22,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.security.AwsSecretsManagerService;
-
+/**
+ * @author mjangari
+ * Helps in creating JWT token based on AWS Cognito pool App clients. 
+ */
 @Service
 public class CognitoTokenService {
 
 		private static final Logger log = LoggerFactory.getLogger(CognitoTokenService.class);
 	 	private final RestTemplate restTemplate = new RestTemplate();
 	 	private final String CLIENT_ID ="clientID";
-	 	private final String CLIENT_NAME ="clientName";
 	 	private final String USER_POOL_ID = "userPoolID";
 	 	private final String SCOPE = "scope";
 	 	private final String CLIENT_SECRET = "clientSecret";
@@ -47,8 +49,6 @@ public class CognitoTokenService {
 	    	
 	    	JsonNode clientIdSecretValues =null;
 	    	JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientName);
-	    	System.out.println("Secrets JSON Node :"+ secretsJson);
-	    	System.out.println("clientName :"+ clientName);
 	    	
 	    	JsonNode clientIdSecrets = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,secretsJson.asText());
 	    	ObjectMapper objectMapper = new ObjectMapper();
@@ -59,20 +59,13 @@ public class CognitoTokenService {
 				e.printStackTrace();
 			}
 	    	
-	    	System.out.println("clientIdSecrets Node :"+ clientIdSecrets);
 	    	String clientID = clientIdSecretValues.get(CLIENT_ID)!=null?clientIdSecretValues.get(CLIENT_ID).asText() :"";
-	    	System.out.println("clientID :"+ clientID);
-			String userPoolID = clientIdSecretValues.get(USER_POOL_ID)!=null?clientIdSecretValues.get(USER_POOL_ID).asText():"" ;
-			System.out.println("userPoolID :"+ userPoolID);
+	    	String userPoolID = clientIdSecretValues.get(USER_POOL_ID)!=null?clientIdSecretValues.get(USER_POOL_ID).asText():"" ;
 			String scope = clientIdSecretValues.get(SCOPE)!=null?clientIdSecretValues.get(SCOPE).asText():"";
-			System.out.println("scope :"+ scope);
 			String clientSecret = clientIdSecretValues.get(CLIENT_SECRET)!=null?clientIdSecretValues.get(CLIENT_SECRET).asText():"";
-			System.out.println("clientSecret :"+ clientSecret);
-			System.out.println("cognitoPoolRegion :"+ cognitoPoolRegion);
 				
 	        String tokenEndpoint = "https://" + cognitoPoolRegion +  userPoolID + ".auth.us-east-1.amazoncognito.com/oauth2/token";
 
-	        System.out.println("tokenEndpoint :"+ tokenEndpoint);
 	        // Encode clientId:clientSecret in base64 for Basic Auth
 	        String auth = clientID + ":" + clientSecret;
 	        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));

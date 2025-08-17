@@ -39,6 +39,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 
 /**
  * @author mjangari
+ * Validates the JWT token and api-key received from the reciter-consumer and reciter app respectively. 
  */
 @Component
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
@@ -71,20 +72,18 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		
         
         String path = request.getRequestURI();
-        
+       
         
 		if (path.startsWith("/reciter/article-retrieval/") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
 		{
 			try {
-				log.info("Requested URI Path"+path);
+				
 				// Verify the token
 				DecodedJWT decodedJWT = verifyJWT(token);
 
 				
 				String clientId = decodedJWT.getClaim("client_id").asString();
-				log.info("clientId"+clientId);
 				JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
-				System.out.println("secretsJSON in JWT*************"+secretsJson);
 				try
 				{
 					// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
@@ -98,7 +97,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				}
 				
 				String clientName = secretsJson.get("clientName").asText();
-				log.info("clientName"+clientName);
 				// Create an authentication object
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 						decodedJWT.getSubject(), null, null);
@@ -130,7 +128,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		}
 		else if(path.startsWith("/reciter/"))
 		{
-			log.info("Requested URI Path in else"+path);
 			Optional.ofNullable(request.getHeader("api-key"))
 	        .filter(key -> !key.isEmpty())
 	        .ifPresent(apiKey -> {
@@ -177,8 +174,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 			String clientId = JWT.decode(token).getClaim("client_id").asString();
 			
 			JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
-			System.out.println("secretsJson in VerufyJWT*************"+secretsJson);
-			
+	
 			ObjectMapper objectMapper = new ObjectMapper();
 	    	try {
 				 clientIdSecretValues = objectMapper.readTree(secretsJson.asText());

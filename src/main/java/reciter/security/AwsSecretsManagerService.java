@@ -19,6 +19,10 @@ import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueReques
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 import software.amazon.awssdk.regions.Region;
 
+/**
+ * @author mjangari
+ * Helps in retrieving the Keys and values from the AWS Secrets Manager.
+ */
 @Service
 public class AwsSecretsManagerService {
 
@@ -41,13 +45,6 @@ public class AwsSecretsManagerService {
 	}
 	
     public JsonNode getSecrets(String secretName) {
-    	
-    	System.out.println("Resolved AWS credentials: "+DefaultCredentialsProvider.create().resolveCredentials());
-        // Initialize the Secrets Manager client
-        /*SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
-        		.region(Region.of(secretManagerRegion)) 
-                .credentialsProvider(DefaultCredentialsProvider.create())
-                .build();*/
     	
     	SecretsManagerClient secretsManagerClient = createSecretsManagerClient() 
     												.orElseThrow(() -> new IllegalStateException("SecretsManagerClient could not be created: region is missing"));
@@ -94,11 +91,7 @@ public class AwsSecretsManagerService {
     }
     
     public String getSecretKeyPairs(String secretName) {
-        // Initialize the Secrets Manager client
-        /*SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
-                .credentialsProvider(DefaultCredentialsProvider.create())
-                .build();*/
-    	
+ 
     	SecretsManagerClient secretsManagerClient = createSecretsManagerClient() 
 				.orElseThrow(() -> new IllegalStateException("SecretsManagerClient could not be created: region is missing"));
 
@@ -119,19 +112,8 @@ public class AwsSecretsManagerService {
      }
     
     public JsonNode getSecretValueFromSecretsManager(String secretName, String secretKey) {
-    	JsonNode secretValueJson = getSecrets(secretName); 
-    	System.out.println("jsonNode in Secrets********************"+secretValueJson);
-    	System.out.println("secretKey********************"+secretKey);
-    	System.out.println("secretValueJson class********************"+secretValueJson.getClass());
-    	ObjectMapper objectMapper = new ObjectMapper();
-    	
-    	Iterator<String> fieldNames = secretValueJson!=null ? secretValueJson.fieldNames(): null;  // This returns an iterator of the field names
-
-    	while (fieldNames!=null && fieldNames.hasNext()) {
-    	    String fieldName = fieldNames.next();
-    	    System.out.println("FieldName****************"+fieldName);
-    	}
-        if (secretValueJson != null && secretKey!=null && !secretKey.equalsIgnoreCase("")) {
+    	 JsonNode secretValueJson = getSecrets(secretName); 
+         if (secretValueJson != null && secretKey!=null && !secretKey.equalsIgnoreCase("")) {
         	return secretValueJson.get(secretKey); 
 	    }
         return null;
