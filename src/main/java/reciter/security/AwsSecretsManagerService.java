@@ -1,5 +1,6 @@
 package reciter.security;
 
+import java.util.Iterator;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -120,6 +121,16 @@ public class AwsSecretsManagerService {
     public JsonNode getSecretValueFromSecretsManager(String secretName, String secretKey) {
     	JsonNode secretValueJson = getSecrets(secretName); 
     	System.out.println("jsonNode in Secrets********************"+secretValueJson);
+    	System.out.println("secretKey********************"+secretKey);
+    	System.out.println("secretValueJson class********************"+secretValueJson.getClass());
+    	ObjectMapper objectMapper = new ObjectMapper();
+    	
+    	Iterator<String> fieldNames = secretValueJson!=null ? secretValueJson.fieldNames(): null;  // This returns an iterator of the field names
+
+    	while (fieldNames!=null && fieldNames.hasNext()) {
+    	    String fieldName = fieldNames.next();
+    	    System.out.println("FieldName****************"+fieldName);
+    	}
         if (secretValueJson != null && secretKey!=null && !secretKey.equalsIgnoreCase("")) {
         	return secretValueJson.get(secretKey); 
 	    }
