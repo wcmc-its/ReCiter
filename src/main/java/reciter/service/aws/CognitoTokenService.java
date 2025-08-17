@@ -44,7 +44,7 @@ public class CognitoTokenService {
 	    public ResponseEntity<String> getCognitoAccessToken(String clientName) {
 	    	
 	    	JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientName);
-	    	System.out.println("Secrets JSON Node :"+ secretsJson.fieldNames());
+	    	System.out.println("Secrets JSON Node :"+ secretsJson);
 	    	System.out.println("clientName :"+ clientName);
 	    	
 	    	String clientID = secretsJson.get(CLIENT_ID)!=null?secretsJson.get(CLIENT_ID).asText() :"";

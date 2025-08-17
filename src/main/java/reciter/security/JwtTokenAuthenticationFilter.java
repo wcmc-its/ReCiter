@@ -83,7 +83,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				String clientId = decodedJWT.getClaim("client_id").asString();
 				log.info("clientId"+clientId);
 				JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
-
+				System.out.println("secretsJSON in JWT*************"+secretsJson);
 				try
 				{
 					// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
