@@ -65,9 +65,11 @@ public class PubMedServiceImpl implements PubMedService {
         	reciter.database.dynamodb.model.PubMedArticle pubMedArticle = iterator.next();
         	if(pubMedArticle!=null && pubMedArticle.isUsingS3())
         	{
+				log.info("Coming into findByPmids***************"+pubMedArticle);
         		PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid(), PubMedArticle.class);
-    			pubMedArticleOutput.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
-    			pubMedArticleOutput.setPubmeddata(pubMedArticleOutput.getPubmeddata());
+    			log.info("PubMed Article retrieved from the S3 is***************"+pubMedArticleOutput);
+				pubMedArticle.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
+    			pubMedArticle.setPubmeddata(pubMedArticleOutput.getPubmeddata());
         	}
         	PubMedArticle pubarticle = pubMedArticle.getPubMedArticle();
         	
@@ -82,8 +84,9 @@ public class PubMedServiceImpl implements PubMedService {
         if (pubMedArticle != null && pubMedArticle.isUsingS3()) {
     			log.info("Retreving pubmed article from s3 for " + pmid);
     			PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pmid, PubMedArticle.class);
-    			pubMedArticleOutput.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
-    			pubMedArticleOutput.setPubmeddata(pubMedArticleOutput.getPubmeddata());
+    			log.info("PubMed Article retrieved from the S3 is***************"+pubMedArticleOutput);
+				pubMedArticle.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
+    			pubMedArticle.setPubmeddata(pubMedArticleOutput.getPubmeddata());
     		} 
             return pubMedArticle.getPubMedArticle();
         
