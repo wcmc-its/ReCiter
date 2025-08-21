@@ -1,19 +1,23 @@
 package reciter.service.dynamo;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
-
-import lombok.extern.slf4j.Slf4j;
-import reciter.database.dynamodb.repository.PubMedArticleRepository;
-import reciter.model.pubmed.PubMedArticle;
-import reciter.service.PubMedService;
-
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
+import reciter.database.dynamodb.DynamoDbS3Operations;
+import reciter.database.dynamodb.repository.PubMedArticleRepository;
+import reciter.model.pubmed.PubMedArticle;
+import reciter.service.PubMedService;
+import reciter.storage.s3.AmazonS3Config;
 
 @Slf4j
 @Service("pubMedService")
@@ -21,6 +25,15 @@ public class PubMedServiceImpl implements PubMedService {
 
     @Autowired
     private PubMedArticleRepository pubMedRepository;
+    
+    @Autowired(required=false)
+	private DynamoDbS3Operations ddbs3;
+	
+    @Value("${aws.s3.use}")
+    private boolean isS3Use;
+    
+    @Value("${aws.dynamoDb.local}")
+    private boolean isDynamoDbLocal;
 
     @Override
     public void save(Collection<PubMedArticle> pubMedArticles) {
@@ -33,6 +46,10 @@ public class PubMedServiceImpl implements PubMedService {
             pubmedArticlesDb.add(pubMedArticleDb);
         }
         try{
+		//modifying the large articles whose size in > 400KB. Storing those to S3 and meta data into DynamoDB.
+        	 for (reciter.database.dynamodb.model.PubMedArticle article : pubmedArticlesDb) {
+        	        offloadLargeFields(article,  AmazonS3Config.BUCKET_NAME);
+        	    }
         	pubMedRepository.saveAll(pubmedArticlesDb);
         } catch(Exception e) { //This is to skip over articles with huge list of authors e.g. yiwang - 29547300
         	log.info(e.getMessage());
@@ -45,7 +62,16 @@ public class PubMedServiceImpl implements PubMedService {
         Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
         pubMedArticles = new ArrayList<>(pmids.size());
         while (iterator.hasNext()) {
-            pubMedArticles.add(iterator.next().getPubMedArticle());
+        	reciter.database.dynamodb.model.PubMedArticle pubMedArticle = iterator.next();
+        	if(pubMedArticle!=null && pubMedArticle.isUsingS3())
+        	{
+        		PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid(), PubMedArticle.class);
+    			pubMedArticleOutput.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
+    			pubMedArticleOutput.setPubmeddata(pubMedArticleOutput.getPubmeddata());
+        	}
+        	PubMedArticle pubarticle = pubMedArticle.getPubMedArticle();
+        	
+            pubMedArticles.add(pubarticle);
         }
         return pubMedArticles;
     }
@@ -53,9 +79,40 @@ public class PubMedServiceImpl implements PubMedService {
     @Override
     public PubMedArticle findByPmid(Long pmid) {
         reciter.database.dynamodb.model.PubMedArticle pubMedArticle = pubMedRepository.findById(pmid).orElseGet(() -> null);
-        if (pubMedArticle != null) {
+        if (pubMedArticle != null && pubMedArticle.isUsingS3()) {
+    			log.info("Retreving pubmed article from s3 for " + pmid);
+    			PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pmid, PubMedArticle.class);
+    			pubMedArticleOutput.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
+    			pubMedArticleOutput.setPubmeddata(pubMedArticleOutput.getPubmeddata());
+    		} 
             return pubMedArticle.getPubMedArticle();
-        }
-        return null;
+        
     }
+    public void offloadLargeFields(reciter.database.dynamodb.model.PubMedArticle article, String bucketName) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+        	 System.out.println("inside offloadLargeFields**********************"+article.getPmid());
+	            // Estimate item size as JSON
+	            String json = mapper.writeValueAsString(article);
+	            int sizeInBytes = json.getBytes(StandardCharsets.UTF_8).length;
+	
+	            if (sizeInBytes > 400 * 1024 && isS3Use && !isDynamoDbLocal) 
+	            {
+	            	System.out.println("Storing item in s3 since it item size exceeds more than 400kb"+article.getPmid() + "size :" + sizeInBytes/1024 +"KB");
+					log.info("Storing item in s3 since it item size exceeds more than 400kb");
+					ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, article.getPubMedArticle(), PubMedArticle.class.getSimpleName() + "/" + article.getPmid());
+					article.setPubMedArticle(null);
+					article.setUsingS3(true);
+	            } else if(isDynamoDbLocal){
+	    			log.info("You are running dynamodb in local mode. Add AWS access key and secret key to environment variable to enable S3 storage.");
+	    		} else {
+	    			log.info("Enable s3 use in application properties file to store larger objects. Set aws.s3.use to true and set aws.s3.dynamodb.bucketName");
+	    		}
+                
+            }
+        	catch (Exception e) {
+        		throw new RuntimeException("Failed to offload large field to S3", e);
+        	}
+    }
+   
 }

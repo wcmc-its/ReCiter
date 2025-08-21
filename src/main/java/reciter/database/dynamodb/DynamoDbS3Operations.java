@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
+import reciter.model.pubmed.PubMedArticle;
 
 /**
  * This class allows you to store dynamodb items which exceeds dynamodb item limit of 400kb in s3.
@@ -122,6 +123,10 @@ public class DynamoDbS3Operations {
 			if(objectClass == Identity.class) {
 				List<Identity> identities = Arrays.asList(OBJECT_MAPPER.readValue(objectContent, Identity[].class));
 				return identities;
+			}
+			if(objectClass == PubMedArticle.class) {
+				PubMedArticle pubMedArticle = OBJECT_MAPPER.readValue(objectContent, PubMedArticle.class);
+				return pubMedArticle;
 			}
 			
 		} catch (IOException | AmazonServiceException e) {
