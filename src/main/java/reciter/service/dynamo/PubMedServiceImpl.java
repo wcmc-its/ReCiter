@@ -65,11 +65,9 @@ public class PubMedServiceImpl implements PubMedService {
         	reciter.database.dynamodb.model.PubMedArticle pubMedArticle = iterator.next();
         	if(pubMedArticle!=null && pubMedArticle.isUsingS3())
         	{
-				log.info("Coming into findByPmids***************"+pubMedArticle);
         		PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid(), PubMedArticle.class);
-    			log.info("PubMed Article retrieved from the S3 is***************"+pubMedArticleOutput);
-				pubMedArticle.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
-    			pubMedArticle.setPubmeddata(pubMedArticleOutput.getPubmeddata());
+    			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
+				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
         	}
         	PubMedArticle pubarticle = pubMedArticle.getPubMedArticle();
         	
@@ -85,9 +83,8 @@ public class PubMedServiceImpl implements PubMedService {
         if (pubMedArticle != null && pubMedArticle.isUsingS3()) {
     			log.info("Retreving pubmed article from s3 for " + pmid);
     			PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pmid, PubMedArticle.class);
-    			log.info("PubMed Article retrieved from the S3 is***************"+pubMedArticleOutput);
-				pubMedArticle.setMedlinecitation(pubMedArticleOutput.getMedlinecitation());
-    			pubMedArticle.setPubmeddata(pubMedArticleOutput.getPubmeddata());
+    			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
+				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
     		} 
             return pubMedArticle.getPubMedArticle();
         
@@ -95,15 +92,14 @@ public class PubMedServiceImpl implements PubMedService {
     private void offloadLargeFields(reciter.database.dynamodb.model.PubMedArticle article, String bucketName) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-        	 System.out.println("inside offloadLargeFields**********************"+article.getPmid());
+        	 
 	            // Estimate item size as JSON
 	            String json = mapper.writeValueAsString(article);
 	            int sizeInBytes = json.getBytes(StandardCharsets.UTF_8).length;
 	
 	            if (sizeInBytes > 400 * 1024 && isS3Use && !isDynamoDbLocal) 
 	            {
-	            	System.out.println("Storing item in s3 since it item size exceeds more than 400kb"+article.getPmid() + "size :" + sizeInBytes/1024 +"KB");
-					log.info("Storing item in s3 since it item size exceeds more than 400kb");
+	         		log.info("Storing item in s3 since it item size exceeds more than 400kb PMID: "+article.getPmid() + " and Size :" + sizeInBytes/1024 +" KB"");
 					ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, article.getPubMedArticle(), PubMedArticle.class.getSimpleName() + "/" + article.getPmid());
 					article.setPubMedArticle(null);
 					article.setUsingS3(true);
@@ -130,7 +126,7 @@ public class PubMedServiceImpl implements PubMedService {
 			//Might Have to change it when isUsingS3 == true - ToDo
 			//Does increase 1 more api call to check - only will increase for objects stored in dynamodb.
 			if((!pubMedArticle.isUsingS3() || pubMedArticle.isUsingS3()) && pubMedArticle.getPubMedArticle() != null) {
-				log.debug("Performing cleanup for analysis size < 400 kb for " + analysisOutput.getUid());
+				log.debug("Performing cleanup for analysis size < 400 kb for " + pubMedArticle.getPmid());
 				ddbs3.deleteLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid());
 			}
 		}
