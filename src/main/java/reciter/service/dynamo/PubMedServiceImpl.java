@@ -99,7 +99,7 @@ public class PubMedServiceImpl implements PubMedService {
 	
 	            if (sizeInBytes > 400 * 1024 && isS3Use && !isDynamoDbLocal) 
 	            {
-	         		log.info("Storing item in s3 since it item size exceeds more than 400kb PMID: "+article.getPmid() + " and Size :" + sizeInBytes/1024 +" KB"");
+	         		log.info("Storing item in s3 since it item size exceeds more than 400kb PMID: "+article.getPmid() + " and Size :" + sizeInBytes/1024 +" KB");
 					ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, article.getPubMedArticle(), PubMedArticle.class.getSimpleName() + "/" + article.getPmid());
 					article.setPubMedArticle(null);
 					article.setUsingS3(true);
