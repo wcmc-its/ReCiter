@@ -81,6 +81,7 @@ public class PubMedServiceImpl implements PubMedService {
     @Override
     public PubMedArticle findByPmid(Long pmid) {
         reciter.database.dynamodb.model.PubMedArticle pubMedArticle = pubMedRepository.findById(pmid).orElseGet(() -> null);
+		performResourceCleanup(pubMedArticle);
         if (pubMedArticle != null && pubMedArticle.isUsingS3()) {
     			log.info("Retreving pubmed article from s3 for " + pmid);
     			PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pmid, PubMedArticle.class);
@@ -91,7 +92,7 @@ public class PubMedServiceImpl implements PubMedService {
             return pubMedArticle.getPubMedArticle();
         
     }
-    public void offloadLargeFields(reciter.database.dynamodb.model.PubMedArticle article, String bucketName) {
+    private void offloadLargeFields(reciter.database.dynamodb.model.PubMedArticle article, String bucketName) {
         ObjectMapper mapper = new ObjectMapper();
         try {
         	 System.out.println("inside offloadLargeFields**********************"+article.getPmid());
@@ -117,5 +118,22 @@ public class PubMedServiceImpl implements PubMedService {
         		throw new RuntimeException("Failed to offload large field to S3", e);
         	}
     }
+	private void performResourceCleanup(reciter.database.dynamodb.model.PubMedArticle pubMedArticle) {
+		if(pubMedArticle != null) {
+			//Case where Size has increased 400kb and reciterFeature needs to be null in dynamoDB
+			if(pubMedArticle.isUsingS3() && pubMedArticle.getPubMedArticle() != null) {
+				pubMedArticle.setPubMedArticle(null);
+				log.debug("Performing cleanup for pubmed article size > 400 kb for " + pubMedArticle.getPmid());
+				pubMedRepository.save(pubMedArticle);
+			}
+			//case when size decreases < 400kb then remove object from S3
+			//Might Have to change it when isUsingS3 == true - ToDo
+			//Does increase 1 more api call to check - only will increase for objects stored in dynamodb.
+			if((!pubMedArticle.isUsingS3() || pubMedArticle.isUsingS3()) && pubMedArticle.getPubMedArticle() != null) {
+				log.debug("Performing cleanup for analysis size < 400 kb for " + analysisOutput.getUid());
+				ddbs3.deleteLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid());
+			}
+		}
+	}
    
 }
