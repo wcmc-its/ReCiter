@@ -74,7 +74,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
        
         
-		if (path.startsWith("/reciter/article-retrieval/") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
+		if ((path.startsWith("/reciter/article-retrieval/") || path.startsWith("/reciter/dev/article-retrieval/")) && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
 		{
 			try {
 				
