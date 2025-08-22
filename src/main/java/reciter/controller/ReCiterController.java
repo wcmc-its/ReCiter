@@ -860,7 +860,7 @@ public class ReCiterController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found"),
             @ApiResponse(code = 500, message = "The uid provided was not found in the Identity table")
     })
-    @RequestMapping(value = "/reciter/article-retrieval/by/uid", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/reciter/dev/article-retrieval/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity runArticleRetrievalByUid(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
@@ -981,6 +981,8 @@ public class ReCiterController {
             log.error("No such entity exists: "+ e);
         }
         log.info("eSearchResults size {}", eSearchResults);
+		if(eSearchResults!=null && eSearchResults.getESearchPmids()!=null)
+			log.info("eSearchResults esearch pmids size {}", eSearchResults.getESearchPmids().size());
 		/*
 		 * //This is when Pubmed returns 0 results. if(eSearchResults == null) { return
 		 * null; }
@@ -1004,6 +1006,9 @@ public class ReCiterController {
             filtered.add(pmid);
             filteredString.add(String.valueOf(pmid));
         }
+		 log.info("filtered  {}", filtered);
+		if(filtered!=null)
+		  log.info("filtered size {}", filtered.size());
         List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
         if (pubMedArticles == null) {
             return null;
@@ -1018,7 +1023,8 @@ public class ReCiterController {
                 map.put(scopusArticle.getPubmedId(), scopusArticle);
             }
         }
-
+		if(map!=null)
+		  log.info("scopus map size {}", map.size());
         // combine PubMed and Scopus articles into a list of ReCiterArticle
         List<ReCiterArticle> reCiterArticles = new ArrayList<>();
         for (PubMedArticle pubMedArticle : pubMedArticles) {
@@ -1029,7 +1035,9 @@ public class ReCiterController {
                 reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors, strategyParameters));
             }
         }
-        
+		log.info("reCiterArticles {}", reCiterArticles);
+		if(reCiterArticles!=null)
+			log.info("reCiterArticles", reCiterArticles.size());
         //Sanitize Identity names
         AuthorNameSanitizationUtils authorNameSanitizationUtils = new AuthorNameSanitizationUtils(strategyParameters);
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));

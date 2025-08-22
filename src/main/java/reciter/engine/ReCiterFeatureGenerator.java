@@ -81,7 +81,7 @@ public class ReCiterFeatureGenerator {
             for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 pmidsRetrieved.add(reCiterArticle.getArticleId());
             }
- 
+		 pmidsRetrieved.forEach(pmid -> log.info("Pmid retrieved from the PubMed*************"+ pmid));
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
         if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
