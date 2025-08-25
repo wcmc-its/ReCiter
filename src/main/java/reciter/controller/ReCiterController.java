@@ -701,6 +701,7 @@ public class ReCiterController {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
             parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag);
+			log.info("getting the reciter articles from the Parameters in controller***"+ parameters.getReciterArticles().size());
             if (parameters == null) {
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -718,16 +719,18 @@ public class ReCiterController {
             } else {
             	filterScore = parameters.getTotalStandardzizedArticleScore();
             }
+			log.info("filter Score in controller***"+filterScore);
             Engine engine = new ReCiterEngine();
             engineOutput = engine.run(parameters, strategyParameters, filterScore, keywordsMax);
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
-            
+             log.info("coming into if condiiton***"+engineOutput.getReCiterFeature().getCountPendingArticles() +"Suggested :"+ engineOutput.getReCiterFeature().getCountSuggestedArticles());
            //Store Analysis only in evidence mode
             if(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null) {
 	            AnalysisOutput analysisOutput = new AnalysisOutput();
 	            if(engineOutput != null) {
 	            	if(filterScore == strategyParameters.getMinimumStorageThreshold()) {
-	            		analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
+	            		log.info("coming into if condiiton***"+engineOutput.getReCiterFeature().getCountPendingArticles() +"Suggested :"+ engineOutput.getReCiterFeature().getCountSuggestedArticles());
+						analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
 	            	} else {
 	            		//Enforce Strict Minimum Storage Threshold
 	            		ReCiterFeature reCiterFeature = new ReCiterFeature();
@@ -746,7 +749,7 @@ public class ReCiterController {
 	            		reCiterFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
 	            		analysisOutput.setReCiterFeature(reCiterFeature);
 	            	}
-
+					log.info("getting the reciter articles from the Parameters in controller***"+ engineOutput.getReCiterFeature());
 					
 	            }
 				analysisOutput.setUid(uid);
@@ -1010,11 +1013,14 @@ public class ReCiterController {
 		if(filtered!=null)
 		  log.info("filtered size {}", filtered.size());
         List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
+		if(pubMedArticles!=null)
+			log.info("pubmedArticles from the PubMedService  {}", pubMedArticles.size());
         if (pubMedArticles == null) {
             return null;
         }
         List<ScopusArticle> scopusArticles = scopusService.findByPmids(filteredString);
-
+		if(scopusArticles!=null)
+			log.info("scopusArticles from the scopusService  {}", scopusArticles.size());
         // create temporary map to retrieve Scopus articles by PMID (at the stage below)
         Map<Long, ScopusArticle> map = new HashMap<>();
 
@@ -1035,9 +1041,9 @@ public class ReCiterController {
                 reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors, strategyParameters));
             }
         }
-		log.info("reCiterArticles {}", reCiterArticles);
+		reCiterArticles.forEach(article-> System.out.println("articles pmids are*******************"+article.getArticleId()));
 		if(reCiterArticles!=null)
-			log.info("reCiterArticles", reCiterArticles.size());
+			log.info("reCiterArticles size {}", reCiterArticles.size());
         //Sanitize Identity names
         AuthorNameSanitizationUtils authorNameSanitizationUtils = new AuthorNameSanitizationUtils(strategyParameters);
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
@@ -1049,13 +1055,16 @@ public class ReCiterController {
         //Find gender probability
         GenderProbability.getGenderIdentityProbability(identity);
         
+		if(reCiterArticles!=null)
+			log.info("reCiterArticles size after sanitization {}", reCiterArticles.size());
+		
         // calculate precision and recall
         EngineParameters parameters = new EngineParameters();
         parameters.setIdentity(identity);
         parameters.setPubMedArticles(pubMedArticles);
         parameters.setScopusArticles(Collections.emptyList());
         parameters.setReciterArticles(reCiterArticles);
-
+		log.info("Getting the Reciter Articles to the Parameters" + parameters.getReciterArticles().size());
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         if (goldStandard == null) {
             parameters.setKnownPmids(new ArrayList<>());
