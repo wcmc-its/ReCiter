@@ -125,8 +125,6 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			System.out.println("eSearchPmid********************"+eSearchPmid);
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
-		if(eSearchResultDb!=null && eSearchResultDb.eSearchPmids!=null)
-			System.out.println("eSearchPmidRefreshFlag********************"+eSearchResultDb.eSearchPmids.size());
 		if (eSearchResultDb == null) {
 			List<ESearchPmid> eSearchPmids = new ArrayList<>();
 			if(eSearchPmid != null) {

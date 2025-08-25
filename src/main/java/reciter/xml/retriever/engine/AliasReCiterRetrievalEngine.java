@@ -526,7 +526,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("scopusArticlesByDoi in retrieveData section with date range****"+scopusArticlesByDoi.size());
 		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
 		
 	}
