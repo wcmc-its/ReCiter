@@ -139,12 +139,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		//Retreive by GoldStandard
 		Map<Long, PubMedArticle> pubMedArticles = null;
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
+		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
 			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
-		}
+		//}
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles = retrievalResult.getPubMedArticles();
@@ -343,12 +343,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Map<Long, PubMedArticle> pubMedArticles = null;
 		//Retreive by GoldStandard
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
+		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
 			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
-		}
+		//}
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
