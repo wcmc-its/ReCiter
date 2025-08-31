@@ -25,7 +25,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	private JwtTokenAuthenticationFilter filter = null;
 	private static final Logger log = LoggerFactory.getLogger(APISecurityConfig.class);
 
-	@Value("${security.enabled:true}")
+	@Value("${spring.security.enabled}")
 	private boolean securityEnabled;
 
 	@Autowired
