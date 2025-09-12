@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -22,26 +25,48 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
-	private JwtTokenAuthenticationFilter filter = null;
+	@Autowired(required = false)
+    	private JwtTokenAuthenticationFilter jwtAuthenticationFilter;
+
 	private static final Logger log = LoggerFactory.getLogger(APISecurityConfig.class);
 
 	@Value("${spring.security.enabled}")
 	private boolean securityEnabled;
 
-	@Autowired
-	public APISecurityConfig(JwtTokenAuthenticationFilter filter) {
-		this.filter = filter;
+	@Bean
+	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
+	public JwtTokenAuthenticationFilter jwtAuthenticationFilter() {
+	   log.info("JWT filter bean is being created!");
+	   return new JwtTokenAuthenticationFilter();
 	}
+	
+	@Bean
+    	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
+    	public FilterRegistrationBean<JwtTokenAuthenticationFilter> jwtFilterRegistration(JwtTokenAuthenticationFilter filter) 
+	{
+        	FilterRegistrationBean<JwtTokenAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+        	registration.setEnabled(false);
+       		 return registration;
+    	}
+	
 
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
 		log.info("*************Execuring Configure method***************");
-		if (securityEnabled) {
-			httpSecurity.antMatcher("/reciter/**").csrf().disable().sessionManagement()
-					.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-					.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class).authorizeRequests()
-					.anyRequest().authenticated();
-		}
+		if (!securityEnabled) { // allow when security is off
+			httpSecurity.antMatcher("/reciter/**").csrf().disable()
+	            .authorizeRequests()
+	            .anyRequest().permitAll();
+	        return;
+	    }
+		httpSecurity.antMatcher("/reciter/**").csrf().disable().sessionManagement()
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+				.authorizeRequests()
+				.anyRequest().authenticated();
+		
+		 if (jwtAuthenticationFilter != null) {
+			 httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+	        }
 
 	}
 

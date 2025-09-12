@@ -42,7 +42,7 @@ import com.nimbusds.jose.jwk.RSAKey;
  * @author mjangari
  * Validates the JWT token and api-key received from the reciter-consumer and reciter app respectively. 
  */
-@Component
+
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final Logger log = LoggerFactory.getLogger(JwtTokenAuthenticationFilter.class);
