@@ -82,7 +82,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	        .ifPresent(apiKey -> {
 	        	
 	        	//JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,apiKey);
-	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(consumerSecretName)); 
+	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(consumerSecretName); 
 	        	try
 				{
 					// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
