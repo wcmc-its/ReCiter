@@ -72,10 +72,11 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		
 		String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
 		
-        
+		String xapiKey = request.getHeader("x-api-key");
+		
         String path = request.getRequestURI();
        
-        if (path.startsWith("/reciter/generate-access-token") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer "))
+        if (path.startsWith("/reciter/generate-access-token") && xapiKey!=null && !xapiKey.equalsIgnoreCase(""))
         {
         	Optional.ofNullable(request.getHeader("x-api-key"))
 	        .filter(key -> !key.isEmpty())
@@ -95,7 +96,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	        		    return;
 	                }
 		            UsernamePasswordAuthenticationToken auth =
-	                        new UsernamePasswordAuthenticationToken("reciter-generate-access-token", null, Collections.emptyList());
+	                        new UsernamePasswordAuthenticationToken("reciter-consumer-user", null, Collections.emptyList());
 	                SecurityContextHolder.getContext().setAuthentication(auth);
 		
 				}
@@ -108,7 +109,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	        });
         }
-        else if (path.startsWith("/reciter/article-retrieval/") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
+        else if ((path.startsWith("/reciter/article-retrieval/") || path.startsWith("/reciter/dev/article-retrieval/")) && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
 		{
 			try {
 				
