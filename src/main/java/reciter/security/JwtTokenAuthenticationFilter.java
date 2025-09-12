@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.FilterChain;
@@ -68,13 +69,46 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		String token = extractToken(request);
+		
 		String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
 		
         
         String path = request.getRequestURI();
        
-        
-		if ((path.startsWith("/reciter/article-retrieval/") || path.startsWith("/reciter/dev/article-retrieval/")) && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
+        if (path.startsWith("/reciter/generate-access-token") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer "))
+        {
+        	Optional.ofNullable(request.getHeader("x-api-key"))
+	        .filter(key -> !key.isEmpty())
+	        .ifPresent(apiKey -> {
+	        	
+	        	//JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,apiKey);
+	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(consumerSecretName)); 
+	        	try
+				{
+					// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
+		            ObjectMapper objectMapper = new ObjectMapper();
+		           // secretsJson = objectMapper.readTree(secretsJson.asText(),Map.xlA);
+		            Map<String, String> secretMap = objectMapper.readValue(secretValueJson, Map.class);
+		            String clientId = secretMap.get(apiKey);
+		            if (clientId == null || clientId.equalsIgnoreCase("")) {
+	        		 	writeJsonErrorResponse(response, "Invalid Api Key.");
+	        		    return;
+	                }
+		            UsernamePasswordAuthenticationToken auth =
+	                        new UsernamePasswordAuthenticationToken("reciter-generate-access-token", null, Collections.emptyList());
+	                SecurityContextHolder.getContext().setAuthentication(auth);
+		
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+				
+				
+
+	        });
+        }
+        else if (path.startsWith("/reciter/article-retrieval/") && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
 		{
 			try {
 				
