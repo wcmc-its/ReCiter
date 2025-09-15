@@ -39,16 +39,15 @@ import reciter.model.identity.Identity;
  * implements the year-based matching for a target author (i.e., Phase II)
  * matching).
  * 
- * @author jil3004
+ * @author ved4006
  *
  */
 @Slf4j
 public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrategy {
 
-	/**
-	 * DegreeType used by this strategy.
-	 */
 	private final DegreeType degreeType;
+	
+	
 
 	/**
 	 * Constructor for YearDiscrepancyStrategy. Requires a DegreeType.
@@ -57,6 +56,10 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 	 */
 	public YearDiscrepancyStrategy(DegreeType degreeType) {
 		this.degreeType = degreeType;
+	}
+	
+	public YearDiscrepancyStrategy() {
+		this.degreeType = null;
 	}
 
 	/**
@@ -141,182 +144,67 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 		return 0;
 	}
 
-	/* @Override
-	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		for(ReCiterArticle reCiterArticle: reCiterArticles) {
-			EducationYearEvidence educationYearEvidence = null;
-			if (reCiterArticle != null 												&&
-					reCiterArticle.getPublicationDateStandardized() != null) {
-					//reCiterArticle.getJournal() != null 							&& 
-					//reCiterArticle.getJournal().getJournalIssuePubDateYear() != 0) {
-				LocalDate date = LocalDate.parse(reCiterArticle.getPublicationDateStandardized());
-
-				int year = date.getYear();//reCiterArticle.getJournal().getJournalIssuePubDateYear();
-
-				int difference;
-				if (degreeType.equals(DegreeType.BACHELORS)) {
-					if (identity.getDegreeYear() != null && identity.getDegreeYear().getBachelorYear() != 0) {
-						difference = year - identity.getDegreeYear().getBachelorYear();
-						reCiterArticle.setBachelorsYearDiscrepancy(difference);
-						educationYearEvidence = new EducationYearEvidence();
-						educationYearEvidence.setIdentityBachelorYear(identity.getDegreeYear().getBachelorYear());
-						educationYearEvidence.setArticleYear(year);
-						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
-						//if (difference < 1) {
-						if(year < ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearBachelorThreshold() + identity.getDegreeYear().getBachelorYear()) {
-							//log.info("Bachelors: Identity degree and reCiter article {} journal issue publication date difference < 1. Remove from cluster.", reCiterArticle.getArticleId());
-							reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
-									+ " [Bachelors Degree Difference=" + difference + "]");
-							reCiterArticle.setBachelorsYearDiscrepancyScore(1);
-							reCiterArticle.setPublishedPriorAcademicDegreeBachelors("Target Author bachelors graduation year: " +
-									identity.getDegreeYear().getBachelorYear() + " publication date: " + year + ". Diff="+ difference);
-							educationYearEvidence.setDiscrepancyDegreeYearBachelor(difference);
-							educationYearEvidence.setDiscrepancyDegreeYearBachelorScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearBachelorScore());
-							
-							//return 1;
-						} else {
-							educationYearEvidence.setDiscrepancyDegreeYearBachelor(difference);
-							educationYearEvidence.setDiscrepancyDegreeYearBachelorScore(0);
-						}
-					}
-				} else if (degreeType.equals(DegreeType.DOCTORAL)) {
-					if (identity.getDegreeYear() != null && identity.getDegreeYear().getDoctoralYear() != 0) {
-						int doctoral = identity.getDegreeYear().getDoctoralYear();
-						difference = year - doctoral;
-						reCiterArticle.setDoctoralYearDiscrepancy(difference);
-						if (doctoral < ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearYearWhichPhDStudentsStartedToAuthorMorePapers()) {
-							if (year < doctoral + ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold1()) {
-								//log.info("DOCTORAL 1998: Identity degree and reCiter article {} journal issue publication date difference < -6" +
-								//		". Remove from cluster.", reCiterArticle.getArticleId());
-								reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
-										+ " [Doctoral Degree Difference (<1988) =" + difference + "]");
-								reCiterArticle.setDoctoralYearDiscrepancyScore(1);
-								reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("(Case doctoral < 1998) Target Author doctoral graduation year: " +
-										identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
-								if(reCiterArticle.getEducationYearEvidence() != null) {
-									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
-								} else {
-									educationYearEvidence = new EducationYearEvidence();
-									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									educationYearEvidence.setArticleYear(year);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
-									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
-								}
-								//return 1;
-							} else {
-								if(reCiterArticle.getEducationYearEvidence() != null) {
-									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(0);
-								} else {
-									educationYearEvidence = new EducationYearEvidence();
-									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									educationYearEvidence.setArticleYear(year);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(0);
-									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
-								}
-							}
-							
-						} else {
-							if (year < doctoral + ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralThreshold2()) {
-								//log.info("DOCTORAL: Identity degree and reCiter article {} journal issue publication date difference < -13. " +
-								//		"Remove from cluster.", reCiterArticle.getArticleId());
-
-								reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() 
-										+ " [Doctoral Degree Difference (>=1998) =" + difference + "]");
-								reCiterArticle.setDoctoralYearDiscrepancyScore(1);
-								reCiterArticle.setPublishedPriorAcademicDegreeDoctoral("Target Author doctoral graduation year: " +
-										identity.getDegreeYear().getDoctoralYear() + " publication date: " + year + ". Diff="+ difference);
-								//return 1;
-								if(reCiterArticle.getEducationYearEvidence() != null) {
-									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
-								} else {
-									educationYearEvidence = new EducationYearEvidence();
-									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									educationYearEvidence.setArticleYear(year);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(ReCiterArticleScorer.strategyParameters.getDiscrepancyDegreeYearDoctoralScore());
-									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
-								}
-							} else {
-								if(reCiterArticle.getEducationYearEvidence() != null) {
-									reCiterArticle.getEducationYearEvidence().setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoral(difference);
-									reCiterArticle.getEducationYearEvidence().setDiscrepancyDegreeYearDoctoralScore(0);
-								} else {
-									educationYearEvidence = new EducationYearEvidence();
-									educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-									educationYearEvidence.setArticleYear(year);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoral(difference);
-									educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(0);
-									reCiterArticle.setEducationYearEvidence(educationYearEvidence);
-								}
-							}
-						}
-					}
-					if(reCiterArticle.getEducationYearEvidence() != null) {
-						log.info("Pmid: " + reCiterArticle.getArticleId() + " " + reCiterArticle.getEducationYearEvidence().toString());
-					}
-				}
-			}
-			
-		}
-		return 0;
-	} */
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		for(ReCiterArticle reCiterArticle: reCiterArticles) {
-			EducationYearEvidence educationYearEvidence = null;
-			if (reCiterArticle != null 
-					&& reCiterArticle.getPublicationDateStandardized() != null) {
+		for (ReCiterArticle reCiterArticle : reCiterArticles) {
+			if (reCiterArticle != null && reCiterArticle.getPublicationDateStandardized() != null) {
 				LocalDate date = LocalDate.parse(reCiterArticle.getPublicationDateStandardized());
 				int articleYear = date.getYear();
-				if (degreeType.equals(DegreeType.DOCTORAL)) {
-					if (identity.getDegreeYear() != null && identity.getDegreeYear().getDoctoralYear() != 0) {
-						int discrepancyDegreeYearDoctoral = articleYear - identity.getDegreeYear().getDoctoralYear();
-						discrepancyDegreeYearDoctoral = (discrepancyDegreeYearDoctoral < -99)?-99:discrepancyDegreeYearDoctoral;
-						discrepancyDegreeYearDoctoral = (discrepancyDegreeYearDoctoral > 100)?100:discrepancyDegreeYearDoctoral;
-						double degreeYearDiscrepancyScore = EngineParameters.getDegreeYearDiscrepancyScoreMap().get(Double.valueOf(discrepancyDegreeYearDoctoral));
-						educationYearEvidence = new EducationYearEvidence();
+
+				boolean hasValidDoctoral = identity.getDegreeYear() != null && identity.getDegreeYear().getDoctoralYear() != 0;
+				boolean hasValidBachelor = identity.getDegreeYear() != null && identity.getDegreeYear().getBachelorYear() != 0;
+				if (hasValidDoctoral || hasValidBachelor) {
+					EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
+						                  educationYearEvidence.setArticleYear(articleYear);
+					double degreeYearDiscrepancyDoctoralScore = 0.0;
+					int discrepancyDegreeYearDoctoral = 0;
+					double degreeYearDiscrepancyBachelorScore = 0.0;
+					int discrepancyDegreeYearBachelor = 0;
+
+					if (hasValidDoctoral) {
+						discrepancyDegreeYearDoctoral = articleYear - identity.getDegreeYear().getDoctoralYear();
+						discrepancyDegreeYearDoctoral = (discrepancyDegreeYearDoctoral < -99) ? -99
+								: discrepancyDegreeYearDoctoral;
+						discrepancyDegreeYearDoctoral = (discrepancyDegreeYearDoctoral > 100) ? 100
+								: discrepancyDegreeYearDoctoral;
+						degreeYearDiscrepancyDoctoralScore = EngineParameters.getDegreeYearDiscrepancyScoreMap()
+								.get(Double.valueOf(discrepancyDegreeYearDoctoral));
+
 						educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
-						if(identity.getDegreeYear().getBachelorYear() != 0) {
+						educationYearEvidence.setDiscrepancyDegreeYearDoctoral(discrepancyDegreeYearDoctoral);
+						educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(degreeYearDiscrepancyDoctoralScore);
+						if (identity.getDegreeYear().getBachelorYear() != 0) {
 							educationYearEvidence.setIdentityBachelorYear(identity.getDegreeYear().getBachelorYear());
 						}
-						educationYearEvidence.setArticleYear(articleYear);
-						educationYearEvidence.setDiscrepancyDegreeYearDoctoral(discrepancyDegreeYearDoctoral);
-						educationYearEvidence.setDiscrepancyDegreeYearDoctoralScore(degreeYearDiscrepancyScore);
 						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
-					}
-				} else {
-					if (identity.getDegreeYear() != null && identity.getDegreeYear().getBachelorYear() != 0) {
-						int discrepancyDegreeYearBachelor = articleYear - identity.getDegreeYear().getBachelorYear() + ReCiterArticleScorer.strategyParameters.getBacherlorYearWeight();
-						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor < -99)?-99:discrepancyDegreeYearBachelor;
-						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor > 100)?100:discrepancyDegreeYearBachelor;
-						double degreeYearDiscrepancyScore = EngineParameters.getDegreeYearDiscrepancyScoreMap().get(Double.valueOf(discrepancyDegreeYearBachelor));
-						educationYearEvidence = new EducationYearEvidence();
+					} else if (hasValidBachelor) {
+						discrepancyDegreeYearBachelor = articleYear - identity.getDegreeYear().getBachelorYear()
+								+ ReCiterArticleScorer.strategyParameters.getBacherlorYearWeight();
+						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor < -99) ? -99
+								: discrepancyDegreeYearBachelor;
+						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor > 100) ? 100
+								: discrepancyDegreeYearBachelor;
+						degreeYearDiscrepancyBachelorScore = EngineParameters.getDegreeYearDiscrepancyScoreMap()
+								.get(Double.valueOf(discrepancyDegreeYearBachelor));
+
 						educationYearEvidence.setIdentityBachelorYear(identity.getDegreeYear().getBachelorYear());
-						if(identity.getDegreeYear().getDoctoralYear() != 0) {
+						educationYearEvidence.setDiscrepancyDegreeYearBachelor(discrepancyDegreeYearBachelor);
+						educationYearEvidence.setDiscrepancyDegreeYearBachelorScore(degreeYearDiscrepancyBachelorScore);
+
+						if (identity.getDegreeYear().getDoctoralYear() != 0) {
 							educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
 						}
-						educationYearEvidence.setArticleYear(articleYear);
-						educationYearEvidence.setDiscrepancyDegreeYearBachelor(discrepancyDegreeYearBachelor);
-						educationYearEvidence.setDiscrepancyDegreeYearBachelorScore(degreeYearDiscrepancyScore);
 						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
 					}
+
 				}
 			}
 		}
 		return 0;
 	}
-
 	public DegreeType getDegreeType() {
 		return degreeType;
-	}
+	} 
 }
+
