@@ -26,7 +26,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired(required = false)
-    	private JwtTokenAuthenticationFilter jwtAuthenticationFilter;
+    private JwtTokenAuthenticationFilter jwtAuthenticationFilter;
+	 
+	@Autowired(required = false)
+    private CustomAuthenticationEntryPoint customEntryPoint;
 
 	private static final Logger log = LoggerFactory.getLogger(APISecurityConfig.class);
 
@@ -34,39 +37,58 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	private boolean securityEnabled;
 
 	@Bean
-	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
 	public JwtTokenAuthenticationFilter jwtAuthenticationFilter() {
 	   log.info("JWT filter bean is being created!");
 	   return new JwtTokenAuthenticationFilter();
 	}
 	
-	@Bean
+	/*@Bean
     	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
     	public FilterRegistrationBean<JwtTokenAuthenticationFilter> jwtFilterRegistration(JwtTokenAuthenticationFilter filter) 
 	{
         	FilterRegistrationBean<JwtTokenAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
         	registration.setEnabled(false);
        		 return registration;
-    	}
+    	}*/
 	
 
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
 		log.info("*************Execuring Configure method***************");
-		if (!securityEnabled) { // allow when security is off
+		/*if (!securityEnabled) { // allow when security is off
 			httpSecurity.antMatcher("/reciter/**").csrf().disable()
 	            .authorizeRequests()
 	            .anyRequest().permitAll();
 	        return;
-	    }
-		httpSecurity.antMatcher("/reciter/**").csrf().disable().sessionManagement()
+	    }*/
+		/*httpSecurity.antMatcher("/reciter/**").csrf().disable().sessionManagement()
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-				.authorizeRequests()
-				.anyRequest().authenticated();
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		
-		 if (jwtAuthenticationFilter != null) {
-			 httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-	        }
+		// Only set exceptionHandling if the entry point is available
+       // if (customEntryPoint != null) {
+        	httpSecurity.exceptionHandling().authenticationEntryPoint(customEntryPoint)
+                .and();
+        //}
+	        httpSecurity.authorizeRequests()
+					.anyRequest().authenticated();
+		
+		 //if (jwtAuthenticationFilter != null) {
+			// httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+	      //  }*/
+		
+		httpSecurity.antMatcher("/reciter/**")
+         .csrf().disable()
+         .exceptionHandling()
+             .authenticationEntryPoint(customEntryPoint)
+         .and()
+         .sessionManagement()
+             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+         .and()
+         .authorizeRequests()
+             .anyRequest().authenticated();
+
+		httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 	}
 

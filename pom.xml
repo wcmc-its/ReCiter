@@ -371,6 +371,11 @@
 	    	<groupId>org.mockito</groupId>
 	    	<artifactId>mockito-core</artifactId>
 	    </dependency>
+	     <dependency>
+		    <groupId>com.github.ben-manes.caffeine</groupId>
+		    <artifactId>caffeine</artifactId>
+		    <version>3.1.8</version> <!-- Latest stable as of Sep 2025 -->
+		</dependency>	
     </dependencies>
     <repositories>
         <!-- Use this repository for local dynamodb. Change the region accordingly. For details: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.Maven.html -->
