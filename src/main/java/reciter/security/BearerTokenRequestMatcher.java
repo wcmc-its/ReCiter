@@ -1,8 +1,8 @@
 package reciter.security;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.security.web.util.matcher.RequestMatcher;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 public class BearerTokenRequestMatcher implements RequestMatcher {
 
@@ -12,5 +12,4 @@ public class BearerTokenRequestMatcher implements RequestMatcher {
 		String authHeader = request.getHeader("Authorization");
         return authHeader != null && authHeader.startsWith("Bearer ");
     }
-
 }

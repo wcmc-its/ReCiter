@@ -8,16 +8,13 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Optional;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -36,6 +33,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * @author mjangari
@@ -62,28 +64,73 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	@Value("${aws.secretsmanager.consumer.secretName}")
 	private String consumerSecretName;
 	
+	@Value("${spring.security.enabled}")
+	private boolean securityEnabled;
+
+	@Autowired
+    private CustomAuthenticationEntryPoint authenticationEntryPoint;
 	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
+		
+		if (!securityEnabled) {
+            // Security off: just continue
+            filterChain.doFilter(request, response);
+            return;
+        }
+		
 		String token = extractToken(request);
+		
 		String header = Optional.ofNullable(request.getHeader("Authorization")).orElseGet(() -> request.getHeader("authorization"));
 		
-        
+		String xapiKey = request.getHeader("x-api-key");
+		
         String path = request.getRequestURI();
-       
-        
-		if ((path.startsWith("/reciter/article-retrieval/") || path.startsWith("/reciter/dev/article-retrieval/")) && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
+        try
 		{
+        if (path.startsWith("/reciter/generate-access-token") && xapiKey!=null && !xapiKey.equalsIgnoreCase(""))
+        {
+        	Optional.ofNullable(request.getHeader("x-api-key"))
+	        .filter(key -> !key.isEmpty())
+	        .ifPresent(apiKey -> {
+	        	
+	        		JsonNode clientIdSecretValues =null;
+		        	JsonNode clientIdSecrets = this.awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,apiKey); 
+			    	if(clientIdSecrets == null)
+			    	{
+			    		throw new BadCredentialsException("Invalid API key : "+ apiKey);
+			    	}
+			    	ObjectMapper objectMapper = new ObjectMapper();
+			    	try {
+						 clientIdSecretValues = objectMapper.readTree(clientIdSecrets.asText());
+					} catch (JsonProcessingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+	        		
+		            UsernamePasswordAuthenticationToken auth =
+	                        new UsernamePasswordAuthenticationToken("reciter-consumer-user", null, Collections.emptyList());
+	                SecurityContextHolder.getContext().setAuthentication(auth);
+	                //Clear the clientIdSecretValues
+	                clientIdSecretValues=null;
+		        });
+        }
+        else if ((path.startsWith("/reciter/article-retrieval/") || path.startsWith("/reciter/dev/article-retrieval/")) && StringUtils.hasText(token) && header != null && header.startsWith("Bearer ")) 
+		{
+        	JsonNode secretsJson=null;
+        	String clientId =null;
+        	String clientName =null;
+        	UserLog userLog =null;
 			try {
 				
 				// Verify the token
 				DecodedJWT decodedJWT = verifyJWT(token);
 
 				
-				String clientId = decodedJWT.getClaim("client_id").asString();
-				JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
+				clientId = decodedJWT.getClaim("client_id").asString();
+				secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
 				try
 				{
 					// Step 1: Convert the string to JsonNode using Jackson's ObjectMapper
@@ -96,7 +143,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 					e.printStackTrace();
 				}
 				
-				String clientName = secretsJson.get("clientName").asText();
+				clientName = secretsJson.get("clientName").asText();
 				// Create an authentication object
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 						decodedJWT.getSubject(), null, null);
@@ -108,13 +155,14 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 				
 				// Create a new UserLog entry
-                UserLog userLog = new UserLog(clientId, clientName,request.getRequestURI(),request.getParameter("uid"),LocalDateTime.now().toString());
+                userLog = new UserLog(clientId, clientName,request.getRequestURI(),request.getParameter("uid"),LocalDateTime.now().toString());
                 // Get the current date as a string in yyyy-MM-dd format
                 String date = Instant.now().toString().split("T")[0];
                 
                 // Write the user log entry to the S3 bucket
                 s3UserLogHandler.writeUserLog(userLog, date);
-
+               
+                
 			} 
 			catch (JWTVerificationException e) 
 			{
@@ -125,6 +173,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				 writeJsonErrorResponse(response, e.getMessage());
 				 return;
 			}
+			finally
+			{
+				 //Clear the secretsJson, and clientName
+                if(!secretsJson.isEmpty()) secretsJson =null ;
+                clientName = clientId = null;
+                userLog =null;
+			}
 		}
 		else if(path.startsWith("/reciter/"))
 		{
@@ -132,8 +187,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	        .filter(key -> !key.isEmpty())
 	        .ifPresent(apiKey -> {
 	        	 if (!apiKey.equals(principalRequestValue)) {
-	        		 	writeJsonErrorResponse(response, "Invalid Api Key.");
-	        		    return;
+	        		 throw new BadCredentialsException("Invalid API key");
 	                }
 	                UsernamePasswordAuthenticationToken auth =
 	                        new UsernamePasswordAuthenticationToken("reciter-internal-user", null, Collections.emptyList());
@@ -141,7 +195,14 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
 	        });
 		}
+	}
+    catch (AuthenticationException ex) {
+		authenticationEntryPoint.commence(request, response, ex);
+		return;
+    }
+
 		filterChain.doFilter(request, response);
+		
 	}
 
 	// Extract token from Authorization header
@@ -168,12 +229,20 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	// Verify JWT token using the public key from JWK set
 	private DecodedJWT verifyJWT(String token) throws Exception {
 		
+		JsonNode clientIdSecretValues =null;
+		JsonNode secretsJson =null;
+		String clientId =null;
+		String userPoolID =null;
+		String tokenSignInUrl =null;
+		String issuer =null;
+		RSAPublicKey publicKey =null;
+		JWTVerifier verifier =null;
 		try
 		{
-			JsonNode clientIdSecretValues =null;
-			String clientId = JWT.decode(token).getClaim("client_id").asString();
 			
-			JsonNode secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
+			clientId = JWT.decode(token).getClaim("client_id").asString();
+			
+			secretsJson = awsSecretsManagerService.getSecretValueFromSecretsManager(consumerSecretName,clientId);
 	
 			ObjectMapper objectMapper = new ObjectMapper();
 	    	try {
@@ -183,15 +252,15 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 				e.printStackTrace();
 			}
 	    	
-	    	String userPoolID = clientIdSecretValues.get(STR_USER_POOL_ID)!=null? cogintoRegion + "_" + clientIdSecretValues.get(STR_USER_POOL_ID).asText():"";
+	    	userPoolID = clientIdSecretValues.get(STR_USER_POOL_ID)!=null? cogintoRegion + "_" + clientIdSecretValues.get(STR_USER_POOL_ID).asText():"";
 	    	
-			String tokenSignInUrl = getTokenSigningKeyUrl(cogintoRegion,userPoolID);
+			tokenSignInUrl = getTokenSigningKeyUrl(cogintoRegion,userPoolID);
 			
-			String issuer = getIssuerFromToken(cogintoRegion,userPoolID);
+			issuer = getIssuerFromToken(cogintoRegion,userPoolID);
 			
-			RSAPublicKey publicKey = getPublicKeyFromJWKSet(token,tokenSignInUrl);
+			publicKey = getPublicKeyFromJWKSet(token,tokenSignInUrl);
 	
-			JWTVerifier verifier = JWT.require(Algorithm.RSA256(publicKey, null))
+			verifier = JWT.require(Algorithm.RSA256(publicKey, null))
 					.withIssuer(issuer).build();
 			
 			return verifier.verify(token);
@@ -202,6 +271,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 		catch(Exception e)
 		{
 			e.printStackTrace();
+		}
+		finally
+		{
+			 // Clear all sensitive references
+		    clientIdSecretValues = secretsJson = null; 
+		    clientId = userPoolID = tokenSignInUrl = issuer = null; 
+		    publicKey = null; verifier =null; 
 		}
 		return null;
 	}
@@ -238,6 +314,9 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     }
     
     private void writeJsonErrorResponse(HttpServletResponse response, String message) {
+    	
+      try
+      {
         if (response.isCommitted()) return;
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -252,12 +331,15 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             + "\"error\": \"Unauthorized\","
             + "\"message\": \"" + escapedMessage + "\""
             + "}";
-
-        try {
-            response.getWriter().write(jsonResponse);
-            response.getWriter().flush();
-        } catch (IOException ioEx) {
-            ioEx.printStackTrace(); // Log safely
+        if (!response.isCommitted()) {
+        	response.getWriter().write(jsonResponse);
+        	response.getWriter().flush();
+        	return;
         }
+      }
+      catch(IOException ioEx)
+      {
+    	  ioEx.printStackTrace();
+      }
     }
 }

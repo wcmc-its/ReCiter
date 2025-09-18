@@ -19,7 +19,14 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +43,10 @@ import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.QueryType;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
-import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
-import reciter.utils.AuthorNameUtils;
-import reciter.utils.ThreadDelay;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 @Component("aliasReCiterRetrievalEngine")
