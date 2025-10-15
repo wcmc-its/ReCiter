@@ -39,16 +39,6 @@ public class APISecurityConfig {
 	   return new JwtTokenAuthenticationFilter();
 	}
 	
-	/*@Bean
-	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
-	public FilterRegistrationBean<JwtTokenAuthenticationFilter> jwtFilterRegistration(JwtTokenAuthenticationFilter filter) 
-{
-    	FilterRegistrationBean<JwtTokenAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
-    	registration.setEnabled(false);
-   		 return registration;
-	}*/
-
-
 	 @Bean
 	    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 	        log.info("*************Executing Configure method***************");
