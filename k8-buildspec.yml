@@ -3,9 +3,9 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      java: openjdk11
+      java: corretto17
     commands:
-      - kubectl version --short --client  
+      - kubectl version --client  
       - java -version 
   pre_build:
       commands:
