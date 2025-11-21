@@ -50,7 +50,7 @@ public class ReCiterEngine implements Engine {
       
         List<ReCiterArticle> reCiterArticles = parameters.getReciterArticles();
 
-        log.info("ReCiter Articles: " + reCiterArticles.size());
+        log.info("ReCiter Articles in ReCiter Engine: " + reCiterArticles.size());
         Analysis.assignGoldStandard(reCiterArticles, parameters.getKnownPmids(), parameters.getRejectedPmids());
 
         EngineOutput engineOutput = new EngineOutput();

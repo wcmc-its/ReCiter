@@ -423,6 +423,11 @@
 		  <artifactId>aws-java-sdk-core</artifactId>
 		  <version>1.12.742</version>
 		</dependency>
+		<dependency>
+		    <groupId>com.github.ben-manes.caffeine</groupId>
+		    <artifactId>caffeine</artifactId>
+		    <version>3.1.8</version> <!-- Latest stable as of Sep 2025 -->
+	   </dependency>	
 	</dependencies>
 	<repositories>
 		<repository>

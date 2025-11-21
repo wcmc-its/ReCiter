@@ -74,9 +74,7 @@ public class NeuralNetworkModelArticlesScorer {
 	        	log.info("lambdaFunction Name:" + lambdaFunction);
 	        	authorshipLikelihoodScore = callAwsLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString,lambdaFunction);
 	        }
-		
-		
-	  
+		 
 		stopWatch.stop();
 		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		return authorshipLikelihoodScore;
@@ -177,13 +175,6 @@ public class NeuralNetworkModelArticlesScorer {
 		 */
 	    private JSONArray callAwsLambda(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
 	       
-	    	log.info("LambdaFunctionName: {}",lambdaFunctionName);
-	    	log.info("LambdaFunctionRegion: {}",PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
-			log.info("category: {}",category);
-			log.info("articleScoreModelFileName: {}",articleScoreModelFileName);
-			log.info("articleDataFilename: {}",articleDataFilename);
-			log.info("s3BucketName:{}",s3BucketName);
-			log.info("isS3UploadRequiredString:{}",isS3UploadRequiredString);
 	    	AWSLambda client = AWSLambdaClientBuilder.standard()
 	                .withRegion(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)) 
 	                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
@@ -213,10 +204,8 @@ public class NeuralNetworkModelArticlesScorer {
 	        try {
 	            InvokeResult result = client.invoke(request);
 	            String response = new String(result.getPayload().array(), StandardCharsets.UTF_8);
-	            log.info("AWS Lambda Response: {}" , response);
 	            JSONObject outer = new JSONObject(response);
 	            String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
-		        log.info("AWS Lambda authorshipLikelihoodScore Response: {}",authorshipLikelihoodScore);
 		        int returnCode = outer.getInt("returncode");
 		        log.info("returnCode: ",returnCode);
 		        if(returnCode==0)

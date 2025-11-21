@@ -72,23 +72,33 @@ public class ReCiterFeatureGenerator {
             for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 pmidsRetrieved.add(reCiterArticle.getArticleId());
             }
- 
+		  log.info("PMIDs retrieved from the PubMed: " + pmidsRetrieved.size());
+         pmidsRetrieved.forEach(pmid -> log.info("Pmid retrieved from the PubMed*************"+ pmid));
+		 
+		  if(goldStandardPmids!=null && goldStandardPmids.size() > 0)
+			  log.info("GoldStandard PMID's are : "+goldStandardPmids);
+		 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
         if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
 	        for (long pmid : goldStandardPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
+	            	log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
         }
+        log.info("rejectedPmids in GoldStandard table: " + rejectedPmids.size());
         if(rejectedPmids != null && rejectedPmids.size() > 0) {
 	        for (long pmid : rejectedPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
+	            	log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
         }
+        log.info("inGoldStandardButNotRetrieved size: " + inGoldStandardButNotRetrieved.size());
+		inGoldStandardButNotRetrieved.forEach(pmid -> log.info("inGoldStandardButNotRetrieved PMID : "+ pmid)); 
         reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {
@@ -442,11 +452,6 @@ public class ReCiterFeatureGenerator {
                 evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());//deserializedEvidence);
             }
 
-            // Education Year Evidence
-            /*EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
-            educationYearEvidence.setDiscrepancyDegreeYearBachelor(reCiterArticle.getBachelorsYearDiscrepancy());
-            educationYearEvidence.setDiscrepancyDegreeYearDoctoral(reCiterArticle.getDoctoralYearDiscrepancy());
-            reCiterArticle.setEducationYearEvidence(educationYearEvidence);*/
             if (reCiterArticle.getEducationYearEvidence() != null) {
                 evidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
             }

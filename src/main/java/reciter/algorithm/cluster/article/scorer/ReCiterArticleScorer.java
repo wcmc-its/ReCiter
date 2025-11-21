@@ -133,15 +133,13 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private StrategyContext citizenshipStrategyContext;
 
-	/**
-	 * Year Discrepancy (Bachelors).
-	 */
-	private StrategyContext bachelorsYearDiscrepancyStrategyContext;
+
 
 	/**
-	 * Year Discrepancy (Doctoral).
+	 * Year Discrepancy (Doctoral or bachelors).
 	 */
-	private StrategyContext doctoralYearDiscrepancyStrategyContext;
+	
+	private StrategyContext  educationYearDiscrepancyStrategyContext;  
 
 	/**
 	 * Discounts Articles not in English.
@@ -183,9 +181,6 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 */
 	private GenderStrategyContext genderStrategyContext;
 
-	//	private StrategyContext boardCertificationStrategyContext;
-	//
-	//	private StrategyContext degreeStrategyContext;
 	
 	private StrategyContext grantStrategyContext;
 	
@@ -223,8 +218,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		this.personTypeStrategyContext = new PersonTypeStrategyContext(new PersonTypeStrategy());
 
 
-		this.bachelorsYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.BACHELORS));
-		this.doctoralYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy(DegreeType.DOCTORAL));
+	    this.educationYearDiscrepancyStrategyContext = new DegreeStrategyContext(new YearDiscrepancyStrategy());
 		
 		this.authorCountStrategyContext = new AuthorCountStrategyContext(new AuthorCountStrategy(ReCiterArticleScorer.strategyParameters));
 
@@ -238,12 +232,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 			this.strategyContexts.add(this.articleSizeStrategyContext);
 		}
 
-		if (strategyParameters.isBachelorsYearDiscrepancy()) {
-			this.strategyContexts.add(this.bachelorsYearDiscrepancyStrategyContext);
-		}
-		
-		if (strategyParameters.isDoctoralYearDiscrepancy()) {
-			this.strategyContexts.add(this.doctoralYearDiscrepancyStrategyContext);
+		if (strategyParameters.isEducationYearDiscrepancy()) {
+			this.strategyContexts.add(this.educationYearDiscrepancyStrategyContext);
 		}
 		
 		if(strategyParameters.isPersonType()) {
@@ -262,63 +252,47 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		List<Future<?>> futures = new ArrayList<>();
 		
 		
-		//((TargetAuthorStrategyContext) nameStrategyContext).executeStrategy(reCiterArticles, identity);
 		futures.add(submitAndLogTime("name Category", executorService, nameStrategyContext, reCiterArticles, identity));
 
 		if (strategyParameters.isEmail()) {
-			//((TargetAuthorStrategyContext) emailStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("Email Category", executorService, emailStrategyContext, reCiterArticles, identity));
 		}
 		
 		if (strategyParameters.isGrant()) {
-			//((TargetAuthorStrategyContext) grantStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("Grant Category", executorService, grantStrategyContext, reCiterArticles, identity));
 		}
 		
 		if (strategyParameters.isKnownRelationship()) {
-			//((TargetAuthorStrategyContext) knownRelationshipsStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("KnownRelationships Category", executorService, knownRelationshipsStrategyContext, reCiterArticles, identity));
 		}
 		
-		if (strategyParameters.isBachelorsYearDiscrepancy()) {
-			//((RemoveReCiterArticleStrategyContext) bachelorsYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
-			futures.add(submitAndLogTime("bachelorsYearDiscrepancy Category", executorService, bachelorsYearDiscrepancyStrategyContext, reCiterArticles, identity));
-		}
-		
-		if (strategyParameters.isDoctoralYearDiscrepancy()) {
-			//((RemoveReCiterArticleStrategyContext) doctoralYearDiscrepancyStrategyContext).executeStrategy(reCiterArticles, identity);
-			futures.add(submitAndLogTime("doctoralYearDiscrepancy Category", executorService, doctoralYearDiscrepancyStrategyContext, reCiterArticles, identity));
+		if (strategyParameters.isEducationYearDiscrepancy()) {
+			futures.add(submitAndLogTime("educationYearDiscrepancy Category", executorService, educationYearDiscrepancyStrategyContext, reCiterArticles, identity));
 		}
 
 		if (strategyParameters.isDepartment()) {
-			//((TargetAuthorStrategyContext) departmentStringMatchStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("departmentStringMatch Category", executorService, departmentStringMatchStrategyContext, reCiterArticles, identity));
 		}
 		
 		if(strategyParameters.isJournalCategory()) {
-			//((TargetAuthorStrategyContext) journalCategoryStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("journalCategory Category", executorService, journalCategoryStrategyContext, reCiterArticles, identity));
 		}
 		
 		if (strategyParameters.isAffiliation()) {
-			//((TargetAuthorStrategyContext)affiliationStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("affiliation Category", executorService, affiliationStrategyContext, reCiterArticles, identity));
 		}
 		
 		if (strategyParameters.isArticleSize()) {
-			//((TargetAuthorStrategyContext) articleSizeStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("articleSize Category", executorService, articleSizeStrategyContext, reCiterArticles, identity));
 		}
 		
 		if (strategyParameters.isPersonType()) {
-			//((TargetAuthorStrategyContext) personTypeStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("personType Category", executorService, personTypeStrategyContext, reCiterArticles, identity));
 		}
 		futures.add(submitAndLogTime("authorCount Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
 		
 		
 		if(strategyParameters.isGender()) {
-			//((TargetAuthorStrategyContext) genderStrategyContext).executeStrategy(reCiterArticles, identity);
 			futures.add(submitAndLogTime("gender Category", executorService, genderStrategyContext, reCiterArticles, identity));
 		}
 		

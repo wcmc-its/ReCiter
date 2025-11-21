@@ -1,110 +1,69 @@
 package reciter.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * @author mjangari This will intercept and request for consumer api JWT token
+ * and admin api key and authenticate its JWT token or api-key
+ */
+
 @EnableWebSecurity
+@Configuration
 public class APISecurityConfig {
-
-    /**
-     * This will intercept and request for admin api and authenticate its api key
-     */
-    @Configuration
-    public static class AdminApiSecurityConfig {
-        
-        private final String principalRequestHeader = "api-key";
-        private String principalRequestValue = System.getenv("ADMIN_API_KEY");
-        
-        @Value("${spring.security.enabled}")
-        private boolean securityEnabled;
-        
-        @Bean
-        @Order(2)
-        public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
-            if (!securityEnabled) {
-                http.csrf(csrf -> csrf.disable())
-                    .securityMatcher("/reciter/**")
-                    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-                return http.build();
-            }
-            
-            APIKeyAuthFilter filter = new APIKeyAuthFilter(principalRequestHeader);
-            filter.setAuthenticationManager(authentication -> {
-                String principal = (String) authentication.getPrincipal();
-                if (principal == null || !principalRequestValue.equals(principal)) {
-                    throw new BadCredentialsException("The API key was not found or not the expected value.");
-                }
-                authentication.setAuthenticated(true);
-                return authentication;
-            });
-            
-            http.csrf(csrf -> csrf.disable())
-                .securityMatcher("/reciter/**")
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/reciter/ping").permitAll()
-                    .anyRequest().authenticated()
-                );
-                
-            return http.build();
-        }
-    }
+	
+	private static final Logger log = LoggerFactory.getLogger(APISecurityConfig.class);
     
-    /**
-     * This will intercept and request for consumer api and authenticate its api key
-     */
-    @Configuration
-    public static class ConsumerApiSecurityConfig {
-            
-            private final String principalRequestHeader = "api-key";
-            private String principalRequestValue = System.getenv("CONSUMER_API_KEY");
+	@Autowired(required = false)
+    private JwtTokenAuthenticationFilter jwtAuthenticationFilter;
 
-            private final JwtTokenAuthenticationFilter filter;
-            
-            @Value("${security.enabled:true}")
-            private boolean securityEnabled;
-            
-            public ConsumerApiSecurityConfig(JwtTokenAuthenticationFilter filter) {
-                this.filter = filter;
-            }
+    @Value("${spring.security.enabled}")
+    private boolean securityEnabled;
+    
+    @Autowired(required = false)
+    private CustomAuthenticationEntryPoint customEntryPoint;
 
-            @Bean
-            @Order(1)
-            public SecurityFilterChain consumerFilterChain(HttpSecurity http) throws Exception {
-                if (!securityEnabled) {
-                    http.csrf(csrf -> csrf.disable())
-                        .securityMatcher("/reciter/article-retrieval/**")
-                        .authorizeRequests(auth -> auth.anyRequest().permitAll());
-                    return http.build();
-                }
-                
-                APIKeyAuthFilter apiKeyAuthFilter = new APIKeyAuthFilter(principalRequestHeader);
-                apiKeyAuthFilter.setAuthenticationManager(authentication -> {
-                    String principal = (String) authentication.getPrincipal();
-                    if (principal == null || !principalRequestValue.equals(principal)) {
-                        throw new BadCredentialsException("The API key was not found or not the expected value.");
-                    }
-                    authentication.setAuthenticated(true);
-                    return authentication;
-                });
-                
-                http.csrf(csrf -> csrf.disable())
-                    .securityMatcher("/reciter/article-retrieval/**")
-                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                    .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                    .authorizeRequests(auth -> auth.anyRequest().authenticated());
-                    
-                return http.build();
-            }
-        }
-    	
-    }
+	@Bean
+	public JwtTokenAuthenticationFilter jwtAuthenticationFilter() {
+	   log.info("JWT filter bean is being created!");
+	   return new JwtTokenAuthenticationFilter();
+	}
+	
+	 @Bean
+	    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+	        log.info("*************Executing Configure method***************");
+	        
+	        return httpSecurity
+	            .securityMatcher("/reciter/**")
+	            .csrf(csrf -> csrf.disable())
+	            .exceptionHandling(exception -> 
+	                exception.authenticationEntryPoint(customEntryPoint))
+	            .sessionManagement(session -> 
+	                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+	            .authorizeHttpRequests(auth -> 
+	                auth.anyRequest().authenticated())
+	            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+	            .build();
+	    }
+	 
+	 @Bean
+	    public WebSecurityCustomizer webSecurityCustomizer() {
+	        return (web) -> {
+	            if (!securityEnabled) {
+	                web.ignoring().requestMatchers("/reciter/**");
+	            }
+	            // Added to whitelist ping controller and Access Token
+	            web.ignoring().requestMatchers("/reciter/ping");
+	        };
+	    }
+}

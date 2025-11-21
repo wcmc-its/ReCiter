@@ -19,7 +19,14 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +43,10 @@ import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.QueryType;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
-import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
-import reciter.utils.AuthorNameUtils;
-import reciter.utils.ThreadDelay;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 
 @Component("aliasReCiterRetrievalEngine")
@@ -87,6 +91,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				// If the eSearchResult collection doesn't contain any information regarding this person,
 				// then we'd want to perform a full retrieval because this will be first time that ReCiter
 				// retrieve PubMed and Scopus articles for this person.
+				slf4jLogger.info("this.refreshFlag in Alias run" + this.refreshFlag);
 				if(this.refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
 					slf4jLogger.info("Starting full retrieval for uid=[" + identity.getUid() + "].");
 					retrieveData(identity, this.refreshFlag);
@@ -118,6 +123,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 	
 	private Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
+		slf4jLogger.info("Coming into retrieveData section without date range****");
 		Set<Long> uniquePmids = new HashSet<>();
 		
 		QueryType queryType = null;
@@ -137,16 +143,16 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		//Retreive by GoldStandard
 		Map<Long, PubMedArticle> pubMedArticles = null;
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
+		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
 			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
-		}
+		//}
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles = retrievalResult.getPubMedArticles();
-		
+		slf4jLogger.info("pubMedArticles in retrieveData section without date range****"+pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
@@ -174,7 +180,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 		uniquePmids.addAll(pubMedArticles.keySet());
-
+		
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, false);
@@ -318,12 +324,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
 			scopusService.save(scopusArticlesByDoi);
 		}
-		
+		slf4jLogger.info("uniquePmids in retrieveData section without date range****"+uniquePmids.size());
 		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
 		return uniquePmids;
 	}
 	
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
+		slf4jLogger.info("Coming in retrieveData section with date range****");
 		Set<Long> uniquePmids = new HashSet<>();
 		QueryType queryType = null; 
 		String uid = identity.getUid();
@@ -340,18 +347,18 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Map<Long, PubMedArticle> pubMedArticles = null;
 		//Retreive by GoldStandard
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
+		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
 			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
-		}
+		//}
 		
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 		//Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
 		pubMedArticles = retrievalResult.getPubMedArticles();
-		
+		slf4jLogger.info("pubMedArticles in retrieveData section with date range****"+pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
@@ -468,7 +475,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r8.getPubMedArticles().keySet());
 		}
-		
+		slf4jLogger.info("uniquePmids in retrieveData section with date range****"+uniquePmids.size());
 		//List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		//scopusService.save(scopusArticles);
 		if (useScopusArticles) {
