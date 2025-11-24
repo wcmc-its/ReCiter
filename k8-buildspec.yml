@@ -49,7 +49,7 @@ phases:
     commands:
       - mvn clean install -Dmaven.test.skip=true
       - |
-        if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
+        if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null || expr "${BRANCH}" : "*MigrationFromJDk11ToAWSCorretto17" >/dev/null; then
           docker build --tag $REPOSITORY_URI:$TAG .
           docker push $REPOSITORY_URI:$TAG
           # Log out from the Docker registry to clear credentials
