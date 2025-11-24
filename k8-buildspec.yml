@@ -38,6 +38,10 @@ phases:
           if expr "${BRANCH}" : ".*master" >/dev/null; then
             sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-prod"'@'  -e 's@APPNAME@'"reciter-prod"'@' -e 's@HPANAME@'"hpa-reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
           fi
+        - |
+          if expr "${BRANCH}" : ".*MigrationFromJDk11ToAWSCorretto17" >/dev/null; then
+            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-dev"'@'  -e 's@APPNAME@'"reciter-dev"'@' -e 's@HPANAME@'"hpa-reciter-dev"'@' -e 's@ENVIRONMENT_LABEL@'"dev"'@' kubernetes/k8-deployment.yaml;
+          fi
         #- $(aws ecr get-login --no-include-email)
         - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
         - cat ./kubernetes/k8-deployment.yaml
@@ -56,6 +60,8 @@ phases:
           kubectl set image deployment/reciter-prod reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME
         fi
         if expr "${BRANCH}" : ".*dev" >/dev/null; then
-          kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME
-          
+          kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME 
+        fi
+        if expr "${BRANCH}" : ".*MigrationFromJDk11ToAWSCorretto17" >/dev/null; then
+          kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME  
         fi
