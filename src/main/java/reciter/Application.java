@@ -45,8 +45,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.bohnman.squiggly.Squiggly;
-import com.github.bohnman.squiggly.web.RequestSquigglyContextProvider;
+//import com.github.bohnman.squiggly.Squiggly;
+//import com.github.bohnman.squiggly.web.RequestSquigglyContextProvider;
 import com.google.common.collect.Iterables;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -128,13 +128,13 @@ public class Application {
 	@Value("${aws.reciterscoring.service.portNo}")
 	private String reciterScoringPortNumber;
 	
-	@Bean
+	/*@Bean
 	public FilterRegistrationBean<SquigglyRequestFilter> squigglyRequestFilter() {
 		FilterRegistrationBean<SquigglyRequestFilter> filter = new FilterRegistrationBean<>();
 		filter.setFilter(new SquigglyRequestFilter());
 		filter.setOrder(1);
 		return filter;
-	}
+	}*/
     
 	
 	public static void main(String[] args) {
@@ -143,13 +143,13 @@ public class Application {
 		Iterable<ObjectMapper> objectMappers = context.getBeansOfType(ObjectMapper.class)
 	            .values();
 		
-		Squiggly.init(objectMappers, new RequestSquigglyContextProvider() {
+		/*Squiggly.init(objectMappers, new RequestSquigglyContextProvider() {
 			
 				protected String customizeFilter(String filter, HttpServletRequest request, Class<?> beanClass) {
 					return filter;
 				}
            
-        });
+        });*/
 
         ObjectMapper objectMapper = Iterables.getFirst(objectMappers, null);
 
