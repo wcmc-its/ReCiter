@@ -4,7 +4,7 @@ FROM amazoncorretto:17-alpine
 WORKDIR /app
 
 # Copy the application JAR file
-ARG JAR_FILE=target/reciter-2.1.3.jar
+ARG JAR_FILE=target/reciter-*.jar
 COPY ${JAR_FILE} /app/app.jar
 
 # Comment this if you do not have NewRelic integration
