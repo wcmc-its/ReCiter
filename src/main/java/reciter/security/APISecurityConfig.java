@@ -63,7 +63,7 @@ public class APISecurityConfig {
 	                web.ignoring().requestMatchers("/reciter/**");
 	            }
 	            // Added to whitelist ping controller and Access Token
-	            web.ignoring().requestMatchers("/reciter/ping");
+	            web.ignoring().requestMatchers("/reciter/ping","/reciter/v3/api-docs/swagger-config");
 	        };
 	    }
 }
