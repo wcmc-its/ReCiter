@@ -73,8 +73,10 @@ public class PubMedServiceImpl implements PubMedService {
         List<PubMedArticle> pubMedArticles = null;
         Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
         pubMedArticles = new ArrayList<>(pmids.size());
+       
 		log.info("PubMed Article size in findByPmids is :" + pmids.size());
         while (iterator.hasNext()) {
+        	 PubMedArticle pubarticle =null;
         	reciter.database.dynamodb.model.PubMedArticle pubMedArticle = iterator.next();
 			log.info("PubMed Article in findBy PMIDs is :" + pubMedArticle);
         	if(pubMedArticle!=null && pubMedArticle.isUsingS3())
@@ -83,9 +85,11 @@ public class PubMedServiceImpl implements PubMedService {
     			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
 				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
         	}
-        	PubMedArticle pubarticle = pubMedArticle.getPubMedArticle();
+        	if(pubMedArticle!=null)
+        	{	pubarticle = pubMedArticle.getPubMedArticle();
         	
-            pubMedArticles.add(pubarticle);
+            	pubMedArticles.add(pubarticle);
+        	}
         }
         return pubMedArticles;
     }

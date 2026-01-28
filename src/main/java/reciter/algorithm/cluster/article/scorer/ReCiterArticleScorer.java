@@ -367,7 +367,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	        	  objectMapper.writeValue(jsonFile,articleIdentityScore);
         	  }
               String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
- 			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("Identity Score", "identityOnlyScoreArticles.py",fileName,identityS3BucketName,isS3UploadRequiredString);
+ 			  JSONArray articlesIdentityScoreTotal = nnmodel.executeArticleScorePredictor("identity", fileName,identityS3BucketName,isS3UploadRequiredString);
  			  if(articlesIdentityScoreTotal!=null && articlesIdentityScoreTotal.length() > 0 )
 					  return mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityScoreTotal);
  		
@@ -537,7 +537,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	        	article.setAuthorshipLikelihoodScore(jsonObject.optDouble("scoreTotal",0.0)*100);
+	        	article.setAuthorshipLikelihoodScore(jsonObject.optDouble("scoreTotal",0.0));
 	            return article; // Return the modified article
 	        }
 

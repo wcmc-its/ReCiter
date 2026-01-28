@@ -515,10 +515,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  
-			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py",fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
+			  JSONArray articlesIdentityFeedbackScoreTotal = nnmodel.executeArticleScorePredictor("feedback", fileName,feedbackIdentityS3BucketName,isS3UploadRequiredString);
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
 			  {  
 				  List<ReCiterArticle> articlesScores =  mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
+				  articlesScores.forEach(article -> log.info("articles : " + article));
 			  	 return articlesScores;	
 			  }  	
 				  
@@ -683,7 +684,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	    for (int i = 0; i < jsonArray.length(); i++) {
 	        JSONObject jsonObject = jsonArray.getJSONObject(i);
 	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal")*100);
+	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal"));
 	            return article; // Return the modified article
 	        }
 	    }

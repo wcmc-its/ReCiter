@@ -46,22 +46,24 @@ public class NeuralNetworkModelArticlesScorer {
 	
 	private String reciterScoringServiceUrl = System.getenv("RECITERSCORING_SERVICE_URL");
 	
+	private static final String reciterScorerModelFileName = "verify_setup.py";
+	
 	public NeuralNetworkModelArticlesScorer()
 	{
 		this.awsSecretsManagerService = new AwsSecretsManagerService();
 	}
 	
-	public JSONArray executeArticleScorePredictor(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException
+	public JSONArray executeArticleScorePredictor(String goldStandardName, String dataFileName,String s3BucketName,String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException
 	{
 	
 		
-		StopWatch stopWatch = new StopWatch(category);
-		stopWatch.start(category);
+		StopWatch stopWatch = new StopWatch(goldStandardName);
+		stopWatch.start(goldStandardName);
 		JSONArray authorshipLikelihoodScore;
 		
 		 if (isS3UploadRequiredString!=null && !isS3UploadRequiredString.equalsIgnoreCase("") && (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) 
 			{  
-			 	authorshipLikelihoodScore = callLocalLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString);
+			 	authorshipLikelihoodScore = callLocalLambda(goldStandardName,reciterScorerModelFileName,dataFileName,s3BucketName,isS3UploadRequiredString);
 	        } else {
 	        	log.info("Getting Secret Name from the Properties: {}", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
 	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
@@ -72,7 +74,7 @@ public class NeuralNetworkModelArticlesScorer {
 	        	String lambdaKey = env+LAMBDA_NAME;
 	        	String lambdaFunction = secretMap.get(lambdaKey);
 	        	log.info("lambdaFunction Name:" + lambdaFunction);
-	        	authorshipLikelihoodScore = callAwsLambda(category,articleScoreModelFileName,articleDataFilename,s3BucketName,isS3UploadRequiredString,lambdaFunction);
+	        	authorshipLikelihoodScore = callAwsLambda(goldStandardName,reciterScorerModelFileName,dataFileName,s3BucketName,isS3UploadRequiredString,lambdaFunction);
 	        }
 		 
 		stopWatch.stop();
@@ -92,14 +94,14 @@ public class NeuralNetworkModelArticlesScorer {
 		public static void main(String args[]) throws JsonMappingException, JsonProcessingException
 		{
 			NeuralNetworkModelArticlesScorer nn = new NeuralNetworkModelArticlesScorer();
-			JSONArray articlesIdentityFeedbackScoreTotal = nn.executeArticleScorePredictor("FeedbackIdentityScore", "feedbackIdentityScoreArticles.py","dwf2001-feedbackIdentityScoringInput.json","feedbackScore","false");
+			JSONArray articlesIdentityFeedbackScoreTotal = nn.executeArticleScorePredictor("feedback", "ajg9004-feedbackIdentityScoringInput.json","feedbackScore","false");
 			if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
 				findJSONObjectById(articlesIdentityFeedbackScoreTotal,9856924);
 				  
 		}
 		
 		@SuppressWarnings("unused")
-		private JSONArray callLocalLambda(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString)
+		private JSONArray callLocalLambda(String goldStandardModelName, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString)
 		{
 			URL url=null;
 			HttpURLConnection conn=null;
@@ -121,6 +123,7 @@ public class NeuralNetworkModelArticlesScorer {
 	        ObjectMapper mapper = new ObjectMapper();
 	        
 	        Map<String, Object> payloadMap = new HashMap<>();
+	        payloadMap.put("modelName", goldStandardModelName);
 	        payloadMap.put("scriptFile", articleScoreModelFileName);
 	        payloadMap.put("inputDataFile", articleDataFilename);
 	        payloadMap.put("useS3Bucket", isS3UploadRequiredString);
@@ -158,7 +161,10 @@ public class NeuralNetworkModelArticlesScorer {
 			     // Parse the response
 			        JSONObject outer = new JSONObject(response.toString());
 			        String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
+			        log.info(" authorshipLikelihoodScore " + authorshipLikelihoodScore);
+			        
 			        int returnCode = outer.getInt("returncode");
+			        log.info(" returnCode " + returnCode);
 			        JSONArray scoringArray = new JSONArray(authorshipLikelihoodScore);
 			        
 			        if(returnCode==0)
@@ -173,7 +179,7 @@ public class NeuralNetworkModelArticlesScorer {
 		/*
 		 * Calls AWS Lambda function
 		 */
-	    private JSONArray callAwsLambda(String category, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
+	    private JSONArray callAwsLambda(String goldStandardModelName, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
 	       
 	    	AWSLambda client = AWSLambdaClientBuilder.standard()
 	                .withRegion(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)) 
@@ -183,6 +189,7 @@ public class NeuralNetworkModelArticlesScorer {
 	        ObjectMapper mapper = new ObjectMapper();
 
 	        Map<String, Object> payloadMap = new HashMap<>();
+	        payloadMap.put("modelName", goldStandardModelName);
 	        payloadMap.put("scriptFile", articleScoreModelFileName);
 	        payloadMap.put("inputDataFile", articleDataFilename);
 	        payloadMap.put("useS3Bucket", isS3UploadRequiredString);
