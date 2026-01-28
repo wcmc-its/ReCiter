@@ -102,21 +102,25 @@ public class DynamoDbS3Operations {
 			} catch (JsonProcessingException e) {
 				log.error(e.getMessage());
 			}
-			byte[] objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
-			InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
-			PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-			        .bucket(bucketName.toLowerCase())
-			        .key(keyName)
-			        .contentType(CONTENT_TYPE)
-			        .contentLength((long) objectContentBytes.length)
-			        .build();
-			try{
-				s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
-			}
-			catch(AmazonServiceException e) {
-				// The call was transmitted successfully, but Amazon S3 couldn't process 
-	            // it, so it returned an error response.
-				log.error(e.getErrorMessage());
+			byte[] objectContentBytes;
+			if(objectContentString!=null)
+			{
+				objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
+				InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
+				PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+				        .bucket(bucketName.toLowerCase())
+				        .key(keyName)
+				        .contentType(CONTENT_TYPE)
+				        .contentLength((long) objectContentBytes.length)
+				        .build();
+				try{
+					s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
+				}
+				catch(AmazonServiceException e) {
+					// The call was transmitted successfully, but Amazon S3 couldn't process 
+		            // it, so it returned an error response.
+					log.error(e.getErrorMessage());
+				}
 			}
 		}
 	}
