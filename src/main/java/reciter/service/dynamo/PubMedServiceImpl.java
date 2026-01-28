@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -85,11 +86,12 @@ public class PubMedServiceImpl implements PubMedService {
     			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
 				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
         	}
-        	if(pubMedArticle!=null)
-        	{	pubarticle = pubMedArticle.getPubMedArticle();
+        	pubarticle = pubMedArticle.getPubMedArticle();
+        	if (pubMedArticle == null) {
+                continue; // Skip the rest of the loop for this null element
+            }
+            pubMedArticles.add(pubarticle);
         	
-            	pubMedArticles.add(pubarticle);
-        	}
         }
         return pubMedArticles;
     }
