@@ -133,6 +133,7 @@ public class ArticleTranslator {
         ReCiterArticleAuthors reCiterCoAuthors = new ReCiterArticleAuthors();
         if (coAuthors != null) {
             for (MedlineCitationArticleAuthor author : coAuthors) {
+            	if(author!=null) {
                 String lastName = author.getLastname();
                 String foreName = author.getForename();
                 String initials = author.getInitials();
@@ -168,6 +169,7 @@ public class ArticleTranslator {
                     reCiterCoAuthors.addAuthor(reCiterAuthor);
                 }
             }
+        }
         }
 
         MedlineCitationKeywordList keywordList = pubmedArticle.getMedlinecitation().getKeywordlist();
