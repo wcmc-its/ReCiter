@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import com.amazonaws.AmazonServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import lombok.extern.slf4j.Slf4j;
 import reciter.engine.analysis.ReCiterFeature;
@@ -45,7 +46,8 @@ public class DynamoDbS3Operations {
 	@Autowired
 	private S3Client  s3;
 	
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+			.registerModule(new JavaTimeModule());
 	
 	private static final String CONTENT_TYPE = "application/json";
 	
