@@ -97,7 +97,9 @@ public class ReCiterFeatureGenerator {
 	            }
 	        }
         }
-		 System.out.println("rejectedPmids in GoldStandard table: " + rejectedPmids.size());
+		 if(rejectedPmids != null) {
+			 log.info("rejectedPmids in GoldStandard table: " + rejectedPmids.size());
+		 }
         if(rejectedPmids != null && rejectedPmids.size() > 0) {
 	        for (long pmid : rejectedPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {

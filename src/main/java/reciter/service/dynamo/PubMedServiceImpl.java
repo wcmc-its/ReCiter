@@ -71,6 +71,7 @@ public class PubMedServiceImpl implements PubMedService {
     			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
 				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
         	}
+        	if (pubMedArticle == null) continue; // Skip the rest of the loop for this null element
         	PubMedArticle pubarticle = pubMedArticle.getPubMedArticle();
         	
             pubMedArticles.add(pubarticle);

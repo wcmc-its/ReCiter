@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11:alpine-jre
+FROM amazoncorretto:11-alpine
 
 RUN mkdir -p /app
 WORKDIR /app
