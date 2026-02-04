@@ -25,10 +25,11 @@ phases:
         - echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
        
         - TAG="$CODEBUILD_BUILD_NUMBER.$(date +%Y-%m-%d.%H.%M.%S).$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
-        - echo $TAG
+        - echo "TAG: $TAG"
         - sed -i.bak -e 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:$TAG"'@' kubernetes/k8-deployment.yaml
         - echo "${CODEBUILD_WEBHOOK_HEAD_REF}"
-        - echo "${BRANCH}"
+        - echo "Branch Name : ${BRANCH}"
+        - echo "AWS Region : ${AWS_REGION}"
         - |
           if expr "${BRANCH}" : ".*dev" >/dev/null; then
             sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-dev"'@' -e 's@APPNAME@'"reciter-dev"'@' -e 's@HPANAME@'"hpa-reciter-dev"'@' -e 's@ENVIRONMENT_LABEL@'"dev"'@' kubernetes/k8-deployment.yaml;
