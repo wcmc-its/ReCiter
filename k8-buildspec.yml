@@ -3,9 +3,9 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      java: corretto11
+      java: openjdk11
     commands:
-      - kubectl version --client  
+      - kubectl version --short --client  
       - java -version 
   pre_build:
       commands:
@@ -38,8 +38,7 @@ phases:
           if expr "${BRANCH}" : ".*master" >/dev/null; then
             sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-prod"'@'  -e 's@APPNAME@'"reciter-prod"'@' -e 's@HPANAME@'"hpa-reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
           fi
-        #- $(aws ecr get-login --no-include-email)
-        - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+        - $(aws ecr get-login --no-include-email)
         - cat ./kubernetes/k8-deployment.yaml
   build:
     commands:
