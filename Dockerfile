@@ -1,7 +1,7 @@
 FROM amazoncorretto:11-alpine
 RUN mkdir -p /app
 WORKDIR /app
-ARG JAR_FILE=target/reciter-*.jar
+ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} /app/app.jar
 # Comment this if you do not have NewRelic integration
 RUN wget https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip && \
