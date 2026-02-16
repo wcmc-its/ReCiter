@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -27,9 +26,6 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	Map<String, List<ReCiterArticleFeedbackScore>> coauthorNameListMap = null;
 	List<ReCiterAuthor> listOfAuthors = null;
 
-	private static final Pattern PATTERN_1 = Pattern.compile("^[A-Z] [A-Z]$");
-	private static final Pattern PATTERN_2 = Pattern.compile("^[A-Z] [A-Z][a-z]");
-
 	@Override
 	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 
@@ -37,15 +33,31 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 
 	}
 
+	/**
+	 * Process author name for co-author matching.
+	 *
+	 * Only returns a match key for authors with verbose (non-initial) first names.
+	 * This prevents false positive matches on common surname + initial combinations
+	 * (e.g., "J Li", "S Zhang") that frequently occur by chance in large author lists.
+	 *
+	 * This is consistent with KnownRelationshipStrategy which distinguishes between
+	 * "verbose" and "initial" match types.
+	 *
+	 * @param author the article author to process
+	 * @return "FirstName LastName" if first name is verbose (length > 1), null otherwise
+	 */
 	private static String processAuthor(ReCiterAuthor author) {
 		String authorFirstname = author.getAuthorName().getFirstName();
 		String authorLastname = author.getAuthorName().getLastName();
 
-		if (PATTERN_1.matcher(authorFirstname).matches() || PATTERN_2.matcher(authorFirstname).matches()) {
-			return authorFirstname + " " + authorLastname;
-		} else {
+		// Only match on verbose first names (not initials)
+		// This prevents false matches like "J Li" matching across unrelated articles
+		if (authorFirstname != null && authorFirstname.length() > 1 && authorLastname != null) {
 			return authorFirstname + " " + authorLastname;
 		}
+
+		// Return null for initial-only first names - these will be filtered out
+		return null;
 	}
 
 	@Override
@@ -68,21 +80,23 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
             .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream())
             .filter(author-> !author.isTargetAuthor())
             .map(author->processAuthor(author))
+            .filter(name -> name != null)  // Filter out initial-only names
             .collect(Collectors.groupingBy(
                 Function.identity(),
                 Collectors.counting()
             ));
-	        
-       
+
+
 	        Map<String, Long> rejectedArticlesCountByCoAuthor =  rejectedArticles.stream()
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream())
 	                .filter(author-> !author.isTargetAuthor())
 	                .map(author->processAuthor(author))
+	                .filter(name -> name != null)  // Filter out initial-only names
 	                .collect(Collectors.groupingBy(
 	                    Function.identity(),
 	                    Collectors.counting()
 	                ));
-	        
+
 	        Map<Long, Integer> nonTargetAuthorCountsByArticle = reCiterArticles.stream()
 	                .collect(Collectors.toMap(
 	                		ReCiterArticle::getArticleId, // Key: Article ID
@@ -90,46 +104,46 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	                        .filter(author -> !author.isTargetAuthor()) // Filter non-target authors
 	                        .count() // Count non-target authors
 	                ));
-	        
+
 	        reCiterArticles.stream()
 	        	.filter(article -> article != null)
 	        	.forEach(article-> {
-	        		
+
 	        	listOfAuthors= article.getArticleCoAuthors().getAuthors();
 				coauthorNameListMap = new HashMap<>();
 				Long articleId = article.getArticleId();
-				
+
 				listOfAuthors.stream()
 				.filter(author -> author != null && !author.isTargetAuthor())
 				.map(author -> processAuthor(author))        // Process each author to get the name
-				.filter(coAuthorName -> coAuthorName != null && !coAuthorName.isEmpty()) 
+				.filter(coAuthorName -> coAuthorName != null && !coAuthorName.isEmpty())
 				.forEach(coAuthorName -> {
-					
-						 
+
+
 						 int countAccepted = 0;
-						 int countRejected = 0; 
+						 int countRejected = 0;
 						 double sumAccepted = 0.0;
 						 double sumRejected = 0.0;
 						 double itemScore = 0.0;
 						int updatedCountAccepted = 0;
-						int updatedCountRejected = 0; 
-						
+						int updatedCountRejected = 0;
+
 						if(acceptArticlesCountByCoAuthor!=null && acceptArticlesCountByCoAuthor.size() > 0)
-						{	
+						{
 							if(acceptArticlesCountByCoAuthor.containsKey(coAuthorName))
-							{	
+							{
 								countAccepted = Math.toIntExact(acceptArticlesCountByCoAuthor.get(coAuthorName));
 							}
 						}
 						if(rejectedArticlesCountByCoAuthor!=null && rejectedArticlesCountByCoAuthor.size() > 0)
-						{	
+						{
 							if(rejectedArticlesCountByCoAuthor.containsKey(coAuthorName))
-							{		
+							{
 								countRejected = Math.toIntExact(rejectedArticlesCountByCoAuthor.get(coAuthorName));
 							}
 						}
 						if(countAccepted > 0 || countRejected > 0)
-						{	
+						{
 							if(article.getGoldStandard() == 1)
 							{
 								updatedCountAccepted = countAccepted - 1;
@@ -146,7 +160,7 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 						//Divide item score by count of the coAuthor of the interested article
 						if(nonTargetAuthorCountsByArticle !=null && nonTargetAuthorCountsByArticle.size() > 0)
 						{
-							if(nonTargetAuthorCountsByArticle.containsKey(articleId) 
+							if(nonTargetAuthorCountsByArticle.containsKey(articleId)
 									&& nonTargetAuthorCountsByArticle.get(articleId) > 0)
 							{
 								int coAuthorsCount = nonTargetAuthorCountsByArticle.get(articleId);
@@ -158,32 +172,32 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 								{
 									sumRejected = itemScore / coAuthorsCount;
 								}
-								
+
 							}
-							
+
 						}
 						double feedbackScore= determineFeedbackScore(article.getGoldStandard(),sumAccepted, sumRejected, itemScore);
 						String exportedFeedbackScore = decimalFormat.format(feedbackScore);
 						ReCiterArticleFeedbackScore coAuthorNameArticle = populateArticleFeedbackScore(article.getArticleId(),coAuthorName,countAccepted,countRejected,
-								   																	itemScore,sumAccepted,
-								   																	sumRejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"CoAuthorName");
-						
+								   								itemScore,sumAccepted,
+								   								sumRejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"CoAuthorName");
+
 							coauthorNameListMap.computeIfAbsent(coAuthorName, k-> new ArrayList<>()).add(coAuthorNameArticle);
-							
-							
+
+
 				});
-				
+
 				// Calculate the sum of all scores
 				double totalScore = coauthorNameListMap.values().stream().flatMap(List::stream) // Flatten the lists into a single stream of ReCiterFeedbackScoreCoAuthorName
 						.mapToDouble(score -> {
-							
+
 							 double feedbackScore = score.getFeedbackScore();
 						        return Double.isNaN(feedbackScore) ? 0 : feedbackScore;
-							
+
 						}) // Extract the scores
 						.sum(); // Sum all scores
-				
-				
+
+
 				// Sort Map Contents before storing into another Map
 				coauthorNameListMap.entrySet().stream()
 						.filter(entry -> entry.getKey() != null && entry.getValue() != null)
@@ -194,11 +208,11 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 						));
 				article.addArticleFeedbackScoresMap(coauthorNameListMap);
 				article.setCoAuthorNameFeedbackScore(totalScore);
-				String exportedCoAuthorNameFeedbackScore = decimalFormat.format(totalScore); 
+				String exportedCoAuthorNameFeedbackScore = decimalFormat.format(totalScore);
 				article.setExportedCoAuthorNameFeedbackScore(exportedCoAuthorNameFeedbackScore);
-				
+
 	        });
-	       
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
