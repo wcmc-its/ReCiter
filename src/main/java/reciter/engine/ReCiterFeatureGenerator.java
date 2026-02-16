@@ -81,27 +81,20 @@ public class ReCiterFeatureGenerator {
             for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 pmidsRetrieved.add(reCiterArticle.getArticleId());
             }
-		  System.out.println("PMIDs retrieved from the PubMed: " + pmidsRetrieved.size());
-         pmidsRetrieved.forEach(pmid -> log.info("Pmid retrieved from the PubMed*************"+ pmid));
-		 
-		  if(goldStandardPmids!=null && goldStandardPmids.size() > 0)
-        	 System.out.println("GoldStandard PMID's are : "+goldStandardPmids);
-		 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
         if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
 	        for (long pmid : goldStandardPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
-					System.out.println("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
+					log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
         }
-		 System.out.println("rejectedPmids in GoldStandard table: " + rejectedPmids.size());
-        if(rejectedPmids != null && rejectedPmids.size() > 0) {
+	    if(rejectedPmids != null && rejectedPmids.size() > 0) {
 	        for (long pmid : rejectedPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
-					 System.out.println("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
+					 log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
@@ -420,15 +413,12 @@ public class ReCiterFeatureGenerator {
 				try 
 				{
 					relationshipEvidenceJson = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
-					System.out.println("relationshipEvidenceJson***************"+relationshipEvidenceJson);
 					releationshipEvidence = objectMapper.readValue(relationshipEvidenceJson, RelationshipEvidence.class);
-					System.out.println("relationshipEvidenceJson***************"+releationshipEvidence.toString());
 					
 					// The object remains as RelationshipEvidence
 		            // Serialize the object back to JSON (field 'relationshipEvidenceTotalScore' will be excluded)
 		            result = objectMapper.convertValue(releationshipEvidence, RelationshipEvidence.class);
-		            System.out.println("Final result***************"+releationshipEvidence.toString());
-					
+		        	
 				} catch (JsonMappingException e) {
 					e.printStackTrace();
 				} catch (JsonProcessingException e) {
@@ -445,13 +435,13 @@ public class ReCiterFeatureGenerator {
 			        String jsonResponse = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
 			        
 			        // Print the JSON response (you should not see the `relationshipEvidenceTotalScore` field here)
-			        System.out.println("Serialized JSON: " + jsonResponse);
+			        //System.out.println("Serialized JSON: " + jsonResponse);
 
 			        // Deserialize back into a RelationshipEvidence instance
 			        deserializedEvidence = objectMapper.readValue(jsonResponse, RelationshipEvidence.class);
 
 			        // The object itself is unchanged, and relationshipEvidenceTotalScore is still set to 0.0
-			        System.out.println("Deserialized Object: " + deserializedEvidence);
+			        //System.out.println("Deserialized Object: " + deserializedEvidence);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
