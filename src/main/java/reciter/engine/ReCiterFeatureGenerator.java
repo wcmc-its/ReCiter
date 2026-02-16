@@ -106,9 +106,7 @@ public class ReCiterFeatureGenerator {
 	            }
 	        }
         }
-		 System.out.println("inGoldStandardButNotRetrieved size: " + inGoldStandardButNotRetrieved.size());
-		inGoldStandardButNotRetrieved.forEach(pmid -> System.out.println("inGoldStandardButNotRetrieved PMID : "+ pmid)); 
-        reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+		reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {
         	selectedArticles = reCiterArticles 
