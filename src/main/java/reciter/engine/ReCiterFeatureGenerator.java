@@ -81,18 +81,18 @@ public class ReCiterFeatureGenerator {
             for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 pmidsRetrieved.add(reCiterArticle.getArticleId());
             }
-		  System.out.println("PMIDs retrieved from the PubMed: " + pmidsRetrieved.size());
+		  log.info("PMIDs retrieved from the PubMed: " + pmidsRetrieved.size());
          pmidsRetrieved.forEach(pmid -> log.info("Pmid retrieved from the PubMed*************"+ pmid));
 		 
 		  if(goldStandardPmids!=null && goldStandardPmids.size() > 0)
-        	 System.out.println("GoldStandard PMID's are : "+goldStandardPmids);
+        	 log.info("GoldStandard PMID's are : "+goldStandardPmids);
 		 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
         if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
 	        for (long pmid : goldStandardPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
-					System.out.println("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
+					log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
@@ -103,13 +103,13 @@ public class ReCiterFeatureGenerator {
         if(rejectedPmids != null && rejectedPmids.size() > 0) {
 	        for (long pmid : rejectedPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
-					 System.out.println("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
+					 log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
         }
-		 System.out.println("inGoldStandardButNotRetrieved size: " + inGoldStandardButNotRetrieved.size());
-		inGoldStandardButNotRetrieved.forEach(pmid -> System.out.println("inGoldStandardButNotRetrieved PMID : "+ pmid)); 
+		 log.info("inGoldStandardButNotRetrieved size: " + inGoldStandardButNotRetrieved.size());
+		inGoldStandardButNotRetrieved.forEach(pmid -> log.info("inGoldStandardButNotRetrieved PMID : "+ pmid)); 
         reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {

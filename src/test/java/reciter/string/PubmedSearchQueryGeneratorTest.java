@@ -24,8 +24,10 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import lombok.extern.slf4j.Slf4j;
 import reciter.utils.PubmedSearchQueryGenerator;
 
+@Slf4j
 public class PubmedSearchQueryGeneratorTest {
 
 	@Test
@@ -101,7 +103,7 @@ public class PubmedSearchQueryGeneratorTest {
 		
 		PubmedSearchQueryGenerator p = new PubmedSearchQueryGenerator();
 		Set<String> result = p.generate(firstName, middleName, lastName);
-		System.out.println(result);
+		log.info("Generated queries: {}", result);
 		
 		assertEquals(11, result.size());
 		assertEquals(true, result.contains("Mari Ann Del De Potro Marque dos-Santos Domingo"));

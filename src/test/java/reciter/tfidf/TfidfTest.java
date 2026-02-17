@@ -23,6 +23,9 @@ import java.util.regex.Pattern;
 
 import org.junit.Test;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class TfidfTest {
 
 	private String docA;
@@ -31,7 +34,7 @@ public class TfidfTest {
 	@Test
 	public void TestGetTermFrequency() {
 		String e = extractDepartment("Department of General Surgery");
-		System.out.println(e);
+		log.info(e);
 	}
 	
 	private String extractDepartment(String department) {

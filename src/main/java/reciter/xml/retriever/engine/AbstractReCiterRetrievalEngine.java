@@ -47,6 +47,9 @@ import reciter.xml.retriever.pubmed.KnownRelationshipRetrievalStrategy;
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
 import reciter.xml.retriever.pubmed.SecondInitialRetrievalStrategy;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component("abstractReCiterRetrievalEngine")
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
 
@@ -100,7 +103,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults, QueryType queryType, RetrievalRefreshFlag refreshFlag) {
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
-		System.out.println("pubMedArticleList size********************"+pubMedArticleList.size());
+		if(pubMedArticleList != null) {
+			log.info("pubMedArticleList size********************"+pubMedArticleList.size());
+		}
 		pubMedService.save(pubMedArticleList);
 
 		// Save the search result.
@@ -108,8 +113,10 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
-		System.out.println("PMID's are********************"+pmids);
-		System.out.println("PMID's size********************"+pmids.size());
+		if(pmids != null) {
+			log.info("PMID's are********************"+pmids);
+			log.info("PMID's size********************"+pmids.size());
+		}
 		ESearchPmid eSearchPmid = null;
 		if(!pmids.isEmpty()){
 			reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag eSearchPmidRefreshFlag;
@@ -120,9 +127,11 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			} else {
 				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.FALSE;
 			}
-			System.out.println("eSearchPmidRefreshFlag********************"+eSearchPmidRefreshFlag);
+			log.info("eSearchPmidRefreshFlag********************"+eSearchPmidRefreshFlag);
 			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
-			System.out.println("eSearchPmid********************"+eSearchPmid);
+			if(eSearchPmid != null) {
+				log.info("eSearchPmid********************"+eSearchPmid);
+			}
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
 		if (eSearchResultDb == null) {
@@ -133,7 +142,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			if(!eSearchPmids.isEmpty()) {
 				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
 			}
-		System.out.println("eSearchResultDb in case of null********************"+eSearchPmids.size());	
+			if(eSearchPmids != null) {
+				log.info("eSearchResultDb in case of null********************"+eSearchPmids.size());
+			}
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
 			if(eSearchPmid != null) {
@@ -146,7 +157,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchResultDb.setQueryType(queryType);
 				eSearchResultService.save(eSearchResultDb);
 			}
-			System.out.println("eSearchResultDb in else********************"+eSearchPmids.size());
+			if(eSearchPmids != null) {
+				log.info("eSearchResultDb in else********************"+eSearchPmids.size());
+			}
 		}
 	}
 }

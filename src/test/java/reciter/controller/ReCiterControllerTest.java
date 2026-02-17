@@ -11,7 +11,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RunWith(MockitoJUnitRunner.class)
+@Slf4j
 public class ReCiterControllerTest {
 
     @Test
@@ -45,7 +48,7 @@ public class ReCiterControllerTest {
                 !identityOrgUnits.isEmpty()
                 &&
                 !Collections.disjoint(identityOrgUnits, filterOrgUnits)) {
-            System.out.println("Filter for both orgunits and personType");
+            log.info("Filter for both orgunits and personType");
         }
 
         // No match filter

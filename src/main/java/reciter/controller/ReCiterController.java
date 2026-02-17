@@ -1041,7 +1041,7 @@ public class ReCiterController {
                 reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors, strategyParameters));
             }
         }
-		reCiterArticles.forEach(article-> System.out.println("articles pmids are*******************"+article.getArticleId()));
+		reCiterArticles.forEach(article-> log.info("articles pmids are*******************"+article.getArticleId()));
 		if(reCiterArticles!=null)
 			log.info("reCiterArticles size {}", reCiterArticles.size());
         //Sanitize Identity names
