@@ -701,7 +701,7 @@ public class ReCiterController {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
             parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag);
-			log.info("getting the reciter articles from the Parameters in controller***"+ parameters.getReciterArticles().size());
+			log.info("getting the reciter articles from the Parameters in controller "+ parameters.getReciterArticles().size());
             if (parameters == null) {
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -719,17 +719,14 @@ public class ReCiterController {
             } else {
             	filterScore = parameters.getTotalStandardzizedArticleScore();
             }
-			log.info("filter Score in controller***"+filterScore);
             Engine engine = new ReCiterEngine();
             engineOutput = engine.run(parameters, strategyParameters, filterScore, keywordsMax);
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
-             log.info("coming into if condiiton***"+engineOutput.getReCiterFeature().getCountPendingArticles() +"Suggested :"+ engineOutput.getReCiterFeature().getCountSuggestedArticles());
            //Store Analysis only in evidence mode
             if(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null) {
 	            AnalysisOutput analysisOutput = new AnalysisOutput();
 	            if(engineOutput != null) {
 	            	if(filterScore == strategyParameters.getMinimumStorageThreshold()) {
-	            		log.info("coming into if condiiton***"+engineOutput.getReCiterFeature().getCountPendingArticles() +"Suggested :"+ engineOutput.getReCiterFeature().getCountSuggestedArticles());
 						analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
 	            	} else {
 	            		//Enforce Strict Minimum Storage Threshold
@@ -749,8 +746,6 @@ public class ReCiterController {
 	            		reCiterFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
 	            		analysisOutput.setReCiterFeature(reCiterFeature);
 	            	}
-					log.info("getting the reciter articles from the Parameters in controller***"+ engineOutput.getReCiterFeature());
-					
 	            }
 				analysisOutput.setUid(uid);
 				/**
@@ -1041,7 +1036,6 @@ public class ReCiterController {
                 reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors, strategyParameters));
             }
         }
-		reCiterArticles.forEach(article-> log.info("articles pmids are*******************"+article.getArticleId()));
 		if(reCiterArticles!=null)
 			log.info("reCiterArticles size {}", reCiterArticles.size());
         //Sanitize Identity names

@@ -63,9 +63,11 @@ public class NeuralNetworkModelArticlesScorer {
 		
 		 if (isS3UploadRequiredString!=null && !isS3UploadRequiredString.equalsIgnoreCase("") && (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) 
 			{  
+			    log.info("Invoking LOCAL Lambda container");
 			 	authorshipLikelihoodScore = callLocalLambda(goldStandardName,reciterScorerModelFileName,dataFileName,s3BucketName,isS3UploadRequiredString);
 	        } else {
-	        	log.info("Getting Secret Name from the Properties: {}", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
+	        	log.info("Invoking AWS Lambda");
+	        	log.info("Fetching secret from AWS Secrets Manager: {}",  PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
 	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
 	        	ObjectMapper mapper = new ObjectMapper();
 	        	Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);
@@ -73,7 +75,7 @@ public class NeuralNetworkModelArticlesScorer {
 	        	String env = System.getenv("ENV_CONTEXT");
 	        	String lambdaKey = env+LAMBDA_NAME;
 	        	String lambdaFunction = secretMap.get(lambdaKey);
-	        	log.info("lambdaFunction Name:" + lambdaFunction);
+	            log.info("Resolved AWS Lambda function: {}", lambdaFunction);
 	        	authorshipLikelihoodScore = callAwsLambda(goldStandardName,reciterScorerModelFileName,dataFileName,s3BucketName,isS3UploadRequiredString,lambdaFunction);
 	        }
 		 
@@ -148,6 +150,7 @@ public class NeuralNetworkModelArticlesScorer {
 				 
 				    // Now it's safe to read the response
 			        int responseCode = conn.getResponseCode();
+			        log.info("Local Lambda HTTP responseCode: {}", responseCode);
 			     // Read response from Lambda
 			        StringBuilder response = new StringBuilder();
 			        
@@ -169,7 +172,7 @@ public class NeuralNetworkModelArticlesScorer {
 				}
 
 			} catch (IOException | RuntimeException e) {
-			    e.printStackTrace(); // You may want to log this properly
+				log.error("Local Lambda invocation failed", e.getMessage());
 			}
 			return null;
 	    }
@@ -211,13 +214,12 @@ public class NeuralNetworkModelArticlesScorer {
 	            JSONObject outer = new JSONObject(response);
 	            String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
 		        int returnCode = outer.getInt("returncode");
-		        log.info("returnCode: ",returnCode);
+		        log.info("AWS Lambda returnCode: {}", returnCode);
 		        if(returnCode==0)
 		        	return new JSONArray(authorshipLikelihoodScore);;
 	          
 	        } catch (Exception e) {
 	            log.error("Lambda invocation failed: {}" , e.getMessage());
-	            e.printStackTrace();
 	        }
 	        return null;
 	    }

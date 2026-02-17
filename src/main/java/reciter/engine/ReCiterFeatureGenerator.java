@@ -24,20 +24,11 @@ import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.evidence.Evidence;
-import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
-import reciter.utils.JsonUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 
 
 @Data
@@ -163,7 +154,6 @@ public class ReCiterFeatureGenerator {
         log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
         log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
         log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
-        log.info("\n");
         
         // Set overall accuracy using the new formula
         reCiterFeature.setOverallAccuracy(Double.isNaN(accuracy)? 0.0:accuracy);

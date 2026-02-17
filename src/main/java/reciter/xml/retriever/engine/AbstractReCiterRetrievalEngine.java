@@ -104,7 +104,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
 		if(pubMedArticleList != null) {
-			log.info("pubMedArticleList size********************"+pubMedArticleList.size());
+			log.info("pubMedArticleList size {}"+pubMedArticleList.size());
 		}
 		pubMedService.save(pubMedArticleList);
 
@@ -113,10 +113,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
-		if(pmids != null) {
-			log.info("PMID's are********************"+pmids);
-			log.info("PMID's size********************"+pmids.size());
-		}
+		
 		ESearchPmid eSearchPmid = null;
 		if(!pmids.isEmpty()){
 			reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag eSearchPmidRefreshFlag;
@@ -127,10 +124,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			} else {
 				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.FALSE;
 			}
-			log.info("eSearchPmidRefreshFlag********************"+eSearchPmidRefreshFlag);
 			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
 			if(eSearchPmid != null) {
-				log.info("eSearchPmid********************"+eSearchPmid);
+				log.info("eSearchPmid {} "+eSearchPmid);
 			}
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
@@ -142,9 +138,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			if(!eSearchPmids.isEmpty()) {
 				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
 			}
-			if(eSearchPmids != null) {
-				log.info("eSearchResultDb in case of null********************"+eSearchPmids.size());
-			}
+			
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
 			if(eSearchPmid != null) {
@@ -156,9 +150,6 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchResultDb.setRetrievalDate(new Date());
 				eSearchResultDb.setQueryType(queryType);
 				eSearchResultService.save(eSearchResultDb);
-			}
-			if(eSearchPmids != null) {
-				log.info("eSearchResultDb in else********************"+eSearchPmids.size());
 			}
 		}
 	}
