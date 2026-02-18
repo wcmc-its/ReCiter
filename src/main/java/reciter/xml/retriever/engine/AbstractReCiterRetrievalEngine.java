@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -47,11 +49,10 @@ import reciter.xml.retriever.pubmed.KnownRelationshipRetrievalStrategy;
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
 import reciter.xml.retriever.pubmed.SecondInitialRetrievalStrategy;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Component("abstractReCiterRetrievalEngine")
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
+	
+	private static final Logger log = LoggerFactory.getLogger(AbstractReCiterRetrievalEngine.class);
 
 	@Autowired
 	protected PubMedService pubMedService;
