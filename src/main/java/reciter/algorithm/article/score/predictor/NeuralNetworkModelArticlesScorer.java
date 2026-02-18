@@ -172,7 +172,7 @@ public class NeuralNetworkModelArticlesScorer {
 				}
 
 			} catch (IOException | RuntimeException e) {
-				log.error("Local Lambda invocation failed", e.getMessage());
+				log.error("Local Lambda invocation failed: {}", e.getMessage());
 			}
 			return null;
 	    }
@@ -214,9 +214,15 @@ public class NeuralNetworkModelArticlesScorer {
 	            JSONObject outer = new JSONObject(response);
 	            String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
 		        int returnCode = outer.getInt("returncode");
-		        log.info("AWS Lambda returnCode: {}", returnCode);
-		        if(returnCode==0)
-		        	return new JSONArray(authorshipLikelihoodScore);;
+		        log.info("AWS Lambda scoring returnCode: {}", returnCode);
+		        if(returnCode==0) {
+		        	return new JSONArray(authorshipLikelihoodScore);
+		        }else {
+		            String stderr = outer.optString("stderr", "");
+		            log.error("Lambda scoring failed with returncode {}. stderr: {}. error: {}",
+		                      returnCode, stderr);
+		            return null;
+		        }
 	          
 	        } catch (Exception e) {
 	            log.error("Lambda invocation failed: {}" , e.getMessage());

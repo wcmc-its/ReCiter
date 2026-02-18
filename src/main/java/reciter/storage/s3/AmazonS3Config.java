@@ -3,6 +3,14 @@ package reciter.storage.s3;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -14,18 +22,11 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Configuration
 @ComponentScan(basePackages ="reciter.storage.s3")
 public class AmazonS3Config {
+	
+	private static final Logger log = LoggerFactory.getLogger(AmazonS3Config.class);
 	
 	private String amazonAWSAccessKey = System.getenv("AMAZON_AWS_ACCESS_KEY");
 

@@ -23,13 +23,15 @@ import static org.junit.Assert.assertEquals;
 import java.util.Set;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.utils.PubmedSearchQueryGenerator;
 
-@Slf4j
 public class PubmedSearchQueryGeneratorTest {
 
+	private static final Logger log = LoggerFactory.getLogger(PubmedSearchQueryGeneratorTest.class);
+	
 	@Test
 	public void testRegex1() {
 		String s = "Williams JR. (III). Brackens O'Connor";

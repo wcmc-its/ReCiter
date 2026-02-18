@@ -1,6 +1,6 @@
 package reciter.utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -13,19 +13,21 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.reflect.TypeToken;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.model.Gender;
 import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 
-@Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class GenderProbabilityTest {
+	
+	private static final Logger log = LoggerFactory.getLogger(GenderProbabilityTest.class);
 	
 	private static List<Gender> genders;
 	

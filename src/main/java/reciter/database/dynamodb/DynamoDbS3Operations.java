@@ -3,13 +3,14 @@ package reciter.database.dynamodb;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,6 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
@@ -34,9 +34,10 @@ import reciter.model.pubmed.PubMedArticle;
  * @author Sarbajit Dutta(szd2013)
  *
  */
-@Slf4j
 @Component
 public class DynamoDbS3Operations {
+	
+	private static final Logger log = LoggerFactory.getLogger(DynamoDbS3Operations.class);
 	
 	@Lazy
 	@Autowired

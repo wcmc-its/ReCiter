@@ -4,12 +4,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
 
@@ -19,8 +20,9 @@ import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
  *
  */
 @Component
-@Slf4j
 public class InstitutionAfidFileImport {
+	
+	private static final Logger log = LoggerFactory.getLogger(InstitutionAfidFileImport.class);
 	
 	@Autowired
 	private IDynamoDbInstitutionAfidService institutionAfIdService;

@@ -10,13 +10,14 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
-@Slf4j
 public class ReCiterControllerTest {
 
+	private static final Logger log = LoggerFactory.getLogger(ReCiterControllerTest.class);
+	
     @Test
     public final void testReCiterFeatureGeneratorGroupFilters() {
         List<String> identityInstitutions = Arrays.asList("Weill Cornell Medical College",

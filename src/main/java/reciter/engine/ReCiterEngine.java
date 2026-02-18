@@ -23,9 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.article.scorer.ArticleScorer;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.feedback.article.scorer.ArticleFeedbackScorer;
@@ -39,9 +40,9 @@ import reciter.model.identity.Identity;
 
 
 
-@Slf4j
 public class ReCiterEngine implements Engine {
 
+	private static final Logger log = LoggerFactory.getLogger(ReCiterEngine.class);
 	  
     @Override
     public EngineOutput run(EngineParameters parameters, StrategyParameters strategyParameters, double filterScore, double keywordsMax) {

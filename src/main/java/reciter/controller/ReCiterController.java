@@ -23,6 +23,7 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -55,7 +55,6 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.api.parameters.FilterFeedbackType;
@@ -92,10 +91,11 @@ import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Api(value = "ReCiterController", description = "Operations on ReCiter API.")
-@Slf4j
 @Controller
 public class ReCiterController {
 
+	private static final Logger log = LoggerFactory.getLogger(ReCiterController.class);
+	
     @Autowired
     private ESearchResultService eSearchResultService;
 
@@ -701,7 +701,6 @@ public class ReCiterController {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
             parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag);
-			log.info("getting the reciter articles from the Parameters in controller "+ parameters.getReciterArticles().size());
             if (parameters == null) {
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
