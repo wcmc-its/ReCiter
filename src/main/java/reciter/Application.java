@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +46,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +54,6 @@ import com.github.bohnman.squiggly.web.RequestSquigglyContextProvider;
 import com.github.bohnman.squiggly.web.SquigglyRequestFilter;
 import com.google.common.collect.Iterables;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
 import reciter.database.dyanmodb.files.InstitutionAfidFileImport;
@@ -75,7 +75,6 @@ import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.utils.AffiliationStrategyUtils;
 import reciter.utils.DegreeYearStrategyUtils;
 
-@Slf4j
 @SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
@@ -83,6 +82,8 @@ import reciter.utils.DegreeYearStrategyUtils;
 @EnableDynamoDBRepositories("reciter.database.dynamodb")
 @ComponentScan("reciter")
 public class Application {
+	
+	private static final Logger log = LoggerFactory.getLogger(Application.class);
 
 //	@Bean
 //	public BCryptPasswordEncoder bCryptPasswordEncoder() {

@@ -1,19 +1,16 @@
 package reciter.algorithm.evidence.article.standardizedscore.strategy;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
-import reciter.algorithm.evidence.article.acceptedrejected.strategy.AcceptedRejectedStrategy;
 import reciter.model.article.ReCiterArticle;
 
 public class StandardScoreStrategy extends AbstractReCiterArticleStrategy {
 	
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(AcceptedRejectedStrategy.class);
+	private static final Logger slf4jLogger = LoggerFactory.getLogger(StandardScoreStrategy.class);
 	
 	//private final String[] standardizedScoreMapping = ReCiterArticleScorer.strategyParameters.getStandardizedScoreMapping().trim().split(",");
 	private List<String> standardizedScores;

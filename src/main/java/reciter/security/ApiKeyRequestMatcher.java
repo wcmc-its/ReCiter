@@ -8,7 +8,6 @@ public class ApiKeyRequestMatcher implements RequestMatcher {
 
 	@Override
     public boolean matches(HttpServletRequest request) {
-		System.out.println("Checking for api-key in request");
         return request.getHeader("api-key") != null;
     }
 

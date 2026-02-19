@@ -54,7 +54,6 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
-		log.info("*************Execuring Configure method***************");
 		/*if (!securityEnabled) { // allow when security is off
 			httpSecurity.antMatcher("/reciter/**").csrf().disable()
 	            .authorizeRequests()

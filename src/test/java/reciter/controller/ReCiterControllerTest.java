@@ -10,10 +10,14 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ReCiterControllerTest {
 
+	private static final Logger log = LoggerFactory.getLogger(ReCiterControllerTest.class);
+	
     @Test
     public final void testReCiterFeatureGeneratorGroupFilters() {
         List<String> identityInstitutions = Arrays.asList("Weill Cornell Medical College",
@@ -45,7 +49,7 @@ public class ReCiterControllerTest {
                 !identityOrgUnits.isEmpty()
                 &&
                 !Collections.disjoint(identityOrgUnits, filterOrgUnits)) {
-            System.out.println("Filter for both orgunits and personType");
+            log.info("Filter for both orgunits and personType");
         }
 
         // No match filter

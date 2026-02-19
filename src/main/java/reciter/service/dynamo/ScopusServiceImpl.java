@@ -1,20 +1,23 @@
 package reciter.service.dynamo;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import reciter.database.dynamodb.repository.ScopusArticleRepository;
-import reciter.model.scopus.ScopusArticle;
-import reciter.service.ScopusService;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import reciter.database.dynamodb.repository.ScopusArticleRepository;
+import reciter.model.scopus.ScopusArticle;
+import reciter.service.ScopusService;
+
 @Service("scopusService")
 public class ScopusServiceImpl implements ScopusService {
+	
+	private static final Logger log = LoggerFactory.getLogger(ScopusServiceImpl.class);
 
     @Autowired
     private ScopusArticleRepository scopusRepository;
