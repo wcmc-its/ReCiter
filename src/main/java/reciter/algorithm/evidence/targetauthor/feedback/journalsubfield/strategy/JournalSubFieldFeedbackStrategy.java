@@ -27,6 +27,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(JournalSubFieldFeedbackStrategy.class);
 	
 	private Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = new HashMap<>();
+	private int totalAccepted = 0;
 	
 	Set<String> filterJournalSubFields = Stream.of("General Science & Technology")
             .collect(Collectors.toSet());
@@ -46,6 +47,11 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		try {
 	        slf4jLogger.info("reCiterArticles size: {}", reCiterArticles.size());
+
+	        // Compute total accepted articles for informed absence penalty
+	        totalAccepted = (int) reCiterArticles.stream()
+	            .filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+	            .count();
 
 	        // Group by gold standard
 	        Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
@@ -123,6 +129,14 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	    double scoreAll = computeScore(countAccepted, countRejected);
 	    double scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted, countRejected);
 	    double scoreWithout1Rejected = computeScore(countAccepted, countRejected > 0 ? countRejected - 1 : countRejected);
+
+	    // Informed absence: journal subfield never seen in accepted or rejected
+	    if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+	        double penalty = computeInformedAbsencePenalty(totalAccepted);
+	        scoreAll = penalty;
+	        scoreWithout1Accepted = penalty;
+	        scoreWithout1Rejected = penalty;
+	    }
 
 	    double feedbackScore = determineFeedbackScore(article.getGoldStandard(), scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
 	    String exportedFeedbackScore = decimalFormat.format(feedbackScore);

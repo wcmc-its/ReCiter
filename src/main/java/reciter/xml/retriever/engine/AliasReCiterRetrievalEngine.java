@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.api.parameters.RetrievalRefreshFlag;
+import reciter.database.dynamodb.model.ESearchCount;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.QueryType;
 import reciter.model.identity.AuthorName;
@@ -39,6 +40,7 @@ import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.service.ESearchCountService;
 import reciter.service.ESearchResultService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameUtils;
@@ -61,7 +63,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	
 	@Autowired
 	private ESearchResultService eSearchResultService;
-	
+
+	@Autowired
+	private ESearchCountService eSearchCountService;
+
 	public enum IdentityNameType {
 		ORIGINAL,
 		DERIVED
@@ -200,6 +205,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if(r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
 			useStrictQueryOnly = true;
 			queryType = QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP;
+
+			// Store the true eSearch count so ArticleSizeStrategy can use log(count) for scoring.
+			// This avoids a separate live eSearch call during the scoring phase.
+			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
+			eSearchCountService.save(new ESearchCount(uid, trueCount));
+			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 		
 		if(r1.getPubMedQueryResults() != null
@@ -410,6 +421,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				&&
 				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
 			queryType = QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP;
+
+			// Store the true eSearch count for scoring.
+			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
+			eSearchCountService.save(new ESearchCount(uid, trueCount));
+			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 		
 		if(r1.getPubMedQueryResults() != null

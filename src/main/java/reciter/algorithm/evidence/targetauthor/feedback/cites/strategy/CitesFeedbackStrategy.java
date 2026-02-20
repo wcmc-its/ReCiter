@@ -60,8 +60,12 @@ public class CitesFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 		stopWatchforCitesFeedback.start("Cites");
 		try {
 			slf4jLogger.info("reCiterArticles size in cites: ", reCiterArticles.size());
-			
-				 
+
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			 Map<Long, ReCiterArticle> articleMap = reCiterArticles.stream()
 		                .collect(Collectors.toMap(ReCiterArticle::getArticleId, Function.identity()));
 			 
@@ -146,8 +150,16 @@ public class CitesFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 	       							    int overallCountAccepted = citingArticlesCountAccepted + citedArticlesCountAccepted;
 	       							    
 	
-	       							    double scoreAll = computeScore(overallCountAccepted, overallCountRejected);
-	         							 
+	       							    double scoreAllBase = computeScore(overallCountAccepted, overallCountRejected);
+
+	       							    // Informed absence: no citing/cited articles in accepted or rejected
+	       							    final double scoreAll;
+	       							    if (overallCountAccepted == 0 && overallCountRejected == 0 && totalAccepted > 0) {
+	       							        scoreAll = computeInformedAbsencePenalty(totalAccepted);
+	       							    } else {
+	       							        scoreAll = scoreAllBase;
+	       							    }
+
 	         							 //Club the Rejected Articles and Accepted Articles
 	         							 List<ReCiterArticle> mergedList = Stream.of(
 	         									 (citingAcceptedArticles != null && !citingAcceptedArticles.isEmpty()) ? citingAcceptedArticles : new ArrayList<ReCiterArticle>(), 

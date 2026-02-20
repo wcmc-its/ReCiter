@@ -68,6 +68,11 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 		try {
 			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
 
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			// Group articles by gold standard
 	        Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
 	            .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
@@ -157,6 +162,12 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 							}
 							itemScore = computeScore(updatedCountAccepted , updatedCountRejected);
 						}
+						// Informed absence: if this co-author has never appeared in any
+						// accepted or rejected article, but the researcher has acceptance
+						// history, apply a negative penalty instead of leaving at 0.0
+						else if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+							itemScore = computeInformedAbsencePenalty(totalAccepted);
+						}
 						//Divide item score by count of the coAuthor of the interested article
 						if(nonTargetAuthorCountsByArticle !=null && nonTargetAuthorCountsByArticle.size() > 0)
 						{
@@ -171,6 +182,12 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 								if(article.getGoldStandard() == -1 && coAuthorsCount > 0)
 								{
 									sumRejected = itemScore / coAuthorsCount;
+								}
+								// Also normalize for unasserted (NULL) articles so consortium
+								// papers with thousands of authors don't accumulate extreme scores
+								if(article.getGoldStandard() == 0 && coAuthorsCount > 0)
+								{
+									itemScore = itemScore / coAuthorsCount;
 								}
 
 							}
