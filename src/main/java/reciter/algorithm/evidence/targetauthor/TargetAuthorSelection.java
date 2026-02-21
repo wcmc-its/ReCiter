@@ -137,16 +137,71 @@ public class TargetAuthorSelection {
 	            	continue;
 	            }
 	            
-	            if(fullLastNameToIdentityPartialMatchCount == 0) {
-	            	slf4jLogger.info("There was no target author found for " + reciterArticle.getArticleId());
-	            	assignTargetAuthorFalse(authors.getAuthors());
-	            }
-	            else if(fullLastNameToIdentityPartialMatchCount > 1) {
-	            	slf4jLogger.info(fullLastNameToIdentityPartialMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId());
-	            }
 	            if(fullLastNameToIdentityPartialMatchCount == 1) {
 	            	slf4jLogger.info("Full Last Name match to partial Identity Last Name: " + reciterArticle.getArticleId());
 	            	continue;
+	            }
+
+	            //Step 13: Attempt strict first name and first initial of last name match
+	            int firstNameLastInitialMatchCount = 0;
+	            if(fullLastNameToIdentityPartialMatchCount == 0 || fullLastNameToIdentityPartialMatchCount > 1)
+	            	firstNameLastInitialMatchCount = checkFirstNameAndLastInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, fullLastNameToIdentityPartialMatchCount, multipleMarkedTargetAuthor);
+	            if(firstNameLastInitialMatchCount == 1) {
+	            	slf4jLogger.info("First Name and Last Initial Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+
+	            //Step 14: Attempt identity middle name to article last name match
+	            int middleNameToLastNameMatchCount = 0;
+	            if(firstNameLastInitialMatchCount == 0 || firstNameLastInitialMatchCount > 1)
+	            	middleNameToLastNameMatchCount = checkMiddleNameToLastNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameLastInitialMatchCount, multipleMarkedTargetAuthor);
+	            if(middleNameToLastNameMatchCount == 1) {
+	            	slf4jLogger.info("Identity Middle Name to Article Last Name Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+
+	            //Step 15: Attempt first-to-last and last-to-first name swap match
+	            int firstLastSwapMatchCount = 0;
+	            if(middleNameToLastNameMatchCount == 0 || middleNameToLastNameMatchCount > 1)
+	            	firstLastSwapMatchCount = checkFirstLastNameSwapMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, middleNameToLastNameMatchCount, multipleMarkedTargetAuthor);
+	            if(firstLastSwapMatchCount == 1) {
+	            	slf4jLogger.info("First-Last Name Swap Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+
+	            //Step 17: Attempt identity last name to article first name + identity first initial to article last initial
+	            int lastToFirstAndInitialMatchCount = 0;
+	            if(firstLastSwapMatchCount == 0 || firstLastSwapMatchCount > 1)
+	            	lastToFirstAndInitialMatchCount = checkLastNameToFirstNameAndFirstInitialToLastInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstLastSwapMatchCount, multipleMarkedTargetAuthor);
+	            if(lastToFirstAndInitialMatchCount == 1) {
+	            	slf4jLogger.info("Identity Last-to-Article First + Initial Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+
+	            //Step 18: Attempt both initials match (first initial to first initial, last initial to last initial)
+	            int bothInitialsMatchCount = 0;
+	            if(lastToFirstAndInitialMatchCount == 0 || lastToFirstAndInitialMatchCount > 1)
+	            	bothInitialsMatchCount = checkBothInitialsMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastToFirstAndInitialMatchCount, multipleMarkedTargetAuthor);
+	            if(bothInitialsMatchCount == 1) {
+	            	slf4jLogger.info("Both Initials Match found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+
+	            //Step 19: Attempt fuzzy last name match (Levenshtein distance <= 2) with first name or first initial match
+	            int fuzzyLastNameMatchCount = 0;
+	            if(bothInitialsMatchCount == 0 || bothInitialsMatchCount > 1)
+	            	fuzzyLastNameMatchCount = checkFuzzyLastNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, bothInitialsMatchCount, multipleMarkedTargetAuthor);
+	            if(fuzzyLastNameMatchCount == 1) {
+	            	slf4jLogger.info("Fuzzy Last Name Match (Levenshtein <= 2) found for article: " + reciterArticle.getArticleId());
+	            	continue;
+	            }
+
+	            if(fuzzyLastNameMatchCount == 0) {
+	            	slf4jLogger.info("There was no target author found for " + reciterArticle.getArticleId());
+	            	assignTargetAuthorFalse(authors.getAuthors());
+	            }
+	            else if(fuzzyLastNameMatchCount > 1) {
+	            	slf4jLogger.info(fuzzyLastNameMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId());
 	            }
             	
             		
@@ -884,6 +939,420 @@ public class TargetAuthorSelection {
 	}
 	
 	
+	//Step 19: Attempt fuzzy last name match (Levenshtein distance <= 2) with first name or first initial match
+	/**
+	 * Check if last names are within Levenshtein distance 2 (handling typos and
+	 * spelling variants) AND the first name or first initial also matches.
+	 * This is the loosest matching step and only fires when all other steps fail.
+	 * Examples:
+	 *   - "Kovanhkaya" vs "Kovanlikaya" (PubMed typo, distance 2)
+	 *   - "Polanecsky" vs "Polaneczky" (variant spelling, distance 2)
+	 *   - "Seidman" vs "Siedman" (transposition, distance 2)
+	 * Requires last name length >= 4 to avoid false positives on short names.
+	 */
+	public int checkFuzzyLastNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
+		int count = 0;
+		if(matchCount > 1) {
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
+		}
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getLastName() != null && author.getAuthorName().getLastName().length() >= 4
+					&& author.getAuthorName().getFirstInitial() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() >= 4
+							&&
+							sanitizedIdentityName.getFirstInitial() != null
+							&&
+							ReCiterStringUtil.levenshteinDistance(
+								author.getAuthorName().getLastName().toLowerCase(),
+								sanitizedIdentityName.getLastName().toLowerCase()) <= 2
+							&&
+							ReCiterStringUtil.levenshteinDistance(
+								author.getAuthorName().getLastName().toLowerCase(),
+								sanitizedIdentityName.getLastName().toLowerCase()) > 0
+							&&
+							(author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
+							||
+							(author.getAuthorName().getFirstName() != null && sanitizedIdentityName.getFirstName() != null
+							&& author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getFirstName()))))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+				else if(matchCount == 0) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() >= 4
+							&&
+							sanitizedIdentityName.getFirstInitial() != null
+							&&
+							ReCiterStringUtil.levenshteinDistance(
+								author.getAuthorName().getLastName().toLowerCase(),
+								sanitizedIdentityName.getLastName().toLowerCase()) <= 2
+							&&
+							ReCiterStringUtil.levenshteinDistance(
+								author.getAuthorName().getLastName().toLowerCase(),
+								sanitizedIdentityName.getLastName().toLowerCase()) > 0
+							&&
+							(author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
+							||
+							(author.getAuthorName().getFirstName() != null && sanitizedIdentityName.getFirstName() != null
+							&& author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getFirstName()))))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
+		return count;
+	}
+
+	//Step 13: Attempt strict first name and first initial of last name match
+	/**
+	 * Check for exact first name match and matching first character of last name.
+	 * Handles cases where the last name is garbled but the first name is intact.
+	 * Example: identity "Mark Polanec" matching article author "M Polanec" where
+	 * last name may be truncated but first name and last initial are correct.
+	 */
+	public int checkFirstNameAndLastInitialMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
+		int count = 0;
+		if(matchCount > 1) {
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
+		}
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getLastName() != null
+					&& author.getAuthorName().getFirstName().length() > 1 && author.getAuthorName().getLastName().length() > 0) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& sanitizedIdentityName.getFirstName().length() > 1
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 0
+							&&
+							author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getFirstName())
+							&&
+							author.getAuthorName().getLastName().substring(0, 1).equalsIgnoreCase(sanitizedIdentityName.getLastName().substring(0, 1)))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+				else if(matchCount == 0) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& sanitizedIdentityName.getFirstName().length() > 1
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 0
+							&&
+							author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getFirstName())
+							&&
+							author.getAuthorName().getLastName().substring(0, 1).equalsIgnoreCase(sanitizedIdentityName.getLastName().substring(0, 1)))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
+		return count;
+	}
+
+	//Step 14: Attempt identity middle name to article last name match
+	/**
+	 * Check if identity middle name matches article last name, with first name or
+	 * first initial also matching. Handles cases where PubMed indexed the middle
+	 * name as the last name (common with multi-part names).
+	 * Example: identity "Brian C Edwards" (middle="C") where article has author
+	 * "C Edwards" indexed differently.
+	 */
+	public int checkMiddleNameToLastNameMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
+		int count = 0;
+		if(matchCount > 1) {
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
+		}
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getLastName() != null && author.getAuthorName().getFirstInitial() != null) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getMiddleName() != null
+							&& sanitizedIdentityName.getMiddleName().length() > 1
+							&&
+							sanitizedIdentityName.getFirstInitial() != null
+							&&
+							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getMiddleName())
+							&&
+							(author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
+							||
+							(author.getAuthorName().getFirstName() != null && sanitizedIdentityName.getFirstName() != null
+							&& author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getFirstName()))))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+				else if(matchCount == 0) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getMiddleName() != null
+							&& sanitizedIdentityName.getMiddleName().length() > 1
+							&&
+							sanitizedIdentityName.getFirstInitial() != null
+							&&
+							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getMiddleName())
+							&&
+							(author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
+							||
+							(author.getAuthorName().getFirstName() != null && sanitizedIdentityName.getFirstName() != null
+							&& author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getFirstName()))))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
+		return count;
+	}
+
+	//Step 15: Attempt first-to-last and last-to-first name swap match
+	/**
+	 * Check if identity first name matches article last name AND identity last name
+	 * matches article first name. Handles cases where PubMed reversed the first
+	 * and last name fields.
+	 * Example: identity "Daniel Li" matching article author "Li Daniel".
+	 */
+	public int checkFirstLastNameSwapMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
+		int count = 0;
+		if(matchCount > 1) {
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
+		}
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getFirstName().length() > 1
+					&& author.getAuthorName().getLastName() != null && author.getAuthorName().getLastName().length() > 1) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& sanitizedIdentityName.getFirstName().length() > 1
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 1
+							&&
+							author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
+							&&
+							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getFirstName()))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+				else if(matchCount == 0) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
+							&& sanitizedIdentityName.getFirstName().length() > 1
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 1
+							&&
+							author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
+							&&
+							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getFirstName()))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
+		return count;
+	}
+
+	//Step 17: Attempt identity last name to article first name + identity first initial to article last name initial
+	/**
+	 * Check if identity last name matches article first name AND identity first
+	 * initial matches the first character of article last name. Handles partial
+	 * name swaps where the last name appears in the first name field.
+	 * Example: identity "Brian Harvey" matching article "Harvey B" where first
+	 * name field has "Harvey" and last name starts with "B".
+	 */
+	public int checkLastNameToFirstNameAndFirstInitialToLastInitialMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
+		int count = 0;
+		if(matchCount > 1) {
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
+		}
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstName() != null && author.getAuthorName().getFirstName().length() > 1
+					&& author.getAuthorName().getLastName() != null && author.getAuthorName().getLastName().length() > 0) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 1
+							&&
+							sanitizedIdentityName.getFirstInitial() != null
+							&&
+							author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
+							&&
+							author.getAuthorName().getLastName().substring(0, 1).equalsIgnoreCase(sanitizedIdentityName.getFirstInitial()))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+				else if(matchCount == 0) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 1
+							&&
+							sanitizedIdentityName.getFirstInitial() != null
+							&&
+							author.getAuthorName().getFirstName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
+							&&
+							author.getAuthorName().getLastName().substring(0, 1).equalsIgnoreCase(sanitizedIdentityName.getFirstInitial()))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
+		return count;
+	}
+
+	//Step 18: Attempt both initials match (first initial to first initial, last initial to last initial)
+	/**
+	 * Check if identity first initial matches article first initial AND identity
+	 * last name initial matches article last name initial. This is the loosest
+	 * matching step and only fires when all other steps have failed.
+	 * Example: identity "Cassie Sied" matching article "CS" where names are
+	 * heavily abbreviated.
+	 */
+	public int checkBothInitialsMatch(Set<Entry<ReCiterAuthor, ReCiterAuthor>> authors, List<AuthorName> sanitizedIdentityAuthors, int matchCount, Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor) {
+		int count = 0;
+		if(matchCount > 1) {
+			authors = new HashSet<Entry<ReCiterAuthor, ReCiterAuthor>>(multipleMarkedTargetAuthor);
+		}
+		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
+			ReCiterAuthor author = entry.getValue();
+			ReCiterAuthor originalAuthor = entry.getKey();
+			if(author.getAuthorName().getFirstInitial() != null && author.getAuthorName().getFirstInitial().length() > 0
+					&& author.getAuthorName().getLastName() != null && author.getAuthorName().getLastName().length() > 0) {
+				if(matchCount > 1 && author.isTargetAuthor()) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
+							&& sanitizedIdentityName.getFirstInitial().length() > 0
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 0
+							&&
+							author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
+							&&
+							author.getAuthorName().getLastName().substring(0, 1).equalsIgnoreCase(sanitizedIdentityName.getLastName().substring(0, 1)))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+				else if(matchCount == 0) {
+					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstInitial() != null
+							&& sanitizedIdentityName.getFirstInitial().length() > 0
+							&&
+							sanitizedIdentityName.getLastName() != null
+							&& sanitizedIdentityName.getLastName().length() > 0
+							&&
+							author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
+							&&
+							author.getAuthorName().getLastName().substring(0, 1).equalsIgnoreCase(sanitizedIdentityName.getLastName().substring(0, 1)))) {
+						author.setTargetAuthor(true);
+						originalAuthor.setTargetAuthor(true);
+						multipleMarkedTargetAuthor.add(entry);
+						count++;
+					}
+					else {
+						author.setTargetAuthor(false);
+						originalAuthor.setTargetAuthor(false);
+					}
+				}
+			}
+		}
+		if(matchCount > 1 && count == 0) {
+			return matchCount;
+		}
+		return count;
+	}
+
 	//Not Used
 	public int checkLastNamePartMatch(List<ReCiterAuthor> authors, Identity identity, int matchCount) {
 		int count = 0;
