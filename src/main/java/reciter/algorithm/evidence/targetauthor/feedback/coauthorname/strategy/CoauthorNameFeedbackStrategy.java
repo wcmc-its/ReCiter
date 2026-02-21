@@ -81,11 +81,14 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	        List<ReCiterArticle> acceptedArticles = groupedByGoldStandard.getOrDefault(ACCEPTED, Collections.emptyList());
 	        List<ReCiterArticle> rejectedArticles = groupedByGoldStandard.getOrDefault(REJECTED, Collections.emptyList());
 
+	        // Count co-author appearances across articles, deduplicating within each article
+	        // so the same co-author listed twice on one paper only counts once for that paper
 	        Map<String, Long> acceptArticlesCountByCoAuthor =  acceptedArticles.stream()
-            .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream())
-            .filter(author-> !author.isTargetAuthor())
-            .map(author->processAuthor(author))
-            .filter(name -> name != null)  // Filter out initial-only names
+            .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
+                .filter(author-> !author.isTargetAuthor())
+                .map(author->processAuthor(author))
+                .filter(name -> name != null)
+                .distinct())  // Deduplicate within each article
             .collect(Collectors.groupingBy(
                 Function.identity(),
                 Collectors.counting()
@@ -93,10 +96,11 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 
 
 	        Map<String, Long> rejectedArticlesCountByCoAuthor =  rejectedArticles.stream()
-	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream())
-	                .filter(author-> !author.isTargetAuthor())
-	                .map(author->processAuthor(author))
-	                .filter(name -> name != null)  // Filter out initial-only names
+	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
+	                    .filter(author-> !author.isTargetAuthor())
+	                    .map(author->processAuthor(author))
+	                    .filter(name -> name != null)
+	                    .distinct())  // Deduplicate within each article
 	                .collect(Collectors.groupingBy(
 	                    Function.identity(),
 	                    Collectors.counting()
@@ -122,6 +126,7 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 				.filter(author -> author != null && !author.isTargetAuthor())
 				.map(author -> processAuthor(author))        // Process each author to get the name
 				.filter(coAuthorName -> coAuthorName != null && !coAuthorName.isEmpty())
+				.distinct()  // Fix #394: same co-author listed twice on one paper only scored once
 				.forEach(coAuthorName -> {
 
 
