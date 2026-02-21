@@ -201,7 +201,13 @@ public class TargetAuthorSelection {
 	            	assignTargetAuthorFalse(authors.getAuthors());
 	            }
 	            else if(fuzzyLastNameMatchCount > 1) {
-	            	slf4jLogger.info(fuzzyLastNameMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId());
+	            	slf4jLogger.info(fuzzyLastNameMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId() + ". Attempting disambiguation...");
+	            	int disambiguatedCount = disambiguateMultipleMatches(multipleMarkedTargetAuthor, sanitizedIdentityAuthors);
+	            	if(disambiguatedCount == 1) {
+	            		slf4jLogger.info("Disambiguation resolved to 1 target author for article: " + reciterArticle.getArticleId());
+	            	} else {
+	            		slf4jLogger.info("Disambiguation could not resolve: " + disambiguatedCount + " authors remain for article " + reciterArticle.getArticleId());
+	            	}
 	            }
             	
             		
@@ -939,6 +945,102 @@ public class TargetAuthorSelection {
 	}
 	
 	
+	/**
+	 * Disambiguate when multiple authors are flagged as target author.
+	 * Scores each matched author by how closely their name components match
+	 * the identity record, then picks the single best match if one exists.
+	 *
+	 * Scoring:
+	 *   +3  exact first name match
+	 *   +1  first initial match (only if no exact first name match)
+	 *   +2  exact middle name match
+	 *   +1  middle initial match (only if no exact middle name match)
+	 *
+	 * If exactly one author has the highest score and it exceeds the runner-up,
+	 * that author is kept and the others are unmarked. If tied, all remain marked
+	 * (no guessing).
+	 *
+	 * @param multipleMarkedTargetAuthor the set of authors currently marked as target
+	 * @param sanitizedIdentityAuthors the identity name variants to compare against
+	 * @return the number of authors still marked as target after disambiguation
+	 */
+	public int disambiguateMultipleMatches(Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor,
+	                                        List<AuthorName> sanitizedIdentityAuthors) {
+		if(multipleMarkedTargetAuthor == null || multipleMarkedTargetAuthor.size() <= 1) {
+			return multipleMarkedTargetAuthor == null ? 0 : multipleMarkedTargetAuthor.size();
+		}
+
+		// Score each matched author
+		Entry<ReCiterAuthor, ReCiterAuthor> bestEntry = null;
+		int bestScore = -1;
+		boolean tied = false;
+
+		for(Entry<ReCiterAuthor, ReCiterAuthor> entry : multipleMarkedTargetAuthor) {
+			ReCiterAuthor author = entry.getValue();
+			if(!author.isTargetAuthor()) continue;
+
+			int score = 0;
+			for(AuthorName identityName : sanitizedIdentityAuthors) {
+				int nameScore = 0;
+
+				// First name scoring
+				if(author.getAuthorName().getFirstName() != null && identityName.getFirstName() != null
+						&& author.getAuthorName().getFirstName().length() > 1 && identityName.getFirstName().length() > 1
+						&& author.getAuthorName().getFirstName().equalsIgnoreCase(identityName.getFirstName())) {
+					nameScore += 3;
+				} else if(author.getAuthorName().getFirstInitial() != null && identityName.getFirstInitial() != null
+						&& author.getAuthorName().getFirstInitial().equalsIgnoreCase(identityName.getFirstInitial())) {
+					nameScore += 1;
+				}
+
+				// Middle name scoring
+				if(author.getAuthorName().getMiddleName() != null && identityName.getMiddleName() != null
+						&& author.getAuthorName().getMiddleName().length() > 1 && identityName.getMiddleName().length() > 1
+						&& author.getAuthorName().getMiddleName().equalsIgnoreCase(identityName.getMiddleName())) {
+					nameScore += 2;
+				} else if(author.getAuthorName().getMiddleInitial() != null && identityName.getMiddleInitial() != null
+						&& author.getAuthorName().getMiddleInitial().length() > 0 && identityName.getMiddleInitial().length() > 0
+						&& author.getAuthorName().getMiddleInitial().equalsIgnoreCase(identityName.getMiddleInitial())) {
+					nameScore += 1;
+				}
+
+				// Take the best score across all identity name variants
+				score = Math.max(score, nameScore);
+			}
+
+			if(score > bestScore) {
+				bestScore = score;
+				bestEntry = entry;
+				tied = false;
+			} else if(score == bestScore) {
+				tied = true;
+			}
+		}
+
+		// Only disambiguate if there's a clear winner (not tied)
+		if(!tied && bestEntry != null && bestScore > 0) {
+			for(Entry<ReCiterAuthor, ReCiterAuthor> entry : multipleMarkedTargetAuthor) {
+				ReCiterAuthor author = entry.getValue();
+				ReCiterAuthor originalAuthor = entry.getKey();
+				if(entry.equals(bestEntry)) {
+					author.setTargetAuthor(true);
+					originalAuthor.setTargetAuthor(true);
+				} else {
+					author.setTargetAuthor(false);
+					originalAuthor.setTargetAuthor(false);
+				}
+			}
+			return 1;
+		}
+
+		// Tied or no score — leave as-is
+		int remaining = 0;
+		for(Entry<ReCiterAuthor, ReCiterAuthor> entry : multipleMarkedTargetAuthor) {
+			if(entry.getValue().isTargetAuthor()) remaining++;
+		}
+		return remaining;
+	}
+
 	//Step 19: Attempt fuzzy last name match (Levenshtein distance <= 2) with first name or first initial match
 	/**
 	 * Check if last names are within Levenshtein distance 2 (handling typos and
