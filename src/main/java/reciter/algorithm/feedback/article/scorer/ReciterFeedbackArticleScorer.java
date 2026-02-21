@@ -40,6 +40,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
@@ -551,25 +552,36 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    		    .collect(Collectors.toList());
 	
     	ObjectMapper objectMapper = new ObjectMapper();
-    	
+
+    	// Enrich scores with identity first name for name frequency scoring in Python
+    	String identityFirstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
+    	        ? identity.getPrimaryName().getFirstName() : "";
+    	List<ObjectNode> enrichedScores = articleIdentityFeedbackScore.stream()
+    	        .map(score -> {
+    	            ObjectNode node = objectMapper.convertValue(score, ObjectNode.class);
+    	            node.put("identityFirstName", identityFirstName);
+    	            return node;
+    	        })
+    	        .collect(Collectors.toList());
+
 		String fileName = StringUtils.join(identity.getUid(), "-feedbackIdentityScoringInput.json");
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String feedbackIdentityS3BucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         try {
-			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																			   
-        	  if(isS3UploadRequired) 
+			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
+        	  if(isS3UploadRequired)
         	  {
         		  File jsonFile = new File(fileName);
-        		  
+
         		// Write the User object to the JSON file
-                  objectMapper.writeValue(jsonFile, articleIdentityFeedbackScore);
+                  objectMapper.writeValue(jsonFile, enrichedScores);
                   log.info("JSON data written to file successfully: ", jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
         	  }
         	  else
-        	  {	  
+        	  {
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
-	        	  objectMapper.writeValue(jsonFile,articleIdentityFeedbackScore);
+	        	  objectMapper.writeValue(jsonFile, enrichedScores);
 				  log.info("JSON written to file successfully.", jsonFile.getAbsolutePath() +"-" + fileName);
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);

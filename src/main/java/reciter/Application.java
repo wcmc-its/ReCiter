@@ -58,16 +58,19 @@ import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
 import reciter.database.dyanmodb.files.InstitutionAfidFileImport;
 import reciter.database.dyanmodb.files.MeshTermFileImport;
+import reciter.database.dyanmodb.files.NameFrequencyFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixFileImport;
 import reciter.database.dynamodb.model.Gender;
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.database.dynamodb.model.MeshTerm;
+import reciter.database.dynamodb.model.NameFrequency;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.EngineParameters;
 import reciter.security.APIKey;
 import reciter.service.GenderService;
+import reciter.service.NameFrequencyService;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
@@ -107,18 +110,24 @@ public class Application {
     
     @Autowired
     private GenderService genderService;
-    
+
+    @Autowired
+    private NameFrequencyService nameFrequencyService;
+
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
-    
+
     @Value("${spring.security.enabled}")
     private boolean useAPISecurity;
-    
+
     @Value("${aws.dynamodb.settings.file.import}")
     private boolean isFileImport;
-    
+
     @Value("${strategy.gender}")
 	private boolean useGenderStrategy;
+
+    @Value("${strategy.nameFrequency:true}")
+	private boolean useNameFrequencyStrategy;
 	
 	@Value("${strategy.discrepancyDegreeYear.degreeYearDiscrepancyScore}")
 	private String degreeYearDiscrepancyScore;
@@ -315,6 +324,13 @@ public class Application {
 				log.info("Gender strategy use is set to false. Please update strategy.gender to true in application.properties file to use it.\n"
 			+ "Its recommened to use this strategy to get better scores.");
 			}
+
+			if(useNameFrequencyStrategy) {
+				NameFrequencyFileImport nameFrequencyFileImport = ApplicationContextHolder.getContext().getBean(NameFrequencyFileImport.class);
+				nameFrequencyFileImport.importNameFrequency();
+			} else {
+				log.info("NameFrequency strategy use is set to false. Set strategy.nameFrequency=true in application.properties to enable.");
+			}
 			
 			if(useScopusArticles) {
 				InstitutionAfidFileImport institutionAfidFileImport = ApplicationContextHolder.getContext().getBean(InstitutionAfidFileImport.class);
@@ -352,6 +368,19 @@ public class Application {
 	        List<Gender> genders = genderService.findAll();
 	        if(genders != null && !genders.isEmpty()) {
 	        	EngineParameters.setGenders(genders);
+	        }
+        }
+        if(useNameFrequencyStrategy) {
+	        log.info("Loading NameFrequency to Engine Parameters");
+	        List<NameFrequency> nameFrequencies = nameFrequencyService.findAll();
+	        if(nameFrequencies != null && !nameFrequencies.isEmpty()) {
+	        	EngineParameters.setNameFrequencies(nameFrequencies);
+	        	Map<String, NameFrequency> nameFrequencyMap = new HashMap<>();
+	        	for (NameFrequency nf : nameFrequencies) {
+	        		nameFrequencyMap.put(nf.getName(), nf);
+	        	}
+	        	EngineParameters.setNameFrequencyMap(nameFrequencyMap);
+	        	log.info("Loaded {} name frequencies to Engine Parameters", nameFrequencies.size());
 	        }
         }
         

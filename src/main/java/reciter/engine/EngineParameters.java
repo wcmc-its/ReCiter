@@ -19,6 +19,7 @@
 package reciter.engine;
 
 import reciter.database.dynamodb.model.Gender;
+import reciter.database.dynamodb.model.NameFrequency;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.model.article.ReCiterArticle;
@@ -51,6 +52,12 @@ public class EngineParameters {
 	@Getter
 	@Setter
     private static List<Gender> genders;
+	@Getter
+	@Setter
+    private static List<NameFrequency> nameFrequencies;
+	@Getter
+	@Setter
+    private static Map<String, NameFrequency> nameFrequencyMap;
     private Identity identity;
     private List<PubMedArticle> pubMedArticles;
     private List<ScopusArticle> scopusArticles;
