@@ -28,9 +28,9 @@ public class AbstractTargetAuthorFeedbackStrategy implements TargetAuthorFeedbac
 	protected DecimalFormat decimalFormat = new DecimalFormat("#.######");
 
 	// Informed absence configuration (set by ReciterFeedbackArticleScorer)
-	protected boolean informedAbsenceEnabled = false;
-	protected double informedAbsenceScale = 10.0;
-	protected double informedAbsenceStrength = 1.0;
+	private boolean informedAbsenceEnabled = false;
+	private double informedAbsenceScale = 10.0;
+	private double informedAbsenceStrength = 1.0;
 
 	public void setInformedAbsenceConfig(boolean enabled, double scale, double strength) {
 		this.informedAbsenceEnabled = enabled;
