@@ -30,17 +30,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
+import reciter.algorithm.util.ArticleTranslator;
 import reciter.algorithm.util.ReCiterStringUtil;
 import reciter.api.parameters.RetrievalRefreshFlag;
+import reciter.database.dynamodb.model.ESearchCount;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.QueryType;
+import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.service.ESearchCountService;
 import reciter.service.ESearchResultService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
+import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.AuthorNameUtils;
 import reciter.utils.ThreadDelay;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
@@ -61,7 +68,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	
 	@Autowired
 	private ESearchResultService eSearchResultService;
-	
+
+	@Autowired
+	private ESearchCountService eSearchCountService;
+
 	public enum IdentityNameType {
 		ORIGINAL,
 		DERIVED
@@ -145,6 +155,37 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
 		//}
+
+		// Retrieve by ORCID (asserted from Identity, or inferred from accepted articles).
+		String orcidForRetrieval = null;
+		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
+				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
+			orcidForRetrieval = identity.getOrcid().trim();
+			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+		}
+		if (orcidForRetrieval == null) {
+			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
+			if (orcidForRetrieval != null) {
+				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+						orcidForRetrieval, uid);
+				// Persist inferred ORCID so subsequent runs use the fast asserted path.
+				identity.setOrcid(orcidForRetrieval);
+				identityService.save(identity);
+				slf4jLogger.info("Persisted inferred ORCID [{}] to Identity for uid=[{}]",
+						orcidForRetrieval, uid);
+			}
+		}
+		if (orcidForRetrieval != null) {
+			// Strategy reads identity.getOrcid() directly (thread-safe).
+			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
+					identity, identityNames, useStrictQueryOnly);
+			pubMedArticles.putAll(orcidResult.getPubMedArticles());
+			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
+			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
+		}
+
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles = retrievalResult.getPubMedArticles();
@@ -153,7 +194,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
-			 
+
 			// Update alias.
 			List<PubMedAlias> pubMedAliases = new ArrayList<>();
 			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
@@ -169,10 +210,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateInitialRun(date);
 			identity.setDateLastRun(date);
 			identityService.save(identity);
-      
+
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}*/
-		
+
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 		uniquePmids.addAll(pubMedArticles.keySet());
@@ -200,6 +241,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if(r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
 			useStrictQueryOnly = true;
 			queryType = QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP;
+
+			// Store the true eSearch count so ArticleSizeStrategy can use log(count) for scoring.
+			// This avoids a separate live eSearch call during the scoring phase.
+			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
+			eSearchCountService.save(new ESearchCount(uid, trueCount));
+			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 		
 		if(r1.getPubMedQueryResults() != null
@@ -349,7 +396,37 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(pubMedArticles.keySet());
 		//}
-		
+
+		// Retrieve by ORCID (asserted from Identity, or inferred from accepted articles).
+		String orcidForRetrieval = null;
+		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
+				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
+			orcidForRetrieval = identity.getOrcid().trim();
+			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+		}
+		if (orcidForRetrieval == null) {
+			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
+			if (orcidForRetrieval != null) {
+				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+						orcidForRetrieval, uid);
+				// Persist inferred ORCID so subsequent runs use the fast asserted path.
+				identity.setOrcid(orcidForRetrieval);
+				identityService.save(identity);
+				slf4jLogger.info("Persisted inferred ORCID [{}] to Identity for uid=[{}]",
+						orcidForRetrieval, uid);
+			}
+		}
+		if (orcidForRetrieval != null) {
+			// Strategy reads identity.getOrcid() directly (thread-safe).
+			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
+					identity, identityNames, startDate, endDate, useStrictQueryOnly);
+			pubMedArticles.putAll(orcidResult.getPubMedArticles());
+			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
+			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
+		}
+
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 		//Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
@@ -359,7 +436,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
-			 
+
 			// Update alias.
 			List<PubMedAlias> pubMedAliases = new ArrayList<PubMedAlias>();
 			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
@@ -376,7 +453,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateInitialRun(now);
 			identity.setDateLastRun(now);
 			identityService.save(identity);
-			
+
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}*/
 		
@@ -410,6 +487,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				&&
 				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
 			queryType = QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP;
+
+			// Store the true eSearch count for scoring.
+			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
+			eSearchCountService.save(new ESearchCount(uid, trueCount));
+			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 		
 		if(r1.getPubMedQueryResults() != null
@@ -546,6 +628,81 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}*/
 	}
 	
+	/**
+	 * Infer the target author's ORCID by scanning accepted (known) PubMed articles.
+	 * Uses the full TargetAuthorSelection pipeline (19-step name matching cascade)
+	 * to identify the target author on each accepted article, then extracts
+	 * the ORCID from whichever author is identified. Returns the most common
+	 * matching ORCID, or null if none found.
+	 */
+	private String inferOrcidFromAcceptedArticles(Map<Long, PubMedArticle> pubMedArticles,
+			GoldStandard goldStandard, Identity identity) {
+		if (goldStandard == null || goldStandard.getKnownPmids() == null
+				|| goldStandard.getKnownPmids().isEmpty() || pubMedArticles == null) {
+			return null;
+		}
+
+		// Sanitize identity names (same as the scoring pipeline does)
+		AuthorNameSanitizationUtils sanitizationUtils = new AuthorNameSanitizationUtils(strategyParameters);
+		identity.setSanitizedNames(sanitizationUtils.sanitizeIdentityAuthorNames(identity));
+
+		// Translate accepted PubMed articles into ReCiterArticles and run target author selection
+		List<ReCiterArticle> acceptedReCiterArticles = new ArrayList<>();
+		for (Long knownPmid : goldStandard.getKnownPmids()) {
+			PubMedArticle pubMedArticle = pubMedArticles.get(knownPmid);
+			if (pubMedArticle == null) {
+				continue;
+			}
+			try {
+				ReCiterArticle reCiterArticle = ArticleTranslator.translate(
+						pubMedArticle, null,
+						strategyParameters.getNameIgnoredCoAuthors(),
+						strategyParameters);
+				// Sanitize article author names
+				reCiterArticle.getArticleCoAuthors().setSanitizedAuthorMap(
+						sanitizationUtils.sanitizeArticleAuthorNames(reCiterArticle));
+				acceptedReCiterArticles.add(reCiterArticle);
+			} catch (Exception e) {
+				slf4jLogger.warn("Could not translate PMID {} for ORCID inference: {}",
+						knownPmid, e.getMessage());
+			}
+		}
+
+		if (acceptedReCiterArticles.isEmpty()) {
+			return null;
+		}
+
+		// Run the full target author identification (19-step cascade)
+		TargetAuthorSelection targetAuthorSelection = new TargetAuthorSelection();
+		targetAuthorSelection.identifyTargetAuthor(acceptedReCiterArticles, identity);
+
+		// Collect ORCIDs from identified target authors
+		Map<String, Integer> orcidCounts = new HashMap<>();
+		for (ReCiterArticle article : acceptedReCiterArticles) {
+			if (article.getArticleCoAuthors() == null
+					|| article.getArticleCoAuthors().getAuthors() == null) {
+				continue;
+			}
+			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
+				if (author.isTargetAuthor()
+						&& author.getOrcid() != null
+						&& !author.getOrcid().isEmpty()) {
+					orcidCounts.merge(author.getOrcid(), 1, Integer::sum);
+				}
+			}
+		}
+
+		if (orcidCounts.isEmpty()) {
+			return null;
+		}
+
+		// Return the most common ORCID
+		return orcidCounts.entrySet().stream()
+				.max(Map.Entry.comparingByValue())
+				.map(Map.Entry::getKey)
+				.orElse(null);
+	}
+
 	/**
 	 * This function get all authorNames and derive additional names as well.
 	 * @see <a href ="https://github.com/wcmc-its/ReCiter/issues/259">All Identity Name Sec 3.</a>

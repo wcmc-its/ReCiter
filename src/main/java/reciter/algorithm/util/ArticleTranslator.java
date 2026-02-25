@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
@@ -74,6 +76,8 @@ import reciter.utils.AuthorNameSanitizationUtils;
  */
 @Component
 public class ArticleTranslator {
+
+    private static final Logger slf4jLogger = LoggerFactory.getLogger(ArticleTranslator.class);
 
     /**
      * Translates a PubmedArticle into a ReCiterArticle.
@@ -159,6 +163,17 @@ public class ArticleTranslator {
                     } else if (initials != null) {
                         firstName = initials;
                     }
+                    // Fix #529: Detect reversed names where lastName is a single character
+                    // and firstName is a full name (e.g., lastName="S", firstName="John").
+                    // PubMed occasionally parses names this way (~0.03% of records).
+                    if (firstName != null && firstName.length() > 1 && lastName.length() == 1) {
+                        String temp = lastName;
+                        lastName = firstName;
+                        firstName = temp;
+                        slf4jLogger.info("Swapped reversed author name for PMID {}: firstName='{}', lastName='{}'",
+                            pubmedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid(), firstName, lastName);
+                    }
+
                     String affiliation = author.getAffiliation();
                     AuthorName authorName = new AuthorName(firstName, middleName, lastName);
 

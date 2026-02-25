@@ -545,7 +545,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -563,7 +563,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -581,7 +581,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -605,7 +605,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -629,7 +629,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -649,7 +649,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -670,7 +670,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());

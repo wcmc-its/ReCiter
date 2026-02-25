@@ -68,6 +68,11 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 		try {
 			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
 
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			// Group articles by gold standard
 	        Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
 	            .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
@@ -76,11 +81,14 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	        List<ReCiterArticle> acceptedArticles = groupedByGoldStandard.getOrDefault(ACCEPTED, Collections.emptyList());
 	        List<ReCiterArticle> rejectedArticles = groupedByGoldStandard.getOrDefault(REJECTED, Collections.emptyList());
 
+	        // Count co-author appearances across articles, deduplicating within each article
+	        // so the same co-author listed twice on one paper only counts once for that paper
 	        Map<String, Long> acceptArticlesCountByCoAuthor =  acceptedArticles.stream()
-            .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream())
-            .filter(author-> !author.isTargetAuthor())
-            .map(author->processAuthor(author))
-            .filter(name -> name != null)  // Filter out initial-only names
+            .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
+                .filter(author-> !author.isTargetAuthor())
+                .map(author->processAuthor(author))
+                .filter(name -> name != null)
+                .distinct())  // Deduplicate within each article
             .collect(Collectors.groupingBy(
                 Function.identity(),
                 Collectors.counting()
@@ -88,10 +96,11 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 
 
 	        Map<String, Long> rejectedArticlesCountByCoAuthor =  rejectedArticles.stream()
-	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream())
-	                .filter(author-> !author.isTargetAuthor())
-	                .map(author->processAuthor(author))
-	                .filter(name -> name != null)  // Filter out initial-only names
+	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
+	                    .filter(author-> !author.isTargetAuthor())
+	                    .map(author->processAuthor(author))
+	                    .filter(name -> name != null)
+	                    .distinct())  // Deduplicate within each article
 	                .collect(Collectors.groupingBy(
 	                    Function.identity(),
 	                    Collectors.counting()
@@ -117,6 +126,7 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 				.filter(author -> author != null && !author.isTargetAuthor())
 				.map(author -> processAuthor(author))        // Process each author to get the name
 				.filter(coAuthorName -> coAuthorName != null && !coAuthorName.isEmpty())
+				.distinct()  // Fix #394: same co-author listed twice on one paper only scored once
 				.forEach(coAuthorName -> {
 
 
@@ -157,6 +167,12 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 							}
 							itemScore = computeScore(updatedCountAccepted , updatedCountRejected);
 						}
+						// Informed absence: if this co-author has never appeared in any
+						// accepted or rejected article, but the researcher has acceptance
+						// history, apply a negative penalty instead of leaving at 0.0
+						else if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+							itemScore = computeInformedAbsencePenalty(totalAccepted);
+						}
 						//Divide item score by count of the coAuthor of the interested article
 						if(nonTargetAuthorCountsByArticle !=null && nonTargetAuthorCountsByArticle.size() > 0)
 						{
@@ -171,6 +187,12 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 								if(article.getGoldStandard() == -1 && coAuthorsCount > 0)
 								{
 									sumRejected = itemScore / coAuthorsCount;
+								}
+								// Also normalize for unasserted (NULL) articles so consortium
+								// papers with thousands of authors don't accumulate extreme scores
+								if(article.getGoldStandard() == 0 && coAuthorsCount > 0)
+								{
+									itemScore = itemScore / coAuthorsCount;
 								}
 
 							}
