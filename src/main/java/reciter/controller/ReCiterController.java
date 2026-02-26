@@ -82,6 +82,7 @@ import reciter.model.scopus.ScopusArticle;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
+import reciter.service.OrcidService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
@@ -134,6 +135,9 @@ public class ReCiterController {
 
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
+    
+    @Autowired
+    private OrcidService orcidService;
 
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiImplicitParams({
@@ -1073,5 +1077,15 @@ public class ReCiterController {
             parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
+    }
+    @RequestMapping(value = "/reciter/article-identityOrcids", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity getAllOrcid() {
+    	StopWatch stopWatch = new StopWatch("getAllOrcid");
+    	stopWatch.start("Fetching all ORCIDs");
+        Map<String, String> allOrcids = orcidService.getAllOrcids();
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return new ResponseEntity<>(allOrcids, HttpStatus.OK);
     }
 }
