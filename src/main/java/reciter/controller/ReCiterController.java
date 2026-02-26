@@ -23,6 +23,7 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -55,7 +55,6 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.api.parameters.FilterFeedbackType;
@@ -83,6 +82,7 @@ import reciter.model.scopus.ScopusArticle;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
+import reciter.service.OrcidService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
@@ -92,10 +92,11 @@ import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Api(value = "ReCiterController", description = "Operations on ReCiter API.")
-@Slf4j
 @Controller
 public class ReCiterController {
 
+	private static final Logger log = LoggerFactory.getLogger(ReCiterController.class);
+	
     @Autowired
     private ESearchResultService eSearchResultService;
 
@@ -134,6 +135,9 @@ public class ReCiterController {
 
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
+    
+    @Autowired
+    private OrcidService orcidService;
 
     @ApiOperation(value = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", notes = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @ApiImplicitParams({
@@ -545,7 +549,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -563,7 +567,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -581,7 +585,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -605,7 +609,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -629,7 +633,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -649,7 +653,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -670,7 +674,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -721,13 +725,12 @@ public class ReCiterController {
             Engine engine = new ReCiterEngine();
             engineOutput = engine.run(parameters, strategyParameters, filterScore, keywordsMax);
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
-            
            //Store Analysis only in evidence mode
             if(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null) {
 	            AnalysisOutput analysisOutput = new AnalysisOutput();
 	            if(engineOutput != null) {
 	            	if(filterScore == strategyParameters.getMinimumStorageThreshold()) {
-	            		analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
+						analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
 	            	} else {
 	            		//Enforce Strict Minimum Storage Threshold
 	            		ReCiterFeature reCiterFeature = new ReCiterFeature();
@@ -746,8 +749,6 @@ public class ReCiterController {
 	            		reCiterFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
 	            		analysisOutput.setReCiterFeature(reCiterFeature);
 	            	}
-
-					
 	            }
 				analysisOutput.setUid(uid);
 				/**
@@ -981,6 +982,8 @@ public class ReCiterController {
             log.error("No such entity exists: "+ e);
         }
         log.info("eSearchResults size {}", eSearchResults);
+		if(eSearchResults!=null && eSearchResults.getESearchPmids()!=null)
+			log.info("eSearchResults esearch pmids size {}", eSearchResults.getESearchPmids().size());
 		/*
 		 * //This is when Pubmed returns 0 results. if(eSearchResults == null) { return
 		 * null; }
@@ -1004,12 +1007,18 @@ public class ReCiterController {
             filtered.add(pmid);
             filteredString.add(String.valueOf(pmid));
         }
+		 log.info("filtered  {}", filtered);
+		if(filtered!=null)
+		  log.info("filtered size {}", filtered.size());
         List<PubMedArticle> pubMedArticles = pubMedService.findByPmids(filtered);
+		if(pubMedArticles!=null)
+			log.info("pubmedArticles from the PubMedService  {}", pubMedArticles.size());
         if (pubMedArticles == null) {
             return null;
         }
         List<ScopusArticle> scopusArticles = scopusService.findByPmids(filteredString);
-
+		if(scopusArticles!=null)
+			log.info("scopusArticles from the scopusService  {}", scopusArticles.size());
         // create temporary map to retrieve Scopus articles by PMID (at the stage below)
         Map<Long, ScopusArticle> map = new HashMap<>();
 
@@ -1018,10 +1027,12 @@ public class ReCiterController {
                 map.put(scopusArticle.getPubmedId(), scopusArticle);
             }
         }
-
+		if(map!=null)
+		  log.info("scopus map size {}", map.size());
         // combine PubMed and Scopus articles into a list of ReCiterArticle
         List<ReCiterArticle> reCiterArticles = new ArrayList<>();
         for (PubMedArticle pubMedArticle : pubMedArticles) {
+        	if (pubMedArticle == null) continue;
             long pmid = pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
             if (map.containsKey(pmid)) {
                 reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, map.get(pmid), nameIgnoredCoAuthors, strategyParameters));
@@ -1029,7 +1040,8 @@ public class ReCiterController {
                 reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors, strategyParameters));
             }
         }
-        
+		if(reCiterArticles!=null)
+			log.info("reCiterArticles size {}", reCiterArticles.size());
         //Sanitize Identity names
         AuthorNameSanitizationUtils authorNameSanitizationUtils = new AuthorNameSanitizationUtils(strategyParameters);
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
@@ -1041,13 +1053,15 @@ public class ReCiterController {
         //Find gender probability
         GenderProbability.getGenderIdentityProbability(identity);
         
+		if(reCiterArticles!=null)
+			log.info("reCiterArticles size after sanitization {}", reCiterArticles.size());
+		
         // calculate precision and recall
         EngineParameters parameters = new EngineParameters();
         parameters.setIdentity(identity);
         parameters.setPubMedArticles(pubMedArticles);
         parameters.setScopusArticles(Collections.emptyList());
         parameters.setReciterArticles(reCiterArticles);
-
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         if (goldStandard == null) {
             parameters.setKnownPmids(new ArrayList<>());
@@ -1062,5 +1076,15 @@ public class ReCiterController {
             parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
+    }
+    @RequestMapping(value = "/reciter/article-identityOrcids", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity getAllOrcid() {
+    	StopWatch stopWatch = new StopWatch("getAllOrcid");
+    	stopWatch.start("Fetching all ORCIDs");
+        Map<String, String> allOrcids = orcidService.getAllOrcids();
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return new ResponseEntity<>(allOrcids, HttpStatus.OK);
     }
 }

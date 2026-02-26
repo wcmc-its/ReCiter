@@ -1,9 +1,9 @@
 package reciter.utils;
 
-import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author szd2013
@@ -12,8 +12,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Data
-@Slf4j
 public class ThreadDelay {
+	private static final Logger log = LoggerFactory.getLogger(ThreadDelay.class);
 	
 	/**
 	 * @param timeout Timeout for the delay

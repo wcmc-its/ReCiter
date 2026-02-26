@@ -1,17 +1,5 @@
 package reciter.service.dynamo;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Service;
-
-import lombok.extern.slf4j.Slf4j;
-import reciter.database.dynamodb.DynamoDbS3Operations;
-import reciter.database.dynamodb.repository.IdentityRepository;
-import reciter.model.identity.Identity;
-import reciter.service.IdentityService;
-import reciter.storage.s3.AmazonS3Config;
-
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -21,10 +9,24 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+import reciter.database.dynamodb.DynamoDbS3Operations;
+import reciter.database.dynamodb.repository.IdentityRepository;
+import reciter.model.identity.Identity;
+import reciter.service.IdentityService;
+import reciter.storage.s3.AmazonS3Config;
+
 @Primary
 @Service
 public class IdentityServiceImpl implements IdentityService {
+	
+	private static final Logger log = LoggerFactory.getLogger(IdentityServiceImpl.class);
 
     @Autowired
     private IdentityRepository identityRepository;

@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +33,7 @@ import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.QueryType;
 import reciter.model.pubmed.PubMedArticle;
+import reciter.engine.StrategyParameters;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
@@ -44,11 +47,14 @@ import reciter.xml.retriever.pubmed.FullNameRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
 import reciter.xml.retriever.pubmed.GrantRetrievalStrategy;
 import reciter.xml.retriever.pubmed.KnownRelationshipRetrievalStrategy;
+import reciter.xml.retriever.pubmed.OrcidRetrievalStrategy;
 import reciter.xml.retriever.pubmed.PubMedQueryResult;
 import reciter.xml.retriever.pubmed.SecondInitialRetrievalStrategy;
 
 @Component("abstractReCiterRetrievalEngine")
 public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrievalEngine {
+	
+	private static final Logger log = LoggerFactory.getLogger(AbstractReCiterRetrievalEngine.class);
 
 	@Autowired
 	protected PubMedService pubMedService;
@@ -61,7 +67,10 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 
 	@Autowired
 	protected IdentityService identityService;
-	
+
+	@Autowired
+	protected StrategyParameters strategyParameters;
+
 	@Autowired
 	protected AffiliationInDbRetrievalStrategy affiliationInDbRetrievalStrategy;
 	
@@ -88,7 +97,10 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	
 	@Autowired
 	protected GoldStandardRetrievalStrategy goldStandardRetrievalStrategy;
-	
+
+	@Autowired
+	protected OrcidRetrievalStrategy orcidRetrievalStrategy;
+
 	@Autowired
 	protected GrantRetrievalStrategy grantRetrievalStrategy;
 	
@@ -100,6 +112,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults, QueryType queryType, RetrievalRefreshFlag refreshFlag) {
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
+		if(pubMedArticleList != null) {
+			log.info("pubMedArticleList size {}"+pubMedArticleList.size());
+		}
 		pubMedService.save(pubMedArticleList);
 
 		// Save the search result.
@@ -107,6 +122,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
+		
 		ESearchPmid eSearchPmid = null;
 		if(!pmids.isEmpty()){
 			reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag eSearchPmidRefreshFlag;
@@ -118,6 +134,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.FALSE;
 			}
 			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
+			if(eSearchPmid != null) {
+				log.info("eSearchPmid {} "+eSearchPmid);
+			}
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
 		if (eSearchResultDb == null) {
@@ -128,6 +147,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			if(!eSearchPmids.isEmpty()) {
 				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
 			}
+			
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
 			if(eSearchPmid != null) {

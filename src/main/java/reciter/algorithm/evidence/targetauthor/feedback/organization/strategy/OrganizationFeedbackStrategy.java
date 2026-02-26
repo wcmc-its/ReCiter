@@ -85,7 +85,12 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	@Override
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		try {
-			
+
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			 Map<String, Map<Integer, Long>> orgCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
@@ -173,7 +178,17 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 													}
 
 												}
-											
+											// Informed absence: organization never seen
+											else if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+												double penalty = computeInformedAbsencePenalty(totalAccepted);
+												String exportedFeedbackScore = decimalFormat.format(penalty);
+												ReCiterArticleFeedbackScore feedbackOrg = populateArticleFeedbackScore(article.getArticleId(),organization,
+														   countAccepted,countRejected,
+														   penalty,penalty,
+														   penalty,article.getGoldStandard(),penalty,exportedFeedbackScore, "Organization");
+												feedbackOrganizationMap.computeIfAbsent(organization, k -> new ArrayList<>()).add(feedbackOrg);
+											}
+
 											});
 										});
 								   

@@ -12,8 +12,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterArticleAuthorFeature;
@@ -24,27 +26,17 @@ import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterArticlePublicationType;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.analysis.evidence.Evidence;
-import reciter.engine.analysis.evidence.RelationshipEvidence;
 import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
-import reciter.utils.JsonUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 
 
 @Data
-@Slf4j
 public class ReCiterFeatureGenerator {
 
-	
+	private static final Logger log = LoggerFactory.getLogger(ReCiterFeatureGenerator.class);
 	
     private double precision;
     private double recall;
@@ -81,24 +73,25 @@ public class ReCiterFeatureGenerator {
             for (ReCiterArticle reCiterArticle : reCiterArticles) {
                 pmidsRetrieved.add(reCiterArticle.getArticleId());
             }
- 
         // in gold standard but not retrieved TODO optimize
         List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
         if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
 	        for (long pmid : goldStandardPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
+					log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
         }
-        if(rejectedPmids != null && rejectedPmids.size() > 0) {
+	    if(rejectedPmids != null && rejectedPmids.size() > 0) {
 	        for (long pmid : rejectedPmids) {
 	            if (!pmidsRetrieved.contains(pmid)) {
+					 log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
 	                inGoldStandardButNotRetrieved.add(pmid);
 	            }
 	        }
         }
-        reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+		reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {
         	selectedArticles = reCiterArticles 
@@ -138,18 +131,22 @@ public class ReCiterFeatureGenerator {
         if(analysis.getTruePositiveList()!=null && analysis.getTruePositiveList().size() > 0)
         {
         	truePositiveListSize = analysis.getTruePositiveList().size();
+        	log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
         }
         if(analysis.getTrueNegativeList()!=null && analysis.getTrueNegativeList().size() > 0)
         {
         	trueNegativeListSize = analysis.getTrueNegativeList().size();
+        	log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
         }
         if(analysis.getFalsePositiveList()!=null && analysis.getFalsePositiveList().size() > 0)
         {
         	falsePositiveListSize = analysis.getFalsePositiveList().size();
+        	log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
         }
         if(analysis.getFalseNegativeList()!=null && analysis.getFalseNegativeList().size() > 0)
         {
         	falseNegativeListSize = analysis.getFalseNegativeList().size();
+        	log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
         }
         double accuracy =0.0;
         if((truePositiveListSize + trueNegativeListSize + falsePositiveListSize + falseNegativeListSize) > 0)
@@ -157,12 +154,6 @@ public class ReCiterFeatureGenerator {
         		(double)(truePositiveListSize + trueNegativeListSize ) / (double)(truePositiveListSize + trueNegativeListSize + falsePositiveListSize + falseNegativeListSize);
         
         log.info("Accuracy=" + accuracy);
-        
-        log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
-        log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
-        log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
-        log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
-        log.info("\n");
         
         // Set overall accuracy using the new formula
         reCiterFeature.setOverallAccuracy(Double.isNaN(accuracy)? 0.0:accuracy);
@@ -412,15 +403,12 @@ public class ReCiterFeatureGenerator {
 				try 
 				{
 					relationshipEvidenceJson = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
-					System.out.println("relationshipEvidenceJson***************"+relationshipEvidenceJson);
 					releationshipEvidence = objectMapper.readValue(relationshipEvidenceJson, RelationshipEvidence.class);
-					System.out.println("relationshipEvidenceJson***************"+releationshipEvidence.toString());
 					
 					// The object remains as RelationshipEvidence
 		            // Serialize the object back to JSON (field 'relationshipEvidenceTotalScore' will be excluded)
 		            result = objectMapper.convertValue(releationshipEvidence, RelationshipEvidence.class);
-		            System.out.println("Final result***************"+releationshipEvidence.toString());
-					
+		        	
 				} catch (JsonMappingException e) {
 					e.printStackTrace();
 				} catch (JsonProcessingException e) {
@@ -437,13 +425,13 @@ public class ReCiterFeatureGenerator {
 			        String jsonResponse = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
 			        
 			        // Print the JSON response (you should not see the `relationshipEvidenceTotalScore` field here)
-			        System.out.println("Serialized JSON: " + jsonResponse);
+			        //System.out.println("Serialized JSON: " + jsonResponse);
 
 			        // Deserialize back into a RelationshipEvidence instance
 			        deserializedEvidence = objectMapper.readValue(jsonResponse, RelationshipEvidence.class);
 
 			        // The object itself is unchanged, and relationshipEvidenceTotalScore is still set to 0.0
-			        System.out.println("Deserialized Object: " + deserializedEvidence);
+			        //System.out.println("Deserialized Object: " + deserializedEvidence);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

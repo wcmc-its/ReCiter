@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import lombok.extern.slf4j.Slf4j;
+import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
+
 import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.repository.AnalysisOutputRepository;
@@ -18,9 +19,10 @@ import reciter.engine.analysis.ReCiterFeature;
 import reciter.service.AnalysisService;
 import reciter.storage.s3.AmazonS3Config;
 
-@Slf4j
 @Service("AnalysisOutputService")
 public class AnalysisServiceImpl implements AnalysisService{
+	
+	private static final Logger log = LoggerFactory.getLogger(AnalysisServiceImpl.class);
 	
 	@Autowired
 	private AnalysisOutputRepository analysisOutputRepository;
