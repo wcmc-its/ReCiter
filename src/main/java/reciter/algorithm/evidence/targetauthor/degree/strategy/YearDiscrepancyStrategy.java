@@ -41,7 +41,8 @@ import reciter.model.identity.Identity;
  * implements the year-based matching for a target author (i.e., Phase II)
  * matching).
  * 
- * @author ved4006
+ * @author jil3004
+ * @author ved4006	
  *
  */
 public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrategy {
