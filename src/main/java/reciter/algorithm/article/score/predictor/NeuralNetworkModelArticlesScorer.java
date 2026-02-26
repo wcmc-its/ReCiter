@@ -178,7 +178,7 @@ public class NeuralNetworkModelArticlesScorer {
 			         {
 				            // Log the stderr from the Python scoring script
 				            String error = outer.optString("error");
-				            log.error("Lambda scoring failed with returncode {}. stderr: {}. error: {}",
+				            log.error("Lambda scoring failed with returncode {}. error: {}",
 				                      returnCode, error);
 				            return null;
 				        }
@@ -243,7 +243,7 @@ public class NeuralNetworkModelArticlesScorer {
 		        } else {
 		            // Log the stderr from the Python scoring script
 		            String error = outer.optString("error");
-		            log.error("Lambda scoring failed with returncode {}. stderr: {}. error: {}",
+		            log.error("Lambda scoring failed with returncode {}. error: {}",
 		                      returnCode, error);
 		            return null;
 		        }

@@ -1077,6 +1077,10 @@ public class ReCiterController {
         }
         return parameters;
     }
+    @ApiOperation(value = "Get all identity ORCIDs", notes = "This api retrieves all ORCIDs stored in the identity table.")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
     @RequestMapping(value = "/reciter/article-identityOrcids", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity getAllOrcid() {
