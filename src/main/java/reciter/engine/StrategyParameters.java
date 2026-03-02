@@ -419,4 +419,40 @@ public class StrategyParameters {
     
     @Value("${strategy.education.year.discrepancy}")
     private boolean isEducationYearDiscrepancy;
+
+    @Value("${strategy.feedback.informedAbsence.enabled:true}")
+    private boolean informedAbsenceEnabled;
+
+    @Value("${strategy.feedback.informedAbsence.scale:10.0}")
+    private double informedAbsenceScale;
+
+    @Value("${strategy.feedback.informedAbsence.targetAuthorName.strength:1.0}")
+    private double informedAbsenceTargetAuthorNameStrength;
+
+    @Value("${strategy.feedback.informedAbsence.coAuthorName.strength:0.9}")
+    private double informedAbsenceCoAuthorNameStrength;
+
+    @Value("${strategy.feedback.informedAbsence.keyword.strength:0.9}")
+    private double informedAbsenceKeywordStrength;
+
+    @Value("${strategy.feedback.informedAbsence.journal.strength:0.7}")
+    private double informedAbsenceJournalStrength;
+
+    @Value("${strategy.feedback.informedAbsence.journalSubField.strength:0.7}")
+    private double informedAbsenceJournalSubFieldStrength;
+
+    @Value("${strategy.feedback.informedAbsence.institution.strength:0.5}")
+    private double informedAbsenceInstitutionStrength;
+
+    @Value("${strategy.feedback.informedAbsence.cites.strength:0.5}")
+    private double informedAbsenceCitesStrength;
+
+    @Value("${strategy.feedback.informedAbsence.organization.strength:0.5}")
+    private double informedAbsenceOrganizationStrength;
+
+    @Value("${strategy.feedback.informedAbsence.email.strength:0.3}")
+    private double informedAbsenceEmailStrength;
+
+    @Value("${strategy.feedback.informedAbsence.orcid.strength:0.3}")
+    private double informedAbsenceOrcidStrength;
 }

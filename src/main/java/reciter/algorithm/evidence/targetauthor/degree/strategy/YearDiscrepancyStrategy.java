@@ -21,7 +21,9 @@ package reciter.algorithm.evidence.targetauthor.degree.strategy;
 import java.time.LocalDate;
 import java.util.List;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.engine.EngineParameters;
@@ -43,12 +45,9 @@ import reciter.model.identity.Identity;
  * @author ved4006	
  *
  */
-@Slf4j
 public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrategy {
 
-	/**
-	 * DegreeType used by this strategy.
-	 */
+	private static final Logger log = LoggerFactory.getLogger(YearDiscrepancyStrategy.class);
 	private final DegreeType degreeType;
 	
 	

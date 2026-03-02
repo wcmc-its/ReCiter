@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.algorithm.util.ReCiterStringUtil;
+import reciter.database.dynamodb.model.NameFrequency;
+import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.model.article.ReCiterArticle;
@@ -137,13 +139,65 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleType("nullTargetAuthor-MatchNotAttempted");
 			}
 			
+			// Add first name frequency modifier: rare names get higher scores
+			double nameFreqScore = computeFirstNameFrequencyScore(identity);
+			if (nameFreqScore != 0.0 && authorNameEvidence.getNameMatchFirstScore() > 0) {
+				double currentModifier = authorNameEvidence.getNameMatchModifierScore();
+				authorNameEvidence.setNameMatchModifierScore(currentModifier + nameFreqScore);
+				authorNameEvidence.setNameScoreTotal(
+					authorNameEvidence.getNameMatchFirstScore()
+					+ authorNameEvidence.getNameMatchLastScore()
+					+ authorNameEvidence.getNameMatchMiddleScore()
+					+ authorNameEvidence.getNameMatchModifierScore()
+				);
+			}
+
 			reCiterArticle.setAuthorNameEvidence(authorNameEvidence);
-			
+
 			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + authorNameEvidence.toString());
 		}
 		return 1;
 	}
 	
+	/**
+	 * Compute IDF-like score for the identity's first name.
+	 * Rare names get higher scores; common names get ~0.
+	 * For compound names (e.g., "Jean-Pierre"), averages the scores of each token.
+	 */
+	private double computeFirstNameFrequencyScore(Identity identity) {
+		Map<String, NameFrequency> nameFrequencyMap = EngineParameters.getNameFrequencyMap();
+		if (nameFrequencyMap == null || nameFrequencyMap.isEmpty()) {
+			return 0.0;
+		}
+		String firstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
+				? identity.getPrimaryName().getFirstName().trim() : "";
+		if (firstName.isEmpty()) {
+			return 0.0;
+		}
+		// Split compound names by spaces and hyphens, discard single-char tokens (initials)
+		String[] tokens = firstName.toLowerCase().split("[\\s\\-]+");
+		double totalScore = 0.0;
+		int validTokens = 0;
+		for (String token : tokens) {
+			token = token.replaceAll("[^a-z]", "");
+			if (token.length() <= 1) {
+				continue;
+			}
+			NameFrequency nf = nameFrequencyMap.get(token);
+			if (nf != null) {
+				totalScore += nf.getScore();
+			} else {
+				// Unknown name — use median score (0.9997 from our frequency table)
+				totalScore += 1.0;
+			}
+			validTokens++;
+		}
+		if (validTokens == 0) {
+			return 0.0;
+		}
+		return totalScore / validTokens;
+	}
+
 	private void scoreCombinedMiddleLastName(AuthorName identityAuthor, AuthorName identityAuthorNameOriginal, Map<ReCiterAuthor, ReCiterAuthor> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
 		if(articleAuthorNames.size() > 0) {
 			Map.Entry<ReCiterAuthor,ReCiterAuthor> entry = articleAuthorNames.entrySet().iterator().next();

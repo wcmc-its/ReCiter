@@ -1,0 +1,20 @@
+package reciter.database.dynamodb.model;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@DynamoDBTable(tableName = "ESearchCount")
+public class ESearchCount {
+
+    @DynamoDBHashKey
+    private String uid;
+
+    private int eSearchCount;
+}

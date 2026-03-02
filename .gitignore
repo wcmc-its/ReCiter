@@ -130,3 +130,7 @@ reciter.iml
 /.apt_generated_tests/
 .vscode/launch.json
 .vscode/settings.json
+
+# Scoring test artifacts
+*-feedbackIdentityScoringInput.json
+*-identityOnlyScoringInput.json

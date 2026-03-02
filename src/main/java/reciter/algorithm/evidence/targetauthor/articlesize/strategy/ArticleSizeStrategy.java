@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import reciter.ApplicationContextHolder;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
+import reciter.database.dynamodb.model.ESearchCount;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag;
 import reciter.database.dynamodb.model.ESearchResult;
@@ -38,6 +39,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.service.ESearchCountService;
 import reciter.service.ESearchResultService;
 
 /**
@@ -103,51 +105,78 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
-		//Logic was updated to include lookupType in eSearchPmid so as to only count publications when
-		//ALL_PUBLICATIONS flag is being used and excluding GoldStandard Strategy retrieval type for actual candidate publication count
-		//https://github.com/wcmc-its/ReCiter/issues/455 
-		ESearchResultService eSearchResultService = ApplicationContextHolder.getContext().getBean(ESearchResultService.class);
+		ESearchCountService eSearchCountService = ApplicationContextHolder.getContext()
+				.getBean(ESearchCountService.class);
+		ESearchCount eSearchCount = eSearchCountService.findByUid(identity.getUid());
+
+		ESearchResultService eSearchResultService = ApplicationContextHolder.getContext()
+				.getBean(ESearchResultService.class);
 		ESearchResult eSearchResult = eSearchResultService.findByUid(identity.getUid());
+
 		reCiterArticles.forEach(reCiterArticle -> {
-		ArticleCountEvidence articleCountEvidence = new ArticleCountEvidence();
-		if(this.numberOfArticles > 0) {
-			int retrievalArticleCountByLookUpType = 0;
-			if(eSearchResult != null
-					&&
-					eSearchResult.getQueryType() != null 
-					&&
-					(eSearchResult.getQueryType() == QueryType.LENIENT_LOOKUP || eSearchResult.getQueryType() == QueryType.STRICT_COMPOUND_NAME_LOOKUP)) {
-				if(eSearchResult.getESearchPmids() != null
-						&&
-						!eSearchResult.getESearchPmids().isEmpty()) {
-							Set<Long> uniqueRetrievalArticle = new HashSet<>();
-							eSearchResult.getESearchPmids().stream()
-							.filter(eSearchPmid -> !eSearchPmid.getRetrievalStrategyName().equalsIgnoreCase("GoldStandardRetrievalStrategy") && eSearchPmid.getLookupType() == RetrievalRefreshFlag.ALL_PUBLICATIONS)
-							.map(ESearchPmid::getPmids)
-							.forEach(uniqueRetrievalArticle::addAll);
-							retrievalArticleCountByLookUpType = uniqueRetrievalArticle.size();
-							if(retrievalArticleCountByLookUpType > 0) {
-								articleCountEvidence.setCountArticlesRetrieved(retrievalArticleCountByLookUpType);
-								articleCountEvidence.setArticleCountScore(-(retrievalArticleCountByLookUpType - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
-							} else {
-								articleCountEvidence.setCountArticlesRetrieved(this.numberOfArticles);
-								articleCountEvidence.setArticleCountScore(-(this.numberOfArticles - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
-							}
+			ArticleCountEvidence articleCountEvidence = new ArticleCountEvidence();
+
+			if (eSearchCount != null && eSearchCount.getESearchCount() > 0) {
+				// Use true eSearch count stored during retrieval — log scale.
+				// This gives accurate name-ambiguity signal even for common names (e.g., Y Wang: 346K results).
+				int trueCount = eSearchCount.getESearchCount();
+				double logScore = Math.log(Math.max(trueCount, 1));
+				articleCountEvidence.setCountArticlesRetrieved(trueCount);
+				articleCountEvidence.setArticleCountScore(logScore);
+				slf4jLogger.info("Pmid: {} using stored eSearchCount={}, articleCountScore=log({})={}",
+						reCiterArticle.getArticleId(), trueCount, trueCount, logScore);
+
+			} else if (eSearchResult != null && this.numberOfArticles > 0) {
+				// Fallback: use retrieved PMID count with linear formula.
+				// This path handles: (a) old data without eSearchCount, (b) persons below the threshold
+				// where retrieved count == true count and the existing formula is adequate.
+				int retrievalArticleCountByLookUpType = 0;
+				if (eSearchResult.getQueryType() != null
+						&& (eSearchResult.getQueryType() == QueryType.LENIENT_LOOKUP
+							|| eSearchResult.getQueryType() == QueryType.STRICT_COMPOUND_NAME_LOOKUP)) {
+					if (eSearchResult.getESearchPmids() != null && !eSearchResult.getESearchPmids().isEmpty()) {
+						Set<Long> uniqueRetrievalArticle = new HashSet<>();
+						eSearchResult.getESearchPmids().stream()
+								.filter(eSearchPmid ->
+										!eSearchPmid.getRetrievalStrategyName()
+												.equalsIgnoreCase("GoldStandardRetrievalStrategy")
+										&& eSearchPmid.getLookupType() == RetrievalRefreshFlag.ALL_PUBLICATIONS)
+								.map(ESearchPmid::getPmids)
+								.forEach(uniqueRetrievalArticle::addAll);
+						retrievalArticleCountByLookUpType = uniqueRetrievalArticle.size();
+						if (retrievalArticleCountByLookUpType > 0) {
+							articleCountEvidence.setCountArticlesRetrieved(retrievalArticleCountByLookUpType);
+							articleCountEvidence.setArticleCountScore(
+									-(retrievalArticleCountByLookUpType
+											- ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())
+											/ ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+						} else {
+							articleCountEvidence.setCountArticlesRetrieved(this.numberOfArticles);
+							articleCountEvidence.setArticleCountScore(
+									-(this.numberOfArticles
+											- ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())
+											/ ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
 						}
-			} else if(eSearchResult != null
-					&&
-					eSearchResult.getQueryType() != null 
-					&&
-					eSearchResult.getQueryType() == QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP){//Strict Lookup
-				articleCountEvidence.setCountArticlesRetrieved(ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold());
-				articleCountEvidence.setArticleCountScore(-(ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold() - ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())/ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+					}
+				} else if (eSearchResult.getQueryType() != null
+						&& eSearchResult.getQueryType() == QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP) {
+					// Old STRICT_EXCEEDS_THRESHOLD records without eSearchCount — use threshold as floor.
+					// This is the same behavior as before; these records will get accurate counts
+					// after their next retrieval run.
+					articleCountEvidence.setCountArticlesRetrieved(
+							(int) ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold());
+					articleCountEvidence.setArticleCountScore(
+							-(ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold()
+									- ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())
+									/ ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
+				}
+
+				slf4jLogger.info("Pmid: {} {}", reCiterArticle.getArticleId(), articleCountEvidence.toString());
 			}
-			
+
 			reCiterArticle.setArticleCountEvidence(articleCountEvidence);
-			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + articleCountEvidence.toString());
-		
-		}
 		});
+
 		return 0;
 	}
 

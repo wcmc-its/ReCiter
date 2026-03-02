@@ -63,7 +63,7 @@ public class NeuralNetworkModelArticlesScorer {
 		
 		 if (isS3UploadRequiredString!=null && !isS3UploadRequiredString.equalsIgnoreCase("") && (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) 
 			{  
-			 	authorshipLikelihoodScore = callLocalLambda(goldStandardName,reciterScorerModelFileName,dataFileName,s3BucketName,isS3UploadRequiredString);
+			 	authorshipLikelihoodScore = callLocalLambda(goldStandardName,dataFileName,s3BucketName,isS3UploadRequiredString);
 	        } else {
 	        	log.info("Getting Secret Name from the Properties: {}", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
 	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
@@ -74,7 +74,7 @@ public class NeuralNetworkModelArticlesScorer {
 	        	String lambdaKey = env+LAMBDA_NAME;
 	        	String lambdaFunction = secretMap.get(lambdaKey);
 	        	log.info("lambdaFunction Name:" + lambdaFunction);
-	        	authorshipLikelihoodScore = callAwsLambda(goldStandardName,reciterScorerModelFileName,dataFileName,s3BucketName,isS3UploadRequiredString,lambdaFunction);
+	        	authorshipLikelihoodScore = callAwsLambda(goldStandardName,dataFileName,s3BucketName,isS3UploadRequiredString,lambdaFunction);
 	        }
 		 
 		stopWatch.stop();
@@ -101,7 +101,7 @@ public class NeuralNetworkModelArticlesScorer {
 		}
 		
 		@SuppressWarnings("unused")
-		private JSONArray callLocalLambda(String goldStandardModelName, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString)
+		private JSONArray callLocalLambda(String goldStandardModelName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString)
 		{
 			URL url=null;
 			HttpURLConnection conn=null;
@@ -124,8 +124,7 @@ public class NeuralNetworkModelArticlesScorer {
 	        
 	        Map<String, Object> payloadMap = new HashMap<>();
 	        payloadMap.put("modelName", goldStandardModelName);
-	        payloadMap.put("scriptFile", articleScoreModelFileName);
-	        payloadMap.put("inputDataFile", articleDataFilename);
+	        payloadMap.put("scoringDataFile", articleDataFilename);
 	        payloadMap.put("useS3Bucket", isS3UploadRequiredString);
 	        payloadMap.put("bucket_name", s3BucketName);
 
@@ -159,14 +158,32 @@ public class NeuralNetworkModelArticlesScorer {
 				        }
 				    }
 			     // Parse the response
+			        JSONArray predictionScoresArray=null;
 			        JSONObject outer = new JSONObject(response.toString());
-			        String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
-			        int returnCode = outer.getInt("returncode");
-			        JSONArray scoringArray = new JSONArray(authorshipLikelihoodScore);
+			        if (outer.get("predictionScores") instanceof JSONArray) {
+			        	predictionScoresArray = outer.getJSONArray("predictionScores");
+			        }
+			        log.info(" predictionScoresArray " + predictionScoresArray);
 			        
-			        if(returnCode==0)
-			        	return scoringArray;
-				}
+		       		//return Code
+		            int returnCode = outer.getInt("returnCode");
+		            log.info("returnCode: " + returnCode);
+
+			       
+			         if(returnCode==0)
+			         {	 
+			        	return predictionScoresArray;
+			         }
+			         else 
+			         {
+				            // Log the stderr from the Python scoring script
+				            String error = outer.optString("error");
+				            log.error("Lambda scoring failed with returncode {}. error: {}",
+				                      returnCode, error);
+				            return null;
+				        }
+			      }
+			     
 
 			} catch (IOException | RuntimeException e) {
 			    e.printStackTrace(); // You may want to log this properly
@@ -176,7 +193,7 @@ public class NeuralNetworkModelArticlesScorer {
 		/*
 		 * Calls AWS Lambda function
 		 */
-	    private JSONArray callAwsLambda(String goldStandardModelName, String articleScoreModelFileName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
+	    private JSONArray callAwsLambda(String goldStandardModelName, String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
 	       
 	    	AWSLambda client = AWSLambdaClientBuilder.standard()
 	                .withRegion(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)) 
@@ -187,8 +204,7 @@ public class NeuralNetworkModelArticlesScorer {
 
 	        Map<String, Object> payloadMap = new HashMap<>();
 	        payloadMap.put("modelName", goldStandardModelName);
-	        payloadMap.put("scriptFile", articleScoreModelFileName);
-	        payloadMap.put("inputDataFile", articleDataFilename);
+	        payloadMap.put("scoringDataFile", articleDataFilename);
 	        payloadMap.put("useS3Bucket", isS3UploadRequiredString);
 	        payloadMap.put("bucket_name", s3BucketName);
 
@@ -204,16 +220,33 @@ public class NeuralNetworkModelArticlesScorer {
 	        InvokeRequest request = new InvokeRequest()
 	                .withFunctionName(lambdaFunctionName)
 	                .withPayload(payloadJson);
-
+	        	        
 	        try {
 	            InvokeResult result = client.invoke(request);
 	            String response = new String(result.getPayload().array(), StandardCharsets.UTF_8);
 	            JSONObject outer = new JSONObject(response);
-	            String authorshipLikelihoodScore = outer.getString("authorshiplikelihoodScores");
-		        int returnCode = outer.getInt("returncode");
-		        log.info("returnCode: ",returnCode);
-		        if(returnCode==0)
-		        	return new JSONArray(authorshipLikelihoodScore);;
+	            JSONArray predictionScoresArray=null;
+	            if (outer.get("predictionScores") instanceof JSONArray) {
+		        	predictionScoresArray = outer.getJSONArray("predictionScores");
+		        }
+		        log.info(" predictionScoresArray " + predictionScoresArray);
+
+		      //return Code
+	            int returnCode = outer.getInt("returnCode");
+	            log.info("returnCode: " + returnCode);
+
+		       
+		         if(returnCode==0)
+		         {	 
+		        	return predictionScoresArray;
+		        
+		        } else {
+		            // Log the stderr from the Python scoring script
+		            String error = outer.optString("error");
+		            log.error("Lambda scoring failed with returncode {}. error: {}",
+		                      returnCode, error);
+		            return null;
+		        }
 	          
 	        } catch (Exception e) {
 	            log.error("Lambda invocation failed: {}" , e.getMessage());

@@ -40,6 +40,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
@@ -123,21 +124,80 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		ReciterFeedbackArticleScorer.strategyParameters = strategyParameters;
 		this.reciterArticles = articles;
 		this.identity = identity;
-		this.journalStrategyContext = new JournalFeedbackStrategyContext(new JournalFeedbackStrategy());
-		this.journalSubFieldStrategyContext = new JournalSubFieldFeedbackStrategyContext(new JournalSubFieldFeedbackStrategy());
-		this.orcidStrategyContext = new OrcidFeedbackStrategyContext(new OrcidFeedbackStrategy());
+
+		// Configure informed absence for target author name strategy
+		TargetAuthorNameFeedbackStrategy targetAuthorNameStrategy = new TargetAuthorNameFeedbackStrategy();
+		targetAuthorNameStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceTargetAuthorNameStrength());
+
+		// Configure informed absence for co-author name strategy
+		CoauthorNameFeedbackStrategy coAuthorNameStrategy = new CoauthorNameFeedbackStrategy();
+		coAuthorNameStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceCoAuthorNameStrength());
+
+		JournalFeedbackStrategy journalStrategy = new JournalFeedbackStrategy();
+		journalStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceJournalStrength());
+
+		JournalSubFieldFeedbackStrategy journalSubFieldStrategy = new JournalSubFieldFeedbackStrategy();
+		journalSubFieldStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceJournalSubFieldStrength());
+
+		OrcidFeedbackStrategy orcidStrategy = new OrcidFeedbackStrategy();
+		orcidStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceOrcidStrength());
+
+		this.journalStrategyContext = new JournalFeedbackStrategyContext(journalStrategy);
+		this.journalSubFieldStrategyContext = new JournalSubFieldFeedbackStrategyContext(journalSubFieldStrategy);
+		this.orcidStrategyContext = new OrcidFeedbackStrategyContext(orcidStrategy);
 		this.yearStrategyContext = new YearFeedbackStrategyContext(new YearFeedbackStrategy());
-		this.targetAuthorNameStrategyContext = new TargetAuthorNameFeedbackStrategyContext(new TargetAuthorNameFeedbackStrategy());
-		this.organizationStrategyContext = new OrganizationFeedbackStrategyContext(new OrganizationFeedbackStrategy());
+		this.targetAuthorNameStrategyContext = new TargetAuthorNameFeedbackStrategyContext(targetAuthorNameStrategy);
+		OrganizationFeedbackStrategy organizationStrategy = new OrganizationFeedbackStrategy();
+		organizationStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceOrganizationStrength());
+		this.organizationStrategyContext = new OrganizationFeedbackStrategyContext(organizationStrategy);
 		this.orcidCoAuthorStrategyContext = new OrcidCoauthorFeedbackStrategyContext(new OrcidCoauthorFeedbackStrategy());
-		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(new KeywordFeedbackStrategy(strategyParameters));
-		this.institutionStrategyContext = new InstitutionFeedbackStrategyContext(new InstitutionFeedbackStrategy());
-		this.emailStrategyContext = new EmailFeedbackStrategyContext(new EmailFeedbackStrategy());
-		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(new CoauthorNameFeedbackStrategy());
-		this.citesStrategyContext = new CitesFeedbackStrategyContext(new CitesFeedbackStrategy());
+		KeywordFeedbackStrategy keywordStrategy = new KeywordFeedbackStrategy(strategyParameters);
+		keywordStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceKeywordStrength());
+		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(keywordStrategy);
+		InstitutionFeedbackStrategy institutionStrategy = new InstitutionFeedbackStrategy();
+		institutionStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceInstitutionStrength());
+		this.institutionStrategyContext = new InstitutionFeedbackStrategyContext(institutionStrategy);
+
+		EmailFeedbackStrategy emailStrategy = new EmailFeedbackStrategy();
+		emailStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceEmailStrength());
+		this.emailStrategyContext = new EmailFeedbackStrategyContext(emailStrategy);
+		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(coAuthorNameStrategy);
+		CitesFeedbackStrategy citesStrategy = new CitesFeedbackStrategy();
+		citesStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceCitesStrength());
+		this.citesStrategyContext = new CitesFeedbackStrategyContext(citesStrategy);
 		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
-		
-		
+
+
 	}
 	public void runFeedbackArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) 
 	{
@@ -492,25 +552,36 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    		    .collect(Collectors.toList());
 	
     	ObjectMapper objectMapper = new ObjectMapper();
-    	
+
+    	// Enrich scores with identity first name for name frequency scoring in Python
+    	String identityFirstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
+    	        ? identity.getPrimaryName().getFirstName() : "";
+    	List<ObjectNode> enrichedScores = articleIdentityFeedbackScore.stream()
+    	        .map(score -> {
+    	            ObjectNode node = objectMapper.convertValue(score, ObjectNode.class);
+    	            node.put("identityFirstName", identityFirstName);
+    	            return node;
+    	        })
+    	        .collect(Collectors.toList());
+
 		String fileName = StringUtils.join(identity.getUid(), "-feedbackIdentityScoringInput.json");
 		boolean isS3UploadRequired = isS3UploadRequired();
 		String feedbackIdentityS3BucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         try {
-			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																			   
-        	  if(isS3UploadRequired) 
+			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
+        	  if(isS3UploadRequired)
         	  {
         		  File jsonFile = new File(fileName);
-        		  
+
         		// Write the User object to the JSON file
-                  objectMapper.writeValue(jsonFile, articleIdentityFeedbackScore);
+                  objectMapper.writeValue(jsonFile, enrichedScores);
                   log.info("JSON data written to file successfully: ", jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
         	  }
         	  else
-        	  {	  
+        	  {
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
-	        	  objectMapper.writeValue(jsonFile,articleIdentityFeedbackScore);
+	        	  objectMapper.writeValue(jsonFile, enrichedScores);
 				  log.info("JSON written to file successfully.", jsonFile.getAbsolutePath() +"-" + fileName);
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);

@@ -79,8 +79,12 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 								                MeshTerm::getCount      // Use the count as the value
 								            ));
 			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
-			
-			
+
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 	        Map<String, Map<Integer, Long>> keywordCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getMeshHeadings() !=null && article.getMeshHeadings().size() > 0)
 	                .flatMap(article -> article.getMeshHeadings().stream()
@@ -171,9 +175,27 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 																   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Keyword");
 														
 														feedbackKeywordMap.computeIfAbsent(keyword, k -> new ArrayList<>()).add(feedbackEmail);
-														
+
 													}
-												
+												// Informed absence: keyword never seen
+												else if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+													double penalty = computeInformedAbsencePenalty(totalAccepted);
+													long meshCount = 0;
+													double factor = 1.0;
+													if(meshCounts!=null && meshCounts.containsKey(keyword))
+													{
+														meshCount = meshCounts.get(keyword);
+														factor = calculateFactor(meshCount);
+														penalty = penalty * factor;
+													}
+													String exportedFeedbackScore = decimalFormat.format(penalty);
+													ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),keyword,
+															   countAccepted,countRejected,
+															   penalty,penalty,
+															   penalty,article.getGoldStandard(),penalty,exportedFeedbackScore,"Keyword");
+													feedbackKeywordMap.computeIfAbsent(keyword, k -> new ArrayList<>()).add(feedbackEmail);
+												}
+
 												}
 											});
 
