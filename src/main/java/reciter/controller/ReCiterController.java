@@ -1077,11 +1077,12 @@ public class ReCiterController {
         }
         return parameters;
     }
-	@ApiOperation(value = "Retrieve orcids for an UID.", response = ResponseEntity.class, notes = "This API retrieves orcids for a given uid from the dynamoDB")
+
+    @ApiOperation(value = "Get all identity ORCIDs", notes = "This api retrieves all ORCIDs stored in the identity table.")
     @ApiImplicitParams({
     	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
     })
-    @ApiResponses(value = {
+	    @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved Map"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),

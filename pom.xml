@@ -371,7 +371,6 @@
 	    	<groupId>org.mockito</groupId>
 	    	<artifactId>mockito-core</artifactId>
 	    </dependency>
-	     
     </dependencies>
     <repositories>
         <!-- Use this repository for local dynamodb. Change the region accordingly. For details: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.Maven.html -->
