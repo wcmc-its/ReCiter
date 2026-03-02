@@ -169,7 +169,7 @@ public class TargetAuthorSelection {
 	            	continue;
 	            }
 
-	            //Step 17: Attempt identity last name to article first name + identity first initial to article last initial
+	            //Step 16: Attempt identity last name to article first name + identity first initial to article last initial
 	            int lastToFirstAndInitialMatchCount = 0;
 	            if(firstLastSwapMatchCount == 0 || firstLastSwapMatchCount > 1)
 	            	lastToFirstAndInitialMatchCount = checkLastNameToFirstNameAndFirstInitialToLastInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstLastSwapMatchCount, multipleMarkedTargetAuthor);
@@ -178,7 +178,7 @@ public class TargetAuthorSelection {
 	            	continue;
 	            }
 
-	            //Step 18: Attempt both initials match (first initial to first initial, last initial to last initial)
+	            //Step 17: Attempt both initials match (first initial to first initial, last initial to last initial)
 	            int bothInitialsMatchCount = 0;
 	            if(lastToFirstAndInitialMatchCount == 0 || lastToFirstAndInitialMatchCount > 1)
 	            	bothInitialsMatchCount = checkBothInitialsMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastToFirstAndInitialMatchCount, multipleMarkedTargetAuthor);
@@ -187,7 +187,7 @@ public class TargetAuthorSelection {
 	            	continue;
 	            }
 
-	            //Step 19: Attempt fuzzy last name match (Levenshtein distance <= 2) with first name or first initial match
+	            //Step 18: Attempt fuzzy last name match (Levenshtein distance <= 2) with first name or first initial match
 	            int fuzzyLastNameMatchCount = 0;
 	            if(bothInitialsMatchCount == 0 || bothInitialsMatchCount > 1)
 	            	fuzzyLastNameMatchCount = checkFuzzyLastNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, bothInitialsMatchCount, multipleMarkedTargetAuthor);
