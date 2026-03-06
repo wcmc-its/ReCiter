@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -547,7 +548,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		//countRejected
 		int countRejected = groupedByGoldStandard.getOrDefault(REJECTED_ASSERTION, Collections.emptyList()).size();
 		
-    	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.stream()
+    	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.parallelStream()
     																	.map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
 														    		    .collect(Collectors.toList());
 	
@@ -725,11 +726,12 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	
 	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
-		 return reCiterArticles.stream()
+		 Map<Long, Double> scoreMap = buildScoreMap(authorshipLikelihoodScoreArray);
+		 return reCiterArticles.parallelStream()
 				 				 .filter(Objects::nonNull)
 				 				 .map(article -> {
-				 					 // Find the JSON object that corresponds to this article's ID
-				 		        	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
+				 					 // Look up score from pre-built map (O(1) instead of O(n))
+				 					 article.setAuthorshipLikelihoodScore(scoreMap.getOrDefault(article.getArticleId(), 0.0));
 					 		            // count the targetAuthors per article
 				 		        	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
 				 		                     .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
@@ -742,26 +744,19 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				 		                	 article.setAuthorshipLikelihoodScore(authorshipLikelyhoodScore);
 				 		                	 article.setTargetAuthorCountPenalty(authorshipLikelyhoodScore - article.getAuthorshipLikelihoodScore());
 				 		                 }
-				 		                 else if (reCiterArticle == null) {
-					 		            	article.setAuthorshipLikelihoodScore(0.0);
-					 		            }
-				 		            return article; 
+				 		            return article;
 				 				 })
-						         .filter(Objects::nonNull) // Filter out null values returned from findJSONObjectById
-						         .collect(Collectors.toList()); // Collect the results if needed, or just perform the mapping
+						         .filter(Objects::nonNull)
+						         .collect(Collectors.toList());
 	}
-	// Helper method to find JSONObject by article
-	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
+	// Build a lookup map from JSONArray for O(1) score access per article
+	private static Map<Long, Double> buildScoreMap(JSONArray jsonArray) {
+	    Map<Long, Double> scoreMap = new HashMap<>(jsonArray.length());
 	    for (int i = 0; i < jsonArray.length(); i++) {
-	        JSONObject jsonObject = jsonArray.getJSONObject(i);
-	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	        	article.setAuthorshipLikelihoodScore(jsonObject.getDouble("scoreTotal"));
-	            return article; // Return the modified article
-	        }
+	        JSONObject obj = jsonArray.getJSONObject(i);
+	        scoreMap.put(obj.getLong("id"), obj.optDouble("scoreTotal", 0.0));
 	    }
-	    if(article!=null)
-	    	article.setAuthorshipLikelihoodScore(0.0);
-	    return article; // Return null if not found
+	    return scoreMap;
 	}
 	private boolean uploadJsonFileIntoS3(String keyName,File file)
 	{

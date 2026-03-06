@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -328,7 +330,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	    
 		slf4jLogger.info("articles Size :", reCiterArticles.size());
    	
-    	List<ReCiterArticleFeedbackIdentityScore> articleIdentityScore = reCiterArticles.stream()
+    	List<ReCiterArticleFeedbackIdentityScore> articleIdentityScore = reCiterArticles.parallelStream()
 																		    		    .map(article -> {
 																		    		        ReCiterArticleFeedbackIdentityScore score = mapToIdentityScore(article);
 																		    		        return score;
@@ -516,12 +518,12 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  	
  	private static List<ReCiterArticle> mapAuthorshipLikelihoodScore(List<ReCiterArticle> reCiterArticles, JSONArray authorshipLikelihoodScoreArray)
 	{
- 		
- 		return reCiterArticles.stream()
-        .filter(Objects::nonNull)  // Make sure the article is not null
+ 		Map<Long, Double> scoreMap = buildScoreMap(authorshipLikelihoodScoreArray);
+ 		return reCiterArticles.parallelStream()
+        .filter(Objects::nonNull)
         .map(article -> {
-            // Find the JSON object that corresponds to this article's ID
-        	ReCiterArticle reCiterArticle = findJSONObjectById(authorshipLikelihoodScoreArray, article);
+            // Look up score from pre-built map (O(1) instead of O(n))
+            article.setAuthorshipLikelihoodScore(scoreMap.getOrDefault(article.getArticleId(), 0.0));
             // count the targetAuthors per article
         	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
                      .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
@@ -535,27 +537,19 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
                 	 article.setAuthorshipLikelihoodScore(authorshipLikelyhoodScore);
                 	 article.setTargetAuthorCountPenalty(authorshipLikelyhoodScore - article.getAuthorshipLikelihoodScore());
                  }
-                 else if (reCiterArticle == null) {
-	            	article.setAuthorshipLikelihoodScore(0.0);
-	            }
-            return article;  // Return the article with updated score
+            return article;
         })
-        .collect(Collectors.toList());  // Collect updated articles into a list
- 
+        .collect(Collectors.toList());
 	}
- 	
- 	
-	// Helper method to find JSONObject by article
-	private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
-	    for (int i = 0; i < jsonArray.length(); i++) {
-	        JSONObject jsonObject = jsonArray.getJSONObject(i);
-	        if (jsonObject.getLong("id") == article.getArticleId()) {
-	        	article.setAuthorshipLikelihoodScore(jsonObject.optDouble("scoreTotal",0.0));
-	            return article; // Return the modified article
-	        }
 
+	// Build a lookup map from JSONArray for O(1) score access per article
+	private static Map<Long, Double> buildScoreMap(JSONArray jsonArray) {
+	    Map<Long, Double> scoreMap = new HashMap<>(jsonArray.length());
+	    for (int i = 0; i < jsonArray.length(); i++) {
+	        JSONObject obj = jsonArray.getJSONObject(i);
+	        scoreMap.put(obj.getLong("id"), obj.optDouble("scoreTotal", 0.0));
 	    }
-	    return article; // Return null if not found
+	    return scoreMap;
 	}
 	private boolean isS3UploadRequired()
     {
