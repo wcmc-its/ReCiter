@@ -83,7 +83,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	            });
 	        });
 	        
-	        reCiterArticles.stream()
+	        reCiterArticles.parallelStream()
 	        		.filter(article->article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null)
 	        		.forEach(article->{
 				ReCiterArticleAuthors coAuthors = article.getArticleCoAuthors();

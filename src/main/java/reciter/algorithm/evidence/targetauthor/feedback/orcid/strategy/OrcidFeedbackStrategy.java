@@ -70,7 +70,7 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 	        // Count co-authors grouped by ORCID for rejected articles
 	        Map<String, Long> rejectedCounts = countCoAuthorsByOrcid(filteredArticles, REJECTED);
 			
-	        reCiterArticles.stream()
+	        reCiterArticles.parallelStream()
 			.filter(article-> article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size()>0)
 					.forEach(article->{
 						listOfAuthors  = article.getArticleCoAuthors().getAuthors();

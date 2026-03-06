@@ -37,7 +37,7 @@ public class FeedbackEvidenceStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
-			reCiterArticles.stream().forEach(reCiterArticle -> {
+			reCiterArticles.parallelStream().forEach(reCiterArticle -> {
 				FeedbackEvidence feedbackEvidence = new FeedbackEvidence();
 				feedbackEvidence.setFeedbackScoreCites(reCiterArticle.getCitesFeedbackScore()*100);
 				feedbackEvidence.setFeedbackScoreCoAuthorName(reCiterArticle.getCoAuthorNameFeedbackScore()*100);

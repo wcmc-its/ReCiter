@@ -33,7 +33,7 @@ public class StandardScoreStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
-		reCiterArticles.stream().forEach(reCiterArticle -> {
+		reCiterArticles.parallelStream().forEach(reCiterArticle -> {
 			double standardizedScore = 1;
 			for(int i = 0; i < this.standardizedScores.size(); i++) {
 					if(i == this.standardizedScores.size() - 1) {

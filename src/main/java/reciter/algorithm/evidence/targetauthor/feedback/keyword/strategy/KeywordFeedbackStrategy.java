@@ -116,7 +116,7 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 	                ));
 
 	        
-		        reCiterArticles.stream()
+		        reCiterArticles.parallelStream()
 				   .filter(article-> article!=null && article.getMeshHeadings()!=null && article.getMeshHeadings().size()> 0)
 				   .forEach(article -> {
 											
