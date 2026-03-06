@@ -32,7 +32,7 @@ public class AcceptedRejectedStrategy extends AbstractReCiterArticleStrategy {
 
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles) {
-			reCiterArticles.parallelStream().forEach(reCiterArticle -> {
+			reCiterArticles.stream().forEach(reCiterArticle -> {
 				AcceptedRejectedEvidence acceptedRejectedEvidence = new AcceptedRejectedEvidence();
 				/*if(reCiterArticle.getGoldStandard() == 1) {
 					acceptedRejectedEvidence.setFeedbackScoreAccepted(ReCiterArticleScorer.strategyParameters.getAcceptedArticleScore());

@@ -76,7 +76,7 @@ public class YearFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 	            .filter(year -> year != null) // Filter out any parsing errors
 	            .min(Integer::compareTo); // Find the minimum year
 
-			reCiterArticles.parallelStream()
+			reCiterArticles.stream()
 						   .filter(article-> article!=null && (article.getPublicationDateStandardized()!=null || article.getDatePublicationAddedToEntrez()!=null))
 						   .forEach(article -> {
 							    int countAccepted = 0;

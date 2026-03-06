@@ -107,7 +107,7 @@ public class CitesFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 	    	 
 	         //Count Accepted and Rejected articles per cited and citing article
 			
-	         reCiterArticles.parallelStream().filter(article -> article!=null)
+	         reCiterArticles.stream().filter(article -> article!=null)
 	         						  .forEach(article ->{
 	         							  
 	         							 feedbackCitesMap = new HashMap<>();

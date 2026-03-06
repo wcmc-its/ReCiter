@@ -114,7 +114,7 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	                        .count() // Count non-target authors
 	                ));
 
-	        reCiterArticles.parallelStream()
+	        reCiterArticles.stream()
 	        	.filter(article -> article != null)
 	        	.forEach(article-> {
 

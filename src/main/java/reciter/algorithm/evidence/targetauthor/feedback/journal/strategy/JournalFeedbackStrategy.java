@@ -52,8 +52,8 @@ public class JournalFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 	                )
 	            ));
 
-	        reCiterArticles.parallelStream()
-	        .filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isEmpty())
+	        reCiterArticles.stream()
+	        .filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isEmpty())	
 			 	.forEach(article -> {
 			 	
 			 	int countAccepted = 0;
