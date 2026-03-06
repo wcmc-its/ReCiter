@@ -29,7 +29,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 	public double executeStrategy(ReCiterCluster reCiterCluster) {
 			
 			List<String> articleAuthorFirstNames = new ArrayList<String>();
-			reCiterCluster.getArticleCluster().parallelStream().forEach(reCiterArticle -> {
+			reCiterCluster.getArticleCluster().stream().forEach(reCiterArticle -> {
 				if(reCiterCluster.getArticleCluster().size() > 1) {
 					populateArticeAuthorFirstName(reCiterArticle, articleAuthorFirstNames);
 				}
@@ -94,7 +94,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 	}
 	
 	private void populateAverageClusterEvidence(ReCiterCluster reCiterCluster, double averageClusterScore) {
-		reCiterCluster.getArticleCluster().parallelStream().forEach(reCiterArticle -> {
+		reCiterCluster.getArticleCluster().stream().forEach(reCiterArticle -> {
 			reCiterArticle.setTotalArticleScoreWithoutClustering(reCiterArticle.getTotalArticleScoreWithoutClustering()
 					- (((reCiterArticle.getAcceptedRejectedEvidence() != null && reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreAccepted():0) +
 							((reCiterArticle.getAcceptedRejectedEvidence() != null && reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected() !=null)?reCiterArticle.getAcceptedRejectedEvidence().getFeedbackScoreRejected():0)));

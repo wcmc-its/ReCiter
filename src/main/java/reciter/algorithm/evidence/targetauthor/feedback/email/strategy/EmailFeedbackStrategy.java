@@ -89,7 +89,7 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 	                ));
 
 	
-			 reCiterArticles.parallelStream()
+			 reCiterArticles.stream()
 					   .filter(article-> article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size()> 0)
 					   .forEach(article -> {
 
