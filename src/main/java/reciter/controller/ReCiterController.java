@@ -96,7 +96,15 @@ import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 public class ReCiterController {
 
 	private static final Logger log = LoggerFactory.getLogger(ReCiterController.class);
-	
+
+	/**
+	 * Bump this constant whenever reciter-article-model or reciter-dynamodb-model
+	 * changes in a way that affects the serialized AnalysisOutput structure.
+	 * Old cached entries with a different (or null) schemaVersion will be
+	 * automatically deleted and regenerated on next access.
+	 */
+	private static final String ANALYSIS_SCHEMA_VERSION = "2.0.32";
+
     @Autowired
     private ESearchResultService eSearchResultService;
 
@@ -417,11 +425,30 @@ public class ReCiterController {
                         .collect(Collectors.toList());
             }
             List<AnalysisOutput> analysis = null;
-            if(uids != null && !uids.isEmpty()) {
-                analysis = analysisService.findByUids(uids);
-            }  else if(identitySubset != null && !identitySubset.isEmpty()){
-                analysis = analysisService.findByUids(identitySubset);
+            try {
+                if(uids != null && !uids.isEmpty()) {
+                    analysis = analysisService.findByUids(uids);
+                }  else if(identitySubset != null && !identitySubset.isEmpty()){
+                    analysis = analysisService.findByUids(identitySubset);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to deserialize Analysis cache for group query, ignoring stale entries: {}",
+                    e.getMessage());
+                analysis = null;
             }
+
+            // Filter out entries with stale schema version
+            if (analysis != null) {
+                analysis.removeIf(anl -> {
+                    if (!ANALYSIS_SCHEMA_VERSION.equals(anl.getSchemaVersion())) {
+                        log.info("Analysis cache schema mismatch for {} (stored={}, current={}), skipping",
+                            anl.getUid(), anl.getSchemaVersion(), ANALYSIS_SCHEMA_VERSION);
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
         	if (analysis != null && !analysis.isEmpty()) {
         		analysis.stream().forEach(anl -> {
         			if(anl.getReCiterFeature() != null
@@ -489,7 +516,22 @@ public class ReCiterController {
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
+
+        // Invalidate cache if schema version doesn't match
+        if (analysis != null && !ANALYSIS_SCHEMA_VERSION.equals(analysis.getSchemaVersion())) {
+            log.info("Analysis cache schema mismatch for {} (stored={}, current={}), invalidating",
+                uid, analysis.getSchemaVersion(), ANALYSIS_SCHEMA_VERSION);
+            analysisService.delete(uid.trim());
+            analysis = null;
+        }
 
         // Smart cache: even with analysisRefreshFlag=true, skip full analysis
         // if incremental retrieval found no new articles and no new feedback
@@ -785,8 +827,9 @@ public class ReCiterController {
 	            	}
 	            }
 				analysisOutput.setUid(uid);
+				analysisOutput.setSchemaVersion(ANALYSIS_SCHEMA_VERSION);
 				/**
-				 * TODO :  This piece of code has been commented to avoid data conflicts in Database as we have the same DynamoDB for Dev and Prod. 
+				 * TODO :  This piece of code has been commented to avoid data conflicts in Database as we have the same DynamoDB for Dev and Prod.
 				 * Will be uncommented out before deploying this to Prod -Mahender
 				 */
 				if(analysisOutput.getReCiterFeature() != null) {
@@ -918,7 +961,23 @@ public class ReCiterController {
         } catch (NullPointerException n) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
+
+        // Invalidate cache if schema version doesn't match
+        if (analysis != null && !ANALYSIS_SCHEMA_VERSION.equals(analysis.getSchemaVersion())) {
+            log.info("Analysis cache schema mismatch for {} (stored={}, current={}), invalidating",
+                uid, analysis.getSchemaVersion(), ANALYSIS_SCHEMA_VERSION);
+            analysisService.delete(uid.trim());
+            analysis = null;
+        }
+
         if (analysis != null) {//This was added to ensure to use analysis results only in evidence mode
         	if(analysis.getReCiterFeature() != null) {
         		analysis.getReCiterFeature().setInGoldStandardButNotRetrieved(null);
