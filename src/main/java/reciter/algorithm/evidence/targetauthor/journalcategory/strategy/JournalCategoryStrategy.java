@@ -40,6 +40,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
 
 		reCiterArticles.forEach(reCiterArticle -> {
+			if (reCiterArticle.getJournal() == null) return;
 			List<MedlineCitationJournalISSN> journalIssn = reCiterArticle.getJournal().getJournalIssn();
 		    if (journalIssn != null && !journalIssn.isEmpty()) {
 		        JournalCategoryEvidence journalCategoryEvidence = null;

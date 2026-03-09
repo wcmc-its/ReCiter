@@ -239,14 +239,12 @@ public class ReCiterFeatureGenerator {
             	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
             }
        
-            // journal title
-            reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
-            
-            //journal issn
-            reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
-
-            // journal title ISO Abbreviation
-            reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal().getIsoAbbreviation());
+            // journal title (may be null for book articles or non-journal sources)
+            if (reCiterArticle.getJournal() != null) {
+                reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
+                reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
+                reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal().getIsoAbbreviation());
+            }
 
             // article title
             reCiterArticleFeature.setArticleTitle(reCiterArticle.getArticleTitle());
