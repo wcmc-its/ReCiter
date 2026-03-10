@@ -65,6 +65,8 @@ import reciter.algorithm.evidence.targetauthor.feedback.keyword.KeywordFeedbackS
 import reciter.algorithm.evidence.targetauthor.feedback.keyword.strategy.KeywordFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.TextSimilarityFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.strategy.TextSimilarityFeedbackStrategy;
+import reciter.algorithm.evidence.targetauthor.feedback.journaltitlesimilarity.JournalTitleSimilarityFeedbackStrategyContext;
+import reciter.algorithm.evidence.targetauthor.feedback.journaltitlesimilarity.strategy.JournalTitleSimilarityFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.orcid.OrcidFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.orcid.strategy.OrcidFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.orcidcoauthor.OrcidCoauthorFeedbackStrategyContext;
@@ -119,9 +121,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
 	private StrategyContext textSimilarityStrategyContext;
+	private StrategyContext journalTitleSimilarityStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
-	
-	ExecutorService executorService = Executors.newWorkStealingPool(14);
+
+	ExecutorService executorService = Executors.newWorkStealingPool(15);
 	
 	public ReciterFeedbackArticleScorer(List<ReCiterArticle> articles,Identity identity,EngineParameters parameters,StrategyParameters strategyParameters)
 	{
@@ -181,6 +184,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(keywordStrategy);
 		TextSimilarityFeedbackStrategy textSimilarityStrategy = new TextSimilarityFeedbackStrategy(strategyParameters);
 		this.textSimilarityStrategyContext = new TextSimilarityFeedbackStrategyContext(textSimilarityStrategy);
+		JournalTitleSimilarityFeedbackStrategy journalTitleSimilarityStrategy = new JournalTitleSimilarityFeedbackStrategy(strategyParameters);
+		this.journalTitleSimilarityStrategyContext = new JournalTitleSimilarityFeedbackStrategyContext(journalTitleSimilarityStrategy);
 		InstitutionFeedbackStrategy institutionStrategy = new InstitutionFeedbackStrategy();
 		institutionStrategy.setInformedAbsenceConfig(
 			strategyParameters.isInformedAbsenceEnabled(),
@@ -248,6 +253,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		}
 		if(strategyParameters.isFeedbackScoreTextSimilarity()) {
 			futures.add(submitAndLogTime("Text Similarity Category", executorService, textSimilarityStrategyContext, reCiterArticles, identity));
+		}
+		if(strategyParameters.isFeedbackScoreJournalTitleSimilarity()) {
+			futures.add(submitAndLogTime("Journal Title Similarity Category", executorService, journalTitleSimilarityStrategyContext, reCiterArticles, identity));
 		}
 		if(strategyParameters.isFeedbackScoreCoauthorName()) {
 			futures.add(submitAndLogTime("CoAuthorName Category", executorService, coAuthorNameStrategyContext, reCiterArticles, identity));
@@ -320,7 +328,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	protected void exportConsolidatedFeedbackScores(String personIdentifier, Map<Long,ReCiterArticle> articleMap)
 	{
 		String[] csvHeaders = { "PersonIdentifier","Pmid","userAssertion","scoreCites","scoreCoAuthorName","scoreEmail",
-    		 	"scoreInstitution","scoreJournal","scoreJournalSubField","scoreKeyword","scoreTextSimilarity","scoreOrcid","scoreOrcidCoAuthor",
+    		 	"scoreInstitution","scoreJournal","scoreJournalSubField","scoreKeyword","scoreTextSimilarity","scoreJournalTitleSimilarity","scoreOrcid","scoreOrcidCoAuthor",
     		 	"scoreOrganization","scoreTargetAuthorName","scoreYear" };
 		
 		Path filePath = Paths.get(personIdentifier + "_consolidated.csv");
@@ -466,6 +474,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					String journalSubFieldFeedbackScore = article.getExportedJournalSubFieldFeedbackScore()!=null?article.getExportedJournalSubFieldFeedbackScore():"0";
 					String keywordFeedbackScore = article.getExportedKeywordFeedackScore()!=null?article.getExportedKeywordFeedackScore():"0";
 					String textSimilarityFeedbackScore = article.getExportedTextSimilarityFeedbackScore()!=null?article.getExportedTextSimilarityFeedbackScore():"0";
+					String journalTitleSimilarityFeedbackScore = article.getExportedJournalTitleSimilarityFeedbackScore()!=null?article.getExportedJournalTitleSimilarityFeedbackScore():"0";
 					String orcidFeedbackScore = article.getExportedOrcidFeedbackScore()!=null?article.getExportedOrcidFeedbackScore():"0";
 					String orcidCoAuthorFeedbackScore = article.getExportedOrcidCoAuthorFeedbackScore()!=null?article.getExportedOrcidCoAuthorFeedbackScore():"0";
 					String organizationFeedbackScore = article.getExportedOrganizationFeedbackScore()!=null?article.getExportedOrganizationFeedbackScore():"0";
@@ -484,6 +493,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 							journalSubFieldFeedbackScore,
 							keywordFeedbackScore,
 							textSimilarityFeedbackScore,
+							journalTitleSimilarityFeedbackScore,
 							orcidFeedbackScore,
 							orcidCoAuthorFeedbackScore,
 							organizationFeedbackScore,
@@ -626,6 +636,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    getFeedbackScore(article.getJournalSubFieldFeedbackScore()),
 														    getFeedbackScore(article.getKeywordFeedackScore()),
 														    getFeedbackScore(article.getTextSimilarityFeedbackScore()),
+														    getFeedbackScore(article.getJournalTitleSimilarityFeedbackScore()),
 														    getFeedbackScore(article.getOrcidFeedbackScore()),
 														    getFeedbackScore(article.getOrcidCoAuthorFeedbackScore()),
 														    getFeedbackScore(article.getOrganizationFeedbackScore()),
