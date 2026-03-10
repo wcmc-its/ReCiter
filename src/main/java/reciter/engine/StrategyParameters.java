@@ -365,6 +365,9 @@ public class StrategyParameters {
     @Value("${strategy.feedback.score.keyword}")
     private boolean isFeedbackScoreKeyword;
 
+    @Value("${strategy.feedback.score.textSimilarity}")
+    private boolean isFeedbackScoreTextSimilarity;
+
     @Value("${strategy.feedback.score.institution}")
     private boolean isFeedbackScoreInstitution;
     
