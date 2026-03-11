@@ -31,7 +31,8 @@
       "Anestesiología",
       "Anesthésiologie",
       "Anesthesiologie",
-      "Anesthésie"
+      "Anesthésie",
+      "Cardiac Anesthesiology"
     ]
   },
   {
@@ -49,7 +50,9 @@
       "Biochemistry",
       "Bioquímica",
       "Bioquimica",
-      "Biochimie"
+      "Biochimie",
+      "Biochemistry, Cell & Molecular Biology",
+      "Biochemistry & Structural Biology"
     ]
   },
   {
@@ -58,7 +61,8 @@
       "Biologia",
       "Biology",
       "Biological Science",
-      "Biological Sciences"
+      "Biological Sciences",
+      "Cell & Developmental Biology"
     ]
   },
   {
@@ -95,7 +99,8 @@
       "Cardiología",
       "Cardiologia",
       "Cardiologie",
-      "Kardiologie"
+      "Kardiologie",
+      "HeartHealth"
     ]
   },
   {
@@ -206,7 +211,9 @@
       "Emergency Medicine",
       "Urgencias",
       "Urgences",
-      "Medicina d'Urgenza"
+      "Medicina d'Urgenza",
+      "Emergency Room",
+      "Burn Center"
     ]
   },
   {
@@ -222,7 +229,8 @@
       "Endocrine",
       "Endocrinology",
       "Endocrinologia",
-      "Endocrinologie"
+      "Endocrinologie",
+      "General Endocrinology"
     ]
   },
   {
@@ -282,7 +290,8 @@
       "Gastroenterology",
       "Gastroenterología",
       "Gastroenterologia",
-      "Gastroenterologie"
+      "Gastroenterologie",
+      "Gastroenterology & Hepatology"
     ]
   },
   {
@@ -291,7 +300,8 @@
       "Genetics",
       "Genética",
       "Genetica",
-      "Génétique"
+      "Génétique",
+      "Clinical Genomics Initiative"
     ]
   },
   {
@@ -359,7 +369,8 @@
       "Médecine Interne",
       "Medecine Interne",
       "Innere Medizin",
-      "Interna"
+      "Interna",
+      "International Medicine"
     ]
   },
   {
@@ -408,7 +419,9 @@
       "Microbiologia",
       "Microbiologie",
       "Mikrobiologie",
-      "Mikrobiyoloji"
+      "Mikrobiyoloji",
+      "Immunology & Microbial Pathogenesis",
+      "Allergy/Immunology"
     ]
   },
   {
@@ -455,7 +468,8 @@
       "General Neurology",
       "Neurología",
       "Neurologia",
-      "Neurologie"
+      "Neurologie",
+      "Neurodegen and Mitochondrial Disease"
     ]
   },
   {
@@ -464,7 +478,9 @@
       "Brain and Mind Research Institute",
       "Neuroscience",
       "Feil Family Brain and Mind Research Institute",
-      "MD-PhD WGS Neuroscience"
+      "MD-PhD WGS Neuroscience",
+      "Cerebral Metabolism",
+      "Center for Autism and Developing Brain"
     ]
   },
   {
@@ -519,7 +535,9 @@
       "Gynécologie",
       "Gynecologie",
       "Gynécologie-Obstétrique",
-      "Frauenheilkunde"
+      "Frauenheilkunde",
+      "Maternal/Fetal",
+      "Ob/Gyn - Immunology"
     ]
   },
   {
@@ -588,7 +606,8 @@
       "Oto-Rhino-Laryngologie",
       "ORL",
       "HNO",
-      "Otorinolaringoiatria"
+      "Otorinolaringoiatria",
+      "Otolaryngology - Head and Neck Surgery"
     ]
   },
   {
@@ -596,7 +615,8 @@
     "members": [
       "Hospice and Palliative Medicine",
       "Palliative Medicine",
-      "Palliative Care"
+      "Palliative Care",
+      "Geriatrics and Palliative Medicine"
     ]
   },
   {
@@ -668,7 +688,8 @@
       "Pediatria",
       "Pédiatrie",
       "Pediatrie",
-      "Pediatri"
+      "Pediatri",
+      "Child Development"
     ]
   },
   {
@@ -685,7 +706,8 @@
       "Pharmacology",
       "Farmacología",
       "Farmacologia",
-      "Pharmacologie"
+      "Pharmacologie",
+      "Tri-Institute-TDI"
     ]
   },
   {
@@ -711,7 +733,8 @@
       "Physiology and Biophysics",
       "Fisiología",
       "Fisiologia",
-      "Physiologie"
+      "Physiologie",
+      "Physiology, Biophysics & Systems Biology"
     ]
   },
   {
@@ -748,7 +771,14 @@
       "Epidemiology",
       "Epidemiologia",
       "Epidemiologie",
-      "Sanità pubblica"
+      "Sanità pubblica",
+      "Outcomes and Effectiveness Research",
+      "Health Systems Innovation and Implementation Science",
+      "Healthcare Policy and Economics",
+      "Comparative Effectiveness and Outcomes Research",
+      "Clinical Epidemiology and Evaluative Sciences",
+      "Community and Public Health Program",
+      "Prevention and Health Behavior"
     ]
   },
   {
@@ -756,7 +786,11 @@
     "members": [
       "Psychiatry and Behavioral Sciences",
       "Psychiatry and Behavioral Science",
-      "Psychiatrie"
+      "Psychiatrie",
+      "Psych PWC - General",
+      "Employee Asstn. Pro",
+      "Payne Whitney",
+      "Westchester"
     ]
   },
   {
@@ -808,7 +842,13 @@
       "Diagnostic Imaging",
       "Radiologia",
       "Radiologie",
-      "Radyoloji"
+      "Radyoloji",
+      "General Radiology",
+      "Radiology - MRI",
+      "NMR",
+      "Neuro Radiology",
+      "WCINYP MRI",
+      "Pediatrics Radiology"
     ]
   },
   {
@@ -825,7 +865,10 @@
     "members": [
       "Reproductive Medicine",
       "Ronald O. Perelman and Claudia Cohen Center for Reproductive Medicine",
-      "Center for Reproductive Medicine"
+      "Center for Reproductive Medicine",
+      "Perelman and Cohen Center for Reproductive Medicine",
+      "Reproduction Medicine",
+      "Invitro Fertilization"
     ]
   },
   {
@@ -902,7 +945,9 @@
       "Urology",
       "Urología",
       "Urologia",
-      "Urologie"
+      "Urologie",
+      "Uro Oncology",
+      "Male Reproductive Medicine & Microsurgery"
     ]
   },
   {
