@@ -66,38 +66,14 @@ public class StrategyParameters {
     @Value("${strategy.scopus.common.affiliation}")
     private boolean isScopusCommonAffiliation;
 
-    @Value("${strategy.coauthor}")
-    private boolean isCoauthor;
-
-    @Value("${strategy.journal}")
-    private boolean isJournal;
-
-    @Value("${strategy.education}")
-    private boolean isEducation;
-
     @Value("${strategy.grant}")
     private boolean isGrant;
-
-    @Value("${strategy.citation}")
-    private boolean isCitation;
-
-    @Value("${strategy.cocitation}")
-    private boolean isCoCitation;
 
     @Value("${strategy.article.size}")
     private boolean isArticleSize;
 
     @Value("${strategy.persontype}")
     private boolean isPersonType;
-
-    @Value("${strategy.averageclustering}")
-    private boolean isAverageClustering;
-
-    @Value("${strategy.cluster.size}")
-    private boolean isClusterSize;
-
-    @Value("${strategy.mesh.major}")
-    private boolean isMeshMajor;
 
     private boolean useGoldStandardEvidence;
     

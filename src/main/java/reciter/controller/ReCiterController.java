@@ -1081,7 +1081,7 @@ public class ReCiterController {
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
         
         //Sanitize Identity Organizational Units(Division and Department)
-        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil(strategyParameters);
+        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil();
         institutionalSanitizationUtil.populateSanitizedIdentityInstitutions(identity);
         
         //Find gender probability
