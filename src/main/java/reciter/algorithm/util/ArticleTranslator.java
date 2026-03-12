@@ -242,6 +242,45 @@ public class ArticleTranslator {
         reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
         reCiterArticle.setArticleKeywords(articleKeywords);
         reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
+        // Supplement PubMed ISSNs with Scopus ISSNs as fallback.
+        // PubMed typically provides one ISSN (Print or Electronic) plus a Linking ISSN.
+        // Scopus provides both Print and Electronic ISSNs independently.
+        if (scopusArticle != null && journalIssn != null) {
+            Set<String> existingIssnValues = journalIssn.stream()
+                .filter(j -> j != null && j.getIssn() != null)
+                .map(j -> j.getIssn().trim())
+                .collect(Collectors.toSet());
+
+            if (scopusArticle.getIssn() != null && !scopusArticle.getIssn().isEmpty()
+                    && !existingIssnValues.contains(scopusArticle.getIssn().trim())) {
+                journalIssn.add(MedlineCitationJournalISSN.builder()
+                    .issntype("Print")
+                    .issn(scopusArticle.getIssn().trim())
+                    .build());
+            }
+            if (scopusArticle.getEIssn() != null && !scopusArticle.getEIssn().isEmpty()
+                    && !existingIssnValues.contains(scopusArticle.getEIssn().trim())) {
+                journalIssn.add(MedlineCitationJournalISSN.builder()
+                    .issntype("Electronic")
+                    .issn(scopusArticle.getEIssn().trim())
+                    .build());
+            }
+        } else if (journalIssn == null && scopusArticle != null
+                && (scopusArticle.getIssn() != null || scopusArticle.getEIssn() != null)) {
+            journalIssn = new ArrayList<>();
+            if (scopusArticle.getIssn() != null && !scopusArticle.getIssn().isEmpty()) {
+                journalIssn.add(MedlineCitationJournalISSN.builder()
+                    .issntype("Print")
+                    .issn(scopusArticle.getIssn().trim())
+                    .build());
+            }
+            if (scopusArticle.getEIssn() != null && !scopusArticle.getEIssn().isEmpty()) {
+                journalIssn.add(MedlineCitationJournalISSN.builder()
+                    .issntype("Electronic")
+                    .issn(scopusArticle.getEIssn().trim())
+                    .build());
+            }
+        }
         reCiterArticle.getJournal().setJournalIssn(journalIssn);
         reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation());
         reCiterArticle.setMeshHeadings(reCiterArticleMeshHeadings);
