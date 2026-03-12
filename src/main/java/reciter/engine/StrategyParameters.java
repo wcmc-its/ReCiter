@@ -374,6 +374,9 @@ public class StrategyParameters {
     @Value("${strategy.feedback.score.cites}")
     private boolean isFeedbackScoreCites;
 
+    @Value("${strategy.feedback.score.bibliographiccoupling}")
+    private boolean isFeedbackScoreBibliographicCoupling;
+
     
     @Value("${strategy.articleCountScoringStrategy.authorCountThreshold}")
     private int authorCountThreshold;
@@ -428,6 +431,9 @@ public class StrategyParameters {
 
     @Value("${strategy.feedback.informedAbsence.cites.strength:0.5}")
     private double informedAbsenceCitesStrength;
+
+    @Value("${strategy.feedback.informedAbsence.bibliographiccoupling.strength:0.5}")
+    private double informedAbsenceBibliographicCouplingStrength;
 
     @Value("${strategy.feedback.informedAbsence.organization.strength:0.5}")
     private double informedAbsenceOrganizationStrength;
