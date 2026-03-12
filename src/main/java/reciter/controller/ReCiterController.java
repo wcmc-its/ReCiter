@@ -491,39 +491,6 @@ public class ReCiterController {
         }
         AnalysisOutput analysis = analysisService.findByUid(uid.trim());
 
-        // Smart cache: even with analysisRefreshFlag=true, skip full analysis
-        // if incremental retrieval found no new articles and no new feedback
-        if (analysisRefreshFlag && analysis != null
-                && retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
-            ESearchResult preRetrievalESearch = eSearchResultService.findByUid(uid.trim());
-            int pmidCountBefore = countTotalPmids(preRetrievalESearch);
-            java.util.Date lastRetrievalDate = preRetrievalESearch != null ? preRetrievalESearch.getRetrievalDate() : null;
-
-            // Run retrieval (lightweight PubMed check for new articles)
-            retrieveArticlesByUid(uid, retrievalRefreshFlag);
-
-            ESearchResult postRetrievalESearch = eSearchResultService.findByUid(uid.trim());
-            int pmidCountAfter = countTotalPmids(postRetrievalESearch);
-
-            boolean hasNewArticles = pmidCountAfter > pmidCountBefore;
-            boolean hasFeedbackChanges = false;
-
-            if (!hasNewArticles && lastRetrievalDate != null) {
-                GoldStandard gs = dynamoDbGoldStandardService.findByUid(uid);
-                if (gs != null && gs.getAuditLog() != null) {
-                    hasFeedbackChanges = gs.getAuditLog().stream()
-                        .anyMatch(entry -> entry.getDateTime() != null
-                            && entry.getDateTime().after(lastRetrievalDate));
-                }
-            }
-
-            if (!hasNewArticles && !hasFeedbackChanges) {
-                log.info("Smart cache hit for {}: no new articles, no feedback changes since {}",
-                    uid, lastRetrievalDate);
-                analysisRefreshFlag = false;  // Let existing cache path return cached result
-            }
-        }
-
         if (!analysisRefreshFlag
         		&&
         		analysis != null
@@ -1134,14 +1101,4 @@ public class ReCiterController {
         return new ResponseEntity<>(allOrcids, HttpStatus.OK);
     }
 
-    private int countTotalPmids(ESearchResult eSearchResult) {
-        if (eSearchResult == null || eSearchResult.getESearchPmids() == null) return 0;
-        Set<Long> allPmids = new HashSet<>();
-        for (ESearchPmid eSearchPmid : eSearchResult.getESearchPmids()) {
-            if (eSearchPmid.getPmids() != null) {
-                allPmids.addAll(eSearchPmid.getPmids());
-            }
-        }
-        return allPmids.size();
-    }
 }
