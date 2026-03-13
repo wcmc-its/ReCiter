@@ -66,38 +66,14 @@ public class StrategyParameters {
     @Value("${strategy.scopus.common.affiliation}")
     private boolean isScopusCommonAffiliation;
 
-    @Value("${strategy.coauthor}")
-    private boolean isCoauthor;
-
-    @Value("${strategy.journal}")
-    private boolean isJournal;
-
-    @Value("${strategy.education}")
-    private boolean isEducation;
-
     @Value("${strategy.grant}")
     private boolean isGrant;
-
-    @Value("${strategy.citation}")
-    private boolean isCitation;
-
-    @Value("${strategy.cocitation}")
-    private boolean isCoCitation;
 
     @Value("${strategy.article.size}")
     private boolean isArticleSize;
 
     @Value("${strategy.persontype}")
     private boolean isPersonType;
-
-    @Value("${strategy.averageclustering}")
-    private boolean isAverageClustering;
-
-    @Value("${strategy.cluster.size}")
-    private boolean isClusterSize;
-
-    @Value("${strategy.mesh.major}")
-    private boolean isMeshMajor;
 
     private boolean useGoldStandardEvidence;
     
@@ -365,6 +341,12 @@ public class StrategyParameters {
     @Value("${strategy.feedback.score.keyword}")
     private boolean isFeedbackScoreKeyword;
 
+    @Value("${strategy.feedback.score.textSimilarity}")
+    private boolean isFeedbackScoreTextSimilarity;
+
+    @Value("${strategy.feedback.score.journalTitleSimilarity}")
+    private boolean isFeedbackScoreJournalTitleSimilarity;
+
     @Value("${strategy.feedback.score.institution}")
     private boolean isFeedbackScoreInstitution;
     
@@ -391,6 +373,9 @@ public class StrategyParameters {
     
     @Value("${strategy.feedback.score.cites}")
     private boolean isFeedbackScoreCites;
+
+    @Value("${strategy.feedback.score.bibliographiccoupling}")
+    private boolean isFeedbackScoreBibliographicCoupling;
 
     
     @Value("${strategy.articleCountScoringStrategy.authorCountThreshold}")
@@ -446,6 +431,9 @@ public class StrategyParameters {
 
     @Value("${strategy.feedback.informedAbsence.cites.strength:0.5}")
     private double informedAbsenceCitesStrength;
+
+    @Value("${strategy.feedback.informedAbsence.bibliographiccoupling.strength:0.5}")
+    private double informedAbsenceBibliographicCouplingStrength;
 
     @Value("${strategy.feedback.informedAbsence.organization.strength:0.5}")
     private double informedAbsenceOrganizationStrength;

@@ -49,6 +49,8 @@ import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
+import reciter.algorithm.evidence.targetauthor.feedback.bibliographiccoupling.BibliographicCouplingFeedbackStrategyContext;
+import reciter.algorithm.evidence.targetauthor.feedback.bibliographiccoupling.strategy.BibliographicCouplingFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.CitesFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.cites.strategy.CitesFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.coauthorname.CoauthorNameFeedbackStrategyContext;
@@ -63,6 +65,10 @@ import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.JournalS
 import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.strategy.JournalSubFieldFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.keyword.KeywordFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.keyword.strategy.KeywordFeedbackStrategy;
+import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.TextSimilarityFeedbackStrategyContext;
+import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.strategy.TextSimilarityFeedbackStrategy;
+import reciter.algorithm.evidence.targetauthor.feedback.journaltitlesimilarity.JournalTitleSimilarityFeedbackStrategyContext;
+import reciter.algorithm.evidence.targetauthor.feedback.journaltitlesimilarity.strategy.JournalTitleSimilarityFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.orcid.OrcidFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.orcid.strategy.OrcidFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.orcidcoauthor.OrcidCoauthorFeedbackStrategyContext;
@@ -116,9 +122,12 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext emailStrategyContext;
 	private StrategyContext coAuthorNameStrategyContext;
 	private StrategyContext citesStrategyContext;
+	private StrategyContext bibliographicCouplingStrategyContext;
+	private StrategyContext textSimilarityStrategyContext;
+	private StrategyContext journalTitleSimilarityStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
-	
-	ExecutorService executorService = Executors.newWorkStealingPool(13);
+
+	ExecutorService executorService = Executors.newWorkStealingPool(15);
 	
 	public ReciterFeedbackArticleScorer(List<ReCiterArticle> articles,Identity identity,EngineParameters parameters,StrategyParameters strategyParameters)
 	{
@@ -176,6 +185,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceKeywordStrength());
 		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(keywordStrategy);
+		TextSimilarityFeedbackStrategy textSimilarityStrategy = new TextSimilarityFeedbackStrategy(strategyParameters);
+		this.textSimilarityStrategyContext = new TextSimilarityFeedbackStrategyContext(textSimilarityStrategy);
+		JournalTitleSimilarityFeedbackStrategy journalTitleSimilarityStrategy = new JournalTitleSimilarityFeedbackStrategy(strategyParameters);
+		this.journalTitleSimilarityStrategyContext = new JournalTitleSimilarityFeedbackStrategyContext(journalTitleSimilarityStrategy);
 		InstitutionFeedbackStrategy institutionStrategy = new InstitutionFeedbackStrategy();
 		institutionStrategy.setInformedAbsenceConfig(
 			strategyParameters.isInformedAbsenceEnabled(),
@@ -196,6 +209,12 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceCitesStrength());
 		this.citesStrategyContext = new CitesFeedbackStrategyContext(citesStrategy);
+		BibliographicCouplingFeedbackStrategy bibCouplingStrategy = new BibliographicCouplingFeedbackStrategy();
+		bibCouplingStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceBibliographicCouplingStrength());
+		this.bibliographicCouplingStrategyContext = new BibliographicCouplingFeedbackStrategyContext(bibCouplingStrategy);
 		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
 
 
@@ -241,6 +260,12 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		if(strategyParameters.isFeedbackScoreKeyword()) {
 			futures.add(submitAndLogTime("Keyword Category", executorService, keywordStrategyContext, reCiterArticles, identity));
 		}
+		if(strategyParameters.isFeedbackScoreTextSimilarity()) {
+			futures.add(submitAndLogTime("Text Similarity Category", executorService, textSimilarityStrategyContext, reCiterArticles, identity));
+		}
+		if(strategyParameters.isFeedbackScoreJournalTitleSimilarity()) {
+			futures.add(submitAndLogTime("Journal Title Similarity Category", executorService, journalTitleSimilarityStrategyContext, reCiterArticles, identity));
+		}
 		if(strategyParameters.isFeedbackScoreCoauthorName()) {
 			futures.add(submitAndLogTime("CoAuthorName Category", executorService, coAuthorNameStrategyContext, reCiterArticles, identity));
 
@@ -248,6 +273,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		if(strategyParameters.isFeedbackScoreCites()) {
 			futures.add(submitAndLogTime("Cites Category", executorService, citesStrategyContext, reCiterArticles, identity));
 
+		}
+		if(strategyParameters.isFeedbackScoreBibliographicCoupling()) {
+			futures.add(submitAndLogTime("Bibliographic Coupling Category", executorService, bibliographicCouplingStrategyContext, reCiterArticles, identity));
 		}
 		//futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
 		// Shutdown executorService after submitting all tasks
@@ -311,8 +339,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	protected void exportConsolidatedFeedbackScores(String personIdentifier, Map<Long,ReCiterArticle> articleMap)
 	{
-		String[] csvHeaders = { "PersonIdentifier","Pmid","userAssertion","scoreCites","scoreCoAuthorName","scoreEmail",
-    		 	"scoreInstitution","scoreJournal","scoreJournalSubField","scoreKeyword","scoreOrcid","scoreOrcidCoAuthor",
+		String[] csvHeaders = { "PersonIdentifier","Pmid","userAssertion","scoreCites","scoreBibliographicCoupling","scoreCoAuthorName","scoreEmail",
+    		 	"scoreInstitution","scoreJournal","scoreJournalSubField","scoreKeyword","scoreTextSimilarity","scoreJournalTitleSimilarity","scoreOrcid","scoreOrcidCoAuthor",
     		 	"scoreOrganization","scoreTargetAuthorName","scoreYear" };
 		
 		Path filePath = Paths.get(personIdentifier + "_consolidated.csv");
@@ -451,12 +479,15 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				
 						
 					String citiesFeedbackScore = article.getExportedCitesFeedbackScore()!=null? article.getExportedCitesFeedbackScore() :"0" ;
+					String bibliographicCouplingFeedbackScore = article.getExportedBibliographicCouplingFeedbackScore()!=null? article.getExportedBibliographicCouplingFeedbackScore() :"0" ;
 					String coAuthorFeedbackScore = article.getExportedCoAuthorNameFeedbackScore()!= null?article.getExportedCoAuthorNameFeedbackScore() :"0";
 					String emailFeedbackScore = article.getExportedEmailFeedbackScore()!=null?article.getExportedEmailFeedbackScore():"0";
 					String institutionFeedbackScore = article.getExportedInstitutionFeedbackScore()!=null?article.getExportedInstitutionFeedbackScore():"0" ;
 					String journalFeedbackScore = article.getExportedJournalFeedackScore()!=null?article.getExportedJournalFeedackScore():"0";
 					String journalSubFieldFeedbackScore = article.getExportedJournalSubFieldFeedbackScore()!=null?article.getExportedJournalSubFieldFeedbackScore():"0";
 					String keywordFeedbackScore = article.getExportedKeywordFeedackScore()!=null?article.getExportedKeywordFeedackScore():"0";
+					String textSimilarityFeedbackScore = article.getExportedTextSimilarityFeedbackScore()!=null?article.getExportedTextSimilarityFeedbackScore():"0";
+					String journalTitleSimilarityFeedbackScore = article.getExportedJournalTitleSimilarityFeedbackScore()!=null?article.getExportedJournalTitleSimilarityFeedbackScore():"0";
 					String orcidFeedbackScore = article.getExportedOrcidFeedbackScore()!=null?article.getExportedOrcidFeedbackScore():"0";
 					String orcidCoAuthorFeedbackScore = article.getExportedOrcidCoAuthorFeedbackScore()!=null?article.getExportedOrcidCoAuthorFeedbackScore():"0";
 					String organizationFeedbackScore = article.getExportedOrganizationFeedbackScore()!=null?article.getExportedOrganizationFeedbackScore():"0";
@@ -464,16 +495,19 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					String yearFeedbackScore = article.getExportedYearFeedbackScore();
 					
 					
-					csvPrinter.printRecord(personIdentifier, 
-							articleId, 
+					csvPrinter.printRecord(personIdentifier,
+							articleId,
 							article.getGoldStandard(),
 							citiesFeedbackScore,
+							bibliographicCouplingFeedbackScore,
 							coAuthorFeedbackScore,
 							emailFeedbackScore,
 							institutionFeedbackScore,
 							journalFeedbackScore,
 							journalSubFieldFeedbackScore,
 							keywordFeedbackScore,
+							textSimilarityFeedbackScore,
+							journalTitleSimilarityFeedbackScore,
 							orcidFeedbackScore,
 							orcidCoAuthorFeedbackScore,
 							organizationFeedbackScore,
@@ -554,13 +588,34 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	
     	ObjectMapper objectMapper = new ObjectMapper();
 
-    	// Enrich scores with identity first name for name frequency scoring in Python
+    	// Enrich scores with identity names and per-article name evidence for Python scoring
     	String identityFirstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
     	        ? identity.getPrimaryName().getFirstName() : "";
+    	String identityMiddleName = (identity.getPrimaryName() != null && identity.getPrimaryName().getMiddleName() != null)
+    	        ? identity.getPrimaryName().getMiddleName() : "";
+
+    	// Build articleId → article map for per-article name evidence enrichment
+    	Map<Long, ReCiterArticle> articleByIdMap = reCiterArticles.stream()
+    	        .collect(Collectors.toMap(ReCiterArticle::getArticleId, Function.identity(), (a, b) -> a));
+
     	List<ObjectNode> enrichedScores = articleIdentityFeedbackScore.stream()
     	        .map(score -> {
     	            ObjectNode node = objectMapper.convertValue(score, ObjectNode.class);
     	            node.put("identityFirstName", identityFirstName);
+    	            node.put("identityMiddleName", identityMiddleName);
+
+    	            // Per-article name evidence fields
+    	            ReCiterArticle article = articleByIdMap.get(score.getArticleId());
+    	            if (article != null && article.getAuthorNameEvidence() != null) {
+    	                AuthorNameEvidence ev = article.getAuthorNameEvidence();
+    	                node.put("articleAuthorFirstName",
+    	                    ev.getArticleAuthorName() != null && ev.getArticleAuthorName().getFirstName() != null
+    	                    ? ev.getArticleAuthorName().getFirstName() : "");
+    	                node.put("nameMatchFirstType",
+    	                    ev.getNameMatchFirstType() != null ? ev.getNameMatchFirstType() : "");
+    	                node.put("nameMatchMiddleType",
+    	                    ev.getNameMatchMiddleType() != null ? ev.getNameMatchMiddleType() : "");
+    	            }
     	            return node;
     	        })
     	        .collect(Collectors.toList());
@@ -615,11 +670,14 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    getFeedbackScore(article.getJournalFeedackScore()),
 														    getFeedbackScore(article.getJournalSubFieldFeedbackScore()),
 														    getFeedbackScore(article.getKeywordFeedackScore()),
+														    getFeedbackScore(article.getTextSimilarityFeedbackScore()),
+														    getFeedbackScore(article.getJournalTitleSimilarityFeedbackScore()),
 														    getFeedbackScore(article.getOrcidFeedbackScore()),
 														    getFeedbackScore(article.getOrcidCoAuthorFeedbackScore()),
 														    getFeedbackScore(article.getOrganizationFeedbackScore()),
 														    getFeedbackScore(article.getTargetAuthorNameFeedbackScore()),
 														    getFeedbackScore(article.getYearFeedbackScore()),
+														    getFeedbackScore(article.getBibliographicCouplingFeedbackScore()),
 														    getArticleCountScore(article.getArticleCountEvidence()),
 														    getAuthorsCountScore(article.getAuthorCountEvidence()),													   
 														    getEducationYearScore(article.getEducationYearEvidence()),
