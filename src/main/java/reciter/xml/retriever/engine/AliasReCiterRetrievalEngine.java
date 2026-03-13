@@ -317,9 +317,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		if (useScopusArticles) {
 			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
-      
-			//Delete the table first if required
-			//scopusService.delete();
 
 			scopusService.save(scopusArticles);
 
@@ -335,40 +332,60 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					notFoundPmids.add(pmid);
 				}
 			}
+
+			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
+
 			List<String> dois = new ArrayList<>();
 			Map<String, Long> doiToPmid = new HashMap<>();
+			int noDoisCount = 0;
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
 
-				if (pubMedArticle != null && 
-						pubMedArticle.getMedlinecitation() != null && 
+				if (pubMedArticle != null &&
+						pubMedArticle.getMedlinecitation() != null &&
 						pubMedArticle.getMedlinecitation().getArticle() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
-					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
+					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase();
 					dois.add(doi);
-					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
+					doiToPmid.put(doi, pmid);
+				} else {
+					noDoisCount++;
 				}
 			}
-			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);;
+
+			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+					uid, notFoundPmids.size(), dois.size(), noDoisCount);
+
+			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
 			List<Long> pmidsByDoi = new ArrayList<>();
+			int doiMatchSuccess = 0;
+			int doiMatchFailed = 0;
 			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
 				// manually insert PMID information.
 				if (scopusArticle.getDoi() != null && !scopusArticle.getDoi().isEmpty()) {
-					// Need to lowercase doi here because of null pointer exception.
-					// PMID: 28221372
-					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112
-					//Sometimes scopus doi retrieval wont match with the DOI found in Pubmed
-					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null)
+					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null) {
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
+						doiMatchSuccess++;
+					} else {
+						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+								uid, scopusArticle.getDoi());
+						doiMatchFailed++;
+					}
+				} else {
+					doiMatchFailed++;
 				}
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
-			slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
+
+			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
+					notFoundPmids.size() - doiMatchSuccess);
+
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("uniquePmids in retrieveData section without date range****"+uniquePmids.size());
-		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
+		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
 		return uniquePmids;
 	}
 	
@@ -558,9 +575,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		//scopusService.save(scopusArticles);
 		if (useScopusArticles) {
 			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
-      
-			//Delete the table first if required
-			//scopusService.delete();
 
 			scopusService.save(scopusArticles);
 
@@ -576,39 +590,60 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					notFoundPmids.add(pmid);
 				}
 			}
+
+			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
+
 			List<String> dois = new ArrayList<>();
 			Map<String, Long> doiToPmid = new HashMap<>();
+			int noDoisCount = 0;
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
 
-				if (pubMedArticle != null && 
-						pubMedArticle.getMedlinecitation() != null && 
+				if (pubMedArticle != null &&
+						pubMedArticle.getMedlinecitation() != null &&
 						pubMedArticle.getMedlinecitation().getArticle() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
-					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
+					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase();
 					dois.add(doi);
-					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
+					doiToPmid.put(doi, pmid);
+				} else {
+					noDoisCount++;
 				}
 			}
-			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);;
+
+			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+					uid, notFoundPmids.size(), dois.size(), noDoisCount);
+
+			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
 			List<Long> pmidsByDoi = new ArrayList<>();
+			int doiMatchSuccess = 0;
+			int doiMatchFailed = 0;
 			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
 				// manually insert PMID information.
 				if (scopusArticle.getDoi() != null && !scopusArticle.getDoi().isEmpty()) {
-					// Need to lowercase doi here because of null pointer exception.
-					// PMID: 28221372
-					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112
-					//Sometimes scopus doi retrieval wont match with the DOI found in Pubmed
-					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null)
+					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null) {
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
+						doiMatchSuccess++;
+					} else {
+						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+								uid, scopusArticle.getDoi());
+						doiMatchFailed++;
+					}
+				} else {
+					doiMatchFailed++;
 				}
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
-			slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
+
+			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
+					notFoundPmids.size() - doiMatchSuccess);
+
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
+		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
 		
 	}
 	
