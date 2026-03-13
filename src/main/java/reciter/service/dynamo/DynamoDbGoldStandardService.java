@@ -40,7 +40,11 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     private PmidProvenanceService pmidProvenanceService;
 
     @Override
-    public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource) {
+    	// Resolve provenance strategy: caller-supplied source, or default
+    	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
+    			? provenanceSource : PM_MANUAL_STRATEGY;
+
     	// Capture incoming accepted PMIDs before merge logic mutates them
     	List<Long> incomingAcceptedPmids = (goldStandard.getKnownPmids() != null)
     			? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
@@ -179,7 +183,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     	// get a provenance record.
     	if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE
     			&& !incomingAcceptedPmids.isEmpty()) {
-    		writeProvenanceForAcceptedPmids(goldStandard.getUid(), incomingAcceptedPmids);
+    		writeProvenanceForAcceptedPmids(goldStandard.getUid(), incomingAcceptedPmids, strategy);
     	}
     }
 
@@ -189,7 +193,10 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     }
 
 	@Override
-	public void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+	public void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource) {
+		// Resolve provenance strategy: caller-supplied source, or default
+		String strategy = (provenanceSource != null && !provenanceSource.isBlank())
+				? provenanceSource : PM_MANUAL_STRATEGY;
 		// Capture incoming accepted PMIDs before merge logic mutates them
 		Map<String, List<Long>> incomingAcceptedPmidsMap = new HashMap<>();
 		if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
@@ -253,7 +260,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
     	// Track provenance for accepted PMIDs in batch
     	for (Map.Entry<String, List<Long>> entry : incomingAcceptedPmidsMap.entrySet()) {
-    		writeProvenanceForAcceptedPmids(entry.getKey(), entry.getValue());
+    		writeProvenanceForAcceptedPmids(entry.getKey(), entry.getValue(), strategy);
     	}
 	}
 
@@ -275,14 +282,14 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	 * keep their original provenance. Only PMIDs with no existing provenance
 	 * (e.g., manually added via Publication Manager) get a new record.
 	 */
-	private void writeProvenanceForAcceptedPmids(String uid, List<Long> pmids) {
+	private void writeProvenanceForAcceptedPmids(String uid, List<Long> pmids, String strategy) {
 		List<PmidProvenance> provenanceRecords = new ArrayList<>();
 		Date now = new Date();
 		for (Long pmid : pmids) {
-			PmidProvenance provenance = new PmidProvenance(uid, pmid, now, PM_MANUAL_STRATEGY);
+			PmidProvenance provenance = new PmidProvenance(uid, pmid, now, strategy);
 			provenanceRecords.add(provenance);
 		}
 		pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
-		log.info("Tracked provenance for {} accepted PMIDs for uid={}", pmids.size(), uid);
+		log.info("Tracked provenance ({}) for {} accepted PMIDs for uid={}", strategy, pmids.size(), uid);
 	}
 }

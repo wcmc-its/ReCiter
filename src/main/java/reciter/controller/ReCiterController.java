@@ -151,7 +151,8 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
-    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
@@ -162,12 +163,12 @@ public class ReCiterController {
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -186,18 +187,19 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.PUT, produces = "application/json")
     @ResponseBody
-    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
         stopWatch.start("Update GoldStandard with List");
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
