@@ -67,7 +67,7 @@ public class DynamoDbConfig {
     @Value("${aws.dynamoDb.local.secretkey}")
     private String dynamodbLocalSecretKey;
     
-    @Value("${aws.dynamoDb.local.dbpath}")
+    @Value("${aws.dynamoDb.local.dbpath:}")
     private String dynamoDbPath;
     
     @Value("${aws.dynamoDb.local}")
