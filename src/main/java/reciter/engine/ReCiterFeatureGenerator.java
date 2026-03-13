@@ -31,6 +31,7 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.utils.ReCiterStringUtil;
 
 
 @Data
@@ -217,7 +218,7 @@ public class ReCiterFeatureGenerator {
             
             //abstract
             if(reCiterArticle.getPublicationAbstract() != null) {
-            	reCiterArticleFeature.setPublicationAbstract(reCiterArticle.getPublicationAbstract());
+            	reCiterArticleFeature.setPublicationAbstract(ReCiterStringUtil.stripBackslashes(reCiterArticle.getPublicationAbstract()));
             }
             
             //article keywords
@@ -236,24 +237,26 @@ public class ReCiterFeatureGenerator {
             }
             //scopus doc id
             if(reCiterArticle.getScopusDocId() != null) {
-            	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
+            	reCiterArticleFeature.setScopusDocID(ReCiterStringUtil.stripBackslashes(reCiterArticle.getScopusDocId()));
             }
        
-            // journal title (may be null for book articles or non-journal sources)
-            if (reCiterArticle.getJournal() != null) {
-                reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
-                reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
-                reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal().getIsoAbbreviation());
-            }
+            // journal title
+            reCiterArticleFeature.setJournalTitleVerbose(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getJournalTitle()));
+            
+            //journal issn
+            reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
+
+            // journal title ISO Abbreviation
+            reCiterArticleFeature.setJournalTitleISOabbreviation(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getIsoAbbreviation()));
 
             // article title
-            reCiterArticleFeature.setArticleTitle(reCiterArticle.getArticleTitle());
+            reCiterArticleFeature.setArticleTitle(ReCiterStringUtil.stripBackslashes(reCiterArticle.getArticleTitle()));
 
             // volume
-            reCiterArticleFeature.setVolume(reCiterArticle.getVolume());
+            reCiterArticleFeature.setVolume(ReCiterStringUtil.stripBackslashes(reCiterArticle.getVolume()));
             
             // issue
-            reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
+            reCiterArticleFeature.setIssue(ReCiterStringUtil.stripBackslashes(reCiterArticle.getIssue()));
 
             /**
              * <Pagination>
@@ -261,18 +264,18 @@ public class ReCiterFeatureGenerator {
              </Pagination>
              */
             // pages
-            reCiterArticleFeature.setPages(reCiterArticle.getPages());
+            reCiterArticleFeature.setPages(ReCiterStringUtil.stripBackslashes(reCiterArticle.getPages()));
 
             // pmcid (https://www.ncbi.nlm.nih.gov/pubmed/26174865?report=xml&format=text)
             // Need to add parsing for <OtherID Source="NLM">PMC5009940 [Available on 01/01/17]</OtherID>
             // Or check <ArticleId IdType="pmc">PMC2907408</ArticleId>
             if(reCiterArticle.getPmcid() != null) {
-            	reCiterArticleFeature.setPmcid(reCiterArticle.getPmcid());
+            	reCiterArticleFeature.setPmcid(ReCiterStringUtil.stripBackslashes(reCiterArticle.getPmcid()));
             }
 
             // doi
             // <ArticleId IdType="doi">10.1093/jnci/djq238</ArticleId>
-            reCiterArticleFeature.setDoi(reCiterArticle.getDoi());
+            reCiterArticleFeature.setDoi(ReCiterStringUtil.stripBackslashes(reCiterArticle.getDoi()));
 
             // author list
             List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
@@ -284,11 +287,11 @@ public class ReCiterFeatureGenerator {
                 reCiterArticleAuthorFeature.setRank(i++);
 
                 // lastname
-                reCiterArticleAuthorFeature.setLastName(reCiterArticleAuthor.getAuthorName().getLastName());
+                reCiterArticleAuthorFeature.setLastName(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getAuthorName().getLastName()));
                 // first name
-                reCiterArticleAuthorFeature.setFirstName(reCiterArticleAuthor.getAuthorName().getFirstName());
+                reCiterArticleAuthorFeature.setFirstName(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getAuthorName().getFirstName()));
                 // initials
-                reCiterArticleAuthorFeature.setInitials(reCiterArticleAuthor.getAuthorName().getFirstInitial());
+                reCiterArticleAuthorFeature.setInitials(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getAuthorName().getFirstInitial()));
                 // affiliation scopus
                 //Commenting out as not necessary at the moment
                 /*ReCiterArticleAffiliationFeature reCiterArticleAffiliationFeature =
@@ -342,7 +345,7 @@ public class ReCiterFeatureGenerator {
                 //EqualContrib
                 if(reCiterArticleAuthor.getEqualContrib()!=null && !reCiterArticleAuthor.getEqualContrib().isEmpty())
                 {
-                	reCiterArticleAuthorFeature.setEqualContrib(reCiterArticleAuthor.getEqualContrib());
+                	reCiterArticleAuthorFeature.setEqualContrib(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getEqualContrib()));
                 }
                 
 
