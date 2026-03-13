@@ -85,14 +85,6 @@ public class StrategyParameters {
     @Value("${nameScoringStrategy-excludedSuffixes}")
     private String nameExcludedSuffixes;
     
-    @Positive(message = "cluster.similarity.threshold score needs to be a positive number.")
-    @Value("${cluster.similarity.threshold.score}")
-    private double clusterSimilarityThresholdScore;
-    
-    @Positive(message = "clusteringGrants-threshold score needs to be a positive integer number.")
-    @Value("${clusteringGrants-threshold}")
-    private double clusteringGrantsThreshold;
-
     @Value("${nameMatchFirstType.full-exact}")
     private double nameMatchFirstTypeFullExactScore;
 
@@ -216,8 +208,8 @@ public class StrategyParameters {
     @Value("${strategy.discrepancyDegreeYear.degreeYearDiscrepancyScore}")
     private String degreeYearDiscrepancyScore;
 
-    @Value("${strategy.discrepancyDegreeYear.bacherlorYearWeight}")
-    private int bacherlorYearWeight;
+    @Value("${strategy.discrepancyDegreeYear.bachelorYearWeight}")
+    private int bachelorYearWeight;
 
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitDepartmentMatchingScore}")
     private double organizationalUnitDepartmentMatchingScore;
@@ -231,9 +223,6 @@ public class StrategyParameters {
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitProgramMatchingScore}")
     private double organizationalUnitProgramMatchingScore;
     
-    @Value("${strategy.orgUnitScoringStrategy.organizationalUnitSynonym}")
-    private String organizationalUnitSynonym;
-
     @Value("${strategy.articleCountScoringStrategy.articleCountThresholdScore}")
     private double articleCountThresholdScore;
 
@@ -304,9 +293,9 @@ public class StrategyParameters {
     private double searchStrategyStrictThreshold;
     
     @NotNull
-    @Positive(message = "searchStrategy-leninent-threshold should be a positive integer. We recommend a number of 2000.")
-    @Value("${searchStrategy-leninent-threshold}")
-    private double searchStrategyLeninentThreshold;
+    @Positive(message = "searchStrategy-lenient-threshold should be a positive integer. We recommend a number of 2000.")
+    @Value("${searchStrategy-lenient-threshold}")
+    private double searchStrategyLenientThreshold;
     
     @Value("${strategy.journalCategoryScore.journalSubfieldScore}")
     private double journalSubfieldScore;
@@ -385,10 +374,10 @@ public class StrategyParameters {
     private double authorCountAdjustmentGamma;
     
     @Value("${strategy.articleCountScoringStrategy.lnCoefficient}")
-    private double inCoefficent;
+    private double lnCoefficient;
     
     @Value("${strategy.articleCountScoringStrategy.constantCoefficient}")
-    private double constantCoefficeint;
+    private double constantCoefficient;
     
     @Value("${strategy.feedback.keywordCountBaseline}")
     private long keywordCountBaseline;

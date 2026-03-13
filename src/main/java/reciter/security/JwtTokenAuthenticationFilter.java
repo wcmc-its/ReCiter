@@ -65,7 +65,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 	@Autowired
 	private S3UserLogHandler s3UserLogHandler;
 
-	@Value("${aws.congito.userpool.region}")
+	@Value("${aws.cognito.userpool.region}")
     private String cogintoRegion;
 	
 	@Value("${aws.secretsmanager.consumer.secretName}")
