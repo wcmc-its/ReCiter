@@ -1,11 +1,17 @@
 package reciter.service.dynamo;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,20 +19,32 @@ import reciter.api.parameters.GoldStandardUpdateFlag;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.model.PmidProvenance;
 import reciter.database.dynamodb.repository.DynamoDbGoldStandardRepository;
 import reciter.service.ESearchResultService;
+import reciter.service.PmidProvenanceService;
 
 @Service("DynamoDbGoldStandardService")
 public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService {
 
+    private static final Logger log = LoggerFactory.getLogger(DynamoDbGoldStandardService.class);
+    private static final String PM_MANUAL_STRATEGY = "PublicationManagerManual";
+
     @Autowired
     private DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
-    
+
     @Autowired
     private ESearchResultService eSearchResultService;
 
+    @Autowired
+    private PmidProvenanceService pmidProvenanceService;
+
     @Override
     public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    	// Capture incoming accepted PMIDs before merge logic mutates them
+    	List<Long> incomingAcceptedPmids = (goldStandard.getKnownPmids() != null)
+    			? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
+
     	if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.save(goldStandard);
     	} else {
@@ -154,7 +172,15 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		}
     	}
-        
+
+    	// Track provenance for accepted PMIDs. saveIfNotExists ensures we
+    	// don't overwrite existing automated-retrieval provenance — only
+    	// truly new PMIDs (e.g., manually added via Publication Manager)
+    	// get a provenance record.
+    	if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE
+    			&& !incomingAcceptedPmids.isEmpty()) {
+    		writeProvenanceForAcceptedPmids(goldStandard.getUid(), incomingAcceptedPmids);
+    	}
     }
 
     @Override
@@ -164,7 +190,16 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
 	@Override
 	public void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
-		
+		// Capture incoming accepted PMIDs before merge logic mutates them
+		Map<String, List<Long>> incomingAcceptedPmidsMap = new HashMap<>();
+		if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+			for (GoldStandard gs : goldStandard) {
+				if (gs.getKnownPmids() != null && !gs.getKnownPmids().isEmpty()) {
+					incomingAcceptedPmidsMap.put(gs.getUid(), new ArrayList<>(gs.getKnownPmids()));
+				}
+			}
+		}
+
 		if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.saveAll(goldStandard);
     	} else {
@@ -215,7 +250,11 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
     		}
     	}
-		
+
+    	// Track provenance for accepted PMIDs in batch
+    	for (Map.Entry<String, List<Long>> entry : incomingAcceptedPmidsMap.entrySet()) {
+    		writeProvenanceForAcceptedPmids(entry.getKey(), entry.getValue());
+    	}
 	}
 
 
@@ -229,5 +268,21 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		}
 		return goldStanards;
 	}
-		
+
+	/**
+	 * Write PmidProvenance records for accepted PMIDs. Uses saveIfNotExists
+	 * so that PMIDs already discovered by automated retrieval strategies
+	 * keep their original provenance. Only PMIDs with no existing provenance
+	 * (e.g., manually added via Publication Manager) get a new record.
+	 */
+	private void writeProvenanceForAcceptedPmids(String uid, List<Long> pmids) {
+		List<PmidProvenance> provenanceRecords = new ArrayList<>();
+		Date now = new Date();
+		for (Long pmid : pmids) {
+			PmidProvenance provenance = new PmidProvenance(uid, pmid, now, PM_MANUAL_STRATEGY);
+			provenanceRecords.add(provenance);
+		}
+		pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
+		log.info("Tracked provenance for {} accepted PMIDs for uid={}", pmids.size(), uid);
+	}
 }
