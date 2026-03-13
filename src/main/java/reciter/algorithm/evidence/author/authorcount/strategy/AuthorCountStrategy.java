@@ -76,10 +76,10 @@ public class AuthorCountStrategy extends AbstractTargetAuthorStrategy {
     private static Function<Integer, Double> calculateLikelihoodAdjustment = authorCount -> {
         // Baseline likelihood (at authorCountThreshold)
     	
-        double y_baseline = strategyParameters.getInCoefficent() * Math.log(strategyParameters.getAuthorCountThreshold()) + strategyParameters.getConstantCoefficeint();
+        double y_baseline = strategyParameters.getLnCoefficient() * Math.log(strategyParameters.getAuthorCountThreshold()) + strategyParameters.getConstantCoefficient();
 
         // Likelihood for the given author count
-        double y = authorCount > 0 ? strategyParameters.getInCoefficent() * Math.log(authorCount) + strategyParameters.getConstantCoefficeint() : y_baseline;
+        double y = authorCount > 0 ? strategyParameters.getLnCoefficient() * Math.log(authorCount) + strategyParameters.getConstantCoefficient() : y_baseline;
 
         // Adjustment is scaled by gamma
         return strategyParameters.getAuthorCountAdjustmentGamma() * (y - y_baseline);

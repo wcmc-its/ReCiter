@@ -164,9 +164,9 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 					// This is the same behavior as before; these records will get accurate counts
 					// after their next retrieval run.
 					articleCountEvidence.setCountArticlesRetrieved(
-							(int) ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold());
+							(int) ReCiterArticleScorer.strategyParameters.getSearchStrategyLenientThreshold());
 					articleCountEvidence.setArticleCountScore(
-							-(ReCiterArticleScorer.strategyParameters.getSearchStrategyLeninentThreshold()
+							-(ReCiterArticleScorer.strategyParameters.getSearchStrategyLenientThreshold()
 									- ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())
 									/ ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
 				}

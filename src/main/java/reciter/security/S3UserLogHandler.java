@@ -35,7 +35,7 @@ public class S3UserLogHandler {
     @Value("${aws.s3.consumer.api.logs.bucketName}")
     private String apiLogsBucketName;
     
-    @Value("${aws.congito.userpool.region}")
+    @Value("${aws.cognito.userpool.region}")
     private String apiLogsBucketRegion;
     
     public S3UserLogHandler() {
