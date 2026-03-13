@@ -102,9 +102,24 @@ public class ArticleTranslator {
         // Article title
         String articleTitle = pubmedArticle.getMedlinecitation().getArticle().getArticletitle();
 
-        // Journal Title
-        String journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getTitle();
-        
+        // Journal Title (may be null for PubmedBookArticle records)
+        String journalTitle = null;
+        List<MedlineCitationJournalISSN> journalIssn = null;
+        int journalIssuePubDateYear = 0;
+        String isoAbbreviation = null;
+        boolean hasJournal = pubmedArticle.getMedlinecitation().getArticle().getJournal() != null;
+
+        if (hasJournal) {
+            journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getTitle();
+            journalIssn = pubmedArticle.getMedlinecitation().getArticle().getJournal().getIssn();
+            isoAbbreviation = pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation();
+            if (pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+                    && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate() != null
+                    && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear() != null) {
+                journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear());
+            }
+        }
+
         //Pubmed Publication Type
         if(pubmedArticle.getMedlinecitation().getArticle().getPublicationtypelist() != null && !pubmedArticle.getMedlinecitation().getArticle().getPublicationtypelist().isEmpty()) {
 	        List<String> publicationTypePubmed = pubmedArticle.getMedlinecitation().getArticle().getPublicationtypelist().stream().map(pubType -> pubType.getPublicationtype()).collect(Collectors.toList());
@@ -123,11 +138,6 @@ public class ArticleTranslator {
         
         
         
-
-        List<MedlineCitationJournalISSN> journalIssn = pubmedArticle.getMedlinecitation().getArticle().getJournal().getIssn();
-
-        // Translating Journal Issue PubDate Year.
-        int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear());
 
         // Co-authors
         List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlinecitation().getArticle().getAuthorlist();
@@ -238,51 +248,14 @@ public class ArticleTranslator {
         }
 
         reCiterArticle.setArticleTitle(articleTitle);
-        reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
+        if (hasJournal) {
+            reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
+            reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
+            reCiterArticle.getJournal().setJournalIssn(journalIssn);
+            reCiterArticle.getJournal().setIsoAbbreviation(isoAbbreviation);
+        }
         reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
         reCiterArticle.setArticleKeywords(articleKeywords);
-        reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
-        // Supplement PubMed ISSNs with Scopus ISSNs as fallback.
-        // PubMed typically provides one ISSN (Print or Electronic) plus a Linking ISSN.
-        // Scopus provides both Print and Electronic ISSNs independently.
-        if (scopusArticle != null && journalIssn != null) {
-            Set<String> existingIssnValues = journalIssn.stream()
-                .filter(j -> j != null && j.getIssn() != null)
-                .map(j -> j.getIssn().trim())
-                .collect(Collectors.toSet());
-
-            if (scopusArticle.getIssn() != null && !scopusArticle.getIssn().isEmpty()
-                    && !existingIssnValues.contains(scopusArticle.getIssn().trim())) {
-                journalIssn.add(MedlineCitationJournalISSN.builder()
-                    .issntype("Print")
-                    .issn(scopusArticle.getIssn().trim())
-                    .build());
-            }
-            if (scopusArticle.getEIssn() != null && !scopusArticle.getEIssn().isEmpty()
-                    && !existingIssnValues.contains(scopusArticle.getEIssn().trim())) {
-                journalIssn.add(MedlineCitationJournalISSN.builder()
-                    .issntype("Electronic")
-                    .issn(scopusArticle.getEIssn().trim())
-                    .build());
-            }
-        } else if (journalIssn == null && scopusArticle != null
-                && (scopusArticle.getIssn() != null || scopusArticle.getEIssn() != null)) {
-            journalIssn = new ArrayList<>();
-            if (scopusArticle.getIssn() != null && !scopusArticle.getIssn().isEmpty()) {
-                journalIssn.add(MedlineCitationJournalISSN.builder()
-                    .issntype("Print")
-                    .issn(scopusArticle.getIssn().trim())
-                    .build());
-            }
-            if (scopusArticle.getEIssn() != null && !scopusArticle.getEIssn().isEmpty()) {
-                journalIssn.add(MedlineCitationJournalISSN.builder()
-                    .issntype("Electronic")
-                    .issn(scopusArticle.getEIssn().trim())
-                    .build());
-            }
-        }
-        reCiterArticle.getJournal().setJournalIssn(journalIssn);
-        reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation());
         reCiterArticle.setMeshHeadings(reCiterArticleMeshHeadings);
 
         // Use PubMed Article date as the publication date (pubdate)
@@ -314,8 +287,9 @@ public class ArticleTranslator {
         
         //Case when ArticleDate does not exist use PubDate as date standardized date
         if (reCiterArticle.getPublicationDateStandardized() == null
-        		&&
-        		pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate() != null) {
+        		&& hasJournal
+        		&& pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+        		&& pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate() != null) {
         	medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate();
         	String articleDateMonth = null;
         	String articleDateDay = null;
@@ -461,13 +435,15 @@ public class ArticleTranslator {
         }
 
         // Volume
-        if (pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume() != null &&
-                !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isEmpty()) {
+        if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+                && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume() != null
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isEmpty()) {
             reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
         }
         // issue
-        if (pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue() != null &&
-                !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isEmpty()) {
+        if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+                && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue() != null
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isEmpty()) {
             reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
         }
 
@@ -627,7 +603,7 @@ public class ArticleTranslator {
     	int featureCount = reCiterArticleFeatures.getFeatureCount();
     	
     	//Journal Feature Name
-		if (reCiterArticle.getJournal().exist()) {
+		if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().exist()) {
 			reCiterArticleFeatures.setJournalName(reCiterArticle.getJournal().getJournalTitle());
 			featureCount++;
 		}
