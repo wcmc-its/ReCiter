@@ -56,8 +56,6 @@ import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(DepartmentStringMatchStrategy.class);
-	private final List<String> orgUnitSynonym = Arrays.asList(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitSynonym().trim().split("\\s*,\\s*"));
-
 	private String extractedDept;
 	private long pmid;
 	private int isGoldStandard;

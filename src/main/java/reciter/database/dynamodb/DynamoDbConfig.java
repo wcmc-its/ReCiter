@@ -25,6 +25,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
@@ -66,7 +67,7 @@ public class DynamoDbConfig {
     @Value("${aws.dynamoDb.local.secretkey}")
     private String dynamodbLocalSecretKey;
     
-    @Value("${aws.dynamoDb.local.dbpath}")
+    @Value("${aws.dynamoDb.local.dbpath:}")
     private String dynamoDbPath;
     
     @Value("${aws.dynamoDb.local}")
@@ -202,11 +203,24 @@ public class DynamoDbConfig {
                                                                      bd.getBeanClassName()));
                 }
 
+                // Detect optional range key
+                String rangeKeyName = null;
+                Class<?> rangeKeyType = null;
+                for (Field field : clazz.getDeclaredFields()) {
+                    if (field.isAnnotationPresent(DynamoDBRangeKey.class)) {
+                        DynamoDBRangeKey rangeKeyAnnotation = field.getAnnotation(DynamoDBRangeKey.class);
+                        rangeKeyName = (rangeKeyAnnotation.attributeName() != null && !rangeKeyAnnotation.attributeName().isEmpty())
+                                ? rangeKeyAnnotation.attributeName() : field.getName();
+                        rangeKeyType = field.getType();
+                        break;
+                    }
+                }
+
                 List<AttributeDefinition> attributeDefinitions = new ArrayList<AttributeDefinition>();
-                if(tableName.equalsIgnoreCase("ScienceMetrixDepartmentCategory") 
-                		|| 
-                		tableName.equalsIgnoreCase("ScienceMetrix") 
-                		|| 
+                if(tableName.equalsIgnoreCase("ScienceMetrixDepartmentCategory")
+                		||
+                		tableName.equalsIgnoreCase("ScienceMetrix")
+                		||
                 		tableName.equalsIgnoreCase("PubMedArticle")) {
                 	attributeDefinitions.add(new AttributeDefinition().withAttributeName(keyName).withAttributeType(ScalarAttributeType.N));
 					/*if(tableName.equalsIgnoreCase("ScienceMetrix")) {
@@ -216,30 +230,41 @@ public class DynamoDbConfig {
                 } else {
                 	attributeDefinitions.add(new AttributeDefinition().withAttributeName(keyName).withAttributeType(ScalarAttributeType.S));
                 }
-                
+
+                // Add range key attribute definition if present
+                if (rangeKeyName != null) {
+                    ScalarAttributeType rangeKeyAttrType =
+                            (rangeKeyType == long.class || rangeKeyType == Long.class
+                                    || rangeKeyType == int.class || rangeKeyType == Integer.class)
+                            ? ScalarAttributeType.N : ScalarAttributeType.S;
+                    attributeDefinitions.add(new AttributeDefinition()
+                            .withAttributeName(rangeKeyName)
+                            .withAttributeType(rangeKeyAttrType));
+                }
+
                 /*if(tableName.equalsIgnoreCase("ScienceMetrix")) {
                 	List<GlobalSecondaryIndex> globalSecondardyIndexes = new ArrayList<GlobalSecondaryIndex>();
-                	
+
                 	List<KeySchemaElement> keyTableSchemaElements = new ArrayList<KeySchemaElement>();
                 	keyTableSchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
-                	
+
                 	GlobalSecondaryIndex issnIndex = new GlobalSecondaryIndex()
                 			.withIndexName("issn-index")
                 			.withKeySchema(new KeySchemaElement().withAttributeName("issn").withKeyType(KeyType.HASH))
                 			.withProvisionedThroughput(new ProvisionedThroughput(READ_CAPACITY_UNITS, WRITE_CAPACITY_UNITS))
                 			.withProjection(new Projection().withProjectionType(ProjectionType.ALL));
-                	
+
                 	GlobalSecondaryIndex eissnIndex = new GlobalSecondaryIndex()
                 			.withIndexName("eissn-index")
                 			.withKeySchema(new KeySchemaElement().withAttributeName("eissn").withKeyType(KeyType.HASH))
                 			.withProvisionedThroughput(new ProvisionedThroughput(READ_CAPACITY_UNITS, WRITE_CAPACITY_UNITS))
                 			.withProjection(new Projection().withProjectionType(ProjectionType.ALL));
-                	
-                	
-                    
+
+
+
                     globalSecondardyIndexes.add(issnIndex);
                     globalSecondardyIndexes.add(eissnIndex);
-                    
+
 					CreateTableRequest request =
 					        new CreateTableRequest()
 					                                .withTableName(tableName)
@@ -249,7 +274,7 @@ public class DynamoDbConfig {
 					                                .withProvisionedThroughput(
 					                                                           new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY_UNITS)
 					                                                                                      .withWriteCapacityUnits(WRITE_CAPACITY_UNITS));
-                    
+
 	                if(request != null) {
 	                	amazonDynamoDB.createTable(request);
 	                }
@@ -262,6 +287,11 @@ public class DynamoDbConfig {
                 } else {*/
                 	List<KeySchemaElement> keySchemaElements = new ArrayList<KeySchemaElement>();
 	                keySchemaElements.add(new KeySchemaElement().withAttributeName(keyName).withKeyType(KeyType.HASH));
+
+	                // Add range key to key schema if present
+	                if (rangeKeyName != null) {
+	                    keySchemaElements.add(new KeySchemaElement().withAttributeName(rangeKeyName).withKeyType(KeyType.RANGE));
+	                }
 	
 	                CreateTableRequest request = null;
 	                

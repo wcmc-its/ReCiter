@@ -342,13 +342,34 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
     	
     	ObjectMapper objectMapper = new ObjectMapper();
 
-    	// Enrich scores with identity first name for name frequency scoring in Python
+    	// Enrich scores with identity names and per-article name evidence for Python scoring
     	String identityFirstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
     	        ? identity.getPrimaryName().getFirstName() : "";
+    	String identityMiddleName = (identity.getPrimaryName() != null && identity.getPrimaryName().getMiddleName() != null)
+    	        ? identity.getPrimaryName().getMiddleName() : "";
+
+    	// Build articleId → article map for per-article name evidence enrichment
+    	Map<Long, ReCiterArticle> articleByIdMap = reCiterArticles.stream()
+    	        .collect(Collectors.toMap(ReCiterArticle::getArticleId, Function.identity(), (a, b) -> a));
+
     	List<ObjectNode> enrichedScores = articleIdentityScore.stream()
     	        .map(score -> {
     	            ObjectNode node = objectMapper.convertValue(score, ObjectNode.class);
     	            node.put("identityFirstName", identityFirstName);
+    	            node.put("identityMiddleName", identityMiddleName);
+
+    	            // Per-article name evidence fields
+    	            ReCiterArticle article = articleByIdMap.get(score.getArticleId());
+    	            if (article != null && article.getAuthorNameEvidence() != null) {
+    	                AuthorNameEvidence ev = article.getAuthorNameEvidence();
+    	                node.put("articleAuthorFirstName",
+    	                    ev.getArticleAuthorName() != null && ev.getArticleAuthorName().getFirstName() != null
+    	                    ? ev.getArticleAuthorName().getFirstName() : "");
+    	                node.put("nameMatchFirstType",
+    	                    ev.getNameMatchFirstType() != null ? ev.getNameMatchFirstType() : "");
+    	                node.put("nameMatchMiddleType",
+    	                    ev.getNameMatchMiddleType() != null ? ev.getNameMatchMiddleType() : "");
+    	            }
     	            return node;
     	        })
     	        .collect(Collectors.toList());
@@ -447,9 +468,9 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	 // Function to calculate likelihood adjustment
     private static Function<Double, Double> calculateLikelihoodAdjustment = authorCount -> {
         // Baseline likelihood (at authorCountThreshold)
-        double y_baseline = strategyParameters.getInCoefficent() * Math.log(strategyParameters.getAuthorCountThreshold()) + strategyParameters.getConstantCoefficeint();
+        double y_baseline = strategyParameters.getLnCoefficient() * Math.log(strategyParameters.getAuthorCountThreshold()) + strategyParameters.getConstantCoefficient();
         // Likelihood for the given author count
-        double y = authorCount > 0 ? strategyParameters.getInCoefficent() * Math.log(authorCount) + strategyParameters.getConstantCoefficeint() : y_baseline;
+        double y = authorCount > 0 ? strategyParameters.getLnCoefficient() * Math.log(authorCount) + strategyParameters.getConstantCoefficient() : y_baseline;
         // Adjustment is scaled by gamma
         return strategyParameters.getAuthorCountAdjustmentGamma() * (y - y_baseline);
     };

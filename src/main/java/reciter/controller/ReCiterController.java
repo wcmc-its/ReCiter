@@ -159,7 +159,8 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
-    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
@@ -170,12 +171,12 @@ public class ReCiterController {
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -194,18 +195,19 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.PUT, produces = "application/json")
     @ResponseBody
-    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
         stopWatch.start("Update GoldStandard with List");
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -531,39 +533,6 @@ public class ReCiterController {
                 uid, analysis.getSchemaVersion(), ANALYSIS_SCHEMA_VERSION);
             analysisService.delete(uid.trim());
             analysis = null;
-        }
-
-        // Smart cache: even with analysisRefreshFlag=true, skip full analysis
-        // if incremental retrieval found no new articles and no new feedback
-        if (analysisRefreshFlag && analysis != null
-                && retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
-            ESearchResult preRetrievalESearch = eSearchResultService.findByUid(uid.trim());
-            int pmidCountBefore = countTotalPmids(preRetrievalESearch);
-            java.util.Date lastRetrievalDate = preRetrievalESearch != null ? preRetrievalESearch.getRetrievalDate() : null;
-
-            // Run retrieval (lightweight PubMed check for new articles)
-            retrieveArticlesByUid(uid, retrievalRefreshFlag);
-
-            ESearchResult postRetrievalESearch = eSearchResultService.findByUid(uid.trim());
-            int pmidCountAfter = countTotalPmids(postRetrievalESearch);
-
-            boolean hasNewArticles = pmidCountAfter > pmidCountBefore;
-            boolean hasFeedbackChanges = false;
-
-            if (!hasNewArticles && lastRetrievalDate != null) {
-                GoldStandard gs = dynamoDbGoldStandardService.findByUid(uid);
-                if (gs != null && gs.getAuditLog() != null) {
-                    hasFeedbackChanges = gs.getAuditLog().stream()
-                        .anyMatch(entry -> entry.getDateTime() != null
-                            && entry.getDateTime().after(lastRetrievalDate));
-                }
-            }
-
-            if (!hasNewArticles && !hasFeedbackChanges) {
-                log.info("Smart cache hit for {}: no new articles, no feedback changes since {}",
-                    uid, lastRetrievalDate);
-                analysisRefreshFlag = false;  // Let existing cache path return cached result
-            }
         }
 
         if (!analysisRefreshFlag
@@ -1140,7 +1109,7 @@ public class ReCiterController {
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
         
         //Sanitize Identity Organizational Units(Division and Department)
-        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil(strategyParameters);
+        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil();
         institutionalSanitizationUtil.populateSanitizedIdentityInstitutions(identity);
         
         //Find gender probability
@@ -1193,14 +1162,4 @@ public class ReCiterController {
         return new ResponseEntity<>(allOrcids, HttpStatus.OK);
     }
 
-    private int countTotalPmids(ESearchResult eSearchResult) {
-        if (eSearchResult == null || eSearchResult.getESearchPmids() == null) return 0;
-        Set<Long> allPmids = new HashSet<>();
-        for (ESearchPmid eSearchPmid : eSearchResult.getESearchPmids()) {
-            if (eSearchPmid.getPmids() != null) {
-                allPmids.addAll(eSearchPmid.getPmids());
-            }
-        }
-        return allPmids.size();
-    }
 }

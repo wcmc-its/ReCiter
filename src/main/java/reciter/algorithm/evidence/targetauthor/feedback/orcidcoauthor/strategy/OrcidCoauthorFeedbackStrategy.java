@@ -96,113 +96,60 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 							 && !author.isTargetAuthor())
 							.forEach(author->{
 								
-					double weightageScore = 0.0;
 					double scoreAll = 0.0;
 					double sumAccepted = 0.0;
 					double sumRejected = 0.0;
-					
+					double feedbackScore = 0.0;
+
 							 int countAccepted = 0;
 							 int countRejected = 0;
-							 
-							 slf4jLogger.info("artice GoldStadard : "+ article.getGoldStandard());
-								if(article!=null && article.getGoldStandard()==1)
-								{
-									int orcidCount=0;
-									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
-									{	
-										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
-										{	
-											orcidCount  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
-											if(orcidCount > 0)
-											{	
-												weightageScore = 1.0 / (double)orcidCount; 
-												
-											}
-										}
-										if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
-												&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
-												nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(ACCEPTED))
-											countAccepted = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(ACCEPTED));
-										sumAccepted = weightageScore * countAccepted;
-									}
-									
-								}
-								else if(article!=null && article.getGoldStandard() == -1)
-								{
-									int orcidCount=0;
-									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
-									{	
-										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
-										{
-											orcidCount  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
-											if(orcidCount > 0)
-											{	
-												weightageScore = 1.0 / (double)orcidCount; 
-												
-											}
-										}
-									}
-									if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
-											&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
-											nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(REJECTED))
-										countRejected = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(REJECTED));
-									
-									sumRejected =  weightageScore * countRejected;
-									
-									
-								}
-								else
-								{
-									int orcidCountAccepted=0;
-									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
-									{	
-										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
-										{	
-											orcidCountAccepted  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
-											if(orcidCountAccepted > 0)
-											{	
-												weightageScore = 1.0 / (double)orcidCountAccepted; 
-												
-											}
-										}
-										if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
-												&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
-												nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(ACCEPTED))
-											countAccepted = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(ACCEPTED));
-										sumAccepted = weightageScore * countAccepted;
-									}
-									
-									int orcidCountRejected=0;
-									if(nonTargetAuthorOrcidCountPerPmid !=null && nonTargetAuthorOrcidCountPerPmid.size() > 0)
-									{	
-										if(nonTargetAuthorOrcidCountPerPmid.containsKey(article.getArticleId()))
-										{
-											orcidCountRejected  = nonTargetAuthorOrcidCountPerPmid.get(article.getArticleId());
-											if(orcidCountRejected > 0)
-											{	
-												weightageScore = 1.0 / (double)orcidCountRejected; 
-												
-											}
-										}
-									}
-									if(nonTargetAuthororcidCountsByArticleStatus !=null && nonTargetAuthororcidCountsByArticleStatus.size() >0
-											&& nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid()) &&
-											nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).containsKey(REJECTED))
-										countRejected = Math.toIntExact(nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid()).get(REJECTED));
-									
-									sumRejected =  weightageScore * countRejected;
-									scoreAll = computeScore(sumAccepted, sumRejected);
-								}
-								
+
+							 // Look up both accepted and rejected counts for this ORCID
+							 if (nonTargetAuthororcidCountsByArticleStatus != null && nonTargetAuthororcidCountsByArticleStatus.size() > 0
+									 && nonTargetAuthororcidCountsByArticleStatus.containsKey(author.getOrcid())) {
+								 Map<Integer, Long> statusCounts = nonTargetAuthororcidCountsByArticleStatus.get(author.getOrcid());
+								 if (statusCounts.containsKey(ACCEPTED))
+									 countAccepted = Math.toIntExact(statusCounts.get(ACCEPTED));
+								 if (statusCounts.containsKey(REJECTED))
+									 countRejected = Math.toIntExact(statusCounts.get(REJECTED));
+							 }
+
+							 // Score with leave-one-out (unified path for all statuses)
+							 if (countAccepted > 0 || countRejected > 0) {
+								 int updatedCountAccepted = countAccepted;
+								 int updatedCountRejected = countRejected;
+								 if (article.getGoldStandard() == 1) {
+									 updatedCountAccepted = countAccepted - 1;
+								 } else if (article.getGoldStandard() == -1) {
+									 updatedCountRejected = countRejected - 1;
+								 }
+								 double itemScore = computeScore(updatedCountAccepted, updatedCountRejected);
+
+								 // Normalize by non-target ORCID count in this article
+								 int orcidCount = nonTargetAuthorOrcidCountPerPmid.getOrDefault(article.getArticleId(), 0);
+								 if (orcidCount > 0) {
+									 itemScore = itemScore / orcidCount;
+								 }
+
+								 if (article.getGoldStandard() == 1) {
+									 sumAccepted = itemScore;
+								 }
+								 if (article.getGoldStandard() == -1) {
+									 sumRejected = itemScore;
+								 }
+								 scoreAll = itemScore;
+
+								 feedbackScore = determineFeedbackScore(article.getGoldStandard(), sumAccepted, sumRejected, scoreAll);
+							 }
+
 							slf4jLogger.info("sumAccepted :" + sumAccepted + "\nSumRejected : " + sumRejected +"\n ScoreAll :" + scoreAll);
-							double feedbackScore= determineFeedbackScore(article.getGoldStandard(),sumAccepted, sumRejected,scoreAll);
 							slf4jLogger.info("Feedback Score:"+feedbackScore);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
 							slf4jLogger.info("exportedFeedbackScore:"+exportedFeedbackScore);
 							ReCiterArticleFeedbackScore feedbackOrcid = populateArticleFeedbackScore(article.getArticleId(),author.getOrcid(),
 									   countAccepted,countRejected,
-									   scoreAll,0.0,
-									   0.0,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"OrcidCoAuthor");
+									   scoreAll,sumAccepted,
+									   sumRejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"OrcidCoAuthor");
 							
 							feedbackOrcidCoAuthorMap.computeIfAbsent(Long.toString(article.getArticleId()), k -> new ArrayList<>()).add(feedbackOrcid);
 							

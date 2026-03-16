@@ -102,8 +102,15 @@ public class ReCiterStringUtil {
 	 * @return
 	 */
 	public static String deAccent(String str) {
-		String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD); 
+		String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
 		Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 		return pattern.matcher(nfdNormalizedString).replaceAll("");
+	}
+
+	public static String stripBackslashes(String str) {
+		if (str == null) {
+			return null;
+		}
+		return str.replace("\\", "");
 	}
 }
