@@ -71,7 +71,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	/**
 	 * Retrieval threshold.
 	 */
-	@Value("${searchStrategy-leninent-threshold}")
+	@Value("${searchStrategy-lenient-threshold}")
 	protected final int DEFAULT_THRESHOLD = 2000;
 	
 	/**

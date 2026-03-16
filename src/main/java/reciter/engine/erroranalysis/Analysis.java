@@ -162,6 +162,11 @@ public class Analysis {
         analysis.setFalseNeg(analysis.getFalseNegativeList().size());
         analysis.setPendingSkippedCount(pendingSkipped);
 
+        // Cache computed values
+        analysis.setPrecision(analysis.getPrecision());
+        analysis.setRecall(analysis.getRecall());
+        analysis.setAccuracy(analysis.getAccuracy());
+
         return analysis;
     }
 

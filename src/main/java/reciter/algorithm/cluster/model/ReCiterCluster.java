@@ -313,6 +313,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 			}
 		} else if(comparisonType.equalsIgnoreCase("meshMajor")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
+				if(reCiterArticle.getMeshHeadings() == null) continue;
 				for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
 					if(meshHeading != null && MeshMajorClusteringStrategy.isMeshMajor(meshHeading)) {
 						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getMeshHeadings() != null && 

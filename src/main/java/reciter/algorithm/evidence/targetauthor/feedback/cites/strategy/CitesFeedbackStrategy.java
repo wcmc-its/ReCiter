@@ -173,14 +173,22 @@ public class CitesFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 										Optional.ofNullable(mergedList).ifPresent(citredArticleList -> citredArticleList.forEach(mergedArticle -> {
 	
 		         								//Citing article Mapping
-												
-												double feedbackScore= determineFeedbackScore(0,overallCountAccepted, overallCountRejected, scoreAll);
+
+												// Compute leave-one-out scores for accepted and rejected articles
+												double scoreWithout1Accepted = computeScore(
+													overallCountAccepted > 0 ? overallCountAccepted - 1 : overallCountAccepted,
+													overallCountRejected);
+												double scoreWithout1Rejected = computeScore(
+													overallCountAccepted,
+													overallCountRejected > 0 ? overallCountRejected - 1 : overallCountRejected);
+
+												double feedbackScore = determineFeedbackScore(article.getGoldStandard(), scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
 												String exportedFeedbackScore = decimalFormat.format(feedbackScore);
-											
+
 		         								ReCiterArticleFeedbackScore citingArticleFeedbackScore = populateArticleFeedbackScore(article.getArticleId(),Long.toString(mergedArticle.getArticleId()),
 		         										overallCountAccepted,overallCountRejected,
-														   scoreAll,0.0,
-														   0.0,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Cites");	
+														   scoreAll,scoreWithout1Accepted,
+														   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Cites");	
 		         								
 		         								
 												
