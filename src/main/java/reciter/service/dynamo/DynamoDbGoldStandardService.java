@@ -19,7 +19,9 @@ import reciter.api.parameters.GoldStandardUpdateFlag;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.model.GoldStandardAuditLog;
 import reciter.database.dynamodb.model.PmidProvenance;
+import reciter.database.dynamodb.model.PublicationFeedback;
 import reciter.database.dynamodb.repository.DynamoDbGoldStandardRepository;
 import reciter.service.ESearchResultService;
 import reciter.service.PmidProvenanceService;
@@ -45,9 +47,11 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
     			? provenanceSource : PM_MANUAL_STRATEGY;
 
-    	// Capture incoming accepted PMIDs before merge logic mutates them
+    	// Capture incoming PMIDs before merge logic mutates them
     	List<Long> incomingAcceptedPmids = (goldStandard.getKnownPmids() != null)
     			? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
+    	List<Long> incomingRejectedPmids = (goldStandard.getRejectedPmids() != null)
+    			? new ArrayList<>(goldStandard.getRejectedPmids()) : Collections.emptyList();
 
     	if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.save(goldStandard);
@@ -58,6 +62,9 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     		} else {
     			List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
     			List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
+    			// Snapshot existing lists before merge mutates them (for audit log diff)
+    			List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
+    			List<Long> existingRejected = (rejectedPmids != null) ? new ArrayList<>(rejectedPmids) : Collections.emptyList();
     			if(goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     				//This portion deals with cases when deleting a pmid from GoldStandard it will delete it from eSearchResult as well if it exists
     				ESearchResult eSearchResult = eSearchResultService.findByUid(goldStandard.getUid());
@@ -173,6 +180,20 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 						goldStandard.setAuditLog(goldStandardDdb.getAuditLog());
 					}
 				}
+    			// Create audit log entries for changes in this update
+    			if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    				List<GoldStandardAuditLog> newEntries = buildAuditEntries(
+    						goldStandard.getUid(), incomingAcceptedPmids, incomingRejectedPmids,
+    						existingAccepted, existingRejected, strategy);
+    				if (!newEntries.isEmpty()) {
+    					List<GoldStandardAuditLog> auditLog = goldStandard.getAuditLog();
+    					if (auditLog == null) {
+    						auditLog = new ArrayList<>();
+    					}
+    					auditLog.addAll(newEntries);
+    					goldStandard.setAuditLog(auditLog);
+    				}
+    			}
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		}
     	}
@@ -197,12 +218,16 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		// Resolve provenance strategy: caller-supplied source, or default
 		String strategy = (provenanceSource != null && !provenanceSource.isBlank())
 				? provenanceSource : PM_MANUAL_STRATEGY;
-		// Capture incoming accepted PMIDs before merge logic mutates them
+		// Capture incoming PMIDs before merge logic mutates them
 		Map<String, List<Long>> incomingAcceptedPmidsMap = new HashMap<>();
+		Map<String, List<Long>> incomingRejectedPmidsMap = new HashMap<>();
 		if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
 			for (GoldStandard gs : goldStandard) {
 				if (gs.getKnownPmids() != null && !gs.getKnownPmids().isEmpty()) {
 					incomingAcceptedPmidsMap.put(gs.getUid(), new ArrayList<>(gs.getKnownPmids()));
+				}
+				if (gs.getRejectedPmids() != null && !gs.getRejectedPmids().isEmpty()) {
+					incomingRejectedPmidsMap.put(gs.getUid(), new ArrayList<>(gs.getRejectedPmids()));
 				}
 			}
 		}
@@ -218,6 +243,8 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     		} else {
     			for(GoldStandard goldStandardDdb: goldStandardDdbList) {
     				List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
+    				List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
+    				List<Long> existingRejected = (goldStandardDdb.getRejectedPmids() != null) ? new ArrayList<>(goldStandardDdb.getRejectedPmids()) : Collections.emptyList();
     				GoldStandard goldStandardNew = goldStandard.stream().filter(gs -> gs.getUid().equalsIgnoreCase(goldStandardDdb.getUid())).findFirst().get();
         			if(acceptedPmids != null && acceptedPmids.size() > 0) {
         				if(goldStandardNew != null && goldStandardNew.getKnownPmids() != null && goldStandardNew.getKnownPmids().size() > 0) {
@@ -253,6 +280,23 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						goldStandardNew.setAuditLog(goldStandardDdb.getAuditLog());
     					}
     				}
+    				// Create audit log entries for changes in this batch update
+    				if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    					String uid = goldStandardNew.getUid();
+    					List<Long> batchIncomingAccepted = incomingAcceptedPmidsMap.getOrDefault(uid, Collections.emptyList());
+    					List<Long> batchIncomingRejected = incomingRejectedPmidsMap.getOrDefault(uid, Collections.emptyList());
+    					List<GoldStandardAuditLog> newEntries = buildAuditEntries(
+    							uid, batchIncomingAccepted, batchIncomingRejected,
+    							existingAccepted, existingRejected, strategy);
+    					if (!newEntries.isEmpty()) {
+    						List<GoldStandardAuditLog> auditLog = goldStandardNew.getAuditLog();
+    						if (auditLog == null) {
+    							auditLog = new ArrayList<>();
+    						}
+    						auditLog.addAll(newEntries);
+    						goldStandardNew.setAuditLog(auditLog);
+    					}
+    				}
     			}
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
     		}
@@ -274,6 +318,47 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 			goldStanards.add(iterator.next());
 		}
 		return goldStanards;
+	}
+
+	/**
+	 * Build audit log entries by diffing incoming PMIDs against existing.
+	 * Only creates entries for genuinely new acceptances/rejections.
+	 */
+	private List<GoldStandardAuditLog> buildAuditEntries(
+			String uid, List<Long> incomingAccepted, List<Long> incomingRejected,
+			List<Long> existingAccepted, List<Long> existingRejected, String source) {
+		List<GoldStandardAuditLog> entries = new ArrayList<>();
+		Date now = new Date();
+
+		List<Long> newlyAccepted = new ArrayList<>(incomingAccepted);
+		newlyAccepted.removeAll(existingAccepted);
+		if (!newlyAccepted.isEmpty()) {
+			entries.add(GoldStandardAuditLog.builder()
+					.userVerbose(source)
+					.uid(uid)
+					.dateTime(now)
+					.pmids(newlyAccepted)
+					.action(PublicationFeedback.ACCEPTED)
+					.build());
+		}
+
+		List<Long> newlyRejected = new ArrayList<>(incomingRejected);
+		newlyRejected.removeAll(existingRejected);
+		if (!newlyRejected.isEmpty()) {
+			entries.add(GoldStandardAuditLog.builder()
+					.userVerbose(source)
+					.uid(uid)
+					.dateTime(now)
+					.pmids(newlyRejected)
+					.action(PublicationFeedback.REJECTED)
+					.build());
+		}
+
+		if (!entries.isEmpty()) {
+			log.info("Audit log: {} new accepted, {} new rejected for uid={}",
+					newlyAccepted.size(), newlyRejected.size(), uid);
+		}
+		return entries;
 	}
 
 	/**
