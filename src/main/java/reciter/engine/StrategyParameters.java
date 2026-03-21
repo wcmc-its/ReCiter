@@ -432,4 +432,7 @@ public class StrategyParameters {
 
     @Value("${strategy.feedback.informedAbsence.orcid.strength:0.3}")
     private double informedAbsenceOrcidStrength;
+    
+    @Value("${dynamodb.migrations.Analysis.schema.version}")
+    private String analysisSchemaVersion;
 }
