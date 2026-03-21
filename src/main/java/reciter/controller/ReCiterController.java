@@ -768,10 +768,6 @@ public class ReCiterController {
 	            	}
 	            }
 				analysisOutput.setUid(uid);
-				/**
-				 * TODO :  This piece of code has been commented to avoid data conflicts in Database as we have the same DynamoDB for Dev and Prod.
-				 * Will be uncommented out before deploying this to Prod -Mahender
-				 */
 				if(analysisOutput.getReCiterFeature() != null) {
 					analysisService.save(analysisOutput);
 				} 
