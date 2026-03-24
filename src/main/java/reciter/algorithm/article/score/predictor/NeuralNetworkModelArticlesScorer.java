@@ -174,11 +174,13 @@ public class NeuralNetworkModelArticlesScorer {
 			        	return predictionScoresArray;
 			         }
 			         else 
+
 						{
 							// Log the error from the Python scoring script
 							String error = outer.optString("error");
 							log.error("Lambda scoring failed with returncode {}. error: {}", returnCode, error);
 							return null;
+
 				        }
 			      }
 			     
@@ -239,10 +241,12 @@ public class NeuralNetworkModelArticlesScorer {
 		        	return predictionScoresArray;
 		        
 		        } else {
+
 		            // Log the error from the Python scoring script
 					String error = outer.optString("error");
 					log.error("Lambda scoring failed with returncode {}. error: {}", returnCode, error);
 					return null;
+
 		        }
 	          
 	        } catch (Exception e) {

@@ -96,7 +96,7 @@ import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 public class ReCiterController {
 
 	private static final Logger log = LoggerFactory.getLogger(ReCiterController.class);
-	
+
     @Autowired
     private ESearchResultService eSearchResultService;
 
@@ -419,11 +419,18 @@ public class ReCiterController {
                         .collect(Collectors.toList());
             }
             List<AnalysisOutput> analysis = null;
-            if(uids != null && !uids.isEmpty()) {
-                analysis = analysisService.findByUids(uids);
-            }  else if(identitySubset != null && !identitySubset.isEmpty()){
-                analysis = analysisService.findByUids(identitySubset);
+            try {
+                if(uids != null && !uids.isEmpty()) {
+                    analysis = analysisService.findByUids(uids);
+                }  else if(identitySubset != null && !identitySubset.isEmpty()){
+                    analysis = analysisService.findByUids(identitySubset);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to deserialize Analysis cache for group query, ignoring stale entries: {}",
+                    e.getMessage());
+                analysis = null;
             }
+
         	if (analysis != null && !analysis.isEmpty()) {
         		analysis.stream().forEach(anl -> {
         			if(anl.getReCiterFeature() != null
@@ -491,7 +498,14 @@ public class ReCiterController {
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
 
         if (!analysisRefreshFlag
         		&&
@@ -754,10 +768,6 @@ public class ReCiterController {
 	            	}
 	            }
 				analysisOutput.setUid(uid);
-				/**
-				 * TODO :  This piece of code has been commented to avoid data conflicts in Database as we have the same DynamoDB for Dev and Prod. 
-				 * Will be uncommented out before deploying this to Prod -Mahender
-				 */
 				if(analysisOutput.getReCiterFeature() != null) {
 					analysisService.save(analysisOutput);
 				} 
@@ -887,7 +897,15 @@ public class ReCiterController {
         } catch (NullPointerException n) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
+
         if (analysis != null) {//This was added to ensure to use analysis results only in evidence mode
         	if(analysis.getReCiterFeature() != null) {
         		analysis.getReCiterFeature().setInGoldStandardButNotRetrieved(null);
@@ -1065,7 +1083,7 @@ public class ReCiterController {
         parameters.setPubMedArticles(pubMedArticles);
         parameters.setScopusArticles(Collections.emptyList());
         parameters.setReciterArticles(reCiterArticles);
-		log.info("Getting the Reciter Articles to the Parameters" + parameters.getReciterArticles().size());
+
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         if (goldStandard == null) {
             parameters.setKnownPmids(new ArrayList<>());
@@ -1081,7 +1099,7 @@ public class ReCiterController {
         }
         return parameters;
     }
-    
+
     @ApiOperation(value = "Get all identity ORCIDs", notes = "This api retrieves all ORCIDs stored in the identity table.")
     @ApiImplicitParams({
     	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
@@ -1092,6 +1110,7 @@ public class ReCiterController {
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })
+
     @RequestMapping(value = "/reciter/article-identityOrcids", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity getAllOrcid() {

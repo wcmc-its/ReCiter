@@ -113,7 +113,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		// Save the articles.
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
 		if(pubMedArticleList != null) {
-			log.info("pubMedArticleList size {}",pubMedArticleList.size());
+			log.info("pubMedArticleList size {}", pubMedArticleList.size());
 		}
 		pubMedService.save(pubMedArticleList);
 

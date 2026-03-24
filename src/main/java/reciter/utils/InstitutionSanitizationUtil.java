@@ -20,7 +20,6 @@ import reciter.model.identity.OrganizationalUnit;
 import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 import reciter.model.identity.OrganizationalUnitSynonym;
 
-@NoArgsConstructor
 public class InstitutionSanitizationUtil {
 
 	private static final Logger log = LoggerFactory.getLogger(InstitutionSanitizationUtil.class);
