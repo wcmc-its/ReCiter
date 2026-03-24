@@ -96,7 +96,7 @@ import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 public class ReCiterController {
 
 	private static final Logger log = LoggerFactory.getLogger(ReCiterController.class);
-	
+
     @Autowired
     private ESearchResultService eSearchResultService;
 
@@ -151,7 +151,8 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
-    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
@@ -162,12 +163,12 @@ public class ReCiterController {
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -186,18 +187,19 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.PUT, produces = "application/json")
     @ResponseBody
-    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
         stopWatch.start("Update GoldStandard with List");
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -417,11 +419,18 @@ public class ReCiterController {
                         .collect(Collectors.toList());
             }
             List<AnalysisOutput> analysis = null;
-            if(uids != null && !uids.isEmpty()) {
-                analysis = analysisService.findByUids(uids);
-            }  else if(identitySubset != null && !identitySubset.isEmpty()){
-                analysis = analysisService.findByUids(identitySubset);
+            try {
+                if(uids != null && !uids.isEmpty()) {
+                    analysis = analysisService.findByUids(uids);
+                }  else if(identitySubset != null && !identitySubset.isEmpty()){
+                    analysis = analysisService.findByUids(identitySubset);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to deserialize Analysis cache for group query, ignoring stale entries: {}",
+                    e.getMessage());
+                analysis = null;
             }
+
         	if (analysis != null && !analysis.isEmpty()) {
         		analysis.stream().forEach(anl -> {
         			if(anl.getReCiterFeature() != null
@@ -489,11 +498,19 @@ public class ReCiterController {
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
-        if (!analysisRefreshFlag 
-        		&& 
-        		analysis != null 
-        		&& 
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
+
+        if (!analysisRefreshFlag
+        		&&
+        		analysis != null
+        		&&
         		(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null)) {//This was added to ensure to use analysis results only in evidence mode
         	List<Long> finalArticles =null;
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
@@ -751,10 +768,6 @@ public class ReCiterController {
 	            	}
 	            }
 				analysisOutput.setUid(uid);
-				/**
-				 * TODO :  This piece of code has been commented to avoid data conflicts in Database as we have the same DynamoDB for Dev and Prod. 
-				 * Will be uncommented out before deploying this to Prod -Mahender
-				 */
 				if(analysisOutput.getReCiterFeature() != null) {
 					analysisService.save(analysisOutput);
 				} 
@@ -884,7 +897,15 @@ public class ReCiterController {
         } catch (NullPointerException n) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
+
         if (analysis != null) {//This was added to ensure to use analysis results only in evidence mode
         	if(analysis.getReCiterFeature() != null) {
         		analysis.getReCiterFeature().setInGoldStandardButNotRetrieved(null);
@@ -1047,7 +1068,7 @@ public class ReCiterController {
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
         
         //Sanitize Identity Organizational Units(Division and Department)
-        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil(strategyParameters);
+        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil();
         institutionalSanitizationUtil.populateSanitizedIdentityInstitutions(identity);
         
         //Find gender probability
@@ -1100,4 +1121,5 @@ public class ReCiterController {
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return new ResponseEntity<>(allOrcids, HttpStatus.OK);
     }
+
 }

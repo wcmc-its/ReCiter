@@ -79,7 +79,7 @@ public class CognitoTokenService {
 	 	@Value("${aws.secretsmanager.consumer.secretName}")
 		private String consumerSecretName;
 	 	
-	 	@Value("${aws.congito.userpool.region}")
+	 	@Value("${aws.cognito.userpool.region}")
 		private String cognitoPoolRegion;
 	 	
 	 // Cache with a single key (since it's one token)

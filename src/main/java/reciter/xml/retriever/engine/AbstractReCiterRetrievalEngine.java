@@ -114,7 +114,6 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
 		if(pubMedArticleList != null) {
 			log.info("pubMedArticleList size {}", pubMedArticleList.size());
-
 		}
 		pubMedService.save(pubMedArticleList);
 
@@ -136,8 +135,12 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			}
 			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
 			if(eSearchPmid != null) {
+<<<<<<< HEAD
 				log.info("eSearchPmid {}", eSearchPmid);
 
+=======
+				log.info("eSearchPmid {} ",eSearchPmid);
+>>>>>>> b0709da4a8a0d6f3d6c8fc98818f1567e6c5d875
 			}
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);

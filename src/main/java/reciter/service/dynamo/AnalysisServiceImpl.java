@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
 
 import reciter.database.dynamodb.DynamoDbS3Operations;
+import reciter.database.dynamodb.aspect.MigrateSchema;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.repository.AnalysisOutputRepository;
 import reciter.engine.analysis.ReCiterFeature;
@@ -63,6 +64,7 @@ public class AnalysisServiceImpl implements AnalysisService{
 	}
 
 	@Override
+	@MigrateSchema(tableName = "Analysis")
 	public AnalysisOutput findByUid(String uid) {
 		AnalysisOutput analysisOutput = analysisOutputRepository.findById(uid).orElseGet(() -> null);
 		performResourceCleanup(analysisOutput);
@@ -87,6 +89,7 @@ public class AnalysisServiceImpl implements AnalysisService{
 	}
 
 	@Override
+	@MigrateSchema(tableName = "Analysis")
 	public List<AnalysisOutput> findByUids(List<String> uids) {
 		List<AnalysisOutput> analysisOutputs = null;
         Iterator<reciter.database.dynamodb.model.AnalysisOutput> iterator = analysisOutputRepository.findAllById(uids).iterator();
