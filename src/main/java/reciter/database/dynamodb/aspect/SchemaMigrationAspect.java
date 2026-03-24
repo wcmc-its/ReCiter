@@ -87,7 +87,7 @@ public class SchemaMigrationAspect {
                     .build();
 
             dynamoDBMapper.save(item, config);
-            System.out.println("DEBUG: Migrated " + item.getClass().getSimpleName() + " to version " + target);
+            log.info("DEBUG: Migrated " + item.getClass().getSimpleName() + " to version " + target);
         }
     }
 
