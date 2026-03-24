@@ -1062,7 +1062,7 @@ public class ReCiterController {
         parameters.setPubMedArticles(pubMedArticles);
         parameters.setScopusArticles(Collections.emptyList());
         parameters.setReciterArticles(reCiterArticles);
-		log.info("Getting the Reciter Articles to the Parameters" + parameters.getReciterArticles().size());
+
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         if (goldStandard == null) {
             parameters.setKnownPmids(new ArrayList<>());
@@ -1078,6 +1078,18 @@ public class ReCiterController {
         }
         return parameters;
     }
+
+    @ApiOperation(value = "Get all identity ORCIDs", notes = "This api retrieves all ORCIDs stored in the identity table.")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
+	    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully retrieved Map"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+
     @RequestMapping(value = "/reciter/article-identityOrcids", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity getAllOrcid() {
