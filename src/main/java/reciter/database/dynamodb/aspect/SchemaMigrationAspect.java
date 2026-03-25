@@ -3,6 +3,8 @@ package reciter.database.dynamodb.aspect;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.SaveBehavior;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+
 import reciter.database.dynamodb.model.VersionedItem;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -58,7 +60,8 @@ public class SchemaMigrationAspect {
         
         if (item instanceof VersionedItem) {
             
-        	int target = registry.getTargetVersion("your_table_name"); // Get from properties
+        	String tableName = getTableNameFromEntity(item);
+        	int target = registry.getTargetVersion(tableName); // Get from properties
             VersionedItem vItem = (VersionedItem) item;
             // Re-run populateDefaults right before the Repo sends it to DynamoDB
             // This ensures any "" set by the Controller are turned back into " "
@@ -140,5 +143,13 @@ public class SchemaMigrationAspect {
                         fieldName, obj.getClass().getSimpleName(), e);
             }
         }
+    }
+    private String getTableNameFromEntity(Object item) {
+        DynamoDBTable annotation = item.getClass().getAnnotation(DynamoDBTable.class);
+        if (annotation != null) {
+            return annotation.tableName();
+        }
+        // Fallback if the annotation is missing (unlikely for a DynamoDB entity)
+        return item.getClass().getSimpleName().toLowerCase();
     }
 }
