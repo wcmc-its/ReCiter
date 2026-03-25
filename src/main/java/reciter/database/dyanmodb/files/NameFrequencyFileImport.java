@@ -13,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import reciter.database.dynamodb.model.NameFrequency;
 import reciter.service.NameFrequencyService;
@@ -24,9 +22,6 @@ import reciter.service.NameFrequencyService;
 public class NameFrequencyFileImport {
 	
 	private static final Logger log = LoggerFactory.getLogger(NameFrequencyFileImport.class);
-
-	private static final Logger log = LoggerFactory.getLogger(NameFrequencyFileImport.class);
-
 
 	@Autowired
 	
