@@ -293,3 +293,4 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		log.info("Tracked provenance ({}) for {} accepted PMIDs for uid={}", strategy, pmids.size(), uid);
 	}
 }
+
