@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
-import reciter.algorithm.util.ReCiterStringUtil;
+import reciter.utils.ReCiterStringUtil;
 import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.database.dynamodb.model.ESearchCount;
 import reciter.database.dynamodb.model.GoldStandard;

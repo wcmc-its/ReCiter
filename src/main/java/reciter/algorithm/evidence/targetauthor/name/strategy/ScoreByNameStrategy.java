@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.algorithm.util.ReCiterStringUtil;
+import reciter.utils.ReCiterStringUtil;
 import reciter.database.dynamodb.model.NameFrequency;
 import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
