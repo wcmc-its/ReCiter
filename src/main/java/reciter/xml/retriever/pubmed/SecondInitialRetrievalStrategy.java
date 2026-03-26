@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import reciter.algorithm.util.ReCiterStringUtil;
+import reciter.utils.ReCiterStringUtil;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.pubmed.retriever.PubMedQuery;

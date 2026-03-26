@@ -183,7 +183,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
 					} else if (hasValidBachelor) {
 						discrepancyDegreeYearBachelor = articleYear - identity.getDegreeYear().getBachelorYear()
-								+ ReCiterArticleScorer.strategyParameters.getBacherlorYearWeight();
+								+ ReCiterArticleScorer.strategyParameters.getBachelorYearWeight();
 						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor < -99) ? -99
 								: discrepancyDegreeYearBachelor;
 						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor > 100) ? 100

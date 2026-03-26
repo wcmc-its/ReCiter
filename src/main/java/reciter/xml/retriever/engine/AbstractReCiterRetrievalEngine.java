@@ -135,7 +135,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			}
 			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
 			if(eSearchPmid != null) {
-				log.info("eSearchPmid {}", eSearchPmid);
+				log.info("eSearchPmid {} ",eSearchPmid);
 			}
 		}
 		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);

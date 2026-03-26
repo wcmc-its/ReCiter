@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ import reciter.model.pubmed.PubMedPubDate;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
 import reciter.utils.AuthorNameSanitizationUtils;
+import reciter.utils.ReCiterStringUtil;
 
 /**
  * Translator that translates a PubmedArticle to ReCiterArticle.
@@ -102,9 +104,24 @@ public class ArticleTranslator {
         // Article title
         String articleTitle = pubmedArticle.getMedlinecitation().getArticle().getArticletitle();
 
-        // Journal Title
-        String journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getTitle();
-        
+        // Journal Title (may be null for PubmedBookArticle records)
+        String journalTitle = null;
+        List<MedlineCitationJournalISSN> journalIssn = null;
+        int journalIssuePubDateYear = 0;
+        String isoAbbreviation = null;
+        boolean hasJournal = pubmedArticle.getMedlinecitation().getArticle().getJournal() != null;
+
+        if (hasJournal) {
+            journalTitle = pubmedArticle.getMedlinecitation().getArticle().getJournal().getTitle();
+            journalIssn = pubmedArticle.getMedlinecitation().getArticle().getJournal().getIssn();
+            isoAbbreviation = pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation();
+            if (pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+                    && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate() != null
+                    && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear() != null) {
+                journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear());
+            }
+        }
+
         //Pubmed Publication Type
         if(pubmedArticle.getMedlinecitation().getArticle().getPublicationtypelist() != null && !pubmedArticle.getMedlinecitation().getArticle().getPublicationtypelist().isEmpty()) {
 	        List<String> publicationTypePubmed = pubmedArticle.getMedlinecitation().getArticle().getPublicationtypelist().stream().map(pubType -> pubType.getPublicationtype()).collect(Collectors.toList());
@@ -123,11 +140,6 @@ public class ArticleTranslator {
         
         
         
-
-        List<MedlineCitationJournalISSN> journalIssn = pubmedArticle.getMedlinecitation().getArticle().getJournal().getIssn();
-
-        // Translating Journal Issue PubDate Year.
-        int journalIssuePubDateYear = Integer.parseInt(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate().getYear());
 
         // Co-authors
         List<MedlineCitationArticleAuthor> coAuthors = pubmedArticle.getMedlinecitation().getArticle().getAuthorlist();
@@ -238,12 +250,14 @@ public class ArticleTranslator {
         }
 
         reCiterArticle.setArticleTitle(articleTitle);
-        reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
+        if (hasJournal) {
+            reCiterArticle.setJournal(new ReCiterJournal(journalTitle));
+            reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
+            reCiterArticle.getJournal().setJournalIssn(journalIssn);
+            reCiterArticle.getJournal().setIsoAbbreviation(isoAbbreviation);
+        }
         reCiterArticle.setArticleCoAuthors(reCiterCoAuthors);
         reCiterArticle.setArticleKeywords(articleKeywords);
-        reCiterArticle.getJournal().setJournalIssuePubDateYear(journalIssuePubDateYear);
-        reCiterArticle.getJournal().setJournalIssn(journalIssn);
-        reCiterArticle.getJournal().setIsoAbbreviation(pubmedArticle.getMedlinecitation().getArticle().getJournal().getIsoAbbreviation());
         reCiterArticle.setMeshHeadings(reCiterArticleMeshHeadings);
 
         // Use PubMed Article date as the publication date (pubdate)
@@ -275,8 +289,9 @@ public class ArticleTranslator {
         
         //Case when ArticleDate does not exist use PubDate as date standardized date
         if (reCiterArticle.getPublicationDateStandardized() == null
-        		&&
-        		pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate() != null) {
+        		&& hasJournal
+        		&& pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+        		&& pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate() != null) {
         	medlineCitationDate = pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getPubdate();
         	String articleDateMonth = null;
         	String articleDateDay = null;
@@ -413,22 +428,31 @@ public class ArticleTranslator {
 
         if (pubmedArticle.getMedlinecitation().getCommentscorrectionslist() != null) {
             Set<Long> commentsCorrectionsPmids = new HashSet<>();
+            Map<Long, String> commentsCorrectionsRefTypes = new HashMap<>();
             List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlinecitation().getCommentscorrectionslist();
             for (MedlineCitationCommentsCorrections medlineCitationCommentsCorrections : commentsCorrectionsList) {
-                if(medlineCitationCommentsCorrections.getPmid() != null)
-                    commentsCorrectionsPmids.add(Long.parseLong(medlineCitationCommentsCorrections.getPmid()));
+                if(medlineCitationCommentsCorrections.getPmid() != null) {
+                    Long ccPmid = Long.parseLong(medlineCitationCommentsCorrections.getPmid());
+                    commentsCorrectionsPmids.add(ccPmid);
+                    if (medlineCitationCommentsCorrections.getReftype() != null) {
+                        commentsCorrectionsRefTypes.put(ccPmid, medlineCitationCommentsCorrections.getReftype());
+                    }
+                }
             }
             reCiterArticle.setCommentsCorrectionsPmids(commentsCorrectionsPmids);
+            reCiterArticle.setCommentsCorrectionsRefTypes(commentsCorrectionsRefTypes);
         }
 
         // Volume
-        if (pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume() != null &&
-                !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isEmpty()) {
+        if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+                && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume() != null
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isEmpty()) {
             reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
         }
         // issue
-        if (pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue() != null &&
-                !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isEmpty()) {
+        if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
+                && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue() != null
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isEmpty()) {
             reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
         }
 
@@ -454,141 +478,395 @@ public class ArticleTranslator {
         return reCiterArticle;
     }
     
+    /**
+     * Phase 1: Determine canonical publication type from PubMed publication types.
+     *
+     * Priority order matters — first match wins. Retraction takes highest priority
+     * among content types because it supersedes the original article type.
+     *
+     * Phase 2 (evidence-based reclassification) runs after this method when the
+     * result is "Academic Article" or "Article", using supplementary signals like
+     * title patterns, journal title, and abstract structure.
+     *
+     * See docs/README-publication-type.md for full rationale and audit results.
+     */
     private static void determinePublicationTypeCanonical(ReCiterArticle reCiterArticle, ScopusArticle scopusArticle) {
     	String publicationTypeCanonical = null;
 
-        if(publicationTypeCanonical == null && reCiterArticle.getPublicationTypePubmed() != null) {
-            if(reCiterArticle.getPublicationTypePubmed().contains("Editorial")) {
+        if(reCiterArticle.getPublicationTypePubmed() != null) {
+            List<String> pubTypes = reCiterArticle.getPublicationTypePubmed();
+
+            if(pubTypes.contains("Editorial")
+                    ||
+                    pubTypes.contains("Introductory Journal Article")) {
                 publicationTypeCanonical = "Editorial Article";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Letter")) {
+            } else if(pubTypes.contains("Letter")) {
                 publicationTypeCanonical = "Letter";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Comment")) {
+            } else if(pubTypes.contains("Comment")) {
                 publicationTypeCanonical = "Comment";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Preprint")) {
-                  publicationTypeCanonical = "Preprint";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Published Erratum")) {
-                  publicationTypeCanonical = "Erratum";                
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference")
+            } else if(pubTypes.contains("Preprint")) {
+                publicationTypeCanonical = "Preprint";
+            } else if(pubTypes.contains("Retraction of Publication")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Consensus Development Conference, NIH")
+                    pubTypes.contains("Retracted Publication")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Address")
+                    pubTypes.contains("Retraction Notice")) {
+                publicationTypeCanonical = "Retraction";
+            } else if(pubTypes.contains("Published Erratum")) {
+                publicationTypeCanonical = "Erratum";
+            } else if(pubTypes.contains("Consensus Development Conference")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Conference")
+                    pubTypes.contains("Consensus Development Conference, NIH")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Congress")
+                    pubTypes.contains("Address")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Lecture")) {
+                    pubTypes.contains("Congress")
+                    ||
+                    pubTypes.contains("Conference Proceedings")
+                    ||
+                    pubTypes.contains("Lecture")) {
                 publicationTypeCanonical = "Conference Paper";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Guideline")
+            } else if(pubTypes.contains("Guideline")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Practice Guideline")) {
+                    pubTypes.contains("Practice Guideline")
+                    ||
+                    pubTypes.contains("Consensus Statement")) {
                 publicationTypeCanonical = "Guideline";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Meta-Analysis")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Review")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Classical Article")
-                    ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Scientific Integrity Review")) {
-                publicationTypeCanonical = "Review";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Case Reports")) {
+            } else if(pubTypes.contains("Case Reports")) {
                 publicationTypeCanonical = "Case Report";
-            } else if(reCiterArticle.getPublicationTypePubmed().contains("Journal Article")
+            } else if(pubTypes.contains("Meta-Analysis")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase I")
+                    pubTypes.contains("Review")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase II")
+                    pubTypes.contains("Systematic Review")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase III")
+                    pubTypes.contains("Scoping Review")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial, Phase IV")
+                    pubTypes.contains("Network Meta-Analysis")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
+                    pubTypes.contains("Classical Article")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Randomized Controlled Trial")
+                    pubTypes.contains("Scientific Integrity Review")) {
+                publicationTypeCanonical = "Review";
+            } else if(pubTypes.contains("Journal Article")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Multicenter Study")
+                    pubTypes.contains("Clinical Trial, Phase I")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Twin Study")
+                    pubTypes.contains("Clinical Trial, Phase II")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Validation Study")
+                    pubTypes.contains("Clinical Trial, Phase III")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Controlled Clinical Trial")
+                    pubTypes.contains("Clinical Trial, Phase IV")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Pragmatic Clinical Trial")
+                    pubTypes.contains("Controlled Clinical Trial")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Study")
+                    pubTypes.contains("Randomized Controlled Trial")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial Protocol")
+                    pubTypes.contains("Multicenter Study")
                     ||
-                    reCiterArticle.getPublicationTypePubmed().contains("Comparative Study")
+                    pubTypes.contains("Twin Study")
                     ||
-					reCiterArticle.getPublicationTypePubmed().contains("Clinical Trial")                    
-            		||
-                    reCiterArticle.getPublicationTypePubmed().contains("Technical Report")) {
+                    pubTypes.contains("Validation Study")
+                    ||
+                    pubTypes.contains("Pragmatic Clinical Trial")
+                    ||
+                    pubTypes.contains("Clinical Study")
+                    ||
+                    pubTypes.contains("Clinical Trial Protocol")
+                    ||
+                    pubTypes.contains("Comparative Study")
+                    ||
+                    pubTypes.contains("Observational Study")
+                    ||
+                    pubTypes.contains("Evaluation Study")
+                    ||
+                    pubTypes.contains("Clinical Trial")
+                    ||
+                    pubTypes.contains("Technical Report")
+                    ||
+                    pubTypes.contains("Clinical Conference")) {
                 publicationTypeCanonical = "Academic Article";
             } else {
                 publicationTypeCanonical = "Article";
             }
         }
 
-/*
+        // Fallback: if PubMed types were null/empty or no branch matched, default to "Article".
+        if (publicationTypeCanonical == null) {
+            publicationTypeCanonical = "Article";
+        }
 
-## The below code uses publication type data from Scopus to infer publication type. Scopus has its virtues but it is commented out 
-## for now so that we rely on PubMed exclusively. The reasoning is:
-## 1. PubMed is freely available
-## 2. More commonly used, and 
-## 3. Less aggressive about mapping publications to what they call "articles" and what we would map to "academic articles."
+        // Phase 2: Evidence-based reclassification for ambiguous defaults.
+        // Only runs when Phase 1 returns "Academic Article" or "Article" (the catch-all types).
+        // Uses title patterns, journal title, and abstract structure to override.
+        if ("Academic Article".equals(publicationTypeCanonical) || "Article".equals(publicationTypeCanonical)) {
+            String reclassified = reclassifyByEvidence(reCiterArticle, publicationTypeCanonical);
+            if (reclassified != null) {
+                publicationTypeCanonical = reclassified;
+            }
+        }
 
-    	if(reCiterArticle.getPublicationTypeScopus() != null && scopusArticle.getSubType() != null) {
-    		if(scopusArticle.getSubType().equalsIgnoreCase("cp")
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("Consensus Development Conference"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("Consensus Development Conference, NIH"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("Address"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("Clinical Conference"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("Congress"))
-    				||
-    				(reCiterArticle.getArticleTitle() != null && reCiterArticle.getArticleTitle().contains("Lecture"))) {
-    			publicationTypeCanonical = "Conference Paper";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("re")) {
-    			publicationTypeCanonical = "Review";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("rp")) {
-    			publicationTypeCanonical = "Report";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("ch")) {
-    			publicationTypeCanonical = "Chapter";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("ed")) {
-    			publicationTypeCanonical = "Editorial Article";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("ip")) {
-    			publicationTypeCanonical = "In Process";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("bk")) {
-    			publicationTypeCanonical = "Book";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("le")) {
-    			publicationTypeCanonical = "Letter";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("no")) {
-    			publicationTypeCanonical = "Comment";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("ar")) {
-    			publicationTypeCanonical = "Academic Article";
-    		} else if(scopusArticle.getSubType().equalsIgnoreCase("ab") || scopusArticle.getSubType().equalsIgnoreCase("bz") || scopusArticle.getSubType().equalsIgnoreCase("cr") || scopusArticle.getSubType().equalsIgnoreCase("sh")) {
-    			publicationTypeCanonical = "Article";
-    		}
-    	}
-*/        
     	reCiterArticle.setPublicationTypeCanonical(publicationTypeCanonical);
     }
-	
+
+    /**
+     * Phase 2: Evidence-based reclassification.
+     *
+     * Evaluates supplementary signals (title patterns, journal title, abstract
+     * structure) to reclassify articles that Phase 1 defaulted to "Academic Article"
+     * or "Article". Each signal contributes a weighted score toward candidate types.
+     * A candidate needs score >= 3 (one Strong signal) to override.
+     *
+     * Weights: Strong = 3, Moderate = 2, Weak = 1.
+     *
+     * The phase1Type parameter ("Academic Article" or "Article") conditions certain
+     * signal weights. When PubMed's indexers actively assigned "Journal Article"
+     * (Phase 1 = "Academic Article"), the prior for genuine article is higher and
+     * ambiguous signals are downweighted.
+     *
+     * Returns the new canonical type, or null if no candidate meets threshold.
+     */
+    private static String reclassifyByEvidence(ReCiterArticle reCiterArticle, String phase1Type) {
+        String title = reCiterArticle.getArticleTitle() != null ? reCiterArticle.getArticleTitle() : "";
+        String titleLower = title.toLowerCase();
+        String journalTitle = reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null
+                ? reCiterArticle.getJournal().getJournalTitle().toLowerCase() : "";
+        boolean hasAbstract = reCiterArticle.getPublicationAbstract() != null
+                && !reCiterArticle.getPublicationAbstract().isEmpty();
+        // Distinguish full IMRaD structure (METHODS + RESULTS) from partial structure
+        // (has section labels like BACKGROUND/CONCLUSIONS but no methods/results).
+        // Full IMRaD strongly confirms original research. Partial structure is weaker —
+        // perspectives, commentaries, and reviews can have BACKGROUND/CONCLUSIONS sections.
+        boolean hasMethodsOrResults = hasAbstract && (
+                reCiterArticle.getPublicationAbstract().contains("METHODS:")
+                || reCiterArticle.getPublicationAbstract().contains("RESULTS:")
+                || reCiterArticle.getPublicationAbstract().contains("MATERIALS AND METHODS:")
+                || reCiterArticle.getPublicationAbstract().contains("FINDINGS:"));
+        boolean hasPartialStructure = !hasMethodsOrResults && hasAbstract && (
+                reCiterArticle.getPublicationAbstract().contains("BACKGROUND:")
+                || reCiterArticle.getPublicationAbstract().contains("OBJECTIVE:")
+                || reCiterArticle.getPublicationAbstract().contains("OBJECTIVES:")
+                || reCiterArticle.getPublicationAbstract().contains("CONCLUSIONS:")
+                || reCiterArticle.getPublicationAbstract().contains("CONCLUSION:")
+                || reCiterArticle.getPublicationAbstract().contains("PURPOSE:")
+                || reCiterArticle.getPublicationAbstract().contains("AIM:")
+                || reCiterArticle.getPublicationAbstract().contains("AIMS:")
+                || reCiterArticle.getPublicationAbstract().contains("INTRODUCTION:"));
+        boolean hasStructuredAbstract = hasMethodsOrResults || hasPartialStructure;
+        int authorCount = reCiterArticle.getArticleCoAuthors() != null
+                && reCiterArticle.getArticleCoAuthors().getAuthors() != null
+                ? reCiterArticle.getArticleCoAuthors().getAuthors().size() : 0;
+
+        // Track scores for each candidate type
+        int reviewScore = 0;
+        int caseReportScore = 0;
+        int editorialScore = 0;
+        int letterScore = 0;
+        int commentScore = 0;
+        int erratumScore = 0;
+        int retractionScore = 0;
+
+        // --- CommentsCorrections RefType signals ---
+        Map<Long, String> refTypes = reCiterArticle.getCommentsCorrectionsRefTypes();
+        boolean hasCommentOn = false;
+        if (refTypes != null) {
+            for (String refType : refTypes.values()) {
+                if ("RetractionOf".equals(refType) || "RetractionIn".equals(refType)) {
+                    return "Retraction"; // Deterministic
+                }
+                if ("ErratumFor".equals(refType)) {
+                    return "Erratum"; // Deterministic
+                }
+                if ("CommentOn".equals(refType)) {
+                    hasCommentOn = true;
+                }
+            }
+        }
+
+        // --- Retraction signals ---
+        if (titleLower.startsWith("retraction:") || titleLower.startsWith("retraction notice")) {
+            retractionScore += 3; // Strong
+        }
+
+        // --- Erratum signals ---
+        if (titleLower.startsWith("erratum") || titleLower.startsWith("corrigendum")
+                || titleLower.startsWith("correction to") || titleLower.startsWith("correction:")) {
+            erratumScore += 3; // Strong
+        }
+
+        // --- Review signals ---
+        // Journal title patterns (Strong)
+        if (journalTitle.contains("annual review of")
+                || journalTitle.startsWith("nature reviews")
+                || journalTitle.startsWith("current opinion in")
+                || journalTitle.contains("cochrane database of systematic reviews")
+                || journalTitle.contains("campbell systematic reviews")
+                || journalTitle.endsWith(" reviews")
+                || journalTitle.contains("systematic reviews")) {
+            reviewScore += 3; // Strong
+        }
+        // Title contains "systematic review" (Strong)
+        if (titleLower.contains("systematic review")) {
+            reviewScore += 3; // Strong
+        }
+        // Title contains "a review" or "review of" without "systematic" (Weak)
+        if ((titleLower.contains("a review") || titleLower.contains("review of"))
+                && !titleLower.contains("systematic review")) {
+            reviewScore += 1; // Weak
+        }
+        // No structured abstract + long article (Weak) — approximate via page string
+        if (!hasStructuredAbstract && hasAbstract) {
+            reviewScore += 1; // Weak (at most; can't reliably check page count)
+        }
+
+        // --- Case Report signals ---
+        if (titleLower.contains("case report")) {
+            caseReportScore += 3; // Strong
+        }
+        if (titleLower.startsWith("a case of") || titleLower.startsWith("a rare case of")) {
+            caseReportScore += 3; // Strong
+        }
+        // Journal title patterns (Moderate)
+        if (journalTitle.contains("case reports")) {
+            caseReportScore += 2; // Moderate
+        }
+        // Abstract has CASE section labels (Moderate)
+        if (hasAbstract && (reCiterArticle.getPublicationAbstract().contains("CASE PRESENTATION:")
+                || reCiterArticle.getPublicationAbstract().contains("CASE REPORT:")
+                || reCiterArticle.getPublicationAbstract().contains("CASE:"))) {
+            caseReportScore += 2; // Moderate
+        }
+
+        // --- Editorial signals ---
+        if (titleLower.startsWith("editorial:") || titleLower.startsWith("editor's note")
+                || titleLower.endsWith("[editorial]")) {
+            editorialScore += 3; // Strong
+        }
+        // No abstract + single page — weight depends on Phase 1 result.
+        // When Phase 1 = "Article" (catch-all, no PubMed type), this signal is Strong (96.6% accuracy).
+        // When Phase 1 = "Academic Article" (PubMed assigned "Journal Article"), this signal alone
+        // is not strong enough to override PubMed's positive classification (42.4% accuracy).
+        boolean isSinglePage = isSinglePageArticle(reCiterArticle.getPages());
+        if (!hasAbstract && isSinglePage) {
+            if ("Article".equals(phase1Type)) {
+                editorialScore += 3; // Strong — no PubMed type to contradict
+            } else {
+                editorialScore += 1; // Weak — PubMed assigned "Journal Article"; needs other signals to fire
+            }
+        }
+        // No abstract + 1 author (Weak + Weak combined as Moderate)
+        if (!hasAbstract && authorCount == 1) {
+            editorialScore += 2; // Moderate (combined weak signals)
+        }
+        // CommentOn RefType — article responds to another article (Moderate)
+        if (hasCommentOn) {
+            editorialScore += 2; // Moderate — response articles are often editorial in nature
+            commentScore += 2;   // Moderate — also evidence for Comment type
+        }
+
+        // --- Letter signals ---
+        if (titleLower.startsWith("letter to the editor") || titleLower.startsWith("letter:")
+                || titleLower.startsWith("correspondence:")) {
+            letterScore += 3; // Strong
+        }
+
+        // --- Comment signals ---
+        if (titleLower.startsWith("comment on") || titleLower.startsWith("response to")
+                || titleLower.startsWith("reply to")) {
+            commentScore += 3; // Strong
+        }
+
+        // --- Confirming Academic Article (prevents weak signals from overriding) ---
+        // Full IMRaD (METHODS/RESULTS) = Strong (3): near-definitive evidence of original research.
+        // Partial structure (BACKGROUND/CONCLUSIONS only) = Moderate (2): perspectives,
+        // commentaries, and reviews can have these labels, so a Strong reclassification
+        // signal (3) can override.
+        int academicScore = 0;
+        if (hasMethodsOrResults) {
+            academicScore += 3; // Strong — full IMRaD confirms original research
+        } else if (hasPartialStructure) {
+            academicScore += 2; // Moderate — partial structure, weaker evidence
+        }
+
+        // Find the highest-scoring candidate that meets threshold
+        // Tiebreaker priority: Retraction > Erratum > Review > Case Report > Editorial > Letter > Comment
+        int threshold = 3;
+        String bestType = null;
+        int bestScore = 0;
+
+        if (retractionScore >= threshold && retractionScore > bestScore) {
+            bestScore = retractionScore; bestType = "Retraction";
+        }
+        if (erratumScore >= threshold && erratumScore > bestScore) {
+            bestScore = erratumScore; bestType = "Erratum";
+        }
+        if (reviewScore >= threshold && reviewScore > bestScore) {
+            bestScore = reviewScore; bestType = "Review";
+        }
+        if (caseReportScore >= threshold && caseReportScore > bestScore) {
+            bestScore = caseReportScore; bestType = "Case Report";
+        }
+        if (editorialScore >= threshold && editorialScore > bestScore) {
+            bestScore = editorialScore; bestType = "Editorial Article";
+        }
+        if (letterScore >= threshold && letterScore > bestScore) {
+            bestScore = letterScore; bestType = "Letter";
+        }
+        if (commentScore >= threshold && commentScore > bestScore) {
+            bestScore = commentScore; bestType = "Comment";
+        }
+
+        // Don't override if Academic Article evidence is equally strong or stronger
+        if (bestType != null && academicScore >= bestScore) {
+            return null;
+        }
+
+        return bestType;
+    }
+
+    /**
+     * Determine if an article is a single-page article based on the pages string.
+     * Handles formats: "123-123" (same page), "e12345" (electronic pagination),
+     * "S123" (supplement), "123" (single number), and abbreviated end pages
+     * like "1262-71" (= 1262-1271, NOT single page).
+     */
+    private static boolean isSinglePageArticle(String pages) {
+        if (pages == null || pages.trim().isEmpty()) {
+            return false;
+        }
+        pages = pages.trim();
+
+        // If contains a hyphen, parse as range
+        if (pages.contains("-")) {
+            // Extract numeric parts, handling prefixes like "S1-S2"
+            String[] parts = pages.split("-", 2);
+            String startStr = parts[0].trim().replaceAll("^[A-Za-z]+", "");
+            String endStr = parts[1].trim().replaceAll("^[A-Za-z]+", "");
+            try {
+                int start = Integer.parseInt(startStr);
+                int end = Integer.parseInt(endStr);
+                // Handle abbreviated end pages: "1262-71" → 1262-1271
+                if (end < start) {
+                    String prefix = startStr.substring(0, startStr.length() - endStr.length());
+                    end = Integer.parseInt(prefix + endStr);
+                }
+                return (end - start + 1) == 1;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+
+        // No hyphen: single-number formats like "e12345", "S123", "123" = 1 page
+        return pages.matches("^[A-Za-z]?\\d+$");
+    }
+
     private static void populateFeatures(ReCiterArticle reCiterArticle, String nameIgnoredCoAuthors) {
     	List<String> ignoredCoAuthorNames = Arrays.asList(nameIgnoredCoAuthors.trim().split("\\s*,\\s*"));
     	ReCiterArticleFeatures reCiterArticleFeatures = new ReCiterArticleFeatures();
     	int featureCount = reCiterArticleFeatures.getFeatureCount();
     	
     	//Journal Feature Name
-		if (reCiterArticle.getJournal().exist()) {
+		if (reCiterArticle.getJournal() != null && reCiterArticle.getJournal().exist()) {
 			reCiterArticleFeatures.setJournalName(reCiterArticle.getJournal().getJournalTitle());
 			featureCount++;
 		}

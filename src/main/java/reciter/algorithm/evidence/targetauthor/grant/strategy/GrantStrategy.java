@@ -53,6 +53,10 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 		GrantEvidence grantEvidence = new GrantEvidence();
 		List<Grant> grants = new ArrayList<>();
 		grantEvidence.setGrants(grants);
+		if (reCiterArticle.getGrantList() == null) {
+			reCiterArticle.setGrantEvidence(grantEvidence);
+			return 0;
+		}
 		for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
 			for (String identityGrantId : identity.getGrants()) {
 				log.info("identity grant {}", identityGrantId);
@@ -85,6 +89,7 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 			//score += executeStrategy(reCiterArticle, identity);
 			List<Grant> grants = new ArrayList<>();
 			checkForValidGrant(reCiterArticle); // Calling here as we removed the old clustering logic for the Grants
+			if (reCiterArticle.getGrantList() == null) continue;
 			for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
 				for (String identityGrantId : sanitizedIdentityGrants) {
 					//log.info("identity grant {}", identityGrantId);
@@ -137,6 +142,7 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 		}
 	}
 	private void checkForValidGrant(ReCiterArticle reCiterArticle) {
+		if (reCiterArticle.getGrantList() == null) return;
 		for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
 			if(grant.getGrantID() != null) {
 				String sanitizedGrant = sanitizeGrant(grant.getGrantID().replaceAll("[\\s\\-]", ""));
