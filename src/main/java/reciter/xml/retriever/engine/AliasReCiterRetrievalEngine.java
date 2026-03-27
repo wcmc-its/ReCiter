@@ -189,10 +189,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if (orcidForRetrieval != null) {
 				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
 						orcidForRetrieval, uid);
-				// Persist inferred ORCID so subsequent runs use the fast asserted path.
+				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
+				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
 				identity.setOrcid(orcidForRetrieval);
-				identityService.save(identity);
-				slf4jLogger.info("Persisted inferred ORCID [{}] to Identity for uid=[{}]",
+				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
 						orcidForRetrieval, uid);
 			}
 		}
@@ -501,10 +501,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			if (orcidForRetrieval != null) {
 				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
 						orcidForRetrieval, uid);
-				// Persist inferred ORCID so subsequent runs use the fast asserted path.
+				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
+				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
 				identity.setOrcid(orcidForRetrieval);
-				identityService.save(identity);
-				slf4jLogger.info("Persisted inferred ORCID [{}] to Identity for uid=[{}]",
+				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
 						orcidForRetrieval, uid);
 			}
 		}
