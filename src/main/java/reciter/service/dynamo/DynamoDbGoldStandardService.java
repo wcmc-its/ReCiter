@@ -320,6 +320,11 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		return goldStanards;
 	}
 
+	@Override
+	public void delete(String uid) {
+		dynamoDbGoldStandardRepository.deleteById(uid);
+	}
+
 	/**
 	 * Build audit log entries by diffing incoming PMIDs against existing.
 	 * Only creates entries for genuinely new acceptances/rejections.
