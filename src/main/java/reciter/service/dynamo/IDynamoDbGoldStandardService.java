@@ -10,4 +10,5 @@ public interface IDynamoDbGoldStandardService {
     void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource);
     GoldStandard findByUid(String uid);
     List<GoldStandard> findByUids(List<String> uid);
+    void delete(String uid);
 }
