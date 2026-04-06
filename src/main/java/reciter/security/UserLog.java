@@ -15,5 +15,6 @@ public class UserLog {
     private String apiEndPoint;
     private String personIdentifier;
     private String timestamp;
+    private int apiRetrievalStatus;
 }
 

@@ -1,19 +1,38 @@
 package reciter.security;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
+import com.amazonaws.services.cognitoidp.model.ListUserPoolClientsRequest;
+import com.amazonaws.services.cognitoidp.model.ListUserPoolClientsResult;
 
 /**
  * @author mjangari 
@@ -26,7 +45,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired(required = false)
-    private JwtTokenAuthenticationFilter jwtAuthenticationFilter;
+    private MultiApiKeyFilter multiApiKeyFilter;
 	 
 	@Autowired(required = false)
     private CustomAuthenticationEntryPoint customEntryPoint;
@@ -35,60 +54,153 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Value("${spring.security.enabled}")
 	private boolean securityEnabled;
+	
+	@Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
+    private String jwkSetUri;
+	
+	@Value("${aws.cognito.issuerUri}")
+	private String issuerUri;
+	
+	@Value("${aws.cognito.user-pool-id}")
+    private String userPoolId;
+	
+	@Value("${aws.cognito.userpool.region}")
+    private String awsRegion;
+	
+	@Value("${aws.cognito.cache.refresh.timeinterval}")
+    private int cognitoCacheRefreshTimeInterval;
+	
+	@Autowired
+	private S3UserLogHandler s3UserLogHandler;
+	
+	// This is the name of the data bucket in the cache for authorized consumer clients.
+    private static final String CACHE_KEY = "AUTHORIZED_CONSUMER_CLIENTS";
 
-	@Bean
-	public JwtTokenAuthenticationFilter jwtAuthenticationFilter() {
+    private final LoadingCache<String, Set<String>> cognitoClientCache = Caffeine.newBuilder()
+        .refreshAfterWrite(15, TimeUnit.MINUTES)
+        .build(key -> fetchAllUserPoolClients());
+    
+    @Bean
+	public MultiApiKeyFilter MultiApiKeyAuthenticationFilter() {
 	   log.info("JWT filter bean is being created!");
-	   return new JwtTokenAuthenticationFilter();
+	   return new MultiApiKeyFilter();
 	}
 	
-	/*@Bean
-    	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
-    	public FilterRegistrationBean<JwtTokenAuthenticationFilter> jwtFilterRegistration(JwtTokenAuthenticationFilter filter) 
-	{
-        	FilterRegistrationBean<JwtTokenAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
-        	registration.setEnabled(false);
-       		 return registration;
-    	}*/
-	
+    @Bean
+    public static PropertySourcesPlaceholderConfigurer propertyScanner() {
+        return new PropertySourcesPlaceholderConfigurer();
+    }
+    
+    @Bean
+    public JwtDecoder jwtDecoder() 
+    {
+    	// 1. Mandatory Property Validation (The Guard Clause)
+        boolean isConfigMissing = jwkSetUri == null || jwkSetUri.isEmpty() || jwkSetUri.contains("${") ||
+                                 issuerUri == null || issuerUri.isEmpty() || issuerUri.contains("${") ||
+                                 "NONE".equals(userPoolId);
 
+        if (isConfigMissing) {
+            log.warn(">>> JWT SECURITY IS DISABLED <<<");
+            log.warn("Missing or unresolved Kubernetes ConfigMap values. JWK URI: {}, Pool ID: {}", jwkSetUri, userPoolId);
+            
+            // Return a fail-fast decoder so the Spring Context stays healthy locally
+            return token -> {
+                throw new JwtException("JWT Authentication is not configured in this environment.");
+            };
+        }
+
+        // 2. Initialize the Base Decoder
+        log.info("Initializing Cognito JwtDecoder for Region: {} with Refresh Interval: {} min", 
+                 awsRegion, cognitoCacheRefreshTimeInterval);
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+
+     // 3. Define the Dynamic Client ID Validator (Zero-Hardcoding)
+        OAuth2TokenValidator<Jwt> clientIdValidator = new JwtClaimValidator<String>(
+            "client_id", 
+            clientId -> {
+                try {
+                    // Accessing the Caffeine Cache
+                    Set<String> authorizedIds = cognitoClientCache.get(CACHE_KEY);
+                    return authorizedIds != null && authorizedIds.contains(clientId);
+                } catch (Exception e) {
+                    log.error("Security Registry Error: Could not validate Client ID {}", clientId, e);
+                    return false;
+                }
+            }
+        );
+
+        // 4. Combine with Standard JWT Validation (Issuer, Expiration, etc.)
+        OAuth2TokenValidator<Jwt> combinedValidator = new DelegatingOAuth2TokenValidator<>(
+            JwtValidators.createDefaultWithIssuer(issuerUri),
+            clientIdValidator
+        );
+
+        jwtDecoder.setJwtValidator(combinedValidator);
+        return jwtDecoder;
+    
+    }
+
+	// 4. The AWS SDK v1 Fetch Logic (Helper Method)
+    private Set<String> fetchAllUserPoolClients() {
+        log.info("Refreshing Cognito Client Registry for Pool: {}", userPoolId);
+        
+        AWSCognitoIdentityProvider client = AWSCognitoIdentityProviderClientBuilder.standard()
+                .withRegion(awsRegion)
+                .build();
+
+        Set<String> freshIds = new HashSet<>();
+        String nextToken = null;
+
+        try {
+            do {
+                ListUserPoolClientsRequest request = new ListUserPoolClientsRequest()
+                        .withUserPoolId(userPoolId)
+                        .withMaxResults(60)
+                        .withNextToken(nextToken);
+
+                ListUserPoolClientsResult result = client.listUserPoolClients(request);
+                result.getUserPoolClients().forEach(c -> freshIds.add(c.getClientId()));
+                nextToken = result.getNextToken();
+            } while (nextToken != null);
+
+            return Collections.unmodifiableSet(freshIds);
+        } catch (Exception e) {
+            log.error("Critical: Failed to sync with Cognito. API may reject valid tokens.", e);
+            throw e; 
+        }
+    }
+	
+    
+    
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
-		/*if (!securityEnabled) { // allow when security is off
-			httpSecurity.antMatcher("/reciter/**").csrf().disable()
-	            .authorizeRequests()
-	            .anyRequest().permitAll();
-	        return;
-	    }*/
-		/*httpSecurity.antMatcher("/reciter/**").csrf().disable().sessionManagement()
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-		
-		// Only set exceptionHandling if the entry point is available
-       // if (customEntryPoint != null) {
-        	httpSecurity.exceptionHandling().authenticationEntryPoint(customEntryPoint)
-                .and();
-        //}
-	        httpSecurity.authorizeRequests()
-					.anyRequest().authenticated();
-		
-		 //if (jwtAuthenticationFilter != null) {
-			// httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-	      //  }*/
 		
 		httpSecurity.antMatcher("/reciter/**")
          .csrf().disable()
-         .exceptionHandling()
-             .authenticationEntryPoint(customEntryPoint)
-         .and()
          .sessionManagement()
-             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+         	.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
          .and()
+         .exceptionHandling()
+         	.authenticationEntryPoint(customEntryPoint)
+         .and()
+         
+      // 1. Setup JWT Decoding (Fires ONLY if Bearer header is present)
+         .oauth2ResourceServer()
+         	.jwt()
+         	.decoder(jwtDecoder()) // This calls your Caffeine-backed bean
+         .and()
+         .and()
+         
+      // 2. Add API Key Filter (Fires BEFORE or AFTER, but needs pass-through logic)
+         .addFilterBefore(multiApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+         
+      // 3. Asynchronous S3 Logging Filter
+         // We place this after BearerTokenAuthenticationFilter so 'SecurityContext' is populated
+         .addFilterAfter(new S3LoggingFilter(s3UserLogHandler), 
+                         org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter.class)
+
          .authorizeRequests()
              .anyRequest().authenticated();
-
-		httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
 	}
 
 	@Override

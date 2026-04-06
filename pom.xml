@@ -321,6 +321,11 @@
 	        <artifactId>spring-security-oauth2-jose</artifactId>
 	        <version>5.6.0</version> 
     	</dependency> 
+    	<dependency>
+	        <groupId>org.springframework.security</groupId>
+	        <artifactId>spring-security-oauth2-resource-server</artifactId>
+	        <version>5.6.0</version>
+    	</dependency>
  	    <dependency>
 	    	<groupId>edu.cornell.weill.reciter</groupId>
 	    	<artifactId>reciter-scopus-model</artifactId>
@@ -342,6 +347,11 @@
 		  <artifactId>aws-java-sdk-core</artifactId>
 		  <version>1.12.742</version>
 		</dependency>
+		<dependency>
+		    <groupId>com.amazonaws</groupId>
+		    <artifactId>aws-java-sdk-cognitoidp</artifactId>
+		    <version>1.12.742</version>
+	    </dependency>
 	    <dependency>
 	    	<groupId>edu.cornell.weill.reciter</groupId>
 	    	<artifactId>reciter-pubmed-model</artifactId>
@@ -386,7 +396,7 @@
 	     <dependency>
 		    <groupId>com.github.ben-manes.caffeine</groupId>
 		    <artifactId>caffeine</artifactId>
-		    <version>3.1.8</version> <!-- Latest stable as of Sep 2025 -->
+		    <version>2.9.3</version> <!-- Latest stable as of Sep 2025 -->
 		</dependency>	
     </dependencies>
     <repositories>
