@@ -131,7 +131,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
         // 4. Combine with Standard JWT Validation (Issuer, Expiration, etc.)
         OAuth2TokenValidator<Jwt> combinedValidator = new DelegatingOAuth2TokenValidator<>(
-            JwtValidators.createDefaultWithIssuer(issuerUri),
+            JwtValidators.createDefaultWithIssuer(issuerUri.trim()),
             clientIdValidator
         );
 
