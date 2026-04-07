@@ -92,17 +92,13 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
     }
     
     @Bean
-    public JwtDecoder jwtDecoder1() {
-        // Construct the direct path to the public keys
-        String jwkSetUri = issuerUri.trim() + "/.well-known/jwks.json";
-        
-        // Use withJwkSetUri instead of withIssuerLocation
-        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
-    }
-    
-    @Bean
     public JwtDecoder jwtDecoder() 
     {
+        log.info("Refreshing Cognito Client Registry for Pool: {}", userPoolId);
+        log.info("DEBUG: Issuer URI is " + issuerUri);
+        log.info("DEBUG: awsRegion is " + awsRegion);
+        log.info("DEBUG: u is " + userPoolId);
+ 
     	// 1. Mandatory Property Validation (The Guard Clause)
         boolean isConfigMissing = jwkSetUri == null || jwkSetUri.isEmpty() || jwkSetUri.contains("${") ||
                                  issuerUri == null || issuerUri.isEmpty() || issuerUri.contains("${") ||
@@ -151,8 +147,6 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
 	// 4. The AWS SDK v1 Fetch Logic (Helper Method)
     private Set<String> fetchAllUserPoolClients() {
-        log.info("Refreshing Cognito Client Registry for Pool: {}", userPoolId);
-        
         AWSCognitoIdentityProvider client = AWSCognitoIdentityProviderClientBuilder.standard()
                 .withRegion(awsRegion)
                 .build();
@@ -168,6 +162,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
                         .withNextToken(nextToken);
 
                 ListUserPoolClientsResult result = client.listUserPoolClients(request);
+                log.info("Successfully fetched {} clients", result.getUserPoolClients().size());
                 result.getUserPoolClients().forEach(c -> freshIds.add(c.getClientId()));
                 nextToken = result.getNextToken();
                 
@@ -176,7 +171,8 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
             log.info("freshIds*********",freshIds);
             return Collections.unmodifiableSet(freshIds);
         } catch (Exception e) {
-            log.error("Critical: Failed to sync with Cognito. API may reject valid tokens.", e);
+            log.error("CRITICAL FAILURE: Could not reach AWS Cognito API!", e);
+            // If this fails, the filter chain will have an empty registry and reject all tokens
             throw e; 
         }
     }
