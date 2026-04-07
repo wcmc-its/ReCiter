@@ -58,7 +58,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	@Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     private String jwkSetUri;
 	
-	@Value("${aws.cognito.issuerUri}")
+	@Value("${aws.cognito.issuer-uri}")
 	private String issuerUri;
 	
 	@Value("${aws.cognito.user-pool-id}")
@@ -94,7 +94,6 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public JwtDecoder jwtDecoder() 
     {
-        log.info("Refreshing Cognito Client Registry for Pool: {}", userPoolId);
         log.info("DEBUG: Issuer URI is " + issuerUri);
         log.info("DEBUG: awsRegion is " + awsRegion);
         log.info("DEBUG: u is " + userPoolId);
@@ -147,6 +146,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
 	// 4. The AWS SDK v1 Fetch Logic (Helper Method)
     private Set<String> fetchAllUserPoolClients() {
+    	 log.info("Refreshing Cognito Client Registry for Pool: {}", userPoolId);
         AWSCognitoIdentityProvider client = AWSCognitoIdentityProviderClientBuilder.standard()
                 .withRegion(awsRegion)
                 .build();
