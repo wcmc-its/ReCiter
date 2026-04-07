@@ -92,6 +92,15 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
     }
     
     @Bean
+    public JwtDecoder jwtDecoder1() {
+        // Construct the direct path to the public keys
+        String jwkSetUri = issuerUri.trim() + "/.well-known/jwks.json";
+        
+        // Use withJwkSetUri instead of withIssuerLocation
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+    }
+    
+    @Bean
     public JwtDecoder jwtDecoder() 
     {
     	// 1. Mandatory Property Validation (The Guard Clause)
@@ -161,8 +170,10 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
                 ListUserPoolClientsResult result = client.listUserPoolClients(request);
                 result.getUserPoolClients().forEach(c -> freshIds.add(c.getClientId()));
                 nextToken = result.getNextToken();
+                
             } while (nextToken != null);
-
+            log.info("nextToken*********",nextToken);
+            log.info("freshIds*********",freshIds);
             return Collections.unmodifiableSet(freshIds);
         } catch (Exception e) {
             log.error("Critical: Failed to sync with Cognito. API may reject valid tokens.", e);
