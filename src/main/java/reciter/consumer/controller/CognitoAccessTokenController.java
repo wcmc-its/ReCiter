@@ -77,6 +77,9 @@ public class CognitoAccessTokenController {
         String user = payload.get("userName");
         String pass = payload.get("password");
 
+      	log.info("User************"+user);
+        
+        
         // 2. Validate the fields are present
         if (user == null || pass == null || user.trim().isEmpty() || pass.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(new ApiResponse<>("Payload must contain 'userName' and 'password'", null, 400));
@@ -85,6 +88,7 @@ public class CognitoAccessTokenController {
     	try
     	{
     		String tokenInfo = cognitoAuthService.authenticateConsumer(user,pass);
+    		log.info("tokenInfo************",tokenInfo);
     		return ResponseEntity.status(200).body(new ApiResponse<>(tokenInfo, null, 200));
     	}
     	catch(RuntimeException ak)

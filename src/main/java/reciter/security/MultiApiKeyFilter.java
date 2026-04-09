@@ -98,6 +98,7 @@ public class MultiApiKeyFilter extends OncePerRequestFilter {
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
 	    String path = request.getServletPath();
+	    log.info("path**********"+path);
 	    String authHeader = request.getHeader("Authorization");
 
 	    // 1. Skip if it's the login path

@@ -8,9 +8,13 @@ import com.amazonaws.services.cognitoidp.model.AuthFlowType;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import reciter.consumer.controller.CognitoAccessTokenController;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -21,12 +25,16 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class CognitoAuthService {
+	
+	private static final Logger log = LoggerFactory.getLogger(CognitoAuthService.class);
 
     // These should be injected from Kubernetes Secrets/Env Vars
     private final String USER_POOL_ID = System.getenv("AWS_COGNITO_USER_POOL_ID");
     private final String CLIENT_ID = System.getenv("MASTER_CLIENT_ID");
     private final String CLIENT_SECRET = System.getenv("MASTER_CLIENT_SECRET");
     private final String AWS_REGION = System.getenv("AWS_REGION");
+    
+    
     
  // Initialize Caffeine Cache
     // Key: Department Username, Value: JWT Token
@@ -40,6 +48,10 @@ public class CognitoAuthService {
             .build();
 
     public String authenticateConsumer(String username, String password) {
+    
+    	log.info("USER_POOL_ID***",USER_POOL_ID);
+        log.info("CLIENT_ID***",CLIENT_ID);
+        log.info("CLIENT_ID***",AWS_REGION);
         
         // 1. Check Cache First
         String cachedToken = tokenCache.getIfPresent(username);
