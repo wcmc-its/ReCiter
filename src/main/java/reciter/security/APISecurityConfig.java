@@ -2,6 +2,7 @@ package reciter.security;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,6 +22,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -73,12 +76,15 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private S3UserLogHandler s3UserLogHandler;
 	
+	// Get the expected ID once from your environment
+	private final String MASTER_CLIENT_ID = System.getenv("MASTER_CLIENT_ID");
+	
 	// This is the name of the data bucket in the cache for authorized consumer clients.
-    private static final String CACHE_KEY = "AUTHORIZED_CONSUMER_CLIENTS";
+    /*private static final String CACHE_KEY = "AUTHORIZED_CONSUMER_CLIENTS";
 
     private final LoadingCache<String, Set<String>> cognitoClientCache = Caffeine.newBuilder()
         .refreshAfterWrite(15, TimeUnit.MINUTES)
-        .build(key -> fetchAllUserPoolClients());
+        .build(key -> fetchAllUserPoolClients());*/
     
     @Bean
 	public MultiApiKeyFilter MultiApiKeyAuthenticationFilter() {
@@ -116,14 +122,30 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
         // 2. Initialize the Base Decoder
         log.info("Initializing Cognito JwtDecoder for Region: {} with Refresh Interval: {} min", 
                  awsRegion, cognitoCacheRefreshTimeInterval);
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri.trim()).build();
 
-     // 3. Define the Dynamic Client ID Validator (Zero-Hardcoding)
-        OAuth2TokenValidator<Jwt> clientIdValidator = new JwtClaimValidator<String>(
+        // 1. Correct Validator for ID Tokens (Handles ArrayList from Cognito)
+        OAuth2TokenValidator<Jwt> audValidator = new JwtClaimValidator<List<String>>(
+            JwtClaimNames.AUD, 
+            audList -> audList != null && audList.contains(System.getenv("MASTER_CLIENT_ID"))
+        );
+
+        // 2. Issuer Validator
+        OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators.createDefaultWithIssuer(issuerUri.trim());
+
+        // 3. Combine
+        OAuth2TokenValidator<Jwt> combinedValidator = new DelegatingOAuth2TokenValidator<>(
+            issuerValidator, 
+            audValidator
+        );
+
+        jwtDecoder.setJwtValidator(combinedValidator);
+        return jwtDecoder;
+        /*OAuth2TokenValidator<Jwt> clientIdValidator = new JwtClaimValidator<String>(
             "client_id", 
             clientId -> {
+                if (clientId == null) return false;
                 try {
-                    // Accessing the Caffeine Cache
                     Set<String> authorizedIds = cognitoClientCache.get(CACHE_KEY);
                     return authorizedIds != null && authorizedIds.contains(clientId);
                 } catch (Exception e) {
@@ -133,19 +155,24 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
             }
         );
 
-        // 4. Combine with Standard JWT Validation (Issuer, Expiration, etc.)
+        // 2. Explicit Issuer Validator (Avoids the 'Default' one which might look for 'aud')
+        // Ensure issuerUri does NOT have a trailing slash unless your Cognito settings do
+        OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators.createDefaultWithIssuer(issuerUri.trim());
+
+        // 3. Combine them using DelegatingOAuth2TokenValidator
+        // We explicitly combine your cache-logic with standard OIDC checks
         OAuth2TokenValidator<Jwt> combinedValidator = new DelegatingOAuth2TokenValidator<>(
-            JwtValidators.createDefaultWithIssuer(issuerUri.trim()),
+            issuerValidator, 
             clientIdValidator
         );
 
         jwtDecoder.setJwtValidator(combinedValidator);
-        return jwtDecoder;
+        return jwtDecoder;*/
     
     }
 
 	// 4. The AWS SDK v1 Fetch Logic (Helper Method)
-    private Set<String> fetchAllUserPoolClients() {
+   /* private Set<String> fetchAllUserPoolClients() {
     	 log.info("Refreshing Cognito Client Registry for Pool: {}", userPoolId);
         AWSCognitoIdentityProvider client = AWSCognitoIdentityProviderClientBuilder.standard()
                 .withRegion(awsRegion)
@@ -175,43 +202,48 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
             // If this fails, the filter chain will have an empty registry and reject all tokens
             throw e; 
         }
-    }
+    }*/
 	
     
     
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
 		
+		log.info("Inside the Configure method of the APiSecurity",httpSecurity);
 		httpSecurity.antMatcher("/reciter/**")
-         .csrf().disable()
-         .sessionManagement()
-         	.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-         .and()
-         .exceptionHandling()
-         	.authenticationEntryPoint(customEntryPoint)
-         .and()
-         
-      // 1. Setup JWT Decoding (Fires ONLY if Bearer header is present)
-         .oauth2ResourceServer()
-         	.jwt()
-         	.decoder(jwtDecoder()) // This calls your Caffeine-backed bean
-         .and()
-         .and()
-         
-      // 2. Add API Key Filter (Fires BEFORE or AFTER, but needs pass-through logic)
-         .addFilterBefore(multiApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
-         
-      // 3. Asynchronous S3 Logging Filter
-         // We place this after BearerTokenAuthenticationFilter so 'SecurityContext' is populated
-         .addFilterAfter(new S3LoggingFilter(s3UserLogHandler), 
-                         org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter.class)
+	    .csrf().disable()
+	    .sessionManagement()
+	        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+	    .and()
+	    .exceptionHandling()
+	        .authenticationEntryPoint(customEntryPoint)
+	    .and()
 
-         .authorizeRequests()
-             .anyRequest().authenticated();
+	    // 1. Setup JWT Decoding (Fires ONLY if Bearer header is present)
+	    .oauth2ResourceServer()
+	        .jwt()
+	        .decoder(jwtDecoder()) // Uses your Caffeine-backed bean
+	    .and()
+	    .and()
+
+	    // 2. Add API Key Filter
+	    .addFilterBefore(multiApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+
+	    // 3. Asynchronous S3 Logging Filter
+	    .addFilterAfter(new S3LoggingFilter(s3UserLogHandler), 
+	                    org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter.class)
+
+	    .authorizeRequests()
+	        // this path /reciter/generate-access-token is allowed to generate a JWT token
+	    	.antMatchers(HttpMethod.POST, "/reciter/generate-access-token").permitAll() 
+	        
+	        // Everything else requires a valid JWT or API Key
+	        .anyRequest().authenticated();
 	}
 
 	@Override
 	public void configure(WebSecurity web) throws Exception {
+		log.info("Inside the Configure method taking WebSecurity param of the APiSecurity",web);
 		if (!securityEnabled) {
 			web.ignoring().antMatchers("/reciter/**");
 		}

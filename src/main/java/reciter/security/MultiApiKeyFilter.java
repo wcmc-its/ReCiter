@@ -95,5 +95,22 @@ public class MultiApiKeyFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 		
 	}
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+	    String path = request.getServletPath();
+	    String authHeader = request.getHeader("Authorization");
 
+	    // 1. Skip if it's the login path
+	    if (path.equals("/reciter/generate-access-token")) {
+	        return true;
+	    }
+
+	    // 2. Skip if it's a JWT-based request
+	    // If the header has "Bearer", let JwtDecoder handle it later in the chain
+	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	        return true;
+	    }
+
+	    return false;
+	}
 }
