@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import reciter.security.AwsSecretsManagerService;
+//import reciter.security.AwsSecretsManagerService;
 import reciter.utils.PropertiesUtils;
 
 
@@ -34,23 +34,18 @@ public class NeuralNetworkModelArticlesScorer {
 
 	private static final Logger log = LoggerFactory.getLogger(NeuralNetworkModelArticlesScorer.class);
 	
-	private static final String LAMBDA_NAME = "lambdaFunctionName";
+	private static final String LAMBDA_NAME = "RECITER_SCORING_LAMBDA_FUNCTION";
 	
 	private static final String LAMBDA_FUNCTION_INVOCATION_URL = "local.lambda.function.invocation.url";
 	
 	private static final String LAMBDA_FUNCTION_REGION = "aws.lambda.region";
 	
-    private AwsSecretsManagerService awsSecretsManagerService; // Inject the service to get the secret
-	
-    private String RECITER_SCORING_SECRET_NAME = "aws.secretsmanager.reciterscoring.secretName";
-	
-	private String reciterScoringServiceUrl = System.getenv("RECITERSCORING_SERVICE_URL");
+   private String reciterScoringServiceUrl = System.getenv("RECITERSCORING_SERVICE_URL");
 	
 	private static final String reciterScorerModelFileName = "verify_setup.py";
 	
 	public NeuralNetworkModelArticlesScorer()
 	{
-		this.awsSecretsManagerService = new AwsSecretsManagerService();
 	}
 	
 	public JSONArray executeArticleScorePredictor(String goldStandardName, String dataFileName,String s3BucketName,String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException
@@ -65,14 +60,7 @@ public class NeuralNetworkModelArticlesScorer {
 			{  
 			 	authorshipLikelihoodScore = callLocalLambda(goldStandardName,dataFileName,s3BucketName,isS3UploadRequiredString);
 	        } else {
-	        	log.info("Getting Secret Name from the Properties: {}", PropertiesUtils.get(RECITER_SCORING_SECRET_NAME));
-	        	String secretValueJson = this.awsSecretsManagerService.getSecretKeyPairs(PropertiesUtils.get(RECITER_SCORING_SECRET_NAME)); 
-	        	ObjectMapper mapper = new ObjectMapper();
-	        	Map<String, String> secretMap = mapper.readValue(secretValueJson, Map.class);
-	        	//reading the ENV_CONTEXT from the EKS deployment file.
-	        	String env = System.getenv("ENV_CONTEXT");
-	        	String lambdaKey = env+LAMBDA_NAME;
-	        	String lambdaFunction = secretMap.get(lambdaKey);
+	        	String lambdaFunction = System.getenv(LAMBDA_NAME);
 	        	log.info("lambdaFunction Name:" + lambdaFunction);
 	        	authorshipLikelihoodScore = callAwsLambda(goldStandardName,dataFileName,s3BucketName,isS3UploadRequiredString,lambdaFunction);
 	        }

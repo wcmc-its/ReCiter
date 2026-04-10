@@ -22,7 +22,7 @@ import reciter.consumer.dto.TokenInfo;
 import reciter.consumer.exception.ApiKeyMappingNotFoundException;
 import reciter.consumer.response.ApiResponse;
 import reciter.consumer.service.CognitoAuthService;
-import reciter.security.AwsSecretsManagerService;
+
 /**
  * REST controller that exposes endpoints for obtaining authentication tokens from AWS Cognito.
  *
