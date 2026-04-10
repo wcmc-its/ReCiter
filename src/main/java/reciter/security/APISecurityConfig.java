@@ -32,7 +32,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * and admin api key and authenticate its JWT token or api-key
  */
 
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 @Configuration
 public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
