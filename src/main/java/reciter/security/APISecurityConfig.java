@@ -25,6 +25,8 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import java.time.Duration;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 
 /**
  * @author mjangari 
@@ -32,7 +34,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * and admin api key and authenticate its JWT token or api-key
  */
 
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @Configuration
 public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -65,16 +67,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private S3UserLogHandler s3UserLogHandler;
 	
-	// Get the expected ID once from your environment
-	private final String MASTER_CLIENT_ID = System.getenv("MASTER_CLIENT_ID");
 	
-	// This is the name of the data bucket in the cache for authorized consumer clients.
-    /*private static final String CACHE_KEY = "AUTHORIZED_CONSUMER_CLIENTS";
-
-    private final LoadingCache<String, Set<String>> cognitoClientCache = Caffeine.newBuilder()
-        .refreshAfterWrite(15, TimeUnit.MINUTES)
-        .build(key -> fetchAllUserPoolClients());*/
-    
     @Bean
 	public MultiApiKeyFilter MultiApiKeyAuthenticationFilter() {
 	   log.info("JWT filter bean is being created!");
@@ -119,81 +112,24 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
             audList -> audList != null && audList.contains(System.getenv("MASTER_CLIENT_ID"))
         );
 
-        // 2. Issuer Validator
+     // 2. Timestamp Validator (Checks 'exp' and 'nbf')
+        // This ensures the token is not expired and is currently valid
+        OAuth2TokenValidator<Jwt> timestampValidator = new JwtTimestampValidator(Duration.ofSeconds(30));
+
+        // 3. Issuer Validator
         OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators.createDefaultWithIssuer(issuerUri.trim());
 
-        // 3. Combine
+        // 4. Combine all validators
+        // Note: Order matters; usually check issuer and timestamp before custom claims
         OAuth2TokenValidator<Jwt> combinedValidator = new DelegatingOAuth2TokenValidator<>(
+            timestampValidator,
             issuerValidator, 
             audValidator
         );
 
         jwtDecoder.setJwtValidator(combinedValidator);
         return jwtDecoder;
-        /*OAuth2TokenValidator<Jwt> clientIdValidator = new JwtClaimValidator<String>(
-            "client_id", 
-            clientId -> {
-                if (clientId == null) return false;
-                try {
-                    Set<String> authorizedIds = cognitoClientCache.get(CACHE_KEY);
-                    return authorizedIds != null && authorizedIds.contains(clientId);
-                } catch (Exception e) {
-                    log.error("Security Registry Error: Could not validate Client ID {}", clientId, e);
-                    return false;
-                }
-            }
-        );
-
-        // 2. Explicit Issuer Validator (Avoids the 'Default' one which might look for 'aud')
-        // Ensure issuerUri does NOT have a trailing slash unless your Cognito settings do
-        OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators.createDefaultWithIssuer(issuerUri.trim());
-
-        // 3. Combine them using DelegatingOAuth2TokenValidator
-        // We explicitly combine your cache-logic with standard OIDC checks
-        OAuth2TokenValidator<Jwt> combinedValidator = new DelegatingOAuth2TokenValidator<>(
-            issuerValidator, 
-            clientIdValidator
-        );
-
-        jwtDecoder.setJwtValidator(combinedValidator);
-        return jwtDecoder;*/
-    
     }
-
-	// 4. The AWS SDK v1 Fetch Logic (Helper Method)
-   /* private Set<String> fetchAllUserPoolClients() {
-    	 log.info("Refreshing Cognito Client Registry for Pool: {}", userPoolId);
-        AWSCognitoIdentityProvider client = AWSCognitoIdentityProviderClientBuilder.standard()
-                .withRegion(awsRegion)
-                .build();
-
-        Set<String> freshIds = new HashSet<>();
-        String nextToken = null;
-
-        try {
-            do {
-                ListUserPoolClientsRequest request = new ListUserPoolClientsRequest()
-                        .withUserPoolId(userPoolId)
-                        .withMaxResults(60)
-                        .withNextToken(nextToken);
-
-                ListUserPoolClientsResult result = client.listUserPoolClients(request);
-                log.info("Successfully fetched {} clients", result.getUserPoolClients().size());
-                result.getUserPoolClients().forEach(c -> freshIds.add(c.getClientId()));
-                nextToken = result.getNextToken();
-                
-            } while (nextToken != null);
-            log.info("nextToken*********",nextToken);
-            log.info("freshIds*********",freshIds);
-            return Collections.unmodifiableSet(freshIds);
-        } catch (Exception e) {
-            log.error("CRITICAL FAILURE: Could not reach AWS Cognito API!", e);
-            // If this fails, the filter chain will have an empty registry and reject all tokens
-            throw e; 
-        }
-    }*/
-	
-    
     
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {

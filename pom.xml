@@ -352,6 +352,7 @@
 		    <artifactId>aws-java-sdk-cognitoidp</artifactId>
 		    <version>1.12.742</version>
 	    </dependency>
+	    
 	    <dependency>
 	    	<groupId>edu.cornell.weill.reciter</groupId>
 	    	<artifactId>reciter-pubmed-model</artifactId>

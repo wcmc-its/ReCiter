@@ -1,14 +1,10 @@
 package reciter.consumer.service;
 
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
-import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthRequest;
-import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthResult;
-import com.amazonaws.services.cognitoidp.model.AuthFlowType;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-
-import reciter.consumer.controller.CognitoAccessTokenController;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -17,11 +13,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
+import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthRequest;
+import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthResult;
+import com.amazonaws.services.cognitoidp.model.AuthFlowType;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
 
 @Service
 public class CognitoAuthService {
@@ -38,21 +39,49 @@ public class CognitoAuthService {
     
  // Initialize Caffeine Cache
     // Key: Department Username, Value: JWT Token
-    private final Cache<String, String> tokenCache = Caffeine.newBuilder()
-            .expireAfterWrite(55, TimeUnit.MINUTES) // Cognito tokens usually last 60 mins; cache for 55 to be safe
-            .maximumSize(2000) // One slot per department machine
-            .build();
+     private final Cache<String, String> tokenCache = Caffeine.newBuilder()
+    	    .maximumSize(2000)
+    	    .expireAfter(new Expiry<String, String>() {
+    	        @Override
+    	        public long expireAfterCreate(String key, String token, long currentTime) {
+    	            // Calculate remaining time in nanoseconds
+    	            long secondsToExpiry = getSecondsUntilExpiry(token);
+    	            // Provide a 60-second "grace period" so we don't return a token 
+    	            // that expires exactly as it reaches the destination
+    	            long safeSeconds = Math.max(0, secondsToExpiry - 60);
+    	            return TimeUnit.SECONDS.toNanos(safeSeconds);
+    	        }
 
+    	        @Override
+    	        public long expireAfterUpdate(String key, String value, long currentTime, long currentDuration) {
+    	            return currentDuration; // Keep original expiry on update
+    	        }
+
+    	        @Override
+    	        public long expireAfterRead(String key, String value, long currentTime, long currentDuration) {
+    	            return currentDuration; // Keep original expiry on read
+    	        }
+    	    })
+    	    .build();
+    
+    private long getSecondsUntilExpiry(String token) {
+        try {
+            // Use your existing JwtDecoder or a simple library like JJWT/Auth0
+            DecodedJWT jwt = JWT.decode(token);
+            long expiresAt = jwt.getExpiresAt().getTime(); // Milliseconds
+            long now = System.currentTimeMillis();
+            return (expiresAt - now) / 1000;
+        } catch (Exception e) {
+            return 0; // Expire immediately if token is invalid
+        }
+    }
+    
     private final AWSCognitoIdentityProvider cognitoClient = AWSCognitoIdentityProviderClientBuilder.standard()
             .withRegion(AWS_REGION)
             .build();
 
     public String authenticateConsumer(String username, String password) {
     
-    	log.info("USER_POOL_ID***",USER_POOL_ID);
-        log.info("CLIENT_ID***",CLIENT_ID);
-        log.info("CLIENT_ID***",AWS_REGION);
-        
         // 1. Check Cache First
         String cachedToken = tokenCache.getIfPresent(username);
         if (cachedToken != null) {
@@ -83,7 +112,7 @@ public class CognitoAuthService {
             return idToken;
             
         } catch (Exception e) {
-            System.err.println("Login failed for: " + username + " Error: " + e.getMessage());
+            log.error("Login failed for: "+ username + " Error: " + e.getMessage());
             throw e;
         }
     }
