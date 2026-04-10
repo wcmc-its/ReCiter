@@ -242,7 +242,7 @@
         <dependency>
        		<groupId>com.amazonaws</groupId>
        		<artifactId>DynamoDBLocal</artifactId>
-       		<version>[1.12,2.0)</version>
+       		 <version>[1.12,2.0)</version>
         </dependency>
         <dependency>
 			<groupId>com.almworks.sqlite4java</groupId>
@@ -321,6 +321,11 @@
 	        <artifactId>spring-security-oauth2-jose</artifactId>
 	        <version>5.6.0</version> 
     	</dependency> 
+    	<dependency>
+	        <groupId>org.springframework.security</groupId>
+	        <artifactId>spring-security-oauth2-resource-server</artifactId>
+	        <version>5.6.0</version>
+    	</dependency>
  	    <dependency>
 	    	<groupId>edu.cornell.weill.reciter</groupId>
 	    	<artifactId>reciter-scopus-model</artifactId>
@@ -342,6 +347,12 @@
 		  <artifactId>aws-java-sdk-core</artifactId>
 		  <version>1.12.742</version>
 		</dependency>
+		<dependency>
+		    <groupId>com.amazonaws</groupId>
+		    <artifactId>aws-java-sdk-cognitoidp</artifactId>
+		    <version>1.12.742</version>
+	    </dependency>
+	    
 	    <dependency>
 	    	<groupId>edu.cornell.weill.reciter</groupId>
 	    	<artifactId>reciter-pubmed-model</artifactId>
@@ -383,6 +394,11 @@
 	    	<groupId>org.mockito</groupId>
 	    	<artifactId>mockito-core</artifactId>
 	    </dependency>
+	     <dependency>
+		    <groupId>com.github.ben-manes.caffeine</groupId>
+		    <artifactId>caffeine</artifactId>
+		    <version>2.9.3</version> <!-- Latest stable as of Sep 2025 -->
+		</dependency>	
     </dependencies>
     <repositories>
         <!-- Use this repository for local dynamodb. Change the region accordingly. For details: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.Maven.html -->

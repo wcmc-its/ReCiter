@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -203,6 +204,34 @@ public class IdentityController {
         return new ResponseEntity<>(identities, HttpStatus.OK);
     }
     
+    @ApiOperation(value = "Delete an identity by uid", notes = "This api deletes a single identity from the Identity table by uid.")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Identity deletion successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/identity/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity deleteIdentity(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete identity by uid");
+        stopWatch.start("Delete identity by uid");
+        Identity identity = identityService.findByUid(uid);
+        if (identity == null) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("The uid '" + uid + "' was not found in the Identity table");
+        }
+        identityService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
     public String[] getMandatoryFields() {
         return mandatoryFields.split(",");
     }

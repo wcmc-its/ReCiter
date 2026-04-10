@@ -227,6 +227,108 @@ public class ReCiterController {
         return ResponseEntity.ok(goldStandard);
     }
 
+    @ApiOperation(value = "Delete a gold standard record by uid", notes = "This api deletes a gold standard record from the GoldStandard table by uid.")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "GoldStandard deletion successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity deleteGoldStandard(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete gold standard by uid");
+        stopWatch.start("Delete gold standard by uid");
+        dynamoDbGoldStandardService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
+    @ApiOperation(value = "Delete an analysis output by uid", notes = "This api deletes an analysis output record from the AnalysisOutput table by uid.")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "AnalysisOutput deletion successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/analysis/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity deleteAnalysis(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete analysis by uid");
+        stopWatch.start("Delete analysis by uid");
+        analysisService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
+    @ApiOperation(value = "Delete an ESearchResult by uid", notes = "This api deletes an ESearchResult record by uid.")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "ESearchResult deletion successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/esearchresult/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity deleteESearchResult(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete ESearchResult by uid");
+        stopWatch.start("Delete ESearchResult by uid");
+        eSearchResultService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
+    @ApiOperation(value = "Bulk cleanup: delete records from all UID-keyed tables", notes = "Deletes Identity, GoldStandard, AnalysisOutput, and ESearchResult records for a list of UIDs. Intended for external validation cleanup.")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Bulk cleanup successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden")
+    })
+    @RequestMapping(value = "/reciter/cleanup/by/uids", method = RequestMethod.POST, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity cleanupByUids(@RequestBody List<String> uids) {
+        StopWatch stopWatch = new StopWatch("Bulk cleanup by uids");
+        stopWatch.start("Bulk cleanup by uids");
+        Map<String, Integer> results = new HashMap<>();
+
+        int analysisCount = 0;
+        int esearchCount = 0;
+        int goldStandardCount = 0;
+        int identityCount = 0;
+
+        for (String uid : uids) {
+            try { analysisService.delete(uid); analysisCount++; } catch (Exception e) { log.warn("Failed to delete analysis for uid={}: {}", uid, e.getMessage()); }
+            try { eSearchResultService.delete(uid); esearchCount++; } catch (Exception e) { log.warn("Failed to delete esearchresult for uid={}: {}", uid, e.getMessage()); }
+            try { dynamoDbGoldStandardService.delete(uid); goldStandardCount++; } catch (Exception e) { log.warn("Failed to delete goldstandard for uid={}: {}", uid, e.getMessage()); }
+            try { identityService.delete(uid); identityCount++; } catch (Exception e) { log.warn("Failed to delete identity for uid={}: {}", uid, e.getMessage()); }
+        }
+
+        results.put("analysisOutput", analysisCount);
+        results.put("eSearchResult", esearchCount);
+        results.put("goldStandard", goldStandardCount);
+        results.put("identity", identityCount);
+        results.put("totalUids", uids.size());
+
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return new ResponseEntity<>(results, HttpStatus.OK);
+    }
+
     @ApiOperation(value = "Retrieve Articles for all UID in Identity Table", response = ResponseEntity.class, notes = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
     @ApiImplicitParams({
     	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
