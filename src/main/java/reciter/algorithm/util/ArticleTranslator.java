@@ -351,8 +351,39 @@ public class ArticleTranslator {
         		reCiterArticle.setDatePublicationAddedToEntrez(df.format(date));
         	}
         }
-        		
-        
+
+        //Populate datePublicationAddedToPMC if it exists in pubmed
+        if(pubmedArticle.getPubmeddata() != null
+        		&&
+        		pubmedArticle.getPubmeddata().getHistory() != null
+        		&&
+        		pubmedArticle.getPubmeddata().getHistory().getPubmedPubDate() != null
+        		&& pubmedArticle.getPubmeddata().getHistory().getPubmedPubDate().size() > 0) {
+        	PubMedPubDate pubmedPubDatePmcRelease = pubmedArticle.getPubmeddata().getHistory().getPubmedPubDate().
+        			stream().filter(pubmedPubDate -> pubmedPubDate.getPubStatus().equalsIgnoreCase("pmc-release")).
+        			findAny().orElse(null);
+        	if(pubmedPubDatePmcRelease != null) {
+        		String pmcDateMonth = null;
+            	String pmcDateDay = null;
+            	if(pubmedPubDatePmcRelease.getPubMedPubDate().getMonth() == null) {
+            		pmcDateMonth = "01";
+            	} else {
+            		pmcDateMonth = pubmedPubDatePmcRelease.getPubMedPubDate().getMonth();
+            	}
+
+            	if(pubmedPubDatePmcRelease.getPubMedPubDate().getDay() == null) {
+            		pmcDateDay = "01";
+            	} else {
+            		pmcDateDay = pubmedPubDatePmcRelease.getPubMedPubDate().getDay();
+            	}
+        		LocalDate localDate = new LocalDate(Integer.parseInt(pubmedPubDatePmcRelease.getPubMedPubDate().getYear()),
+                        Integer.parseInt(pmcDateMonth),
+                        Integer.parseInt(pmcDateDay));
+                Date date = localDate.toDate();
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        		reCiterArticle.setDatePublicationAddedToPMC(df.format(date));
+        	}
+        }
 
         // Update PubMed's authors' first name from Scopus Article. Logic is as follows:
         // 1. First compare last name if match:
