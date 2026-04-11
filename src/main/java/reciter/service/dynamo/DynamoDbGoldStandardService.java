@@ -365,48 +365,6 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		}
 		return entries;
 	}
-
-	/**
-	 * Build audit log entries by diffing incoming PMIDs against existing.
-	 * Only creates entries for genuinely new acceptances/rejections.
-	 */
-	private List<GoldStandardAuditLog> buildAuditEntries(
-			String uid, List<Long> incomingAccepted, List<Long> incomingRejected,
-			List<Long> existingAccepted, List<Long> existingRejected, String source) {
-		List<GoldStandardAuditLog> entries = new ArrayList<>();
-		Date now = new Date();
-
-		List<Long> newlyAccepted = new ArrayList<>(incomingAccepted);
-		newlyAccepted.removeAll(existingAccepted);
-		if (!newlyAccepted.isEmpty()) {
-			entries.add(GoldStandardAuditLog.builder()
-					.userVerbose(source)
-					.uid(uid)
-					.dateTime(now)
-					.pmids(newlyAccepted)
-					.action(PublicationFeedback.ACCEPTED)
-					.build());
-		}
-
-		List<Long> newlyRejected = new ArrayList<>(incomingRejected);
-		newlyRejected.removeAll(existingRejected);
-		if (!newlyRejected.isEmpty()) {
-			entries.add(GoldStandardAuditLog.builder()
-					.userVerbose(source)
-					.uid(uid)
-					.dateTime(now)
-					.pmids(newlyRejected)
-					.action(PublicationFeedback.REJECTED)
-					.build());
-		}
-
-		if (!entries.isEmpty()) {
-			log.info("Audit log: {} new accepted, {} new rejected for uid={}",
-					newlyAccepted.size(), newlyRejected.size(), uid);
-		}
-		return entries;
-	}
-
 	/**
 	 * Write PmidProvenance records for accepted PMIDs. Uses saveIfNotExists
 	 * so that PMIDs already discovered by automated retrieval strategies
