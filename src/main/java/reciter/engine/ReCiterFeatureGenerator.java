@@ -195,7 +195,12 @@ public class ReCiterFeatureGenerator {
             if(reCiterArticle.getDatePublicationAddedToEntrez() != null) {
             	reCiterArticleFeature.setDatePublicationAddedToEntrez(reCiterArticle.getDatePublicationAddedToEntrez());
             }
-            
+
+            //datePublicationAddedToPMC
+            if(reCiterArticle.getDatePublicationAddedToPMC() != null) {
+            	reCiterArticleFeature.setDatePublicationAddedToPMC(reCiterArticle.getDatePublicationAddedToPMC());
+            }
+
             //Publication type
             ReCiterArticlePublicationType reCiterPublicationType = ReCiterArticlePublicationType.builder().build();
             
