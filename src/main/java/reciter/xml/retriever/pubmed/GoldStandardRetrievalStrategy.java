@@ -20,6 +20,7 @@ package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -71,13 +72,29 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 		return buildChunkedQueries(pmids, startDate, endDate, true);
 	}
 
-	protected List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> uniquePmids) {
+	public List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> uniquePmids) {
 		String uid = requireValidUid(identity);
 		List<Long> pmids = loadGoldStandardPmids(uid, false);
 		if (uniquePmids != null && !uniquePmids.isEmpty()) {
 			pmids.removeAll(uniquePmids);
 		}
 		return buildChunkedQueries(pmids, null, null, false);
+	}
+
+	/**
+	 * Retrieve PubMed articles for an explicit list of pre-built queries.
+	 * Used by {@code AliasReCiterRetrievalEngine} after it builds chunked GoldStandard
+	 * queries via {@link #buildQueryGoldStandard(Identity, Set)} so the engine can
+	 * dedup against {@code uniquePmids} accumulated by prior strategies (FIX-05).
+	 *
+	 * <p>Delegates to the parent's protected {@code retrievePubMedArticles} helper —
+	 * same threshold gating, lenient/strict logic, and PubMed eutils calls as the
+	 * standard retrieval path. Identity names map is empty because GS queries are
+	 * PMID-list based and do not consult name evidence.
+	 */
+	public RetrievalResult retrievePubMedArticlesUsingQueries(Identity identity,
+			List<PubMedQueryType> pubMedQueries, boolean useStrictQueryOnly) throws IOException {
+		return retrievePubMedArticles(identity, Collections.emptyMap(), pubMedQueries, useStrictQueryOnly);
 	}
 
 	/**
