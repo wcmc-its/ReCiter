@@ -125,7 +125,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}*/
 
-	private RetrievalResult retrievePubMedArticles(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, List<PubMedQueryType> pubMedQueries, boolean useStrictQueryOnly) throws IOException {
+	protected RetrievalResult retrievePubMedArticles(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, List<PubMedQueryType> pubMedQueries, boolean useStrictQueryOnly) throws IOException {
 
 		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
 
