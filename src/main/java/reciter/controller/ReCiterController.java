@@ -1093,6 +1093,8 @@ public class ReCiterController {
         try {
         	eSearchResults = eSearchResultService.findByUid(uid);
             if (eSearchResults == null) {
+                log.warn("No ESearchResult for uid={}; upgrading requested flag={} to ALL_PUBLICATIONS",
+                         uid, retrievalRefreshFlag);
                 retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 eSearchResults = eSearchResultService.findByUid(uid);
             } else if(eSearchResults != null && (retrievalRefreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS || retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS)) {
