@@ -61,7 +61,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
 		String uid = requireValidUid(identity);
 		List<Long> pmids = loadGoldStandardPmids(uid, true);
-		return buildChunkedQueries(pmids, null, null, true);
+		return buildChunkedQueries(pmids, null, null);
 	}
 
 	@Override
@@ -69,7 +69,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 			Date startDate, Date endDate) {
 		String uid = requireValidUid(identity);
 		List<Long> pmids = loadGoldStandardPmids(uid, true);
-		return buildChunkedQueries(pmids, startDate, endDate, true);
+		return buildChunkedQueries(pmids, startDate, endDate);
 	}
 
 	public List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> uniquePmids) {
@@ -78,7 +78,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 		if (uniquePmids != null && !uniquePmids.isEmpty()) {
 			pmids.removeAll(uniquePmids);
 		}
-		return buildChunkedQueries(pmids, null, null, false);
+		return buildChunkedQueries(pmids, null, null);
 	}
 
 	/**
@@ -100,15 +100,18 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	/**
 	 * Build one {@link PubMedQueryType} per chunk of up to {@link #PMID_BATCH_SIZE} PMIDs.
 	 *
-	 * @param pmids             the PMIDs to encode (chunked); may be null/empty (returns an empty list)
-	 * @param startDate         optional date-range start applied to TERM queries only; null means no date-range
-	 * @param endDate           optional date-range end applied to TERM queries only
-	 * @param includeCountQuery when true, a date-less count query is attached to each chunk
-	 *                          (count queries omit the date range so the threshold gate sees the
-	 *                          full author result count, not a date-restricted subset).
+	 * <p>Count queries are ALWAYS set (date-less, even when the term query carries a date
+	 * range) — required because {@code AbstractRetrievalStrategy.retrievePubMedArticles}
+	 * unconditionally reads {@code getLenientCountQuery().getQuery()} on every emitted
+	 * {@link PubMedQueryType} and would NPE otherwise. Date-restricting the count query
+	 * is intentionally avoided so the threshold gate sees the full author result count,
+	 * not a date-restricted subset (see PR-spec-goldstandard-chunking.md line 232).
+	 *
+	 * @param pmids     the PMIDs to encode (chunked); may be null/empty (returns an empty list)
+	 * @param startDate optional date-range start applied to TERM queries only; null means no date-range
+	 * @param endDate   optional date-range end applied to TERM queries only
 	 */
-	private List<PubMedQueryType> buildChunkedQueries(List<Long> pmids, Date startDate, Date endDate,
-			boolean includeCountQuery) {
+	private List<PubMedQueryType> buildChunkedQueries(List<Long> pmids, Date startDate, Date endDate) {
 		List<PubMedQueryType> queries = new ArrayList<>();
 		if (pmids == null || pmids.isEmpty()) {
 			return queries;
@@ -129,15 +132,14 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 				termQuery.setEnd(endDate);
 			}
 
+			// Date-less count query always set — see Javadoc for the NPE-avoidance rationale.
+			PubMedQuery countQuery = new PubMedQueryBuilder().buildPmids(chunk);
+
 			PubMedQueryType pubMedQueryType = new PubMedQueryType();
 			pubMedQueryType.setLenientQuery(new PubMedQueryResult(termQuery));
 			pubMedQueryType.setStrictQuery(new PubMedQueryResult(termQuery));
-
-			if (includeCountQuery) {
-				PubMedQuery countQuery = new PubMedQueryBuilder().buildPmids(chunk);
-				pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(countQuery));
-				pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(countQuery));
-			}
+			pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(countQuery));
+			pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(countQuery));
 
 			queries.add(pubMedQueryType);
 		}
