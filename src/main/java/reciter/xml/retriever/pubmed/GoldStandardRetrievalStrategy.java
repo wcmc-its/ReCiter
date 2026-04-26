@@ -74,7 +74,14 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	public List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> uniquePmids) {
 		String uid = requireValidUid(identity);
-		List<Long> pmids = loadGoldStandardPmids(uid, false);
+		// Include BOTH knownPmids and rejectedPmids — the engine's analysis metric
+		// `inGoldStandardButNotRetrieved` counts any GS PMID (known OR rejected) that
+		// wasn't retrieved, so excluding rejected from the dedup variant causes a
+		// regression in the metric for users with non-trivial rejectedPmids
+		// counts (e.g., rsb2005: 156 rejected → +132 missing in dev smoke retest).
+		// Dedup is about avoiding redundant eutils traffic for PMIDs already
+		// retrieved by other strategies, not about which GS subset to query.
+		List<Long> pmids = loadGoldStandardPmids(uid, true);
 		if (uniquePmids != null && !uniquePmids.isEmpty()) {
 			pmids.removeAll(uniquePmids);
 		}
