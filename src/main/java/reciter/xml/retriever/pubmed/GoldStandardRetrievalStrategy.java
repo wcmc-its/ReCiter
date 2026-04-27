@@ -19,10 +19,12 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,19 +32,23 @@ import org.springframework.stereotype.Component;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
-import reciter.model.pubmed.PubMedArticle;
-import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
-import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("goldStandardRetrievalStrategy")
 public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
-	
+
 	private static final String retrievalStrategyName = "GoldStandardRetrievalStrategy";
-	
+
+	/**
+	 * Maximum number of PMIDs per chunked PubMed query. Sized to keep the encoded
+	 * query string well under PubMed's ~2000-character URL ceiling. PMIDs are 8-digit
+	 * comma-separated tokens, so 100 PMIDs ~= 900 chars of payload.
+	 */
+	static final int PMID_BATCH_SIZE = 100;
+
 	@Autowired
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 
@@ -50,95 +56,132 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	public String getRetrievalStrategyName() {
 		return retrievalStrategyName;
 	}
-	
-	protected List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> unqiuePmids) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-		List<Long> goldStandardPmids = dynamoDbGoldStandardService.findByUid(identity.getUid().trim()).getKnownPmids();
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
-		goldStandardPmids.removeAll(unqiuePmids);
-		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
-
-		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueryType.setStrictQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueries.add(pubMedQueryType);
-
-		return pubMedQueries;
-	}
-	
 
 	@Override
 	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder();
-		List<Long> goldStandardPmids = new ArrayList<Long>();
-		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null 
-				&& 
-				goldStandard.getKnownPmids() != null 
-				&& 
-				goldStandard.getKnownPmids().size() > 0) {
-			goldStandardPmids = goldStandard.getKnownPmids();
-		}
-		
-		if(goldStandard != null 
-				&&
-				goldStandard.getRejectedPmids() != null
-				&&
-				goldStandard.getRejectedPmids().size() > 0) {
-			goldStandardPmids.addAll(goldStandard.getRejectedPmids());
-		}
-		
-		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
-
-		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueryType.setStrictQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueries.add(pubMedQueryType);
-
-		return pubMedQueries;
+		String uid = requireValidUid(identity);
+		List<Long> pmids = loadGoldStandardPmids(uid, true);
+		return buildChunkedQueries(pmids, null, null);
 	}
 
 	@Override
-	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, Date startDate, Date endDate) {
-		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
-		
-		List<Long> goldStandardPmids = new ArrayList<Long>();
-		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		if(goldStandard != null 
-				&& 
-				goldStandard.getKnownPmids() != null 
-				&& 
-				goldStandard.getKnownPmids().size() > 0) {
-			goldStandardPmids = goldStandard.getKnownPmids();
+	protected List<PubMedQueryType> buildQuery(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames,
+			Date startDate, Date endDate) {
+		String uid = requireValidUid(identity);
+		List<Long> pmids = loadGoldStandardPmids(uid, true);
+		return buildChunkedQueries(pmids, startDate, endDate);
+	}
+
+	public List<PubMedQueryType> buildQueryGoldStandard(Identity identity, Set<Long> uniquePmids) {
+		String uid = requireValidUid(identity);
+		// Include BOTH knownPmids and rejectedPmids — the engine's analysis metric
+		// `inGoldStandardButNotRetrieved` counts any GS PMID (known OR rejected) that
+		// wasn't retrieved, so excluding rejected from the dedup variant causes a
+		// regression in the metric for users with non-trivial rejectedPmids
+		// counts (e.g., rsb2005: 156 rejected → +132 missing in dev smoke retest).
+		// Dedup is about avoiding redundant eutils traffic for PMIDs already
+		// retrieved by other strategies, not about which GS subset to query.
+		List<Long> pmids = loadGoldStandardPmids(uid, true);
+		if (uniquePmids != null && !uniquePmids.isEmpty()) {
+			pmids.removeAll(uniquePmids);
 		}
-		
-		if(goldStandard != null 
-				&&
-				goldStandard.getRejectedPmids() != null
-				&&
-				goldStandard.getRejectedPmids().size() > 0) {
-			goldStandardPmids.addAll(goldStandard.getRejectedPmids());
+		return buildChunkedQueries(pmids, null, null);
+	}
+
+	/**
+	 * Retrieve PubMed articles for an explicit list of pre-built queries.
+	 * Used by {@code AliasReCiterRetrievalEngine} after it builds chunked GoldStandard
+	 * queries via {@link #buildQueryGoldStandard(Identity, Set)} so the engine can
+	 * dedup against {@code uniquePmids} accumulated by prior strategies (FIX-05).
+	 *
+	 * <p>Delegates to the parent's protected {@code retrievePubMedArticles} helper —
+	 * same threshold gating, lenient/strict logic, and PubMed eutils calls as the
+	 * standard retrieval path. Identity names map is empty because GS queries are
+	 * PMID-list based and do not consult name evidence.
+	 */
+	public RetrievalResult retrievePubMedArticlesUsingQueries(Identity identity,
+			List<PubMedQueryType> pubMedQueries, boolean useStrictQueryOnly) throws IOException {
+		return retrievePubMedArticles(identity, Collections.emptyMap(), pubMedQueries, useStrictQueryOnly);
+	}
+
+	/**
+	 * Build one {@link PubMedQueryType} per chunk of up to {@link #PMID_BATCH_SIZE} PMIDs.
+	 *
+	 * <p>Count queries are ALWAYS set (date-less, even when the term query carries a date
+	 * range) — required because {@code AbstractRetrievalStrategy.retrievePubMedArticles}
+	 * unconditionally reads {@code getLenientCountQuery().getQuery()} on every emitted
+	 * {@link PubMedQueryType} and would NPE otherwise. Date-restricting the count query
+	 * is intentionally avoided so the threshold gate sees the full author result count,
+	 * not a date-restricted subset (see PR-spec-goldstandard-chunking.md line 232).
+	 *
+	 * @param pmids     the PMIDs to encode (chunked); may be null/empty (returns an empty list)
+	 * @param startDate optional date-range start applied to TERM queries only; null means no date-range
+	 * @param endDate   optional date-range end applied to TERM queries only
+	 */
+	private List<PubMedQueryType> buildChunkedQueries(List<Long> pmids, Date startDate, Date endDate) {
+		List<PubMedQueryType> queries = new ArrayList<>();
+		if (pmids == null || pmids.isEmpty()) {
+			return queries;
 		}
 
-		PubMedQueryBuilder pubMedQueryBuilder = new PubMedQueryBuilder()
-				.dateRange(true, startDate, endDate);
-		PubMedQuery goldStandardQuery = pubMedQueryBuilder.buildPmids(goldStandardPmids);
-		
-		PubMedQueryBuilder pubMedQueryBuilderCount = new PubMedQueryBuilder();
-		PubMedQuery goldStandardCountQuery = pubMedQueryBuilderCount.buildPmids(goldStandardPmids);
+		boolean withDateRange = (startDate != null && endDate != null);
+		for (int i = 0; i < pmids.size(); i += PMID_BATCH_SIZE) {
+			List<Long> chunk = pmids.subList(i, Math.min(i + PMID_BATCH_SIZE, pmids.size()));
 
-		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		pubMedQueryType.setLenientQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueryType.setStrictQuery(new PubMedQueryResult(goldStandardQuery));
-		pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(goldStandardCountQuery));
-		pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(goldStandardCountQuery));
-		pubMedQueries.add(pubMedQueryType);
+			PubMedQueryBuilder termBuilder = withDateRange
+					? new PubMedQueryBuilder().dateRange(true, startDate, endDate)
+					: new PubMedQueryBuilder();
+			PubMedQuery termQuery = termBuilder.buildPmids(chunk);
+			// PubMedQueryBuilder.buildPmids does not propagate startDate/endDate to the
+			// returned PubMedQuery; apply them here so PubMedQuery.toString() emits the [DP]/[EDAT] window.
+			if (withDateRange) {
+				termQuery.setStart(startDate);
+				termQuery.setEnd(endDate);
+			}
 
-		return pubMedQueries;
+			// Date-less count query always set — see Javadoc for the NPE-avoidance rationale.
+			PubMedQuery countQuery = new PubMedQueryBuilder().buildPmids(chunk);
+
+			PubMedQueryType pubMedQueryType = new PubMedQueryType();
+			pubMedQueryType.setLenientQuery(new PubMedQueryResult(termQuery));
+			pubMedQueryType.setStrictQuery(new PubMedQueryResult(termQuery));
+			pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(countQuery));
+			pubMedQueryType.setStrictCountQuery(new PubMedQueryResult(countQuery));
+
+			queries.add(pubMedQueryType);
+		}
+		return queries;
+	}
+
+	private String requireValidUid(Identity identity) {
+		if (identity == null || identity.getUid() == null || identity.getUid().trim().isEmpty()) {
+			throw new IllegalArgumentException("Identity UID is missing or blank.");
+		}
+		return identity.getUid().trim();
+	}
+
+	/**
+	 * Defensive-copy the GoldStandard PMID list so callers can mutate the result
+	 * (e.g. remove unique PMIDs) without polluting the DynamoDB-cached entity.
+	 *
+	 * @param uid               the resolved (trimmed) identity UID
+	 * @param includeRejected   when true, append rejectedPmids to the returned list
+	 *                          (the no-args and dateRange overloads target the full GS;
+	 *                          the dedup overload targets known PMIDs only).
+	 */
+	private List<Long> loadGoldStandardPmids(String uid, boolean includeRejected) {
+		List<Long> pmids = new ArrayList<>();
+		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
+		if (goldStandard == null) {
+			return pmids;
+		}
+		if (goldStandard.getKnownPmids() != null) {
+			pmids.addAll(goldStandard.getKnownPmids());
+		}
+		if (includeRejected && goldStandard.getRejectedPmids() != null) {
+			pmids.addAll(goldStandard.getRejectedPmids());
+		}
+		return pmids;
 	}
 
 	@Override

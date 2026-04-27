@@ -53,6 +53,7 @@ import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.AuthorNameUtils;
 import reciter.utils.ThreadDelay;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
+import reciter.xml.retriever.pubmed.PubMedQueryType;
 
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
@@ -166,52 +167,17 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
 		}
 
-		//Retreive by GoldStandard
-		Map<Long, PubMedArticle> pubMedArticles = null;
+		// Initialize as an empty map up front so all strategies use putAll uniformly.
+		// (Phase 36 FIX-05) GoldStandard retrieval now runs LAST after Email/FNI/Aff/Dept/Grant/etc.
+		// have populated uniquePmids, so the GS dedup filter has full coverage. ORCID inference
+		// and the ORCID retrieval strategy also move to after GS-last so they still see GS-retrieved
+		// articles in pubMedArticles when inferOrcidFromAcceptedArticles runs.
+		Map<Long, PubMedArticle> pubMedArticles = new HashMap<>();
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
-			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
-			uniquePmids.addAll(pubMedArticles.keySet());
-			trackNewPmids(pubMedArticles, goldStandardRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
-		//}
-
-		// Retrieve by ORCID (asserted from Identity, or inferred from accepted articles).
-		String orcidForRetrieval = null;
-		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
-				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
-			orcidForRetrieval = identity.getOrcid().trim();
-			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
-		}
-		if (orcidForRetrieval == null) {
-			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
-			if (orcidForRetrieval != null) {
-				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
-						orcidForRetrieval, uid);
-				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
-				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
-				identity.setOrcid(orcidForRetrieval);
-				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
-						orcidForRetrieval, uid);
-			}
-		}
-		if (orcidForRetrieval != null) {
-			// Strategy reads identity.getOrcid() directly (thread-safe).
-			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
-					identity, identityNames, useStrictQueryOnly);
-			pubMedArticles.putAll(orcidResult.getPubMedArticles());
-			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
-					orcidRetrievalStrategy.getRetrievalStrategyName(),
-					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
-			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
-			nonGsStrategyPmids.addAll(orcidResult.getPubMedArticles().keySet());
-			trackNewPmids(orcidResult.getPubMedArticles(), orcidRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
-		}
 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-		pubMedArticles = retrievalResult.getPubMedArticles();
+		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
 		slf4jLogger.info("pubMedArticles in retrieveData section without date range****"+pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
@@ -355,6 +321,60 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 		}
 
+		// Phase 36 FIX-05: GoldStandard retrieval runs LAST so it can dedup against the
+		// uniquePmids accumulated by every prior name/email/affiliation/grant strategy.
+		// The chunked GS query builder from Plan 36-01 batches PMIDs in groups of 100;
+		// the dedup filter strips any knownPmid already retrieved by another strategy.
+		// Net effect: zero redundant eutils traffic for PMIDs already in hand.
+		List<PubMedQueryType> gsQueries = goldStandardRetrievalStrategy.buildQueryGoldStandard(identity, uniquePmids);
+		RetrievalResult goldStandardRetrievalResult =
+				goldStandardRetrievalStrategy.retrievePubMedArticlesUsingQueries(identity, gsQueries, useStrictQueryOnly);
+		pubMedArticles.putAll(goldStandardRetrievalResult.getPubMedArticles());
+		savePubMedArticles(goldStandardRetrievalResult.getPubMedArticles().values(), uid,
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
+		uniquePmids.addAll(goldStandardRetrievalResult.getPubMedArticles().keySet());
+		trackNewPmids(goldStandardRetrievalResult.getPubMedArticles(),
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				uid, existingPmids, newPmidStrategy, backfillPmids);
+
+		// Retrieve by ORCID (asserted from Identity, or inferred from accepted articles).
+		// Inference walks GoldStandard.knownPmids against pubMedArticles, so it must run
+		// AFTER GS retrieval has populated those PMIDs. The ORCID strategy then runs
+		// against either the asserted or inferred ORCID and adds any new articles.
+		String orcidForRetrieval = null;
+		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
+				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
+			orcidForRetrieval = identity.getOrcid().trim();
+			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+		}
+		if (orcidForRetrieval == null) {
+			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
+			if (orcidForRetrieval != null) {
+				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+						orcidForRetrieval, uid);
+				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
+				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
+				identity.setOrcid(orcidForRetrieval);
+				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+						orcidForRetrieval, uid);
+			}
+		}
+		if (orcidForRetrieval != null) {
+			// Strategy reads identity.getOrcid() directly (thread-safe).
+			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
+					identity, identityNames, useStrictQueryOnly);
+			pubMedArticles.putAll(orcidResult.getPubMedArticles());
+			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
+			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
+			nonGsStrategyPmids.addAll(orcidResult.getPubMedArticles().keySet());
+			trackNewPmids(orcidResult.getPubMedArticles(),
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					uid, existingPmids, newPmidStrategy, backfillPmids);
+		}
+
 		// Phase 1: Save ESearchCount for users who didn't already get a threshold-path
 		// count (line 275). For threshold-exceeding users, the raw PubMed count is
 		// the correct value for ArticleSizeStrategy's log(count) scoring formula.
@@ -478,52 +498,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
 		}
 
-		Map<Long, PubMedArticle> pubMedArticles = null;
-		//Retreive by GoldStandard
+		// (Phase 36 FIX-05) GoldStandard retrieval moved to AFTER the other strategies so it
+		// can dedup against uniquePmids. ORCID inference + ORCID-strategy moved with it so
+		// inference still sees GS-retrieved articles in pubMedArticles when it runs.
+		Map<Long, PubMedArticle> pubMedArticles = new HashMap<>();
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
-			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
-			uniquePmids.addAll(pubMedArticles.keySet());
-			trackNewPmids(pubMedArticles, goldStandardRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
-		//}
-
-		// Retrieve by ORCID (asserted from Identity, or inferred from accepted articles).
-		String orcidForRetrieval = null;
-		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
-				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
-			orcidForRetrieval = identity.getOrcid().trim();
-			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
-		}
-		if (orcidForRetrieval == null) {
-			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
-			if (orcidForRetrieval != null) {
-				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
-						orcidForRetrieval, uid);
-				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
-				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
-				identity.setOrcid(orcidForRetrieval);
-				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
-						orcidForRetrieval, uid);
-			}
-		}
-		if (orcidForRetrieval != null) {
-			// Strategy reads identity.getOrcid() directly (thread-safe).
-			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
-					identity, identityNames, startDate, endDate, useStrictQueryOnly);
-			pubMedArticles.putAll(orcidResult.getPubMedArticles());
-			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
-					orcidRetrievalStrategy.getRetrievalStrategyName(),
-					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
-			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
-			trackNewPmids(orcidResult.getPubMedArticles(), orcidRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
-		}
 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-		//Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
-		pubMedArticles = retrievalResult.getPubMedArticles();
+		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
 		slf4jLogger.info("pubMedArticles in retrieveData section with date range****"+pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
@@ -654,6 +637,53 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r8.getPubMedArticles().keySet());
 			trackNewPmids(r8.getPubMedArticles(), secondIntialRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+		}
+
+		// Phase 36 FIX-05: GoldStandard runs LAST with dedup against uniquePmids.
+		// Date-range variant uses the dateRange-aware buildQuery overload internally —
+		// here we keep the no-args buildQueryGoldStandard helper because date-range and
+		// PMID-list semantics don't compose: a PMID is a unique identifier, not a temporal
+		// query, so we want all knownPmids retrievable regardless of date window.
+		List<PubMedQueryType> gsQueries = goldStandardRetrievalStrategy.buildQueryGoldStandard(identity, uniquePmids);
+		RetrievalResult goldStandardRetrievalResult =
+				goldStandardRetrievalStrategy.retrievePubMedArticlesUsingQueries(identity, gsQueries, useStrictQueryOnly);
+		pubMedArticles.putAll(goldStandardRetrievalResult.getPubMedArticles());
+		savePubMedArticles(goldStandardRetrievalResult.getPubMedArticles().values(), uid,
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
+		uniquePmids.addAll(goldStandardRetrievalResult.getPubMedArticles().keySet());
+		trackNewPmids(goldStandardRetrievalResult.getPubMedArticles(),
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				uid, existingPmids, newPmidStrategy, backfillPmids);
+
+		// Retrieve by ORCID — inference now sees GS articles in pubMedArticles (FIX-05).
+		String orcidForRetrieval = null;
+		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
+				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
+			orcidForRetrieval = identity.getOrcid().trim();
+			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+		}
+		if (orcidForRetrieval == null) {
+			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
+			if (orcidForRetrieval != null) {
+				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+						orcidForRetrieval, uid);
+				identity.setOrcid(orcidForRetrieval);
+				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+						orcidForRetrieval, uid);
+			}
+		}
+		if (orcidForRetrieval != null) {
+			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
+					identity, identityNames, startDate, endDate, useStrictQueryOnly);
+			pubMedArticles.putAll(orcidResult.getPubMedArticles());
+			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
+			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
+			trackNewPmids(orcidResult.getPubMedArticles(),
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					uid, existingPmids, newPmidStrategy, backfillPmids);
 		}
 
 		// Phase 1: Write provenance records for newly discovered PMIDs (no ESearchCount always-save for date-range runs)
