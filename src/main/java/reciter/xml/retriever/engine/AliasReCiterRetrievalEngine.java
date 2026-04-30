@@ -45,6 +45,7 @@ import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.database.dynamodb.model.PmidProvenance;
+import reciter.service.ArticleProvenanceService;
 import reciter.service.ESearchCountService;
 import reciter.service.ESearchResultService;
 import reciter.service.PmidProvenanceService;
@@ -77,6 +78,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	@Autowired
 	private PmidProvenanceService pmidProvenanceService;
+
+	@Autowired
+	private ArticleProvenanceService articleProvenanceService;
 
 	public enum IdentityNameType {
 		ORIGINAL,
@@ -866,14 +870,32 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	}
 
 	/**
-	 * Track newly discovered PMIDs for provenance recording.
-	 * For each PMID in the articles map, if it's not already known (from existingPmids or newPmidStrategy),
-	 * record which strategy first discovered it. Also heal any backfill provenance records.
+	 * Track PMIDs returned by a retrieval strategy.
+	 *
+	 * <p>Two effects per PMID:
+	 * <ol>
+	 *   <li><b>Legacy {@code PmidProvenance} attribution</b>: if the PMID is genuinely new
+	 *       (not in {@code existingPmids} nor already attributed in {@code newPmidStrategy}),
+	 *       record this strategy as the first finder. The contents of {@code newPmidStrategy}
+	 *       are batch-written to {@code PmidProvenance} after all strategies finish.
+	 *       Backfill-tagged PMIDs are healed via {@link PmidProvenanceService#updateStrategyIfBackfill}.</li>
+	 *   <li><b>Phase 33 {@code ArticleProvenance} write</b>: for EVERY PMID returned by the
+	 *       strategy (not just new ones), upsert the {@code ArticleProvenance} row with
+	 *       {@code rs}/{@code frd}/{@code ads}. Uses {@code if_not_exists} so original
+	 *       attribution is preserved on re-runs; {@code ads} grows as new strategies re-find
+	 *       this PMID. The {@code src} field is NOT touched here (curator/CTSC paths own it).
+	 *       This closes the established-user gap where PmidProvenance was never written
+	 *       because all PMIDs were already known.</li>
+	 * </ol>
+	 *
+	 * <p>Phase 33-01 D-01..D-04. Provenance write failures never propagate (logged in service).
 	 */
 	private void trackNewPmids(Map<Long, ?> articles, String strategyName,
 			String uid, Set<Long> existingPmids, Map<Long, String> newPmidStrategy,
 			Set<Long> backfillPmids) {
+		long nowEpochSeconds = System.currentTimeMillis() / 1000L;
 		for (Long pmid : articles.keySet()) {
+			// Legacy PmidProvenance attribution (new-only)
 			if (!existingPmids.contains(pmid) && !newPmidStrategy.containsKey(pmid)) {
 				newPmidStrategy.put(pmid, strategyName);
 			}
@@ -881,6 +903,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pmidProvenanceService.updateStrategyIfBackfill(uid, pmid, strategyName);
 				backfillPmids.remove(pmid);
 			}
+			// Phase 33-01: ArticleProvenance upsert for EVERY retrieved PMID
+			articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
 		}
 	}
 
