@@ -70,13 +70,22 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         values.put(":strategy", new AttributeValue().withS(strategyCode));
         values.put(":now", new AttributeValue().withN(String.valueOf(epochSeconds)));
         values.put(":strategySet", new AttributeValue().withSS(Collections.singletonList(strategyCode)));
+        values.put(":pm", new AttributeValue().withS(SRC_PM));
 
+        // src is set to 'PM' only when currently absent. This matches Phase 31's Python
+        // backfill behavior, which wrote src='PM' for every retrieval-found item. Without
+        // this, brand-new AP rows created by Phase 33-01 would have src absent, and a
+        // subsequent curator action would incorrectly transition src=null -> 'MAN'
+        // (algo-missed) instead of -> 'MAN_FROM_PM' (algo-found, then curator-touched).
+        // The if_not_exists guard preserves existing src values (CTSC, MAN, MAN_FROM_*)
+        // so the curator/CTSC paths retain ownership of src per Phase 33 D-04 intent.
         UpdateItemRequest req = new UpdateItemRequest()
                 .withTableName(TABLE_NAME)
                 .withKey(key)
                 .withUpdateExpression(
                         "SET rs = if_not_exists(rs, :strategy), " +
-                        "    frd = if_not_exists(frd, :now) " +
+                        "    frd = if_not_exists(frd, :now), " +
+                        "    src = if_not_exists(src, :pm) " +
                         "ADD ads :strategySet")
                 .withExpressionAttributeValues(values);
 
