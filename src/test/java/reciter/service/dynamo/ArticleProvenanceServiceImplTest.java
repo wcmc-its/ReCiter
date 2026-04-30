@@ -104,14 +104,18 @@ public class ArticleProvenanceServiceImplTest {
     }
 
     @Test
-    public void testUpsert_DoesNotTouchSrc() {
+    public void testUpsert_PreservesExistingSrc_OnlySetsPmIfAbsent() {
         service.upsertRetrievalProvenance("uid1", 100L, "STRAT_A", 1700000000L);
         UpdateItemRequest req = captureRequest();
 
         String expr = req.getUpdateExpression();
-        // Phase 33 D-04: retrieval path never writes src.
-        assertTrue("UpdateExpression must not contain 'src': " + expr,
-                !expr.contains("src"));
+        // Phase 33-01b: retrieval sets src='PM' only when src is currently absent.
+        // The if_not_exists guard preserves existing src values (CTSC, MAN, MAN_FROM_*)
+        // so the curator/CTSC paths retain ownership of src per D-04 spirit, while
+        // matching Phase 31's behavior of writing src='PM' on retrieval-found items.
+        assertTrue("UpdateExpression must use if_not_exists(src, :pm): " + expr,
+                expr.contains("src = if_not_exists(src, :pm)"));
+        assertEquals("PM", req.getExpressionAttributeValues().get(":pm").getS());
     }
 
     @Test
