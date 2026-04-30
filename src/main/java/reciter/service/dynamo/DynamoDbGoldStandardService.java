@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,7 +25,10 @@ import reciter.database.dynamodb.model.GoldStandardAuditLog;
 import reciter.database.dynamodb.model.PmidProvenance;
 import reciter.database.dynamodb.model.PublicationFeedback;
 import reciter.database.dynamodb.repository.DynamoDbGoldStandardRepository;
+import reciter.feedback.EntryPath;
+import reciter.service.ArticleProvenanceService;
 import reciter.service.ESearchResultService;
+import reciter.service.FeedbackLogService;
 import reciter.service.PmidProvenanceService;
 
 @Service("DynamoDbGoldStandardService")
@@ -41,8 +46,33 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     @Autowired
     private PmidProvenanceService pmidProvenanceService;
 
+    @Autowired
+    private FeedbackLogService feedbackLogService;
+
+    @Autowired
+    private ArticleProvenanceService articleProvenanceService;
+
+    // ---- Phase 33-02 4-arg overloads -----------------------------------------------------------
+    // Existing 3-arg save() callers default entryPath to CANDIDATE_LIST. Controllers that want to
+    // distinguish PUBMED_SEARCH actions invoke the 4-arg overload directly.
+
     @Override
     public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource) {
+        save(goldStandard, goldStandardUpdateFlag, provenanceSource, EntryPath.CANDIDATE_LIST);
+    }
+
+    @Override
+    public void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource) {
+        save(goldStandard, goldStandardUpdateFlag, provenanceSource, EntryPath.CANDIDATE_LIST);
+    }
+
+    @Override
+    public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+                     String provenanceSource, EntryPath entryPath) {
+        saveInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
+    }
+
+    private void saveInternal(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath) {
     	// Resolve provenance strategy: caller-supplied source, or default
     	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
     			? provenanceSource : PM_MANUAL_STRATEGY;
@@ -193,6 +223,14 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     					auditLog.addAll(newEntries);
     					goldStandard.setAuditLog(auditLog);
     				}
+    				// Phase 33-02: FeedbackLog rows + ArticleProvenance D-11/D-13 transitions
+    				// for the diff. Inside the same UPDATE branch where existingAccepted/Rejected
+    				// are in scope.
+    				recordFeedbackLogAndArticleProvenance(
+    						goldStandard.getUid(),
+    						incomingAcceptedPmids, incomingRejectedPmids,
+    						existingAccepted, existingRejected,
+    						entryPath);
     			}
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		}
@@ -214,7 +252,12 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     }
 
 	@Override
-	public void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource) {
+	public void save(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+	                 String provenanceSource, EntryPath entryPath) {
+		saveListInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
+	}
+
+	private void saveListInternal(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath) {
 		// Resolve provenance strategy: caller-supplied source, or default
 		String strategy = (provenanceSource != null && !provenanceSource.isBlank())
 				? provenanceSource : PM_MANUAL_STRATEGY;
@@ -296,6 +339,10 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						auditLog.addAll(newEntries);
     						goldStandardNew.setAuditLog(auditLog);
     					}
+    					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff
+    					recordFeedbackLogAndArticleProvenance(uid,
+    							batchIncomingAccepted, batchIncomingRejected,
+    							existingAccepted, existingRejected, entryPath);
     				}
     			}
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
@@ -365,6 +412,73 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		}
 		return entries;
 	}
+	/**
+	 * Phase 33-02: emit FeedbackLog rows + ArticleProvenance D-11/D-13 transitions for
+	 * every curator action implied by the diff between incoming GS state and existing
+	 * GS state. Three buckets:
+	 *
+	 * <ul>
+	 *   <li><b>newly ACCEPTED</b> — pmids in {@code incomingAccepted} not in {@code existingAccepted}</li>
+	 *   <li><b>newly REJECTED</b> — pmids in {@code incomingRejected} not in {@code existingRejected}</li>
+	 *   <li><b>newly PENDING</b> — pmids in {@code (existingAccepted ∪ existingRejected)} that are
+	 *       NOT in {@code (incomingAccepted ∪ incomingRejected)} (state transition to pending)</li>
+	 * </ul>
+	 *
+	 * <p>Each bucket emits one FeedbackLog row per pmid + one ArticleProvenance D-11
+	 * transition. PUBMED_SEARCH entry path additionally writes the rs='PM_UI_SEARCH' record
+	 * before the D-11 transition (D-13). Both services log and continue on failure;
+	 * curator request never blocks.
+	 *
+	 * <p>{@code curatedBy} is set to 0 because the {@code POST /reciter/goldstandard}
+	 * endpoint does not currently carry a userID. Future work: extend the endpoint to
+	 * include curatedBy in the request payload.
+	 */
+	private void recordFeedbackLogAndArticleProvenance(String uid,
+			List<Long> incomingAccepted, List<Long> incomingRejected,
+			List<Long> existingAccepted, List<Long> existingRejected,
+			EntryPath entryPath) {
+		long actionEpoch = System.currentTimeMillis() / 1000L;
+		Set<Long> incomingAccSet = new HashSet<>(incomingAccepted);
+		Set<Long> incomingRejSet = new HashSet<>(incomingRejected);
+		Set<Long> existingAccSet = new HashSet<>(existingAccepted);
+		Set<Long> existingRejSet = new HashSet<>(existingRejected);
+
+		Set<Long> newlyAccepted = new HashSet<>(incomingAccSet);
+		newlyAccepted.removeAll(existingAccSet);
+
+		Set<Long> newlyRejected = new HashSet<>(incomingRejSet);
+		newlyRejected.removeAll(existingRejSet);
+
+		Set<Long> previouslyClassified = new HashSet<>();
+		previouslyClassified.addAll(existingAccSet);
+		previouslyClassified.addAll(existingRejSet);
+		Set<Long> stillClassified = new HashSet<>();
+		stillClassified.addAll(incomingAccSet);
+		stillClassified.addAll(incomingRejSet);
+		Set<Long> newlyPending = new HashSet<>(previouslyClassified);
+		newlyPending.removeAll(stillClassified);
+
+		int total = newlyAccepted.size() + newlyRejected.size() + newlyPending.size();
+		if (total == 0) {
+			return;
+		}
+		log.info("Phase 33-02: feedback diff for uid={} entryPath={}: +{} accepted, +{} rejected, +{} pending",
+				uid, entryPath, newlyAccepted.size(), newlyRejected.size(), newlyPending.size());
+
+		for (Long pmid : newlyAccepted) {
+			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.ACCEPTED, 0, actionEpoch);
+			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
+		}
+		for (Long pmid : newlyRejected) {
+			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.REJECTED, 0, actionEpoch);
+			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
+		}
+		for (Long pmid : newlyPending) {
+			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.PENDING, 0, actionEpoch);
+			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
+		}
+	}
+
 	/**
 	 * Write PmidProvenance records for accepted PMIDs. Uses saveIfNotExists
 	 * so that PMIDs already discovered by automated retrieval strategies

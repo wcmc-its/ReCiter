@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,10 +18,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Collections;
+import java.util.HashMap;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
+import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
+
+import reciter.feedback.EntryPath;
 
 /**
  * Unit tests for {@link ArticleProvenanceServiceImpl}.
@@ -162,5 +171,176 @@ public class ArticleProvenanceServiceImplTest {
     public void testUpsert_EmptyStrategyCode_SkipsCallEntirely() {
         service.upsertRetrievalProvenance("uid1", 100L, "", 1700000000L);
         verify(amazonDynamoDB, never()).updateItem(any(UpdateItemRequest.class));
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Phase 33-02: D-11 transition table tests via computeNewSrc + upsertCuratorAction
+    // -----------------------------------------------------------------------------------------
+
+    @Test
+    public void testComputeNewSrc_AbsentToMan() {
+        assertEquals("MAN", ArticleProvenanceServiceImpl.computeNewSrc(null));
+    }
+
+    @Test
+    public void testComputeNewSrc_GsToMan() {
+        assertEquals("MAN", ArticleProvenanceServiceImpl.computeNewSrc("GS"));
+    }
+
+    @Test
+    public void testComputeNewSrc_PmToManFromPm() {
+        assertEquals("MAN_FROM_PM", ArticleProvenanceServiceImpl.computeNewSrc("PM"));
+    }
+
+    @Test
+    public void testComputeNewSrc_CtscToManFromCtsc() {
+        assertEquals("MAN_FROM_CTSC", ArticleProvenanceServiceImpl.computeNewSrc("CTSC"));
+    }
+
+    @Test
+    public void testComputeNewSrc_ManIsNoop() {
+        assertEquals("MAN", ArticleProvenanceServiceImpl.computeNewSrc("MAN"));
+    }
+
+    @Test
+    public void testComputeNewSrc_ManFromPmIsNoop() {
+        assertEquals("MAN_FROM_PM", ArticleProvenanceServiceImpl.computeNewSrc("MAN_FROM_PM"));
+    }
+
+    @Test
+    public void testComputeNewSrc_ManFromCtscIsNoop() {
+        assertEquals("MAN_FROM_CTSC", ArticleProvenanceServiceImpl.computeNewSrc("MAN_FROM_CTSC"));
+    }
+
+    private void stubGetItemSrc(String existingSrc) {
+        GetItemResult result = new GetItemResult();
+        if (existingSrc != null) {
+            HashMap<String, AttributeValue> item = new HashMap<>();
+            item.put("src", new AttributeValue().withS(existingSrc));
+            result.setItem(item);
+        }
+        when(amazonDynamoDB.getItem(any(GetItemRequest.class))).thenReturn(result);
+    }
+
+    @Test
+    public void testCuratorAction_NoExisting_CandidateList_WritesSrcMan() {
+        stubGetItemSrc(null);
+        service.upsertCuratorAction("uid1", 100L, EntryPath.CANDIDATE_LIST, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB).updateItem(captor.capture());
+        UpdateItemRequest req = captor.getValue();
+        assertEquals("MAN", req.getExpressionAttributeValues().get(":new").getS());
+        assertEquals("attribute_not_exists(src)", req.getConditionExpression());
+        assertTrue("UpdateExpression must SET src and frd: " + req.getUpdateExpression(),
+                req.getUpdateExpression().contains("SET src = :new")
+                        && req.getUpdateExpression().contains("frd = if_not_exists(frd, :ts)"));
+    }
+
+    @Test
+    public void testCuratorAction_ExistingPm_CandidateList_TransitionsToManFromPm() {
+        stubGetItemSrc("PM");
+        service.upsertCuratorAction("uid1", 100L, EntryPath.CANDIDATE_LIST, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB).updateItem(captor.capture());
+        UpdateItemRequest req = captor.getValue();
+        assertEquals("MAN_FROM_PM", req.getExpressionAttributeValues().get(":new").getS());
+        assertEquals("PM", req.getExpressionAttributeValues().get(":existing").getS());
+        assertEquals("src = :existing", req.getConditionExpression());
+    }
+
+    @Test
+    public void testCuratorAction_ExistingCtsc_CandidateList_TransitionsToManFromCtsc() {
+        stubGetItemSrc("CTSC");
+        service.upsertCuratorAction("uid1", 100L, EntryPath.CANDIDATE_LIST, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB).updateItem(captor.capture());
+        UpdateItemRequest req = captor.getValue();
+        assertEquals("MAN_FROM_CTSC", req.getExpressionAttributeValues().get(":new").getS());
+        assertEquals("CTSC", req.getExpressionAttributeValues().get(":existing").getS());
+    }
+
+    @Test
+    public void testCuratorAction_ExistingManFromPm_CandidateList_NoSrcChangeOnlyFrdMaintenance() {
+        stubGetItemSrc("MAN_FROM_PM");
+        service.upsertCuratorAction("uid1", 100L, EntryPath.CANDIDATE_LIST, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB).updateItem(captor.capture());
+        UpdateItemRequest req = captor.getValue();
+        // Should write only frd (idempotent on src)
+        assertTrue("Expression must be only frd if_not_exists: " + req.getUpdateExpression(),
+                req.getUpdateExpression().equals("SET frd = if_not_exists(frd, :ts)"));
+        // No condition (since src is already correct)
+        assertTrue("No conditional needed for noop: " + req.getConditionExpression(),
+                req.getConditionExpression() == null);
+    }
+
+    @Test
+    public void testCuratorAction_PubmedSearch_NewPmid_WritesPmUiSearchThenManFromPm() {
+        stubGetItemSrc(null);
+        // First updateItem call is the PM_UI_SEARCH retrieval-record write (D-13)
+        // Second updateItem call is the D-11 transition (which sees no existing src after the
+        // mock GetItem; in real life GetItem would read what D-13 just wrote, but we control
+        // the mock to verify the two-step sequence).
+        service.upsertCuratorAction("uid1", 100L, EntryPath.PUBMED_SEARCH, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB, times(2)).updateItem(captor.capture());
+        UpdateItemRequest first = captor.getAllValues().get(0);
+        // Step 1: PM_UI_SEARCH retrieval-record write
+        assertTrue("First call must SET rs to PM_UI_SEARCH if absent: " + first.getUpdateExpression(),
+                first.getUpdateExpression().contains("rs  = if_not_exists(rs,  :rs)"));
+        assertEquals("PM_UI_SEARCH", first.getExpressionAttributeValues().get(":rs").getS());
+        assertEquals("PM", first.getExpressionAttributeValues().get(":pm").getS());
+        assertNotNull(first.getExpressionAttributeValues().get(":rsSet"));
+        assertEquals("PM_UI_SEARCH", first.getExpressionAttributeValues().get(":rsSet").getSS().get(0));
+    }
+
+    @Test
+    public void testCuratorAction_PubmedSearch_TwoUpdateItemCallsSequence() {
+        stubGetItemSrc(null);
+        service.upsertCuratorAction("uid1", 100L, EntryPath.PUBMED_SEARCH, 1700000000L);
+        // PUBMED_SEARCH path: 1 PM_UI_SEARCH write + 1 D-11 transition = 2 updateItem calls
+        verify(amazonDynamoDB, times(2)).updateItem(any(UpdateItemRequest.class));
+    }
+
+    @Test
+    public void testCuratorAction_CandidateList_OneUpdateItemCall() {
+        stubGetItemSrc(null);
+        service.upsertCuratorAction("uid1", 100L, EntryPath.CANDIDATE_LIST, 1700000000L);
+        // CANDIDATE_LIST path: only the D-11 transition = 1 updateItem call
+        verify(amazonDynamoDB, times(1)).updateItem(any(UpdateItemRequest.class));
+    }
+
+    @Test
+    public void testCuratorAction_NullUid_SkipsCallEntirely() {
+        service.upsertCuratorAction(null, 100L, EntryPath.CANDIDATE_LIST, 1700000000L);
+        verify(amazonDynamoDB, never()).updateItem(any(UpdateItemRequest.class));
+        verify(amazonDynamoDB, never()).getItem(any(GetItemRequest.class));
+    }
+
+    @Test
+    public void testCuratorAction_NullEntryPath_DefaultsCandidateList() {
+        stubGetItemSrc("PM");
+        service.upsertCuratorAction("uid1", 100L, null, 1700000000L);
+        // Should be 1 updateItem call (CANDIDATE_LIST path)
+        verify(amazonDynamoDB, times(1)).updateItem(any(UpdateItemRequest.class));
+    }
+
+    @Test
+    public void testCuratorAction_RaceOnUpdate_RetriesOnce() {
+        stubGetItemSrc("PM");
+        when(amazonDynamoDB.updateItem(any(UpdateItemRequest.class)))
+                .thenThrow(new ConditionalCheckFailedException("race"))
+                .thenReturn(null);  // second attempt succeeds
+
+        service.upsertCuratorAction("uid1", 100L, EntryPath.CANDIDATE_LIST, 1700000000L);
+        // 2 updateItem invocations: original + 1 retry
+        verify(amazonDynamoDB, times(2)).updateItem(any(UpdateItemRequest.class));
+        // GetItem is called twice (once initial, once on retry)
+        verify(amazonDynamoDB, times(2)).getItem(any(GetItemRequest.class));
     }
 }
