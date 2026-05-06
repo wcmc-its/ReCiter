@@ -280,6 +280,15 @@ public class ArticleProvenanceServiceImplTest {
         // No condition (since src is already correct)
         assertTrue("No conditional needed for noop: " + req.getConditionExpression(),
                 req.getConditionExpression() == null);
+        // Regression: DynamoDB rejects ExpressionAttributeValues that aren't referenced
+        // in the UpdateExpression with ValidationException. The no-op branch must NOT
+        // include :new (only :ts is referenced).
+        assertTrue(":new must not be in ExpressionAttributeValues for noop branch: "
+                        + req.getExpressionAttributeValues().keySet(),
+                !req.getExpressionAttributeValues().containsKey(":new"));
+        assertTrue(":ts must be present in ExpressionAttributeValues: "
+                        + req.getExpressionAttributeValues().keySet(),
+                req.getExpressionAttributeValues().containsKey(":ts"));
     }
 
     @Test
