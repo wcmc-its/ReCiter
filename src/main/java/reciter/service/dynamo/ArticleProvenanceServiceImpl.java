@@ -181,22 +181,24 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
 
         String newSrc = computeNewSrc(existingSrc);
 
-        // 2. Build conditional UpdateItem
+        // 2. Build conditional UpdateItem. Only add :new to values when the
+        // UpdateExpression actually references it; DynamoDB rejects unused
+        // ExpressionAttributeValues with ValidationException.
         Map<String, AttributeValue> values = new HashMap<>();
-        values.put(":new", new AttributeValue().withS(newSrc));
         values.put(":ts", new AttributeValue().withN(String.valueOf(epochSeconds)));
 
         UpdateItemRequest req = new UpdateItemRequest()
                 .withTableName(TABLE_NAME)
-                .withKey(key)
-                .withExpressionAttributeValues(values);
+                .withKey(key);
 
         if (existingSrc == null) {
             // New row: write src + frd, condition on src absence
+            values.put(":new", new AttributeValue().withS(newSrc));
             req.withUpdateExpression("SET src = :new, frd = if_not_exists(frd, :ts)")
                .withConditionExpression("attribute_not_exists(src)");
         } else if (!newSrc.equals(existingSrc)) {
             // Transition: condition on observed existing value to detect concurrent write
+            values.put(":new", new AttributeValue().withS(newSrc));
             values.put(":existing", new AttributeValue().withS(existingSrc));
             req.withUpdateExpression("SET src = :new, frd = if_not_exists(frd, :ts)")
                .withConditionExpression("src = :existing");
@@ -204,6 +206,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
             // No-op on src; ensure frd is present
             req.withUpdateExpression("SET frd = if_not_exists(frd, :ts)");
         }
+        req.withExpressionAttributeValues(values);
 
         try {
             amazonDynamoDB.updateItem(req);
