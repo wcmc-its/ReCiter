@@ -412,6 +412,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		}
 		return entries;
 	}
+
 	/**
 	 * Phase 33-02: emit FeedbackLog rows + ArticleProvenance D-11/D-13 transitions for
 	 * every curator action implied by the diff between incoming GS state and existing

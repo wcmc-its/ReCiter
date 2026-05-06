@@ -462,11 +462,17 @@ public class ArticleTranslator {
             Map<Long, String> commentsCorrectionsRefTypes = new HashMap<>();
             List<MedlineCitationCommentsCorrections> commentsCorrectionsList = pubmedArticle.getMedlinecitation().getCommentscorrectionslist();
             for (MedlineCitationCommentsCorrections medlineCitationCommentsCorrections : commentsCorrectionsList) {
-                if(medlineCitationCommentsCorrections.getPmid() != null) {
-                    Long ccPmid = Long.parseLong(medlineCitationCommentsCorrections.getPmid());
-                    commentsCorrectionsPmids.add(ccPmid);
-                    if (medlineCitationCommentsCorrections.getReftype() != null) {
-                        commentsCorrectionsRefTypes.put(ccPmid, medlineCitationCommentsCorrections.getReftype());
+                String ccPmidStr = medlineCitationCommentsCorrections.getPmid();
+                if (ccPmidStr != null) {
+                    if (ccPmidStr.matches("\\d+")) {
+                        Long ccPmid = Long.parseLong(ccPmidStr);
+                        commentsCorrectionsPmids.add(ccPmid);
+                        if (medlineCitationCommentsCorrections.getReftype() != null) {
+                            commentsCorrectionsRefTypes.put(ccPmid, medlineCitationCommentsCorrections.getReftype());
+                        }
+                    } else {
+                        slf4jLogger.debug("Skipping non-numeric CommentsCorrections PMID for article {}: {}",
+                                pubmedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid(), ccPmidStr);
                     }
                 }
             }
