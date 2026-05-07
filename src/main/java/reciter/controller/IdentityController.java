@@ -99,6 +99,12 @@ public class IdentityController {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
         stopWatch.start("Add list of identities to Identity table in DynamoDb");
         log.info("calling saveIdentities with number of identities=" + identities.size());
+        
+        if (identities == null || identities.isEmpty()) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+            log.info("The request body must contain at least one Identity");
+        }
      
         for(Identity identity : identities)
         {	
@@ -240,10 +246,6 @@ public class IdentityController {
     private void validateMandatoryFields(Identity identity) {
         String[] mandatoryFields = getMandatoryFields();
 
-     // Validate each AuthorName in the alternateNames list
-        if (identity ==null || identity.getAlternateNames() == null || identity.getAlternateNames().isEmpty()) {
-            throw new IllegalArgumentException("Field 'alternateNames' is required but not provided.");
-        }
         List<AuthorName> listofAuthorNames = identity.getAlternateNames();
         
         if (identity ==null || identity.getUid() == null || identity.getUid().isEmpty()) {
