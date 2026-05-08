@@ -104,11 +104,15 @@ public class SecondInitialRetrievalStrategy extends AbstractNameRetrievalStrateg
 				}
 			}
 			buf.append(")");
-			if(buf.toString().endsWith(" OR )")) {
-				return buf.toString().substring(0, buf.toString().length() - 5) + ")";
+			String result = buf.toString();
+			if(result.equals("()")) {
+				return null;
+			}
+			if(result.endsWith(" OR )")) {
+				return result.substring(0, result.length() - 5) + ")";
 			}
 			else {
-				return buf.toString();
+				return result;
 			}
 		} else {
 			return null;
