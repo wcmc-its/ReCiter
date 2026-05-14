@@ -251,7 +251,7 @@ public class IdentityController {
         if (identity ==null || identity.getUid() == null || identity.getUid().isEmpty()) {
             throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
         }
-  
+       if(listofAuthorNames!=null) {
         for (AuthorName authorName : listofAuthorNames) {
             // Ensure each field is present and valid
         	
@@ -277,5 +277,6 @@ public class IdentityController {
                 }
             }
         }
+      }
     }
 }
