@@ -171,6 +171,12 @@ public class DynamoDbS3Operations {
 	 * @return date of the object that was stored
 	 */
 	public Date getObjectSaveTimestamp(String bucketName, String keyName) {
+		// Match the null guards in saveLargeItem / retrieveLargeItem. Return null
+		// when the S3 client or bucket is unavailable so the caller falls back to
+		// a fresh DynamoDB read instead of throwing NullPointerException.
+		if (s3 == null || bucketName == null) {
+			return null;
+		}
 		try {
 			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 			Date lastModifedDate = s3Object.getObjectMetadata().getLastModified();
