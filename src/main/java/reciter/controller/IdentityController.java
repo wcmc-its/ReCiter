@@ -98,13 +98,14 @@ public class IdentityController {
     public void saveIdentities(@RequestBody List<Identity> identities) {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
         stopWatch.start("Add list of identities to Identity table in DynamoDb");
-        log.info("calling saveIdentities with number of identities=" + identities.size());
         
         if (identities == null || identities.isEmpty()) {
             stopWatch.stop();
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             log.info("The request body must contain at least one Identity");
+            return;
         }
+        log.info("calling saveIdentities with number of identities=" + identities.size());
      
         for(Identity identity : identities)
         {	
@@ -246,11 +247,11 @@ public class IdentityController {
     private void validateMandatoryFields(Identity identity) {
         String[] mandatoryFields = getMandatoryFields();
 
-        List<AuthorName> listofAuthorNames = identity.getAlternateNames();
-        
-        if (identity ==null || identity.getUid() == null || identity.getUid().isEmpty()) {
+        if (identity == null || identity.getUid() == null || identity.getUid().isEmpty()) {
             throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
         }
+
+        List<AuthorName> listofAuthorNames = identity.getAlternateNames();
        if(listofAuthorNames!=null) {
         for (AuthorName authorName : listofAuthorNames) {
             // Ensure each field is present and valid
