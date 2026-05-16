@@ -54,7 +54,16 @@ public class DynamoDbS3Operations {
 	 * @param keyName
 	 */
 	public void saveLargeItem(String bucketName, Object object, String keyName) {
-		
+		// Skip S3 entirely when client or bucket is unavailable (e.g., standalone
+		// local mode with aws.s3.use=false). The previous code's else branch
+		// dereferenced bucketName.toLowerCase() unconditionally, producing
+		// NullPointerException for any Analysis object large enough to spill
+		// (>400KB DynamoDB item limit). The S3 cache is best-effort; callers
+		// don't depend on it for the API response.
+		if (s3 == null || bucketName == null) {
+			return;
+		}
+
 		if(s3 != null && bucketName != null && !s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
 			
 			//AmazonS3Config.createFolder(bucketName, AnalysisOutput.class.getName(), s3);
@@ -114,6 +123,12 @@ public class DynamoDbS3Operations {
 	 * @return
 	 */
 	public <T> Object retrieveLargeItem(String bucketName, String keyName, Class<T> objectClass) {
+		// Match the null guard in saveLargeItem. Return null so callers fall back
+		// to the standard DynamoDB read path (which the caller already does for
+		// items <= 400KB).
+		if (s3 == null || bucketName == null) {
+			return null;
+		}
 		try {
 			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 			String objectContent = IOUtils.toString(s3Object.getObjectContent(), StandardCharsets.UTF_8);
