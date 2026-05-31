@@ -86,6 +86,8 @@ import reciter.service.OrcidService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
+import reciter.service.dynamo.FeedbackLogQueryService;
+import reciter.service.dynamo.AuditHistoryEntry;
 import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
 import reciter.utils.InstitutionSanitizationUtil;
@@ -121,6 +123,9 @@ public class ReCiterController {
     @Autowired
     private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 
+    @Autowired
+    private FeedbackLogQueryService feedbackLogQueryService;
+
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
     
@@ -153,7 +158,8 @@ public class ReCiterController {
     @ResponseBody
     public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
     		@RequestParam(value = "source", required = false) String provenanceSource,
-    		@RequestParam(value = "entryPath", required = false) String entryPathParam) {
+    		@RequestParam(value = "entryPath", required = false) String entryPathParam,
+    		@RequestParam(value = "curatedBy", required = false, defaultValue = "0") int curatedBy) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
@@ -165,12 +171,12 @@ public class ReCiterController {
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource, entryPath);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource, entryPath, curatedBy);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath, curatedBy);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath, curatedBy);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -229,6 +235,28 @@ public class ReCiterController {
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
+    }
+
+    @ApiOperation(value = "Get curation audit history (FeedbackLog + ArticleProvenance) for a uid",
+            notes = "Returns the curator action history (accept/reject/pending) for the person, newest first, each row enriched with how the PMID first arrived (ArticleProvenance).")
+    @ApiImplicitParams({
+    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Audit history retrieval successful"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/feedback-log/{uid}", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<List<AuditHistoryEntry>> retrieveFeedbackLogByUid(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Get curation audit history by uid");
+        stopWatch.start("Get curation audit history by uid");
+        List<AuditHistoryEntry> history = feedbackLogQueryService.getAuditHistory(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok(history);
     }
 
     @ApiOperation(value = "Delete a gold standard record by uid", notes = "This api deletes a gold standard record from the GoldStandard table by uid.")
