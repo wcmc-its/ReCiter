@@ -69,10 +69,16 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     @Override
     public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
                      String provenanceSource, EntryPath entryPath) {
-        saveInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
+        saveInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath, 0);
     }
 
-    private void saveInternal(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath) {
+    @Override
+    public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+                     String provenanceSource, EntryPath entryPath, int curatedBy) {
+        saveInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath, curatedBy);
+    }
+
+    private void saveInternal(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath, int curatedBy) {
     	// Resolve provenance strategy: caller-supplied source, or default
     	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
     			? provenanceSource : PM_MANUAL_STRATEGY;
@@ -230,7 +236,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						goldStandard.getUid(),
     						incomingAcceptedPmids, incomingRejectedPmids,
     						existingAccepted, existingRejected,
-    						entryPath);
+    						entryPath, curatedBy);
     			}
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		}
@@ -339,10 +345,11 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						auditLog.addAll(newEntries);
     						goldStandardNew.setAuditLog(auditLog);
     					}
-    					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff
+    					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff.
+    					// Bulk/list (PUT) path carries no interactive curator id -> curatedBy = 0.
     					recordFeedbackLogAndArticleProvenance(uid,
     							batchIncomingAccepted, batchIncomingRejected,
-    							existingAccepted, existingRejected, entryPath);
+    							existingAccepted, existingRejected, entryPath, 0);
     				}
     			}
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
@@ -430,14 +437,14 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	 * before the D-11 transition (D-13). Both services log and continue on failure;
 	 * curator request never blocks.
 	 *
-	 * <p>{@code curatedBy} is set to 0 because the {@code POST /reciter/goldstandard}
-	 * endpoint does not currently carry a userID. Future work: extend the endpoint to
-	 * include curatedBy in the request payload.
+	 * <p>{@code curatedBy} is the curating user's id (admin_users.userID) supplied by
+	 * Publication Manager via the {@code curatedBy} request param; it is 0 when the
+	 * caller does not provide one (e.g., bulk/list updates or non-PM callers).
 	 */
 	private void recordFeedbackLogAndArticleProvenance(String uid,
 			List<Long> incomingAccepted, List<Long> incomingRejected,
 			List<Long> existingAccepted, List<Long> existingRejected,
-			EntryPath entryPath) {
+			EntryPath entryPath, int curatedBy) {
 		long actionEpoch = System.currentTimeMillis() / 1000L;
 		Set<Long> incomingAccSet = new HashSet<>(incomingAccepted);
 		Set<Long> incomingRejSet = new HashSet<>(incomingRejected);
@@ -467,15 +474,15 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 				uid, entryPath, newlyAccepted.size(), newlyRejected.size(), newlyPending.size());
 
 		for (Long pmid : newlyAccepted) {
-			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.ACCEPTED, 0, actionEpoch);
+			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.ACCEPTED, curatedBy, actionEpoch);
 			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
 		}
 		for (Long pmid : newlyRejected) {
-			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.REJECTED, 0, actionEpoch);
+			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.REJECTED, curatedBy, actionEpoch);
 			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
 		}
 		for (Long pmid : newlyPending) {
-			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.PENDING, 0, actionEpoch);
+			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.PENDING, curatedBy, actionEpoch);
 			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
 		}
 	}
