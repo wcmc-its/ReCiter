@@ -37,6 +37,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
     private static final Logger log = LoggerFactory.getLogger(ArticleProvenanceServiceImpl.class);
     private static final String TABLE_NAME = "ArticleProvenance";
     private static final String PM_UI_SEARCH_RS = "PM_UI_SEARCH";
+    private static final String PM_AUTHOR_RS = "PM_AUTHOR";
     private static final String SRC_PM = "PM";
     private static final String SRC_CTSC = "CTSC";
     private static final String SRC_GS_PLACEHOLDER = "GS";
@@ -113,6 +114,10 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         // sees src='PM' and lifts to MAN_FROM_PM. CANDIDATE_LIST skips this step.
         if (path == EntryPath.PUBMED_SEARCH) {
             writePmUiSearchRecord(uid, pmid, epochSeconds);
+        } else if (path == EntryPath.PM_AUTHOR) {
+            // Authorship Review tab: stamp the PM_AUTHOR entry-path marker into rs/ads so
+            // these curations are auditable, but do NOT seed src='PM' (see writePmAuthorRecord).
+            writePmAuthorRecord(uid, pmid, epochSeconds);
         }
 
         // D-11 transition with one retry on race
@@ -149,6 +154,42 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
             amazonDynamoDB.updateItem(req);
         } catch (AmazonDynamoDBException e) {
             log.warn("PM_UI_SEARCH retrieval-record write failed for uid={} pmid={}: {}",
+                    uid, pmid, e.getMessage());
+        }
+    }
+
+    /**
+     * Authorship Review tab (PM_AUTHOR) marker write. Mirrors {@link #writePmUiSearchRecord}
+     * — sets {@code rs} if absent, ensures {@code frd}, and ADDs PM_AUTHOR to the {@code ads}
+     * strategy set — but deliberately does NOT seed {@code src='PM'}. The AAR queue contains
+     * authorships production either buried (already retrieved → an ArticleProvenance row with
+     * {@code src='PM'} already exists → D-11 lifts it to MAN_FROM_PM) or never scored at all
+     * (no row → D-11 sets {@code src='MAN'} = algo-missed, curator-found). Seeding {@code src='PM'}
+     * here would wrongly relabel a never-retrieved authorship as PM-sourced.
+     */
+    private void writePmAuthorRecord(String uid, long pmid, long epochSeconds) {
+        Map<String, AttributeValue> key = new HashMap<>();
+        key.put("uid", new AttributeValue().withS(uid));
+        key.put("articleId", new AttributeValue().withS(String.valueOf(pmid)));
+
+        Map<String, AttributeValue> values = new HashMap<>();
+        values.put(":rs", new AttributeValue().withS(PM_AUTHOR_RS));
+        values.put(":ts", new AttributeValue().withN(String.valueOf(epochSeconds)));
+        values.put(":rsSet", new AttributeValue().withSS(Collections.singletonList(PM_AUTHOR_RS)));
+
+        UpdateItemRequest req = new UpdateItemRequest()
+                .withTableName(TABLE_NAME)
+                .withKey(key)
+                .withUpdateExpression(
+                        "SET rs  = if_not_exists(rs,  :rs), " +
+                        "    frd = if_not_exists(frd, :ts) " +
+                        "ADD ads :rsSet")
+                .withExpressionAttributeValues(values);
+
+        try {
+            amazonDynamoDB.updateItem(req);
+        } catch (AmazonDynamoDBException e) {
+            log.warn("PM_AUTHOR marker write failed for uid={} pmid={}: {}",
                     uid, pmid, e.getMessage());
         }
     }
