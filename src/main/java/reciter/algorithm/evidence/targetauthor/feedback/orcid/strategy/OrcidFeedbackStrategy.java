@@ -55,6 +55,11 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 		try {
 			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
 
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			List<ReCiterArticle> filteredArticles = reCiterArticles.stream()
 					.filter(article -> article.getGoldStandard() != 0)
 					 .collect(Collectors.toList());
@@ -93,7 +98,14 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 							scoreWithout1Rejected = computeScore(countAccepted,
 									countRejected > 0 ? countRejected - 1 : countRejected);
 
-							
+							// Informed absence: orcid never seen in accepted or rejected
+							if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+								double penalty = computeInformedAbsencePenalty(totalAccepted);
+								scoreAll = penalty;
+								scoreWithout1Accepted = penalty;
+								scoreWithout1Rejected = penalty;
+							}
+
 							double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
 							

@@ -1,12 +1,13 @@
 package reciter.storage.s3;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
-import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
@@ -20,11 +21,11 @@ import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.model.GetCallerIdentityRequest;
 import software.amazon.awssdk.services.sts.model.GetCallerIdentityResponse;
 
-
-@Slf4j
 @Configuration
 @ComponentScan(basePackages ="reciter.storage.s3")
 public class AmazonS3Config {
+	
+	private static final Logger log = LoggerFactory.getLogger(AmazonS3Config.class);
 	
 	private String amazonAWSAccessKey = System.getenv("AMAZON_AWS_ACCESS_KEY");
 

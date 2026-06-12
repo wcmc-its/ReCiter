@@ -53,7 +53,12 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 		stopWatchforEmailFeedback.start("Email");
 		try {
 			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
-			
+
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			 Map<String, Map<Integer, Long>> emailCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
@@ -133,9 +138,19 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 																	   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore,"Email");
 															
 															feedbackEmailMap.computeIfAbsent(email, k -> new ArrayList<>()).add(feedbackEmail);
-															
+
 														}
-													
+													// Informed absence: email never seen
+													else if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+														double penalty = computeInformedAbsencePenalty(totalAccepted);
+														String exportedFeedbackScore = decimalFormat.format(penalty);
+														ReCiterArticleFeedbackScore feedbackEmail = populateArticleFeedbackScore(article.getArticleId(),email,
+																   countAccepted,countRejected,
+																   penalty,penalty,
+																   penalty,article.getGoldStandard(),penalty,exportedFeedbackScore,"Email");
+														feedbackEmailMap.computeIfAbsent(email, k -> new ArrayList<>()).add(feedbackEmail);
+													}
+
 													}
 												});
 										 

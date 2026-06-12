@@ -13,26 +13,23 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.ApplicationContextHolder;
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
 import reciter.database.dynamodb.model.ScienceMetrix;
+import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.MedlineCitationJournalISSN;
-import reciter.service.ScienceMetrixService;
 
 public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(JournalSubFieldFeedbackStrategy.class);
 	
 	private Map<String, List<ReCiterArticleFeedbackScore>> feedbackJournalsSubFieldMap = new HashMap<>();
+	private int totalAccepted = 0;
 	
 	Set<String> filterJournalSubFields = Stream.of("General Science & Technology")
             .collect(Collectors.toSet());
-	
-	ScienceMetrixService scienceMetrixService = ApplicationContextHolder.getContext()
-			.getBean(ScienceMetrixService.class);
 	
 	@Override
 	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
@@ -47,6 +44,11 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 		try {
 	        slf4jLogger.info("reCiterArticles size: {}", reCiterArticles.size());
 
+	        // Compute total accepted articles for informed absence penalty
+	        totalAccepted = (int) reCiterArticles.stream()
+	            .filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+	            .count();
+
 	        // Group by gold standard
 	        Map<Integer, List<ReCiterArticle>> groupedByGoldStandard = reCiterArticles.stream()
 	                .collect(Collectors.groupingBy(ReCiterArticle::getGoldStandard));
@@ -59,14 +61,11 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	        Map<String, Long> acceptArticlesCountByJournalSubField = countArticlesByJournalSubField(acceptedArticles);
 	        Map<String, Long> rejectedArticlesCountByJournalSubField = countArticlesByJournalSubField(rejectedArticles);
 
-	        // Process each article concurrently
-	        feedbackJournalsSubFieldMap = reCiterArticles.parallelStream() // Using parallelStream for concurrent processing
+	        // Process each article — resolve one subfield per article to avoid double-counting
+	        feedbackJournalsSubFieldMap = reCiterArticles.parallelStream()
 	                .filter(article -> article != null && article.getJournal() != null && article.getJournal().getJournalIssn() != null && !article.getJournal().getJournalIssn().isEmpty())
-	                .flatMap(article -> article.getJournal().getJournalIssn().stream()
-	                        .filter(Objects::nonNull)
-	                        .map(journalIssn -> processArticle(article, journalIssn, acceptArticlesCountByJournalSubField, rejectedArticlesCountByJournalSubField))
-	                        .filter(Objects::nonNull)
-	                )
+	                .map(article -> processArticle(article, acceptArticlesCountByJournalSubField, rejectedArticlesCountByJournalSubField))
+	                .filter(Objects::nonNull)
 	                .collect(Collectors.groupingBy(ReCiterArticleFeedbackScore::getFeedbackScoreType));
 	        
 	        
@@ -96,22 +95,19 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 
 	}
 	private Map<String, Long> countArticlesByJournalSubField(List<ReCiterArticle> articles) {
-	    return articles.parallelStream() // Use parallelStream for faster processing on large datasets
+	    return articles.parallelStream()
 	            .filter(article -> article.getJournal() != null && article.getJournal().getJournalIssn() != null && !article.getJournal().getJournalIssn().isEmpty())
-	            .flatMap(article -> article.getJournal().getJournalIssn().stream()
-	                    .filter(Objects::nonNull)
-	                    .map(this::retrieveJournalSubField)
-	                    .filter(Objects::nonNull)
-	                    .filter(subField -> !subField.isEmpty())
-	            )
+	            .map(article -> resolveJournalSubField(article.getJournal().getJournalIssn()))
+	            .filter(Objects::nonNull)
+	            .filter(subField -> !subField.isEmpty())
 	            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 	}
 
-	private ReCiterArticleFeedbackScore processArticle(ReCiterArticle article, MedlineCitationJournalISSN journalIssn,
+	private ReCiterArticleFeedbackScore processArticle(ReCiterArticle article,
 	                                                   Map<String, Long> acceptArticlesCountByJournalSubField,
 	                                                   Map<String, Long> rejectedArticlesCountByJournalSubField) {
 
-	    String journalSubField = retrieveJournalSubField(journalIssn);
+	    String journalSubField = resolveJournalSubField(article.getJournal().getJournalIssn());
 	    if (journalSubField == null || journalSubField.isEmpty() || filterJournalSubFields.contains(journalSubField)) {
 	        return null; // Skip if no valid subfield
 	    }
@@ -123,6 +119,14 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	    double scoreAll = computeScore(countAccepted, countRejected);
 	    double scoreWithout1Accepted = computeScore(countAccepted > 0 ? countAccepted - 1 : countAccepted, countRejected);
 	    double scoreWithout1Rejected = computeScore(countAccepted, countRejected > 0 ? countRejected - 1 : countRejected);
+
+	    // Informed absence: journal subfield never seen in accepted or rejected
+	    if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+	        double penalty = computeInformedAbsencePenalty(totalAccepted);
+	        scoreAll = penalty;
+	        scoreWithout1Accepted = penalty;
+	        scoreWithout1Rejected = penalty;
+	    }
 
 	    double feedbackScore = determineFeedbackScore(article.getGoldStandard(), scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
 	    String exportedFeedbackScore = decimalFormat.format(feedbackScore);
@@ -143,18 +147,63 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	    );
 	}
 
-	private String retrieveJournalSubField(MedlineCitationJournalISSN journalIssn) {
-	    if (journalIssn == null || journalIssn.getIssn() == null || journalIssn.getIssn().isEmpty()) {
+	/**
+	 * Resolve a single journal subfield from an article's ISSN list using type priority:
+	 * Linking > Print > Electronic. For each ISSN, tries both SM.issn and SM.eissn fields.
+	 * This prevents double-counting when multiple ISSNs resolve to the same journal.
+	 */
+	private String resolveJournalSubField(List<MedlineCitationJournalISSN> journalIssns) {
+	    if (journalIssns == null || journalIssns.isEmpty()) {
 	        return null;
 	    }
 
-	    ScienceMetrix scienceMetrix = scienceMetrixService.findByIssn(journalIssn.getIssn());
+	    String issnPrint = null;
+	    String issnElectronic = null;
+	    String issnLinking = null;
+
+	    for (MedlineCitationJournalISSN journalIssn : journalIssns) {
+	        if (journalIssn == null || journalIssn.getIssntype() == null || journalIssn.getIssn() == null) {
+	            continue;
+	        }
+	        if (journalIssn.getIssntype().equalsIgnoreCase("Print")) {
+	            issnPrint = journalIssn.getIssn().trim();
+	        } else if (journalIssn.getIssntype().equalsIgnoreCase("Electronic")) {
+	            issnElectronic = journalIssn.getIssn().trim();
+	        } else {
+	            issnLinking = journalIssn.getIssn().trim();
+	        }
+	    }
+
+	    // Try ISSNs in priority order: Linking > Print > Electronic
+	    ScienceMetrix scienceMetrix = findScienceMetrixByIssn(issnLinking);
 	    if (scienceMetrix == null) {
-	        scienceMetrix = scienceMetrixService.findByEissn(journalIssn.getIssn());
+	        scienceMetrix = findScienceMetrixByIssn(issnPrint);
+	    }
+	    if (scienceMetrix == null) {
+	        scienceMetrix = findScienceMetrixByIssn(issnElectronic);
 	    }
 
 	    return (scienceMetrix != null && scienceMetrix.getScienceMetrixSubfield() != null && !scienceMetrix.getScienceMetrixSubfield().isEmpty())
 	            ? scienceMetrix.getScienceMetrixSubfield()
 	            : null;
-	}	
+	}
+
+	/**
+	 * Look up a single ISSN value against the in-memory ScienceMetrix journal list,
+	 * trying both the issn and eissn fields.
+	 */
+	private ScienceMetrix findScienceMetrixByIssn(String issn) {
+	    if (issn == null || issn.isEmpty()) {
+	        return null;
+	    }
+	    for (ScienceMetrix smJournal : EngineParameters.getScienceMetrixJournals()) {
+	        if (smJournal.getIssn() != null && smJournal.getIssn().equals(issn)) {
+	            return smJournal;
+	        }
+	        if (smJournal.getEissn() != null && smJournal.getEissn().equals(issn)) {
+	            return smJournal;
+	        }
+	    }
+	    return null;
+	}
 }

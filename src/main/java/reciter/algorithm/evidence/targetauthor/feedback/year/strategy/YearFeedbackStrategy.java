@@ -119,7 +119,9 @@ public class YearFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 										   scoreWithout1Rejected,article.getGoldStandard(),feedbackScore,exportedFeedbackScore, "Year");	
 	
 								
-								feedbackYearMap.computeIfAbsent(article.getJournal().getJournalTitle().trim(), k -> new ArrayList<>()).add(feedbackYear);
+								String yearMapKey = (article.getJournal() != null && article.getJournal().getJournalTitle() != null)
+										? article.getJournal().getJournalTitle().trim() : "Unknown";
+								feedbackYearMap.computeIfAbsent(yearMapKey, k -> new ArrayList<>()).add(feedbackYear);
 								
 								feedbackYearMap.entrySet().stream()
 								.filter(entry -> entry.getKey() != null && entry.getValue() != null)

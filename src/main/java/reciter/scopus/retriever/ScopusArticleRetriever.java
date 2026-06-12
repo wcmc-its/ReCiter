@@ -18,20 +18,27 @@
  *******************************************************************************/
 package reciter.scopus.retriever;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
-import reciter.model.scopus.ScopusArticle;
-import reciter.model.scopus.ScopusQuery;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import reciter.model.scopus.ScopusArticle;
+import reciter.model.scopus.ScopusQuery;
+
 public class ScopusArticleRetriever<T> {
 
+	private static final Logger log = LoggerFactory.getLogger(ScopusArticleRetriever.class);
+	
     /**
      * Scopus pmid modifier
      */

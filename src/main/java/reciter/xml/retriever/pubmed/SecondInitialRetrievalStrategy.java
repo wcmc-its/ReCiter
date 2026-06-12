@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import reciter.algorithm.util.ReCiterStringUtil;
+import reciter.utils.ReCiterStringUtil;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.pubmed.retriever.PubMedQuery;
@@ -104,11 +104,15 @@ public class SecondInitialRetrievalStrategy extends AbstractNameRetrievalStrateg
 				}
 			}
 			buf.append(")");
-			if(buf.toString().endsWith(" OR )")) {
-				return buf.toString().substring(0, buf.toString().length() - 5) + ")";
+			String result = buf.toString();
+			if(result.equals("()")) {
+				return null;
+			}
+			if(result.endsWith(" OR )")) {
+				return result.substring(0, result.length() - 5) + ")";
 			}
 			else {
-				return buf.toString();
+				return result;
 			}
 		} else {
 			return null;

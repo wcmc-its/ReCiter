@@ -53,11 +53,10 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
-		Set<AuthorName> originalIdentityNames = new HashSet<>();
+		Set<AuthorName> originalIdentityNames = identityNames.getOrDefault(IdentityNameType.ORIGINAL, new HashSet<>());
 		for(Entry<IdentityNameType, Set<AuthorName>> identityName: identityNames.entrySet()) {
-			
+
 			if(identityName.getKey() == IdentityNameType.ORIGINAL) {
-				originalIdentityNames = identityName.getValue();
 				pubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
 				pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
 			} else {
@@ -101,10 +100,9 @@ public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStr
 		List<PubMedQueryType> pubMedQueries = new ArrayList<PubMedQueryType>();
 		
 		PubMedQueryType pubMedQueryType = new PubMedQueryType();
+		Set<AuthorName> originalIdentityNames = identityNames.getOrDefault(IdentityNameType.ORIGINAL, new HashSet<>());
 		for(Entry<IdentityNameType, Set<AuthorName>> identityName: identityNames.entrySet()) {
-			Set<AuthorName> originalIdentityNames = new HashSet<>();
 			if(identityName.getKey() == IdentityNameType.ORIGINAL) {
-				originalIdentityNames = identityName.getValue();
 				pubMedQueryType.setLenientQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity, startDate, endDate)));
 				pubMedQueryType.setLenientCountQuery(new PubMedQueryResult(buildNameQuery(identityName.getValue(), identity)));
 			} else {

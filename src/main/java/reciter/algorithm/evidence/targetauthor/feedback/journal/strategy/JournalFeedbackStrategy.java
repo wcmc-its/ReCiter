@@ -36,6 +36,11 @@ public class JournalFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 		try {
 			slf4jLogger.info("reCiterArticles size:", reCiterArticles.size());
 
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			// Count articles based on status per journal title
 	        Map<String, Map<Integer, Long>> journalTitleCountByArticleStatus = reCiterArticles.stream()
 	        	.filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isEmpty())	
@@ -96,6 +101,20 @@ public class JournalFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 						String exportedJournalFeedackScore = decimalFormat.format(feedbackJournal.getFeedbackScore()); 
 						article.setExportedJournalFeedackScore(exportedJournalFeedackScore);
 				 }
+				// Informed absence: journal never seen in accepted or rejected
+				else if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+					double penalty = computeInformedAbsencePenalty(totalAccepted);
+					String exportedFeedbackScore = decimalFormat.format(penalty);
+					ReCiterArticleFeedbackScore feedbackJournal = populateArticleFeedbackScore(article.getArticleId(),article.getJournal().getJournalTitle(),
+																							   countAccepted,countRejected,
+																							   penalty,penalty,
+																							   penalty,article.getGoldStandard(),penalty,exportedFeedbackScore,"Journal");
+					feedbackJournalsListMap.computeIfAbsent(article.getJournal().getJournalTitle().trim(), k -> new ArrayList<>()).add(feedbackJournal);
+					article.addArticleFeedbackScoresMap(feedbackJournalsListMap);
+					article.setJournalFeedackScore(feedbackJournal.getFeedbackScore());
+					String exportedJournalFeedackScore = decimalFormat.format(feedbackJournal.getFeedbackScore());
+					article.setExportedJournalFeedackScore(exportedJournalFeedackScore);
+			 }
 			});
 			} catch (Exception e) {
 				e.printStackTrace();

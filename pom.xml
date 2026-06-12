@@ -70,7 +70,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>3.11.0</version>
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
@@ -175,15 +175,19 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-websocket</artifactId>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-commons -->
 		<dependency>
 			<groupId>org.springframework.data</groupId>
@@ -261,7 +265,6 @@
 			<artifactId>DynamoDBLocal</artifactId>
 			<version>2.5.3</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.almworks.sqlite4java</groupId>
 			<artifactId>sqlite4java</artifactId>
@@ -335,6 +338,12 @@
 			<artifactId>secretsmanager</artifactId>
 			<version>2.20.34</version>
 		</dependency>
+		<dependency>
+		    <groupId>com.amazonaws</groupId>
+		    <artifactId>aws-java-sdk-cognitoidp</artifactId>
+		    <version>1.12.742</version>
+	    </dependency>
+	    
 		<!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
 <!--		<dependency>-->
 <!--			<groupId>javax.xml.bind</groupId>-->
@@ -442,3 +451,4 @@
 		</repository>
 	</repositories>
 </project>
+

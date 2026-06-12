@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,7 +35,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -45,26 +46,25 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-//import com.github.bohnman.squiggly.Squiggly;
-//import com.github.bohnman.squiggly.web.RequestSquigglyContextProvider;
 import com.google.common.collect.Iterables;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
 import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
 import reciter.database.dyanmodb.files.InstitutionAfidFileImport;
 import reciter.database.dyanmodb.files.MeshTermFileImport;
+import reciter.database.dyanmodb.files.NameFrequencyFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixDepartmentCategoryFileImport;
 import reciter.database.dyanmodb.files.ScienceMetrixFileImport;
 import reciter.database.dynamodb.model.Gender;
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.database.dynamodb.model.MeshTerm;
+import reciter.database.dynamodb.model.NameFrequency;
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.engine.EngineParameters;
 import reciter.security.APIKey;
 import reciter.service.GenderService;
+import reciter.service.NameFrequencyService;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
@@ -72,14 +72,14 @@ import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.utils.AffiliationStrategyUtils;
 import reciter.utils.DegreeYearStrategyUtils;
 
-@Slf4j
 @SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
 @ComponentScan("reciter")
 public class Application {
-
+	
+	private static final Logger log = LoggerFactory.getLogger(Application.class);
 
 	@Autowired
 	private DynamoDbMeshTermService dynamoDbMeshTermService;
@@ -96,19 +96,24 @@ public class Application {
 
 	@Autowired
 	private GenderService genderService;
-	 
-    
+
+    @Autowired
+    private NameFrequencyService nameFrequencyService;
+
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
-    
+
     @Value("${spring.security.enabled}")
     private boolean useAPISecurity;
-    
+
     @Value("${aws.dynamodb.settings.file.import}")
     private boolean isFileImport;
-    
+
     @Value("${strategy.gender}")
 	private boolean useGenderStrategy;
+
+    @Value("${strategy.nameFrequency:true}")
+	private boolean useNameFrequencyStrategy;
 	
 	@Value("${strategy.discrepancyDegreeYear.degreeYearDiscrepancyScore}")
 	private String degreeYearDiscrepancyScore;
@@ -128,14 +133,6 @@ public class Application {
 	@Value("${aws.reciterscoring.service.portNo}")
 	private String reciterScoringPortNumber;
 	
-	/*@Bean
-	public FilterRegistrationBean<SquigglyRequestFilter> squigglyRequestFilter() {
-		FilterRegistrationBean<SquigglyRequestFilter> filter = new FilterRegistrationBean<>();
-		filter.setFilter(new SquigglyRequestFilter());
-		filter.setOrder(1);
-		return filter;
-	}*/
-    
 	
 	public static void main(String[] args) {
 		ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
@@ -288,6 +285,13 @@ public class Application {
 				log.info("Gender strategy use is set to false. Please update strategy.gender to true in application.properties file to use it.\n"
 			+ "Its recommened to use this strategy to get better scores.");
 			}
+
+			if(useNameFrequencyStrategy) {
+				NameFrequencyFileImport nameFrequencyFileImport = ApplicationContextHolder.getContext().getBean(NameFrequencyFileImport.class);
+				nameFrequencyFileImport.importNameFrequency();
+			} else {
+				log.info("NameFrequency strategy use is set to false. Set strategy.nameFrequency=true in application.properties to enable.");
+			}
 			
 			if(useScopusArticles) {
 				InstitutionAfidFileImport institutionAfidFileImport = ApplicationContextHolder.getContext().getBean(InstitutionAfidFileImport.class);
@@ -331,6 +335,19 @@ public class Application {
 				EngineParameters.setGenders(genders);
 			}
 
+        }
+        if(useNameFrequencyStrategy) {
+	        log.info("Loading NameFrequency to Engine Parameters");
+	        List<NameFrequency> nameFrequencies = nameFrequencyService.findAll();
+	        if(nameFrequencies != null && !nameFrequencies.isEmpty()) {
+	        	EngineParameters.setNameFrequencies(nameFrequencies);
+	        	Map<String, NameFrequency> nameFrequencyMap = new HashMap<>();
+	        	for (NameFrequency nf : nameFrequencies) {
+	        		nameFrequencyMap.put(nf.getName(), nf);
+	        	}
+	        	EngineParameters.setNameFrequencyMap(nameFrequencyMap);
+	        	log.info("Loaded {} name frequencies to Engine Parameters", nameFrequencies.size());
+	        }
         }
         
         if(useScopusArticles) {

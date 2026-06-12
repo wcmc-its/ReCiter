@@ -1,40 +1,29 @@
 package reciter.service.dynamo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import lombok.extern.slf4j.Slf4j;
-import reciter.database.dynamodb.repository.PubMedArticleRepository;
-import reciter.model.pubmed.PubMedArticle;
-import reciter.service.PubMedService;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.database.dynamodb.repository.PubMedArticleRepository;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.PubMedService;
 import reciter.storage.s3.AmazonS3Config;
 
-@Slf4j
 @Service("pubMedService")
 public class PubMedServiceImpl implements PubMedService {
+	
+	private static final Logger log = LoggerFactory.getLogger(PubMedServiceImpl.class);
 
     @Autowired
     private PubMedArticleRepository pubMedRepository;
@@ -87,10 +76,8 @@ public class PubMedServiceImpl implements PubMedService {
 				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
         	}
         	 if (pubMedArticle == null) continue; // Skip the rest of the loop for this null element
-              
         	pubarticle = pubMedArticle.getPubMedArticle();
             pubMedArticles.add(pubarticle);
-        	
         }
         return pubMedArticles;
     }

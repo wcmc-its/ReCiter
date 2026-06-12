@@ -19,10 +19,10 @@ import reciter.model.article.ReCiterArticle;
  * This class is to populate FeedbackEvidence for all articles
  */
 public class FeedbackEvidenceStrategy extends AbstractReCiterArticleStrategy {
-	
+
 	private static final Logger slf4jLogger = LoggerFactory.getLogger(FeedbackEvidenceStrategy.class);
 	protected DecimalFormat decimalFormat = new DecimalFormat("#.###");
-	
+
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, ReCiterArticle otherReCiterArticle) {
 		// TODO Auto-generated method stub
@@ -51,9 +51,10 @@ public class FeedbackEvidenceStrategy extends AbstractReCiterArticleStrategy {
 				feedbackEvidence.setFeedbackScoreOrganization(reCiterArticle.getOrganizationFeedbackScore()*100);
 				feedbackEvidence.setFeedbackScoreTargetAuthorName(reCiterArticle.getTargetAuthorNameFeedbackScore()*100);
 				feedbackEvidence.setFeedbackScoreYear(reCiterArticle.getYearFeedbackScore()*100);
-				
-				
-				
+				feedbackEvidence.setFeedbackScoreTextSimilarity(reCiterArticle.getTextSimilarityFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreJournalTitleSimilarity(reCiterArticle.getJournalTitleSimilarityFeedbackScore()*100);
+				feedbackEvidence.setFeedbackScoreBibliographicCoupling(reCiterArticle.getBibliographicCouplingFeedbackScore()*100);
+
 				if(feedbackEvidence != null) {
 					//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + feedbackEvidence);
 					reCiterArticle.setFeedbackEvidence(feedbackEvidence);
@@ -66,6 +67,6 @@ public class FeedbackEvidenceStrategy extends AbstractReCiterArticleStrategy {
 		return BigDecimal.valueOf(value)
          .setScale(decimalPlaces, RoundingMode.DOWN)
          .doubleValue();
-	       
+
 	    }
 }

@@ -18,15 +18,15 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor.knownrelationship.strategy;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
@@ -39,8 +39,9 @@ import reciter.model.identity.Identity;
 import reciter.model.identity.KnownRelationship;
 import reciter.model.identity.KnownRelationship.RelationshipType;
 
-@Slf4j
 public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
+	
+	private static final Logger log = LoggerFactory.getLogger(KnownRelationshipStrategy.class);
 
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {

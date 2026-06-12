@@ -50,8 +50,12 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 
 		try {
 			slf4jLogger.info("reCiterArticles size: " + reCiterArticles.size());
-			
-			
+
+			// Compute total accepted articles for informed absence penalty
+			final int totalAccepted = (int) reCiterArticles.stream()
+				.filter(a -> a != null && a.getGoldStandard() == ACCEPTED)
+				.count();
+
 			Map<String, Map<Integer, Long>> targetAuthorNameCountsByArticleStatus = reCiterArticles.stream()
 				    .filter(article -> article != null &&
 				                       article.getArticleCoAuthors() != null &&
@@ -124,8 +128,17 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 										countAccepted > 0 ? countAccepted - 1 : countAccepted, countRejected);
 								scoreWithout1Rejected = computeScore(countAccepted,
 										countRejected > 0 ? countRejected - 1 : countRejected);
-								
-								
+
+								// Informed absence: if this author name has never appeared in any
+								// accepted or rejected article, but the researcher has substantial
+								// acceptance history, apply a negative penalty instead of 0.0
+								if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
+									double penalty = computeInformedAbsencePenalty(totalAccepted);
+									scoreAll = penalty;
+									scoreWithout1Accepted = penalty;
+									scoreWithout1Rejected = penalty;
+								}
+
 								double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
 								String exportedFeedbackScore = decimalFormat.format(feedbackScore);
 								
