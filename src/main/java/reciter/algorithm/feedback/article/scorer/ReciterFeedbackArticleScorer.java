@@ -448,7 +448,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					.withRegion(System.getenv("AWS_REGION"))
 					.build();
 			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) {
-        		log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+        		log.info("Uploading files to S3 bucket {}",FeedbackScoreBucketName);
                 PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), fileName, inputStream, metadata);
                 try{
     				s3.putObject(putObjectRequest);
@@ -631,14 +631,14 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
         		// Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, enrichedScores);
-                  log.info("JSON data written to file successfully: ", jsonFile.getAbsolutePath());
+                  log.info("JSON data written to file successfully: {}", jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
         	  }
         	  else
         	  {
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
 	        	  objectMapper.writeValue(jsonFile, enrichedScores);
-				  log.info("JSON written to file successfully.", jsonFile.getAbsolutePath() +"-" + fileName);
+				  log.info("JSON written to file successfully. {}", jsonFile.getAbsolutePath() +"-" + fileName);
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  
@@ -690,9 +690,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
 														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
 														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-														    article.getRelationshipEvidence().getRelationshipPositiveMatchScore(),
-														    article.getRelationshipEvidence().getRelationshipNegativeMatchScore(),
-														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
+														    (article.getRelationshipEvidence() == null ? 0.0 : article.getRelationshipEvidence().getRelationshipPositiveMatchScore()),
+														    (article.getRelationshipEvidence() == null ? 0.0 : article.getRelationshipEvidence().getRelationshipNegativeMatchScore()),
+														    (article.getRelationshipEvidence() == null ? 0L : article.getRelationshipEvidence().getRelationshipIdentityCount()),
 														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
 														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
 														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
@@ -831,7 +831,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	
 			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) 
 			{												
-	        	log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
+	        	log.info("Uploading files to S3 bucket {}",FeedbackScoreBucketName);
 	        	PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), keyName, file);
 	       
 	        	// Optionally, set metadata
