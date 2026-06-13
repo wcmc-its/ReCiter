@@ -1,6 +1,7 @@
 package reciter.service.dynamo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -355,5 +356,65 @@ public class ArticleProvenanceServiceImplTest {
         verify(amazonDynamoDB, times(2)).updateItem(any(UpdateItemRequest.class));
         // GetItem is called twice (once initial, once on retry)
         verify(amazonDynamoDB, times(2)).getItem(any(GetItemRequest.class));
+    }
+
+    // ---- Phase 34: PM_AUTHOR (Authorship Review tab) entry path ----
+
+    @Test
+    public void testCuratorAction_PmAuthor_NewPmid_WritesPmAuthorMarkerWithoutSrcPm() {
+        stubGetItemSrc(null);
+        service.upsertCuratorAction("uid1", 100L, EntryPath.PM_AUTHOR, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB, times(2)).updateItem(captor.capture());
+        UpdateItemRequest marker = captor.getAllValues().get(0);
+
+        // Marker mirrors PM_UI_SEARCH: sets rs/frd via if_not_exists and ADDs to ads...
+        assertTrue("Marker must SET rs via if_not_exists: " + marker.getUpdateExpression(),
+                marker.getUpdateExpression().contains("rs  = if_not_exists(rs,  :rs)"));
+        assertTrue("Marker must ADD to ads: " + marker.getUpdateExpression(),
+                marker.getUpdateExpression().contains("ADD ads :rsSet"));
+        assertEquals("PM_AUTHOR", marker.getExpressionAttributeValues().get(":rs").getS());
+        assertEquals("PM_AUTHOR", marker.getExpressionAttributeValues().get(":rsSet").getSS().get(0));
+
+        // ...but, unlike PUBMED_SEARCH, it must NOT seed src='PM'. This is the invariant
+        // that keeps a never-retrieved authorship at src='MAN' rather than MAN_FROM_PM.
+        assertFalse("Marker must NOT touch src: " + marker.getUpdateExpression(),
+                marker.getUpdateExpression().contains("src"));
+        assertFalse("Marker must NOT carry :pm: " + marker.getExpressionAttributeValues().keySet(),
+                marker.getExpressionAttributeValues().containsKey(":pm"));
+    }
+
+    @Test
+    public void testCuratorAction_PmAuthor_TwoUpdateItemCallsSequence() {
+        stubGetItemSrc(null);
+        service.upsertCuratorAction("uid1", 100L, EntryPath.PM_AUTHOR, 1700000000L);
+        // PM_AUTHOR path: 1 marker write + 1 D-11 transition = 2 updateItem calls
+        verify(amazonDynamoDB, times(2)).updateItem(any(UpdateItemRequest.class));
+    }
+
+    @Test
+    public void testCuratorAction_PmAuthor_NeverRetrieved_D11WritesMan() {
+        // No prior ArticleProvenance row (never retrieved). Because the marker does not
+        // seed src='PM', the D-11 transition writes src='MAN' (algo-missed, curator-found).
+        stubGetItemSrc(null);
+        service.upsertCuratorAction("uid1", 100L, EntryPath.PM_AUTHOR, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB, times(2)).updateItem(captor.capture());
+        UpdateItemRequest d11 = captor.getAllValues().get(1);
+        assertEquals("MAN", d11.getExpressionAttributeValues().get(":new").getS());
+    }
+
+    @Test
+    public void testCuratorAction_PmAuthor_AlreadyRetrievedPm_D11LiftsToManFromPm() {
+        // Already-retrieved authorship (existing src='PM'): D-11 lifts it to MAN_FROM_PM.
+        stubGetItemSrc("PM");
+        service.upsertCuratorAction("uid1", 100L, EntryPath.PM_AUTHOR, 1700000000L);
+
+        ArgumentCaptor<UpdateItemRequest> captor = ArgumentCaptor.forClass(UpdateItemRequest.class);
+        verify(amazonDynamoDB, times(2)).updateItem(captor.capture());
+        UpdateItemRequest d11 = captor.getAllValues().get(1);
+        assertEquals("MAN_FROM_PM", d11.getExpressionAttributeValues().get(":new").getS());
     }
 }
