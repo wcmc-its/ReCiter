@@ -18,7 +18,8 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 	@Autowired
 	private ApplicationUserRepository applicationUserRepository;
 	
-	private String secretsalt = BCrypt.gensalt(10);
+	// Salt is generated per-password inside createUser() (see BCrypt.gensalt below);
+	// a single reused salt would defeat per-user salting.
 
 	@Override
 	public boolean createUser(ApplicationUser appUser) {
@@ -28,7 +29,10 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 				&& !appUser.getUsername().isEmpty()
 				&& appUser.getPassword() != null
 				&& !appUser.getPassword().isEmpty()) {
-			String password = BCrypt.hashpw(appUser.getPassword(), secretsalt);
+			// Per-password random salt. BCrypt embeds the salt in the stored hash, so
+			// authenticateUser()/checkpw() still verifies correctly. Previously a single
+			// per-bean salt was reused for every account, defeating per-user salting.
+			String password = BCrypt.hashpw(appUser.getPassword(), BCrypt.gensalt(10));
 			appUser.setPassword(password);
 			applicationUserRepository.save(appUser);
 			return true;

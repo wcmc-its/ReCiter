@@ -246,13 +246,13 @@ public class ReCiterFeatureGenerator {
             }
        
             // journal title
-            reCiterArticleFeature.setJournalTitleVerbose(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getJournalTitle()));
+            reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal() == null ? null : ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getJournalTitle()));
             
             //journal issn
-            reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
+            reCiterArticleFeature.setIssn(reCiterArticle.getJournal() == null ? null : reCiterArticle.getJournal().getJournalIssn());
 
             // journal title ISO Abbreviation
-            reCiterArticleFeature.setJournalTitleISOabbreviation(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getIsoAbbreviation()));
+            reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal() == null ? null : ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getIsoAbbreviation()));
 
             // article title
             reCiterArticleFeature.setArticleTitle(ReCiterStringUtil.stripBackslashes(reCiterArticle.getArticleTitle()));

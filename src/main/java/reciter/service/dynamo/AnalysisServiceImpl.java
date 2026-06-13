@@ -57,8 +57,8 @@ public class AnalysisServiceImpl implements AnalysisService{
 		}
 		catch(Exception e)
 		{
-			log.info("AnalysisOutput",analysis);
-			log.info("AnalysisOutput reciterFeature",analysis.getReCiterFeature());
+			log.info("AnalysisOutput {}",analysis);
+			log.info("AnalysisOutput reciterFeature {}",analysis.getReCiterFeature());
 			e.printStackTrace();
 		}
 	}
