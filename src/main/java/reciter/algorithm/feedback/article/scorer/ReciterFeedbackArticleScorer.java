@@ -798,9 +798,13 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				 		                 article.setTargetAuthorCount(targetAuthorCount);
 				 		                 if(targetAuthorCount == 0)
 				 		                 {
-				 		                	 double authorshipLikelyhoodScore = (strategyParameters.getTargetAuthorMissingPenaltyPercent() * (article.getAuthorshipLikelihoodScore()/100));
+				 		                	 // FIX (#640-C): capture the ORIGINAL score before overwriting it. Previously
+				 		                	 // the penalty was computed AFTER setAuthorshipLikelihoodScore, so it read back
+				 		                	 // the new value and the delta was always x-x=0.
+				 		                	 double originalAuthorshipLikelihoodScore = article.getAuthorshipLikelihoodScore();
+				 		                	 double authorshipLikelyhoodScore = (strategyParameters.getTargetAuthorMissingPenaltyPercent() * (originalAuthorshipLikelihoodScore/100));
 				 		                	 article.setAuthorshipLikelihoodScore(authorshipLikelyhoodScore);
-				 		                	 article.setTargetAuthorCountPenalty(authorshipLikelyhoodScore - article.getAuthorshipLikelihoodScore());
+				 		                	 article.setTargetAuthorCountPenalty(authorshipLikelyhoodScore - originalAuthorshipLikelihoodScore);
 				 		                 }
 				 		            return article;
 				 				 })
