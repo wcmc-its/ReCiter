@@ -103,8 +103,7 @@ public class NeuralNetworkModelArticlesScorer {
 				    conn.setDoOutput(true);
 				}
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("Failed to open Lambda HTTP connection to {} for model={}, dataFile={}", reciterScoringServiceUrl, goldStandardModelName, articleDataFilename, e);
 			}
 	      
 	        
@@ -120,8 +119,7 @@ public class NeuralNetworkModelArticlesScorer {
 			try {
 				payload = mapper.writeValueAsString(payloadMap);
 			} catch (JsonProcessingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("Failed to serialize local-Lambda scoring payload for model={}, dataFile={}", goldStandardModelName, articleDataFilename, e);
 			}
 	        
 			try {
@@ -174,7 +172,7 @@ public class NeuralNetworkModelArticlesScorer {
 			     
 
 			} catch (IOException | RuntimeException e) {
-			    e.printStackTrace(); // You may want to log this properly
+			    log.error("Local Lambda scoring invocation/parse failed for model={}, dataFile={}; returning null", goldStandardModelName, articleDataFilename, e);
 			}
 			return null;
 	    }
@@ -202,7 +200,7 @@ public class NeuralNetworkModelArticlesScorer {
 			try {
 				payloadJson = mapper.writeValueAsString(payloadMap);
 			} catch (JsonProcessingException e) {
-				e.printStackTrace();
+				log.error("Failed to serialize AWS Lambda scoring payload for model={}, dataFile={}", goldStandardModelName, articleDataFilename, e);
 			}
 	        
 	        InvokeRequest request = new InvokeRequest()
@@ -238,8 +236,7 @@ public class NeuralNetworkModelArticlesScorer {
 		        }
 	          
 	        } catch (Exception e) {
-	            log.error("Lambda invocation failed: {}" , e.getMessage());
-	            e.printStackTrace();
+	            log.error("AWS Lambda scoring invocation/parse failed for function={}, model={}, dataFile={}", lambdaFunctionName, goldStandardModelName, articleDataFilename, e);
 	        }
 	        return null;
 	    }

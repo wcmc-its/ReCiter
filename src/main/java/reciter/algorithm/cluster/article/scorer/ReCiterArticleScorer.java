@@ -410,8 +410,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
        
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			slf4jLogger.error("Failed to write/upload identity scoring input or invoke scorer for uid={}, file={}", identity.getUid(), fileName, e);
+			throw new RuntimeException("Identity scoring failed for uid=" + identity.getUid(), e);
 		}
        return null;
    }
@@ -440,8 +440,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 															    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
 															    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			slf4jLogger.error("Failed to map identity score for articleId={}; article will be dropped from scoring", article.getArticleId(), e);
 		}
 		return null;
 
@@ -627,7 +626,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	}
         
         } catch (Exception e) {
-            e.printStackTrace();
+            slf4jLogger.error("Failed to upload scoring input file to S3 bucket={}, key={}", FeedbackScoreBucketName, keyName, e);
 			return false;			 
         }
  	}
