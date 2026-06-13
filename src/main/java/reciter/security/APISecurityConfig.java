@@ -134,7 +134,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
 		
-		log.info("Inside the Configure method of the APiSecurity",httpSecurity);
+		log.info("Inside the Configure method of the APiSecurity");
 		httpSecurity.antMatcher("/reciter/**")
 	    .csrf().disable()
 	    .sessionManagement()
@@ -168,7 +168,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	public void configure(WebSecurity web) throws Exception {
-		log.info("Inside the Configure method taking WebSecurity param of the APiSecurity",web);
+		log.info("Inside the Configure method taking WebSecurity param of the APiSecurity");
 		if (!securityEnabled) {
 			web.ignoring().antMatchers("/reciter/**");
 		}
