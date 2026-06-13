@@ -54,7 +54,7 @@ public class SchemaMigrationAspect {
         
         return result;
     }
-    @Around("execution(* org.springframework.data.repository.CrudRepository.save(..))")
+    @Around("execution(* reciter.database.dynamodb.repository.DynamoDbCrudRepository+.save(..))")
     public Object ensureDefaultsOnSave(ProceedingJoinPoint joinPoint) throws Throwable {
         Object item = joinPoint.getArgs()[0];
         

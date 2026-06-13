@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,7 +81,6 @@ import reciter.utils.DegreeYearStrategyUtils;
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
-@EnableDynamoDBRepositories("reciter.database.dynamodb")
 @ComponentScan("reciter")
 public class Application {
 	

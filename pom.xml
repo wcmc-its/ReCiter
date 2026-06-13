@@ -145,13 +145,6 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.springframework.data</groupId>
-                <artifactId>spring-data-releasetrain</artifactId>
-                <version>Lovelace-SR20</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
         			<groupId>com.amazonaws</groupId>
         			<artifactId>aws-java-sdk-bom</artifactId>
         			<version>1.11.925</version>
@@ -231,13 +224,20 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.github.derjust/spring-data-dynamodb -->
+        <!-- Provides org.springframework.dao.* (e.g. EmptyResultDataAccessException),
+             previously pulled in transitively via spring-data-dynamodb. Retained
+             explicitly after its removal (#634 Stage 1). Version managed by the Boot parent. -->
         <dependency>
-            <groupId>com.github.derjust</groupId>
-            <artifactId>spring-data-dynamodb</artifactId>
-            <version>5.1.0</version>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
         </dependency>
-        
+        <!-- Bean Validation provider (Hibernate Validator) for @Validated
+             @ConfigurationProperties such as StrategyParameters. Previously pulled in
+             transitively via spring-data-dynamodb; now declared explicitly (#634 Stage 1). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
         <dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-boot-starter</artifactId>

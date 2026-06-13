@@ -1,11 +1,15 @@
 package reciter.database.dynamodb.repository;
 
-import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 import reciter.database.dynamodb.model.AnalysisOutput;
 
-@EnableScan
-public interface AnalysisOutputRepository extends CrudRepository<AnalysisOutput, String> {
+@Repository
+public class AnalysisOutputRepository extends DynamoDbCrudRepository<AnalysisOutput, String> {
 
+    public AnalysisOutputRepository(DynamoDBMapper dynamoDBMapper) {
+        super(dynamoDBMapper, AnalysisOutput.class);
+    }
 }

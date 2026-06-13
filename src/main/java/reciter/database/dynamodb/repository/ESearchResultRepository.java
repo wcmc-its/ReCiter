@@ -1,9 +1,15 @@
 package reciter.database.dynamodb.repository;
 
-import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+
 import reciter.database.dynamodb.model.ESearchResult;
 
-@EnableScan
-public interface ESearchResultRepository extends CrudRepository<ESearchResult, String> {
+@Repository
+public class ESearchResultRepository extends DynamoDbCrudRepository<ESearchResult, String> {
+
+    public ESearchResultRepository(DynamoDBMapper dynamoDBMapper) {
+        super(dynamoDBMapper, ESearchResult.class);
+    }
 }
