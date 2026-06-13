@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Spy;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,15 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.utils.AuthorNameSanitizationUtils;
 
-@RunWith(MockitoJUnitRunner.class)
 public class TargetAuthorSelectionTest {
 
 	@BeforeClass
@@ -35,13 +31,13 @@ public class TargetAuthorSelectionTest {
 		//MockitoAnnotations.initMocks(this);
 	}
 	
-	@Spy
+	// Plain instances: these are data holders, not mocks. Spying concrete JDK
+	// collections (ArrayList/HashSet) under JDK 17 + Mockito/Objenesis instantiates
+	// them without running their constructors, leaving elementData/map null -> NPE.
 	TargetAuthorSelection targetAuthorSelection = new TargetAuthorSelection();
-	
-	@Spy
+
 	List<AuthorName> sanitizedIdentityAuthors = new ArrayList<AuthorName>();
-	
-	@Spy
+
 	Set<Entry<ReCiterAuthor, ReCiterAuthor>> multipleMarkedTargetAuthor = new HashSet<Map.Entry<ReCiterAuthor,ReCiterAuthor>>();
 
 	/*	@Test
