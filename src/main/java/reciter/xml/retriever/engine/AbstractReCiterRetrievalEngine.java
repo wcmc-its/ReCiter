@@ -151,6 +151,13 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
 			if(eSearchPmid != null) {
+				// FIX (#640-B): upsert by retrievalStrategyName. Previously every re-run
+				// appended a new ESearchPmid for the same strategy without removing the prior
+				// entry, growing the ESearchResult item unbounded toward the 400KB DynamoDB cap.
+				String newStrategyName = eSearchPmid.getRetrievalStrategyName();
+				eSearchPmids.removeIf(existing -> existing != null
+						&& existing.getRetrievalStrategyName() != null
+						&& existing.getRetrievalStrategyName().equalsIgnoreCase(newStrategyName));
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(!eSearchPmids.isEmpty()) {

@@ -47,6 +47,8 @@ import java.util.Set;
  */
 public class Analysis {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Analysis.class);
+
     private double precision;
     private double recall;
     private double accuracy;
@@ -144,7 +146,9 @@ public class Analysis {
                 analysis.getFalsePositiveList().add(pmid);
             } else {
                 // goldStandard == 1 but not in goldSet — data inconsistency;
-                // treat conservatively as TN
+                // treat conservatively as TN, but surface it (FIX #640-D) so gold/cache
+                // divergence is no longer silently absorbed.
+                log.warn("Accepted article pmid={} is labelled goldStandard==1 but is absent from the supplied gold-standard set (size={}); classifying as TN. Gold standard and cached analysis may be out of sync.", pmid, goldSet.size());
                 analysis.getTrueNegativeList().add(pmid);
             }
         }

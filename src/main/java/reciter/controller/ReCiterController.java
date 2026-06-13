@@ -681,7 +681,24 @@ public class ReCiterController {
         	//All the results are filtered based on filterByFeedback
         	if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
-			
+				// FIX (#640-A): Compute precision/recall/accuracy ONCE over the FULL candidate
+				// set BEFORE any display filtering. Previously each filterByFeedback branch ran
+				// performAnalysis over the already-filtered subset, so e.g. ACCEPTED_ONLY removed
+				// every REJECTED (false-positive) row and precision collapsed to TP/(TP+0)=1.0.
+				List<ReCiterArticle> fullCandidateSet = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+					    .map(featureArticle -> {
+					        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+					        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+					        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
+					        return article;
+					    })
+					    .collect(Collectors.toList());
+				Analysis featureAnalysis = Analysis.performAnalysis(fullCandidateSet,knownPmids);
+				analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
+				analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
+				analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
+
+				// Apply the display filter ONLY to the returned article list (metrics already set above).
 				if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
@@ -693,58 +710,17 @@ public class ReCiterController {
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 								)
 								.collect(Collectors.toList()));
-					
-					
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_ONLY) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.REJECTED_ONLY) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
@@ -755,20 +731,7 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 							)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
@@ -779,40 +742,14 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 							)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_REJECTED) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 							||
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
@@ -820,20 +757,7 @@ public class ReCiterController {
 							&&
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				}
 			}
 			else if(analysis.getReCiterFeature()!=null)
