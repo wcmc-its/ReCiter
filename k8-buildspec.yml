@@ -43,7 +43,10 @@ phases:
         - cat ./kubernetes/k8-deployment.yaml
   build:
     commands:
-      - mvn clean install -Dmaven.test.skip=true
+      # Run the unit test suite as part of the build. `mvn clean install` binds the
+      # test phase, so any test failure fails this build phase and gates the deploy
+      # (docker build/push and `kubectl set image` only run if tests pass).
+      - mvn clean install
       - |
         if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
           docker build --tag $REPOSITORY_URI:$TAG .
