@@ -10,17 +10,19 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import reciter.database.dynamodb.model.ApplicationUser;
 import reciter.service.ApplicationUserService;
 
 
-@Api(value = "ReCiterPubManagerController", description = "Operations on ReCiter publication manager.")
+@Tag(name = "ReCiterPubManagerController", description = "Operations on ReCiter publication manager.")
 @Controller
 public class ReCiterPubManagerController {
 	
@@ -29,15 +31,15 @@ public class ReCiterPubManagerController {
 	@Autowired
 	private ApplicationUserService applicationUserService;
 	
-	@ApiOperation(value = "Authenticate user for ReCiter publications manager", response = Boolean.class, notes = "This api checks for credentials for access to reciter publication manager app.")
-    @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+	@Operation(summary = "Authenticate user for ReCiter publications manager", description = "This api checks for credentials for access to reciter publication manager app.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
     })
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "User authenticated"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User authenticated"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @RequestMapping(value = "/reciter/publication/manager/authenticate", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
@@ -58,15 +60,15 @@ public class ReCiterPubManagerController {
         return false;
     }
 	
-	@ApiOperation(value = "Create user for ReCiter publications manager", response = Boolean.class, notes = "This api create user for reciter publication manager app.")
-    @ApiImplicitParams({
-    	@ApiImplicitParam(name = "api-key", value = "api-key for this resource", paramType = "header", dataTypeClass = String.class)
+	@Operation(summary = "Create user for ReCiter publications manager", description = "This api create user for reciter publication manager app.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
     })
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "User created"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User created"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @RequestMapping(value = "/reciter/publication/manager/user/create", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
