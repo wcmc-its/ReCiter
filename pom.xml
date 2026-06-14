@@ -151,6 +151,25 @@
         			<type>pom</type>
         			<scope>import</scope>
       		</dependency>
+            <!-- Pin the OpenAPI 3 model/core/annotation stack to the version springdoc 1.6.15
+                 ships with. Without this, the legacy swagger-codegen-maven-plugin (a compile
+                 dependency) wins Maven mediation with swagger-models 2.0.0, which lacks methods
+                 springdoc calls at runtime (NoSuchMethodError Schema.getExampleSetFlag). #634 Stage 2. -->
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-models</artifactId>
+                <version>2.2.8</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-core</artifactId>
+                <version>2.2.8</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>2.2.8</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -238,10 +257,20 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- springdoc-openapi replaces the abandoned springfox (#634 Stage 2). 1.6.x is the
+             Boot 2.x line; it bundles the OpenAPI 3 (io.swagger.v3) annotations + swagger-ui. -->
         <dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-boot-starter</artifactId>
-			<version>3.0.0</version>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.6.15</version>
+		</dependency>
+        <!-- springdoc 1.6.x eagerly introspects its spring-data-web customizers
+             (PageableDefault/SortDefault), so spring-data-commons must be on the classpath
+             for the context to load. Inert otherwise — no repository scanning is enabled
+             (spring-data-dynamodb was removed in Stage 1). Version managed by the Boot parent. -->
+        <dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-commons</artifactId>
 		</dependency>
         <!-- Uncomment this dependency if you want to use dynamodb locally -->
         <dependency>

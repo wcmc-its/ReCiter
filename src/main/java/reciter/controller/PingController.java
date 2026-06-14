@@ -1,7 +1,7 @@
 package reciter.controller;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping("/reciter")
-@Api(value = "PingController", tags = {"Health Check"})
+@Tag(name = "Health Check")
 public class PingController {
 
-    @ApiOperation(value = "Health check", response = ResponseEntity.class)
+    @Operation(summary = "Health check")
     @GetMapping(value = "/ping", produces = "text/plain")
     @ResponseBody
     public ResponseEntity<String> ping() {

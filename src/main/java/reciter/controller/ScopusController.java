@@ -33,9 +33,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 import reciter.model.scopus.ScopusArticle;
 import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.service.ScopusService;

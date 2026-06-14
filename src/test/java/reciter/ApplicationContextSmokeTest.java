@@ -1,15 +1,21 @@
 package reciter;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
@@ -41,10 +47,13 @@ import reciter.service.dynamo.DynamoDbMeshTermService;
  * </ul>
  *
  * <p>This is the per-stage gate for #634: every framework/wiring change (Stages 1-3)
- * must keep this green, proving the context still wires end to end.
+ * must keep this green, proving the context still wires end to end. Stage 2 also
+ * asserts that springdoc (which replaced springfox) actually generates the OpenAPI
+ * document for the {@code reciter} controller group.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 public class ApplicationContextSmokeTest {
 
@@ -83,11 +92,29 @@ public class ApplicationContextSmokeTest {
     @Autowired
     private ApplicationContext context;
 
+    @Autowired
+    private MockMvc mockMvc;
+
     @Test
     public void contextLoads() {
         assertNotNull("Spring application context should load", context);
         // A concrete bean from the DynamoDB wiring path proves the persistence config
         // wired (the surface Stage 1 will rework when spring-data-dynamodb is removed).
         assertNotNull("DynamoDbConfig should be wired", context.getBean(DynamoDbConfig.class));
+    }
+
+    /**
+     * Stage 2: springdoc generates the OpenAPI document for the {@code reciter} group
+     * (GroupedOpenApi scoped to reciter.controller / {@code /reciter/**}). Proves the
+     * springfox-&gt;springdoc migration and the v1-&gt;v3 annotation conversion actually
+     * produce docs, not just that the context loads.
+     */
+    @Test
+    public void springdocApiDocsAreGenerated() throws Exception {
+        mockMvc.perform(get("/v3/api-docs/reciter"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"openapi\"")))
+                .andExpect(content().string(containsString("/reciter/ping")))
+                .andExpect(content().string(containsString("ReCiter publication management system")));
     }
 }
