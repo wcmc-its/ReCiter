@@ -1,8 +1,20 @@
 # ReCiter #634 — Stage 3: Spring Boot 2.5.0 → 2.7.18 + Spring Security 5.7
 
-**Status:** ready to execute · **Owner:** lead author, #634 · **Worktree:** `/Users/paulalbert/worktrees/reciter-remediation`
+**Status:** executed — deps + security rewrite committed & locally green (see §0 for corrections) · **Owner:** lead author, #634 · **Worktree:** `/Users/paulalbert/worktrees/reciter-remediation`
 
 This document is an execution plan, not research. An engineer should be able to run it top‑to‑bottom without re‑investigating. All paths are repo‑relative to the worktree root above unless absolute.
+
+---
+
+## 0. Execution corrections (applied during Steps 7–10)
+
+Two claims in the plan below were wrong and were corrected when the code was actually compiled and run. The committed code reflects the corrections; the original sections are left as-written for traceability.
+
+1. **`HttpSecurity.securityMatcher(String)` does NOT exist at Spring Security 5.7.11** — it was introduced at 5.8/6.0. `mvn compile` failed with `cannot find symbol: method securityMatcher`. The code keeps `httpSecurity.antMatcher("/reciter/**")` (the original call; `antMatcher` is not deprecated at 5.7). Consequence for §2/§3a: the stated "order is forced because `securityMatcher` needs 5.7" justification is **inaccurate** — deps-first is still the right order (the adapter must be replaced and `WebSecurityConfigurerAdapter` is deprecated, so bumping the pom first still isolates failure classes), but it is **not** literally forced by `securityMatcher`. The inner `antMatchers(...)`/`web.ignoring().antMatchers(...)` calls are unchanged and correct at 5.7.
+
+2. **The entire `SecurityFilterChainIntegrationTest` is env-gated, not just the valid-key assertion.** With `spring.security.enabled=true`, `Application.apiKeySetter()` requires `ADMIN_API_KEY` **and** `CONSUMER_API_KEY` in the JVM env at context-load time (that is exactly why the `test` profile sets security off). Without them the context cannot load — every test in the class errors, not just the positive path (the plan's §3e under-specified this). The class now gates on both keys via `@BeforeClass Assume` and **skips cleanly** when they are absent; it runs all four assertions when present. The positive-path assertions were relaxed to "security did not reject (not 401/403)" because the downstream controllers run against mocked AWS and may return 200/400/500.
+
+**Verified (Java 17, local), Steps 5 + 10:** dependency bump — `ApplicationContextSmokeTest` green, full suite **147/147**, `dependency:tree` single Security 5.7.11 + swagger 2.2.9. Security rewrite — full suite **148 run / 1 skipped / 0 failures** without the api-key env vars, **151 / 0 skipped / 0 failures** with them. *Not yet run through CI.*
 
 ---
 
