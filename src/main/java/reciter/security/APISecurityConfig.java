@@ -11,10 +11,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -36,7 +36,7 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 
 @EnableWebSecurity
 @Configuration
-public class APISecurityConfig extends WebSecurityConfigurerAdapter {
+public class APISecurityConfig {
 
 	@Autowired(required = false)
     private MultiApiKeyFilter multiApiKeyFilter;
@@ -131,10 +131,12 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
         return jwtDecoder;
     }
     
-	@Override
-	protected void configure(HttpSecurity httpSecurity) throws Exception {
-		
-		log.info("Inside the Configure method of the APiSecurity");
+	@Bean
+	public SecurityFilterChain apiSecurityFilterChain(HttpSecurity httpSecurity, JwtDecoder jwtDecoder) throws Exception {
+
+		log.info("Inside apiSecurityFilterChain of the APISecurity");
+		// HttpSecurity.antMatcher(String) is the 5.7 matcher; it is renamed to securityMatcher
+		// only at Spring Security 5.8/6.0, so we keep antMatcher here for the 2.7 / 5.7.11 line.
 		httpSecurity.antMatcher("/reciter/**")
 	    .csrf().disable()
 	    .sessionManagement()
@@ -147,7 +149,7 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	    // 1. Setup JWT Decoding (Fires ONLY if Bearer header is present)
 	    .oauth2ResourceServer()
 	        .jwt()
-	        .decoder(jwtDecoder()) // Uses your Caffeine-backed bean
+	        .decoder(jwtDecoder) // injected singleton bean, not self-invoked (no second decoder)
 	    .and()
 	    .and()
 
@@ -164,16 +166,19 @@ public class APISecurityConfig extends WebSecurityConfigurerAdapter {
 	        
 	        // Everything else requires a valid JWT or API Key
 	        .anyRequest().authenticated();
+
+		return httpSecurity.build();
 	}
 
-	@Override
-	public void configure(WebSecurity web) throws Exception {
-		log.info("Inside the Configure method taking WebSecurity param of the APiSecurity");
-		if (!securityEnabled) {
-			web.ignoring().antMatchers("/reciter/**");
-		}
-		// Added to whitelist ping controller and Access Token
-		web.ignoring().antMatchers("/reciter/ping");
-		
+	@Bean
+	public WebSecurityCustomizer webSecurityCustomizer() {
+		return (web) -> {
+			// /reciter/ping always bypassed (whitelisted ping controller)
+			web.ignoring().antMatchers("/reciter/ping");
+			// entire /reciter/** bypassed only when security is disabled (local/dev/test)
+			if (!securityEnabled) {
+				web.ignoring().antMatchers("/reciter/**");
+			}
+		};
 	}
 }
