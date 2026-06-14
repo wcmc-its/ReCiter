@@ -1,4 +1,4 @@
-FROM amazoncorretto:11-alpine
+FROM amazoncorretto:17-alpine
 RUN mkdir -p /app
 WORKDIR /app
 ARG JAR_FILE=target/reciter-*.jar
