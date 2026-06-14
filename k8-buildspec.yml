@@ -43,6 +43,17 @@ phases:
         - cat ./kubernetes/k8-deployment.yaml
   build:
     commands:
+      # SecurityFilterChainIntegrationTest (#634 Stage 3) only loads its context when
+      # ADMIN_API_KEY and CONSUMER_API_KEY are present in the environment (apiKeySetter()
+      # reads them via System.getenv at bean init when spring.security.enabled=true);
+      # without them it @BeforeClass-Assume-skips, so CI green would NOT prove the
+      # security chain works. Export throwaway, CI-only values so the test actually runs.
+      # These are NOT secrets: they are derived from the build number, never used against
+      # any live system, and the test reads them straight back from the env to call the
+      # endpoint, so any consistent non-empty value passes (the real keys come from the
+      # reciter-secrets Kubernetes secret at runtime, not from this build).
+      - export ADMIN_API_KEY="ci-test-admin-${CODEBUILD_BUILD_NUMBER}"
+      - export CONSUMER_API_KEY="ci-test-consumer-${CODEBUILD_BUILD_NUMBER}"
       # Run the unit test suite as part of the build. `mvn clean install` binds the
       # test phase, so any test failure fails this build phase and gates the deploy
       # (docker build/push and `kubectl set image` only run if tests pass).
