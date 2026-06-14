@@ -1,10 +1,15 @@
 package reciter.database.dynamodb.repository;
 
-import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+
 import reciter.database.dynamodb.model.Identity;
 
-@EnableScan
-public interface IdentityRepository extends CrudRepository<Identity, String> {
+@Repository
+public class IdentityRepository extends DynamoDbCrudRepository<Identity, String> {
 
+    public IdentityRepository(DynamoDBMapper dynamoDBMapper) {
+        super(dynamoDBMapper, Identity.class);
+    }
 }

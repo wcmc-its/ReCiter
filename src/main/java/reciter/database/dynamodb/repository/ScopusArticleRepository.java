@@ -1,9 +1,15 @@
 package reciter.database.dynamodb.repository;
 
-import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+
 import reciter.database.dynamodb.model.ScopusArticle;
 
-@EnableScan
-public interface ScopusArticleRepository extends CrudRepository<ScopusArticle, String> {
+@Repository
+public class ScopusArticleRepository extends DynamoDbCrudRepository<ScopusArticle, String> {
+
+    public ScopusArticleRepository(DynamoDBMapper dynamoDBMapper) {
+        super(dynamoDBMapper, ScopusArticle.class);
+    }
 }

@@ -1,9 +1,15 @@
 package reciter.database.dynamodb.repository;
 
-import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+
 import reciter.database.dynamodb.model.GoldStandard;
 
-@EnableScan
-public interface DynamoDbGoldStandardRepository extends CrudRepository<GoldStandard, String> {
+@Repository
+public class DynamoDbGoldStandardRepository extends DynamoDbCrudRepository<GoldStandard, String> {
+
+    public DynamoDbGoldStandardRepository(DynamoDBMapper dynamoDBMapper) {
+        super(dynamoDBMapper, GoldStandard.class);
+    }
 }

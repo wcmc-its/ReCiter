@@ -1,9 +1,15 @@
 package reciter.database.dynamodb.repository;
 
-import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+
 import reciter.database.dynamodb.model.ApplicationUser;
 
-@EnableScan
-public interface ApplicationUserRepository extends CrudRepository<ApplicationUser, String> {
+@Repository
+public class ApplicationUserRepository extends DynamoDbCrudRepository<ApplicationUser, String> {
+
+    public ApplicationUserRepository(DynamoDBMapper dynamoDBMapper) {
+        super(dynamoDBMapper, ApplicationUser.class);
+    }
 }

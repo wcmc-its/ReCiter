@@ -1,9 +1,15 @@
 package reciter.database.dynamodb.repository;
 
-import org.socialsignin.spring.data.dynamodb.repository.EnableScan;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+
 import reciter.database.dynamodb.model.MeshTerm;
 
-@EnableScan
-public interface DynamoMeshTermRepository extends CrudRepository<MeshTerm, String> {
+@Repository
+public class DynamoMeshTermRepository extends DynamoDbCrudRepository<MeshTerm, String> {
+
+    public DynamoMeshTermRepository(DynamoDBMapper dynamoDBMapper) {
+        super(dynamoDBMapper, MeshTerm.class);
+    }
 }

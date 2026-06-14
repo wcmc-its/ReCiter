@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.socialsignin.spring.data.dynamodb.repository.config.EnableDynamoDBRepositories;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -23,7 +22,7 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
@@ -41,8 +40,6 @@ import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import com.amazonaws.services.dynamodbv2.util.TableUtils.TableNeverTransitionedToStateException;
 
 @Configuration
-@EnableDynamoDBRepositories
-        (basePackages = "reciter.database.dynamodb.repository", dynamoDBMapperConfigRef = "dynamoDBMapperConfig")
 public class DynamoDbConfig {
 	
 	private static final Logger log = LoggerFactory.getLogger(DynamoDbConfig.class);
@@ -159,10 +156,16 @@ public class DynamoDbConfig {
         return amazonDynamoDB;
     }
     
+    /**
+     * Replaces the {@code DynamoDBMapper} that spring-data-dynamodb used to
+     * auto-register (#634 Stage 1). Backs both {@code DynamoDbCrudRepository} and
+     * the {@code @Autowired DynamoDBMapper} in {@code SchemaMigrationAspect}. Uses
+     * {@code DynamoDBMapperConfig.DEFAULT} (the bare config the old
+     * {@code dynamoDBMapperConfig} bean produced carried no overrides).
+     */
     @Bean
-    public DynamoDBMapperConfig dynamoDBMapperConfig() {
-    	DynamoDBMapperConfig.Builder builder = new DynamoDBMapperConfig.Builder();
-    	return builder.build();
+    public DynamoDBMapper dynamoDBMapper(AmazonDynamoDB amazonDynamoDB) {
+    	return new DynamoDBMapper(amazonDynamoDB);
     }
     
     /**
