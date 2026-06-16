@@ -20,12 +20,16 @@ package reciter.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StopWatch;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,11 +48,11 @@ import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
 
-@Slf4j
+
 @RestController
 public class IdentityController {
 
-
+	private static final Logger log = LoggerFactory.getLogger(IdentityController.class);
     @Autowired
     private IdentityService identityService;
     
@@ -98,6 +102,13 @@ public class IdentityController {
     public void saveIdentities(@RequestBody List<Identity> identities) {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
         stopWatch.start("Add list of identities to Identity table in DynamoDb");
+        
+        if (identities == null || identities.isEmpty()) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+            log.info("The request body must contain at least one Identity");
+            return;
+        }
         log.info("calling saveIdentities with number of identities=" + identities.size());
      
         for(Identity identity : identities)
@@ -201,6 +212,33 @@ public class IdentityController {
         return new ResponseEntity<>(identities, HttpStatus.OK);
     }
     
+    @Operation(summary = "Delete an identity by uid", description = "This api deletes a single identity from the Identity table by uid.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Identity deletion successful"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    })
+    @DeleteMapping(value = "/reciter/identity/{uid}", produces = "application/json")
+    public ResponseEntity deleteIdentity(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete identity by uid");
+        stopWatch.start("Delete identity by uid");
+        Identity identity = identityService.findByUid(uid);
+        if (identity == null) {
+            stopWatch.stop();
+            log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("The uid '" + uid + "' was not found in the Identity table");
+        }
+        identityService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
     public String[] getMandatoryFields() {
         return mandatoryFields.split(",");
     }
@@ -209,16 +247,12 @@ public class IdentityController {
     private void validateMandatoryFields(Identity identity) {
         String[] mandatoryFields = getMandatoryFields();
 
-     // Validate each AuthorName in the alternateNames list
-        if (identity ==null || identity.getAlternateNames() == null || identity.getAlternateNames().isEmpty()) {
-            throw new IllegalArgumentException("Field 'alternateNames' is required but not provided.");
-        }
-        List<AuthorName> listofAuthorNames = identity.getAlternateNames();
-        
-        if (identity ==null || identity.getUid() == null || identity.getUid().isEmpty()) {
+        if (identity == null || identity.getUid() == null || identity.getUid().isEmpty()) {
             throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
         }
-  
+
+        List<AuthorName> listofAuthorNames = identity.getAlternateNames();
+       if(listofAuthorNames!=null) {
         for (AuthorName authorName : listofAuthorNames) {
             // Ensure each field is present and valid
         	
@@ -244,5 +278,6 @@ public class IdentityController {
                 }
             }
         }
+      }
     }
 }

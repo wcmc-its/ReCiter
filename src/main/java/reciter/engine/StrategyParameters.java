@@ -66,38 +66,14 @@ public class StrategyParameters {
     @Value("${strategy.scopus.common.affiliation}")
     private boolean isScopusCommonAffiliation;
 
-    @Value("${strategy.coauthor}")
-    private boolean isCoauthor;
-
-    @Value("${strategy.journal}")
-    private boolean isJournal;
-
-    @Value("${strategy.education}")
-    private boolean isEducation;
-
     @Value("${strategy.grant}")
     private boolean isGrant;
-
-    @Value("${strategy.citation}")
-    private boolean isCitation;
-
-    @Value("${strategy.cocitation}")
-    private boolean isCoCitation;
 
     @Value("${strategy.article.size}")
     private boolean isArticleSize;
 
     @Value("${strategy.persontype}")
     private boolean isPersonType;
-
-    @Value("${strategy.averageclustering}")
-    private boolean isAverageClustering;
-
-    @Value("${strategy.cluster.size}")
-    private boolean isClusterSize;
-
-    @Value("${strategy.mesh.major}")
-    private boolean isMeshMajor;
 
     private boolean useGoldStandardEvidence;
     
@@ -109,14 +85,6 @@ public class StrategyParameters {
     @Value("${nameScoringStrategy-excludedSuffixes}")
     private String nameExcludedSuffixes;
     
-    @Positive(message = "cluster.similarity.threshold score needs to be a positive number.")
-    @Value("${cluster.similarity.threshold.score}")
-    private double clusterSimilarityThresholdScore;
-    
-    @Positive(message = "clusteringGrants-threshold score needs to be a positive integer number.")
-    @Value("${clusteringGrants-threshold}")
-    private double clusteringGrantsThreshold;
-
     @Value("${nameMatchFirstType.full-exact}")
     private double nameMatchFirstTypeFullExactScore;
 
@@ -240,8 +208,8 @@ public class StrategyParameters {
     @Value("${strategy.discrepancyDegreeYear.degreeYearDiscrepancyScore}")
     private String degreeYearDiscrepancyScore;
 
-    @Value("${strategy.discrepancyDegreeYear.bacherlorYearWeight}")
-    private int bacherlorYearWeight;
+    @Value("${strategy.discrepancyDegreeYear.bachelorYearWeight}")
+    private int bachelorYearWeight;
 
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitDepartmentMatchingScore}")
     private double organizationalUnitDepartmentMatchingScore;
@@ -255,9 +223,6 @@ public class StrategyParameters {
     @Value("${strategy.orgUnitScoringStrategy.organizationalUnitProgramMatchingScore}")
     private double organizationalUnitProgramMatchingScore;
     
-    @Value("${strategy.orgUnitScoringStrategy.organizationalUnitSynonym}")
-    private String organizationalUnitSynonym;
-
     @Value("${strategy.articleCountScoringStrategy.articleCountThresholdScore}")
     private double articleCountThresholdScore;
 
@@ -328,9 +293,9 @@ public class StrategyParameters {
     private double searchStrategyStrictThreshold;
     
     @NotNull
-    @Positive(message = "searchStrategy-leninent-threshold should be a positive integer. We recommend a number of 2000.")
-    @Value("${searchStrategy-leninent-threshold}")
-    private double searchStrategyLeninentThreshold;
+    @Positive(message = "searchStrategy-lenient-threshold should be a positive integer. We recommend a number of 2000.")
+    @Value("${searchStrategy-lenient-threshold}")
+    private double searchStrategyLenientThreshold;
     
     @Value("${strategy.journalCategoryScore.journalSubfieldScore}")
     private double journalSubfieldScore;
@@ -365,6 +330,12 @@ public class StrategyParameters {
     @Value("${strategy.feedback.score.keyword}")
     private boolean isFeedbackScoreKeyword;
 
+    @Value("${strategy.feedback.score.textSimilarity}")
+    private boolean isFeedbackScoreTextSimilarity;
+
+    @Value("${strategy.feedback.score.journalTitleSimilarity}")
+    private boolean isFeedbackScoreJournalTitleSimilarity;
+
     @Value("${strategy.feedback.score.institution}")
     private boolean isFeedbackScoreInstitution;
     
@@ -392,6 +363,9 @@ public class StrategyParameters {
     @Value("${strategy.feedback.score.cites}")
     private boolean isFeedbackScoreCites;
 
+    @Value("${strategy.feedback.score.bibliographiccoupling}")
+    private boolean isFeedbackScoreBibliographicCoupling;
+
     
     @Value("${strategy.articleCountScoringStrategy.authorCountThreshold}")
     private int authorCountThreshold;
@@ -400,10 +374,10 @@ public class StrategyParameters {
     private double authorCountAdjustmentGamma;
     
     @Value("${strategy.articleCountScoringStrategy.lnCoefficient}")
-    private double inCoefficent;
+    private double lnCoefficient;
     
     @Value("${strategy.articleCountScoringStrategy.constantCoefficient}")
-    private double constantCoefficeint;
+    private double constantCoefficient;
     
     @Value("${strategy.feedback.keywordCountBaseline}")
     private long keywordCountBaseline;
@@ -419,4 +393,46 @@ public class StrategyParameters {
     
     @Value("${strategy.education.year.discrepancy}")
     private boolean isEducationYearDiscrepancy;
+
+    @Value("${strategy.feedback.informedAbsence.enabled:true}")
+    private boolean informedAbsenceEnabled;
+
+    @Value("${strategy.feedback.informedAbsence.scale:10.0}")
+    private double informedAbsenceScale;
+
+    @Value("${strategy.feedback.informedAbsence.targetAuthorName.strength:1.0}")
+    private double informedAbsenceTargetAuthorNameStrength;
+
+    @Value("${strategy.feedback.informedAbsence.coAuthorName.strength:0.9}")
+    private double informedAbsenceCoAuthorNameStrength;
+
+    @Value("${strategy.feedback.informedAbsence.keyword.strength:0.9}")
+    private double informedAbsenceKeywordStrength;
+
+    @Value("${strategy.feedback.informedAbsence.journal.strength:0.7}")
+    private double informedAbsenceJournalStrength;
+
+    @Value("${strategy.feedback.informedAbsence.journalSubField.strength:0.7}")
+    private double informedAbsenceJournalSubFieldStrength;
+
+    @Value("${strategy.feedback.informedAbsence.institution.strength:0.5}")
+    private double informedAbsenceInstitutionStrength;
+
+    @Value("${strategy.feedback.informedAbsence.cites.strength:0.5}")
+    private double informedAbsenceCitesStrength;
+
+    @Value("${strategy.feedback.informedAbsence.bibliographiccoupling.strength:0.5}")
+    private double informedAbsenceBibliographicCouplingStrength;
+
+    @Value("${strategy.feedback.informedAbsence.organization.strength:0.5}")
+    private double informedAbsenceOrganizationStrength;
+
+    @Value("${strategy.feedback.informedAbsence.email.strength:0.3}")
+    private double informedAbsenceEmailStrength;
+
+    @Value("${strategy.feedback.informedAbsence.orcid.strength:0.3}")
+    private double informedAbsenceOrcidStrength;
+    
+    @Value("${dynamodb.migrations.Analysis.schema.version}")
+    private String analysisSchemaVersion;
 }

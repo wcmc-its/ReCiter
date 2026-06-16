@@ -19,6 +19,7 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,17 +38,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import reciter.algorithm.util.ReCiterStringUtil;
+import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
+import reciter.algorithm.util.ArticleTranslator;
 import reciter.api.parameters.RetrievalRefreshFlag;
+import reciter.database.dynamodb.model.ESearchCount;
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.model.PmidProvenance;
 import reciter.database.dynamodb.model.QueryType;
+import reciter.model.article.ReCiterArticle;
+import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
+import reciter.service.ArticleProvenanceService;
+import reciter.service.ESearchCountService;
 import reciter.service.ESearchResultService;
+import reciter.service.PmidProvenanceService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
+import reciter.utils.AuthorNameSanitizationUtils;
+import reciter.utils.ReCiterStringUtil;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
+import reciter.xml.retriever.pubmed.PubMedQueryType;
 
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
@@ -57,15 +69,24 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
 	
-	@Value("${searchStrategy-leninent-threshold}")
-	private double searchStrategyLeninentThreshold;
+	@Value("${searchStrategy-lenient-threshold}")
+	private double searchStrategyLenientThreshold;
 	
 	@Autowired
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 	
 	@Autowired
 	private ESearchResultService eSearchResultService;
-	
+
+	@Autowired
+	private ESearchCountService eSearchCountService;
+
+	@Autowired
+	private PmidProvenanceService pmidProvenanceService;
+
+	@Autowired
+	private ArticleProvenanceService articleProvenanceService;
+
 	public enum IdentityNameType {
 		ORIGINAL,
 		DERIVED
@@ -131,33 +152,47 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		//eSearchResultService.delete();
 		
 		String uid = identity.getUid();
-		
+
+		// Phase 1 provenance tracking state
+		Set<Long> nonGsStrategyPmids = new HashSet<>();
+		Map<Long, String> newPmidStrategy = new LinkedHashMap<>();
+		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
+		// Build set of already-known PMIDs from existing ESearchResult
+		Set<Long> existingPmids = new HashSet<>();
+		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
+		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
+			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
+				if (esp.getPmids() != null) {
+					existingPmids.addAll(esp.getPmids());
+				}
+			}
+		}
+
 		Map<IdentityNameType, Set<AuthorName>> identityNames = new LinkedHashMap<IdentityNameType, Set<AuthorName>>();
 		identityAuthorNames(identity, identityNames);
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
-		
+
 		if(useStrictQueryOnly) {
 			queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
 		}
-		
-		//Retreive by GoldStandard
-		Map<Long, PubMedArticle> pubMedArticles = null;
+
+		// Initialize as an empty map up front so all strategies use putAll uniformly.
+		// (Phase 36 FIX-05) GoldStandard retrieval now runs LAST after Email/FNI/Aff/Dept/Grant/etc.
+		// have populated uniquePmids, so the GS dedup filter has full coverage. ORCID inference
+		// and the ORCID retrieval strategy also move to after GS-last so they still see GS-retrieved
+		// articles in pubMedArticles when inferOrcidFromAcceptedArticles runs.
+		Map<Long, PubMedArticle> pubMedArticles = new HashMap<>();
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
-			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
-			uniquePmids.addAll(pubMedArticles.keySet());
-		//}
+
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
-		pubMedArticles = retrievalResult.getPubMedArticles();
+		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
 		slf4jLogger.info("pubMedArticles in retrieveData section without date range****"+pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
-			 
+
 			// Update alias.
 			List<PubMedAlias> pubMedAliases = new ArrayList<>();
 			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
@@ -173,13 +208,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateInitialRun(date);
 			identity.setDateLastRun(date);
 			identityService.save(identity);
-      
+
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}*/
-		
+
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 		uniquePmids.addAll(pubMedArticles.keySet());
+		nonGsStrategyPmids.addAll(pubMedArticles.keySet());
+		trackNewPmids(pubMedArticles, emailRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 		
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
@@ -192,25 +229,33 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				&&
 				r1.getPubMedQueryResults().size() > 0
 				&&
-				r1.getPubMedQueryResults().get(0).getNumResult() < searchStrategyLeninentThreshold) {
+				r1.getPubMedQueryResults().get(0).getNumResult() < searchStrategyLenientThreshold) {
 			if(queryType == null) {
 				queryType = QueryType.LENIENT_LOOKUP;
 			}
 			pubMedArticles.putAll(r1.getPubMedArticles());
 			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r1.getPubMedArticles().keySet());
-		} 
+			nonGsStrategyPmids.addAll(r1.getPubMedArticles().keySet());
+			trackNewPmids(r1.getPubMedArticles(), firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+		}
 		//toggle useStrictQUery as true if results from Last Name First Initial Strategy is larger than lenientStrategy
-		if(r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
+		if(r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLenientThreshold) {
 			useStrictQueryOnly = true;
 			queryType = QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP;
+
+			// Store the true eSearch count so ArticleSizeStrategy can use log(count) for scoring.
+			// This avoids a separate live eSearch call during the scoring phase.
+			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
+			eSearchCountService.save(new ESearchCount(uid, trueCount));
+			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
-		
+
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
 				&&
-				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold
+				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLenientThreshold
 				||
 				useStrictQueryOnly) {
 			//Check to see if there is an actual need to do query for all steps
@@ -219,64 +264,149 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pubMedArticles.putAll(r2.getPubMedArticles());
 				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
-				
+				nonGsStrategyPmids.addAll(r2.getPubMedArticles().keySet());
+				trackNewPmids(r2.getPubMedArticles(), affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			} else {
 				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
 			}
-			
+
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r3.getPubMedArticles());
 			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
-			
+			nonGsStrategyPmids.addAll(r3.getPubMedArticles().keySet());
+			trackNewPmids(r3.getPubMedArticles(), affiliationRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
 				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r4.getPubMedArticles());
 				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
-				
+				nonGsStrategyPmids.addAll(r4.getPubMedArticles().keySet());
+				trackNewPmids(r4.getPubMedArticles(), departmentRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			} else {
 				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
 			}
-			
+
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
 				RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r5.getPubMedArticles());
 				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
-				
+				nonGsStrategyPmids.addAll(r5.getPubMedArticles().keySet());
+				trackNewPmids(r5.getPubMedArticles(), grantRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			} else {
 				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
 			}
-			
+
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
 			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
-			
+			nonGsStrategyPmids.addAll(r6.getPubMedArticles().keySet());
+			trackNewPmids(r6.getPubMedArticles(), fullNameRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
 				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 				pubMedArticles.putAll(r7.getPubMedArticles());
 				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
-				
+				nonGsStrategyPmids.addAll(r7.getPubMedArticles().keySet());
+				trackNewPmids(r7.getPubMedArticles(), knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
-			
+
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 			pubMedArticles.putAll(r8.getPubMedArticles());
 			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r8.getPubMedArticles().keySet());
-			
+			nonGsStrategyPmids.addAll(r8.getPubMedArticles().keySet());
+			trackNewPmids(r8.getPubMedArticles(), secondIntialRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 		}
-		
-		
+
+		// Phase 36 FIX-05: GoldStandard retrieval runs LAST so it can dedup against the
+		// uniquePmids accumulated by every prior name/email/affiliation/grant strategy.
+		// The chunked GS query builder from Plan 36-01 batches PMIDs in groups of 100;
+		// the dedup filter strips any knownPmid already retrieved by another strategy.
+		// Net effect: zero redundant eutils traffic for PMIDs already in hand.
+		List<PubMedQueryType> gsQueries = goldStandardRetrievalStrategy.buildQueryGoldStandard(identity, uniquePmids);
+		RetrievalResult goldStandardRetrievalResult =
+				goldStandardRetrievalStrategy.retrievePubMedArticlesUsingQueries(identity, gsQueries, useStrictQueryOnly);
+		pubMedArticles.putAll(goldStandardRetrievalResult.getPubMedArticles());
+		savePubMedArticles(goldStandardRetrievalResult.getPubMedArticles().values(), uid,
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
+		uniquePmids.addAll(goldStandardRetrievalResult.getPubMedArticles().keySet());
+		trackNewPmids(goldStandardRetrievalResult.getPubMedArticles(),
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				uid, existingPmids, newPmidStrategy, backfillPmids);
+
+		// Retrieve by ORCID (asserted from Identity, or inferred from accepted articles).
+		// Inference walks GoldStandard.knownPmids against pubMedArticles, so it must run
+		// AFTER GS retrieval has populated those PMIDs. The ORCID strategy then runs
+		// against either the asserted or inferred ORCID and adds any new articles.
+		String orcidForRetrieval = null;
+		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
+				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
+			orcidForRetrieval = identity.getOrcid().trim();
+			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+		}
+		if (orcidForRetrieval == null) {
+			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
+			if (orcidForRetrieval != null) {
+				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+						orcidForRetrieval, uid);
+				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
+				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
+				identity.setOrcid(orcidForRetrieval);
+				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+						orcidForRetrieval, uid);
+			}
+		}
+		if (orcidForRetrieval != null) {
+			// Strategy reads identity.getOrcid() directly (thread-safe).
+			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
+					identity, identityNames, useStrictQueryOnly);
+			pubMedArticles.putAll(orcidResult.getPubMedArticles());
+			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
+			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
+			nonGsStrategyPmids.addAll(orcidResult.getPubMedArticles().keySet());
+			trackNewPmids(orcidResult.getPubMedArticles(),
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					uid, existingPmids, newPmidStrategy, backfillPmids);
+		}
+
+		// Phase 1: Save ESearchCount for users who didn't already get a threshold-path
+		// count (line 275). For threshold-exceeding users, the raw PubMed count is
+		// the correct value for ArticleSizeStrategy's log(count) scoring formula.
+		// This guard will be removed in Phase 2 when ArticleSizeStrategy is updated
+		// to use the retrieved-PMID semantic consistently.
+		if (queryType != QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP) {
+			eSearchCountService.save(new ESearchCount(uid, nonGsStrategyPmids.size()));
+			slf4jLogger.info("Stored final eSearchCount={} for uid={}", nonGsStrategyPmids.size(), uid);
+		}
+
+		// Phase 1: Write provenance records for newly discovered PMIDs
+		if (!newPmidStrategy.isEmpty()) {
+			Date now = new Date();
+			List<PmidProvenance> provenanceRecords = new ArrayList<>();
+			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
+				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
+			}
+			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
+			slf4jLogger.info("Wrote {} provenance records for uid={}", provenanceRecords.size(), uid);
+		}
+
 		if (useScopusArticles) {
 			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
-      
-			//Delete the table first if required
-			//scopusService.delete();
 
 			scopusService.save(scopusArticles);
 
@@ -292,78 +422,106 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					notFoundPmids.add(pmid);
 				}
 			}
+
+			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
+
 			List<String> dois = new ArrayList<>();
 			Map<String, Long> doiToPmid = new HashMap<>();
+			int noDoisCount = 0;
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
 
-				if (pubMedArticle != null && 
-						pubMedArticle.getMedlinecitation() != null && 
+				if (pubMedArticle != null &&
+						pubMedArticle.getMedlinecitation() != null &&
 						pubMedArticle.getMedlinecitation().getArticle() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
-					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
+					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase();
 					dois.add(doi);
-					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
+					doiToPmid.put(doi, pmid);
+				} else {
+					noDoisCount++;
 				}
 			}
-			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);;
+
+			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+					uid, notFoundPmids.size(), dois.size(), noDoisCount);
+
+			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
 			List<Long> pmidsByDoi = new ArrayList<>();
+			int doiMatchSuccess = 0;
+			int doiMatchFailed = 0;
 			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
 				// manually insert PMID information.
 				if (scopusArticle.getDoi() != null && !scopusArticle.getDoi().isEmpty()) {
-					// Need to lowercase doi here because of null pointer exception.
-					// PMID: 28221372
-					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112
-					//Sometimes scopus doi retrieval wont match with the DOI found in Pubmed
-					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null)
+					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null) {
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
+						doiMatchSuccess++;
+					} else {
+						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+								uid, scopusArticle.getDoi());
+						doiMatchFailed++;
+					}
+				} else {
+					doiMatchFailed++;
 				}
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
-			slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
+
+			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
+					notFoundPmids.size() - doiMatchSuccess);
+
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("uniquePmids in retrieveData section without date range****"+uniquePmids.size());
-		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
+		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
 		return uniquePmids;
 	}
 	
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
 		slf4jLogger.info("Coming in retrieveData section with date range****");
 		Set<Long> uniquePmids = new HashSet<>();
-		QueryType queryType = null; 
+		QueryType queryType = null;
 		String uid = identity.getUid();
-		
+
+		// Phase 1 provenance tracking state (no always-save ESearchCount for date-range runs)
+		Map<Long, String> newPmidStrategy = new LinkedHashMap<>();
+		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
+		Set<Long> existingPmids = new HashSet<>();
+		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
+		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
+			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
+				if (esp.getPmids() != null) {
+					existingPmids.addAll(esp.getPmids());
+				}
+			}
+		}
+
 		Map<IdentityNameType, Set<AuthorName>> identityNames = new LinkedHashMap<IdentityNameType, Set<AuthorName>>();
 		identityAuthorNames(identity, identityNames);
-		
+
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
-		
+
 		if(useStrictQueryOnly) {
 			queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
 		}
-		
-		Map<Long, PubMedArticle> pubMedArticles = null;
-		//Retreive by GoldStandard
+
+		// (Phase 36 FIX-05) GoldStandard retrieval moved to AFTER the other strategies so it
+		// can dedup against uniquePmids. ORCID inference + ORCID-strategy moved with it so
+		// inference still sees GS-retrieved articles in pubMedArticles when it runs.
+		Map<Long, PubMedArticle> pubMedArticles = new HashMap<>();
 		GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(identity.getUid().trim());
-		//if(goldStandard != null && goldStandard.getKnownPmids() != null && !goldStandard.getKnownPmids().isEmpty()) {
-			RetrievalResult goldStandardRetrievalResult = goldStandardRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-			pubMedArticles = goldStandardRetrievalResult.getPubMedArticles();
-			savePubMedArticles(pubMedArticles.values(), uid, goldStandardRetrievalStrategy.getRetrievalStrategyName(), goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
-			uniquePmids.addAll(pubMedArticles.keySet());
-		//}
-		
+
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
-		//Map<Long, PubMedArticle> emailPubMedArticles = retrievalResult.getPubMedArticles();
-		pubMedArticles = retrievalResult.getPubMedArticles();
+		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
 		slf4jLogger.info("pubMedArticles in retrieveData section with date range****"+pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
 			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
-			 
+
 			// Update alias.
 			List<PubMedAlias> pubMedAliases = new ArrayList<PubMedAlias>();
 			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
@@ -380,13 +538,14 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			identity.setDateInitialRun(now);
 			identity.setDateLastRun(now);
 			identityService.save(identity);
-			
+
 			uniquePmids.addAll(pubMedArticles.keySet());
 		}*/
-		
+
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
 		uniquePmids.addAll(pubMedArticles.keySet());
+		trackNewPmids(pubMedArticles, emailRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 		RetrievalResult r1;
 		if(useStrictQueryOnly) {
@@ -399,36 +558,43 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				&&
 				r1.getPubMedQueryResults().size() > 0
 				&&
-				r1.getPubMedQueryResults().get(0).getNumResult() < searchStrategyLeninentThreshold) {
+				r1.getPubMedQueryResults().get(0).getNumResult() < searchStrategyLenientThreshold) {
 			if(queryType == null) {
 				queryType = QueryType.LENIENT_LOOKUP;
 			}
 			pubMedArticles.putAll(r1.getPubMedArticles());
 			savePubMedArticles(r1.getPubMedArticles().values(), uid, firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), r1.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r1.getPubMedArticles().keySet());
+			trackNewPmids(r1.getPubMedArticles(), firstNameInitialRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 		}
-		
+
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
 				&&
-				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold) {
+				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLenientThreshold) {
 			queryType = QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP;
+
+			// Store the true eSearch count for scoring.
+			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
+			eSearchCountService.save(new ESearchCount(uid, trueCount));
+			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
-		
+
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
 				&&
-				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLeninentThreshold
+				r1.getPubMedQueryResults().get(0).getNumResult() > searchStrategyLenientThreshold
 				||
 				useStrictQueryOnly) {
-			
+
 			if(identity.getInstitutions() != null && !identity.getInstitutions().isEmpty()) {
 				RetrievalResult r2 = affiliationInDbRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r2.getPubMedArticles());
 				savePubMedArticles(r2.getPubMedArticles().values(), uid, affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), r2.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
+				trackNewPmids(r2.getPubMedArticles(), affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
 				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
 			}
@@ -437,36 +603,41 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			pubMedArticles.putAll(r3.getPubMedArticles());
 			savePubMedArticles(r3.getPubMedArticles().values(), uid, affiliationRetrievalStrategy.getRetrievalStrategyName(), r3.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r3.getPubMedArticles().keySet());
-			
+			trackNewPmids(r3.getPubMedArticles(), affiliationRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			if(identity.getOrganizationalUnits() != null && !identity.getOrganizationalUnits().isEmpty()) {
 				RetrievalResult r4 = departmentRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r4.getPubMedArticles());
 				savePubMedArticles(r4.getPubMedArticles().values(), uid, departmentRetrievalStrategy.getRetrievalStrategyName(), r4.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r4.getPubMedArticles().keySet());
-				
+				trackNewPmids(r4.getPubMedArticles(), departmentRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
+
 			} else {
 				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
 			}
-			
+
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
 				RetrievalResult r5 = grantRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r5.getPubMedArticles());
 				savePubMedArticles(r5.getPubMedArticles().values(), uid, grantRetrievalStrategy.getRetrievalStrategyName(), r5.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
+				trackNewPmids(r5.getPubMedArticles(), grantRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
 				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
 			}
-			
+
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r6.getPubMedArticles());
 			savePubMedArticles(r6.getPubMedArticles().values(), uid, fullNameRetrievalStrategy.getRetrievalStrategyName(), r6.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r6.getPubMedArticles().keySet());
+			trackNewPmids(r6.getPubMedArticles(), fullNameRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			if(identity.getKnownRelationships() != null && !identity.getKnownRelationships().isEmpty()) {
 				RetrievalResult r7 = knownRelationshipRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 				pubMedArticles.putAll(r7.getPubMedArticles());
 				savePubMedArticles(r7.getPubMedArticles().values(), uid, knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), r7.getPubMedQueryResults(), queryType, refreshFlag);
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
+				trackNewPmids(r7.getPubMedArticles(), knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
 				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
 			}
@@ -474,15 +645,72 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			pubMedArticles.putAll(r8.getPubMedArticles());
 			savePubMedArticles(r8.getPubMedArticles().values(), uid, secondIntialRetrievalStrategy.getRetrievalStrategyName(), r8.getPubMedQueryResults(), queryType, refreshFlag);
 			uniquePmids.addAll(r8.getPubMedArticles().keySet());
+			trackNewPmids(r8.getPubMedArticles(), secondIntialRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 		}
+
+		// Phase 36 FIX-05: GoldStandard runs LAST with dedup against uniquePmids.
+		// Date-range variant uses the dateRange-aware buildQuery overload internally —
+		// here we keep the no-args buildQueryGoldStandard helper because date-range and
+		// PMID-list semantics don't compose: a PMID is a unique identifier, not a temporal
+		// query, so we want all knownPmids retrievable regardless of date window.
+		List<PubMedQueryType> gsQueries = goldStandardRetrievalStrategy.buildQueryGoldStandard(identity, uniquePmids);
+		RetrievalResult goldStandardRetrievalResult =
+				goldStandardRetrievalStrategy.retrievePubMedArticlesUsingQueries(identity, gsQueries, useStrictQueryOnly);
+		pubMedArticles.putAll(goldStandardRetrievalResult.getPubMedArticles());
+		savePubMedArticles(goldStandardRetrievalResult.getPubMedArticles().values(), uid,
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				goldStandardRetrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
+		uniquePmids.addAll(goldStandardRetrievalResult.getPubMedArticles().keySet());
+		trackNewPmids(goldStandardRetrievalResult.getPubMedArticles(),
+				goldStandardRetrievalStrategy.getRetrievalStrategyName(),
+				uid, existingPmids, newPmidStrategy, backfillPmids);
+
+		// Retrieve by ORCID — inference now sees GS articles in pubMedArticles (FIX-05).
+		String orcidForRetrieval = null;
+		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
+				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
+			orcidForRetrieval = identity.getOrcid().trim();
+			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+		}
+		if (orcidForRetrieval == null) {
+			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
+			if (orcidForRetrieval != null) {
+				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+						orcidForRetrieval, uid);
+				identity.setOrcid(orcidForRetrieval);
+				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+						orcidForRetrieval, uid);
+			}
+		}
+		if (orcidForRetrieval != null) {
+			RetrievalResult orcidResult = orcidRetrievalStrategy.retrievePubMedArticles(
+					identity, identityNames, startDate, endDate, useStrictQueryOnly);
+			pubMedArticles.putAll(orcidResult.getPubMedArticles());
+			savePubMedArticles(orcidResult.getPubMedArticles().values(), uid,
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					orcidResult.getPubMedQueryResults(), queryType, refreshFlag);
+			uniquePmids.addAll(orcidResult.getPubMedArticles().keySet());
+			trackNewPmids(orcidResult.getPubMedArticles(),
+					orcidRetrievalStrategy.getRetrievalStrategyName(),
+					uid, existingPmids, newPmidStrategy, backfillPmids);
+		}
+
+		// Phase 1: Write provenance records for newly discovered PMIDs (no ESearchCount always-save for date-range runs)
+		if (!newPmidStrategy.isEmpty()) {
+			Date now = new Date();
+			List<PmidProvenance> provenanceRecords = new ArrayList<>();
+			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
+				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
+			}
+			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
+			slf4jLogger.info("Wrote {} provenance records (date-range) for uid={}", provenanceRecords.size(), uid);
+		}
+
 		slf4jLogger.info("uniquePmids in retrieveData section with date range****"+uniquePmids.size());
 		//List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		//scopusService.save(scopusArticles);
 		if (useScopusArticles) {
 			List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
-      
-			//Delete the table first if required
-			//scopusService.delete();
 
 			scopusService.save(scopusArticles);
 
@@ -498,39 +726,60 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					notFoundPmids.add(pmid);
 				}
 			}
+
+			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
+
 			List<String> dois = new ArrayList<>();
 			Map<String, Long> doiToPmid = new HashMap<>();
+			int noDoisCount = 0;
 			for (long pmid : notFoundPmids) {
 				PubMedArticle pubMedArticle = pubMedArticles.get(pmid);
 
-				if (pubMedArticle != null && 
-						pubMedArticle.getMedlinecitation() != null && 
+				if (pubMedArticle != null &&
+						pubMedArticle.getMedlinecitation() != null &&
 						pubMedArticle.getMedlinecitation().getArticle() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid() != null &&
 						pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid() != null) {
-					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase(); // Need to lowercase doi here because of null pointer exception. (see below comment)
+					String doi = pubMedArticle.getMedlinecitation().getArticle().getElocationid().getElocationid().toLowerCase();
 					dois.add(doi);
-					doiToPmid.put(doi, pmid); // store a map of doi to pmid so that when Scopus doesn't return pmid, use this mapping to manually insert pmid.
+					doiToPmid.put(doi, pmid);
+				} else {
+					noDoisCount++;
 				}
 			}
-			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);;
+
+			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+					uid, notFoundPmids.size(), dois.size(), noDoisCount);
+
+			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
 			List<Long> pmidsByDoi = new ArrayList<>();
+			int doiMatchSuccess = 0;
+			int doiMatchFailed = 0;
 			for (ScopusArticle scopusArticle : scopusArticlesByDoi) {
 				// manually insert PMID information.
 				if (scopusArticle.getDoi() != null && !scopusArticle.getDoi().isEmpty()) {
-					// Need to lowercase doi here because of null pointer exception.
-					// PMID: 28221372
-					// PubMed article may provide DOI as "10.1038/NPLANTS.2016.112", and Scopus article may provide DOI as 10.1038/nplants.2016.112
-					//Sometimes scopus doi retrieval wont match with the DOI found in Pubmed
-					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null)
+					if(doiToPmid.get(scopusArticle.getDoi().toLowerCase()) != null) {
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
+						doiMatchSuccess++;
+					} else {
+						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+								uid, scopusArticle.getDoi());
+						doiMatchFailed++;
+					}
+				} else {
+					doiMatchFailed++;
 				}
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
-			slf4jLogger.info("retrieved size=[" + pmidsByDoi.size() + "] pmidsByDoi=" + pmidsByDoi + " via DOI for uid=[" + uid + "]");
+
+			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
+					notFoundPmids.size() - doiMatchSuccess);
+
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("Finished retrieval for uid: " + identity.getUid());
+		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
 		
 	}
 	
@@ -550,6 +799,120 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		}*/
 	}
 	
+	/**
+	 * Infer the target author's ORCID by scanning accepted (known) PubMed articles.
+	 * Uses the full TargetAuthorSelection pipeline (19-step name matching cascade)
+	 * to identify the target author on each accepted article, then extracts
+	 * the ORCID from whichever author is identified. Returns the most common
+	 * matching ORCID, or null if none found.
+	 */
+	private String inferOrcidFromAcceptedArticles(Map<Long, PubMedArticle> pubMedArticles,
+			GoldStandard goldStandard, Identity identity) {
+		if (goldStandard == null || goldStandard.getKnownPmids() == null
+				|| goldStandard.getKnownPmids().isEmpty() || pubMedArticles == null) {
+			return null;
+		}
+
+		// Sanitize identity names (same as the scoring pipeline does)
+		AuthorNameSanitizationUtils sanitizationUtils = new AuthorNameSanitizationUtils(strategyParameters);
+		identity.setSanitizedNames(sanitizationUtils.sanitizeIdentityAuthorNames(identity));
+
+		// Translate accepted PubMed articles into ReCiterArticles and run target author selection
+		List<ReCiterArticle> acceptedReCiterArticles = new ArrayList<>();
+		for (Long knownPmid : goldStandard.getKnownPmids()) {
+			PubMedArticle pubMedArticle = pubMedArticles.get(knownPmid);
+			if (pubMedArticle == null) {
+				continue;
+			}
+			try {
+				ReCiterArticle reCiterArticle = ArticleTranslator.translate(
+						pubMedArticle, null,
+						strategyParameters.getNameIgnoredCoAuthors(),
+						strategyParameters);
+				// Sanitize article author names
+				reCiterArticle.getArticleCoAuthors().setSanitizedAuthorMap(
+						sanitizationUtils.sanitizeArticleAuthorNames(reCiterArticle));
+				acceptedReCiterArticles.add(reCiterArticle);
+			} catch (Exception e) {
+				slf4jLogger.warn("Could not translate PMID {} for ORCID inference: {}",
+						knownPmid, e.getMessage());
+			}
+		}
+
+		if (acceptedReCiterArticles.isEmpty()) {
+			return null;
+		}
+
+		// Run the full target author identification (19-step cascade)
+		TargetAuthorSelection targetAuthorSelection = new TargetAuthorSelection();
+		targetAuthorSelection.identifyTargetAuthor(acceptedReCiterArticles, identity);
+
+		// Collect ORCIDs from identified target authors
+		Map<String, Integer> orcidCounts = new HashMap<>();
+		for (ReCiterArticle article : acceptedReCiterArticles) {
+			if (article.getArticleCoAuthors() == null
+					|| article.getArticleCoAuthors().getAuthors() == null) {
+				continue;
+			}
+			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
+				if (author.isTargetAuthor()
+						&& author.getOrcid() != null
+						&& !author.getOrcid().isEmpty()) {
+					orcidCounts.merge(author.getOrcid(), 1, Integer::sum);
+				}
+			}
+		}
+
+		if (orcidCounts.isEmpty()) {
+			return null;
+		}
+
+		// Return the most common ORCID
+		return orcidCounts.entrySet().stream()
+				.max(Map.Entry.comparingByValue())
+				.map(Map.Entry::getKey)
+				.orElse(null);
+	}
+
+	/**
+	 * Track PMIDs returned by a retrieval strategy.
+	 *
+	 * <p>Two effects per PMID:
+	 * <ol>
+	 *   <li><b>Legacy {@code PmidProvenance} attribution</b>: if the PMID is genuinely new
+	 *       (not in {@code existingPmids} nor already attributed in {@code newPmidStrategy}),
+	 *       record this strategy as the first finder. The contents of {@code newPmidStrategy}
+	 *       are batch-written to {@code PmidProvenance} after all strategies finish.
+	 *       Backfill-tagged PMIDs are healed via {@link PmidProvenanceService#updateStrategyIfBackfill}.</li>
+	 *   <li><b>Phase 33 {@code ArticleProvenance} write</b>: for EVERY PMID returned by the
+	 *       strategy (not just new ones), upsert the {@code ArticleProvenance} row with
+	 *       {@code rs}/{@code frd}/{@code ads}. Uses {@code if_not_exists} so original
+	 *       attribution is preserved on re-runs; {@code ads} grows as new strategies re-find
+	 *       this PMID. The {@code src} field is NOT touched here (curator/CTSC paths own it).
+	 *       This closes the established-user gap where PmidProvenance was never written
+	 *       because all PMIDs were already known.</li>
+	 * </ol>
+	 *
+	 * <p>Phase 33-01 D-01..D-04. Provenance write failures never propagate (logged in service).
+	 */
+	private void trackNewPmids(Map<Long, ?> articles, String strategyName,
+			String uid, Set<Long> existingPmids, Map<Long, String> newPmidStrategy,
+			Set<Long> backfillPmids) {
+		long nowEpochSeconds = System.currentTimeMillis() / 1000L;
+		for (Long pmid : articles.keySet()) {
+			// Legacy PmidProvenance attribution (new-only)
+			if (!existingPmids.contains(pmid) && !newPmidStrategy.containsKey(pmid)) {
+				newPmidStrategy.put(pmid, strategyName);
+			}
+			if (backfillPmids.contains(pmid)) {
+				pmidProvenanceService.updateStrategyIfBackfill(uid, pmid, strategyName);
+				backfillPmids.remove(pmid);
+			}
+			// Phase 33-01: ArticleProvenance upsert for EVERY retrieved PMID
+			articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
+		}
+	}
+
 	/**
 	 * This function get all authorNames and derive additional names as well.
 	 * @see <a href ="https://github.com/wcmc-its/ReCiter/issues/259">All Identity Name Sec 3.</a>

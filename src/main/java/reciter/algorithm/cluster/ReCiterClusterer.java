@@ -24,25 +24,27 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-
 import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
 import reciter.algorithm.cluster.model.ReCiterCluster;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.BaselineClusteringStrategy;
+import reciter.algorithm.cluster.similarity.clusteringstrategy.article.CitesFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.GrantFeatureClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.TepidClusteringStrategy;
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.BaselineClusteringStrategy;
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.CitesFeatureClusteringStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 
-@Slf4j
 @Getter
 @Setter
 public class ReCiterClusterer extends AbstractClusterer {
+	
+	private static final Logger log = LoggerFactory.getLogger(ReCiterClusterer.class);
 
 	private List<ReCiterArticle> reCiterArticles;
 	private Identity identity;

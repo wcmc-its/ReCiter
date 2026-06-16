@@ -22,16 +22,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TfidfTest {
 
+	private static final Logger log = LoggerFactory.getLogger(TfidfTest.class);
+	
 	private String docA;
 	private String docB;
 	
 	@Test
 	public void TestGetTermFrequency() {
 		String e = extractDepartment("Department of General Surgery");
-		System.out.println(e);
+		log.info(e);
 	}
 	
 	private String extractDepartment(String department) {

@@ -10,6 +10,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -64,13 +67,8 @@ public class ReCiterControllerTest {
 
 	@Mock
 	private ESearchResultService eSearchResultService;
-
-	@Mock
-	private PubMedService pubMedService;
-
-	@Mock
-	private ReCiterRetrievalEngine aliasReCiterRetrievalEngine;
-
+	private static final Logger log = LoggerFactory.getLogger(ReCiterControllerTest.class);
+	
 	@Mock
 	private IdentityService identityService;
 
@@ -86,6 +84,10 @@ public class ReCiterControllerTest {
 	@Mock
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 
+	@Mock
+	private ReCiterRetrievalEngine aliasReCiterRetrievalEngine;
+
+	
 	@InjectMocks
 	private ReCiterController reCiterController;
 
@@ -258,72 +260,72 @@ public class ReCiterControllerTest {
 	@Test
 	public void testUpdateGoldStandardSuccess() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.UPDATE);
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.UPDATE);
+		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.UPDATE, testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardNullFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
-		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard, null);
+		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard, null, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.UPDATE);
+		verify(dynamoDbGoldStandardService, times(1)).save((List<GoldStandard>) validGoldStandard, GoldStandardUpdateFlag.UPDATE, testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardDeleteFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save((List<GoldStandard>) any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.DELETE);
+				GoldStandardUpdateFlag.DELETE, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.DELETE);
+		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.DELETE, testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardRefreshFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.REFRESH);
+				GoldStandardUpdateFlag.REFRESH, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.REFRESH);
+		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.REFRESH, testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardNullGoldStandard() {
 		GoldStandard goldStandard = null;
 		// Act
-		ResponseEntity<?> response = reCiterController.updateGoldStandard(goldStandard, GoldStandardUpdateFlag.UPDATE);
+		ResponseEntity<?> response = reCiterController.updateGoldStandard(goldStandard, GoldStandardUpdateFlag.UPDATE, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		assertEquals("The api requires a GoldStandard model", response.getBody());
-		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class));
+		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 	}
 
 	@Test
@@ -334,71 +336,71 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(invalidGoldStandard,
-				GoldStandardUpdateFlag.UPDATE);
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		assertEquals("The api requires a valid uid to be passed with GoldStandard model", response.getBody());
-		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class));
+		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardListSuccess() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(anyList(), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
 		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList,
-				GoldStandardUpdateFlag.UPDATE);
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.UPDATE);
+		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.UPDATE, testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardListNullFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(anyList(), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
-		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList, null);
+		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList, null, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.UPDATE);
+		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.UPDATE, testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardListDeleteFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(anyList(), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
 		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList,
-				GoldStandardUpdateFlag.DELETE);
+				GoldStandardUpdateFlag.DELETE, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.DELETE);
+		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.DELETE, testUid);
 	}
 
 	@Test
 	public void testUpdateGoldStandardListRefreshFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(anyList(), any(GoldStandardUpdateFlag.class));
+		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
 		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList,
-				GoldStandardUpdateFlag.REFRESH);
+				GoldStandardUpdateFlag.REFRESH, testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.REFRESH);
+		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.REFRESH, testUid);
 	}
 
 	@Test

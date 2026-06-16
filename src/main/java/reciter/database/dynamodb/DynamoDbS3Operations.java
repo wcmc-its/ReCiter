@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -17,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -38,9 +39,10 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  * @author Sarbajit Dutta(szd2013)
  *
  */
-@Slf4j
 @Component
 public class DynamoDbS3Operations {
+	
+	private static final Logger log = LoggerFactory.getLogger(DynamoDbS3Operations.class);
 	
 	@Lazy
 	@Autowired
@@ -58,9 +60,17 @@ public class DynamoDbS3Operations {
 	 * @param keyName
 	 */
 	public void saveLargeItem(String bucketName, Object object, String keyName) {
-		
-		if (s3 != null && bucketName != null && !s3ObjectExists(bucketName.toLowerCase(), keyName)) {
+		// Skip S3 entirely when client or bucket is unavailable (e.g., standalone
+		// local mode with aws.s3.use=false). The previous code's else branch
+		// dereferenced bucketName.toLowerCase() unconditionally, producing
+		// NullPointerException for any Analysis object large enough to spill
+		// (>400KB DynamoDB item limit). The S3 cache is best-effort; callers
+		// don't depend on it for the API response.
+		if (s3 == null || bucketName == null) {
+			return;
+		}
 
+		if(s3 != null && bucketName != null && !s3ObjectExists(bucketName.toLowerCase(), keyName)) {
 			
 			//AmazonS3Config.createFolder(bucketName, AnalysisOutput.class.getName(), s3);
 			String objectContentString = null;
@@ -155,6 +165,12 @@ public class DynamoDbS3Operations {
 	 * @return
 	 */
 	public <T> Object retrieveLargeItem(String bucketName, String keyName, Class<T> objectClass) {
+		// Match the null guard in saveLargeItem. Return null so callers fall back
+		// to the standard DynamoDB read path (which the caller already does for
+		// items <= 400KB).
+		if (s3 == null || bucketName == null) {
+			return null;
+		}
 		try {
 			//S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 			
@@ -216,16 +232,6 @@ public class DynamoDbS3Operations {
 	 * @param keyName
 	 * @return date of the object that was stored
 	 */
-	/*public Date getObjectSaveTimestamp(String bucketName, String keyName) {
-		try {
-			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
-			Date lastModifedDate = s3Object.getObjectMetadata().getLastModified();
-			return lastModifedDate;
-		} catch (AmazonServiceException e) {
-			log.error(e.getMessage());
-		}
-		return null;
-	}*/
 	public Date getObjectSaveTimestamp(String bucketName, String keyName) {
 	    try {
 	        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()

@@ -21,7 +21,9 @@ package reciter.algorithm.evidence.targetauthor.degree.strategy;
 import java.time.LocalDate;
 import java.util.List;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.article.AbstractRemoveReCiterArticleStrategy;
 import reciter.engine.EngineParameters;
@@ -39,12 +41,13 @@ import reciter.model.identity.Identity;
  * implements the year-based matching for a target author (i.e., Phase II)
  * matching).
  * 
- * @author ved4006
+ * @author jil3004
+ * @author ved4006	
  *
  */
-@Slf4j
 public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrategy {
 
+	private static final Logger log = LoggerFactory.getLogger(YearDiscrepancyStrategy.class);
 	private final DegreeType degreeType;
 	
 	
@@ -180,7 +183,7 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 						reCiterArticle.setEducationYearEvidence(educationYearEvidence);
 					} else if (hasValidBachelor) {
 						discrepancyDegreeYearBachelor = articleYear - identity.getDegreeYear().getBachelorYear()
-								+ ReCiterArticleScorer.strategyParameters.getBacherlorYearWeight();
+								+ ReCiterArticleScorer.strategyParameters.getBachelorYearWeight();
 						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor < -99) ? -99
 								: discrepancyDegreeYearBachelor;
 						discrepancyDegreeYearBachelor = (discrepancyDegreeYearBachelor > 100) ? 100

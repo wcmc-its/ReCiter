@@ -40,6 +40,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		Map<String, List<String>> identityOrgUnitToSynonymMap = identity.getIdentityOrgUnitToSynonymMap();
 
 		reCiterArticles.forEach(reCiterArticle -> {
+			if (reCiterArticle.getJournal() == null) return;
 			List<MedlineCitationJournalISSN> journalIssn = reCiterArticle.getJournal().getJournalIssn();
 		    if (journalIssn != null && !journalIssn.isEmpty()) {
 		        JournalCategoryEvidence journalCategoryEvidence = null;
@@ -123,6 +124,9 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		String issnLinking = null;
 		ScienceMetrix scienceMetrix = null;
 		for(MedlineCitationJournalISSN journalIssn: journalIssns) {
+			if(journalIssn == null || journalIssn.getIssntype() == null || journalIssn.getIssn() == null) {
+				continue;
+			}
 			if(journalIssn.getIssntype().equalsIgnoreCase("Print")) {
 				issnPrint = journalIssn.getIssn().trim();
 			} else if(journalIssn.getIssntype().equalsIgnoreCase("Electronic")) {
@@ -132,23 +136,8 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 			}
 		}
 		
-		/*if(issnLinking != null) {
-			scienceMetrix = scienceMetrixService.findByIssn(issnLinking);
-			if(scienceMetrix == null) {
-				scienceMetrix = scienceMetrixService.findByEissn(issnLinking);
-			}
-		} else if(scienceMetrix == null && issnPrint != null) {
-			scienceMetrix = scienceMetrixService.findByIssn(issnPrint);
-			if(scienceMetrix == null) {
-				scienceMetrix = scienceMetrixService.findByEissn(issnPrint);
-			}
-		} else if(scienceMetrix == null && issnElectronic != null) {
-			scienceMetrix = scienceMetrixService.findByIssn(issnElectronic);
-			if(scienceMetrix == null) {
-				scienceMetrix = scienceMetrixService.findByEissn(issnElectronic);
-			}
-		}*/
-		
+		// Priority order: Linking ISSN > Print ISSN > Electronic ISSN
+		// For each, try both SM.issn and SM.eissn fields
 		for(ScienceMetrix scienceMetrixJournal: EngineParameters.getScienceMetrixJournals()) {
 			if(issnLinking != null) {
 				if(scienceMetrixJournal.getIssn() != null 

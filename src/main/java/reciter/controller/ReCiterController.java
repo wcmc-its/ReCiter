@@ -33,13 +33,25 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -48,7 +60,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.api.parameters.FilterFeedbackType;
@@ -85,9 +96,10 @@ import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Tag(name = "ReCiterController", description = "Operations on ReCiter API.")
-@Slf4j
 @RestController
 public class ReCiterController {
+
+	private static final Logger log = LoggerFactory.getLogger(ReCiterController.class);
 
     @Autowired
     private ESearchResultService eSearchResultService;
@@ -127,6 +139,7 @@ public class ReCiterController {
 
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
+    
 
     @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description ="This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @Parameters({
@@ -139,7 +152,10 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description  = "The resource you were trying to reach is not found")
     })
     @PostMapping(value = "/reciter/goldstandard", produces = "application/json")
-    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource,
+    		@RequestParam(value = "entryPath", required = false) String entryPathParam) {
+    
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
@@ -147,15 +163,16 @@ public class ReCiterController {
     	} else if(goldStandard != null && goldStandard.getUid() == null) {
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a valid uid to be passed with GoldStandard model");
     	}
+    	reciter.feedback.EntryPath entryPath = reciter.feedback.EntryPath.fromString(entryPathParam);
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource, entryPath);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -172,19 +189,23 @@ public class ReCiterController {
     		@ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
     		@ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
+    
     @PutMapping(value = "/reciter/goldstandard", produces = "application/json")
-    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag) {
+    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag,
+    		@RequestParam(value = "source", required = false) String provenanceSource,
+    		@RequestParam(value = "entryPath", required = false) String entryPathParam) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
         stopWatch.start("Update GoldStandard with List");
+    	reciter.feedback.EntryPath entryPath = reciter.feedback.EntryPath.fromString(entryPathParam);
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource, entryPath);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -212,6 +233,108 @@ public class ReCiterController {
     }
 
     @Operation(summary = "Retrieve Articles for all UID in Identity Table", description = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "GoldStandard deletion successful"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity deleteGoldStandard(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete gold standard by uid");
+        stopWatch.start("Delete gold standard by uid");
+        dynamoDbGoldStandardService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Delete an analysis output by uid", description = "This api deletes an analysis output record from the AnalysisOutput table by uid.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "AnalysisOutput deletion successful"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/analysis/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity deleteAnalysis(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete analysis by uid");
+        stopWatch.start("Delete analysis by uid");
+        analysisService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Delete an ESearchResult by uid", description = "This api deletes an ESearchResult record by uid.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "ESearchResult deletion successful"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    })
+    @RequestMapping(value = "/reciter/esearchresult/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity deleteESearchResult(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Delete ESearchResult by uid");
+        stopWatch.start("Delete ESearchResult by uid");
+        eSearchResultService.delete(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Bulk cleanup: delete records from all UID-keyed tables", description = "Deletes Identity, GoldStandard, AnalysisOutput, and ESearchResult records for a list of UIDs. Intended for external validation cleanup.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bulk cleanup successful"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden")
+    })
+    @RequestMapping(value = "/reciter/cleanup/by/uids", method = RequestMethod.POST, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity cleanupByUids(@RequestBody List<String> uids) {
+        StopWatch stopWatch = new StopWatch("Bulk cleanup by uids");
+        stopWatch.start("Bulk cleanup by uids");
+        Map<String, Integer> results = new HashMap<>();
+
+        int analysisCount = 0;
+        int esearchCount = 0;
+        int goldStandardCount = 0;
+        int identityCount = 0;
+
+        for (String uid : uids) {
+            try { analysisService.delete(uid); analysisCount++; } catch (Exception e) { log.warn("Failed to delete analysis for uid={}: {}", uid, e.getMessage()); }
+            try { eSearchResultService.delete(uid); esearchCount++; } catch (Exception e) { log.warn("Failed to delete esearchresult for uid={}: {}", uid, e.getMessage()); }
+            try { dynamoDbGoldStandardService.delete(uid); goldStandardCount++; } catch (Exception e) { log.warn("Failed to delete goldstandard for uid={}: {}", uid, e.getMessage()); }
+            try { identityService.delete(uid); identityCount++; } catch (Exception e) { log.warn("Failed to delete identity for uid={}: {}", uid, e.getMessage()); }
+        }
+
+        results.put("analysisOutput", analysisCount);
+        results.put("eSearchResult", esearchCount);
+        results.put("goldStandard", goldStandardCount);
+        results.put("identity", identityCount);
+        results.put("totalUids", uids.size());
+
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return new ResponseEntity<>(results, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Retrieve Articles for all UID in Identity Table",  description = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
     @Parameters({
     	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
@@ -398,11 +521,18 @@ public class ReCiterController {
                         .collect(Collectors.toList());
             }
             List<AnalysisOutput> analysis = null;
-            if(uids != null && !uids.isEmpty()) {
-                analysis = analysisService.findByUids(uids);
-            }  else if(identitySubset != null && !identitySubset.isEmpty()){
-                analysis = analysisService.findByUids(identitySubset);
+            try {
+                if(uids != null && !uids.isEmpty()) {
+                    analysis = analysisService.findByUids(uids);
+                }  else if(identitySubset != null && !identitySubset.isEmpty()){
+                    analysis = analysisService.findByUids(identitySubset);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to deserialize Analysis cache for group query, ignoring stale entries: {}",
+                    e.getMessage());
+                analysis = null;
             }
+
         	if (analysis != null && !analysis.isEmpty()) {
         		analysis.stream().forEach(anl -> {
         			if(anl.getReCiterFeature() != null
@@ -474,11 +604,19 @@ public class ReCiterController {
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
-        if (!analysisRefreshFlag 
-        		&& 
-        		analysis != null 
-        		&& 
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
+
+        if (!analysisRefreshFlag
+        		&&
+        		analysis != null
+        		&&
         		(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null)) {//This was added to ensure to use analysis results only in evidence mode
         	List<Long> finalArticles =null;
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
@@ -534,7 +672,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -552,7 +690,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -570,7 +708,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -594,7 +732,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -618,7 +756,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -638,7 +776,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -659,7 +797,7 @@ public class ReCiterController {
 						    .map(featureArticle -> {
 						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : -1 );
+						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
 						        return article;
 						    })
 						    .collect(Collectors.toList());
@@ -690,7 +828,6 @@ public class ReCiterController {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
             parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag);
-			log.info("getting the reciter articles from the Parameters in controller***"+ parameters.getReciterArticles().size());
             if (parameters == null) {
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -708,17 +845,14 @@ public class ReCiterController {
             } else {
             	filterScore = parameters.getTotalStandardzizedArticleScore();
             }
-			log.info("filter Score in controller***"+filterScore);
             Engine engine = new ReCiterEngine();
             engineOutput = engine.run(parameters, strategyParameters, filterScore, keywordsMax);
             originalFeatures.addAll(engineOutput.getReCiterFeature().getReCiterArticleFeatures());
-             log.info("coming into if condiiton***"+engineOutput.getReCiterFeature().getCountPendingArticles() +"Suggested :"+ engineOutput.getReCiterFeature().getCountSuggestedArticles());
            //Store Analysis only in evidence mode
             if(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null) {
 	            AnalysisOutput analysisOutput = new AnalysisOutput();
 	            if(engineOutput != null) {
 	            	if(filterScore == strategyParameters.getMinimumStorageThreshold()) {
-	            		log.info("coming into if condiiton***"+engineOutput.getReCiterFeature().getCountPendingArticles() +"Suggested :"+ engineOutput.getReCiterFeature().getCountSuggestedArticles());
 						analysisOutput.setReCiterFeature(engineOutput.getReCiterFeature());
 	            	} else {
 	            		//Enforce Strict Minimum Storage Threshold
@@ -738,14 +872,8 @@ public class ReCiterController {
 	            		reCiterFeature.setCountSuggestedArticles(reCiterFilteredArticles.size());
 	            		analysisOutput.setReCiterFeature(reCiterFeature);
 	            	}
-					log.info("getting the reciter articles from the Parameters in controller***"+ engineOutput.getReCiterFeature());
-					
 	            }
 				analysisOutput.setUid(uid);
-				/**
-				 * TODO :  This piece of code has been commented to avoid data conflicts in Database as we have the same DynamoDB for Dev and Prod. 
-				 * Will be uncommented out before deploying this to Prod -Mahender
-				 */
 				if(analysisOutput.getReCiterFeature() != null) {
 					analysisService.save(analysisOutput);
 				} 
@@ -852,11 +980,9 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found"),
             @ApiResponse(responseCode = "500", description = "The uid provided was not found in the Identity table")
     })
+    
     @GetMapping(value = "/reciter/article-retrieval/by/uid", produces = "application/json")
     public ResponseEntity runArticleRetrievalByUid(@RequestParam String uid, @RequestParam(required = false) Double totalStandardizedArticleScore,@RequestParam(required = false) FilterFeedbackType filterByFeedback) {
-  //  @RequestMapping(value = "/reciter/dev/article-retrieval/by/uid", method = RequestMethod.GET, produces = "application/json")
-   // @ResponseBody
-   // public ResponseEntity runArticleRetrievalByUid(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         
@@ -877,7 +1003,15 @@ public class ReCiterController {
         } catch (NullPointerException n) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid provided '" + uid + "' was not found in the Identity table");
         }
-        AnalysisOutput analysis = analysisService.findByUid(uid.trim());
+        AnalysisOutput analysis = null;
+        try {
+            analysis = analysisService.findByUid(uid.trim());
+        } catch (Exception e) {
+            log.warn("Failed to deserialize Analysis cache for {}, deleting stale entry: {}",
+                uid, e.getMessage());
+            analysisService.delete(uid.trim());
+        }
+
         if (analysis != null) {//This was added to ensure to use analysis results only in evidence mode
         	if(analysis.getReCiterFeature() != null) {
         		analysis.getReCiterFeature().setInGoldStandardButNotRetrieved(null);
@@ -963,6 +1097,8 @@ public class ReCiterController {
         try {
         	eSearchResults = eSearchResultService.findByUid(uid);
             if (eSearchResults == null) {
+                log.warn("No ESearchResult for uid={}; upgrading requested flag={} to ALL_PUBLICATIONS",
+                         uid, retrievalRefreshFlag);
                 retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 eSearchResults = eSearchResultService.findByUid(uid);
             } else if(eSearchResults != null && (retrievalRefreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS || retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS)) {
@@ -1031,7 +1167,6 @@ public class ReCiterController {
                 reCiterArticles.add(ArticleTranslator.translate(pubMedArticle, null, nameIgnoredCoAuthors, strategyParameters));
             }
         }
-		reCiterArticles.forEach(article-> System.out.println("articles pmids are*******************"+article.getArticleId()));
 		if(reCiterArticles!=null)
 			log.info("reCiterArticles size {}", reCiterArticles.size());
         //Sanitize Identity names
@@ -1039,7 +1174,7 @@ public class ReCiterController {
         identity.setSanitizedNames(authorNameSanitizationUtils.sanitizeIdentityAuthorNames(identity));
         
         //Sanitize Identity Organizational Units(Division and Department)
-        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil(strategyParameters);
+        InstitutionSanitizationUtil institutionalSanitizationUtil = new InstitutionSanitizationUtil();
         institutionalSanitizationUtil.populateSanitizedIdentityInstitutions(identity);
         
         //Find gender probability
@@ -1054,7 +1189,7 @@ public class ReCiterController {
         parameters.setPubMedArticles(pubMedArticles);
         parameters.setScopusArticles(Collections.emptyList());
         parameters.setReciterArticles(reCiterArticles);
-		log.info("Getting the Reciter Articles to the Parameters" + parameters.getReciterArticles().size());
+
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         if (goldStandard == null) {
             parameters.setKnownPmids(new ArrayList<>());

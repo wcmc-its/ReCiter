@@ -107,4 +107,30 @@ public class ReCiterStringUtilTest {
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
 		assertEquals("equal", "o", deAccentedS);
 	}
+
+	@Test
+	public void testStripBackslashesWithBackslashDash() {
+		String s = "Non\\-alcoholic fatty liver disease";
+		String result = ReCiterStringUtil.stripBackslashes(s);
+		assertEquals("Backslash-dash should be stripped", "Non-alcoholic fatty liver disease", result);
+	}
+
+	@Test
+	public void testStripBackslashesNoBackslashes() {
+		String s = "Normal title without backslashes";
+		String result = ReCiterStringUtil.stripBackslashes(s);
+		assertEquals("String without backslashes should be unchanged", "Normal title without backslashes", result);
+	}
+
+	@Test
+	public void testStripBackslashesNull() {
+		String result = ReCiterStringUtil.stripBackslashes(null);
+		assertEquals("Null input should return null", null, result);
+	}
+
+	@Test
+	public void testStripBackslashesEmpty() {
+		String result = ReCiterStringUtil.stripBackslashes("");
+		assertEquals("Empty string should return empty", "", result);
+	}
 }
