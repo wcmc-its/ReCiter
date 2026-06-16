@@ -657,55 +657,55 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		}
         return null;
     }
-    private static ReCiterArticleFeedbackIdentityScore mapToFeedbackScore(ReCiterArticle article,int countAccepted, int countRejected) {
-   
-        try {
-        	
-        	return new ReCiterArticleFeedbackIdentityScore(
-														    article.getArticleId(),
-														    getFeedbackScore(article.getCitesFeedbackScore()),
-														    getFeedbackScore(article.getCoAuthorNameFeedbackScore()),
-														    getFeedbackScore(article.getEmailFeedbackScore()),
-														    getFeedbackScore(article.getInstitutionFeedbackScore()),
-														    getFeedbackScore(article.getJournalFeedackScore()),
-														    getFeedbackScore(article.getJournalSubFieldFeedbackScore()),
-														    getFeedbackScore(article.getKeywordFeedackScore()),
-														    getFeedbackScore(article.getTextSimilarityFeedbackScore()),
-														    getFeedbackScore(article.getJournalTitleSimilarityFeedbackScore()),
-														    getFeedbackScore(article.getOrcidFeedbackScore()),
-														    getFeedbackScore(article.getOrcidCoAuthorFeedbackScore()),
-														    getFeedbackScore(article.getOrganizationFeedbackScore()),
-														    getFeedbackScore(article.getTargetAuthorNameFeedbackScore()),
-														    getFeedbackScore(article.getYearFeedbackScore()),
-														    getFeedbackScore(article.getBibliographicCouplingFeedbackScore()),
-														    getArticleCountScore(article.getArticleCountEvidence()),
-														    getAuthorsCountScore(article.getAuthorCountEvidence()),													   
-														    getEducationYearScore(article.getEducationYearEvidence()),
-														    getEmailMatchScore(article.getEmailEvidence()),
-														    getGenderScore(article.getGenderEvidence()),
-														    article.getGrantEvidenceTotalScore(), 
-														    getJournalSubfieldScore(article.getJournalCategoryEvidence()),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchFirstScore),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchLastScore),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
-														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
-														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-														    article.getRelationshipEvidence().getRelationshipPositiveMatchScore(),
-														    article.getRelationshipEvidence().getRelationshipNegativeMatchScore(),
-														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
-														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
-														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
-														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
-														    article.getGoldStandard()==1? countAccepted-1 : countAccepted,  
-														    article.getGoldStandard()==-1? countRejected-1: countRejected,
-														    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+      private static ReCiterArticleFeedbackIdentityScore mapToFeedbackScore(ReCiterArticle article,int countAccepted, int countRejected) {
+   	   
+          try {
+          	
+          	return new ReCiterArticleFeedbackIdentityScore(
+  														    article.getArticleId(),
+  														    getFeedbackScore(article.getCitesFeedbackScore()),
+  														    getFeedbackScore(article.getCoAuthorNameFeedbackScore()),
+  														    getFeedbackScore(article.getEmailFeedbackScore()),
+  														    getFeedbackScore(article.getInstitutionFeedbackScore()),
+  														    getFeedbackScore(article.getJournalFeedackScore()),
+  														    getFeedbackScore(article.getJournalSubFieldFeedbackScore()),
+  														    getFeedbackScore(article.getKeywordFeedackScore()),
+  														    getFeedbackScore(article.getTextSimilarityFeedbackScore()),
+  														    getFeedbackScore(article.getJournalTitleSimilarityFeedbackScore()),
+  														    getFeedbackScore(article.getOrcidFeedbackScore()),
+  														    getFeedbackScore(article.getOrcidCoAuthorFeedbackScore()),
+  														    getFeedbackScore(article.getOrganizationFeedbackScore()),
+  														    getFeedbackScore(article.getTargetAuthorNameFeedbackScore()),
+  														    getFeedbackScore(article.getYearFeedbackScore()),
+  														    getFeedbackScore(article.getBibliographicCouplingFeedbackScore()),
+  														    getArticleCountScore(article.getArticleCountEvidence()),
+  														    getAuthorsCountScore(article.getAuthorCountEvidence()),													   
+  														    getEducationYearScore(article.getEducationYearEvidence()),
+  														    getEmailMatchScore(article.getEmailEvidence()),
+  														    getGenderScore(article.getGenderEvidence()),
+  														    article.getGrantEvidenceTotalScore(), 
+  														    getJournalSubfieldScore(article.getJournalCategoryEvidence()),
+  														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchFirstScore),
+  														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchLastScore),
+  														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
+  														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
+  														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
+  														    article.getRelationshipEvidence().getRelationshipPositiveMatchScore(),
+  														    article.getRelationshipEvidence().getRelationshipNegativeMatchScore(),
+  														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
+  														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
+  														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+  														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
+  														    article.getGoldStandard()==1? countAccepted-1 : countAccepted,  
+  														    article.getGoldStandard()==-1? countRejected-1: countRejected,
+  														    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
+  		} catch (Exception e) {
+  			// TODO Auto-generated catch block
+  			e.printStackTrace();
+  		}
+  		return null;
 
-    }
+      }
     
 	// Helper methods
 	private static double getFeedbackScore(Double score) {
