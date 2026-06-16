@@ -23,8 +23,6 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
-
 @Service
 public class S3UserLogHandler {
 
@@ -35,7 +33,7 @@ public class S3UserLogHandler {
     @Value("${aws.s3.consumer.api.logs.bucketName}")
     private String apiLogsBucketName;
     
-    @Value("${aws.congito.userpool.region}")
+    @Value("${aws.cognito.userpool.region}")
     private String apiLogsBucketRegion;
     
     public S3UserLogHandler() {

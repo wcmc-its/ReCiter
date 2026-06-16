@@ -2,13 +2,11 @@ package reciter.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -27,8 +25,7 @@ public class APISecurityConfig {
 	
 	private static final Logger log = LoggerFactory.getLogger(APISecurityConfig.class);
     
-	//@Autowired(required = false)
-    private final JwtTokenAuthenticationFilter jwtAuthenticationFilter;
+	
 
     @Value("${spring.security.enabled}")
     private boolean securityEnabled;
@@ -65,7 +62,6 @@ public class APISecurityConfig {
 	                    .requestMatchers("/reciter/ping", "/reciter/v3/api-docs/swagger-config", "/reciter/v3/api-docs/reciter-group").permitAll()
 	                    .anyRequest().authenticated()
 	                )
-	                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 	                .build();
 	    }
 	 

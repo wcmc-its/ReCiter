@@ -4,8 +4,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.database.dynamodb.model.Gender;
@@ -15,9 +16,10 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.Identity;
 import reciter.utils.GenderProbability;
 
-@Slf4j
 public class GenderStrategy extends AbstractTargetAuthorStrategy {
 
+	private static final Logger log = LoggerFactory.getLogger(GenderStrategy.class);
+	
 	@Override
 	public double executeStrategy(ReCiterArticle reCiterArticle, Identity identity) {
 		return 0;

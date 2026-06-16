@@ -10,6 +10,7 @@ import reciter.database.dynamodb.model.GoldStandard;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 
 @Repository
 public class DynamoDbGoldStandardRepository {
@@ -54,4 +55,17 @@ public class DynamoDbGoldStandardRepository {
 		}
 		return goldStandards;
 	}
+	
+	 /**
+     * Delete GoldStandard by UID.
+     *
+     * @param uid user identifier
+     */
+    public void deleteById(String uid) {
+
+        goldStandardTable.deleteItem(
+                Key.builder()
+                        .partitionValue(uid)
+                        .build());
+    }
 }

@@ -23,11 +23,15 @@ import static org.junit.Assert.assertEquals;
 import java.util.Set;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import reciter.utils.PubmedSearchQueryGenerator;
 
 public class PubmedSearchQueryGeneratorTest {
 
+	private static final Logger log = LoggerFactory.getLogger(PubmedSearchQueryGeneratorTest.class);
+	
 	@Test
 	public void testRegex1() {
 		String s = "Williams JR. (III). Brackens O'Connor";
@@ -101,7 +105,7 @@ public class PubmedSearchQueryGeneratorTest {
 		
 		PubmedSearchQueryGenerator p = new PubmedSearchQueryGenerator();
 		Set<String> result = p.generate(firstName, middleName, lastName);
-		System.out.println(result);
+		log.info("Generated queries: {}", result);
 		
 		assertEquals(11, result.size());
 		assertEquals(true, result.contains("Mari Ann Del De Potro Marque dos-Santos Domingo"));

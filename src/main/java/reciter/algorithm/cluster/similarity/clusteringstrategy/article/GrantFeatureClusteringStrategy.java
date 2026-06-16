@@ -74,6 +74,7 @@ public class GrantFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	}
 	
 	private void checkForValidGrant(ReCiterArticle reCiterArticle) {
+		if (reCiterArticle.getGrantList() == null) return;
 		for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
 			if(grant.getGrantID() != null) {
 				String sanitizedGrant = sanitizeGrant(grant.getGrantID().replaceAll("[\\s\\-]", ""));

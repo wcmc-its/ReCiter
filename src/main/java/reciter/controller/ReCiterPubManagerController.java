@@ -1,5 +1,7 @@
 package reciter.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,15 +16,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
 import reciter.database.dynamodb.model.ApplicationUser;
 import reciter.service.ApplicationUserService;
 
 
 @Tag(name = "ReCiterPubManagerController", description = "Operations on ReCiter publication manager.")
-@Slf4j
 @RestController
 public class ReCiterPubManagerController {
+	
+	private static final Logger log = LoggerFactory.getLogger(ReCiterPubManagerController.class);
 	
 	@Autowired
 	private ApplicationUserService applicationUserService;

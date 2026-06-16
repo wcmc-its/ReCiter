@@ -12,5 +12,4 @@ RUN wget https://download.newrelic.com/newrelic/java-agent/newrelic-agent/curren
 	unzip newrelic-java.zip -d /app    
 
 EXPOSE 5000
-
 CMD java -Djava.security.egd=file:/dev/./urandom -XX:+PrintFlagsFinal $JAVA_OPTIONS -jar /app/app.jar

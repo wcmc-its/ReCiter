@@ -12,8 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterArticleAuthorFeature;
@@ -29,13 +30,13 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
-
+import reciter.utils.ReCiterStringUtil;
+import lombok.Data;
 
 @Data
-@Slf4j
 public class ReCiterFeatureGenerator {
 
-	
+	private static final Logger log = LoggerFactory.getLogger(ReCiterFeatureGenerator.class);
 	
     private double precision;
     private double recall;
@@ -69,37 +70,29 @@ public class ReCiterFeatureGenerator {
         reCiterFeature.setMode(mode);
 
         Set<Long> pmidsRetrieved = new HashSet<>();
-            for (ReCiterArticle reCiterArticle : reCiterArticles) {
-                pmidsRetrieved.add(reCiterArticle.getArticleId());
+        for (ReCiterArticle reCiterArticle : reCiterArticles) {
+            pmidsRetrieved.add(reCiterArticle.getArticleId());
+        }
+    // in gold standard but not retrieved TODO optimize
+    List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
+    if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
+        for (long pmid : goldStandardPmids) {
+            if (!pmidsRetrieved.contains(pmid)) {
+				log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
+                inGoldStandardButNotRetrieved.add(pmid);
             }
-		  log.info("PMIDs retrieved from the PubMed: " + pmidsRetrieved.size());
-         pmidsRetrieved.forEach(pmid -> log.info("Pmid retrieved from the PubMed*************"+ pmid));
-		 
-		  if(goldStandardPmids!=null && goldStandardPmids.size() > 0)
-			  log.info("GoldStandard PMID's are : "+goldStandardPmids);
-		 
-        // in gold standard but not retrieved TODO optimize
-        List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
-        if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
-	        for (long pmid : goldStandardPmids) {
-	            if (!pmidsRetrieved.contains(pmid)) {
-	            	log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
-	                inGoldStandardButNotRetrieved.add(pmid);
-	            }
-	        }
         }
-        log.info("rejectedPmids in GoldStandard table: " + rejectedPmids.size());
-        if(rejectedPmids != null && rejectedPmids.size() > 0) {
-	        for (long pmid : rejectedPmids) {
-	            if (!pmidsRetrieved.contains(pmid)) {
-	            	log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
-	                inGoldStandardButNotRetrieved.add(pmid);
-	            }
-	        }
+    }
+    if(rejectedPmids != null && rejectedPmids.size() > 0) {
+        for (long pmid : rejectedPmids) {
+            if (!pmidsRetrieved.contains(pmid)) {
+				 log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
+                inGoldStandardButNotRetrieved.add(pmid);
+            }
         }
-        log.info("inGoldStandardButNotRetrieved size: " + inGoldStandardButNotRetrieved.size());
-		inGoldStandardButNotRetrieved.forEach(pmid -> log.info("inGoldStandardButNotRetrieved PMID : "+ pmid)); 
-        reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+    }
+	reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+	
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {
         	selectedArticles = reCiterArticles 
@@ -139,18 +132,22 @@ public class ReCiterFeatureGenerator {
         if(analysis.getTruePositiveList()!=null && analysis.getTruePositiveList().size() > 0)
         {
         	truePositiveListSize = analysis.getTruePositiveList().size();
+        	log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
         }
         if(analysis.getTrueNegativeList()!=null && analysis.getTrueNegativeList().size() > 0)
         {
         	trueNegativeListSize = analysis.getTrueNegativeList().size();
+        	log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
         }
         if(analysis.getFalsePositiveList()!=null && analysis.getFalsePositiveList().size() > 0)
         {
         	falsePositiveListSize = analysis.getFalsePositiveList().size();
+        	log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
         }
         if(analysis.getFalseNegativeList()!=null && analysis.getFalseNegativeList().size() > 0)
         {
         	falseNegativeListSize = analysis.getFalseNegativeList().size();
+        	log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
         }
         double accuracy =0.0;
         if((truePositiveListSize + trueNegativeListSize + falsePositiveListSize + falseNegativeListSize) > 0)
@@ -158,12 +155,6 @@ public class ReCiterFeatureGenerator {
         		(double)(truePositiveListSize + trueNegativeListSize ) / (double)(truePositiveListSize + trueNegativeListSize + falsePositiveListSize + falseNegativeListSize);
         
         log.info("Accuracy=" + accuracy);
-        
-        log.info("True Positive List [" + analysis.getTruePositiveList().size() + "]: " + analysis.getTruePositiveList());
-        log.info("True Negative List: [" + analysis.getTrueNegativeList().size() + "]: " + analysis.getTrueNegativeList());
-        log.info("False Positive List: [" + analysis.getFalsePositiveList().size() + "]: " + analysis.getFalsePositiveList());
-        log.info("False Negative List: [" + analysis.getFalseNegativeList().size() + "]: " + analysis.getFalseNegativeList());
-        log.info("\n");
         
         // Set overall accuracy using the new formula
         reCiterFeature.setOverallAccuracy(Double.isNaN(accuracy)? 0.0:accuracy);
@@ -204,7 +195,12 @@ public class ReCiterFeatureGenerator {
             if(reCiterArticle.getDatePublicationAddedToEntrez() != null) {
             	reCiterArticleFeature.setDatePublicationAddedToEntrez(reCiterArticle.getDatePublicationAddedToEntrez());
             }
-            
+
+            //datePublicationAddedToPMC
+            if(reCiterArticle.getDatePublicationAddedToPMC() != null) {
+            	reCiterArticleFeature.setDatePublicationAddedToPMC(reCiterArticle.getDatePublicationAddedToPMC());
+            }
+
             //Publication type
             ReCiterArticlePublicationType reCiterPublicationType = ReCiterArticlePublicationType.builder().build();
             
@@ -227,7 +223,7 @@ public class ReCiterFeatureGenerator {
             
             //abstract
             if(reCiterArticle.getPublicationAbstract() != null) {
-            	reCiterArticleFeature.setPublicationAbstract(reCiterArticle.getPublicationAbstract());
+            	reCiterArticleFeature.setPublicationAbstract(ReCiterStringUtil.stripBackslashes(reCiterArticle.getPublicationAbstract()));
             }
             
             //article keywords
@@ -246,26 +242,26 @@ public class ReCiterFeatureGenerator {
             }
             //scopus doc id
             if(reCiterArticle.getScopusDocId() != null) {
-            	reCiterArticleFeature.setScopusDocID(reCiterArticle.getScopusDocId());
+            	reCiterArticleFeature.setScopusDocID(ReCiterStringUtil.stripBackslashes(reCiterArticle.getScopusDocId()));
             }
        
             // journal title
-            reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal().getJournalTitle());
+            reCiterArticleFeature.setJournalTitleVerbose(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getJournalTitle()));
             
             //journal issn
             reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
 
             // journal title ISO Abbreviation
-            reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal().getIsoAbbreviation());
+            reCiterArticleFeature.setJournalTitleISOabbreviation(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getIsoAbbreviation()));
 
             // article title
-            reCiterArticleFeature.setArticleTitle(reCiterArticle.getArticleTitle());
+            reCiterArticleFeature.setArticleTitle(ReCiterStringUtil.stripBackslashes(reCiterArticle.getArticleTitle()));
 
             // volume
-            reCiterArticleFeature.setVolume(reCiterArticle.getVolume());
+            reCiterArticleFeature.setVolume(ReCiterStringUtil.stripBackslashes(reCiterArticle.getVolume()));
             
             // issue
-            reCiterArticleFeature.setIssue(reCiterArticle.getIssue());
+            reCiterArticleFeature.setIssue(ReCiterStringUtil.stripBackslashes(reCiterArticle.getIssue()));
 
             /**
              * <Pagination>
@@ -273,18 +269,18 @@ public class ReCiterFeatureGenerator {
              </Pagination>
              */
             // pages
-            reCiterArticleFeature.setPages(reCiterArticle.getPages());
+            reCiterArticleFeature.setPages(ReCiterStringUtil.stripBackslashes(reCiterArticle.getPages()));
 
             // pmcid (https://www.ncbi.nlm.nih.gov/pubmed/26174865?report=xml&format=text)
             // Need to add parsing for <OtherID Source="NLM">PMC5009940 [Available on 01/01/17]</OtherID>
             // Or check <ArticleId IdType="pmc">PMC2907408</ArticleId>
             if(reCiterArticle.getPmcid() != null) {
-            	reCiterArticleFeature.setPmcid(reCiterArticle.getPmcid());
+            	reCiterArticleFeature.setPmcid(ReCiterStringUtil.stripBackslashes(reCiterArticle.getPmcid()));
             }
 
             // doi
             // <ArticleId IdType="doi">10.1093/jnci/djq238</ArticleId>
-            reCiterArticleFeature.setDoi(reCiterArticle.getDoi());
+            reCiterArticleFeature.setDoi(ReCiterStringUtil.stripBackslashes(reCiterArticle.getDoi()));
 
             // author list
             List<ReCiterArticleAuthorFeature> reCiterArticleAuthorFeatures = new ArrayList<>();
@@ -296,11 +292,11 @@ public class ReCiterFeatureGenerator {
                 reCiterArticleAuthorFeature.setRank(i++);
 
                 // lastname
-                reCiterArticleAuthorFeature.setLastName(reCiterArticleAuthor.getAuthorName().getLastName());
+                reCiterArticleAuthorFeature.setLastName(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getAuthorName().getLastName()));
                 // first name
-                reCiterArticleAuthorFeature.setFirstName(reCiterArticleAuthor.getAuthorName().getFirstName());
+                reCiterArticleAuthorFeature.setFirstName(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getAuthorName().getFirstName()));
                 // initials
-                reCiterArticleAuthorFeature.setInitials(reCiterArticleAuthor.getAuthorName().getFirstInitial());
+                reCiterArticleAuthorFeature.setInitials(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getAuthorName().getFirstInitial()));
                 // affiliation scopus
                 //Commenting out as not necessary at the moment
                 /*ReCiterArticleAffiliationFeature reCiterArticleAffiliationFeature =
@@ -354,7 +350,7 @@ public class ReCiterFeatureGenerator {
                 //EqualContrib
                 if(reCiterArticleAuthor.getEqualContrib()!=null && !reCiterArticleAuthor.getEqualContrib().isEmpty())
                 {
-                	reCiterArticleAuthorFeature.setEqualContrib(reCiterArticleAuthor.getEqualContrib());
+                	reCiterArticleAuthorFeature.setEqualContrib(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getEqualContrib()));
                 }
                 
 
@@ -413,15 +409,12 @@ public class ReCiterFeatureGenerator {
 				try 
 				{
 					relationshipEvidenceJson = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
-					System.out.println("relationshipEvidenceJson***************"+relationshipEvidenceJson);
 					releationshipEvidence = objectMapper.readValue(relationshipEvidenceJson, RelationshipEvidence.class);
-					System.out.println("relationshipEvidenceJson***************"+releationshipEvidence.toString());
 					
 					// The object remains as RelationshipEvidence
 		            // Serialize the object back to JSON (field 'relationshipEvidenceTotalScore' will be excluded)
 		            result = objectMapper.convertValue(releationshipEvidence, RelationshipEvidence.class);
-		            System.out.println("Final result***************"+releationshipEvidence.toString());
-					
+		        	
 				} catch (JsonMappingException e) {
 					e.printStackTrace();
 				} catch (JsonProcessingException e) {
@@ -438,13 +431,13 @@ public class ReCiterFeatureGenerator {
 			        String jsonResponse = objectMapper.writeValueAsString(reCiterArticle.getRelationshipEvidence());
 			        
 			        // Print the JSON response (you should not see the `relationshipEvidenceTotalScore` field here)
-			        System.out.println("Serialized JSON: " + jsonResponse);
+			        //System.out.println("Serialized JSON: " + jsonResponse);
 
 			        // Deserialize back into a RelationshipEvidence instance
 			        deserializedEvidence = objectMapper.readValue(jsonResponse, RelationshipEvidence.class);
 
 			        // The object itself is unchanged, and relationshipEvidenceTotalScore is still set to 0.0
-			        System.out.println("Deserialized Object: " + deserializedEvidence);
+			        //System.out.println("Deserialized Object: " + deserializedEvidence);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

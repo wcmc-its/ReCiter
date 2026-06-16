@@ -18,18 +18,21 @@
  *******************************************************************************/
 package reciter.pubmed.retriever;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
-import reciter.model.pubmed.PubMedArticle;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import reciter.model.pubmed.PubMedArticle;
+
 public class PubMedArticleRetriever {
 
+	private static final Logger log = LoggerFactory.getLogger(PubMedArticleRetriever.class);
+	
     private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
 
     /**

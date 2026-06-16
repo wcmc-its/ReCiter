@@ -71,7 +71,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	/**
 	 * Retrieval threshold.
 	 */
-	@Value("${searchStrategy-leninent-threshold}")
+	@Value("${searchStrategy-lenient-threshold}")
 	protected final int DEFAULT_THRESHOLD = 2000;
 	
 	/**
@@ -125,7 +125,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return retrievePubMedArticles(identity, pubMedQueries);
 	}*/
 
-	private RetrievalResult retrievePubMedArticles(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, List<PubMedQueryType> pubMedQueries, boolean useStrictQueryOnly) throws IOException {
+	protected RetrievalResult retrievePubMedArticles(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames, List<PubMedQueryType> pubMedQueries, boolean useStrictQueryOnly) throws IOException {
 
 		Map<Long, PubMedArticle> pubMedArticles = new HashMap<Long, PubMedArticle>();
 
@@ -135,7 +135,13 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		for (PubMedQueryType pubMedQueryType : pubMedQueries) {
 			
 			PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
-			handler = getNumberOfResults(encodedInitialCountQuery);
+			String countQueryStr = encodedInitialCountQuery == null ? "" : encodedInitialCountQuery.toString().trim();
+			if (countQueryStr.isEmpty() || countQueryStr.equals("()")) {
+				slf4jLogger.info("Skipping degenerate count query [{}] for strategy [{}]", countQueryStr, getRetrievalStrategyName());
+				handler = 0;
+			} else {
+				handler = getNumberOfResults(encodedInitialCountQuery);
+			}
 			if(!useStrictQueryOnly) {
 				slf4jLogger.info("Constructed lenient count query {}", pubMedQueryType.getLenientCountQuery().getQuery());
 				slf4jLogger.info("Constructed lenient query {}", pubMedQueryType.getLenientQuery().getQuery());
