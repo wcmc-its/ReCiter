@@ -41,17 +41,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -89,6 +79,8 @@ import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
+import reciter.service.dynamo.AuditHistoryEntry;
+import reciter.service.dynamo.FeedbackLogQueryService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
@@ -124,6 +116,9 @@ public class ReCiterController {
 
     @Autowired
     private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
+    
+    @Autowired
+    private FeedbackLogQueryService feedbackLogQueryService;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -154,7 +149,7 @@ public class ReCiterController {
     @PostMapping(value = "/reciter/goldstandard", produces = "application/json")
     public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag,
     		@RequestParam(value = "source", required = false) String provenanceSource,
-    		@RequestParam(value = "entryPath", required = false) String entryPathParam) {
+    		@RequestParam(value = "entryPath", required = false) String entryPathParam,@RequestParam(value = "curatedBy", required = false, defaultValue = "0") int curatedBy) {
     
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
@@ -167,12 +162,12 @@ public class ReCiterController {
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     		if(goldStandardUpdateFlag == null) {
-    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource, entryPath);
+    			dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.UPDATE, provenanceSource, entryPath, curatedBy);
     		} else {
-    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
+    			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath, curatedBy);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath,curatedBy);
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -242,7 +237,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/reciter/goldstandard/{uid}", produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteGoldStandard(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete gold standard by uid");
@@ -263,7 +258,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/analysis/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/reciter/analysis/{uid}", produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteAnalysis(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete analysis by uid");
@@ -284,7 +279,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/esearchresult/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/reciter/esearchresult/{uid}", produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteESearchResult(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete ESearchResult by uid");
@@ -304,7 +299,7 @@ public class ReCiterController {
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden")
     })
-    @RequestMapping(value = "/reciter/cleanup/by/uids", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/cleanup/by/uids", produces = "application/json")
     @ResponseBody
     public ResponseEntity cleanupByUids(@RequestBody List<String> uids) {
         StopWatch stopWatch = new StopWatch("Bulk cleanup by uids");
@@ -650,10 +645,27 @@ public class ReCiterController {
 			{
 				analysis.getReCiterFeature().setCountPendingArticles(0);
 			}
-        	//All the results are filtered based on filterByFeedback
+			//All the results are filtered based on filterByFeedback
         	if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
-			
+				// FIX (#640-A): Compute precision/recall/accuracy ONCE over the FULL candidate
+				// set BEFORE any display filtering. Previously each filterByFeedback branch ran
+				// performAnalysis over the already-filtered subset, so e.g. ACCEPTED_ONLY removed
+				// every REJECTED (false-positive) row and precision collapsed to TP/(TP+0)=1.0.
+				List<ReCiterArticle> fullCandidateSet = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
+					    .map(featureArticle -> {
+					        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
+					        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
+					        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
+					        return article;
+					    })
+					    .collect(Collectors.toList());
+				Analysis featureAnalysis = Analysis.performAnalysis(fullCandidateSet,knownPmids);
+				analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
+				analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
+				analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
+
+				// Apply the display filter ONLY to the returned article list (metrics already set above).
 				if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
@@ -665,58 +677,17 @@ public class ReCiterController {
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 								)
 								.collect(Collectors.toList()));
-					
-					
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_ONLY) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.REJECTED_ONLY) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
@@ -727,20 +698,7 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 							)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
@@ -751,40 +709,14 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 							)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_REJECTED) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 							||
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				} else if(filterByFeedback == FilterFeedbackType.NULL) {
 					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
@@ -792,20 +724,7 @@ public class ReCiterController {
 							&&
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							.collect(Collectors.toList()));
-					//List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-					List<ReCiterArticle> reCiterFeatureArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-						    .map(featureArticle -> {
-						        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
-						        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
-						        article.setGoldStandard(featureArticle.getUserAssertion() == PublicationFeedback.ACCEPTED ? 1 : featureArticle.getUserAssertion() == PublicationFeedback.REJECTED ? -1 : 0);
-						        return article;
-						    })
-						    .collect(Collectors.toList());
-					Analysis featureAnalysis = Analysis.performAnalysis(reCiterFeatureArticles,knownPmids);
 					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
-					analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
-					analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
-					analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 				}
 			}
 			else if(analysis.getReCiterFeature()!=null)
@@ -1085,6 +1004,28 @@ public class ReCiterController {
         } 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There is no publications data for uid " + uid + ". Please wait while feature-generator re-runs tonight.");
        
+    }
+    
+    @Operation(summary = "Get curation audit history (FeedbackLog + ArticleProvenance) for a uid",
+            description = "Returns the curator action history (accept/reject/pending) for the person, newest first, each row enriched with how the PMID first arrived (ArticleProvenance).")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Audit history retrieval successful"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    })
+    @GetMapping(value = "/reciter/feedback-log/{uid}", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<List<AuditHistoryEntry>> retrieveFeedbackLogByUid(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Get curation audit history by uid");
+        stopWatch.start("Get curation audit history by uid");
+        List<AuditHistoryEntry> history = feedbackLogQueryService.getAuditHistory(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok(history);
     }
 
 

@@ -264,7 +264,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.UPDATE, testUid, testUid);
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid,0);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -278,7 +278,7 @@ public class ReCiterControllerTest {
 		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 
 		// Act
-		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard, null, testUid, testUid);
+		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard, null, testUid, testUid,0);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -293,7 +293,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.DELETE, testUid, testUid);
+				GoldStandardUpdateFlag.DELETE, testUid, testUid,0);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -308,7 +308,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.REFRESH, testUid, testUid);
+				GoldStandardUpdateFlag.REFRESH, testUid, testUid,0);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -320,7 +320,7 @@ public class ReCiterControllerTest {
 	public void testUpdateGoldStandardNullGoldStandard() {
 		GoldStandard goldStandard = null;
 		// Act
-		ResponseEntity<?> response = reCiterController.updateGoldStandard(goldStandard, GoldStandardUpdateFlag.UPDATE, testUid, testUid);
+		ResponseEntity<?> response = reCiterController.updateGoldStandard(goldStandard, GoldStandardUpdateFlag.UPDATE, testUid, testUid,0);
 
 		// Assert
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -336,7 +336,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(invalidGoldStandard,
-				GoldStandardUpdateFlag.UPDATE, testUid, testUid);
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid,0);
 
 		// Assert
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
