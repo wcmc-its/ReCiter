@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.utils.ReCiterStringUtil;
 import reciter.database.dynamodb.model.NameFrequency;
 import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
@@ -30,6 +28,7 @@ import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.utils.ReCiterStringUtil;
 
 /**
  * @author szd2013

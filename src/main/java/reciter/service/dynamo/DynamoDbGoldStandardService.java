@@ -9,15 +9,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import reciter.api.parameters.GoldStandardUpdateFlag;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
@@ -34,25 +33,17 @@ import reciter.service.FeedbackLogService;
 import reciter.service.PmidProvenanceService;
 
 @Service("DynamoDbGoldStandardService")
+@RequiredArgsConstructor
 public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService {
 
     private static final Logger log = LoggerFactory.getLogger(DynamoDbGoldStandardService.class);
     private static final String PM_MANUAL_STRATEGY = "PublicationManagerManual";
 
-    @Autowired
-    private DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
-
-    @Autowired
-    private ESearchResultService eSearchResultService;
-
-    @Autowired
-    private PmidProvenanceService pmidProvenanceService;
-
-    @Autowired
-    private FeedbackLogService feedbackLogService;
-
-    @Autowired
-    private ArticleProvenanceService articleProvenanceService;
+    private final DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
+    private final ESearchResultService eSearchResultService;
+    private final PmidProvenanceService pmidProvenanceService;
+    private final FeedbackLogService feedbackLogService;
+    private final ArticleProvenanceService articleProvenanceService;
 
     // ---- Phase 33-02 4-arg overloads -----------------------------------------------------------
     // Existing 3-arg save() callers default entryPath to CANDIDATE_LIST. Controllers that want to

@@ -20,7 +20,6 @@ package reciter.algorithm.evidence.targetauthor.email.strategy;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
-import reciter.algorithm.evidence.targetauthor.name.strategy.ScoreByNameStrategy;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.EmailEvidence;
 import reciter.model.article.ReCiterArticle;

@@ -18,7 +18,6 @@ import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterJournalCategory;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
 import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;

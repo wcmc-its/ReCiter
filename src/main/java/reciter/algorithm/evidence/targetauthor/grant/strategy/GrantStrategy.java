@@ -25,15 +25,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
-import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.evidence.Grant;
 import reciter.engine.analysis.evidence.GrantEvidence;
 import reciter.model.article.ReCiterArticle;

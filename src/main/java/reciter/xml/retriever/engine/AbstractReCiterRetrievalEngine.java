@@ -28,13 +28,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import lombok.extern.slf4j.Slf4j;
 import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.QueryType;
-import reciter.model.pubmed.PubMedArticle;
 import reciter.engine.StrategyParameters;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
@@ -151,6 +150,13 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
 			if(eSearchPmid != null) {
+				// FIX (#640-B): upsert by retrievalStrategyName. Previously every re-run
+				// appended a new ESearchPmid for the same strategy without removing the prior
+				// entry, growing the ESearchResult item unbounded toward the 400KB DynamoDB cap.
+				String newStrategyName = eSearchPmid.getRetrievalStrategyName();
+				eSearchPmids.removeIf(existing -> existing != null
+						&& existing.getRetrievalStrategyName() != null
+						&& existing.getRetrievalStrategyName().equalsIgnoreCase(newStrategyName));
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(!eSearchPmids.isEmpty()) {

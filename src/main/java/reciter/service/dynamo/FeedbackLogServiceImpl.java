@@ -2,14 +2,12 @@ package reciter.service.dynamo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
 
 import reciter.database.dynamodb.model.FeedbackLog;
 import reciter.database.dynamodb.repository.FeedbackLogRepository;
 import reciter.service.FeedbackLogService;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 /**

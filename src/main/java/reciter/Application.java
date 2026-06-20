@@ -99,6 +99,12 @@ public class Application {
 
     @Autowired
     private NameFrequencyService nameFrequencyService;
+    
+    @Autowired
+    private DegreeYearStrategyUtils degreeYearStrategyUtils;
+    
+    @Autowired
+    private AffiliationStrategyUtils affiliationStrategyUtils;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -140,14 +146,6 @@ public class Application {
 		Iterable<ObjectMapper> objectMappers = context.getBeansOfType(ObjectMapper.class)
 	            .values();
 		
-		/*Squiggly.init(objectMappers, new RequestSquigglyContextProvider() {
-			
-				protected String customizeFilter(String filter, HttpServletRequest request, Class<?> beanClass) {
-					return filter;
-				}
-           
-        });*/
-
         ObjectMapper objectMapper = Iterables.getFirst(objectMappers, null);
 
         // Enable Squiggly for Jackson message converter
@@ -174,12 +172,12 @@ public class Application {
 	 
 				int code = connection.getResponseCode();
 				if (code == 200) {
-					log.info("The Scopus Service endpoint " + scopusService + " provided is valid and reachable");
+					log.info("The Scopus Service endpoint {} provided is valid and reachable", scopusService);
 				} else {
-					log.info("The Scopus Service endpoint " + scopusService + " provided is not valid and not reachable");
+					log.info("The Scopus Service endpoint {} provided is not valid and not reachable", scopusService);
 				}
 			} catch (Exception e) {
-				log.error("Wrong domain - Exception: " + e.getMessage());
+				log.error("Failed to connect to Scopus service endpoint Wrong domain - Exception {}", scopusService, e);
 	 
 			}
 		}
@@ -194,9 +192,9 @@ public class Application {
 	 
 				int code = connection.getResponseCode();
 				if (code == 200) {
-					log.info("The Pubmed Service endpoint " + pubmedService + " provided is valid and reachable");
+					log.info("The Pubmed Service endpoint {} provided is valid and reachable",pubmedService);
 				} else {
-					log.info("The Pubmed Service endpoint " + pubmedService + " provided is not valid and not reachable");
+					log.info("The Pubmed Service endpoint {} provided is not valid and not reachable",pubmedService);
 				}
 			} catch (Exception e) {
 				log.error("Wrong domain - Exception: " + e.getMessage());
@@ -208,8 +206,6 @@ public class Application {
 		if(reciterScoringService != null && !reciterScoringService.isEmpty()) 
 		{
 			String urlString = "http://localhost:"+ reciterScoringPortNumber +"/2015-03-31/functions/function/invocations";
-	        String payload = "{}";  // Empty payload, as Lambda doesn't require specific input for health check
-	        
 	        ObjectMapper mapper = new ObjectMapper();
 	        
 	        Map<String, Object> payloadMap = new HashMap<>();
@@ -222,7 +218,7 @@ public class Application {
 			try {
 				payloadJson = mapper.writeValueAsString(payloadMap);
 			} catch (JsonProcessingException e) {
-				log.error("ReCiter---Scoring payload: Failed to serialize payload map to JSON "+e.getMessage());
+				log.error("ReCiter---Scoring payload: Failed to serialize payload map to JSON {} ",e.getMessage());
 			}
 	        
 	        try {
@@ -234,12 +230,12 @@ public class Application {
 		            connection.getOutputStream().write(payloadJson.getBytes("UTF-8"));
 		            int responseCode = connection.getResponseCode();
 		            if (responseCode == 200) {
-						log.info("The reciterScoring Service endpoint " + reciterScoringService + " provided is valid and reachable");
+						log.info("The reciterScoring Service endpoint {} provided is valid and reachable",reciterScoringService);
 					} else {
-						log.info("The ReciterScoring Service endpoint " + reciterScoringService + " provided is not valid and not reachable");
+						log.info("The ReciterScoring Service endpoint {} provided is not valid and not reachable",reciterScoringService);
 					}
 	        }catch (Exception e) {
-				log.error("ReCiter---Scoring Container is not running. Please start the service: " + e.getMessage());
+				log.error("ReCiter---Scoring Container is not running. Please start the service: {}" , e.getMessage());
 			}
 		}
 		
@@ -321,10 +317,11 @@ public class Application {
         log.info("Loading MeshTermCounts to Engine Parameters");
         if (EngineParameters.getMeshCountMap() == null) {
             List<MeshTerm> meshTerms = dynamoDbMeshTermService.findAll();
-            Map<String, Long> meshCountMap = new HashMap<>();
-            for (MeshTerm meshTerm : meshTerms) {
-                meshCountMap.put(meshTerm.getMesh(), meshTerm.getCount());
-            }
+            Map<String, Long> meshCountMap =
+                    meshTerms.stream()
+                             .collect(Collectors.toMap(
+                                     MeshTerm::getMesh,
+                                     MeshTerm::getCount));
             EngineParameters.setMeshCountMap(meshCountMap);
         }
         if(useGenderStrategy) {
@@ -361,10 +358,8 @@ public class Application {
 			}
 			 
 		}
-		DegreeYearStrategyUtils degreeYearStrategyUtils = new DegreeYearStrategyUtils();
 		EngineParameters.setDegreeYearDiscrepancyScoreMap(degreeYearStrategyUtils.getDegreeYearDiscrepancyScoreMap(this.degreeYearDiscrepancyScore));
 
-		AffiliationStrategyUtils affiliationStrategyUtils = new AffiliationStrategyUtils();
 		EngineParameters.setRegexForStopWords(affiliationStrategyUtils.constructRegexForStopWords(this.instAfflInstitutionStopwords));
 		
         log.info("ReCiter is up and ready to use. Please make sure its other components such as Pubmed-Retrieval-Tool is also setup if you wish to do retrieval.");

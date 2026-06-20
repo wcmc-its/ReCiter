@@ -34,12 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -63,12 +58,10 @@ import reciter.algorithm.evidence.targetauthor.feedback.journal.JournalFeedbackS
 import reciter.algorithm.evidence.targetauthor.feedback.journal.strategy.JournalFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.JournalSubFieldFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.journalsubfield.strategy.JournalSubFieldFeedbackStrategy;
-import reciter.algorithm.evidence.targetauthor.feedback.keyword.KeywordFeedbackStrategyContext;
-import reciter.algorithm.evidence.targetauthor.feedback.keyword.strategy.KeywordFeedbackStrategy;
-import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.TextSimilarityFeedbackStrategyContext;
-import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.strategy.TextSimilarityFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.journaltitlesimilarity.JournalTitleSimilarityFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.journaltitlesimilarity.strategy.JournalTitleSimilarityFeedbackStrategy;
+import reciter.algorithm.evidence.targetauthor.feedback.keyword.KeywordFeedbackStrategyContext;
+import reciter.algorithm.evidence.targetauthor.feedback.keyword.strategy.KeywordFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.orcid.OrcidFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.orcid.strategy.OrcidFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.orcidcoauthor.OrcidCoauthorFeedbackStrategyContext;
@@ -77,6 +70,8 @@ import reciter.algorithm.evidence.targetauthor.feedback.organization.Organizatio
 import reciter.algorithm.evidence.targetauthor.feedback.organization.strategy.OrganizationFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.targetauthorname.TargetAuthorNameFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.targetauthorname.strategy.TargetAuthorNameFeedbackStrategy;
+import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.TextSimilarityFeedbackStrategyContext;
+import reciter.algorithm.evidence.targetauthor.feedback.textsimilarity.strategy.TextSimilarityFeedbackStrategy;
 import reciter.algorithm.evidence.targetauthor.feedback.year.YearFeedbackStrategyContext;
 import reciter.algorithm.evidence.targetauthor.feedback.year.strategy.YearFeedbackStrategy;
 import reciter.engine.EngineParameters;
@@ -97,6 +92,14 @@ import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.utils.PropertiesUtils;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
 
@@ -358,11 +361,12 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				mapConsolidatedCSVData(articleMap,csvPrinter,personIdentifier);
 
 				csvPrinter.flush();
-				NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();																	  
 				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error(
+						"IOException while exporting consolidated CSV for S3. personIdentifier={}, filePath={}, articleCount={}",
+						personIdentifier, filePath, articleMap != null ? articleMap.size() : 0, e);
 				
 			}	
 		}
@@ -380,8 +384,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				
 			 
 			} catch (IOException e) {
-				e.printStackTrace();
-				
+				log.error(
+						"IOException while exporting consolidated CSV locally. personIdentifier={}, filePath={}, articleCount={}",
+						personIdentifier, filePath, articleMap != null ? articleMap.size() : 0, e);
+
 			}
 		}
 	}
@@ -408,7 +414,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				uploadCsvToS3(outputStream.toString(StandardCharsets.UTF_8.name()),filePath.toString());
 				
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("IOException while exporting item-level CSV for S3 upload. personIdentifier={}, filePath={}",personIdentifier, filePath, e);
 			}
 		}
 		else
@@ -423,55 +429,56 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				
 				csvPrinter.flush();
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("IOException while exporting item-level CSV locally. personIdentifier={}, filePath={}",personIdentifier, filePath, e);
 			}
 		}
 		
 	}
 	private boolean uploadCsvToS3(String csvContent,String fileName) {
        
-		String FeedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
+		String feedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
+		byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
         // Create InputStream from CSV content
         ByteArrayInputStream inputStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
         
-        // Set metadata
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(csvContent.length());
-       	metadata.setContentType("text/csv");
-     
         // Upload the CSV file
         try {
-        	
-        	final AmazonS3 s3 = AmazonS3ClientBuilder
-					.standard()
-					.withCredentials(new DefaultAWSCredentialsProviderChain())
-					.withRegion(System.getenv("AWS_REGION"))
-					.build();
-			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) {
-        		log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
-                PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), fileName, inputStream, metadata);
-                try{
-    				s3.putObject(putObjectRequest);
-    			    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
-    			    return true;
-    			}
-    			catch(AmazonServiceException e) {
-    				// The call was transmitted successfully, but Amazon S3 couldn't process 
-    	            // it, so it returned an error response.
-    				log.error(e.getErrorMessage());
-    				return false;
-    			}
-        	}
-        	else {
-        		log.error("S3 bucket does not exist: " + FeedbackScoreBucketName);
-                return false;
-        	}
-        
-        } catch (Exception e) {
-            e.printStackTrace();
-			return false;			 
-        }
-    }
+        	final S3Client s3 = S3Client.builder()
+       			 .credentialsProvider(DefaultCredentialsProvider.create())
+    	            .region(Region.of(System.getenv("AWS_REGION")))
+    	            .build();
+        	// Check if the bucket exists
+	        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
+	                .bucket(feedbackScoreBucketName)
+	                .build();
+	        try {
+	  				s3.headBucket(headBucketRequest);
+	  				log.info("Uploading CSV file to S3 bucket: {}",feedbackScoreBucketName);
+	  			} catch (S3Exception e) {
+	  				if (e.statusCode() == 404) {
+	  					log.error("S3 bucket does not exist: {}" , feedbackScoreBucketName);
+	  				} else {
+	  					log.error("Error checking bucket existence: {}" ,e.getMessage());
+	  				}
+	  				return false;
+	  			}
+	  	        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+	  					.bucket(feedbackScoreBucketName.toLowerCase()).key(fileName).contentType("text/csv").build();
+	  	        PutObjectResponse putObjectResponse = s3.putObject(putObjectRequest, RequestBody.fromBytes(csvBytes));
+	  	        
+	  	        if (putObjectResponse.sdkHttpResponse().isSuccessful()) {
+	                  log.info("CSV file uploaded successfully to S3 bucket: {}" , feedbackScoreBucketName);
+	                  return true;
+	              } else {
+						log.error("Failed to upload CSV file to S3. fileName={}, bucketName={}", fileName,feedbackScoreBucketName);
+	                  return false;
+	              }
+	          } catch (Exception e) {
+					log.error("Unexpected exception while uploading CSV to S3. fileName={}, bucketName={}", fileName,feedbackScoreBucketName, e);
+	  			return false;			 
+	          }
+	      }
+	
 	private void mapConsolidatedCSVData(Map<Long,ReCiterArticle> articleMap,CSVPrinter csvPrinter,String personIdentifier)
 	{
 		articleMap.forEach((articleId, article) -> {
@@ -517,8 +524,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					
 					
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error(
+						"IOException while writing consolidated CSV data. personIdentifier={}, articleId={}, goldStandard={}",
+						personIdentifier, articleId, article != null ? article.getGoldStandard() : null, e);
 			}
 
 		});
@@ -543,15 +551,17 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 													feedbackScore.getAcceptedCount(), feedbackScore.getRejectedCount(), feedbackScore.getFeedbackScoreType(),
 													feedbackScore.getFeedbackScoreFieldValue(), feedbackScore.getFeedbackScore(),feedbackScore.getGoldStandard());
 										} catch (IOException e) {
-											// TODO Auto-generated catch block
-											e.printStackTrace();
+											log.error(
+													"IOException while writing CSV record. personIdentifier={}, articleId={}, feedbackScoreType={}, feedbackScoreFieldValue={}",
+													personIdentifier, feedbackScore.getArticleId(),
+													feedbackScore.getFeedbackScoreType(),
+													feedbackScore.getFeedbackScoreFieldValue(), e);
 										}
 									}
 							 });
 							 
 					} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+						log.error("Exception while mapping item level CSV data. personIdentifier={}, articleId={}",personIdentifier, article.getArticleId(), e);
 				}
 
 			});
@@ -629,16 +639,16 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         	  {
         		  File jsonFile = new File(fileName);
 
-        		// Write the User object to the JSON file
+        		  // Write the User object to the JSON file
                   objectMapper.writeValue(jsonFile, enrichedScores);
-                  log.info("JSON data written to file successfully: ", jsonFile.getAbsolutePath());
+                  log.info("JSON data written to file successfully: {}", jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
         	  }
         	  else
         	  {
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
 	        	  objectMapper.writeValue(jsonFile, enrichedScores);
-				  log.info("JSON written to file successfully.", jsonFile.getAbsolutePath() +"-" + fileName);
+	        	  log.info("JSON written to file successfully. {}", jsonFile.getAbsolutePath() +"-" + fileName);
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
 			  
@@ -652,8 +662,14 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				  
 			  
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(
+		            "IOException occurred while executing article feedback scoring. identityId={}, fileName={}, articleCount={}, acceptedCount={}, rejectedCount={}",
+		            identity != null ? identity.getUid() : null,
+		            fileName,
+		            reCiterArticles != null ? reCiterArticles.size() : 0,
+		            countAccepted,
+		            countRejected,
+		            e);
 		}
         return null;
     }
@@ -690,9 +706,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
   														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchMiddleScore),
   														    getNameMatchScore(article.getAuthorNameEvidence(), AuthorNameEvidence::getNameMatchModifierScore),
   														    getFeedbackScore(article.getOrganizationalEvidencesTotalScore()),
-  														    article.getRelationshipEvidence().getRelationshipPositiveMatchScore(),
-  														    article.getRelationshipEvidence().getRelationshipNegativeMatchScore(),
-  														    article.getRelationshipEvidence().getRelationshipIdentityCount(),
+  														    (article.getRelationshipEvidence() == null ? 0.0 : article.getRelationshipEvidence().getRelationshipPositiveMatchScore()),
+  														    (article.getRelationshipEvidence() == null ? 0.0 : article.getRelationshipEvidence().getRelationshipNegativeMatchScore()),
+  														    (article.getRelationshipEvidence() == null ? 0L : article.getRelationshipEvidence().getRelationshipIdentityCount()),
   														    getNonTargetAuthorInstitutionalAffiliationScore(article.getAffiliationEvidence()),
   														    getTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
   														    getPubmedTargetAuthorAffiliationScore(article.getAffiliationEvidence()),
@@ -700,8 +716,9 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
   														    article.getGoldStandard()==-1? countRejected-1: countRejected,
   														    ((article.getGoldStandard()==1)? "ACCEPTED" : (article.getGoldStandard()==-1)? "REJECTED" :"PENDING"));
   		} catch (Exception e) {
-  			// TODO Auto-generated catch block
-  			e.printStackTrace();
+			log.error(
+					"Exception occurred while mapping feedback score for articleId {}. acceptedCount={}, rejectedCount={}",
+					article != null ? article.getArticleId() : null, countAccepted, countRejected, e);
   		}
   		return null;
 
@@ -798,9 +815,16 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 				 		                 article.setTargetAuthorCount(targetAuthorCount);
 				 		                 if(targetAuthorCount == 0)
 				 		                 {
-				 		                	 double authorshipLikelyhoodScore = (strategyParameters.getTargetAuthorMissingPenaltyPercent() * (article.getAuthorshipLikelihoodScore()/100));
+				 		                	 //double authorshipLikelyhoodScore = (strategyParameters.getTargetAuthorMissingPenaltyPercent() * (article.getAuthorshipLikelihoodScore()/100));
+				 		                	 
+				 		                	 // FIX (#640-C): capture the ORIGINAL score before overwriting it. Previously
+				 		                	 // the penalty was computed AFTER setAuthorshipLikelihoodScore, so it read back
+				 		                	 // the new value and the delta was always x-x=0.
+				 		                	 double originalAuthorshipLikelihoodScore = article.getAuthorshipLikelihoodScore();
+				 		                	 double authorshipLikelyhoodScore = (strategyParameters.getTargetAuthorMissingPenaltyPercent() * (originalAuthorshipLikelihoodScore/100));
+				 		                	 
 				 		                	 article.setAuthorshipLikelihoodScore(authorshipLikelyhoodScore);
-				 		                	 article.setTargetAuthorCountPenalty(authorshipLikelyhoodScore - article.getAuthorshipLikelihoodScore());
+				 		                	article.setTargetAuthorCountPenalty(authorshipLikelyhoodScore - originalAuthorshipLikelihoodScore);
 				 		                 }
 				 		            return article;
 				 				 })
@@ -818,49 +842,50 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	private boolean uploadJsonFileIntoS3(String keyName,File file)
 	{
-		String FeedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
+		String feedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         
 		// Upload the python file
-        try {
-        	
-        	final AmazonS3 s3 = AmazonS3ClientBuilder
-					.standard()
-					.withCredentials(new DefaultAWSCredentialsProviderChain())
-					.withRegion(System.getenv("AWS_REGION"))
-					.build();
-        	
-			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) 
-			{												
-	        	log.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
-	        	PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), keyName, file);
-	       
-	        	// Optionally, set metadata
-	            ObjectMetadata metadata = new ObjectMetadata();
-	            metadata.setContentType("application/json");
-	            putObjectRequest.setMetadata(metadata);
-	
-	            
-	            try{
-					s3.putObject(putObjectRequest);
-				    log.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
-					return true;   
-				}
-				catch(AmazonServiceException e) {
-					// The call was transmitted successfully, but Amazon S3 couldn't process 
-		            // it, so it returned an error response.
-					log.error(e.getErrorMessage());
-					 return false;
-				}
-			}
-        	else {
-        		log.error("S3 bucket does not exist: " + FeedbackScoreBucketName);
-                return false;
-        	}
-        
-        } catch (Exception e) {
-            e.printStackTrace();
-			return false;			 
-        }
-	}
+				 try (S3Client s3 = S3Client.builder()
+				            .credentialsProvider(DefaultCredentialsProvider.create())
+				            .region(Region.of(System.getenv("AWS_REGION")))
+				            .build()) {
+					// Check if the bucket exists
+				        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
+				                .bucket(feedbackScoreBucketName)
+				                .build();
+				        try {
+							s3.headBucket(headBucketRequest);
+							log.info("Uploading files to S3 bucket: {}", feedbackScoreBucketName);
+						} catch (S3Exception e) {
+							if (e.statusCode() == 404) {
+								log.error("S3 bucket does not exist: {}" , feedbackScoreBucketName);
+								return false;
+							}
+						}
+				        // Upload file
+			            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+			                    .bucket(feedbackScoreBucketName.toLowerCase())
+			                    .key(keyName)
+			                    .contentType("application/json") // Set metadata
+			                    .build();
+			            PutObjectResponse putObjectResponse = s3.putObject(putObjectRequest, RequestBody.fromFile(Paths.get(file.getAbsolutePath())));
 
-}
+			            if (putObjectResponse.sdkHttpResponse().isSuccessful()) {
+			                log.info("JSON file uploaded successfully to S3 bucket:{} ", feedbackScoreBucketName);
+			                return true;
+			            } else {
+			                log.error("Failed to upload JSON file to S3.");
+			                return false;
+			            }
+			            
+					
+		        } catch (Exception e) {
+					log.error(
+							"Unexpected exception while uploading JSON file to S3. keyName={}, filePath={}, bucketName={}",
+							keyName, file != null ? file.getAbsolutePath() : null, feedbackScoreBucketName, e);
+
+		            return false;		 
+		        }
+			}
+
+		}

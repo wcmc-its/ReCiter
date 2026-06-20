@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import reciter.database.dynamodb.model.ArticleProvenance;
 import reciter.database.dynamodb.repository.ArticleProvenanceRepository;
 import reciter.feedback.EntryPath;
@@ -26,6 +27,7 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
  * {@code if_not_exists} is atomic per UpdateItem.
  */
 @Service
+@RequiredArgsConstructor
 public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
 
     private static final Logger log = LoggerFactory.getLogger(ArticleProvenanceServiceImpl.class);
@@ -38,13 +40,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
     private static final String SRC_MAN_FROM_CTSC = "MAN_FROM_CTSC";
     private static final String PM_AUTHOR_RS = "PM_AUTHOR";
 
-
-  
     private final ArticleProvenanceRepository articleProvenanceRepository;
-
-    public ArticleProvenanceServiceImpl(ArticleProvenanceRepository articleProvenanceRepository) {
-        this.articleProvenanceRepository = articleProvenanceRepository;
-    }
 
     @Override
     public void upsertRetrievalProvenance(String uid, long pmid, String strategyCode, long epochSeconds) {
