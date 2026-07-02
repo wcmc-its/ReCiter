@@ -223,7 +223,9 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 			reCiterArticle.setAffiliationEvidence(affiliationEvidence);
 			reCiterArticle.setAffiliationScore(this.totalAffiliationScore);
 			totalAffiliationScore = 0;
-			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + affiliationEvidence.toString());
+			
+			//enable if requrired for debugging
+			//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + affiliationEvidence.toString());
 			
 			if(this.nonTargetAuthorScopusAffiliationIds.size() > 0) {
 				this.nonTargetAuthorScopusAffiliationIds.clear();

@@ -550,7 +550,8 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
                      .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
                      .count();  // Count them
-        	 	slf4jLogger.info("Article: " + article.getArticleId() + ", Target Author Count: " + targetAuthorCount);
+        	 	//enable if requrired for debugging
+        	 	//slf4jLogger.info("Article: " + article.getArticleId() + ", Target Author Count: " + targetAuthorCount);
                  //if the targetAuthorCount is zero then impose the penality in the article authorshipLikelyhood score.
                  article.setTargetAuthorCount(targetAuthorCount);
                  if(targetAuthorCount == 0)

@@ -46,7 +46,8 @@ public class GenderStrategy extends AbstractTargetAuthorStrategy {
 					genderEvidence.setGenderScoreIdentityArticleDiscrepancy(BigDecimal.valueOf(genderScore).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
 				}
 				reCiterArticle.setGenderEvidence(genderEvidence);
-				log.info("Pmid: " + reCiterArticle.getArticleId() + " " + genderEvidence.toString());
+				//enable if requrired for debugging
+				//log.info("Pmid: " + reCiterArticle.getArticleId() + " " + genderEvidence.toString());
 			}
 		}
 		

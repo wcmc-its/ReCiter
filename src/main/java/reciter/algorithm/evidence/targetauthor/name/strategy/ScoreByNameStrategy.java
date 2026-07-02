@@ -152,8 +152,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			}
 
 			reCiterArticle.setAuthorNameEvidence(authorNameEvidence);
-
-			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + authorNameEvidence.toString());
+			//enable if requrired for debugging
+			//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + authorNameEvidence.toString());
 		}
 		return 1;
 	}

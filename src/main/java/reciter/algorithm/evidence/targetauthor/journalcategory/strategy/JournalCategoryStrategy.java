@@ -88,10 +88,10 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		            }
 		        }
 
-		        // Log and set the evidence
-		        if (journalCategoryEvidence != null) {
+		        // enable if requrired for debugging .Log and set the evidence
+		        /* if (journalCategoryEvidence != null) {
 		            log.info("Pmid: " + reCiterArticle.getArticleId() + " " + journalCategoryEvidence.toString());
-		        }
+		        }*/
 		        reCiterArticle.setJournalCategoryEvidence(journalCategoryEvidence);
 		    }
 		});

@@ -485,7 +485,6 @@ public class ReCiterFeatureGenerator {
             evidence.setTargetAuthorCount(reCiterArticle.getTargetAuthorCount());
             evidence.setTargetAuthorCountPenalty(reCiterArticle.getTargetAuthorCountPenalty());
             
-            log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
             reCiterArticleFeature.setEvidence(evidence);
  
             reCiterArticleFeatures.add(reCiterArticleFeature);

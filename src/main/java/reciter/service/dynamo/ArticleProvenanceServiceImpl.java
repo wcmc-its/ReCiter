@@ -56,9 +56,9 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         try {
             articleProvenanceRepository.upsertRetrievalProvenance(uid, String.valueOf(pmid), strategyCode, SRC_PM, epochSeconds);
         } catch (DynamoDbException e) {
-            log.warn("ArticleProvenance upsert failed for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
+            log.error("ArticleProvenance upsert failed for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
         } catch (RuntimeException e) {
-            log.warn("ArticleProvenance upsert unexpected error for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
+            log.error("ArticleProvenance upsert unexpected error for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
         }
     }
 
@@ -81,7 +81,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         try {
             applyD11Transition(uid, pmid, epochSeconds, /*allowRetry=*/ true);
         } catch (RuntimeException e) {
-            log.warn("D-11 upsert unexpected error for uid={} pmid={} entryPath={}: {}", uid, pmid, path, e.getMessage());
+            log.error("D-11 upsert unexpected error for uid={} pmid={} entryPath={}: {}", uid, pmid, path, e.getMessage());
         }
     }
 
@@ -89,7 +89,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         try {
             articleProvenanceRepository.writePmUiSearchRecord(uid, String.valueOf(pmid), PM_UI_SEARCH_RS, SRC_PM, epochSeconds);
         } catch (DynamoDbException e) {
-            log.warn("PM_UI_SEARCH retrieval-record write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+            log.error("PM_UI_SEARCH retrieval-record write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
         }
     }
 
@@ -100,7 +100,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         try {
             recordOpt = articleProvenanceRepository.findByIdWithConsistentRead(uid, articleId);
         } catch (DynamoDbException e) {
-            log.warn("D-11 read failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+            log.error("D-11 read failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
             return;
         }
 
@@ -117,7 +117,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
                 log.warn("D-11 retry also failed for uid={} pmid={}; giving up (PM UI request continues)", uid, pmid);
             }
         } catch (DynamoDbException e) {
-            log.warn("D-11 update failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+            log.error("D-11 update failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
         }
     }
     

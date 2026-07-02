@@ -282,7 +282,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 				}
 			}
 			if(orgUnitEvidences.size() > 0) {
-				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
+				//enable if requrired for debugging
+				//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
 				//Remove duplicate evidence based on orgUnit matches
 				if(orgUnitEvidences.size() > 1) {
 					Set<Object> seen=new HashSet<>();
