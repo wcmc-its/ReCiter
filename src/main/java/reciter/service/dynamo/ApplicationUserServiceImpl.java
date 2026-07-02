@@ -1,24 +1,18 @@
 package reciter.service.dynamo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import reciter.database.dynamodb.model.ApplicationUser;
 import reciter.database.dynamodb.repository.ApplicationUserRepository;
 import reciter.service.ApplicationUserService;
 
 @Service("ApplicationUserService")
+@RequiredArgsConstructor
 public class ApplicationUserServiceImpl implements ApplicationUserService {
 	
-	private static final Logger log = LoggerFactory.getLogger(ApplicationUserServiceImpl.class);
-	
-	@Autowired
-	private ApplicationUserRepository applicationUserRepository;
-	
-	private String secretsalt = BCrypt.gensalt(10);
+	private final ApplicationUserRepository applicationUserRepository;
 
 	@Override
 	public boolean createUser(ApplicationUser appUser) {
@@ -28,7 +22,10 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 				&& !appUser.getUsername().isEmpty()
 				&& appUser.getPassword() != null
 				&& !appUser.getPassword().isEmpty()) {
-			String password = BCrypt.hashpw(appUser.getPassword(), secretsalt);
+			             // Per-password random salt. BCrypt embeds the salt in the stored hash, so
+						// authenticateUser()/checkpw() still verifies correctly. Previously a single
+						// per-bean salt was reused for every account, defeating per-user salting.
+						String password = BCrypt.hashpw(appUser.getPassword(), BCrypt.gensalt(10));
 			appUser.setPassword(password);
 			applicationUserRepository.save(appUser);
 			return true;

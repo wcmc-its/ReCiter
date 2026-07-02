@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.database.dynamodb.aspect.MigrateSchema;
 import reciter.database.dynamodb.model.AnalysisOutput;
@@ -20,13 +21,13 @@ import reciter.storage.s3.AmazonS3Config;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 @Service("AnalysisOutputService")
+@RequiredArgsConstructor
 public class AnalysisServiceImpl implements AnalysisService{
 	
 	private static final Logger log = LoggerFactory.getLogger(AnalysisServiceImpl.class);
 	
-	@Autowired
-	private AnalysisOutputRepository analysisOutputRepository;
-	
+	private final AnalysisOutputRepository analysisOutputRepository;
+
 	@Autowired(required=false)
 	private DynamoDbS3Operations ddbs3;
 	
@@ -56,9 +57,8 @@ public class AnalysisServiceImpl implements AnalysisService{
 		}
 		catch(Exception e)
 		{
-			log.info("AnalysisOutput",analysis);
-			log.info("AnalysisOutput reciterFeature",analysis.getReCiterFeature());
-			e.printStackTrace();
+			log.info("AnalysisOutput {}",analysis);
+			log.info("AnalysisOutput reciterFeature {}",analysis.getReCiterFeature());
 		}
 	}
 
@@ -70,7 +70,8 @@ public class AnalysisServiceImpl implements AnalysisService{
 		if(analysisOutput != null 
 				&&
 				analysisOutput.isUsingS3()) {
-			log.info("Retreving analysis from s3 for " + uid);
+			log.info("Retreving analysis from s3 for {} " , uid);
+			
 			ReCiterFeature reCiterFeature = (ReCiterFeature) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, AnalysisOutput.class.getSimpleName() + "/" + uid.trim(), ReCiterFeature.class);
 			analysisOutput.setReCiterFeature(reCiterFeature);
 		} 
@@ -98,7 +99,7 @@ public class AnalysisServiceImpl implements AnalysisService{
         	if(anaOutput != null 
     				&&
     				anaOutput.isUsingS3()) {
-        		log.info("Retreving analysis from s3 for " + anaOutput.getUid());
+        		log.info("Retreving analysis from s3 for {} ", anaOutput.getUid());
         		ReCiterFeature reCiterFeature = (ReCiterFeature) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, AnalysisOutput.class.getSimpleName() + "/" + anaOutput.getUid(), ReCiterFeature.class);
         		anaOutput.setReCiterFeature(reCiterFeature);
         	}
@@ -112,14 +113,14 @@ public class AnalysisServiceImpl implements AnalysisService{
 			//Case where Size has increased 400kb and reciterFeature needs to be null in dynamoDB
 			if(analysisOutput.isUsingS3() && analysisOutput.getReCiterFeature() != null) {
 				analysisOutput.setReCiterFeature(null);
-				log.debug("Performing cleanup for analysis size > 400 kb for " + analysisOutput.getUid());
+				log.debug("Performing cleanup for analysis size > 400 kb for {} " ,analysisOutput.getUid());
 				analysisOutputRepository.save(analysisOutput);
 			}
 			//case when size decreases < 400kb then remove object from S3
 			//Might Have to change it when isUsingS3 == true - ToDo
 			//Does increase 1 more api call to check - only will increase for objects stored in dynamodb.
 			if((!analysisOutput.isUsingS3() || analysisOutput.isUsingS3()) && analysisOutput.getReCiterFeature() != null) {
-				log.debug("Performing cleanup for analysis size < 400 kb for " + analysisOutput.getUid());
+				log.debug("Performing cleanup for analysis size < 400 kb for {} ", analysisOutput.getUid());
 				ddbs3.deleteLargeItem(AmazonS3Config.BUCKET_NAME, AnalysisOutput.class.getSimpleName() + "/" + analysisOutput.getUid());
 			}
 		}

@@ -43,7 +43,6 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.extern.slf4j.Slf4j;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
@@ -70,7 +69,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PostMapping(value = "/reciter/identity/", produces = "application/json")
-    public ResponseEntity addIdentity(@RequestBody Identity identity) {
+    public ResponseEntity<?> addIdentity(@RequestBody Identity identity) {
         StopWatch stopWatch = new StopWatch("Add an identity to Identity table in DynamoDb");
         stopWatch.start("Add an identity to Identity table in DynamoDb");
      // Validate the mandatory fields
@@ -140,7 +139,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/find/identity/by/uid", produces = "application/json")
-    public ResponseEntity findByUid(@RequestParam String uid) {
+    public ResponseEntity<?> findByUid(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
         stopWatch.start("Search the identity table for a given ID");
         log.info("calling findByUid with size of uids=" + uid);
@@ -166,7 +165,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/find/identity/by/uids/", produces = "application/json")
-    public ResponseEntity findByUids(@RequestParam List<String> uids) {
+    public ResponseEntity<?> findByUids(@RequestParam List<String> uids) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a list of ID supplied");
         stopWatch.start("Search the identity table for a list of ID supplied");
         log.info("calling findByUid with size of uids=" + uids);
@@ -195,7 +194,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/find/all/identity", produces = "application/json")
-    public ResponseEntity findAll() {
+    public ResponseEntity<?> findAll() {
         StopWatch stopWatch = new StopWatch("Identity All api performance");
         stopWatch.start("findAllIdentities");
         List<Identity> identities;
@@ -223,7 +222,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @DeleteMapping(value = "/reciter/identity/{uid}", produces = "application/json")
-    public ResponseEntity deleteIdentity(@PathVariable String uid) {
+    public ResponseEntity<?> deleteIdentity(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete identity by uid");
         stopWatch.start("Delete identity by uid");
         Identity identity = identityService.findByUid(uid);
@@ -252,6 +251,11 @@ public class IdentityController {
         }
 
         List<AuthorName> listofAuthorNames = identity.getAlternateNames();
+        
+        if (listofAuthorNames == null || listofAuthorNames.isEmpty()) {
+            throw new IllegalArgumentException("Field 'alternateNames' in Identity is required but not provided.");
+        }
+        
        if(listofAuthorNames!=null) {
         for (AuthorName authorName : listofAuthorNames) {
             // Ensure each field is present and valid

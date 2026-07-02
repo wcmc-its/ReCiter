@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.AmazonServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -22,6 +21,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkServiceException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -95,10 +95,10 @@ public class DynamoDbS3Operations {
 	
 				try{
 					s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
-				} catch(AmazonServiceException e) {
+				} catch(SdkServiceException e) {
 					// The call was transmitted successfully, but Amazon S3 couldn't process 
 		            // it, so it returned an error response.
-					log.error(e.getErrorMessage());
+					log.error("S3 putObject failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
 				}
 			}
 		} else {
@@ -132,10 +132,10 @@ public class DynamoDbS3Operations {
 				try{
 					s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
 				}
-				catch(AmazonServiceException e) {
+				catch(SdkServiceException e) {
 					// The call was transmitted successfully, but Amazon S3 couldn't process 
 		            // it, so it returned an error response.
-					log.error(e.getErrorMessage());
+					log.error("S3 putObject (replace) failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
 				}
 			}
 		}
@@ -194,8 +194,8 @@ public class DynamoDbS3Operations {
 
 		
 	}
-		catch ( AmazonServiceException e) {
-			log.error(e.getMessage());
+		catch (SdkServiceException e) {
+			log.error("S3 getObject failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
 		}
 		return null;
 	}
@@ -233,6 +233,12 @@ public class DynamoDbS3Operations {
 	 * @return date of the object that was stored
 	 */
 	public Date getObjectSaveTimestamp(String bucketName, String keyName) {
+		// Match the null guards in saveLargeItem / retrieveLargeItem. Return null
+		// when the S3 client or bucket is unavailable so the caller falls back to
+		// a fresh DynamoDB read instead of throwing NullPointerException.
+		if (s3 == null || bucketName == null) {
+			return null;
+		}
 	    try {
 	        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
 	                .bucket(bucketName.toLowerCase())

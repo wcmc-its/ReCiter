@@ -1,27 +1,17 @@
 package reciter.service.dynamo;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
-import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
-
+import lombok.RequiredArgsConstructor;
 import reciter.database.dynamodb.model.ArticleProvenance;
 import reciter.database.dynamodb.repository.ArticleProvenanceRepository;
-import reciter.database.dynamodb.repository.FeedbackLogRepository;
 import reciter.feedback.EntryPath;
 import reciter.service.ArticleProvenanceService;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 /**
@@ -29,7 +19,7 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
  *
  * <p>Uses raw {@code AmazonDynamoDB.updateItem} so the {@code UpdateExpression} can
  * combine {@code if_not_exists(...)} with {@code ADD ads :strategySet} in a single
- * request. {@link com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper}
+ * 
  * does not support this expression shape directly.
  *
  * <p>Single-round-trip semantics: no read-then-write, no race; concurrent retrieval
@@ -37,10 +27,10 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
  * {@code if_not_exists} is atomic per UpdateItem.
  */
 @Service
+@RequiredArgsConstructor
 public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
 
     private static final Logger log = LoggerFactory.getLogger(ArticleProvenanceServiceImpl.class);
-    private static final String TABLE_NAME = "ArticleProvenance";
     private static final String PM_UI_SEARCH_RS = "PM_UI_SEARCH";
     private static final String SRC_PM = "PM";
     private static final String SRC_CTSC = "CTSC";
@@ -48,14 +38,9 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
     private static final String SRC_MAN = "MAN";
     private static final String SRC_MAN_FROM_PM = "MAN_FROM_PM";
     private static final String SRC_MAN_FROM_CTSC = "MAN_FROM_CTSC";
+    private static final String PM_AUTHOR_RS = "PM_AUTHOR";
 
-
-  
     private final ArticleProvenanceRepository articleProvenanceRepository;
-
-    public ArticleProvenanceServiceImpl(ArticleProvenanceRepository articleProvenanceRepository) {
-        this.articleProvenanceRepository = articleProvenanceRepository;
-    }
 
     @Override
     public void upsertRetrievalProvenance(String uid, long pmid, String strategyCode, long epochSeconds) {
@@ -71,9 +56,9 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         try {
             articleProvenanceRepository.upsertRetrievalProvenance(uid, String.valueOf(pmid), strategyCode, SRC_PM, epochSeconds);
         } catch (DynamoDbException e) {
-            log.warn("ArticleProvenance upsert failed for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
+            log.error("ArticleProvenance upsert failed for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
         } catch (RuntimeException e) {
-            log.warn("ArticleProvenance upsert unexpected error for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
+            log.error("ArticleProvenance upsert unexpected error for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
         }
     }
 
@@ -87,12 +72,16 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
 
         if (path == EntryPath.PUBMED_SEARCH) {
             writePmUiSearchRecord(uid, pmid, epochSeconds);
+        } else if (path == EntryPath.PM_AUTHOR) {
+            // Authorship Review tab: stamp the PM_AUTHOR entry-path marker into rs/ads so
+            // these curations are auditable, but do NOT seed src='PM' (see writePmAuthorRecord).
+            writePmAuthorRecord(uid, pmid, epochSeconds);
         }
 
         try {
             applyD11Transition(uid, pmid, epochSeconds, /*allowRetry=*/ true);
         } catch (RuntimeException e) {
-            log.warn("D-11 upsert unexpected error for uid={} pmid={} entryPath={}: {}", uid, pmid, path, e.getMessage());
+            log.error("D-11 upsert unexpected error for uid={} pmid={} entryPath={}: {}", uid, pmid, path, e.getMessage());
         }
     }
 
@@ -100,7 +89,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         try {
             articleProvenanceRepository.writePmUiSearchRecord(uid, String.valueOf(pmid), PM_UI_SEARCH_RS, SRC_PM, epochSeconds);
         } catch (DynamoDbException e) {
-            log.warn("PM_UI_SEARCH retrieval-record write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+            log.error("PM_UI_SEARCH retrieval-record write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
         }
     }
 
@@ -111,7 +100,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         try {
             recordOpt = articleProvenanceRepository.findByIdWithConsistentRead(uid, articleId);
         } catch (DynamoDbException e) {
-            log.warn("D-11 read failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+            log.error("D-11 read failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
             return;
         }
 
@@ -128,10 +117,23 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
                 log.warn("D-11 retry also failed for uid={} pmid={}; giving up (PM UI request continues)", uid, pmid);
             }
         } catch (DynamoDbException e) {
-            log.warn("D-11 update failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+            log.error("D-11 update failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
         }
     }
-
+    
+    /**
+     * Authorship Review tab (PM_AUTHOR) marker write. Mirrors {@link #writePmUiSearchRecord}
+     * — sets {@code rs} if absent, ensures {@code frd}, and ADDs PM_AUTHOR to the {@code ads}
+     * strategy set — but deliberately does NOT seed {@code src='PM'}.
+     */
+    private void writePmAuthorRecord(String uid, long pmid, long epochSeconds) {
+        try {
+            articleProvenanceRepository.writePmAuthorRecord(uid, String.valueOf(pmid), PM_AUTHOR_RS, epochSeconds);
+        } catch (DynamoDbException e) {
+            log.warn("PM_AUTHOR marker write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage(), e);
+        }
+    }
+   
     static String computeNewSrc(String existingSrc) {
         if (existingSrc == null || SRC_GS_PLACEHOLDER.equals(existingSrc)) {
             return SRC_MAN;

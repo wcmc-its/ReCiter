@@ -1,33 +1,34 @@
 package reciter.security;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Service
 public class S3UserLogHandler {
 
     private static final Logger log = LoggerFactory.getLogger(S3UserLogHandler.class);
-    private AmazonS3 s3Client;
+    private S3Client s3Client;
     private final ObjectMapper objectMapper;
 
     @Value("${aws.s3.consumer.api.logs.bucketName}")
@@ -43,11 +44,8 @@ public class S3UserLogHandler {
     @PostConstruct
     public void init() {
         if (apiLogsBucketRegion != null && !apiLogsBucketRegion.isEmpty()) {
-            s3Client = AmazonS3ClientBuilder
-                    .standard()
-                    .withCredentials(new DefaultAWSCredentialsProviderChain())
-                    .withRegion(apiLogsBucketRegion)
-                    .build();
+			s3Client = S3Client.builder().credentialsProvider(DefaultCredentialsProvider.create())
+					.region(Region.of(apiLogsBucketRegion)).build();
         } else {
             throw new IllegalStateException("AWS region is not configured correctly");
         }
@@ -59,47 +57,68 @@ public class S3UserLogHandler {
     }
 
     // Method to create or append user log entry to the log file
-    public void writeUserLog(UserLog userLog, String date) throws IOException {
-        String logFilePath = getLogFilePath(date);
-        List<UserLog> logs = new ArrayList<>();
-        try
-        {
-        	boolean isObjectexists = s3Client.doesObjectExist(apiLogsBucketName, logFilePath);
-        }
-        catch (AmazonS3Exception e) {
-            if (e.getStatusCode() == 404) {
-                log.warn("Object does not exist.");
-            } else {
-                log.error("Error: " + e.getMessage());
-            }
-        }
-        // Check if file already exists
-        if (s3Client.doesObjectExist(apiLogsBucketName, logFilePath)) {
-            try {
-                // If the file exists, download it and append the new log
-                S3Object object = s3Client.getObject(apiLogsBucketName, logFilePath);
-                try (InputStream inputStream = object.getObjectContent()) {
-                    // Read existing logs
-                    UserLog[] existingLogs = objectMapper.readValue(inputStream, UserLog[].class);
-                    for (UserLog log : existingLogs) {
-                        logs.add(log);
-                    }
-                }
-            } catch (AmazonServiceException e) {
-                // Log the exception
-                e.printStackTrace();
-            }
-        }
-        // Add the new log entry
-        logs.add(userLog);
-        // Convert the list of logs to JSON
-        String jsonLogs = objectMapper.writeValueAsString(logs);
-        // Upload the updated logs back to S3
-        InputStream updatedInputStream = new ByteArrayInputStream(jsonLogs.getBytes());
-        PutObjectRequest request = new PutObjectRequest(apiLogsBucketName, logFilePath, updatedInputStream, new ObjectMetadata());
-        s3Client.putObject(request);
+	public void writeUserLog(UserLog userLog, String date) throws IOException {
+		String logFilePath = getLogFilePath(date);
+		List<UserLog> logs = new ArrayList<>();
+		try {
 
-    }
+			boolean objectExists = s3ObjectExists(apiLogsBucketName, logFilePath);
+
+			if (objectExists) {
+
+				log.info("Reading existing log file from S3. bucketName={}, key={}", apiLogsBucketName, logFilePath);
+
+				GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(apiLogsBucketName)
+						.key(logFilePath).build();
+
+				try (ResponseInputStream<?> inputStream = s3Client.getObject(getObjectRequest)) {
+
+					UserLog[] existingLogs = objectMapper.readValue((InputStream) inputStream, UserLog[].class);
+
+					logs.addAll(List.of(existingLogs));
+				}
+			}
+
+			logs.add(userLog);
+
+			String jsonLogs = objectMapper.writeValueAsString(logs);
+
+			PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(apiLogsBucketName).key(logFilePath)
+					.contentType("application/json").build();
+
+			s3Client.putObject(putObjectRequest, RequestBody.fromString(jsonLogs));
+
+			log.info("Successfully wrote user log to S3. bucketName={}, key={}, totalLogs={}", apiLogsBucketName,
+					logFilePath, logs.size());
+
+		} catch (S3Exception e) {
+
+			log.error("S3 exception while writing user log. bucketName={}, key={}", apiLogsBucketName, logFilePath, e);
+
+			throw e;
+
+		} catch (Exception e) {
+
+			log.error("Unexpected exception while writing user log. bucketName={}, key={}", apiLogsBucketName,
+					logFilePath, e);
+
+			throw new IOException("Failed to write user log to S3", e);
+		}
+	}
+    private boolean s3ObjectExists(String bucketName, String keyName) {
+	    try {
+	    	s3Client.headObject(HeadObjectRequest.builder()
+	                .bucket(bucketName)
+	                .key(keyName)
+	                .build());
+	        return true; // Object exists
+	    } catch (NoSuchKeyException e) {
+	        return false; // Object does not exist
+	    } catch (S3Exception e) {
+	        log.error("Error checking object existence in S3: {}", e.awsErrorDetails().errorMessage());
+	        return false;
+	    }
+	}
 }
 
 

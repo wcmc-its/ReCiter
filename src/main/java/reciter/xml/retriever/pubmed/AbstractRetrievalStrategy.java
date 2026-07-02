@@ -19,11 +19,18 @@
 package reciter.xml.retriever.pubmed;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -37,8 +44,6 @@ import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.scopus.retriever.ScopusArticleRetriever;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
-import reciter.xml.retriever.pubmed.GoldStandardRetrievalStrategy;
-import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Configurable
 public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {

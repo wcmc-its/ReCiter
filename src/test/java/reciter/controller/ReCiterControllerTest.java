@@ -1,22 +1,12 @@
 package reciter.controller;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,11 +23,19 @@ import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -53,11 +51,11 @@ import reciter.engine.StrategyParameters;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.engine.analysis.ReCiterArticleFeature.PublicationFeedback;
 import reciter.engine.analysis.ReCiterFeature;
+import reciter.feedback.EntryPath;
 import reciter.model.identity.Identity;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
-import reciter.service.PubMedService;
 import reciter.service.ScopusService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
@@ -68,7 +66,7 @@ public class ReCiterControllerTest {
 	@Mock
 	private ESearchResultService eSearchResultService;
 	private static final Logger log = LoggerFactory.getLogger(ReCiterControllerTest.class);
-	
+
 	@Mock
 	private IdentityService identityService;
 
@@ -87,7 +85,6 @@ public class ReCiterControllerTest {
 	@Mock
 	private ReCiterRetrievalEngine aliasReCiterRetrievalEngine;
 
-	
 	@InjectMocks
 	private ReCiterController reCiterController;
 
@@ -130,7 +127,7 @@ public class ReCiterControllerTest {
 		// Create identity list for retrieveArticles method
 		identityList = new ArrayList<>();
 		identity = new Identity();
-		
+
 		identity.setUid(testUid);
 		identityList.add(identity);
 
@@ -260,94 +257,121 @@ public class ReCiterControllerTest {
 	@Test
 	public void testUpdateGoldStandardSuccess() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
+		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), eq(GoldStandardUpdateFlag.UPDATE),
+				eq(testUid), any(EntryPath.class), anyInt());
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.UPDATE, testUid, testUid);
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid, 0);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.UPDATE, testUid);
+
+		// Verify
+		verify(dynamoDbGoldStandardService, times(1)).save(eq(validGoldStandard), eq(GoldStandardUpdateFlag.UPDATE),
+				eq(testUid), any(EntryPath.class), eq(0));
 	}
 
 	@Test
 	public void testUpdateGoldStandardNullFlag() {
-		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
+		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), eq(GoldStandardUpdateFlag.UPDATE),
+				eq(testUid), any(EntryPath.class), anyInt());
 
 		// Act
-		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard, null, testUid, testUid);
+		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard, null, testUid, testUid, 0);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save((List<GoldStandard>) validGoldStandard, GoldStandardUpdateFlag.UPDATE, testUid);
+
+		// Verify
+		verify(dynamoDbGoldStandardService).save(eq(validGoldStandard), eq(GoldStandardUpdateFlag.UPDATE), eq(testUid),
+				any(EntryPath.class), eq(0));
 	}
 
 	@Test
 	public void testUpdateGoldStandardDeleteFlag() {
-		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save((List<GoldStandard>) any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
 
-		// Act
+		// 1. Setup the Mock correctly.
+		// Notice how every single argument is wrapped in a matcher (eq or any).
+		// No casting is used for the GoldStandard object.
+		doNothing().when(dynamoDbGoldStandardService).save(eq(validGoldStandard), // Use eq() instead of casting List
+				eq(GoldStandardUpdateFlag.DELETE), // Use eq() instead of any() if you know the exact value
+				eq(testUid), any(EntryPath.class), eq(0) // Wrap raw ints in eq()
+		);
+
+		// 2. Call the controller
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.DELETE, testUid, testUid);
+				GoldStandardUpdateFlag.DELETE, testUid, testUid, 0);
 
-		// Assert
+		// 3. Assertions
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.DELETE, testUid);
+
+		// 4. Verification
+		// Again, ensure every argument is wrapped in a matcher.
+		verify(dynamoDbGoldStandardService, times(1)).save(eq(validGoldStandard), eq(GoldStandardUpdateFlag.DELETE),
+				eq(testUid), any(EntryPath.class), eq(0));
 	}
 
 	@Test
 	public void testUpdateGoldStandardRefreshFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
+		// 1. Wrap testUid in eq()
+		doNothing().when(dynamoDbGoldStandardService).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class),
+				eq(testUid), any(EntryPath.class), anyInt());
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
-				GoldStandardUpdateFlag.REFRESH, testUid, testUid);
+				GoldStandardUpdateFlag.REFRESH, testUid, testUid, 0);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandard, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandard, GoldStandardUpdateFlag.REFRESH, testUid);
+
+		// Verify
+		// 1. Wrap everything in eq()
+		verify(dynamoDbGoldStandardService, times(1)).save(eq(validGoldStandard), eq(GoldStandardUpdateFlag.REFRESH),
+				eq(testUid), any(EntryPath.class), eq(0));
 	}
 
 	@Test
 	public void testUpdateGoldStandardNullGoldStandard() {
 		GoldStandard goldStandard = null;
 		// Act
-		ResponseEntity<?> response = reCiterController.updateGoldStandard(goldStandard, GoldStandardUpdateFlag.UPDATE, testUid, testUid);
+		ResponseEntity<?> response = reCiterController.updateGoldStandard(goldStandard, GoldStandardUpdateFlag.UPDATE,
+				testUid, testUid, 0);
 
 		// Assert
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		assertEquals("The api requires a GoldStandard model", response.getBody());
-		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
+		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class),
+				eq(testUid));
 	}
 
 	@Test
 	public void testUpdateGoldStandardNullUid() {
 		// Arrange
 		GoldStandard invalidGoldStandard = new GoldStandard();
-		// UID is null
 
 		// Act
 		ResponseEntity<?> response = reCiterController.updateGoldStandard(invalidGoldStandard,
-				GoldStandardUpdateFlag.UPDATE, testUid, testUid);
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid, 0);
 
 		// Assert
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		assertEquals("The api requires a valid uid to be passed with GoldStandard model", response.getBody());
-		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class), testUid);
+
+		verify(dynamoDbGoldStandardService, never()).save(any(GoldStandard.class), any(GoldStandardUpdateFlag.class),
+				anyString(), any(EntryPath.class), anyInt());
 	}
 
 	@Test
 	public void testUpdateGoldStandardListSuccess() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
+		doNothing().when(dynamoDbGoldStandardService).save(eq(validGoldStandardList), eq(GoldStandardUpdateFlag.UPDATE),
+				eq(testUid), any(EntryPath.class));
 
 		// Act
 		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList,
@@ -356,27 +380,44 @@ public class ReCiterControllerTest {
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.UPDATE, testUid);
+
+		// Verify
+		verify(dynamoDbGoldStandardService, times(1)).save(eq(validGoldStandardList), eq(GoldStandardUpdateFlag.UPDATE),
+				eq(testUid), any(EntryPath.class));
 	}
 
 	@Test
 	public void testUpdateGoldStandardListNullFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
+		doNothing().when(dynamoDbGoldStandardService).save(eq(validGoldStandardList), eq(GoldStandardUpdateFlag.UPDATE),
+				eq(testUid), any(EntryPath.class));
 
 		// Act
-		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList, null, testUid, testUid);
+		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList, null, // We
+																														// pass
+																														// null
+																														// to
+																														// the
+																														// controller
+																														// here
+				testUid, testUid);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.UPDATE, testUid);
+
+		// Verify
+		verify(dynamoDbGoldStandardService, times(1)).save(eq(validGoldStandardList), eq(GoldStandardUpdateFlag.UPDATE),
+				eq(testUid), any(EntryPath.class));
 	}
 
 	@Test
 	public void testUpdateGoldStandardListDeleteFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
+		// 1. Remove the bad cast and use eq(validGoldStandardList)
+		// 2. Wrap the flag and testUid in eq()
+		doNothing().when(dynamoDbGoldStandardService).save(eq(validGoldStandardList), eq(GoldStandardUpdateFlag.DELETE),
+				eq(testUid), any(EntryPath.class));
 
 		// Act
 		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList,
@@ -385,13 +426,17 @@ public class ReCiterControllerTest {
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.DELETE, testUid);
+
+		// Verify
+		// Match the setup exactly
+		verify(dynamoDbGoldStandardService, times(1)).save(eq(validGoldStandardList), eq(GoldStandardUpdateFlag.DELETE),
+				eq(testUid), any(EntryPath.class));
 	}
 
-	@Test
 	public void testUpdateGoldStandardListRefreshFlag() {
 		// Arrange
-		doNothing().when(dynamoDbGoldStandardService).save((GoldStandard) anyList(), any(GoldStandardUpdateFlag.class), testUid);
+		doNothing().when(dynamoDbGoldStandardService).save(eq(validGoldStandardList),
+				eq(GoldStandardUpdateFlag.REFRESH), eq(testUid), any(EntryPath.class));
 
 		// Act
 		ResponseEntity<List<GoldStandard>> response = reCiterController.updateGoldStandard(validGoldStandardList,
@@ -400,7 +445,10 @@ public class ReCiterControllerTest {
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(validGoldStandardList, response.getBody());
-		verify(dynamoDbGoldStandardService, times(1)).save(validGoldStandardList, GoldStandardUpdateFlag.REFRESH, testUid);
+
+		// Verify
+		verify(dynamoDbGoldStandardService, times(1)).save(eq(validGoldStandardList),
+				eq(GoldStandardUpdateFlag.REFRESH), eq(testUid), any(EntryPath.class));
 	}
 
 	@Test

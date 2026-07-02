@@ -8,9 +8,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.article.AbstractReCiterArticleStrategy;
-import reciter.engine.analysis.evidence.AcceptedRejectedEvidence;
 import reciter.engine.analysis.evidence.FeedbackEvidence;
 import reciter.model.article.ReCiterArticle;
 

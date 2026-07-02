@@ -58,10 +58,6 @@ public class ReCiterFeatureGenerator {
                                           List<ReCiterArticle> reCiterArticles,
                                           List<Long> goldStandardPmids,
                                           List<Long> rejectedPmids,Identity identity) {
-     
-    	List<Long> finalArticles = reCiterArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
-    	
-            
 
         ReCiterFeature reCiterFeature = new ReCiterFeature();
         reCiterFeature.setPersonIdentifier(identity.getUid());
@@ -78,7 +74,7 @@ public class ReCiterFeatureGenerator {
     if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
         for (long pmid : goldStandardPmids) {
             if (!pmidsRetrieved.contains(pmid)) {
-				log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
+				log.info("Updating accepted inGoldStandardButNotRetrieved List {} ", pmid); 
                 inGoldStandardButNotRetrieved.add(pmid);
             }
         }
@@ -86,7 +82,7 @@ public class ReCiterFeatureGenerator {
     if(rejectedPmids != null && rejectedPmids.size() > 0) {
         for (long pmid : rejectedPmids) {
             if (!pmidsRetrieved.contains(pmid)) {
-				 log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
+				 log.info("Updating rejected inGoldStandardButNotRetrieved List {}" , pmid);
                 inGoldStandardButNotRetrieved.add(pmid);
             }
         }
@@ -246,13 +242,13 @@ public class ReCiterFeatureGenerator {
             }
        
             // journal title
-            reCiterArticleFeature.setJournalTitleVerbose(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getJournalTitle()));
+            reCiterArticleFeature.setJournalTitleVerbose(reCiterArticle.getJournal() == null ? null : ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getJournalTitle()));
             
             //journal issn
-            reCiterArticleFeature.setIssn(reCiterArticle.getJournal().getJournalIssn());
+            reCiterArticleFeature.setIssn(reCiterArticle.getJournal() == null ? null : reCiterArticle.getJournal().getJournalIssn());
 
             // journal title ISO Abbreviation
-            reCiterArticleFeature.setJournalTitleISOabbreviation(ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getIsoAbbreviation()));
+            reCiterArticleFeature.setJournalTitleISOabbreviation(reCiterArticle.getJournal() == null ? null : ReCiterStringUtil.stripBackslashes(reCiterArticle.getJournal().getIsoAbbreviation()));
 
             // article title
             reCiterArticleFeature.setArticleTitle(ReCiterStringUtil.stripBackslashes(reCiterArticle.getArticleTitle()));
@@ -489,7 +485,6 @@ public class ReCiterFeatureGenerator {
             evidence.setTargetAuthorCount(reCiterArticle.getTargetAuthorCount());
             evidence.setTargetAuthorCountPenalty(reCiterArticle.getTargetAuthorCountPenalty());
             
-            log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
             reCiterArticleFeature.setEvidence(evidence);
  
             reCiterArticleFeatures.add(reCiterArticleFeature);

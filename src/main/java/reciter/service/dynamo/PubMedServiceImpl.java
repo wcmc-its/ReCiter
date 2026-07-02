@@ -68,7 +68,8 @@ public class PubMedServiceImpl implements PubMedService {
         while (iterator.hasNext()) {
         	 PubMedArticle pubarticle =null;
         	reciter.database.dynamodb.model.PubMedArticle pubMedArticle = iterator.next();
-			log.info("PubMed Article in findBy PMIDs is :" + pubMedArticle);
+        	//enable if requrired for debugging
+			//log.info("PubMed Article in findBy PMIDs is :" + pubMedArticle);
         	if(pubMedArticle!=null && pubMedArticle.isUsingS3())
         	{
         		PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid(), PubMedArticle.class);

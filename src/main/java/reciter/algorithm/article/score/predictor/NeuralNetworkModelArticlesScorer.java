@@ -16,234 +16,229 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.lambda.AWSLambda;
-import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
-import com.amazonaws.services.lambda.model.InvokeRequest;
-import com.amazonaws.services.lambda.model.InvokeResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-//import reciter.security.AwsSecretsManagerService;
 import reciter.utils.PropertiesUtils;
-
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
 public class NeuralNetworkModelArticlesScorer {
 
-
 	private static final Logger log = LoggerFactory.getLogger(NeuralNetworkModelArticlesScorer.class);
-	
+
 	private static final String LAMBDA_NAME = "RECITER_SCORING_LAMBDA_FUNCTION";
-	
+
 	private static final String LAMBDA_FUNCTION_INVOCATION_URL = "local.lambda.function.invocation.url";
-	
+
 	private static final String LAMBDA_FUNCTION_REGION = "aws.lambda.region";
-	
-   private String reciterScoringServiceUrl = System.getenv("RECITERSCORING_SERVICE_URL");
-	
-	private static final String reciterScorerModelFileName = "verify_setup.py";
-	
-	public NeuralNetworkModelArticlesScorer()
-	{
+
+	private String reciterScoringServiceUrl = System.getenv("RECITERSCORING_SERVICE_URL");
+
+	public NeuralNetworkModelArticlesScorer() {
 	}
-	
-	public JSONArray executeArticleScorePredictor(String goldStandardName, String dataFileName,String s3BucketName,String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException
-	{
-	
-		
+
+	public JSONArray executeArticleScorePredictor(String goldStandardName, String dataFileName, String s3BucketName,
+			String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException {
+
 		StopWatch stopWatch = new StopWatch(goldStandardName);
 		stopWatch.start(goldStandardName);
 		JSONArray authorshipLikelihoodScore;
-		
-		 if (isS3UploadRequiredString!=null && !isS3UploadRequiredString.equalsIgnoreCase("") && (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) 
-			{  
-			 	authorshipLikelihoodScore = callLocalLambda(goldStandardName,dataFileName,s3BucketName,isS3UploadRequiredString);
-	        } else {
-	        	String lambdaFunction = System.getenv(LAMBDA_NAME);
-	        	log.info("lambdaFunction Name:" + lambdaFunction);
 
-	        	authorshipLikelihoodScore = callAwsLambda(goldStandardName,dataFileName,s3BucketName,isS3UploadRequiredString,lambdaFunction);
-	        }
-		 
+		if (isS3UploadRequiredString != null && !isS3UploadRequiredString.equalsIgnoreCase("")
+				&& (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) {
+			authorshipLikelihoodScore = callLocalLambda(goldStandardName, dataFileName, s3BucketName,
+					isS3UploadRequiredString);
+		} else {
+			String lambdaFunction = System.getenv(LAMBDA_NAME);
+			log.info("lambdaFunction Name:" + lambdaFunction);
+
+			authorshipLikelihoodScore = callAwsLambda(goldStandardName, dataFileName, s3BucketName,
+					isS3UploadRequiredString, lambdaFunction);
+		}
+
 		stopWatch.stop();
 		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		return authorshipLikelihoodScore;
 	}
-	
+
 	// Helper method to find JSONObject by article
-		private static void findJSONObjectById(JSONArray jsonArray, long articleId) {
-		    for (int i = 0; i < jsonArray.length(); i++) {
-		        JSONObject jsonObject = jsonArray.getJSONObject(i);
-		        if (jsonObject.getLong("id") == articleId) {
-		        	double score = jsonObject.getDouble("scoreTotal")*100;
-		        }
-		    }
-		    }
-		public static void main(String args[]) throws JsonMappingException, JsonProcessingException
-		{
-			NeuralNetworkModelArticlesScorer nn = new NeuralNetworkModelArticlesScorer();
-			JSONArray articlesIdentityFeedbackScoreTotal = nn.executeArticleScorePredictor("feedback", "ajg9004-feedbackIdentityScoringInput.json","feedbackScore","false");
-			if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
-				findJSONObjectById(articlesIdentityFeedbackScoreTotal,9856924);
-				  
+	private static void findJSONObjectById(JSONArray jsonArray, long articleId) {
+		for (int i = 0; i < jsonArray.length(); i++) {
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
+			if (jsonObject.getLong("id") == articleId) {
+				double score = jsonObject.getDouble("scoreTotal") * 100;
+			}
 		}
-		
-		@SuppressWarnings("unused")
+	}
 
-		private JSONArray callLocalLambda(String goldStandardModelName,String articleDataFilename,String s3BucketName,String isS3UploadRequiredString)
-		{
-			URL url=null;
-			HttpURLConnection conn=null;
-			try {
-				url = new URL(reciterScoringServiceUrl + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL));
-				conn = (HttpURLConnection) url.openConnection();
-				if(conn!=null)
-				{	
-					conn.setRequestMethod("POST");
-					conn.setRequestProperty("Content-Type", "application/json");
-				    conn.setDoOutput(true);
+	public static void main(String args[]) throws JsonMappingException, JsonProcessingException {
+		NeuralNetworkModelArticlesScorer nn = new NeuralNetworkModelArticlesScorer();
+		JSONArray articlesIdentityFeedbackScoreTotal = nn.executeArticleScorePredictor("feedback",
+				"ajg9004-feedbackIdentityScoringInput.json", "feedbackScore", "false");
+		if (articlesIdentityFeedbackScoreTotal != null && articlesIdentityFeedbackScoreTotal.length() > 0)
+			findJSONObjectById(articlesIdentityFeedbackScoreTotal, 9856924);
+
+	}
+
+	@SuppressWarnings("unused")
+
+	private JSONArray callLocalLambda(String goldStandardModelName, String articleDataFilename, String s3BucketName,
+			String isS3UploadRequiredString) {
+		URL url = null;
+		HttpURLConnection conn = null;
+		try {
+			url = new URL(reciterScoringServiceUrl + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL));
+			conn = (HttpURLConnection) url.openConnection();
+			if (conn != null) {
+				conn.setRequestMethod("POST");
+				conn.setRequestProperty("Content-Type", "application/json");
+				conn.setDoOutput(true);
+			}
+		} catch (Exception e) {
+			log.error("Failed to open Lambda HTTP connection to {} for model={}, dataFile={}", reciterScoringServiceUrl,
+					goldStandardModelName, articleDataFilename, e);
+		}
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		Map<String, Object> payloadMap = new HashMap<>();
+		payloadMap.put("modelName", goldStandardModelName);
+		payloadMap.put("scoringDataFile", articleDataFilename);
+		payloadMap.put("useS3Bucket", isS3UploadRequiredString);
+		payloadMap.put("bucket_name", s3BucketName);
+
+		String payload = null;
+		try {
+			payload = mapper.writeValueAsString(payloadMap);
+		} catch (JsonProcessingException e) {
+			log.error("Failed to serialize local-Lambda scoring payload for model={}, dataFile={}",
+					goldStandardModelName, articleDataFilename, e);
+		}
+
+		try {
+			if (conn != null) {
+				// Write payload to Lambda container
+				try (OutputStream os = conn.getOutputStream()) {
+					os.write(payload.getBytes(StandardCharsets.UTF_8));
 				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	      
-	        
-	        ObjectMapper mapper = new ObjectMapper();
-	        
-	        Map<String, Object> payloadMap = new HashMap<>();
-	        payloadMap.put("modelName", goldStandardModelName);
-	        payloadMap.put("scoringDataFile", articleDataFilename);
-	        payloadMap.put("useS3Bucket", isS3UploadRequiredString);
-	        payloadMap.put("bucket_name", s3BucketName);
+				// Read response from Lambda container
 
-	        String payload=null;
-			try {
-				payload = mapper.writeValueAsString(payloadMap);
-			} catch (JsonProcessingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	        
-			try {
-				 if(conn!=null)
-				 {	 
-				    // Write payload to Lambda container
-				    try (OutputStream os = conn.getOutputStream()) {
-				        os.write(payload.getBytes(StandardCharsets.UTF_8));
-				    }
-				    // Read response from Lambda container
-				 
-				    // Now it's safe to read the response
-			        int responseCode = conn.getResponseCode();
-			     // Read response from Lambda
-			        StringBuilder response = new StringBuilder();
-			        
-			        try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-				        String output;
-				        while ((output = reader.readLine()) != null) {
-				            response.append(output);
-				           
-				        }
-				    }
-			     // Parse the response
-			        JSONArray predictionScoresArray=null;
-			        JSONObject outer = new JSONObject(response.toString());
-			        if (outer.get("predictionScores") instanceof JSONArray) {
-			        	predictionScoresArray = outer.getJSONArray("predictionScores");
-			        }
-			        log.info(" predictionScoresArray " + predictionScoresArray);
-			        
-		       		//return Code
-		            int returnCode = outer.getInt("returnCode");
-		            log.info("returnCode: " + returnCode);
-			       
-			         if(returnCode==0)
-			         {	 
-			        	return predictionScoresArray;
-			         }
-			         else 
+				// Now it's safe to read the response
+				int responseCode = conn.getResponseCode();
+				// Read response from Lambda
+				StringBuilder response = new StringBuilder();
 
-						{
-							// Log the error from the Python scoring script
-							String error = outer.optString("error");
-							log.error("Lambda scoring failed with returncode {}. error: {}", returnCode, error);
-							return null;
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+					String output;
+					while ((output = reader.readLine()) != null) {
+						response.append(output);
 
-				        }
-			      }
-			     
+					}
+				}
+				// Parse the response
+				JSONArray predictionScoresArray = null;
+				JSONObject outer = new JSONObject(response.toString());
+				if (outer.get("predictionScores") instanceof JSONArray) {
+					predictionScoresArray = outer.getJSONArray("predictionScores");
+				}
+				log.info(" predictionScoresArray " + predictionScoresArray);
 
-			} catch (IOException | RuntimeException e) {
-			    e.printStackTrace(); // You may want to log this properly
-			}
-			return null;
-	    }
-		/*
-		 * Calls AWS Lambda function
-		 */
-	    private JSONArray callAwsLambda(String goldStandardModelName, String articleDataFilename,String s3BucketName,String isS3UploadRequiredString,String lambdaFunctionName) {
-	       
-	    	AWSLambda client = AWSLambdaClientBuilder.standard()
-	                .withRegion(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)) 
-	                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
-	                .build();
+				// return Code
+				int returnCode = outer.getInt("returnCode");
+				log.info("returnCode: " + returnCode);
 
-	        ObjectMapper mapper = new ObjectMapper();
+				if (returnCode == 0) {
+					return predictionScoresArray;
+				} else
 
-	        Map<String, Object> payloadMap = new HashMap<>();
-	        payloadMap.put("modelName", goldStandardModelName);
-	        payloadMap.put("scoringDataFile", articleDataFilename);
-	        payloadMap.put("useS3Bucket", isS3UploadRequiredString);
-	        payloadMap.put("bucket_name", s3BucketName);
-
-	        
-	        
-	        String payloadJson=null;
-			try {
-				payloadJson = mapper.writeValueAsString(payloadMap);
-			} catch (JsonProcessingException e) {
-				e.printStackTrace();
-			}
-	        
-	        InvokeRequest request = new InvokeRequest()
-	                .withFunctionName(lambdaFunctionName)
-	                .withPayload(payloadJson);
-	        	        
-	        try {
-	            InvokeResult result = client.invoke(request);
-	            String response = new String(result.getPayload().array(), StandardCharsets.UTF_8);
-	            JSONObject outer = new JSONObject(response);
-	            JSONArray predictionScoresArray=null;
-	            if (outer.get("predictionScores") instanceof JSONArray) {
-		        	predictionScoresArray = outer.getJSONArray("predictionScores");
-		        }
-		        log.info(" predictionScoresArray " + predictionScoresArray);
-
-		      //return Code
-	            int returnCode = outer.getInt("returnCode");
-	            log.info("returnCode: " + returnCode);
-
-		       
-		         if(returnCode==0)
-		         {	 
-		        	return predictionScoresArray;
-		        
-		        } else {
-
-		            // Log the error from the Python scoring script
+				{
+					// Log the error from the Python scoring script
 					String error = outer.optString("error");
 					log.error("Lambda scoring failed with returncode {}. error: {}", returnCode, error);
 					return null;
 
-		        }
-	          
-	        } catch (Exception e) {
-	            log.error("Lambda invocation failed: {}" , e.getMessage());
-	            e.printStackTrace();
-	        }
-	        return null;
-	    }
-	   
+				}
+			}
+
+		} catch (IOException | RuntimeException e) {
+			log.error("Local Lambda scoring invocation/parse failed for model={}, dataFile={}; returning null",
+					goldStandardModelName, articleDataFilename, e);
+		}
+		return null;
+	}
+
+	/*
+	 * Calls AWS Lambda function
+	 */
+	private JSONArray callAwsLambda(String goldStandardModelName, String articleDataFilename, String s3BucketName,
+			String isS3UploadRequiredString, String lambdaFunctionName) {
+
+		LambdaClient client = LambdaClient.builder().region(Region.of(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)))
+				.credentialsProvider(DefaultCredentialsProvider.create()).build();
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		Map<String, Object> payloadMap = new HashMap<>();
+		payloadMap.put("modelName", goldStandardModelName);
+		payloadMap.put("scoringDataFile", articleDataFilename);
+		payloadMap.put("useS3Bucket", isS3UploadRequiredString);
+		payloadMap.put("bucket_name", s3BucketName);
+
+		String payloadJson = null;
+		try {
+			payloadJson = mapper.writeValueAsString(payloadMap);
+		} catch (JsonProcessingException e) {
+			log.error("Failed to serialize AWS Lambda scoring payload for model={}, dataFile={}", goldStandardModelName,
+					articleDataFilename, e);
+		}
+
+		// v2: InvokeRequest.builder() replaces new InvokeRequest().withFunctionName()
+		// v2: SdkBytes.fromUtf8String() replaces plain String payload
+		InvokeRequest request = InvokeRequest.builder().functionName(lambdaFunctionName)
+				.payload(SdkBytes.fromUtf8String(payloadJson)).build();
+
+		try {
+			// v2: LambdaClient.invoke() replaces AWSLambda.invoke()
+			// v2: InvokeResponse replaces InvokeResult
+			InvokeResponse result = client.invoke(request);
+
+			// v2: result.payload().asUtf8String() replaces result.getPayload().array()
+			String response = result.payload().asUtf8String();
+
+			JSONObject outer = new JSONObject(response);
+			JSONArray predictionScoresArray = null;
+			if (outer.get("predictionScores") instanceof JSONArray) {
+				predictionScoresArray = outer.getJSONArray("predictionScores");
+			}
+			log.info(" predictionScoresArray " + predictionScoresArray);
+
+			// return Code
+			int returnCode = outer.getInt("returnCode");
+			log.info("returnCode: " + returnCode);
+
+			if (returnCode == 0) {
+				return predictionScoresArray;
+
+			} else {
+
+				// Log the error from the Python scoring script
+				String error = outer.optString("error");
+				log.error("Lambda scoring failed with returncode {}. error: {}", returnCode, error);
+				return null;
+
+			}
+
+		} catch (Exception e) {
+			log.error("AWS Lambda scoring invocation/parse failed for function={}, model={}, dataFile={}",
+					lambdaFunctionName, goldStandardModelName, articleDataFilename, e);
+		}
+		return null;
+	}
+
 }

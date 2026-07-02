@@ -20,16 +20,12 @@ package reciter.algorithm.evidence.targetauthor.department.strategy;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -286,7 +282,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 				}
 			}
 			if(orgUnitEvidences.size() > 0) {
-				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
+				//enable if requrired for debugging
+				//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + orgUnitEvidences.toString());
 				//Remove duplicate evidence based on orgUnit matches
 				if(orgUnitEvidences.size() > 1) {
 					Set<Object> seen=new HashSet<>();

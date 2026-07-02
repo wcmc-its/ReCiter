@@ -108,4 +108,37 @@ public class ArticleProvenanceRepository {
 		reqBuilder.expressionAttributeValues(values);
 		lowLevelClient.updateItem(reqBuilder.build());
 	}
+	/**
+	 * Authorship Review tab (PM_AUTHOR) marker write. Mirrors {@link #writePmUiSearchRecord}
+	 * — sets {@code rs} if absent, ensures {@code frd}, and ADDs PM_AUTHOR to the {@code ads}
+	 * strategy set — but deliberately does NOT seed {@code src='PM'}. The AAR queue contains
+	 * authorships production either buried (already retrieved → an ArticleProvenance row with
+	 * {@code src='PM'} already exists → D-11 lifts it to MAN_FROM_PM) or never scored at all
+	 * (no row → D-11 sets {@code src='MAN'} = algo-missed, curator-found). Seeding {@code src='PM'}
+	 * here would wrongly relabel a never-retrieved authorship as PM-sourced.
+	 */
+	public void writePmAuthorRecord(String uid, String articleId, String pmAuthorRs, long epochSeconds) {
+		Map<String, AttributeValue> key = Map.of(
+			"uid", AttributeValue.fromS(uid),
+			"articleId", AttributeValue.fromS(articleId)
+		);
+
+		Map<String, AttributeValue> values = Map.of(
+			":rs", AttributeValue.fromS(pmAuthorRs),
+			":ts", AttributeValue.fromN(String.valueOf(epochSeconds)),
+			":rsSet", AttributeValue.builder().ss(pmAuthorRs).build()
+		);
+
+		UpdateItemRequest req = UpdateItemRequest.builder()
+				.tableName("ArticleProvenance")
+				.key(key)
+				.updateExpression(
+						"SET rs  = if_not_exists(rs,  :rs), " +
+						"    frd = if_not_exists(frd, :ts) " +
+						"ADD ads :rsSet")
+				.expressionAttributeValues(values)
+				.build();
+
+		lowLevelClient.updateItem(req);
+	}
 }
