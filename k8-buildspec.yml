@@ -63,5 +63,5 @@ phases:
           kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME 
         fi
         if expr "${BRANCH}" : ".*MigrationFromJDk11ToAWSCorretto17" >/dev/null; then
-          kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME  
+          kubectl set image deployment/reciter-prod reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME  
         fi
