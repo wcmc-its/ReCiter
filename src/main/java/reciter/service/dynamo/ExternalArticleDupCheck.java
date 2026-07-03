@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.engine.analysis.ReCiterArticleFeature;
@@ -131,24 +132,20 @@ public final class ExternalArticleDupCheck {
 
     /**
      * Supersede matching (#660): returns the accepted PMID that supersedes this
-     * external row — by direct PMID first, then by normalized DOI — or null if none.
+     * external row — by direct PMID first, then by normalized DOI — or null if
+     * none. acceptedDoiToPmid must be keyed by {@link #normalizeDoi} output.
      */
     public static Long matchSupersedingPmid(ExternalArticle row,
-                                            List<Long> acceptedPmids,
-                                            Map<Long, String> acceptedPmidToDoi) {
+                                            Set<Long> acceptedPmids,
+                                            Map<String, Long> acceptedDoiToPmid) {
         if (row.getPmid() != null && acceptedPmids != null && acceptedPmids.contains(row.getPmid())) {
             return row.getPmid();
         }
         String rowDoi = normalizeDoi(row.getDoi());
-        if (rowDoi == null || acceptedPmidToDoi == null) {
+        if (rowDoi == null || acceptedDoiToPmid == null) {
             return null;
         }
-        for (Map.Entry<Long, String> accepted : acceptedPmidToDoi.entrySet()) {
-            if (rowDoi.equals(normalizeDoi(accepted.getValue()))) {
-                return accepted.getKey();
-            }
-        }
-        return null;
+        return acceptedDoiToPmid.get(rowDoi);
     }
 
     // ponytail: exact match on normalized title + same year. Upgrade to token-overlap

@@ -15,9 +15,11 @@ public interface ExternalArticleService {
     void delete(String uid, String articleId);
 
     /**
-     * Supersede rule: suppress non-suppressed external rows whose PMID or DOI
-     * matches an accepted PMID (DOIs resolved via the person's Analysis output).
-     * Never throws; returns the number of rows suppressed.
+     * Supersede rule, run after gold standard updates. Re-reads the authoritative
+     * gold standard and reconciles both directions: suppresses active rows whose
+     * PMID or DOI matches an accepted PMID (DOIs resolved via the person's
+     * Analysis output), and un-suppresses rows whose superseding PMID is no
+     * longer accepted. Never throws; returns the number of rows changed.
      */
-    int supersedeByAcceptedPmids(String uid, List<Long> acceptedPmids);
+    int reconcileWithGoldStandard(String uid);
 }

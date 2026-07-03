@@ -187,28 +187,30 @@ public class ExternalArticleDupCheckTest {
     public void supersedeMatchesByPmidFirst() {
         ExternalArticle row = candidate("SCOPUS:850010", 12345L, "10.1000/xyz", "A Title", "2024");
         Long superseding = ExternalArticleDupCheck.matchSupersedingPmid(
-                row, Arrays.asList(12345L), Collections.emptyMap());
+                row, Collections.singleton(12345L), Collections.emptyMap());
         assertEquals(Long.valueOf(12345L), superseding);
     }
 
     @Test
     public void supersedeMatchesByNormalizedDoi() {
         ExternalArticle row = candidate("OPENALEX:W789", null, "https://doi.org/10.1000/XYZ", "A Title", "2024");
-        java.util.Map<Long, String> acceptedDois = new java.util.HashMap<>();
-        acceptedDois.put(55555L, "10.1000/xyz");
+        java.util.Map<String, Long> acceptedDoiToPmid = new java.util.HashMap<>();
+        acceptedDoiToPmid.put("10.1000/xyz", 55555L);
         Long superseding = ExternalArticleDupCheck.matchSupersedingPmid(
-                row, Arrays.asList(55555L), acceptedDois);
+                row, Collections.singleton(55555L), acceptedDoiToPmid);
         assertEquals(Long.valueOf(55555L), superseding);
     }
 
     @Test
     public void supersedeNoMatchReturnsNull() {
-        ExternalArticle row = candidate("OPENALEX:W789", null, "10.1000/other", "A Title", "2024");
-        java.util.Map<Long, String> acceptedDois = new java.util.HashMap<>();
-        acceptedDois.put(55555L, "10.1000/xyz");
-        assertNull(ExternalArticleDupCheck.matchSupersedingPmid(row, Arrays.asList(55555L), acceptedDois));
+        java.util.Map<String, Long> acceptedDoiToPmid = new java.util.HashMap<>();
+        acceptedDoiToPmid.put("10.1000/xyz", 55555L);
         assertNull(ExternalArticleDupCheck.matchSupersedingPmid(
-                candidate("WOS:123", null, null, "No DOI", "2024"), Arrays.asList(55555L), acceptedDois));
+                candidate("OPENALEX:W789", null, "10.1000/other", "A Title", "2024"),
+                Collections.singleton(55555L), acceptedDoiToPmid));
+        assertNull(ExternalArticleDupCheck.matchSupersedingPmid(
+                candidate("WOS:123", null, null, "No DOI", "2024"),
+                Collections.singleton(55555L), acceptedDoiToPmid));
     }
 
     @Test
