@@ -27,6 +27,7 @@ import reciter.database.dynamodb.model.GoldStandard;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.service.AnalysisService;
 import reciter.service.ExternalArticleService;
+import reciter.service.IdentityService;
 import reciter.service.dynamo.ExternalArticleDupCheck;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 
@@ -52,6 +53,9 @@ public class ExternalArticleController {
     @Autowired
     private AnalysisService analysisService;
 
+    @Autowired
+    private IdentityService identityService;
+
     @Operation(summary = "Add an external-source article for a person.",
             description = "Adds a publication from Scopus, Web of Science, or OpenAlex. Blocks on PMID/DOI duplicates "
                     + "against the person's PubMed record and existing external articles; warns on fuzzy title+year "
@@ -66,10 +70,16 @@ public class ExternalArticleController {
         if (validationError != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(validationError));
         }
+        if (identityService.findByUid(externalArticle.getUid()) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(errorBody("The uid provided '" + externalArticle.getUid() + "' was not found in the Identity table"));
+        }
 
+        GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(externalArticle.getUid());
         ExternalArticleDupCheck.Result result = ExternalArticleDupCheck.check(
                 externalArticle,
-                knownPmids(externalArticle.getUid()),
+                goldStandard == null ? null : goldStandard.getKnownPmids(),
+                goldStandard == null ? null : goldStandard.getRejectedPmids(),
                 candidateArticles(externalArticle.getUid()),
                 externalArticleService.findByUid(externalArticle.getUid()));
 
@@ -85,9 +95,9 @@ public class ExternalArticleController {
         if (externalArticle.getDateAdded() == null || externalArticle.getDateAdded().trim().isEmpty()) {
             externalArticle.setDateAdded(Instant.now().toString());
         }
-        if (externalArticle.getSuppressed() == null) {
-            externalArticle.setSuppressed(Boolean.FALSE);
-        }
+        // Owned by the supersede rule (#660), never by the client.
+        externalArticle.setSuppressed(Boolean.FALSE);
+        externalArticle.setSupersededByPmid(null);
         externalArticleService.save(externalArticle);
         log.info("External article {} added for uid {} from {} (method={}, force={})",
                 externalArticle.getArticleId(), externalArticle.getUid(), externalArticle.getSourceType(),
@@ -135,14 +145,6 @@ public class ExternalArticleController {
             return "sourceType '" + externalArticle.getSourceType() + "' does not match articleId prefix '" + prefix + "'.";
         }
         return null;
-    }
-
-    private List<Long> knownPmids(String uid) {
-        GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
-        if (goldStandard == null || goldStandard.getKnownPmids() == null) {
-            return new ArrayList<>();
-        }
-        return goldStandard.getKnownPmids();
     }
 
     private List<ReCiterArticleFeature> candidateArticles(String uid) {

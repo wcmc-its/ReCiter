@@ -941,15 +941,23 @@ public class ReCiterController {
      * Suppressed rows (superseded by a PubMed record with the same DOI) are excluded.
      */
     private ResponseEntity<Object> featureGeneratorResponse(ReCiterFeature reCiterFeature, String uid, boolean includeExternal) {
-        if (!includeExternal) {
+        if (!includeExternal || reCiterFeature == null) {
             return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
         }
-        List<ExternalArticle> externalArticles = externalArticleService.findByUid(uid.trim()).stream()
-                .filter(externalArticle -> !Boolean.TRUE.equals(externalArticle.getSuppressed()))
-                .collect(Collectors.toList());
-        ObjectNode responseBody = objectMapper.valueToTree(reCiterFeature);
-        responseBody.set("externalArticles", objectMapper.valueToTree(externalArticles));
-        return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        try {
+            List<ExternalArticle> externalArticles = externalArticleService.findByUid(uid.trim()).stream()
+                    .filter(externalArticle -> !Boolean.TRUE.equals(externalArticle.getSuppressed()))
+                    .collect(Collectors.toList());
+            ObjectNode responseBody = objectMapper.valueToTree(reCiterFeature);
+            responseBody.set("externalArticles", objectMapper.valueToTree(externalArticles));
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (Exception e) {
+            // The scoring result must never fail on the optional external-article sidecar;
+            // the absent externalArticles field (vs empty array) signals the degradation.
+            log.warn("Could not append external articles for uid {}; returning scoring result without them: {}",
+                    uid, e.getMessage());
+            return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
+        }
     }
     
     @Operation(summary = "Article retrieval by UID.", description = "This api returns all the publication for a supplied uid.")

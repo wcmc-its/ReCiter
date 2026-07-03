@@ -69,6 +69,7 @@ public final class ExternalArticleDupCheck {
 
     public static Result check(ExternalArticle candidate,
                                List<Long> knownPmids,
+                               List<Long> rejectedPmids,
                                List<ReCiterArticleFeature> candidateArticles,
                                List<ExternalArticle> existingExternal) {
         List<Match> blocked = new ArrayList<>();
@@ -81,6 +82,9 @@ public final class ExternalArticleDupCheck {
             if (existing.getArticleId() != null && existing.getArticleId().equals(candidate.getArticleId())) {
                 blocked.add(new Match("ALREADY_ADDED", existing.getArticleId(),
                         "This external article was already added for this person."));
+            } else if (candidate.getPmid() != null && candidate.getPmid().equals(existing.getPmid())) {
+                blocked.add(new Match("PMID_MATCH_EXTERNAL", existing.getArticleId(),
+                        "An external article with the same PMID was already added from " + existing.getSourceType() + "."));
             } else if (candidateDoi != null && candidateDoi.equals(normalizeDoi(existing.getDoi()))) {
                 blocked.add(new Match("DOI_MATCH_EXTERNAL", existing.getArticleId(),
                         "An external article with the same DOI was already added from " + existing.getSourceType() + "."));
@@ -94,6 +98,10 @@ public final class ExternalArticleDupCheck {
         if (candidate.getPmid() != null && knownPmids != null && knownPmids.contains(candidate.getPmid())) {
             blocked.add(new Match("PMID_IN_GOLD_STANDARD", String.valueOf(candidate.getPmid()),
                     "This PMID is already accepted in the person's gold standard."));
+        }
+        if (candidate.getPmid() != null && rejectedPmids != null && rejectedPmids.contains(candidate.getPmid())) {
+            blocked.add(new Match("PMID_REJECTED_IN_GOLD_STANDARD", String.valueOf(candidate.getPmid()),
+                    "This PMID was explicitly rejected by a curator; do not re-add it from an external source."));
         }
 
         for (ReCiterArticleFeature feature : safe(candidateArticles)) {
@@ -126,11 +134,8 @@ public final class ExternalArticleDupCheck {
         if (titleA == null || titleB == null || !titleA.equals(titleB)) {
             return false;
         }
-        // Identical titles with both years unknown still warrant a warning.
-        if (yearA == null || yearB == null) {
-            return yearA == null && yearB == null;
-        }
-        return yearA.equals(yearB);
+        // Identical titles collide unless both years are known and differ.
+        return yearA == null || yearB == null || yearA.equals(yearB);
     }
 
     /** Lowercase, trim, strip any doi.org URL prefix. Returns null for blank input. */

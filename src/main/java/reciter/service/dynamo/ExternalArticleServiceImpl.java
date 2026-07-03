@@ -32,7 +32,7 @@ public class ExternalArticleServiceImpl implements ExternalArticleService {
         DynamoDBQueryExpression<ExternalArticle> queryExpression =
                 new DynamoDBQueryExpression<ExternalArticle>()
                         .withHashKeyValues(hashKey)
-                        .withConsistentRead(false);
+                        .withConsistentRead(true);
         return dynamoDBMapper.query(ExternalArticle.class, queryExpression);
     }
 

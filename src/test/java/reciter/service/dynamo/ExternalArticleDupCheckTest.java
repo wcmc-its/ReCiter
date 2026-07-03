@@ -41,6 +41,7 @@ public class ExternalArticleDupCheckTest {
         Result result = ExternalArticleDupCheck.check(
                 candidate("OPENALEX:W123", null, "10.1000/xyz", "A Novel Finding", "2025-06-01"),
                 Arrays.asList(11111L),
+                Collections.emptyList(),
                 Arrays.asList(pubmedArticle(11111L, "10.1000/abc", "Something Else Entirely", "2020-01-01")),
                 Collections.emptyList());
         assertEquals(Level.OK, result.getLevel());
@@ -52,15 +53,29 @@ public class ExternalArticleDupCheckTest {
                 candidate("SCOPUS:850001", 11111L, null, "Any Title", "2020"),
                 Arrays.asList(11111L),
                 Collections.emptyList(),
+                Collections.emptyList(),
                 Collections.emptyList());
         assertEquals(Level.BLOCKED, result.getLevel());
         assertEquals("PMID_IN_GOLD_STANDARD", result.getMatches().get(0).getType());
     }
 
     @Test
+    public void rejectedPmidBlocks() {
+        Result result = ExternalArticleDupCheck.check(
+                candidate("SCOPUS:850001", 99999L, null, "Any Title", "2020"),
+                Collections.emptyList(),
+                Arrays.asList(99999L),
+                Collections.emptyList(),
+                Collections.emptyList());
+        assertEquals(Level.BLOCKED, result.getLevel());
+        assertEquals("PMID_REJECTED_IN_GOLD_STANDARD", result.getMatches().get(0).getType());
+    }
+
+    @Test
     public void pmidInCandidateSetBlocks() {
         Result result = ExternalArticleDupCheck.check(
                 candidate("SCOPUS:850001", 22222L, null, "Any Title", "2020"),
+                Collections.emptyList(),
                 Collections.emptyList(),
                 Arrays.asList(pubmedArticle(22222L, null, "Any Title", "2020-01-01")),
                 Collections.emptyList());
@@ -69,9 +84,23 @@ public class ExternalArticleDupCheckTest {
     }
 
     @Test
+    public void pmidMatchAgainstExistingExternalBlocks() {
+        ExternalArticle existing = candidate("SCOPUS:850002", 88888L, null, "From Scopus", "2022");
+        Result result = ExternalArticleDupCheck.check(
+                candidate("OPENALEX:W456", 88888L, null, "From OpenAlex", "2022"),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Arrays.asList(existing));
+        assertEquals(Level.BLOCKED, result.getLevel());
+        assertEquals("PMID_MATCH_EXTERNAL", result.getMatches().get(0).getType());
+    }
+
+    @Test
     public void doiMatchAgainstCandidatesBlocksDespiteUrlPrefixAndCase() {
         Result result = ExternalArticleDupCheck.check(
                 candidate("OPENALEX:W123", null, "https://doi.org/10.1000/ABC", "Different Title", "2021"),
+                Collections.emptyList(),
                 Collections.emptyList(),
                 Arrays.asList(pubmedArticle(33333L, "10.1000/abc", "Original Title", "2021-05-01")),
                 Collections.emptyList());
@@ -86,6 +115,7 @@ public class ExternalArticleDupCheckTest {
                 candidate("OPENALEX:W456", null, "10.1000/xyz", "Same Work From OpenAlex", "2022"),
                 Collections.emptyList(),
                 Collections.emptyList(),
+                Collections.emptyList(),
                 Arrays.asList(existing));
         assertEquals(Level.BLOCKED, result.getLevel());
         assertEquals("DOI_MATCH_EXTERNAL", result.getMatches().get(0).getType());
@@ -98,6 +128,7 @@ public class ExternalArticleDupCheckTest {
                 candidate("OPENALEX:W123", null, null, "A Title", "2020"),
                 Collections.emptyList(),
                 Collections.emptyList(),
+                Collections.emptyList(),
                 Arrays.asList(existing));
         assertEquals(Level.BLOCKED, result.getLevel());
         assertEquals("ALREADY_ADDED", result.getMatches().get(0).getType());
@@ -108,7 +139,20 @@ public class ExternalArticleDupCheckTest {
         Result result = ExternalArticleDupCheck.check(
                 candidate("OPENALEX:W123", null, null, "Deep Learning for Author Disambiguation!", "2023"),
                 Collections.emptyList(),
+                Collections.emptyList(),
                 Arrays.asList(pubmedArticle(44444L, null, "Deep learning for author disambiguation", "2023-09-15")),
+                Collections.emptyList());
+        assertEquals(Level.WARNING, result.getLevel());
+        assertEquals("TITLE_YEAR_MATCH", result.getMatches().get(0).getType());
+    }
+
+    @Test
+    public void titleCollisionWithOneMissingYearStillWarns() {
+        Result result = ExternalArticleDupCheck.check(
+                candidate("OPENALEX:W123", null, null, "Deep Learning for Author Disambiguation", "2023"),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Arrays.asList(pubmedArticle(44444L, null, "Deep learning for author disambiguation", null)),
                 Collections.emptyList());
         assertEquals(Level.WARNING, result.getLevel());
         assertEquals("TITLE_YEAR_MATCH", result.getMatches().get(0).getType());
@@ -118,6 +162,7 @@ public class ExternalArticleDupCheckTest {
     public void sameTitleDifferentYearIsOk() {
         Result result = ExternalArticleDupCheck.check(
                 candidate("OPENALEX:W123", null, null, "Annual Report on Disambiguation", "2024"),
+                Collections.emptyList(),
                 Collections.emptyList(),
                 Arrays.asList(pubmedArticle(55555L, null, "Annual Report on Disambiguation", "2023-01-01")),
                 Collections.emptyList());
@@ -131,6 +176,7 @@ public class ExternalArticleDupCheckTest {
                 pubmedArticle(77777L, null, "A Fuzzy Title Match", "2022-03-01"));
         Result result = ExternalArticleDupCheck.check(
                 candidate("SCOPUS:850003", null, "10.1000/dup", "A Fuzzy Title Match", "2022"),
+                Collections.emptyList(),
                 Collections.emptyList(),
                 candidates,
                 Collections.emptyList());
