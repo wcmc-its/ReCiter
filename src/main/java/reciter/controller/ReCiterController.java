@@ -191,6 +191,7 @@ public class ReCiterController {
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath, curatedBy);
         }
+    	reconcileExternalArticles(Collections.singletonList(goldStandard));
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
@@ -224,6 +225,7 @@ public class ReCiterController {
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
         }
+    	reconcileExternalArticles(goldStandard);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
@@ -940,6 +942,18 @@ public class ReCiterController {
      * read at serialization time and never enter feature generation or Analysis.
      * Suppressed rows (superseded by a PubMed record with the same DOI) are excluded.
      */
+    /**
+     * Post-update supersede reconciliation (#660) — runs for every flag including
+     * DELETE, since removing an acceptance is what un-suppresses an external row.
+     */
+    private void reconcileExternalArticles(List<GoldStandard> goldStandards) {
+        for (GoldStandard goldStandard : goldStandards) {
+            if (goldStandard != null && goldStandard.getUid() != null) {
+                externalArticleService.reconcileWithGoldStandard(goldStandard.getUid());
+            }
+        }
+    }
+
     private ResponseEntity<Object> featureGeneratorResponse(ReCiterFeature reCiterFeature, String uid, boolean includeExternal) {
         if (!includeExternal || reCiterFeature == null) {
             return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
