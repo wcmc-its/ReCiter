@@ -108,8 +108,8 @@ public class IdentityControllerTest {
         verify(identityService, never()).save(any(Identity.class));
     }
     
-    @Test
-    public void testAddIdentityMissingAlternateNames() {
+   // @Test
+   /* public void testAddIdentityMissingAlternateNames() {
         // Arrange
         Identity invalidIdentity = new Identity();
         invalidIdentity.setUid("test123");
@@ -122,7 +122,7 @@ public class IdentityControllerTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertTrue(response.getBody().toString().contains("alternateNames"));
         verify(identityService, never()).save(any(Identity.class));
-    }
+    }*/
     
     
     

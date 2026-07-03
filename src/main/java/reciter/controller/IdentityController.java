@@ -252,9 +252,9 @@ public class IdentityController {
 
         List<AuthorName> listofAuthorNames = identity.getAlternateNames();
         
-        if (listofAuthorNames == null || listofAuthorNames.isEmpty()) {
+        /*if (listofAuthorNames == null || listofAuthorNames.isEmpty()) {
             throw new IllegalArgumentException("Field 'alternateNames' in Identity is required but not provided.");
-        }
+        }*/
         
        if(listofAuthorNames!=null) {
         for (AuthorName authorName : listofAuthorNames) {
