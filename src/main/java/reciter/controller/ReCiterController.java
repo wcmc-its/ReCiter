@@ -49,6 +49,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -66,6 +69,7 @@ import reciter.api.parameters.UseGoldStandard;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
+import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
@@ -83,6 +87,7 @@ import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
+import reciter.service.ExternalArticleService;
 import reciter.service.IdentityService;
 import reciter.service.OrcidService;
 import reciter.service.PubMedService;
@@ -127,6 +132,12 @@ public class ReCiterController {
 
     @Autowired
     private FeedbackLogQueryService feedbackLogQueryService;
+
+    @Autowired
+    private ExternalArticleService externalArticleService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -613,7 +624,8 @@ public class ReCiterController {
     })
     @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag) {
+    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag,
+    		@RequestParam(value = "includeExternal", required = false, defaultValue = "false") boolean includeExternal) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
         
@@ -772,7 +784,7 @@ public class ReCiterController {
 			}	
             stopWatch.stop();
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-            return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
+            return featureGeneratorResponse(analysis.getReCiterFeature(), uid, includeExternal);
         } else {
             if (useGoldStandard == null) {
                 strategyParameters.setUseGoldStandardEvidence(true);
@@ -919,7 +931,25 @@ public class ReCiterController {
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-        return new ResponseEntity<>(reCiterOutputFeature, HttpStatus.OK);
+        return featureGeneratorResponse(reCiterOutputFeature, uid, includeExternal);
+    }
+
+    /**
+     * With includeExternal=true, appends the person's manually added external-source
+     * articles (Scopus/WoS/OpenAlex) as a sibling "externalArticles" field — they are
+     * read at serialization time and never enter feature generation or Analysis.
+     * Suppressed rows (superseded by a PubMed record with the same DOI) are excluded.
+     */
+    private ResponseEntity<Object> featureGeneratorResponse(ReCiterFeature reCiterFeature, String uid, boolean includeExternal) {
+        if (!includeExternal) {
+            return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
+        }
+        List<ExternalArticle> externalArticles = externalArticleService.findByUid(uid.trim()).stream()
+                .filter(externalArticle -> !Boolean.TRUE.equals(externalArticle.getSuppressed()))
+                .collect(Collectors.toList());
+        ObjectNode responseBody = objectMapper.valueToTree(reCiterFeature);
+        responseBody.set("externalArticles", objectMapper.valueToTree(externalArticles));
+        return new ResponseEntity<>(responseBody, HttpStatus.OK);
     }
     
     @Operation(summary = "Article retrieval by UID.", description = "This api returns all the publication for a supplied uid.")
