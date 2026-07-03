@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -167,13 +168,15 @@ public class APISecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Allow token generation endpoint without authentication
                 .requestMatchers(HttpMethod.POST, "/reciter/generate-access-token").permitAll()
+                .requestMatchers("/reciter/v3/api-docs/**", "/reciter/swagger-ui/**").permitAll()
                 // Everything else requires a valid JWT or API Key
                 .anyRequest().authenticated()
             );
 
         return httpSecurity.build();
     }
-
+    
+   
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> {
