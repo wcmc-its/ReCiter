@@ -201,9 +201,10 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-oauth2-jose -->
 		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-oauth2-jose</artifactId>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
+    	
 		<!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
 		<dependency>
 			<groupId>org.springdoc</groupId>

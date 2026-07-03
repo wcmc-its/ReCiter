@@ -20,6 +20,7 @@ package reciter.algorithm.evidence.targetauthor.degree.strategy;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,8 +172,9 @@ public class YearDiscrepancyStrategy extends AbstractRemoveReCiterArticleStrateg
 								: discrepancyDegreeYearDoctoral;
 						discrepancyDegreeYearDoctoral = (discrepancyDegreeYearDoctoral > 100) ? 100
 								: discrepancyDegreeYearDoctoral;
-						degreeYearDiscrepancyDoctoralScore = EngineParameters.getDegreeYearDiscrepancyScoreMap()
-								.get(Double.valueOf(discrepancyDegreeYearDoctoral));
+						degreeYearDiscrepancyDoctoralScore = Optional.ofNullable(discrepancyDegreeYearDoctoral)
+							    .map(d -> EngineParameters.getDegreeYearDiscrepancyScoreMap().get(Double.valueOf(d)))
+							    .orElse(0.0);
 
 						educationYearEvidence.setIdentityDoctoralYear(identity.getDegreeYear().getDoctoralYear());
 						educationYearEvidence.setDiscrepancyDegreeYearDoctoral(discrepancyDegreeYearDoctoral);
