@@ -184,6 +184,34 @@ public class ExternalArticleDupCheckTest {
     }
 
     @Test
+    public void supersedeMatchesByPmidFirst() {
+        ExternalArticle row = candidate("SCOPUS:850010", 12345L, "10.1000/xyz", "A Title", "2024");
+        Long superseding = ExternalArticleDupCheck.matchSupersedingPmid(
+                row, Arrays.asList(12345L), Collections.emptyMap());
+        assertEquals(Long.valueOf(12345L), superseding);
+    }
+
+    @Test
+    public void supersedeMatchesByNormalizedDoi() {
+        ExternalArticle row = candidate("OPENALEX:W789", null, "https://doi.org/10.1000/XYZ", "A Title", "2024");
+        java.util.Map<Long, String> acceptedDois = new java.util.HashMap<>();
+        acceptedDois.put(55555L, "10.1000/xyz");
+        Long superseding = ExternalArticleDupCheck.matchSupersedingPmid(
+                row, Arrays.asList(55555L), acceptedDois);
+        assertEquals(Long.valueOf(55555L), superseding);
+    }
+
+    @Test
+    public void supersedeNoMatchReturnsNull() {
+        ExternalArticle row = candidate("OPENALEX:W789", null, "10.1000/other", "A Title", "2024");
+        java.util.Map<Long, String> acceptedDois = new java.util.HashMap<>();
+        acceptedDois.put(55555L, "10.1000/xyz");
+        assertNull(ExternalArticleDupCheck.matchSupersedingPmid(row, Arrays.asList(55555L), acceptedDois));
+        assertNull(ExternalArticleDupCheck.matchSupersedingPmid(
+                candidate("WOS:123", null, null, "No DOI", "2024"), Arrays.asList(55555L), acceptedDois));
+    }
+
+    @Test
     public void normalizers() {
         assertEquals("10.1000/abc", ExternalArticleDupCheck.normalizeDoi(" https://dx.doi.org/10.1000/ABC "));
         assertNull(ExternalArticleDupCheck.normalizeDoi("  "));

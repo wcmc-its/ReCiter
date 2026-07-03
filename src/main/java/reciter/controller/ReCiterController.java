@@ -191,6 +191,9 @@ public class ReCiterController {
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath, curatedBy);
         }
+    	if(goldStandardUpdateFlag != GoldStandardUpdateFlag.DELETE) {
+    		externalArticleService.supersedeByAcceptedPmids(goldStandard.getUid(), goldStandard.getKnownPmids());
+    	}
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
@@ -224,6 +227,13 @@ public class ReCiterController {
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
         }
+    	if(goldStandardUpdateFlag != GoldStandardUpdateFlag.DELETE) {
+    		for (GoldStandard gs : goldStandard) {
+    			if (gs != null) {
+    				externalArticleService.supersedeByAcceptedPmids(gs.getUid(), gs.getKnownPmids());
+    			}
+    		}
+    	}
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);

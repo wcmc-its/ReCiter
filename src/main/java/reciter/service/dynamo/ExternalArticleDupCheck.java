@@ -3,6 +3,7 @@ package reciter.service.dynamo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.engine.analysis.ReCiterArticleFeature;
@@ -126,6 +127,28 @@ public final class ExternalArticleDupCheck {
             return new Result(Level.WARNING, warnings);
         }
         return new Result(Level.OK, new ArrayList<>());
+    }
+
+    /**
+     * Supersede matching (#660): returns the accepted PMID that supersedes this
+     * external row — by direct PMID first, then by normalized DOI — or null if none.
+     */
+    public static Long matchSupersedingPmid(ExternalArticle row,
+                                            List<Long> acceptedPmids,
+                                            Map<Long, String> acceptedPmidToDoi) {
+        if (row.getPmid() != null && acceptedPmids != null && acceptedPmids.contains(row.getPmid())) {
+            return row.getPmid();
+        }
+        String rowDoi = normalizeDoi(row.getDoi());
+        if (rowDoi == null || acceptedPmidToDoi == null) {
+            return null;
+        }
+        for (Map.Entry<Long, String> accepted : acceptedPmidToDoi.entrySet()) {
+            if (rowDoi.equals(normalizeDoi(accepted.getValue()))) {
+                return accepted.getKey();
+            }
+        }
+        return null;
     }
 
     // ponytail: exact match on normalized title + same year. Upgrade to token-overlap
