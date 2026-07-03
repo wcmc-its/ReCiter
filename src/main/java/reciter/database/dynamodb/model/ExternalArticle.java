@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * A publication manually added from a non-PubMed source (Scopus, Web of Science,
- * OpenAlex). External articles never enter feature generation, scoring, or
+ * OpenAlex, WorldCat). External articles never enter feature generation, scoring, or
  * Analysis writes; they are appended to feature-generator API output at
  * serialization time when includeExternal=true is requested.
  */
@@ -44,7 +44,7 @@ public class ExternalArticle {
 
     private String publicationType;
 
-    /** SCOPUS | WOS | OPENALEX — must agree with the articleId prefix. */
+    /** SCOPUS | WOS | OPENALEX | WORLDCAT — must agree with the articleId prefix. */
     private String sourceType;
 
     private String addedBy;
