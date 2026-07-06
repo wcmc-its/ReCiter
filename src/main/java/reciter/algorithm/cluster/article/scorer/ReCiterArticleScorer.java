@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
+import reciter.storage.s3.AwsScoringClients;
 import reciter.algorithm.evidence.author.authorcount.AuthorCountStrategyContext;
 import reciter.algorithm.evidence.author.authorcount.strategy.AuthorCountStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
@@ -609,10 +610,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		// Upload the python file
         try {
         	
-        	final S3Client s3 = S3Client.builder()
-    			    .credentialsProvider(DefaultCredentialsProvider.create())
-    			    .region(Region.of(System.getenv("AWS_REGION"))) 
-    			    .build();
+        	final S3Client s3 = AwsScoringClients.s3();
         	try {
                 HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
                         .bucket(feedbackScoreBucketName)

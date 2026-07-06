@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
+import reciter.storage.s3.AwsScoringClients;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
@@ -443,10 +444,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         
         // Upload the CSV file
         try {
-        	final S3Client s3 = S3Client.builder()
-       			 .credentialsProvider(DefaultCredentialsProvider.create())
-    	            .region(Region.of(System.getenv("AWS_REGION")))
-    	            .build();
+        	final S3Client s3 = AwsScoringClients.s3();
         	// Check if the bucket exists
 	        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
 	                .bucket(feedbackScoreBucketName)
@@ -845,10 +843,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		String feedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         
 		// Upload the python file
-				 try (S3Client s3 = S3Client.builder()
-				            .credentialsProvider(DefaultCredentialsProvider.create())
-				            .region(Region.of(System.getenv("AWS_REGION")))
-				            .build()) {
+				 S3Client s3 = AwsScoringClients.s3();
+				 try {
 					// Check if the bucket exists
 				        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
 				                .bucket(feedbackScoreBucketName)
