@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
@@ -179,8 +180,7 @@ public class NeuralNetworkModelArticlesScorer {
 	private JSONArray callAwsLambda(String goldStandardModelName, String articleDataFilename, String s3BucketName,
 			String isS3UploadRequiredString, String lambdaFunctionName) {
 
-		LambdaClient client = LambdaClient.builder().region(Region.of(PropertiesUtils.get(LAMBDA_FUNCTION_REGION)))
-				.credentialsProvider(DefaultCredentialsProvider.create()).build();
+		LambdaClient client = AwsScoringClients.lambda(PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
 
 		ObjectMapper mapper = new ObjectMapper();
 
