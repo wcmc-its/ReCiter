@@ -124,13 +124,15 @@ public class AmazonS3Config {
     }
     
 	private String getAccountIDUsingAccessKey(String accessKey, String secretKey) {
-		try (StsClient stsClient = StsClient.builder().credentialsProvider(DefaultCredentialsProvider.create())
-				.build()) {
-
-			GetCallerIdentityResponse callerIdentity = stsClient
-					.getCallerIdentity(GetCallerIdentityRequest.builder().build());
-			return callerIdentity.account();
-		}
+		// Do NOT close this StsClient. DefaultCredentialsProvider.create() is a JVM-wide singleton;
+		// closing any client built with it shuts down the shared IRSA STS connection pool, which
+		// then breaks credential refresh for every other client (incl. DynamoDB) after ~1h. This
+		// runs once at startup, so the single un-closed client lives harmlessly for the app lifetime.
+		StsClient stsClient = StsClient.builder().credentialsProvider(DefaultCredentialsProvider.create())
+				.build();
+		GetCallerIdentityResponse callerIdentity = stsClient
+				.getCallerIdentity(GetCallerIdentityRequest.builder().build());
+		return callerIdentity.account();
 	}
     
 }
