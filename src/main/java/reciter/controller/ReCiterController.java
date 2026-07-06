@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -933,70 +935,148 @@ public class ReCiterController {
 
         if (analysis != null) {//This was added to ensure to use analysis results only in evidence mode
         	if(analysis.getReCiterFeature() != null) {
-        		analysis.getReCiterFeature().setInGoldStandardButNotRetrieved(null);
-        		analysis.getReCiterFeature().setPrecision(null);
-        		analysis.getReCiterFeature().setRecall(null);
-        		analysis.getReCiterFeature().setOverallAccuracy(null);
-        		if(analysis.getReCiterFeature().getReCiterArticleFeatures() != null && analysis.getReCiterFeature().getReCiterArticleFeatures().size() > 0) {
-        			for(ReCiterArticleFeature reCiterArticleFeatures: analysis.getReCiterFeature().getReCiterArticleFeatures()) {
-        				reCiterArticleFeatures.setEvidence(null);
-        			}
-        		}
+        		Optional.ofNullable(analysis)
+        	    .map(AnalysisOutput::getReCiterFeature)
+        	    .ifPresent(feature -> {
+
+        	        feature.setInGoldStandardButNotRetrieved(null);
+        	        feature.setPrecision(null);
+        	        feature.setRecall(null);
+        	        feature.setOverallAccuracy(null);
+
+        	        Optional.ofNullable(feature.getReCiterArticleFeatures())
+        	            .orElse(Collections.emptyList())
+        	            .stream()
+        	            .filter(Objects::nonNull)
+        	            .forEach(f -> f.setEvidence(null));
+        	    });
         	}
         	//All the results are filtered based on filterByFeedback
         	if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
-	        	analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-			            	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
-	        				  .filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
-			            	&&
-			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
-			            	||
-			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
-			            	||
-			            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
-			            	)
-			            	.collect(Collectors.toList()));
+	        	Optional.ofNullable(analysis)
+	            .map(AnalysisOutput::getReCiterFeature)
+	            .ifPresent(feature ->
+	                feature.setReCiterArticleFeatures(
+	                    Optional.ofNullable(feature.getReCiterArticleFeatures())
+	                        .orElse(Collections.emptyList())
+	                        .stream()
+	                        .filter(Objects::nonNull)
+	                        .filter(f -> {
+	                            PublicationFeedback fb = f.getUserAssertion();
+
+	                            return fb == PublicationFeedback.ACCEPTED
+	                                    || fb == PublicationFeedback.REJECTED
+	                                    || (fb == PublicationFeedback.NULL
+	                                        && Optional.ofNullable(f.getAuthorshipLikelihoodScore())
+	                                                   .map(score -> score >= totalScore)
+	                                                   .orElse(false));
+	                        })
+	                        .collect(Collectors.toList())
+	                )
+	            );
+
         	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_ONLY) {
-        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
-		            	.collect(Collectors.toList()));
+        			Optional.ofNullable(analysis)
+        	    .map(AnalysisOutput::getReCiterFeature)
+        	    .ifPresent(feature ->
+        	        feature.setReCiterArticleFeatures(
+        	            Optional.ofNullable(feature.getReCiterArticleFeatures())
+        	                .orElse(Collections.emptyList())
+        	                .stream()
+        	                .filter(Objects::nonNull)
+        	                .filter(f -> f.getUserAssertion() == PublicationFeedback.ACCEPTED)
+        	                .collect(Collectors.toList())
+        	        )
+        	    );
         	} else if(filterByFeedback == FilterFeedbackType.REJECTED_ONLY) {
-        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
-		            	.collect(Collectors.toList()));
+        		Optional.ofNullable(analysis)
+        	    .map(AnalysisOutput::getReCiterFeature)
+        	    .ifPresent(feature ->
+        	        feature.setReCiterArticleFeatures(
+        	            Optional.ofNullable(feature.getReCiterArticleFeatures())
+        	                .orElse(Collections.emptyList())
+        	                .stream()
+        	                .filter(Objects::nonNull)
+        	                .filter(f -> f.getUserAssertion() == PublicationFeedback.REJECTED)
+        	                .collect(Collectors.toList())
+        	        )
+        	    );
         	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
-        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore 
-		            	.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore 
-		            	&& 
-		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
-		            	||
-		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
-		            	)
-		            	.collect(Collectors.toList()));
+        		Optional.ofNullable(analysis)
+        	    .map(AnalysisOutput::getReCiterFeature)
+        	    .ifPresent(feature ->
+        	        feature.setReCiterArticleFeatures(
+        	            Optional.ofNullable(feature.getReCiterArticleFeatures())
+        	                .orElse(Collections.emptyList())
+        	                .stream()
+        	                .filter(Objects::nonNull)
+        	                .filter(f ->
+        	                    (f.getUserAssertion() == PublicationFeedback.ACCEPTED)
+        	                    ||
+        	                    (f.getUserAssertion() == PublicationFeedback.NULL
+        	                        && Optional.ofNullable(f.getAuthorshipLikelihoodScore())
+        	                                   .map(score -> score >= totalScore)
+        	                                   .orElse(false))
+        	                )
+        	                .collect(Collectors.toList())
+        	        )
+        	    );
         	} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
-        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
-        				.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
-		            	&&
-		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
-		            	||
-		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
-		            	)
-		            	.collect(Collectors.toList()));
+        		Optional.ofNullable(analysis)
+        	    .map(AnalysisOutput::getReCiterFeature)
+        	    .ifPresent(feature ->
+        	        feature.setReCiterArticleFeatures(
+        	            Optional.ofNullable(feature.getReCiterArticleFeatures())
+        	                .orElse(Collections.emptyList())
+        	                .stream()
+        	                .filter(Objects::nonNull)
+        	                .filter(f ->
+        	                    (f.getUserAssertion() == PublicationFeedback.REJECTED)
+        	                    ||
+        	                    (f.getUserAssertion() == PublicationFeedback.NULL
+        	                        && Optional.ofNullable(f.getAuthorshipLikelihoodScore())
+        	                                   .map(score -> score >= totalScore)
+        	                                   .orElse(false))
+        	                )
+        	                .collect(Collectors.toList())
+        	        )
+        	    );
         	} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_REJECTED) {
-        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
-		            	||
-		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
-		            	.collect(Collectors.toList()));
+        		       		
+        		Optional.ofNullable(analysis)
+        	    .map(AnalysisOutput::getReCiterFeature)
+        	    .ifPresent(feature ->
+        	        feature.setReCiterArticleFeatures(
+        	            Optional.ofNullable(feature.getReCiterArticleFeatures())
+        	                .orElse(Collections.emptyList())
+        	                .stream()
+        	                .filter(Objects::nonNull)
+        	                .filter(f ->
+        	                    f.getUserAssertion() == PublicationFeedback.ACCEPTED
+        	                    || f.getUserAssertion() == PublicationFeedback.REJECTED
+        	                )
+        	                .collect(Collectors.toList())
+        	        )
+        	    );
         	} else if(filterByFeedback == FilterFeedbackType.NULL) {
-        		analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-		            	//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
-        				.filter(reCiterArticleFeature -> reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
-		            	&&
-		            	reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
-		            	.collect(Collectors.toList()));
+        		       		
+        		Optional.ofNullable(analysis)
+        	    .map(AnalysisOutput::getReCiterFeature)
+        	    .ifPresent(feature ->
+        	        feature.setReCiterArticleFeatures(
+        	            Optional.ofNullable(feature.getReCiterArticleFeatures())
+        	                .orElse(Collections.emptyList())
+        	                .stream()
+        	                .filter(Objects::nonNull)
+        	                .filter(f ->
+        	                    f.getUserAssertion() == PublicationFeedback.NULL
+        	                    && Optional.ofNullable(f.getAuthorshipLikelihoodScore())
+        	                               .map(score -> score >= totalScore)
+        	                               .orElse(false)
+        	                )
+        	                .collect(Collectors.toList())
+        	        )
+        	    );
         	}
             stopWatch.stop();
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
