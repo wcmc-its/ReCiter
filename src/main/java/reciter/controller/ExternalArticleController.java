@@ -42,7 +42,7 @@ public class ExternalArticleController {
 
     private static final Logger log = LoggerFactory.getLogger(ExternalArticleController.class);
 
-    private static final Pattern ARTICLE_ID_PATTERN = Pattern.compile("^(SCOPUS|WOS|OPENALEX):\\S+$");
+    private static final Pattern ARTICLE_ID_PATTERN = Pattern.compile("^(SCOPUS|WOS|OPENALEX|WORLDCAT):\\S+$");
 
     @Autowired
     private ExternalArticleService externalArticleService;
@@ -132,7 +132,7 @@ public class ExternalArticleController {
     private String validate(ExternalArticle externalArticle) {
         if (externalArticle.getArticleId() == null
                 || !ARTICLE_ID_PATTERN.matcher(externalArticle.getArticleId().trim()).matches()) {
-            return "articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, or OPENALEX:<id>.";
+            return "articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>.";
         }
         externalArticle.setArticleId(externalArticle.getArticleId().trim());
         if (externalArticle.getTitle() == null || externalArticle.getTitle().trim().isEmpty()) {
