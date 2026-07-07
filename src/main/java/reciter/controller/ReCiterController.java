@@ -40,14 +40,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -89,19 +91,18 @@ import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
 import reciter.service.ExternalArticleService;
 import reciter.service.IdentityService;
-import reciter.service.OrcidService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
-import reciter.service.dynamo.IDynamoDbGoldStandardService;
-import reciter.service.dynamo.FeedbackLogQueryService;
 import reciter.service.dynamo.AuditHistoryEntry;
+import reciter.service.dynamo.FeedbackLogQueryService;
+import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
 import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 
 @Tag(name = "ReCiterController", description = "Operations on ReCiter API.")
-@Controller
+@RestController
 public class ReCiterController {
 
 	private static final Logger log = LoggerFactory.getLogger(ReCiterController.class);
@@ -129,7 +130,7 @@ public class ReCiterController {
 
     @Autowired
     private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
-
+    
     @Autowired
     private FeedbackLogQueryService feedbackLogQueryService;
 
@@ -154,25 +155,22 @@ public class ReCiterController {
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
     
-    @Autowired
-    private OrcidService orcidService;
 
-    @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description = "This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
+    @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description ="This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "GoldStandard creation successful"),
-            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
-            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description  = "GoldStandard creation successful"),
+            @ApiResponse(responseCode = "401", description  = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description  = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description  = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.POST, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    @PostMapping(value = "/reciter/goldstandard", produces = "application/json")
+    public ResponseEntity updateGoldStandard(@RequestBody GoldStandard goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag,
     		@RequestParam(value = "source", required = false) String provenanceSource,
-    		@RequestParam(value = "entryPath", required = false) String entryPathParam,
-    		@RequestParam(value = "curatedBy", required = false, defaultValue = "0") int curatedBy) {
+    		@RequestParam(value = "entryPath", required = false) String entryPathParam,@RequestParam(value = "curatedBy", required = false, defaultValue = "0") int curatedBy) {
+    
         StopWatch stopWatch = new StopWatch("Update GoldStandard");
         stopWatch.start("Update GoldStandard");
     	if(goldStandard == null) {
@@ -189,7 +187,7 @@ public class ReCiterController {
     			dynamoDbGoldStandardService.save(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath, curatedBy);
     		}
     	} else {
-    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath, curatedBy);
+    		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath,curatedBy);
         }
     	reconcileExternalArticles(Collections.singletonList(goldStandard));
         stopWatch.stop();
@@ -199,17 +197,17 @@ public class ReCiterController {
 
     @Operation(summary = "Update the goldstandard by passing  a list of GoldStandard model(uid, knownPmids, rejectedPmids)", description = "This api updates the goldstandard by passing list of GoldStandard model(uid, knownPmids, rejectedPmids).")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "GoldStandard List creation successful"),
-            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
-            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    @ApiResponses(value = {
+    		@ApiResponse(responseCode = "200", description = "GoldStandard List creation successful"),
+    		@ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+    		@ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+    		@ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard", method = RequestMethod.PUT, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
+    
+    @PutMapping(value = "/reciter/goldstandard", produces = "application/json")
+    public ResponseEntity<List<GoldStandard>> updateGoldStandard(@RequestBody List<GoldStandard> goldStandard,@RequestParam(required = false) GoldStandardUpdateFlag goldStandardUpdateFlag,
     		@RequestParam(value = "source", required = false) String provenanceSource,
     		@RequestParam(value = "entryPath", required = false) String entryPathParam) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
@@ -233,16 +231,15 @@ public class ReCiterController {
 
     @Operation(summary = "Get the goldStandard by passing an uid", description = "This api gets the goldStandard by passing an uid.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "The goldstandard retrieval for supplied uid is successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
+    @GetMapping(value = "/reciter/goldstandard/{uid}", produces = "application/json")
     public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Get the goldStandard by passing an uid");
         stopWatch.start("Get the goldStandard by passing an uid");
@@ -252,39 +249,17 @@ public class ReCiterController {
         return ResponseEntity.ok(goldStandard);
     }
 
-    @Operation(summary = "Get curation audit history (FeedbackLog + ArticleProvenance) for a uid",
-            description = "Returns the curator action history (accept/reject/pending) for the person, newest first, each row enriched with how the PMID first arrived (ArticleProvenance).")
-    @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
-    })
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Audit history retrieval successful"),
-            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
-            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
-    })
-    @RequestMapping(value = "/reciter/feedback-log/{uid}", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity<List<AuditHistoryEntry>> retrieveFeedbackLogByUid(@PathVariable String uid) {
-        StopWatch stopWatch = new StopWatch("Get curation audit history by uid");
-        stopWatch.start("Get curation audit history by uid");
-        List<AuditHistoryEntry> history = feedbackLogQueryService.getAuditHistory(uid);
-        stopWatch.stop();
-        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-        return ResponseEntity.ok(history);
-    }
-
     @Operation(summary = "Delete a gold standard record by uid", description = "This api deletes a gold standard record from the GoldStandard table by uid.")
     @Parameters({
         @Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "GoldStandard deletion successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/goldstandard/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/reciter/goldstandard/{uid}", produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteGoldStandard(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete gold standard by uid");
@@ -297,15 +272,15 @@ public class ReCiterController {
 
     @Operation(summary = "Delete an analysis output by uid", description = "This api deletes an analysis output record from the AnalysisOutput table by uid.")
     @Parameters({
-        @Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "AnalysisOutput deletion successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/analysis/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/reciter/analysis/{uid}", produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteAnalysis(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete analysis by uid");
@@ -318,15 +293,15 @@ public class ReCiterController {
 
     @Operation(summary = "Delete an ESearchResult by uid", description = "This api deletes an ESearchResult record by uid.")
     @Parameters({
-        @Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "ESearchResult deletion successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/esearchresult/{uid}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/reciter/esearchresult/{uid}", produces = "application/json")
     @ResponseBody
     public ResponseEntity deleteESearchResult(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete ESearchResult by uid");
@@ -339,14 +314,15 @@ public class ReCiterController {
 
     @Operation(summary = "Bulk cleanup: delete records from all UID-keyed tables", description = "Deletes Identity, GoldStandard, AnalysisOutput, and ESearchResult records for a list of UIDs. Intended for external validation cleanup.")
     @Parameters({
-        @Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Bulk cleanup successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden")
     })
-    @RequestMapping(value = "/reciter/cleanup/by/uids", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/reciter/cleanup/by/uids", produces = "application/json")
     @ResponseBody
     public ResponseEntity cleanupByUids(@RequestBody List<String> uids) {
         StopWatch stopWatch = new StopWatch("Bulk cleanup by uids");
@@ -376,19 +352,18 @@ public class ReCiterController {
         return new ResponseEntity<>(results, HttpStatus.OK);
     }
 
-    @Operation(summary = "Retrieve Articles for all UID in Identity Table", description = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
+    @Operation(summary = "Retrieve Articles for all UID in Identity Table",  description = "This API retrieves candidate articles for all uid in Identity Table from pubmed and its complementing articles from scopus")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list for given list of uid"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/retrieve/articles/", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity retrieveArticles(RetrievalRefreshFlag refreshFlag) {
+    @GetMapping(value = "/reciter/retrieve/articles/", produces = "application/json")
+    public ResponseEntity retrieveArticles(@RequestParam(required = false) RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for all UID in Identity Table");
         stopWatch.start("Retrieve Articles for all UID in Identity Table");
         LocalDate initial = LocalDate.now();
@@ -409,17 +384,16 @@ public class ReCiterController {
 
     @Operation(summary = "Retrieve Articles for an UID.", description = "This API retrieves candidate articles for a given uid from pubmed and its complementing articles from scopus")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/retrieve/articles/by/uid", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
+    @GetMapping(value = "/reciter/retrieve/articles/by/uid", produces = "application/json")
+    public ResponseEntity retrieveArticlesByUid(@RequestParam(required = false) String uid,@RequestParam(required = false) RetrievalRefreshFlag refreshFlag) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for an UID");
         stopWatch.start("Retrieve Articles for an UID");
         List<Identity> identities = new ArrayList<>();
@@ -467,7 +441,7 @@ public class ReCiterController {
                     identities.add(identity);
             	eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
             	if (eSearchResult != null) {
-            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(eSearchResult.getRetrievalDate())).minusDays(1);
+            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(Date.from(eSearchResult.getRetrievalDate()))).minusDays(1);
             	} else {
             		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
             	}
@@ -480,8 +454,6 @@ public class ReCiterController {
                     log.error(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                 }
-            	
-            	
             }
         } catch (EmptyResultDataAccessException e) {
             log.error("No such entity exists: "+e);
@@ -492,18 +464,17 @@ public class ReCiterController {
         return ResponseEntity.ok().body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
     }
     
-    @Operation(summary = "Retrieve pending articles for a group of users.", description = "Retrieve pending articles for a group of users.")
+    @Operation(summary = "Retrieve pending articles for a group of users.",  description = "Retrieve pending articles for a group of users.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/feature-generator/by/group", method = RequestMethod.POST, produces = "application/json")
-    @ResponseBody
+    @PostMapping(value = "/reciter/feature-generator/by/group", produces = "application/json")
     public ResponseEntity retrieveBulkFeatureGenerator(@RequestBody(required = false) List<String> uids, @RequestParam(required =false) List<String> personType, @RequestParam(required = false) List<String> organizationalAffiliation, @RequestParam(required = false) List<String> departmentalAffiliation,
     		@RequestParam(required = true) Double totalStandardizedArticleScore, @RequestParam(required = true) int maxArticlesPerPerson) {
         
@@ -611,22 +582,25 @@ public class ReCiterController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There is no publications data for the group. Please wait while feature-generator re-runs tonight.");
     }
-
-    @Operation(summary = "Feature generation for UID.", description = "This api generates all the suggestion for a given uid along with its relevant evidence.")
+    @Operation(summary = "Feature generation for UID.",  description  = "This api generates all the suggestion for a given uid along with its relevant evidence.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string")),
-    	@Parameter(name = "fields", description = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", in = ParameterIn.QUERY, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string")),
+    	@Parameter(name = "fields", description = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", in =ParameterIn.QUERY, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found"),
             @ApiResponse(responseCode = "500", description = "The uid provided was not found in the Identity table")
     })
-    @RequestMapping(value = "/reciter/feature-generator/by/uid", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity runFeatureGenerator(@RequestParam(value = "uid") String uid, Double authorshipLikelihoodScore, UseGoldStandard useGoldStandard, FilterFeedbackType filterByFeedback, boolean analysisRefreshFlag, RetrievalRefreshFlag retrievalRefreshFlag,
+    @GetMapping(value = "/reciter/feature-generator/by/uid", produces = "application/json")
+    public ResponseEntity runFeatureGenerator(@RequestParam String uid,
+    		@RequestParam(required = false)	Double authorshipLikelihoodScore ,
+    		@RequestParam(required = false) UseGoldStandard useGoldStandard, 
+    		@RequestParam(required = false) FilterFeedbackType filterByFeedback, 
+    		@RequestParam(required = false) boolean analysisRefreshFlag,
+    		@RequestParam(required = false) RetrievalRefreshFlag retrievalRefreshFlag,
     		@RequestParam(value = "includeExternal", required = false, defaultValue = "false") boolean includeExternal) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
@@ -694,7 +668,7 @@ public class ReCiterController {
 			{
 				analysis.getReCiterFeature().setCountPendingArticles(0);
 			}
-        	//All the results are filtered based on filterByFeedback
+			//All the results are filtered based on filterByFeedback
         	if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
 				// FIX (#640-A): Compute precision/recall/accuracy ONCE over the FULL candidate
@@ -974,21 +948,21 @@ public class ReCiterController {
         }
     }
     
-    @Operation(summary = "Article retrieval by UID.", description = "This api returns all the publication for a supplied uid.")
+    @Operation(summary = "Article retrieval by UID.", description =  "This api returns all the publication for a supplied uid.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string")),
-    	@Parameter(name = "fields", description = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", in = ParameterIn.QUERY, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description  = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string")),
+    	@Parameter(name = "fields", description = "Fields to return (e.g., reCiterArticleFeatures.pmid,reCiterArticleFeatures.publicationType.publicationTypeCanonical). Default is all.", in =ParameterIn.QUERY, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found"),
             @ApiResponse(responseCode = "500", description = "The uid provided was not found in the Identity table")
     })
-    @RequestMapping(value = "/reciter/article-retrieval/by/uid", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity runArticleRetrievalByUid(@RequestParam(value = "uid") String uid, Double totalStandardizedArticleScore, FilterFeedbackType filterByFeedback) {
+    
+    @GetMapping(value = "/reciter/article-retrieval/by/uid", produces = "application/json")
+    public ResponseEntity runArticleRetrievalByUid(@RequestParam String uid, @RequestParam(required = false) Double totalStandardizedArticleScore,@RequestParam(required = false) FilterFeedbackType filterByFeedback) {
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         
@@ -1092,6 +1066,28 @@ public class ReCiterController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There is no publications data for uid " + uid + ". Please wait while feature-generator re-runs tonight.");
        
     }
+    
+    @Operation(summary = "Get curation audit history (FeedbackLog + ArticleProvenance) for a uid",
+            description = "Returns the curator action history (accept/reject/pending) for the person, newest first, each row enriched with how the PMID first arrived (ArticleProvenance).")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Audit history retrieval successful"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    })
+    @GetMapping(value = "/reciter/feedback-log/{uid}", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<List<AuditHistoryEntry>> retrieveFeedbackLogByUid(@PathVariable String uid) {
+        StopWatch stopWatch = new StopWatch("Get curation audit history by uid");
+        stopWatch.start("Get curation audit history by uid");
+        List<AuditHistoryEntry> history = feedbackLogQueryService.getAuditHistory(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok(history);
+    }
 
 
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
@@ -1111,8 +1107,6 @@ public class ReCiterController {
             	retrieveArticlesByUid(uid, retrievalRefreshFlag);
             	eSearchResults = eSearchResultService.findByUid(uid);
             }
-            
-            
         } catch (EmptyResultDataAccessException e) {
             log.error("No such entity exists: "+ e);
         }
@@ -1213,27 +1207,4 @@ public class ReCiterController {
         }
         return parameters;
     }
-
-    @Operation(summary = "Get all identity ORCIDs", description = "This api retrieves all ORCIDs stored in the identity table.")
-    @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
-    })
-	    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved Map"),
-            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
-            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
-    })
-
-    @RequestMapping(value = "/reciter/article-identityOrcids", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity getAllOrcid() {
-    	StopWatch stopWatch = new StopWatch("getAllOrcid");
-    	stopWatch.start("Fetching all ORCIDs");
-        Map<String, String> allOrcids = orcidService.getAllOrcids();
-        stopWatch.stop();
-        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-        return new ResponseEntity<>(allOrcids, HttpStatus.OK);
-    }
-
 }

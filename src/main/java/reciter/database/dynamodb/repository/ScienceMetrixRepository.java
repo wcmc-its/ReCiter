@@ -1,43 +1,73 @@
 package reciter.database.dynamodb.repository;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-
 import reciter.database.dynamodb.model.ScienceMetrix;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 @Repository
-public class ScienceMetrixRepository extends DynamoDbCrudRepository<ScienceMetrix, Long> {
+public class ScienceMetrixRepository {
 
-    public ScienceMetrixRepository(DynamoDBMapper dynamoDBMapper) {
-        super(dynamoDBMapper, ScienceMetrix.class);
-    }
+	private final DynamoDbTable<ScienceMetrix> scienceMetrixTable;
 
-    public ScienceMetrix findByEissn(String eissn) {
-        return scanFirstByStringAttribute("eissn", eissn);
-    }
+	public ScienceMetrixRepository(DynamoDbEnhancedClient enhancedClient) {
+		this.scienceMetrixTable = enhancedClient.table("ScienceMetrix", TableSchema.fromBean(ScienceMetrix.class));
+	}
 
-    public ScienceMetrix findByIssn(String issn) {
-        return scanFirstByStringAttribute("issn", issn);
-    }
+	public Collection<ScienceMetrix> saveAll(Collection<ScienceMetrix> scienceMetrics) {
+		scienceMetrics.forEach(scienceMetrix -> scienceMetrixTable.putItem(scienceMetrix));
+		return scienceMetrics;
+	}
 
-    /**
-     * Replaces the former Spring Data derived query. The {@code @EnableScan}
-     * repositories scanned with an equality filter on the (non-key) attribute, so
-     * this performs the same scan and returns the first match (or {@code null}).
-     */
-    private ScienceMetrix scanFirstByStringAttribute(String attributeName, String value) {
-        DynamoDBScanExpression scan = new DynamoDBScanExpression()
-                .withFilterExpression("#attr = :val")
-                .withExpressionAttributeNames(Collections.singletonMap("#attr", attributeName))
-                .withExpressionAttributeValues(
-                        Collections.singletonMap(":val", new AttributeValue().withS(value)));
-        List<ScienceMetrix> results = dynamoDBMapper.scan(ScienceMetrix.class, scan);
-        return results.isEmpty() ? null : results.get(0);
-    }
+	public List<ScienceMetrix> findAll() {
+		return scienceMetrixTable.scan().items().stream().toList();
+	}
+
+	public ScienceMetrix findBySmsid(Long smsid) {
+		return scienceMetrixTable.getItem(r -> r.key(k -> k.partitionValue(smsid)));
+	}
+
+	public void save(Collection<ScienceMetrix> scienceMetrics) {
+		scienceMetrics.forEach(scienceMetrix -> scienceMetrixTable.putItem(scienceMetrix));
+
+	}
+
+	public ScienceMetrix findByEissn(String eissn) {
+		return findByAttribute("eissn", eissn);
+	}
+
+	public ScienceMetrix findByIssn(String issn) {
+		return findByAttribute("issn", issn);
+	}
+
+	@SuppressWarnings("unused")
+	public long count() {
+		long count = 0;
+
+		for (ScienceMetrix scienceMetrix : scienceMetrixTable.scan().items()) {
+			count++;
+		}
+		return count;
+	}
+
+	public ScienceMetrix findByAttribute(String attributeName, String value) {
+		Map<String, AttributeValue> expressionValues = Map.of(":value", AttributeValue.builder().s(value).build());
+
+		Expression filterExpression = Expression.builder().expression(attributeName + " = :value")
+				.expressionValues(expressionValues).build();
+
+		ScanEnhancedRequest scanRequest = ScanEnhancedRequest.builder().filterExpression(filterExpression).build();
+
+		return scienceMetrixTable.scan(scanRequest).items().stream().findFirst().orElse(null);
+	}
+
 }

@@ -19,7 +19,15 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
-import java.util.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -32,27 +40,24 @@ import org.springframework.stereotype.Component;
 
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
-import reciter.utils.ReCiterStringUtil;
 import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.database.dynamodb.model.ESearchCount;
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.model.PmidProvenance;
 import reciter.database.dynamodb.model.QueryType;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
-import reciter.model.identity.PubMedAlias;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
-import reciter.database.dynamodb.model.PmidProvenance;
 import reciter.service.ArticleProvenanceService;
 import reciter.service.ESearchCountService;
 import reciter.service.ESearchResultService;
 import reciter.service.PmidProvenanceService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameSanitizationUtils;
-import reciter.utils.AuthorNameUtils;
-import reciter.utils.ThreadDelay;
+import reciter.utils.ReCiterStringUtil;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 import reciter.xml.retriever.pubmed.PubMedQueryType;
 
@@ -394,7 +399,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			Date now = new Date();
 			List<PmidProvenance> provenanceRecords = new ArrayList<>();
 			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
-				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), now, entry.getValue()));
+				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
 			}
 			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
 			slf4jLogger.info("Wrote {} provenance records for uid={}", provenanceRecords.size(), uid);
@@ -695,7 +700,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			Date now = new Date();
 			List<PmidProvenance> provenanceRecords = new ArrayList<>();
 			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
-				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), now, entry.getValue()));
+				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
 			}
 			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
 			slf4jLogger.info("Wrote {} provenance records (date-range) for uid={}", provenanceRecords.size(), uid);

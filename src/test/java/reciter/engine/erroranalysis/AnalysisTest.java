@@ -143,4 +143,5 @@ public class AnalysisTest {
         assertEquals(REJECTED, articles.get(1).getGoldStandard());
         assertEquals(PENDING, articles.get(2).getGoldStandard());
     }
+
 }

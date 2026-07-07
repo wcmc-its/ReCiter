@@ -12,13 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
-
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.database.dynamodb.model.GoldStandard;
+import reciter.database.dynamodb.repository.ExternalArticleRepository;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.service.AnalysisService;
 import reciter.service.ExternalArticleService;
@@ -28,45 +25,36 @@ public class ExternalArticleServiceImpl implements ExternalArticleService {
 
     private static final Logger log = LoggerFactory.getLogger(ExternalArticleServiceImpl.class);
 
-    private final DynamoDBMapper dynamoDBMapper;
+    private final ExternalArticleRepository externalArticleRepository;
     private final AnalysisService analysisService;
     private final IDynamoDbGoldStandardService dynamoDbGoldStandardService;
 
-    public ExternalArticleServiceImpl(AmazonDynamoDB amazonDynamoDB,
+    public ExternalArticleServiceImpl(ExternalArticleRepository externalArticleRepository,
                                       AnalysisService analysisService,
                                       IDynamoDbGoldStandardService dynamoDbGoldStandardService) {
-        this.dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB);
+        this.externalArticleRepository = externalArticleRepository;
         this.analysisService = analysisService;
         this.dynamoDbGoldStandardService = dynamoDbGoldStandardService;
     }
 
     @Override
     public void save(ExternalArticle externalArticle) {
-        dynamoDBMapper.save(externalArticle);
+    	externalArticleRepository.save(externalArticle);
     }
 
     @Override
     public List<ExternalArticle> findByUid(String uid) {
-        ExternalArticle hashKey = new ExternalArticle();
-        hashKey.setUid(uid);
-        DynamoDBQueryExpression<ExternalArticle> queryExpression =
-                new DynamoDBQueryExpression<ExternalArticle>()
-                        .withHashKeyValues(hashKey)
-                        .withConsistentRead(true);
-        return dynamoDBMapper.query(ExternalArticle.class, queryExpression);
+    	return externalArticleRepository.findByUid(uid);
     }
 
     @Override
     public ExternalArticle find(String uid, String articleId) {
-        return dynamoDBMapper.load(ExternalArticle.class, uid, articleId);
+    	 return externalArticleRepository.find(uid, articleId).orElse(null);
     }
 
     @Override
     public void delete(String uid, String articleId) {
-        ExternalArticle key = new ExternalArticle();
-        key.setUid(uid);
-        key.setArticleId(articleId);
-        dynamoDBMapper.delete(key);
+    	externalArticleRepository.delete(uid, articleId);
     }
 
     @Override

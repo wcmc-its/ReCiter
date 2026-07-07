@@ -18,12 +18,15 @@
  *******************************************************************************/
 package reciter.engine.erroranalysis;
 
-import reciter.model.article.ReCiterArticle;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import reciter.model.article.ReCiterArticle;
 
 /**
  * Computes precision, recall, and accuracy for ReCiter article suggestions.
@@ -47,8 +50,9 @@ import java.util.Set;
  */
 public class Analysis {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Analysis.class);
 
+	private static final Logger log = LoggerFactory.getLogger(Analysis.class);
+	
     private double precision;
     private double recall;
     private double accuracy;
@@ -146,7 +150,7 @@ public class Analysis {
                 analysis.getFalsePositiveList().add(pmid);
             } else {
                 // goldStandard == 1 but not in goldSet — data inconsistency;
-                // treat conservatively as TN, but surface it (FIX #640-D) so gold/cache
+            	// treat conservatively as TN, but surface it (FIX #640-D) so gold/cache
                 // divergence is no longer silently absorbed.
                 log.warn("Accepted article pmid={} is labelled goldStandard==1 but is absent from the supplied gold-standard set (size={}); classifying as TN. Gold standard and cached analysis may be out of sync.", pmid, goldSet.size());
                 analysis.getTrueNegativeList().add(pmid);

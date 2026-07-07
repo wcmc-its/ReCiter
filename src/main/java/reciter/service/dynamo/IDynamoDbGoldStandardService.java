@@ -27,7 +27,6 @@ public interface IDynamoDbGoldStandardService {
      */
     void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
               String provenanceSource, reciter.feedback.EntryPath entryPath, int curatedBy);
-
     GoldStandard findByUid(String uid);
     List<GoldStandard> findByUids(List<String> uid);
     void delete(String uid);

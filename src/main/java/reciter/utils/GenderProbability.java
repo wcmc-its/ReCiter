@@ -105,7 +105,7 @@ public class GenderProbability {
 						.add(new Gender(matchGender.getUniqueId(), matchGender.getName(), matchGender.getGender(), ((matchGender.getGender() == GenderEnum.F)?(1 - matchGender.getProbability()):matchGender.getProbability())));
 					});
 					Double avgProbability = matchingGendersCopy.stream().mapToDouble(Gender::getProbability).average().getAsDouble();
-					identity.setGender(new Gender(null, null, null, avgProbability));
+					identity.setGender(new reciter.model.identity.Gender(null, null, null, avgProbability));
 			}
 		}
 	}

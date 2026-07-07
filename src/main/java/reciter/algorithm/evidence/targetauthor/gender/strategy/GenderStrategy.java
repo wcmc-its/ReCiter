@@ -28,7 +28,7 @@ public class GenderStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		if(identity.getGender() != null) {
-			Gender identityGender = identity.getGender();
+			reciter.model.identity.Gender identityGender = identity.getGender();
 			for (ReCiterArticle reCiterArticle : reCiterArticles) {
 				Gender genderArticle = GenderProbability.getGenderArticleProbability(reCiterArticle);
 				Double genderScore = null;
@@ -46,7 +46,8 @@ public class GenderStrategy extends AbstractTargetAuthorStrategy {
 					genderEvidence.setGenderScoreIdentityArticleDiscrepancy(BigDecimal.valueOf(genderScore).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
 				}
 				reCiterArticle.setGenderEvidence(genderEvidence);
-				log.info("Pmid: " + reCiterArticle.getArticleId() + " " + genderEvidence.toString());
+				//enable if requrired for debugging
+				//log.info("Pmid: " + reCiterArticle.getArticleId() + " " + genderEvidence.toString());
 			}
 		}
 		

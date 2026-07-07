@@ -1,5 +1,6 @@
 package reciter.service.dynamo;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -8,18 +9,18 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 import reciter.api.parameters.GoldStandardUpdateFlag;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
+import reciter.database.dynamodb.model.FeedbackLog;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.database.dynamodb.model.GoldStandardAuditLog;
 import reciter.database.dynamodb.model.PmidProvenance;
@@ -32,25 +33,17 @@ import reciter.service.FeedbackLogService;
 import reciter.service.PmidProvenanceService;
 
 @Service("DynamoDbGoldStandardService")
+@RequiredArgsConstructor
 public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService {
 
     private static final Logger log = LoggerFactory.getLogger(DynamoDbGoldStandardService.class);
     private static final String PM_MANUAL_STRATEGY = "PublicationManagerManual";
 
-    @Autowired
-    private DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
-
-    @Autowired
-    private ESearchResultService eSearchResultService;
-
-    @Autowired
-    private PmidProvenanceService pmidProvenanceService;
-
-    @Autowired
-    private FeedbackLogService feedbackLogService;
-
-    @Autowired
-    private ArticleProvenanceService articleProvenanceService;
+    private final DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
+    private final ESearchResultService eSearchResultService;
+    private final PmidProvenanceService pmidProvenanceService;
+    private final FeedbackLogService feedbackLogService;
+    private final ArticleProvenanceService articleProvenanceService;
 
     // ---- Phase 33-02 4-arg overloads -----------------------------------------------------------
     // Existing 3-arg save() callers default entryPath to CANDIDATE_LIST. Controllers that want to
@@ -69,7 +62,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     @Override
     public void save(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag,
                      String provenanceSource, EntryPath entryPath) {
-        saveInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath, 0);
+        saveInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath,0);
     }
 
     @Override
@@ -79,6 +72,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     }
 
     private void saveInternal(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath, int curatedBy) {
+    	
     	// Resolve provenance strategy: caller-supplied source, or default
     	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
     			? provenanceSource : PM_MANUAL_STRATEGY;
@@ -236,7 +230,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						goldStandard.getUid(),
     						incomingAcceptedPmids, incomingRejectedPmids,
     						existingAccepted, existingRejected,
-    						entryPath, curatedBy);
+    						entryPath,curatedBy);
     			}
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		}
@@ -345,11 +339,10 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						auditLog.addAll(newEntries);
     						goldStandardNew.setAuditLog(auditLog);
     					}
-    					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff.
-    					// Bulk/list (PUT) path carries no interactive curator id -> curatedBy = 0.
+    					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff
     					recordFeedbackLogAndArticleProvenance(uid,
     							batchIncomingAccepted, batchIncomingRejected,
-    							existingAccepted, existingRejected, entryPath, 0);
+    							existingAccepted, existingRejected, entryPath,0);
     				}
     			}
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
@@ -395,7 +388,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 			entries.add(GoldStandardAuditLog.builder()
 					.userVerbose(source)
 					.uid(uid)
-					.dateTime(now)
+					.dateTime(Instant.now())
 					.pmids(newlyAccepted)
 					.action(PublicationFeedback.ACCEPTED)
 					.build());
@@ -407,7 +400,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 			entries.add(GoldStandardAuditLog.builder()
 					.userVerbose(source)
 					.uid(uid)
-					.dateTime(now)
+					.dateTime(Instant.now())
 					.pmids(newlyRejected)
 					.action(PublicationFeedback.REJECTED)
 					.build());
@@ -444,7 +437,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	private void recordFeedbackLogAndArticleProvenance(String uid,
 			List<Long> incomingAccepted, List<Long> incomingRejected,
 			List<Long> existingAccepted, List<Long> existingRejected,
-			EntryPath entryPath, int curatedBy) {
+			EntryPath entryPath,int curatedBy) {
 		long actionEpoch = System.currentTimeMillis() / 1000L;
 		Set<Long> incomingAccSet = new HashSet<>(incomingAccepted);
 		Set<Long> incomingRejSet = new HashSet<>(incomingRejected);
@@ -474,15 +467,37 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 				uid, entryPath, newlyAccepted.size(), newlyRejected.size(), newlyPending.size());
 
 		for (Long pmid : newlyAccepted) {
-			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.ACCEPTED, curatedBy, actionEpoch);
+			FeedbackLog logEntry = new FeedbackLog();
+			logEntry.setUid(uid);
+		    logEntry.setArticleId(String.valueOf(pmid));
+		    logEntry.setFeedback(FeedbackLogService.Feedback.ACCEPTED.name());
+		    logEntry.setCuratedBy(curatedBy);
+		    logEntry.setCreateTimestamp(actionEpoch);
+		    logEntry.setModifyTimestamp(actionEpoch);
+			
+			feedbackLogService.recordAction(logEntry);
 			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
 		}
 		for (Long pmid : newlyRejected) {
-			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.REJECTED, curatedBy, actionEpoch);
+			FeedbackLog logEntry = new FeedbackLog();
+		    logEntry.setUid(uid);
+		    logEntry.setArticleId(String.valueOf(pmid));
+		    logEntry.setFeedback(FeedbackLogService.Feedback.REJECTED.name());
+		    logEntry.setCuratedBy(curatedBy);
+		    logEntry.setCreateTimestamp(actionEpoch);
+		    logEntry.setModifyTimestamp(actionEpoch);
+			feedbackLogService.recordAction(logEntry);
 			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
 		}
 		for (Long pmid : newlyPending) {
-			feedbackLogService.recordAction(uid, pmid, FeedbackLogService.Feedback.PENDING, curatedBy, actionEpoch);
+			FeedbackLog logEntry = new FeedbackLog();
+		    logEntry.setUid(uid);
+		    logEntry.setArticleId(String.valueOf(pmid));
+		    logEntry.setFeedback(FeedbackLogService.Feedback.PENDING.name());
+		    logEntry.setCuratedBy(curatedBy);
+		    logEntry.setCreateTimestamp(actionEpoch);
+		    logEntry.setModifyTimestamp(actionEpoch);
+			feedbackLogService.recordAction(logEntry);
 			articleProvenanceService.upsertCuratorAction(uid, pmid, entryPath, actionEpoch);
 		}
 	}
@@ -497,7 +512,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		List<PmidProvenance> provenanceRecords = new ArrayList<>();
 		Date now = new Date();
 		for (Long pmid : pmids) {
-			PmidProvenance provenance = new PmidProvenance(uid, pmid, now, strategy);
+			PmidProvenance provenance = new PmidProvenance(uid, pmid, Instant.now(), strategy);
 			provenanceRecords.add(provenance);
 		}
 		pmidProvenanceService.saveAllIfNotExists(provenanceRecords);

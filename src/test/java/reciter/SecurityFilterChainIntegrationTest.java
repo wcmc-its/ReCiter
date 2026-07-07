@@ -11,14 +11,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.s3.AmazonS3;
 
 import reciter.consumer.service.CognitoAuthService;
 import reciter.security.CognitoClientRegistry;
@@ -28,6 +25,8 @@ import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.s3.S3Client;
 
 /**
  * Stage 3 (#634): exercises the migrated {@code SecurityFilterChain} + {@code WebSecurityCustomizer}
@@ -47,7 +46,7 @@ import reciter.service.dynamo.DynamoDbMeshTermService;
  * and {@code CONSUMER_API_KEY} before the build (see plan docs/634-modernization/634-stage3-boot27-plan.md
  * §3e / open question 2). The Stage-0 smoke test remains the always-on context-load gate.
  *
- * <p>Mirrors the smoke test's {@code @MockBean} set so the context loads without live AWS. The
+ * <p>Mirrors the smoke test's {@code @MockitoBean} set so the context loads without live AWS. The
  * {@code jwtDecoder()} bean stays on its fail-fast branch ({@code aws.cognito.user-pool-id=NONE});
  * no Bearer token is sent here, so that is fine. Assertions about the positive (valid-key / permitAll)
  * paths check that security did <i>not</i> reject the request (not 401/403); a downstream 200/400/500
@@ -60,16 +59,16 @@ import reciter.service.dynamo.DynamoDbMeshTermService;
 @ActiveProfiles("test")
 public class SecurityFilterChainIntegrationTest {
 
-    @MockBean private AmazonDynamoDB amazonDynamoDB;
-    @MockBean private AmazonS3 amazonS3;
-    @MockBean private CognitoAuthService cognitoAuthService;
-    @MockBean private CognitoClientRegistry cognitoClientRegistry;
-    @MockBean private ScienceMetrixService scienceMetrixService;
-    @MockBean private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
-    @MockBean private DynamoDbMeshTermService dynamoDbMeshTermService;
-    @MockBean private GenderService genderService;
-    @MockBean private NameFrequencyService nameFrequencyService;
-    @MockBean private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
+	@MockitoBean private DynamoDbClient dynamoDbClient;
+	@MockitoBean private S3Client s3Client;
+	@MockitoBean private CognitoAuthService cognitoAuthService;
+	@MockitoBean private CognitoClientRegistry cognitoClientRegistry;
+	@MockitoBean private ScienceMetrixService scienceMetrixService;
+	@MockitoBean private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
+	@MockitoBean private DynamoDbMeshTermService dynamoDbMeshTermService;
+	@MockitoBean private GenderService genderService;
+	@MockitoBean private NameFrequencyService nameFrequencyService;
+	@MockitoBean private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
 
     @Autowired private MockMvc mockMvc;
 

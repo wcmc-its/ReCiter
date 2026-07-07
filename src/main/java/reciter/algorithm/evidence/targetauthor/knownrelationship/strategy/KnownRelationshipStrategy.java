@@ -223,7 +223,8 @@ public class KnownRelationshipStrategy extends AbstractTargetAuthorStrategy {
 			//relaEvidence.setRelationshipNegativeMatch(relationshipNegativeMatch);
 			
 			reCiterArticle.setRelationshipEvidence(relaEvidence);
-			log.info("Pmid: " + reCiterArticle.getArticleId() + " " + relaEvidence.toString());
+			//enable if requrired for debugging
+			//log.info("Pmid: " + reCiterArticle.getArticleId() + " " + relaEvidence.toString());
 		}
 		return sum;
 	}
