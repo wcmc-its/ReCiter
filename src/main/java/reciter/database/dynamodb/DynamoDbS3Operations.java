@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -15,18 +14,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
-import reciter.model.pubmed.PubMedArticle;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkServiceException;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 /**
  * This class allows you to store dynamodb items which exceeds dynamodb item limit of 400kb in s3.
@@ -41,9 +46,10 @@ public class DynamoDbS3Operations {
 	
 	@Lazy
 	@Autowired
-	private AmazonS3 s3;
+	private S3Client  s3;
 	
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+			.registerModule(new JavaTimeModule());
 	
 	private static final String CONTENT_TYPE = "application/json";
 	
@@ -64,7 +70,7 @@ public class DynamoDbS3Operations {
 			return;
 		}
 
-		if(s3 != null && bucketName != null && !s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
+		if(s3 != null && bucketName != null && !s3ObjectExists(bucketName.toLowerCase(), keyName)) {
 			
 			//AmazonS3Config.createFolder(bucketName, AnalysisOutput.class.getName(), s3);
 			String objectContentString = null;
@@ -73,23 +79,38 @@ public class DynamoDbS3Operations {
 			} catch (JsonProcessingException e) {
 				log.error(e.getMessage());
 			}
-			byte[] objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
-			InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
-			ObjectMetadata metadata = new ObjectMetadata();
-			metadata.setContentType(CONTENT_TYPE);
-			metadata.setContentLength(objectContentBytes.length);
-			PutObjectRequest putObjectRequest = new PutObjectRequest(
-					bucketName.toLowerCase(), keyName, fileInputStream, metadata);
-			try{
-				s3.putObject(putObjectRequest);
-			} catch(AmazonServiceException e) {
-				// The call was transmitted successfully, but Amazon S3 couldn't process 
-	            // it, so it returned an error response.
-				log.error(e.getErrorMessage());
+			byte[] objectContentBytes;
+			if(objectContentString!=null)
+			{	
+				objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
+				InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
+				PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+				        .bucket(bucketName.toLowerCase())
+				        .key(keyName)
+				        .contentType(CONTENT_TYPE)
+				        .contentLength((long) objectContentBytes.length)
+				        .build();
+	
+				
+	
+				try{
+					s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
+				} catch(SdkServiceException e) {
+					// The call was transmitted successfully, but Amazon S3 couldn't process 
+		            // it, so it returned an error response.
+					log.error("S3 putObject failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
+				}
 			}
 		} else {
 			log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
-			s3.deleteObject(bucketName.toLowerCase(), keyName);
+			DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+			        .bucket(bucketName.toLowerCase())
+			        .key(keyName)
+			        .build();
+
+			s3.deleteObject(deleteObjectRequest);
+
+			//s3.deleteObject(bucketName.toLowerCase(), keyName);
 			//Delete the object and insert it again
 			String objectContentString = null;
 			try {
@@ -97,23 +118,44 @@ public class DynamoDbS3Operations {
 			} catch (JsonProcessingException e) {
 				log.error(e.getMessage());
 			}
-			byte[] objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
-			InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
-			ObjectMetadata metadata = new ObjectMetadata();
-			metadata.setContentType(CONTENT_TYPE);
-			metadata.setContentLength(objectContentBytes.length);
-			PutObjectRequest putObjectRequest = new PutObjectRequest(
-					bucketName.toLowerCase(), keyName, fileInputStream, metadata);
-			try{
-				s3.putObject(putObjectRequest);
-			}
-			catch(AmazonServiceException e) {
-				// The call was transmitted successfully, but Amazon S3 couldn't process 
-	            // it, so it returned an error response.
-				log.error(e.getErrorMessage());
+			byte[] objectContentBytes;
+			if(objectContentString!=null)
+			{
+				objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
+				InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
+				PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+				        .bucket(bucketName.toLowerCase())
+				        .key(keyName)
+				        .contentType(CONTENT_TYPE)
+				        .contentLength((long) objectContentBytes.length)
+				        .build();
+				try{
+					s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
+				}
+				catch(SdkServiceException e) {
+					// The call was transmitted successfully, but Amazon S3 couldn't process 
+		            // it, so it returned an error response.
+					log.error("S3 putObject (replace) failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
+				}
 			}
 		}
 	}
+	
+	private boolean s3ObjectExists(String bucketName, String keyName) {
+	    try {
+	        s3.headObject(HeadObjectRequest.builder()
+	                .bucket(bucketName)
+	                .key(keyName)
+	                .build());
+	        return true; // Object exists
+	    } catch (NoSuchKeyException e) {
+	        return false; // Object does not exist
+	    } catch (S3Exception e) {
+	        log.error("Error checking object existence in S3: {}", e.awsErrorDetails().errorMessage());
+	        return false;
+	    }
+	}
+
 	
 	/**
 	 * This function retrieves large object from S3
@@ -130,26 +172,32 @@ public class DynamoDbS3Operations {
 			return null;
 		}
 		try {
-			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
-			String objectContent = IOUtils.toString(s3Object.getObjectContent(), StandardCharsets.UTF_8);
-			if(objectClass == ReCiterFeature.class) {
-				ReCiterFeature reCiterFeature = OBJECT_MAPPER.readValue(objectContent, ReCiterFeature.class);
-				return reCiterFeature;
-			}
-			if(objectClass == Identity.class) {
-				List<Identity> identities = Arrays.asList(OBJECT_MAPPER.readValue(objectContent, Identity[].class));
-				return identities;
-			}
-			if(objectClass == PubMedArticle.class) {
-				PubMedArticle pubMedArticle = OBJECT_MAPPER.readValue(objectContent, PubMedArticle.class);
-				return pubMedArticle;
-			}
+			//S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 			
-		} catch (IOException | AmazonServiceException e) {
-			log.error(e.getMessage());
+			GetObjectRequest getObjectRequest  = GetObjectRequest.builder()
+			        .bucket(bucketName.toLowerCase())
+			        .key(keyName)
+			        .build();
+			try (ResponseInputStream<GetObjectResponse> s3Object = s3.getObject(getObjectRequest)) {
+			    String objectContent = IOUtils.toString(s3Object, StandardCharsets.UTF_8);
+
+			    if (objectClass == ReCiterFeature.class) {
+			        return OBJECT_MAPPER.readValue(objectContent, ReCiterFeature.class);
+			    }
+			    if (objectClass == Identity.class) {
+			        return Arrays.asList(OBJECT_MAPPER.readValue(objectContent, Identity[].class));
+			    }
+			} catch (IOException | S3Exception e) {
+			    log.error("Error retrieving object from S3: {}", e.getMessage());
+			}
+		
+
+		
+	}
+		catch (SdkServiceException e) {
+			log.error("S3 getObject failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
 		}
 		return null;
-		
 	}
 	
 	/**
@@ -157,12 +205,26 @@ public class DynamoDbS3Operations {
 	 * @param bucketName
 	 * @param keyName
 	 */
-	public void deleteLargeItem(String bucketName, String keyName) {
+	/*public void deleteLargeItem(String bucketName, String keyName) {
 		if(s3 != null && bucketName != null && s3.doesObjectExist(bucketName.toLowerCase(), keyName)) {
 			log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
 			s3.deleteObject(bucketName.toLowerCase(), keyName);
 		}
 	}
+	*/
+	public void deleteLargeItem(String bucketName, String keyName) {
+	    if (s3 != null && bucketName != null && s3ObjectExists(bucketName.toLowerCase(), keyName)) {
+	        log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
+
+	        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+	                .bucket(bucketName.toLowerCase())
+	                .key(keyName)
+	                .build();
+
+	        s3.deleteObject(deleteObjectRequest);
+	    }
+	}
+
 
 	/**
 	 * This function gets the timestamp of the object that was stored. It assumes versioning is turned off for bucket.
@@ -177,13 +239,19 @@ public class DynamoDbS3Operations {
 		if (s3 == null || bucketName == null) {
 			return null;
 		}
-		try {
-			S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
-			Date lastModifedDate = s3Object.getObjectMetadata().getLastModified();
-			return lastModifedDate;
-		} catch (AmazonServiceException e) {
-			log.error(e.getMessage());
-		}
-		return null;
+	    try {
+	        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+	                .bucket(bucketName.toLowerCase())
+	                .key(keyName)
+	                .build();
+
+	        HeadObjectResponse headObjectResponse = s3.headObject(headObjectRequest);
+
+	        return Date.from(headObjectResponse.lastModified());
+	    } catch (S3Exception e) {
+	        log.error("Error retrieving object metadata from S3: {}", e.awsErrorDetails().errorMessage());
+	    }
+	    return null;
 	}
+
 }

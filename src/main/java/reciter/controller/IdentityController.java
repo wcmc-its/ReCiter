@@ -26,14 +26,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StopWatch;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,7 +46,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
-@Controller
+
+
+@RestController
 public class IdentityController {
 
 	private static final Logger log = LoggerFactory.getLogger(IdentityController.class);
@@ -55,19 +58,18 @@ public class IdentityController {
     @Value("${identity.dynamodb.mandatory.fields}")
     private String mandatoryFields;
 
-    @Operation(summary = "Add an identity to Identity table in DynamoDb", description = "This api creates an identity in the Identity table in dynamoDb by collecting identity data from different system of records.")
+    @Operation(summary  = "Add an identity to Identity table in DynamoDb", description  = "This api creates an identity in the Identity table in dynamoDb by collecting identity data from different system of records.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Identity creation successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/identity/", method = RequestMethod.POST, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity addIdentity(@RequestBody Identity identity) {
+    @PostMapping(value = "/reciter/identity/", produces = "application/json")
+    public ResponseEntity<?> addIdentity(@RequestBody Identity identity) {
         StopWatch stopWatch = new StopWatch("Add an identity to Identity table in DynamoDb");
         stopWatch.start("Add an identity to Identity table in DynamoDb");
      // Validate the mandatory fields
@@ -85,18 +87,17 @@ public class IdentityController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Add list of identities to Identity table in DynamoDb", description = "This api creates list of identities in the Identity table in dynamoDb by collecting identity data from different system of records.")
+    @Operation(summary  = "Add list of identities to Identity table in DynamoDb", description  = "This api creates list of identities in the Identity table in dynamoDb by collecting identity data from different system of records.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description  = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Identity List creation successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/save/identities/", method = RequestMethod.PUT, produces = "application/json")
-    @ResponseBody
+    @PutMapping(value = "/reciter/save/identities/", produces = "application/json")
     public void saveIdentities(@RequestBody List<Identity> identities) {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
         stopWatch.start("Add list of identities to Identity table in DynamoDb");
@@ -127,19 +128,18 @@ public class IdentityController {
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
     }
 
-    @Operation(summary = "Search the identity table for a given ID", description = "This api searches for a given identity in identity table.")
+    @Operation(summary  = "Search the identity table for a given ID", description = "This api searches for a given identity in identity table.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description  = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Identity found successfully"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/find/identity/by/uid", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity findByUid(@RequestParam String uid) {
+    @GetMapping(value = "/reciter/find/identity/by/uid", produces = "application/json")
+    public ResponseEntity<?> findByUid(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
         stopWatch.start("Search the identity table for a given ID");
         log.info("calling findByUid with size of uids=" + uid);
@@ -156,17 +156,16 @@ public class IdentityController {
 
     @Operation(summary = "Search the identity table for a list of ID supplied", description = "This api searches for a list of identities in identity table.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Identity List found successfully"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/find/identity/by/uids/", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity findByUids(@RequestParam List<String> uids) {
+    @GetMapping(value = "/reciter/find/identity/by/uids/", produces = "application/json")
+    public ResponseEntity<?> findByUids(@RequestParam List<String> uids) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a list of ID supplied");
         stopWatch.start("Search the identity table for a list of ID supplied");
         log.info("calling findByUid with size of uids=" + uids);
@@ -184,19 +183,18 @@ public class IdentityController {
         return new ResponseEntity<>(identities, HttpStatus.OK);
     }
     
-    @Operation(summary = "Get all identity from Identity table", description = "This api scans identity table and returns all identitites.")
+    @Operation(summary = "Get all identity from Identity table", description  = "This api scans identity table and returns all identitites.")
     @Parameters({
-    	@Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Identities found successfully"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/find/all/identity", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity findAll() {
+    @GetMapping(value = "/reciter/find/all/identity", produces = "application/json")
+    public ResponseEntity<?> findAll() {
         StopWatch stopWatch = new StopWatch("Identity All api performance");
         stopWatch.start("findAllIdentities");
         List<Identity> identities;
@@ -215,17 +213,16 @@ public class IdentityController {
     
     @Operation(summary = "Delete an identity by uid", description = "This api deletes a single identity from the Identity table by uid.")
     @Parameters({
-        @Parameter(name = "api-key", description = "api-key for this resource", in = ParameterIn.HEADER, schema = @Schema(type = "string"))
+    	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
     })
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Identity deletion successful"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
-    @RequestMapping(value = "/reciter/identity/{uid}", method = RequestMethod.DELETE, produces = "application/json")
-    @ResponseBody
-    public ResponseEntity deleteIdentity(@PathVariable String uid) {
+    @DeleteMapping(value = "/reciter/identity/{uid}", produces = "application/json")
+    public ResponseEntity<?> deleteIdentity(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Delete identity by uid");
         stopWatch.start("Delete identity by uid");
         Identity identity = identityService.findByUid(uid);
@@ -254,6 +251,11 @@ public class IdentityController {
         }
 
         List<AuthorName> listofAuthorNames = identity.getAlternateNames();
+        
+        /*if (listofAuthorNames == null || listofAuthorNames.isEmpty()) {
+            throw new IllegalArgumentException("Field 'alternateNames' in Identity is required but not provided.");
+        }*/
+        
        if(listofAuthorNames!=null) {
         for (AuthorName authorName : listofAuthorNames) {
             // Ensure each field is present and valid

@@ -170,8 +170,8 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 									- ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())
 									/ ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
 				}
-
-				slf4jLogger.info("Pmid: {} {}", reCiterArticle.getArticleId(), articleCountEvidence.toString());
+				//enable if requrired for debugging
+				//slf4jLogger.info("Pmid: {} {}", reCiterArticle.getArticleId(), articleCountEvidence.toString());
 			}
 
 			reCiterArticle.setArticleCountEvidence(articleCountEvidence);

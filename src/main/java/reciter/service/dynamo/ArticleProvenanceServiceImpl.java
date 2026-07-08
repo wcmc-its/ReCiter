@@ -1,30 +1,25 @@
 package reciter.service.dynamo;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
-import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
-
+import lombok.RequiredArgsConstructor;
+import reciter.database.dynamodb.model.ArticleProvenance;
+import reciter.database.dynamodb.repository.ArticleProvenanceRepository;
 import reciter.feedback.EntryPath;
 import reciter.service.ArticleProvenanceService;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 /**
  * Phase 33-01 implementation of {@link ArticleProvenanceService}.
  *
  * <p>Uses raw {@code AmazonDynamoDB.updateItem} so the {@code UpdateExpression} can
  * combine {@code if_not_exists(...)} with {@code ADD ads :strategySet} in a single
- * request. {@link com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper}
+ * 
  * does not support this expression shape directly.
  *
  * <p>Single-round-trip semantics: no read-then-write, no race; concurrent retrieval
@@ -32,24 +27,20 @@ import reciter.service.ArticleProvenanceService;
  * {@code if_not_exists} is atomic per UpdateItem.
  */
 @Service
+@RequiredArgsConstructor
 public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
 
     private static final Logger log = LoggerFactory.getLogger(ArticleProvenanceServiceImpl.class);
-    private static final String TABLE_NAME = "ArticleProvenance";
     private static final String PM_UI_SEARCH_RS = "PM_UI_SEARCH";
-    private static final String PM_AUTHOR_RS = "PM_AUTHOR";
     private static final String SRC_PM = "PM";
     private static final String SRC_CTSC = "CTSC";
     private static final String SRC_GS_PLACEHOLDER = "GS";
     private static final String SRC_MAN = "MAN";
     private static final String SRC_MAN_FROM_PM = "MAN_FROM_PM";
     private static final String SRC_MAN_FROM_CTSC = "MAN_FROM_CTSC";
+    private static final String PM_AUTHOR_RS = "PM_AUTHOR";
 
-    private final AmazonDynamoDB amazonDynamoDB;
-
-    public ArticleProvenanceServiceImpl(AmazonDynamoDB amazonDynamoDB) {
-        this.amazonDynamoDB = amazonDynamoDB;
-    }
+    private final ArticleProvenanceRepository articleProvenanceRepository;
 
     @Override
     public void upsertRetrievalProvenance(String uid, long pmid, String strategyCode, long epochSeconds) {
@@ -58,47 +49,16 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
             return;
         }
         if (strategyCode == null || strategyCode.isEmpty()) {
-            log.warn("upsertRetrievalProvenance called with null/empty strategyCode; skipping (uid={} pmid={})",
-                    uid, pmid);
+            log.warn("upsertRetrievalProvenance called with null/empty strategyCode; skipping (uid={} pmid={})", uid, pmid);
             return;
         }
 
-        Map<String, AttributeValue> key = new HashMap<>();
-        key.put("uid", new AttributeValue().withS(uid));
-        key.put("articleId", new AttributeValue().withS(String.valueOf(pmid)));
-
-        Map<String, AttributeValue> values = new HashMap<>();
-        values.put(":strategy", new AttributeValue().withS(strategyCode));
-        values.put(":now", new AttributeValue().withN(String.valueOf(epochSeconds)));
-        values.put(":strategySet", new AttributeValue().withSS(Collections.singletonList(strategyCode)));
-        values.put(":pm", new AttributeValue().withS(SRC_PM));
-
-        // src is set to 'PM' only when currently absent. This matches Phase 31's Python
-        // backfill behavior, which wrote src='PM' for every retrieval-found item. Without
-        // this, brand-new AP rows created by Phase 33-01 would have src absent, and a
-        // subsequent curator action would incorrectly transition src=null -> 'MAN'
-        // (algo-missed) instead of -> 'MAN_FROM_PM' (algo-found, then curator-touched).
-        // The if_not_exists guard preserves existing src values (CTSC, MAN, MAN_FROM_*)
-        // so the curator/CTSC paths retain ownership of src per Phase 33 D-04 intent.
-        UpdateItemRequest req = new UpdateItemRequest()
-                .withTableName(TABLE_NAME)
-                .withKey(key)
-                .withUpdateExpression(
-                        "SET rs = if_not_exists(rs, :strategy), " +
-                        "    frd = if_not_exists(frd, :now), " +
-                        "    src = if_not_exists(src, :pm) " +
-                        "ADD ads :strategySet")
-                .withExpressionAttributeValues(values);
-
         try {
-            amazonDynamoDB.updateItem(req);
-        } catch (AmazonDynamoDBException e) {
-            // Provenance failures must not break retrieval. Log and continue.
-            log.warn("ArticleProvenance upsert failed for uid={} pmid={} strategy={}: {}",
-                    uid, pmid, strategyCode, e.getMessage());
+            articleProvenanceRepository.upsertRetrievalProvenance(uid, String.valueOf(pmid), strategyCode, SRC_PM, epochSeconds);
+        } catch (DynamoDbException e) {
+            log.error("ArticleProvenance upsert failed for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
         } catch (RuntimeException e) {
-            log.warn("ArticleProvenance upsert unexpected error for uid={} pmid={} strategy={}: {}",
-                    uid, pmid, strategyCode, e.getMessage());
+            log.error("ArticleProvenance upsert unexpected error for uid={} pmid={} strategy={}: {}", uid, pmid, strategyCode, e.getMessage());
         }
     }
 
@@ -110,8 +70,6 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         }
         EntryPath path = (entryPath == null) ? EntryPath.CANDIDATE_LIST : entryPath;
 
-        // D-13: PUBMED_SEARCH path writes a retrieval-style record FIRST so D-11
-        // sees src='PM' and lifts to MAN_FROM_PM. CANDIDATE_LIST skips this step.
         if (path == EntryPath.PUBMED_SEARCH) {
             writePmUiSearchRecord(uid, pmid, epochSeconds);
         } else if (path == EntryPath.PM_AUTHOR) {
@@ -120,152 +78,62 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
             writePmAuthorRecord(uid, pmid, epochSeconds);
         }
 
-        // D-11 transition with one retry on race
         try {
             applyD11Transition(uid, pmid, epochSeconds, /*allowRetry=*/ true);
         } catch (RuntimeException e) {
-            log.warn("D-11 upsert unexpected error for uid={} pmid={} entryPath={}: {}",
-                    uid, pmid, path, e.getMessage());
+            log.error("D-11 upsert unexpected error for uid={} pmid={} entryPath={}: {}", uid, pmid, path, e.getMessage());
         }
     }
 
     private void writePmUiSearchRecord(String uid, long pmid, long epochSeconds) {
-        Map<String, AttributeValue> key = new HashMap<>();
-        key.put("uid", new AttributeValue().withS(uid));
-        key.put("articleId", new AttributeValue().withS(String.valueOf(pmid)));
-
-        Map<String, AttributeValue> values = new HashMap<>();
-        values.put(":rs", new AttributeValue().withS(PM_UI_SEARCH_RS));
-        values.put(":pm", new AttributeValue().withS(SRC_PM));
-        values.put(":ts", new AttributeValue().withN(String.valueOf(epochSeconds)));
-        values.put(":rsSet", new AttributeValue().withSS(Collections.singletonList(PM_UI_SEARCH_RS)));
-
-        UpdateItemRequest req = new UpdateItemRequest()
-                .withTableName(TABLE_NAME)
-                .withKey(key)
-                .withUpdateExpression(
-                        "SET rs  = if_not_exists(rs,  :rs), " +
-                        "    src = if_not_exists(src, :pm), " +
-                        "    frd = if_not_exists(frd, :ts) " +
-                        "ADD ads :rsSet")
-                .withExpressionAttributeValues(values);
-
         try {
-            amazonDynamoDB.updateItem(req);
-        } catch (AmazonDynamoDBException e) {
-            log.warn("PM_UI_SEARCH retrieval-record write failed for uid={} pmid={}: {}",
-                    uid, pmid, e.getMessage());
-        }
-    }
-
-    /**
-     * Authorship Review tab (PM_AUTHOR) marker write. Mirrors {@link #writePmUiSearchRecord}
-     * — sets {@code rs} if absent, ensures {@code frd}, and ADDs PM_AUTHOR to the {@code ads}
-     * strategy set — but deliberately does NOT seed {@code src='PM'}. The AAR queue contains
-     * authorships production either buried (already retrieved → an ArticleProvenance row with
-     * {@code src='PM'} already exists → D-11 lifts it to MAN_FROM_PM) or never scored at all
-     * (no row → D-11 sets {@code src='MAN'} = algo-missed, curator-found). Seeding {@code src='PM'}
-     * here would wrongly relabel a never-retrieved authorship as PM-sourced.
-     */
-    private void writePmAuthorRecord(String uid, long pmid, long epochSeconds) {
-        Map<String, AttributeValue> key = new HashMap<>();
-        key.put("uid", new AttributeValue().withS(uid));
-        key.put("articleId", new AttributeValue().withS(String.valueOf(pmid)));
-
-        Map<String, AttributeValue> values = new HashMap<>();
-        values.put(":rs", new AttributeValue().withS(PM_AUTHOR_RS));
-        values.put(":ts", new AttributeValue().withN(String.valueOf(epochSeconds)));
-        values.put(":rsSet", new AttributeValue().withSS(Collections.singletonList(PM_AUTHOR_RS)));
-
-        UpdateItemRequest req = new UpdateItemRequest()
-                .withTableName(TABLE_NAME)
-                .withKey(key)
-                .withUpdateExpression(
-                        "SET rs  = if_not_exists(rs,  :rs), " +
-                        "    frd = if_not_exists(frd, :ts) " +
-                        "ADD ads :rsSet")
-                .withExpressionAttributeValues(values);
-
-        try {
-            amazonDynamoDB.updateItem(req);
-        } catch (AmazonDynamoDBException e) {
-            log.warn("PM_AUTHOR marker write failed for uid={} pmid={}: {}",
-                    uid, pmid, e.getMessage());
+            articleProvenanceRepository.writePmUiSearchRecord(uid, String.valueOf(pmid), PM_UI_SEARCH_RS, SRC_PM, epochSeconds);
+        } catch (DynamoDbException e) {
+            log.error("PM_UI_SEARCH retrieval-record write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
         }
     }
 
     private void applyD11Transition(String uid, long pmid, long epochSeconds, boolean allowRetry) {
-        // 1. Read current src
-        Map<String, AttributeValue> key = new HashMap<>();
-        key.put("uid", new AttributeValue().withS(uid));
-        key.put("articleId", new AttributeValue().withS(String.valueOf(pmid)));
-
-        GetItemRequest getReq = new GetItemRequest()
-                .withTableName(TABLE_NAME)
-                .withKey(key)
-                .withProjectionExpression("src")
-                .withConsistentRead(true);
-
-        GetItemResult getRes;
+        String articleId = String.valueOf(pmid);
+        Optional<ArticleProvenance> recordOpt;
+        
         try {
-            getRes = amazonDynamoDB.getItem(getReq);
-        } catch (AmazonDynamoDBException e) {
-            log.warn("D-11 read failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+            recordOpt = articleProvenanceRepository.findByIdWithConsistentRead(uid, articleId);
+        } catch (DynamoDbException e) {
+            log.error("D-11 read failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
             return;
         }
 
-        String existingSrc = null;
-        if (getRes.getItem() != null && getRes.getItem().containsKey("src")) {
-            AttributeValue v = getRes.getItem().get("src");
-            existingSrc = v != null ? v.getS() : null;
-        }
-
+        String existingSrc = recordOpt.map(ArticleProvenance::getSrc).orElse(null);
         String newSrc = computeNewSrc(existingSrc);
 
-        // 2. Build conditional UpdateItem. Only add :new to values when the
-        // UpdateExpression actually references it; DynamoDB rejects unused
-        // ExpressionAttributeValues with ValidationException.
-        Map<String, AttributeValue> values = new HashMap<>();
-        values.put(":ts", new AttributeValue().withN(String.valueOf(epochSeconds)));
-
-        UpdateItemRequest req = new UpdateItemRequest()
-                .withTableName(TABLE_NAME)
-                .withKey(key);
-
-        if (existingSrc == null) {
-            // New row: write src + frd, condition on src absence
-            values.put(":new", new AttributeValue().withS(newSrc));
-            req.withUpdateExpression("SET src = :new, frd = if_not_exists(frd, :ts)")
-               .withConditionExpression("attribute_not_exists(src)");
-        } else if (!newSrc.equals(existingSrc)) {
-            // Transition: condition on observed existing value to detect concurrent write
-            values.put(":new", new AttributeValue().withS(newSrc));
-            values.put(":existing", new AttributeValue().withS(existingSrc));
-            req.withUpdateExpression("SET src = :new, frd = if_not_exists(frd, :ts)")
-               .withConditionExpression("src = :existing");
-        } else {
-            // No-op on src; ensure frd is present
-            req.withUpdateExpression("SET frd = if_not_exists(frd, :ts)");
-        }
-        req.withExpressionAttributeValues(values);
-
         try {
-            amazonDynamoDB.updateItem(req);
+            articleProvenanceRepository.applyD11Update(uid, articleId, newSrc, existingSrc, epochSeconds);
         } catch (ConditionalCheckFailedException race) {
             if (allowRetry) {
-                log.info("D-11 race for uid={} pmid={} (existing src changed since GetItem); retrying once",
-                        uid, pmid);
+                log.info("D-11 race for uid={} pmid={} (existing src changed since GetItem); retrying once", uid, pmid);
                 applyD11Transition(uid, pmid, epochSeconds, /*allowRetry=*/ false);
             } else {
-                log.warn("D-11 retry also failed for uid={} pmid={}; giving up (PM UI request continues)",
-                        uid, pmid);
+                log.warn("D-11 retry also failed for uid={} pmid={}; giving up (PM UI request continues)", uid, pmid);
             }
-        } catch (AmazonDynamoDBException e) {
-            log.warn("D-11 update failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
+        } catch (DynamoDbException e) {
+            log.error("D-11 update failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
         }
     }
-
-    /** D-11 transition table. Package-private for testability. */
+    
+    /**
+     * Authorship Review tab (PM_AUTHOR) marker write. Mirrors {@link #writePmUiSearchRecord}
+     * — sets {@code rs} if absent, ensures {@code frd}, and ADDs PM_AUTHOR to the {@code ads}
+     * strategy set — but deliberately does NOT seed {@code src='PM'}.
+     */
+    private void writePmAuthorRecord(String uid, long pmid, long epochSeconds) {
+        try {
+            articleProvenanceRepository.writePmAuthorRecord(uid, String.valueOf(pmid), PM_AUTHOR_RS, epochSeconds);
+        } catch (DynamoDbException e) {
+            log.warn("PM_AUTHOR marker write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage(), e);
+        }
+    }
+   
     static String computeNewSrc(String existingSrc) {
         if (existingSrc == null || SRC_GS_PLACEHOLDER.equals(existingSrc)) {
             return SRC_MAN;
@@ -276,7 +144,6 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
         if (SRC_CTSC.equals(existingSrc)) {
             return SRC_MAN_FROM_CTSC;
         }
-        // MAN, MAN_FROM_PM, MAN_FROM_CTSC, or any future value: leave as-is
         return existingSrc;
     }
 }

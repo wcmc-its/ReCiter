@@ -134,5 +134,10 @@ reciter.iml
 # Scoring test artifacts
 *-feedbackIdentityScoringInput.json
 *-identityOnlyScoringInput.json
+<<<<<<< HEAD
 *_consolidated.csv
 *_item_level.csv
+=======
+*-consolidated.csv
+*-item_level.csv
+>>>>>>> refs/remotes/origin/MigrationFromJDk11ToAWSCorretto17

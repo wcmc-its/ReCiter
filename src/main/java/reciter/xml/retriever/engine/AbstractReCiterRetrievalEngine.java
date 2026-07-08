@@ -18,9 +18,9 @@
  *******************************************************************************/
 package reciter.xml.retriever.engine;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -32,8 +32,8 @@ import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.QueryType;
-import reciter.model.pubmed.PubMedArticle;
 import reciter.engine.StrategyParameters;
+import reciter.model.pubmed.PubMedArticle;
 import reciter.service.ESearchResultService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
@@ -133,7 +133,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 			} else {
 				eSearchPmidRefreshFlag = reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag.FALSE;
 			}
-			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, new Date(), eSearchPmidRefreshFlag);
+			eSearchPmid = new ESearchPmid(pmids, retrievalStrategyName, Instant.now(), eSearchPmidRefreshFlag);
 			if(eSearchPmid != null) {
 				log.info("eSearchPmid {} ",eSearchPmid);
 			}
@@ -145,9 +145,8 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(!eSearchPmids.isEmpty()) {
-				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
+				eSearchResultService.save(new ESearchResult(uid, Instant.now(), eSearchPmids, queryType));
 			}
-			
 		} else {
 			List<ESearchPmid> eSearchPmids = eSearchResultDb.getESearchPmids();
 			if(eSearchPmid != null) {
@@ -161,9 +160,9 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmids.add(eSearchPmid);
 			}
 			if(!eSearchPmids.isEmpty()) {
-				eSearchResultService.save(new ESearchResult(uid, new Date(), eSearchPmids, queryType));
+				eSearchResultService.save(new ESearchResult(uid, Instant.now(), eSearchPmids, queryType));
 			} else {
-				eSearchResultDb.setRetrievalDate(new Date());
+				eSearchResultDb.setRetrievalDate(Instant.now());
 				eSearchResultDb.setQueryType(queryType);
 				eSearchResultService.save(eSearchResultDb);
 			}

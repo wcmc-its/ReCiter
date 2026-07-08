@@ -1,5 +1,7 @@
 package reciter.service;
 
+import reciter.database.dynamodb.model.FeedbackLog;
+
 /**
  * Writes curator action records to the {@code FeedbackLog} DynamoDB table.
  *
@@ -38,5 +40,5 @@ public interface FeedbackLogService {
      *                            that doesn't carry a userID)
      * @param actionEpochSeconds  curator action time, epoch seconds (used in sk and timestamps)
      */
-    void recordAction(String uid, long pmid, Feedback feedback, int curatedBy, long actionEpochSeconds);
+    void recordAction(FeedbackLog feedbackLog);
 }

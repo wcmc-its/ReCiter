@@ -18,7 +18,6 @@ import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.JournalCategoryEvidence;
 import reciter.model.article.ReCiterArticle;
-import reciter.model.article.ReCiterJournalCategory;
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
 import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
@@ -89,10 +88,10 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		            }
 		        }
 
-		        // Log and set the evidence
-		        if (journalCategoryEvidence != null) {
+		        // enable if requrired for debugging .Log and set the evidence
+		        /* if (journalCategoryEvidence != null) {
 		            log.info("Pmid: " + reCiterArticle.getArticleId() + " " + journalCategoryEvidence.toString());
-		        }
+		        }*/
 		        reCiterArticle.setJournalCategoryEvidence(journalCategoryEvidence);
 		    }
 		});

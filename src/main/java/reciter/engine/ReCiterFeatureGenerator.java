@@ -1,8 +1,8 @@
 package reciter.engine;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.Data;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterArticleAuthorFeature;
@@ -32,7 +31,7 @@ import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
 import reciter.utils.ReCiterStringUtil;
-
+import lombok.Data;
 
 @Data
 public class ReCiterFeatureGenerator {
@@ -59,40 +58,37 @@ public class ReCiterFeatureGenerator {
                                           List<ReCiterArticle> reCiterArticles,
                                           List<Long> goldStandardPmids,
                                           List<Long> rejectedPmids,Identity identity) {
-     
-    	List<Long> finalArticles = reCiterArticles.stream().map(article -> article.getArticleId()).collect(Collectors.toList());
-    	
-            
 
         ReCiterFeature reCiterFeature = new ReCiterFeature();
         reCiterFeature.setPersonIdentifier(identity.getUid());
-        reCiterFeature.setDateAdded(new Date()); // TODO Add 'date_added' to identity.
-        reCiterFeature.setDateUpdated(new Date()); // TODO add 'date_updated' to identity.
+        reCiterFeature.setDateAdded(Instant.now()); // TODO Add 'date_added' to identity.
+        reCiterFeature.setDateUpdated(Instant.now()); // TODO add 'date_updated' to identity.
         reCiterFeature.setMode(mode);
 
         Set<Long> pmidsRetrieved = new HashSet<>();
-            for (ReCiterArticle reCiterArticle : reCiterArticles) {
-                pmidsRetrieved.add(reCiterArticle.getArticleId());
+        for (ReCiterArticle reCiterArticle : reCiterArticles) {
+            pmidsRetrieved.add(reCiterArticle.getArticleId());
+        }
+    // in gold standard but not retrieved TODO optimize
+    List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
+    if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
+        for (long pmid : goldStandardPmids) {
+            if (!pmidsRetrieved.contains(pmid)) {
+				log.info("Updating accepted inGoldStandardButNotRetrieved List {} ", pmid); 
+                inGoldStandardButNotRetrieved.add(pmid);
             }
-        // in gold standard but not retrieved TODO optimize
-        List<Long> inGoldStandardButNotRetrieved = new ArrayList<>();
-        if(goldStandardPmids != null && goldStandardPmids.size() > 0) {
-	        for (long pmid : goldStandardPmids) {
-	            if (!pmidsRetrieved.contains(pmid)) {
-					log.info("Updating accepted inGoldStandardButNotRetrieved List" + pmid); 
-	                inGoldStandardButNotRetrieved.add(pmid);
-	            }
-	        }
         }
-	    if(rejectedPmids != null && rejectedPmids.size() > 0) {
-	        for (long pmid : rejectedPmids) {
-	            if (!pmidsRetrieved.contains(pmid)) {
-					 log.info("Updating rejected inGoldStandardButNotRetrieved List" + pmid);
-	                inGoldStandardButNotRetrieved.add(pmid);
-	            }
-	        }
+    }
+    if(rejectedPmids != null && rejectedPmids.size() > 0) {
+        for (long pmid : rejectedPmids) {
+            if (!pmidsRetrieved.contains(pmid)) {
+				 log.info("Updating rejected inGoldStandardButNotRetrieved List {}" , pmid);
+                inGoldStandardButNotRetrieved.add(pmid);
+            }
         }
-		reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+    }
+	reCiterFeature.setInGoldStandardButNotRetrieved(inGoldStandardButNotRetrieved);
+	
         List<ReCiterArticle> selectedArticles = new ArrayList<>();
         if(mode == UseGoldStandard.AS_EVIDENCE) {
         	selectedArticles = reCiterArticles 
@@ -445,11 +441,6 @@ public class ReCiterFeatureGenerator {
                 evidence.setRelationshipEvidence(reCiterArticle.getRelationshipEvidence());//deserializedEvidence);
             }
 
-            // Education Year Evidence
-            /*EducationYearEvidence educationYearEvidence = new EducationYearEvidence();
-            educationYearEvidence.setDiscrepancyDegreeYearBachelor(reCiterArticle.getBachelorsYearDiscrepancy());
-            educationYearEvidence.setDiscrepancyDegreeYearDoctoral(reCiterArticle.getDoctoralYearDiscrepancy());
-            reCiterArticle.setEducationYearEvidence(educationYearEvidence);*/
             if (reCiterArticle.getEducationYearEvidence() != null) {
                 evidence.setEducationYearEvidence(reCiterArticle.getEducationYearEvidence());
             }
@@ -494,7 +485,6 @@ public class ReCiterFeatureGenerator {
             evidence.setTargetAuthorCount(reCiterArticle.getTargetAuthorCount());
             evidence.setTargetAuthorCountPenalty(reCiterArticle.getTargetAuthorCountPenalty());
             
-            log.info("reCiter {} hashcode {}", reCiterArticle.getArticleId(), reCiterArticle.hashCode());
             reCiterArticleFeature.setEvidence(evidence);
  
             reCiterArticleFeatures.add(reCiterArticleFeature);

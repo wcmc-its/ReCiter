@@ -11,14 +11,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.s3.AmazonS3;
 
 import reciter.consumer.service.CognitoAuthService;
 import reciter.database.dynamodb.DynamoDbConfig;
@@ -29,13 +26,15 @@ import reciter.service.ScienceMetrixDepartmentCategoryService;
 import reciter.service.ScienceMetrixService;
 import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.s3.S3Client;
 
 /**
  * Stage 0 context-load smoke test (#634 dependency modernization).
  *
  * <p>Boots the full Spring application context under the dedicated {@code test}
  * profile (see {@code application-test.properties}), which neutralizes the
- * property-controlled live-AWS startup blockers. The {@code @MockBean} overrides
+ * property-controlled live-AWS startup blockers. The {@code @MockitoBean} overrides
  * below stand in for the beans that build live AWS SDK clients or run data loads
  * at startup:
  * <ul>
@@ -57,36 +56,36 @@ import reciter.service.dynamo.DynamoDbMeshTermService;
 @ActiveProfiles("test")
 public class ApplicationContextSmokeTest {
 
-    @MockBean
-    private AmazonDynamoDB amazonDynamoDB;
+	@MockitoBean
+    private DynamoDbClient dynamoDbClient;
 
-    @MockBean
-    private AmazonS3 amazonS3;
-
-    @MockBean
+	@MockitoBean
+    private S3Client s3Client;
+    
+	@MockitoBean
     private CognitoAuthService cognitoAuthService;
 
-    @MockBean
+	@MockitoBean
     private CognitoClientRegistry cognitoClientRegistry;
 
     // Services invoked by Application's ApplicationReadyEvent listeners. Mocking them
     // makes populateStaticEngineParameters() a no-op at startup without needing AWS.
-    @MockBean
+	@MockitoBean
     private ScienceMetrixService scienceMetrixService;
 
-    @MockBean
+	@MockitoBean
     private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
 
-    @MockBean
+	@MockitoBean
     private DynamoDbMeshTermService dynamoDbMeshTermService;
 
-    @MockBean
+	@MockitoBean
     private GenderService genderService;
 
-    @MockBean
+	@MockitoBean
     private NameFrequencyService nameFrequencyService;
 
-    @MockBean
+	@MockitoBean
     private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
 
     @Autowired

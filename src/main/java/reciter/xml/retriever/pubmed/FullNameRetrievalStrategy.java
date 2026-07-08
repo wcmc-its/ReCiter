@@ -19,7 +19,6 @@
 package reciter.xml.retriever.pubmed;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;

@@ -1,34 +1,5 @@
 package reciter.queue.sqs;
 
-import java.util.UUID;
-
-import javax.inject.Inject;
-
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-
-import com.amazon.sqs.javamessaging.AmazonSQSExtendedClient;
-import com.amazon.sqs.javamessaging.ExtendedClientConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.Region;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-
-import lombok.extern.slf4j.Slf4j;
-import reciter.ApplicationContextHolder;
-
 /*@Slf4j
 @Configuration
 @ComponentScan(basePackages ="reciter.queue.sqs")

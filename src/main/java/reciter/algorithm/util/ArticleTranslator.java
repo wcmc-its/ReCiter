@@ -69,7 +69,6 @@ import reciter.model.pubmed.PubMedPubDate;
 import reciter.model.scopus.Author;
 import reciter.model.scopus.ScopusArticle;
 import reciter.utils.AuthorNameSanitizationUtils;
-import reciter.utils.ReCiterStringUtil;
 
 /**
  * Translator that translates a PubmedArticle to ReCiterArticle.

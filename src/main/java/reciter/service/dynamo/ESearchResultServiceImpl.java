@@ -1,7 +1,6 @@
 package reciter.service.dynamo;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import reciter.database.dynamodb.model.ESearchResult;
@@ -20,24 +19,10 @@ public class ESearchResultServiceImpl implements ESearchResultService {
     }
 
     @Override
-    public ESearchResult findByUid(String uid) throws EmptyResultDataAccessException {
+    public ESearchResult findByUid(String uid) {
         return eSearchResultRepository.findById(uid).orElseGet(() -> null);
     }
 
-    @Override
-    public boolean pushESearchResult(ESearchResult eSearchResult) {
-        return false;
-    }
-
-    @Override
-    public void update(ESearchResult eSearchResult) {
-
-    }
-
-    @Override
-    public boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName) {
-        return false;
-    }
 
 	@Override
 	public void deleteAll() {

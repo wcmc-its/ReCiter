@@ -84,15 +84,15 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 	        // Count co-author appearances across articles, deduplicating within each article
 	        // so the same co-author listed twice on one paper only counts once for that paper
 	        Map<String, Long> acceptArticlesCountByCoAuthor =  acceptedArticles.stream()
-            .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-                .filter(author-> !author.isTargetAuthor())
-                .map(author->processAuthor(author))
-                .filter(name -> name != null)
-                .distinct())  // Deduplicate within each article
-            .collect(Collectors.groupingBy(
-                Function.identity(),
-                Collectors.counting()
-            ));
+	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
+	                    .filter(author-> !author.isTargetAuthor())
+	                    .map(author->processAuthor(author))
+	                    .filter(name -> name != null)
+	                    .distinct())  // Deduplicate within each article
+	                .collect(Collectors.groupingBy(
+	                    Function.identity(),
+	                    Collectors.counting()
+	                ));
 
 
 	        Map<String, Long> rejectedArticlesCountByCoAuthor =  rejectedArticles.stream()
@@ -194,7 +194,6 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 								{
 									itemScore = itemScore / coAuthorsCount;
 								}
-
 							}
 
 						}

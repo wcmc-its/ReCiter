@@ -63,19 +63,21 @@ public class PubMedServiceImpl implements PubMedService {
         List<PubMedArticle> pubMedArticles = null;
         Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
         pubMedArticles = new ArrayList<>(pmids.size());
+       
 		log.info("PubMed Article size in findByPmids is :" + pmids.size());
         while (iterator.hasNext()) {
+        	 PubMedArticle pubarticle =null;
         	reciter.database.dynamodb.model.PubMedArticle pubMedArticle = iterator.next();
-			log.info("PubMed Article in findBy PMIDs is :" + pubMedArticle);
+        	//enable if requrired for debugging
+			//log.info("PubMed Article in findBy PMIDs is :" + pubMedArticle);
         	if(pubMedArticle!=null && pubMedArticle.isUsingS3())
         	{
         		PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid(), PubMedArticle.class);
     			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
 				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
         	}
-        	if (pubMedArticle == null) continue; // Skip the rest of the loop for this null element
-        	PubMedArticle pubarticle = pubMedArticle.getPubMedArticle();
-        	
+        	 if (pubMedArticle == null) continue; // Skip the rest of the loop for this null element
+        	pubarticle = pubMedArticle.getPubMedArticle();
             pubMedArticles.add(pubarticle);
         }
         return pubMedArticles;

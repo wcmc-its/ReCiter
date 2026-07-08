@@ -1,17 +1,11 @@
 package reciter.consumer.dto;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
 import lombok.Setter;
-import reciter.algorithm.cluster.clusteringstrategy.article.ClusteringStrategy;
-import reciter.algorithm.cluster.model.ReCiterCluster;
-import reciter.model.article.ReCiterArticle;
-import reciter.model.identity.Identity;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 /**
  * Represents the authentication token information retrieved from AWS Cognito or another identity provider.
  *
