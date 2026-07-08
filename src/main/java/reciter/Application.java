@@ -25,18 +25,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -48,9 +46,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.bohnman.squiggly.Squiggly;
-import com.github.bohnman.squiggly.web.RequestSquigglyContextProvider;
-import com.github.bohnman.squiggly.web.SquigglyRequestFilter;
 import com.google.common.collect.Iterables;
 
 import reciter.database.dyanmodb.files.GenderFileImport;
@@ -86,32 +81,30 @@ public class Application {
 	
 	private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-//	@Bean
-//	public BCryptPasswordEncoder bCryptPasswordEncoder() {
-//		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-//		String password = "reciter";
-//		String hashedPassword = encoder.encode(password);
-//		System.out.println("password:" + hashedPassword);
-//		return new BCryptPasswordEncoder();
-//	}
-	
-    @Autowired
-    private DynamoDbMeshTermService dynamoDbMeshTermService;
-	
-    @Autowired
-    private ScienceMetrixService scienceMetrixService;
-    
-    @Autowired
-    private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
-    
-    @Autowired
-    private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
-    
-    @Autowired
-    private GenderService genderService;
+	@Autowired
+	private DynamoDbMeshTermService dynamoDbMeshTermService;
+
+	@Autowired
+	@Qualifier("scienceMetrixServiceImpl")
+	private ScienceMetrixService scienceMetrixService;
+
+	@Autowired
+	private ScienceMetrixDepartmentCategoryService scienceMetrixDepartmentCategoryService;
+
+	@Autowired
+	private DynamoDbInstitutionAfidService dynamoDbInstitutionAfidService;
+
+	@Autowired
+	private GenderService genderService;
 
     @Autowired
     private NameFrequencyService nameFrequencyService;
+    
+    @Autowired
+    private DegreeYearStrategyUtils degreeYearStrategyUtils;
+    
+    @Autowired
+    private AffiliationStrategyUtils affiliationStrategyUtils;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -146,35 +139,13 @@ public class Application {
 	@Value("${aws.reciterscoring.service.portNo}")
 	private String reciterScoringPortNumber;
 	
-	@Bean
-    public FilterRegistrationBean squigglyRequestFilter() {
-        FilterRegistrationBean filter = new FilterRegistrationBean();
-        filter.setFilter(new SquigglyRequestFilter());
-        filter.setOrder(1);
-        return filter;
-    }
-    
-    
-
+	
 	public static void main(String[] args) {
 		ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
 		
 		Iterable<ObjectMapper> objectMappers = context.getBeansOfType(ObjectMapper.class)
 	            .values();
 		
-		Squiggly.init(objectMappers, new RequestSquigglyContextProvider() {
-            @Override
-            protected String customizeFilter(String filter, HttpServletRequest request, Class beanClass) {
-
-                /*// OPTIONAL: automatically wrap filter expressions in items{} when the object is a ListResponse
-                if (filter != null && ListResponse.class.isAssignableFrom(beanClass)) {
-                    filter = "items[" + filter + "]";
-                }*/
-
-                return filter;
-            }
-        });
-
         ObjectMapper objectMapper = Iterables.getFirst(objectMappers, null);
 
         // Enable Squiggly for Jackson message converter
@@ -201,12 +172,12 @@ public class Application {
 	 
 				int code = connection.getResponseCode();
 				if (code == 200) {
-					log.info("The Scopus Service endpoint " + scopusService + " provided is valid and reachable");
+					log.info("The Scopus Service endpoint {} provided is valid and reachable", scopusService);
 				} else {
-					log.info("The Scopus Service endpoint " + scopusService + " provided is not valid and not reachable");
+					log.info("The Scopus Service endpoint {} provided is not valid and not reachable", scopusService);
 				}
 			} catch (Exception e) {
-				log.error("Wrong domain - Exception: " + e.getMessage());
+				log.error("Failed to connect to Scopus service endpoint Wrong domain - Exception {}", scopusService, e);
 	 
 			}
 		}
@@ -221,9 +192,9 @@ public class Application {
 	 
 				int code = connection.getResponseCode();
 				if (code == 200) {
-					log.info("The Pubmed Service endpoint " + pubmedService + " provided is valid and reachable");
+					log.info("The Pubmed Service endpoint {} provided is valid and reachable",pubmedService);
 				} else {
-					log.info("The Pubmed Service endpoint " + pubmedService + " provided is not valid and not reachable");
+					log.info("The Pubmed Service endpoint {} provided is not valid and not reachable",pubmedService);
 				}
 			} catch (Exception e) {
 				log.error("Wrong domain - Exception: " + e.getMessage());
@@ -231,11 +202,10 @@ public class Application {
 			}
 		}
 		
+		
 		if(reciterScoringService != null && !reciterScoringService.isEmpty()) 
 		{
 			String urlString = "http://localhost:"+ reciterScoringPortNumber +"/2015-03-31/functions/function/invocations";
-	        String payload = "{}";  // Empty payload, as Lambda doesn't require specific input for health check
-	        
 	        ObjectMapper mapper = new ObjectMapper();
 	        
 	        Map<String, Object> payloadMap = new HashMap<>();
@@ -243,42 +213,30 @@ public class Application {
 	        payloadMap.put("file_Name", "test");
 	        payloadMap.put("useS3Bucket", "feedbackScore");
 	        payloadMap.put("bucket_name", false);
-
-	        
 	        
 	        String payloadJson=null;
 			try {
 				payloadJson = mapper.writeValueAsString(payloadMap);
 			} catch (JsonProcessingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("ReCiter---Scoring payload: Failed to serialize payload map to JSON {} ",e.getMessage());
 			}
 	        
 	        try {
-		            // Create a URL object
 		            URL url = new URL(urlString);
-	
-		            // Open the connection and configure it
 		            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		            connection.setRequestMethod("POST");
 		            connection.setRequestProperty("Content-Type", "application/json");
 		            connection.setDoOutput(true);
-	
-		            // Send the payload (empty JSON in this case)
 		            connection.getOutputStream().write(payloadJson.getBytes("UTF-8"));
-	
-		            // Get the HTTP response code
 		            int responseCode = connection.getResponseCode();
 		            if (responseCode == 200) {
-						log.info("The reciterScoring Service endpoint " + reciterScoringService + " provided is valid and reachable");
+						log.info("The reciterScoring Service endpoint {} provided is valid and reachable",reciterScoringService);
 					} else {
-						log.info("The ReciterScoring Service endpoint " + reciterScoringService + " provided is not valid and not reachable");
+						log.info("The ReciterScoring Service endpoint {} provided is not valid and not reachable",reciterScoringService);
 					}
 	        }catch (Exception e) {
-				log.error("ReCiter---Scoring Container is not running. Please start the service: " + e.getMessage());
-	 
+				log.error("ReCiter---Scoring Container is not running. Please start the service: {}" , e.getMessage());
 			}
-	          
 		}
 		
 		if(pubmedService == null) {
@@ -343,31 +301,37 @@ public class Application {
 		
 		log.info("Loading ScienceMetrixJournals to Engine Parameters");
 		List<ScienceMetrix> scienceMetrixJournals = scienceMetrixService.findAll();
-        if(scienceMetrixJournals != null) {
-        		EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
-        }
-        
+		if (scienceMetrixJournals != null) {
+			EngineParameters.setScienceMetrixJournals(scienceMetrixJournals);
+		}
+
         log.info("Loading ScienceMetrixDepartmentCategories to Engine Parameters");
-		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = scienceMetrixDepartmentCategoryService.findAll();
-        if(scienceMetrixDeptCategories != null) {
-        		EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
-        }
+		
+		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategories = scienceMetrixDepartmentCategoryService
+				.findAll();
+		if (scienceMetrixDeptCategories != null) {
+			EngineParameters.setScienceMetrixDepartmentCategories(scienceMetrixDeptCategories);
+		}
+		 
         
         log.info("Loading MeshTermCounts to Engine Parameters");
         if (EngineParameters.getMeshCountMap() == null) {
             List<MeshTerm> meshTerms = dynamoDbMeshTermService.findAll();
-            Map<String, Long> meshCountMap = new HashMap<>();
-            for (MeshTerm meshTerm : meshTerms) {
-                meshCountMap.put(meshTerm.getMesh(), meshTerm.getCount());
-            }
+            Map<String, Long> meshCountMap =
+                    meshTerms.stream()
+                             .collect(Collectors.toMap(
+                                     MeshTerm::getMesh,
+                                     MeshTerm::getCount));
             EngineParameters.setMeshCountMap(meshCountMap);
         }
         if(useGenderStrategy) {
 	        log.info("Loading GenderProbability to Engine Parameters");
-	        List<Gender> genders = genderService.findAll();
-	        if(genders != null && !genders.isEmpty()) {
-	        	EngineParameters.setGenders(genders);
-	        }
+			
+			List<Gender> genders = genderService.findAll();
+			if (genders != null && !genders.isEmpty()) {
+				EngineParameters.setGenders(genders);
+			}
+
         }
         if(useNameFrequencyStrategy) {
 	        log.info("Loading NameFrequency to Engine Parameters");
@@ -385,16 +349,17 @@ public class Application {
         
         if(useScopusArticles) {
 	        log.info("Loading ScopusInstitutionalAfids to Engine Parameters");
-	        List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
-	        if(instAfids != null && instAfids.size() > 0) {
-		        	Map<String, List<String>> institutionAfids = instAfids.stream().collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
-		        	EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
-	        }
+			
+			List<InstitutionAfid> instAfids = dynamoDbInstitutionAfidService.findAll();
+			if (instAfids != null && instAfids.size() > 0) {
+				Map<String, List<String>> institutionAfids = instAfids.stream()
+						.collect(Collectors.toMap(InstitutionAfid::getInstitution, InstitutionAfid::getAfids));
+				EngineParameters.setAfiliationNameToAfidMap(institutionAfids);
+			}
+			 
 		}
-		DegreeYearStrategyUtils degreeYearStrategyUtils = new DegreeYearStrategyUtils();
 		EngineParameters.setDegreeYearDiscrepancyScoreMap(degreeYearStrategyUtils.getDegreeYearDiscrepancyScoreMap(this.degreeYearDiscrepancyScore));
 
-		AffiliationStrategyUtils affiliationStrategyUtils = new AffiliationStrategyUtils();
 		EngineParameters.setRegexForStopWords(affiliationStrategyUtils.constructRegexForStopWords(this.instAfflInstitutionStopwords));
 		
         log.info("ReCiter is up and ready to use. Please make sure its other components such as Pubmed-Retrieval-Tool is also setup if you wish to do retrieval.");

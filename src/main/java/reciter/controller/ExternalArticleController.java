@@ -12,12 +12,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +40,7 @@ import reciter.service.dynamo.IDynamoDbGoldStandardService;
  * they surface in feature-generator output only via includeExternal=true.
  */
 @Tag(name = "ExternalArticleController", description = "Operations on manually added external-source articles.")
-@Controller
+@RestController
 public class ExternalArticleController {
 
     private static final Logger log = LoggerFactory.getLogger(ExternalArticleController.class);
@@ -60,8 +63,7 @@ public class ExternalArticleController {
             description = "Adds a publication from Scopus, Web of Science, or OpenAlex. Blocks on PMID/DOI duplicates "
                     + "against the person's PubMed record and existing external articles; warns on fuzzy title+year "
                     + "collisions unless force=true.")
-    @RequestMapping(value = "/reciter/external-article/by/uid", method = RequestMethod.POST, produces = "application/json")
-    @ResponseBody
+    @PostMapping(value = "/reciter/external-article/by/uid", produces = "application/json")
     public ResponseEntity<Object> addExternalArticle(@RequestParam(value = "uid") String uid,
                                                      @RequestParam(value = "force", required = false, defaultValue = "false") boolean force,
                                                      @RequestBody ExternalArticle externalArticle) {
@@ -107,16 +109,14 @@ public class ExternalArticleController {
 
     @Operation(summary = "List external-source articles for a person.",
             description = "Returns all manually added external articles for the uid, including suppressed rows.")
-    @RequestMapping(value = "/reciter/external-article/by/uid", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
+    @GetMapping(value = "/reciter/external-article/by/uid",  produces = "application/json")
     public ResponseEntity<List<ExternalArticle>> findExternalArticles(@RequestParam(value = "uid") String uid) {
         return new ResponseEntity<>(externalArticleService.findByUid(uid.trim()), HttpStatus.OK);
     }
 
     @Operation(summary = "Delete an external-source article for a person.",
             description = "Deleting is the revoke path — there is deliberately no sameAs assert/revoke model.")
-    @RequestMapping(value = "/reciter/external-article/by/uid", method = RequestMethod.DELETE, produces = "application/json")
-    @ResponseBody
+    @DeleteMapping(value = "/reciter/external-article/by/uid", produces = "application/json")
     public ResponseEntity<Object> deleteExternalArticle(@RequestParam(value = "uid") String uid,
                                                         @RequestParam(value = "articleId") String articleId) {
         ExternalArticle existing = externalArticleService.find(uid.trim(), articleId.trim());

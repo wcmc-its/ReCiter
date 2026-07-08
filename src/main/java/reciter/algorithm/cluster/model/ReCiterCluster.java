@@ -25,12 +25,11 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
+
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
-import reciter.engine.ReCiterEngine;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeatures;
-import reciter.model.article.ReCiterArticleGrant;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;

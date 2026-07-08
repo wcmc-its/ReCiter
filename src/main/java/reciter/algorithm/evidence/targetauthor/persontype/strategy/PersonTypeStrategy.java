@@ -32,7 +32,8 @@ public class PersonTypeStrategy extends AbstractTargetAuthorStrategy {
 				personTypeEvidence.setPersonType("academic-faculty-weillfulltime");
 				personTypeEvidence.setPersonTypeScore(ReCiterArticleScorer.strategyParameters.getPersonTypeScoreAcademicFacultyWeillfulltime());
 				reCiterArticle.setPersonTypeEvidence(personTypeEvidence);
-				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + personTypeEvidence.toString());
+				//enable if requrired for debugging
+				//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + personTypeEvidence.toString());
 			} else if(identity.getPersonTypes() != null 
 					&&
 					identity.getPersonTypes().contains("student-md-new-york")) {
@@ -40,7 +41,8 @@ public class PersonTypeStrategy extends AbstractTargetAuthorStrategy {
 				personTypeEvidence.setPersonType("student-md-new-york");
 				personTypeEvidence.setPersonTypeScore(ReCiterArticleScorer.strategyParameters.getPersonTypeScoreStudentMdNewyork());
 				reCiterArticle.setPersonTypeEvidence(personTypeEvidence);
-				slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + personTypeEvidence.toString());
+				//enable if requrired for debugging
+				//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + personTypeEvidence.toString());
 			}
 			});
 		return 0;

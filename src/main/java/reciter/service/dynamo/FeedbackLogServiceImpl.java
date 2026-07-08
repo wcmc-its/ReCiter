@@ -1,19 +1,14 @@
 package reciter.service.dynamo;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
-
+import reciter.database.dynamodb.model.FeedbackLog;
+import reciter.database.dynamodb.repository.FeedbackLogRepository;
 import reciter.service.FeedbackLogService;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 /**
  * Phase 33-02 implementation of {@link FeedbackLogService}.
@@ -31,58 +26,48 @@ import reciter.service.FeedbackLogService;
 public class FeedbackLogServiceImpl implements FeedbackLogService {
 
     private static final Logger log = LoggerFactory.getLogger(FeedbackLogServiceImpl.class);
-    private static final String TABLE_NAME = "FeedbackLog";
     private static final String SRC_MAN = "MAN";
     private static final int SK_RETRY_LIMIT = 5;
 
-    private final AmazonDynamoDB amazonDynamoDB;
+    private final FeedbackLogRepository feedbackLogRepository;
 
-    public FeedbackLogServiceImpl(AmazonDynamoDB amazonDynamoDB) {
-        this.amazonDynamoDB = amazonDynamoDB;
+    public FeedbackLogServiceImpl(FeedbackLogRepository feedbackLogRepository) {
+        this.feedbackLogRepository = feedbackLogRepository;
     }
 
     @Override
-    public void recordAction(String uid, long pmid, Feedback feedback, int curatedBy, long actionEpochSeconds) {
-        if (uid == null || uid.isEmpty()) {
-            log.warn("recordAction called with null/empty uid; skipping (pmid={})", pmid);
-            return;
-        }
-        if (feedback == null) {
-            log.warn("recordAction called with null feedback; skipping (uid={} pmid={})", uid, pmid);
-            return;
-        }
+	public void recordAction(FeedbackLog feedbackLog) {
+		if (feedbackLog == null || feedbackLog.getUid() == null || feedbackLog.getUid().isEmpty()) {
+			log.warn("recordAction called with null/empty uid; skipping (pmid={})", feedbackLog.getArticleId());
+			return;
+		}
+		if (feedbackLog.getFeedback() == null) {
+			log.warn("recordAction called with null feedback; skipping (uid={} pmid={})", feedbackLog.getUid(),
+					feedbackLog.getArticleId());
+			return;
+		}
 
-        for (int attempt = 0; attempt < SK_RETRY_LIMIT; attempt++) {
-            String sk = buildSk(actionEpochSeconds);
-            Map<String, AttributeValue> item = new HashMap<>();
-            item.put("uid", new AttributeValue().withS(uid));
-            item.put("sk", new AttributeValue().withS(sk));
-            item.put("articleId", new AttributeValue().withS(String.valueOf(pmid)));
-            item.put("feedback", new AttributeValue().withS(feedback.name()));
-            item.put("curatedBy", new AttributeValue().withN(String.valueOf(curatedBy)));
-            item.put("src", new AttributeValue().withS(SRC_MAN));
-            item.put("createTimestamp", new AttributeValue().withN(String.valueOf(actionEpochSeconds)));
-            item.put("modifyTimestamp", new AttributeValue().withN(String.valueOf(actionEpochSeconds)));
+		for (int attempt = 0; attempt < SK_RETRY_LIMIT; attempt++) {
+			String sk = buildSk(feedbackLog.getCreateTimestamp());
+			feedbackLog.setSk(sk);
+			feedbackLog.setSrc(SRC_MAN);
 
-            PutItemRequest req = new PutItemRequest()
-                    .withTableName(TABLE_NAME)
-                    .withItem(item)
-                    .withConditionExpression("attribute_not_exists(sk)");
+			try {
+				// Pass the object directly just like ESearchResultRepository!
+				feedbackLogRepository.save(feedbackLog);
+				return;
+			} catch (ConditionalCheckFailedException race) {
+				// If a collision happens, log it and the loop will retry with a fresh SK
+				log.info("FeedbackLog sk collision for uid={} sk={}; retrying (attempt {})", feedbackLog.getUid(), sk,
+						attempt + 1);
+			} catch (DynamoDbException e) {
+				log.warn("FeedbackLog write failed for uid={} articleId={}: {}", feedbackLog.getUid(),
+						feedbackLog.getArticleId(), e.getMessage());
+				return;
+			}
+		}
 
-            try {
-                amazonDynamoDB.putItem(req);
-                return;
-            } catch (ConditionalCheckFailedException race) {
-                // sk collision (extremely unlikely with 8 hex chars); retry with fresh suffix
-                log.info("FeedbackLog sk collision for uid={} sk={}; retrying (attempt {})",
-                        uid, sk, attempt + 1);
-            } catch (AmazonDynamoDBException e) {
-                log.warn("FeedbackLog write failed for uid={} pmid={}: {}", uid, pmid, e.getMessage());
-                return;
-            }
-        }
-        log.warn("FeedbackLog write hit retry limit for uid={} pmid={}; giving up", uid, pmid);
-    }
+	}
 
     /**
      * Build a unique sk: epoch + '#' + last 8 hex digits of nanoTime.

@@ -25,17 +25,21 @@ phases:
         - echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin
        
         - TAG="$CODEBUILD_BUILD_NUMBER.$(date +%Y-%m-%d.%H.%M.%S).$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
-        - echo "TAG $TAG"
+        - echo $TAG
         - sed -i.bak -e 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:$TAG"'@' kubernetes/k8-deployment.yaml
         - echo "${CODEBUILD_WEBHOOK_HEAD_REF}"
-        - echo "Branch Name ${BRANCH}"
-        - echo "AWS Region ${AWS_REGION}"
+        - echo "${BRANCH}"
+        - echo "${AWS_REGION}"
         - |
           if expr "${BRANCH}" : ".*dev" >/dev/null; then
             sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-dev"'@' -e 's@APPNAME@'"reciter-dev"'@' -e 's@HPANAME@'"hpa-reciter-dev"'@' -e 's@ENVIRONMENT_LABEL@'"dev"'@' kubernetes/k8-deployment.yaml;
           fi
         - |
           if expr "${BRANCH}" : ".*master" >/dev/null; then
+            sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-prod"'@'  -e 's@APPNAME@'"reciter-prod"'@' -e 's@HPANAME@'"hpa-reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
+          fi
+        - |
+          if expr "${BRANCH}" : ".*MigrationFromJDk11ToAWSCorretto17" >/dev/null; then
             sed -i.bak -e 's@NAMESPACE@'"reciter"'@' -e 's@ENVCONFIG@'"env-config-prod"'@'  -e 's@APPNAME@'"reciter-prod"'@' -e 's@HPANAME@'"hpa-reciter-prod"'@' -e 's@ENVIRONMENT_LABEL@'"prod"'@' kubernetes/k8-deployment.yaml;
           fi
         #- $(aws ecr get-login --no-include-email)
@@ -59,7 +63,7 @@ phases:
       # (docker build/push and `kubectl set image` only run if tests pass).
       - mvn clean install
       - |
-        if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null; then
+        if expr "${BRANCH}" : ".*master" >/dev/null || expr "${BRANCH}" : ".*dev" >/dev/null || expr "${BRANCH}" : ".*MigrationFromJDk11ToAWSCorretto17" >/dev/null; then
           docker build --tag $REPOSITORY_URI:$TAG .
           docker push $REPOSITORY_URI:$TAG
           # Log out from the Docker registry to clear credentials
@@ -70,6 +74,8 @@ phases:
           kubectl set image deployment/reciter-prod reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME
         fi
         if expr "${BRANCH}" : ".*dev" >/dev/null; then
-          kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME
-          
+          kubectl set image deployment/reciter-dev reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME 
+        fi
+        if expr "${BRANCH}" : ".*MigrationFromJDk11ToAWSCorretto17" >/dev/null; then
+          kubectl set image deployment/reciter-prod reciter=$REPOSITORY_URI:$TAG -n $EKS_CLUSTER_NAME  
         fi

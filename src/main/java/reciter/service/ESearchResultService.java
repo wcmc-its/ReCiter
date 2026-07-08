@@ -20,20 +20,12 @@ package reciter.service;
 
 import reciter.database.dynamodb.model.ESearchResult;
 
-import java.util.List;
-
 public interface ESearchResultService {
 
 	void save(ESearchResult eSearchResult);
 
 	ESearchResult findByUid(String uid);
 
-	boolean pushESearchResult(ESearchResult eSearchResult);
-
-	void update(ESearchResult eSearchResult);
-	
-	boolean existByUidAndRetrievalStrategyName(String uid, String eSearchPmidretrievalStrategyName);
-	
 	void deleteAll();
 
 	void delete(String uid);

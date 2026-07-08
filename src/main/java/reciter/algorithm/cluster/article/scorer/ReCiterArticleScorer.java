@@ -2,6 +2,7 @@ package reciter.algorithm.cluster.article.scorer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,12 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -45,7 +40,6 @@ import reciter.algorithm.evidence.targetauthor.affiliation.strategy.CommonAffili
 import reciter.algorithm.evidence.targetauthor.articlesize.ArticleSizeStrategyContext;
 import reciter.algorithm.evidence.targetauthor.articlesize.strategy.ArticleSizeStrategy;
 import reciter.algorithm.evidence.targetauthor.degree.DegreeStrategyContext;
-import reciter.algorithm.evidence.targetauthor.degree.strategy.DegreeType;
 import reciter.algorithm.evidence.targetauthor.degree.strategy.YearDiscrepancyStrategy;
 import reciter.algorithm.evidence.targetauthor.department.DepartmentStrategyContext;
 import reciter.algorithm.evidence.targetauthor.department.strategy.DepartmentStringMatchStrategy;
@@ -79,7 +73,14 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 /**
  * @author szd2013
@@ -548,16 +549,18 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         	 	long targetAuthorCount = article.getArticleCoAuthors().getAuthors().stream()
                      .filter(ReCiterAuthor::isTargetAuthor)  // Filter target authors
                      .count();  // Count them
-        	 	slf4jLogger.info("Article: " + article.getArticleId() + ", Target Author Count: " + targetAuthorCount);
+        	 	//enable if requrired for debugging
+        	 	//slf4jLogger.info("Article: " + article.getArticleId() + ", Target Author Count: " + targetAuthorCount);
                  //if the targetAuthorCount is zero then impose the penality in the article authorshipLikelyhood score.
                  article.setTargetAuthorCount(targetAuthorCount);
                  if(targetAuthorCount == 0)
                  {
-                	 // FIX (#640-C): capture the ORIGINAL score before overwriting it. Previously
+                	// FIX (#640-C): capture the ORIGINAL score before overwriting it. Previously
                 	 // the penalty was computed AFTER setAuthorshipLikelihoodScore, so it read back
                 	 // the new value and the delta was always x-x=0.
                 	 double originalAuthorshipLikelihoodScore = article.getAuthorshipLikelihoodScore();
                 	 double authorshipLikelyhoodScore = (strategyParameters.getTargetAuthorMissingPenaltyPercent() * (originalAuthorshipLikelihoodScore/100));
+                	 
                 	 article.setAuthorshipLikelihoodScore(authorshipLikelyhoodScore);
                 	 article.setTargetAuthorCountPenalty(authorshipLikelyhoodScore - originalAuthorshipLikelihoodScore);
                  }
@@ -565,6 +568,17 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
         })
         .collect(Collectors.toList());
 	}
+ 	
+ 	
+	// Helper method to find JSONObject by article
+	/*private static ReCiterArticle findJSONObjectById(JSONArray jsonArray, ReCiterArticle article) {
+	    for (int i = 0; i < jsonArray.length(); i++) {
+	        JSONObject jsonObject = jsonArray.getJSONObject(i);
+	        if (jsonObject.getLong("id") == article.getArticleId()) {
+	        	article.setAuthorshipLikelihoodScore(jsonObject.optDouble("scoreTotal",0.0));
+	            return article; // Return the modified article
+	        }
+*/
 
 	// Build a lookup map from JSONArray for O(1) score access per article
 	private static Map<Long, Double> buildScoreMap(JSONArray jsonArray) {
@@ -587,50 +601,50 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
     	return false;
     }
 	
-	private boolean uploadJsonFileIntoS3(String keyName,File file)
+	private boolean uploadJsonFileIntoS3(String keyName,File fileName)
 	{
-		String FeedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
+		String feedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
         
 		// Upload the python file
         try {
         	
-        	final AmazonS3 s3 = AmazonS3ClientBuilder
-					.standard()
-					.withCredentials(new DefaultAWSCredentialsProviderChain())
-					.withRegion(System.getenv("AWS_REGION"))
-					.build();
-			if(s3.doesBucketExistV2(FeedbackScoreBucketName)) 
-			{												
-        	
-	        	slf4jLogger.info("Uploading files to S3 bucket ",FeedbackScoreBucketName);
-	        	PutObjectRequest putObjectRequest = new PutObjectRequest(FeedbackScoreBucketName.toLowerCase(), keyName, file);
-	       
-	        	// Optionally, set metadata
-	            ObjectMetadata metadata = new ObjectMetadata();
-	            metadata.setContentType("application/json");
-	            putObjectRequest.setMetadata(metadata);
-	
+        	final S3Client s3 = AwsScoringClients.s3();
+        	try {
+                HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
+                        .bucket(feedbackScoreBucketName)
+                        .build();
+
+                s3.headBucket(headBucketRequest); // If successful, the bucket exists
+                slf4jLogger.info("Uploading files to S3 bucket ",feedbackScoreBucketName);
+                
+                // Upload file
+	            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+	                    .bucket(feedbackScoreBucketName.toLowerCase())
+	                    .key(keyName)
+	                    .contentType("application/json")
+	                    .build();
 	            
-	            try{
-					s3.putObject(putObjectRequest);
-					slf4jLogger.info("CSV file uploaded successfully to S3 bucket: " + FeedbackScoreBucketName);
-				}
-				catch(AmazonServiceException e) {
-					// The call was transmitted successfully, but Amazon S3 couldn't process 
-		            // it, so it returned an error response.
-					slf4jLogger.error(e.getErrorMessage());
-					 return false;
-				}
-	            return true;
-			}
-        	else 
-        	{
-        		slf4jLogger.error("S3 bucket does not exist: " + FeedbackScoreBucketName);
-                return false;
-        	}
+	            PutObjectResponse putObjectResponse = s3.putObject(putObjectRequest, RequestBody.fromFile(Paths.get(fileName.getAbsolutePath())));
+	            if (putObjectResponse.sdkHttpResponse().isSuccessful()) {
+	            	slf4jLogger.info("CSV file uploaded successfully to S3 bucket: " + feedbackScoreBucketName );
+	                return true;
+	            } else {
+	            	slf4jLogger.error("Failed to upload JSON file to S3.");
+	                return false;
+	            }
+            } catch (S3Exception e) {
+                if (e.statusCode() == 404) {
+                    slf4jLogger.error("S3 bucket does not exist: " + feedbackScoreBucketName);
+                    return false;
+                }else {
+                	slf4jLogger.error(e.getMessage());
+                	return false;
+                }
+            }
+    
         
         } catch (Exception e) {
-            slf4jLogger.error("Failed to upload scoring input file to S3 bucket={}, key={}", FeedbackScoreBucketName, keyName, e);
+			slf4jLogger.error("Unexpected exception while uploading CSV file to S3. fileName={}, bucketName={}",fileName, feedbackScoreBucketName, e);
 			return false;			 
         }
  	}

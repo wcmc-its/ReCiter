@@ -1,5 +1,6 @@
 package reciter.service.dynamo;
 
+
 /**
  * One row of curation audit history for the Publication Manager UI: a FeedbackLog
  * action (accept/reject/pending) on a PMID, enriched with that article's

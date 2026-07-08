@@ -1,22 +1,21 @@
 package reciter.service.dynamo;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import reciter.database.dynamodb.model.InstitutionAfid;
-import reciter.database.dynamodb.model.MeshTerm;
-import reciter.database.dynamodb.repository.DynamoDbInstitutionAfidRepository;
-import reciter.model.identity.Identity;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import reciter.database.dynamodb.model.InstitutionAfid;
+import reciter.database.dynamodb.repository.DynamoDbInstitutionAfidRepository;
+
 @Service("dynamoDbInstitutionAfidService")
+@RequiredArgsConstructor
 public class DynamoDbInstitutionAfidService implements IDynamoDbInstitutionAfidService {
 
-    @Autowired
-    private DynamoDbInstitutionAfidRepository dynamoDbInstitutionAfidRepository;
+	private final DynamoDbInstitutionAfidRepository dynamoDbInstitutionAfidRepository;
 
     @Override
     public void save(Collection<InstitutionAfid> institutionAfids) {

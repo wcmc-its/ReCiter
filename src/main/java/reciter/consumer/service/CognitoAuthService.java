@@ -13,16 +13,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
-import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthRequest;
-import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthResult;
-import com.amazonaws.services.cognitoidp.model.AuthFlowType;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
+
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthFlowType;
 
 @Service
 public class CognitoAuthService {
@@ -75,9 +77,10 @@ public class CognitoAuthService {
             return 0; // Expire immediately if token is invalid
         }
     }
-    
-    private final AWSCognitoIdentityProvider cognitoClient = AWSCognitoIdentityProviderClientBuilder.standard()
-            .withRegion(AWS_REGION)
+    // v2: CognitoIdentityProviderClient replaces AWSCognitoIdentityProvider
+    // v2: .builder().region() replaces .withRegion()
+    private final CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.builder()
+            .region(Region.of("us-west-2"))
             .build();
 
     public String authenticateConsumer(String username, String password) {
@@ -96,15 +99,18 @@ public class CognitoAuthService {
         authParams.put("PASSWORD", password);
         authParams.put("SECRET_HASH", secretHash);
 
-        AdminInitiateAuthRequest authRequest = new AdminInitiateAuthRequest()
-                .withAuthFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
-                .withUserPoolId(USER_POOL_ID)
-                .withClientId(CLIENT_ID)
-                .withAuthParameters(authParams);
+       
+        AdminInitiateAuthRequest authRequest = AdminInitiateAuthRequest.builder()
+                .authFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
+                .userPoolId(USER_POOL_ID)
+                .clientId(CLIENT_ID)
+                .authParameters(authParams)
+                .build();
 
         try {
-            AdminInitiateAuthResult result = cognitoClient.adminInitiateAuth(authRequest);
-            String idToken = result.getAuthenticationResult().getIdToken();
+        	// v2: adminInitiateAuth() returns AdminInitiateAuthResponse (not AdminInitiateAuthResult)
+            AdminInitiateAuthResponse result = cognitoClient.adminInitiateAuth(authRequest);
+            String idToken = result.authenticationResult().idToken();
             
             // 3. Store in Cache before returning
             tokenCache.put(username, idToken);

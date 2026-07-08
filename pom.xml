@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>edu.cornell.weill.reciter</groupId>
-    <artifactId>reciter</artifactId>
-    <version>2.1.3</version>
-    <name>ReCiter</name>
-    <description>ReCiter is a publication suggestions engine</description>
-    <url>https://github.com/wcmc-its/ReCiter</url>
-    
-    <organization>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>edu.cornell.weill.reciter</groupId>
+	<artifactId>reciter</artifactId>
+	<version>3.0.0</version>
+	<name>ReCiter</name>
+	<description>ReCiter is a publication suggestions engine</description>
+	<url>https://github.com/wcmc-its/ReCiter</url>
+
+	<organization>
 		<url>https://github.com/wcmc-its</url>
 		<name>Weill Cornell Medicine ITS</name>
 	</organization>
@@ -44,394 +45,354 @@
 			<timezone>GMT-5</timezone>
 		</developer>
 	</developers>
-    
-    <scm>
+
+	<scm>
 		<connection>scm:git:git://github.com/wcmc-its/ReCiter.git</connection>
 		<developerConnection>scm:git:git@github.com:wcmc-its/ReCiter.git</developerConnection>
 		<url>https://github.com/wcmc-its/ReCiter</url>
-		<tag>2.1.3</tag>
+		<tag>3.0.0</tag>
 	</scm>
-    
-    <properties>
+
+	<properties>
 		<java.version>17</java.version>
-    	<sqlite4java.version>1.0.392</sqlite4java.version>
-		<lombok.version>1.18.44</lombok.version>
-  	</properties>
-    <build>
-        <sourceDirectory>src/main/java</sourceDirectory>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
-        <plugins>
-            <plugin>
+		<corretto.version>17</corretto.version>
+		<log4j2.version>2.17.1</log4j2.version>
+		<!--  <spring-framework.version>6.0.0</spring-framework.version>-->
+	</properties>
+	<build>
+		<sourceDirectory>src/main/java</sourceDirectory>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.11.0</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-            	<groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-antrun-plugin</artifactId>
-	            <version>1.6</version>
-	            <executions>
-	                <execution>
-	                    <id>prepare</id>
-	                    <phase>package</phase>
-	                    <configuration>
-	                        <tasks>
-	                            <unzip src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.directory}/${project.build.finalName}" />
-	                            <copy todir="${project.build.directory}/${project.build.finalName}/" overwrite="false">
-	                                <fileset dir="./" includes=".ebextensions/**"/>
-	                            </copy>
-	                            <!-- <jar jarfile="${project.build.directory}/${project.build.finalName}.jar" basedir="${project.build.directory}/${project.build.finalName}"/>-->
-	                            <zip compress="false" destfile="${project.build.directory}/${project.build.finalName}.jar" basedir="${project.build.directory}/${project.build.finalName}"/>
-	                        </tasks>
-	                    </configuration>
-	                    <goals>
-	                        <goal>run</goal>
-	                    </goals>
-	                </execution>
-	            </executions>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>1.18.42</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>prepare</id>
+						<phase>package</phase>
+						<configuration>
+							<target>
+								<unzip
+									src="${project.build.directory}/${project.build.finalName}.jar"
+									dest="${project.build.directory}/${project.build.finalName}" />
+
+								<copy
+									todir="${project.build.directory}/${project.build.finalName}/"
+									overwrite="false">
+									<fileset dir="./"
+										includes=".ebextensions/**" />
+								</copy>
+
+								<zip compress="false"
+									destfile="${project.build.directory}/${project.build.finalName}.jar"
+									basedir="${project.build.directory}/${project.build.finalName}" />
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<version>3.1.2</version>
 				<executions>
-						<execution>
-								<id>copy</id>
-								<phase>test-compile</phase>
-								<goals>
-										<goal>copy-dependencies</goal>
-								</goals>
-								<configuration>
-										<includeScope>test</includeScope>
-										<includeTypes>so,dll,dylib</includeTypes>
-										<outputDirectory>${project.basedir}/native-libs</outputDirectory>
-								</configuration>
-						</execution>
+					<execution>
+						<id>copy</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeScope>test</includeScope>
+							<includeTypes>so,dll,dylib</includeTypes>
+							<outputDirectory>${project.basedir}/native-libs</outputDirectory>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
-        </plugins>
-    </build>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
-    </parent>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-        			<groupId>com.amazonaws</groupId>
-        			<artifactId>aws-java-sdk-bom</artifactId>
-        			<version>1.11.925</version>
-        			<type>pom</type>
-        			<scope>import</scope>
-      		</dependency>
-            <!-- Pin the OpenAPI 3 model/core/annotation stack to the version springdoc 1.6.15
-                 ships with. Without this, the legacy swagger-codegen-maven-plugin (a compile
-                 dependency) wins Maven mediation with swagger-models 2.0.0, which lacks methods
-                 springdoc calls at runtime (NoSuchMethodError Schema.getExampleSetFlag). #634 Stage 2. -->
-            <dependency>
-                <groupId>io.swagger.core.v3</groupId>
-                <artifactId>swagger-models</artifactId>
-                <version>2.2.9</version>
-            </dependency>
-            <dependency>
-                <groupId>io.swagger.core.v3</groupId>
-                <artifactId>swagger-core</artifactId>
-                <version>2.2.9</version>
-            </dependency>
-            <dependency>
-                <groupId>io.swagger.core.v3</groupId>
-                <artifactId>swagger-annotations</artifactId>
-                <version>2.2.9</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <dependencies>
-    	<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
+		</plugins>
+	</build>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.3</version>
+	</parent>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>2.29.26</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test -->
 		<dependency>
-		    <groupId>org.springframework.security</groupId>
-		    <artifactId>spring-security-config</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
 		</dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-web -->
+		<!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-core -->
 		<dependency>
-		    <groupId>org.springframework.security</groupId>
-		    <artifactId>spring-security-web</artifactId>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-core</artifactId>
 		</dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-core -->
+		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security -->
 		<dependency>
-		    <groupId>org.springframework.security</groupId>
-		    <artifactId>spring-security-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-websocket</artifactId>
-        </dependency>
-        <dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-starter-aop</artifactId>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		<!--
+		https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket -->
 		<dependency>
-    			<groupId>commons-io</groupId>
-    			<artifactId>commons-io</artifactId>
-    			<version>2.14.0</version> <!-- 2.14.0 fixes GHSA-78wr-2p64-hpwj -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 		<dependency>
-	        <groupId>org.apache.commons</groupId>
-	        <artifactId>commons-csv</artifactId>
-	        <version>1.9.0</version>
-    	</dependency>
-    	<dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20240303</version> <!-- Latest stable version -->
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.unboundid/unboundid-ldapsdk -->
-        <dependency>
-            <groupId>com.unboundid</groupId>
-            <artifactId>unboundid-ldapsdk</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <!-- Provides org.springframework.dao.* (e.g. EmptyResultDataAccessException),
-             previously pulled in transitively via spring-data-dynamodb. Retained
-             explicitly after its removal (#634 Stage 1). Version managed by the Boot parent. -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-        </dependency>
-        <!-- Bean Validation provider (Hibernate Validator) for @Validated
-             @ConfigurationProperties such as StrategyParameters. Previously pulled in
-             transitively via spring-data-dynamodb; now declared explicitly (#634 Stage 1). -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <!-- springdoc-openapi replaces the abandoned springfox (#634 Stage 2). 1.6.x is the
-             Boot 2.x line; it bundles the OpenAPI 3 (io.swagger.v3) annotations + swagger-ui. -->
-        <dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-ui</artifactId>
-			<version>1.7.0</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
-        <!-- springdoc 1.6.x eagerly introspects its spring-data-web customizers
-             (PageableDefault/SortDefault), so spring-data-commons must be on the classpath
-             for the context to load. Inert otherwise — no repository scanning is enabled
-             (spring-data-dynamodb was removed in Stage 1). Version managed by the Boot parent. -->
-        <dependency>
+		<!--
+		https://mvnrepository.com/artifact/org.springframework.data/spring-data-commons -->
+		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-commons</artifactId>
 		</dependency>
-        <!-- Uncomment this dependency if you want to use dynamodb locally -->
-        <dependency>
-       		<groupId>com.amazonaws</groupId>
-       		<artifactId>DynamoDBLocal</artifactId>
-       		 <version>[1.12,2.0)</version>
-        </dependency>
-        <dependency>
-			<groupId>com.almworks.sqlite4java</groupId>
-			<artifactId>sqlite4java</artifactId>
-			<type>jar</type>
-			<version>${sqlite4java.version}</version>
-		  </dependency>
-	  <dependency>
-			<groupId>com.almworks.sqlite4java</groupId>
-			<artifactId>libsqlite4java-linux-i386</artifactId>
-			<type>so</type>
-			<version>${sqlite4java.version}</version>
-	  </dependency>
-		  <dependency>
-			  <groupId>com.almworks.sqlite4java</groupId>
-			  <artifactId>libsqlite4java-osx</artifactId>
-			  <type>dylib</type>
-			  <version>${sqlite4java.version}</version>
-		  </dependency>
-		  <dependency>
-			  <groupId>com.almworks.sqlite4java</groupId>
-			  <artifactId>sqlite4java-win32-x64</artifactId>
-			  <type>dll</type>
-			  <version>${sqlite4java.version}</version>
-		  </dependency>
-		  <dependency>
-			  <groupId>com.almworks.sqlite4java</groupId>
-			  <artifactId>sqlite4java-win32-x86</artifactId>
-			  <type>dll</type>
-			  <version>${sqlite4java.version}</version>
-		  </dependency>
-	    <dependency>
-	    	<groupId>com.opencsv</groupId>
-	    	<artifactId>opencsv</artifactId>
-	    	<version>4.2</version>
-	    </dependency>
-	    <dependency>
-	    	<groupId>com.amazonaws</groupId>
-	    	<artifactId>aws-java-sdk-sqs</artifactId>
-	    </dependency>
-	    <dependency>
-	    	<groupId>com.amazonaws</groupId>
-	    	<artifactId>aws-java-sdk-sts</artifactId>
-	    </dependency>
-	    <dependency>
-	    	<groupId>com.amazonaws</groupId>
-	    	<artifactId>amazon-sqs-java-extended-client-lib</artifactId>
-	    	<version>1.0.3</version>
+		<!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-rest-core -->
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-rest-core</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-oauth2-jose -->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+    	
+		<!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.5</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.reflections/reflections -->
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.10.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.7</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.9.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.json/json -->
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20240303</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/junit/junit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.42</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- Uncomment this dependency if you want to use dynamodb locally -->
+		<dependency>
+			<groupId>software.amazon.dynamodb</groupId>
+			<artifactId>DynamoDBLocal</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.opencsv/opencsv -->
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>4.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/dynamodb -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>dynamodb</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/sqs -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sqs</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/sts -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sts</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/dynamodb-enhanced -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>dynamodb-enhanced</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/apache-client -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>apache-client</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.amazonaws/amazon-sqs-java-extended-client-lib -->
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>amazon-sqs-java-extended-client-lib</artifactId>
+			<version>2.0.4</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/secretsmanager -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>secretsmanager</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>cognitoidentityprovider</artifactId>
+		</dependency>
+
+		<!-- model dependencies-->
+		<dependency>
+			<groupId>edu.cornell.weill.reciter</groupId>
+			<artifactId>reciter-scopus-model</artifactId>
+			<version>3.0.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-simple</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
-	        <groupId>org.springframework.boot</groupId>
-	        <artifactId>spring-boot-starter-security</artifactId>
-    	</dependency>
-		<dependency>
-	        <groupId>software.amazon.awssdk</groupId>
-	        <artifactId>secretsmanager</artifactId>
-	        <version>2.20.34</version>
-    	</dependency>
-    	<dependency>
-	        <groupId>com.auth0</groupId>
-	        <artifactId>java-jwt</artifactId>
-	        <version>3.19.4</version> 
-    	</dependency>
-    	<dependency>
-		    <groupId>com.nimbusds</groupId>
-		    <artifactId>nimbus-jose-jwt</artifactId>
-		    <version>9.37.4</version> <!-- Library to handle JWKs; 9.37.4 fixes GHSA-gvpg-vgmx-xg6w / GHSA-xwmg-2g98-w7v9 -->
-		</dependency>
-    	<dependency>
-	        <groupId>org.springframework.security</groupId>
-	        <artifactId>spring-security-oauth2-jose</artifactId>
-    	</dependency>
-    	<dependency>
-	        <groupId>org.springframework.security</groupId>
-	        <artifactId>spring-security-oauth2-resource-server</artifactId>
-    	</dependency>
- 	    <dependency>
-	    	<groupId>edu.cornell.weill.reciter</groupId>
-	    	<artifactId>reciter-scopus-model</artifactId>
-	    	<version>2.0.3</version>
-	    	<exclusions>
-	    		<exclusion>
-	    			<groupId>org.slf4j</groupId>
-	    			<artifactId>slf4j-simple</artifactId>
-	    		</exclusion>
-	    	</exclusions>
-	    </dependency>
-	    <dependency>
-		  <groupId>com.amazonaws</groupId>
-		  <artifactId>aws-java-sdk-lambda</artifactId>
-		  <version>1.12.742</version> <!-- Use the latest available version -->
+			<groupId>edu.cornell.weill.reciter</groupId>
+			<artifactId>reciter-pubmed-model</artifactId>
+			<version>3.0.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-simple</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
-		  <groupId>com.amazonaws</groupId>
-		  <artifactId>aws-java-sdk-core</artifactId>
-		  <version>1.12.742</version>
+			<groupId>edu.cornell.weill.reciter</groupId>
+			<artifactId>reciter-identity-model</artifactId>
+			<version>3.0.2</version>
 		</dependency>
 		<dependency>
-		    <groupId>com.amazonaws</groupId>
-		    <artifactId>aws-java-sdk-cognitoidp</artifactId>
-		    <version>1.12.742</version>
-	    </dependency>
-	    
-	    <dependency>
-	    	<groupId>edu.cornell.weill.reciter</groupId>
-	    	<artifactId>reciter-pubmed-model</artifactId>
-	    	<version>2.0.3</version>
-	    	<exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-	    </dependency>
-	    <dependency>
-	    	<groupId>edu.cornell.weill.reciter</groupId>
-	    	<artifactId>reciter-identity-model</artifactId>
-	    	<version>2.0.10</version>
-	    </dependency>
-	    <dependency>
-	    	<groupId>edu.cornell.weill.reciter</groupId>
-	    	<artifactId>reciter-article-model</artifactId>
-	    	<version>2.0.36</version>
-	    </dependency>
-	    <dependency>
-	    	<groupId>edu.cornell.weill.reciter</groupId>
-	    	<artifactId>reciter-dynamodb-model</artifactId>
-	    	<version>2.0.15</version>
-	    </dependency>
-	    <dependency>
-	    	<groupId>com.github.bohnman</groupId>
-	    	<artifactId>squiggly-filter-jackson</artifactId>
-	    	<version>1.3.18</version>
-	    </dependency>
+			<groupId>edu.cornell.weill.reciter</groupId>
+			<artifactId>reciter-article-model</artifactId>
+			<version>3.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.cornell.weill.reciter</groupId>
+			<artifactId>reciter-dynamodb-model</artifactId>
+			<version>3.0.3</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.auth0/java-jwt -->
+		<dependency>
+			<groupId>com.auth0</groupId>
+			<artifactId>java-jwt</artifactId>
+			<version>3.19.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.nimbusds</groupId>
+			<artifactId>nimbus-jose-jwt</artifactId>
+			<version>9.1.2</version> <!-- Library to handle JWKs -->
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.antlr/antlr4-runtime -->
 		<dependency>
 			<groupId>org.antlr</groupId>
 			<artifactId>antlr4-runtime</artifactId>
 			<version>4.6</version>
 		</dependency>
-	    <dependency>
-	    	<groupId>org.mockito</groupId>
-	    	<artifactId>mockito-core</artifactId>
-	    </dependency>
-	     <dependency>
-		    <groupId>com.github.ben-manes.caffeine</groupId>
-		    <artifactId>caffeine</artifactId>
-		    <version>2.9.3</version> <!-- Latest stable as of Sep 2025 -->
-		</dependency>	
-    </dependencies>
-    <repositories>
-        <!-- Use this repository for local dynamodb. Change the region accordingly. For details: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.Maven.html -->
-        <repository>
-       		<id>dynamodb-local-oregon</id>
-       		<name>DynamoDB Local Release Repository</name>
-       		<url>https://s3-us-west-2.amazonaws.com/dynamodb-local/release</url>
-    	</repository>
-    </repositories>
+		<!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator -->
+		<dependency>
+			<groupId>org.hibernate.validator</groupId>
+			<artifactId>hibernate-validator</artifactId>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>lambda</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+	</dependencies>
+
 </project>

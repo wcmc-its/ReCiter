@@ -1,27 +1,33 @@
 
 package reciter.security;
 
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
-import com.amazonaws.services.cognitoidp.model.ListUserPoolClientsRequest;
-import com.amazonaws.services.cognitoidp.model.ListUserPoolClientsResult;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+
+import jakarta.annotation.PostConstruct;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolClientsRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolClientsResponse;
+
 @Component
-@Slf4j
 public class CognitoClientRegistry {
 
-    private AWSCognitoIdentityProvider cognitoClient;
+	private static final Logger log = LoggerFactory.getLogger(CognitoClientRegistry.class);	
+	
+    // v2: CognitoIdentityProviderClient replaces AWSCognitoIdentityProvider
+    private CognitoIdentityProviderClient cognitoClient;
 
     @Value("${aws.cognito.user-pool-id}")
     private String userPoolId;
@@ -33,9 +39,11 @@ public class CognitoClientRegistry {
 
     @PostConstruct
     public void init() {
-        // Initialize AWS Client
-        this.cognitoClient = AWSCognitoIdentityProviderClientBuilder.standard()
-                .withRegion(awsRegion)
+         // Initialize AWS Client
+    	 // v2: CognitoIdentityProviderClient.builder().region() replaces
+         //     AWSCognitoIdentityProviderClientBuilder.standard().withRegion()
+        this.cognitoClient = CognitoIdentityProviderClient.builder()
+                .region(Region.of(awsRegion))
                 .build();
 
         // Initialize Caffeine Cache
@@ -62,18 +70,28 @@ public class CognitoClientRegistry {
 
         try {
             do {
-                // Use ListUserPoolClientsRequest instead of ListAppClientsRequest
-                ListUserPoolClientsRequest request = new ListUserPoolClientsRequest()
-                        .withUserPoolId(userPoolId)
-                        .withMaxResults(60)
-                        .withNextToken(nextToken);
+               
+                
+             // v2: ListUserPoolClientsRequest.builder() replaces new ListUserPoolClientsRequest().withXxx()
+                ListUserPoolClientsRequest.Builder reqBuilder = ListUserPoolClientsRequest.builder()
+                        .userPoolId(userPoolId)
+                        .maxResults(60);
+                
+                if (nextToken != null) {
+                    reqBuilder.nextToken(nextToken);
+                }
 
-                ListUserPoolClientsResult result = cognitoClient.listUserPoolClients(request);
+                
+                // v2: ListUserPoolClientsResponse replaces ListUserPoolClientsResult
+                ListUserPoolClientsResponse result = cognitoClient.listUserPoolClients(reqBuilder.build());
                 
                 // Collect the Client IDs
-                result.getUserPoolClients().forEach(client -> freshIds.add(client.getClientId()));
+                // v2: result.userPoolClients() replaces result.getUserPoolClients()
+                // v2: client.clientId() replaces client.getClientId()
+                result.userPoolClients().forEach(client -> freshIds.add(client.clientId()));
                 
-                nextToken = result.getNextToken();
+                // v2: result.nextToken() replaces result.getNextToken()
+                nextToken = result.nextToken();
             } while (nextToken != null);
 
             return Collections.unmodifiableSet(freshIds);
