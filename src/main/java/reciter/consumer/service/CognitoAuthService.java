@@ -80,7 +80,7 @@ public class CognitoAuthService {
     // v2: CognitoIdentityProviderClient replaces AWSCognitoIdentityProvider
     // v2: .builder().region() replaces .withRegion()
     private final CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.builder()
-            .region(Region.of("us-west-2"))
+            .region(Region.of(AWS_REGION))
             .build();
 
     public String authenticateConsumer(String username, String password) {
