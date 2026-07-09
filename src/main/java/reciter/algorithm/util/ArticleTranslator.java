@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
@@ -128,12 +129,20 @@ public class ArticleTranslator {
 	        reCiterArticle.setPublicationTypePubmed(publicationTypePubmed);
         }
         
-        if(pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract() != null && 
-        		pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts() != null && !pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts().isEmpty()) {
-	        String pubmedPublicationAbstract = pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts()
-	        		.stream()
-	        		.map(pubAbstract -> ((pubAbstract.getAbstractTextLabel() != null)?pubAbstract.getAbstractTextLabel() + ": ":"") + pubAbstract.getAbstractText()).collect(Collectors.joining(" "));
-	        reCiterArticle.setPublicationAbstract(pubmedPublicationAbstract);
+        if (pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract() != null
+                && pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts() != null
+                && !pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts().isEmpty()) {
+            String pubmedPublicationAbstract = pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts()
+                    .stream()
+                    // defensive: skip null entries which caused NPE in production
+                    .filter(Objects::nonNull)
+                    .map(pubAbstract -> {
+                        String label = pubAbstract.getAbstractTextLabel() != null ? pubAbstract.getAbstractTextLabel() + ": " : "";
+                        String text = pubAbstract.getAbstractText() != null ? pubAbstract.getAbstractText() : "";
+                        return label + text;
+                    })
+                    .collect(Collectors.joining(" "));
+            reCiterArticle.setPublicationAbstract(pubmedPublicationAbstract);
         }
         
         
