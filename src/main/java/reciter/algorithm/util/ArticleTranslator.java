@@ -132,7 +132,7 @@ public class ArticleTranslator {
         		pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts() != null && !pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts().isEmpty()) {
 	        String pubmedPublicationAbstract = pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts()
 	        		.stream()
-	        		.map(pubAbstract -> ((pubAbstract.getAbstractTextLabel() != null)?pubAbstract.getAbstractTextLabel() + ": ":"") + pubAbstract.getAbstractText()).collect(Collectors.joining(" "));
+	        		.map(pubAbstract -> pubAbstract == null ? "" : ((pubAbstract.getAbstractTextLabel() != null)?pubAbstract.getAbstractTextLabel() + ": ":"") + pubAbstract.getAbstractText()).collect(Collectors.joining(" "));
 	        reCiterArticle.setPublicationAbstract(pubmedPublicationAbstract);
         }
         
