@@ -18,7 +18,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkServiceException;
@@ -181,12 +180,16 @@ public class DynamoDbS3Operations {
 			try (ResponseInputStream<GetObjectResponse> s3Object = s3.getObject(getObjectRequest)) {
 			    String objectContent = IOUtils.toString(s3Object, StandardCharsets.UTF_8);
 
-			    if (objectClass == ReCiterFeature.class) {
-			        return OBJECT_MAPPER.readValue(objectContent, ReCiterFeature.class);
-			    }
+			    // Identity is stored as an array and returned as a List. Every other
+			    // offloaded type (ReCiterFeature, PubMedArticle, ...) deserializes
+			    // directly to objectClass. The previous code only had explicit
+			    // branches for ReCiterFeature and Identity, so any other type — most
+			    // importantly PubMedArticle — fell through to `return null`, silently
+			    // dropping the offloaded article and NPE-ing the caller.
 			    if (objectClass == Identity.class) {
 			        return Arrays.asList(OBJECT_MAPPER.readValue(objectContent, Identity[].class));
 			    }
+			    return OBJECT_MAPPER.readValue(objectContent, objectClass);
 			} catch (IOException | S3Exception e) {
 			    log.error("Error retrieving object from S3: {}", e.getMessage());
 			}
