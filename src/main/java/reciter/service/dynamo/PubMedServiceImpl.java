@@ -78,6 +78,14 @@ public class PubMedServiceImpl implements PubMedService {
         	}
         	 if (pubMedArticle == null) continue; // Skip the rest of the loop for this null element
         	pubarticle = pubMedArticle.getPubMedArticle();
+        	// Skip articles whose body couldn't be loaded (e.g. S3 offload object
+        	// missing). Adding a null here would NPE downstream feature generation
+        	// and fail the whole run for one bad article.
+        	if (pubarticle == null) {
+        		log.warn("Skipping pmid {} in findByPmids: article body unavailable (usingS3={})",
+        				pubMedArticle.getPmid(), pubMedArticle.isUsingS3());
+        		continue;
+        	}
             pubMedArticles.add(pubarticle);
         }
         return pubMedArticles;
