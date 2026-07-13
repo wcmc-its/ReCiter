@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -128,13 +130,24 @@ public class ArticleTranslator {
 	        reCiterArticle.setPublicationTypePubmed(publicationTypePubmed);
         }
         
-        if(pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract() != null && 
-        		pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts() != null && !pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts().isEmpty()) {
-	        String pubmedPublicationAbstract = pubmedArticle.getMedlinecitation().getArticle().getPublicationAbstract().getAbstractTexts()
-	        		.stream()
-	        		.map(pubAbstract -> pubAbstract == null ? "" : ((pubAbstract.getAbstractTextLabel() != null)?pubAbstract.getAbstractTextLabel() + ": ":"") + pubAbstract.getAbstractText()).collect(Collectors.joining(" "));
-	        reCiterArticle.setPublicationAbstract(pubmedPublicationAbstract);
-        }
+        Optional.ofNullable(pubmedArticle.getMedlinecitation())
+        .map(medlineCitation -> medlineCitation.getArticle())
+        .map(article -> article.getPublicationAbstract())
+        .map(publicationAbstract -> publicationAbstract.getAbstractTexts())
+        .filter(abstractTexts -> abstractTexts != null && !abstractTexts.isEmpty())
+        .ifPresent(abstractTexts -> {
+            String pubmedPublicationAbstract = abstractTexts
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .map(pubAbstract -> {
+                        String label = pubAbstract.getAbstractTextLabel() != null ? pubAbstract.getAbstractTextLabel() + ": " : "";
+                        String text = pubAbstract.getAbstractText() != null ? pubAbstract.getAbstractText() : "";
+                        return label + text;
+                    })
+                    .collect(Collectors.joining(" "));
+            reCiterArticle.setPublicationAbstract(pubmedPublicationAbstract);
+        });
+        
         
         
         
