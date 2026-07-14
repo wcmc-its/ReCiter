@@ -22,9 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;

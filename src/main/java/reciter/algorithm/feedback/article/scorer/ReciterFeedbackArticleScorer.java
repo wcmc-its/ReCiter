@@ -719,7 +719,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 					article != null ? article.getArticleId() : null, countAccepted, countRejected, e);
   		}
   		return null;
-
       }
     
 	// Helper methods

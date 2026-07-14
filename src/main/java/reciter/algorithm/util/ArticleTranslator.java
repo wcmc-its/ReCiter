@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
@@ -90,6 +91,11 @@ public class ArticleTranslator {
      */
     public static ReCiterArticle translate(PubMedArticle pubmedArticle, ScopusArticle scopusArticle, String nameIgnoredCoAuthors, StrategyParameters strategyParameters) {
 
+    	 if (pubmedArticle == null) {
+             slf4jLogger.warn("PubMedArticle is null, cannot translate to ReCiterArticle");
+             return null;
+         }
+    	 
         // PMID
         long pmid = pubmedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid();
         ReCiterArticle reCiterArticle = new ReCiterArticle(pmid);

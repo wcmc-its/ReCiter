@@ -55,6 +55,7 @@ import reciter.feedback.EntryPath;
 import reciter.model.identity.Identity;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
+import reciter.service.ExternalArticleService;
 import reciter.service.IdentityService;
 import reciter.service.ScopusService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
@@ -84,6 +85,9 @@ public class ReCiterControllerTest {
 
 	@Mock
 	private ReCiterRetrievalEngine aliasReCiterRetrievalEngine;
+	
+	@Mock
+	private ExternalArticleService externalArticleService;
 
 	@InjectMocks
 	private ReCiterController reCiterController;
@@ -799,7 +803,7 @@ public class ReCiterControllerTest {
 		when(identityService.findByUid(uid)).thenReturn(null);
 
 		// Act
-		ResponseEntity<?> response = reCiterController.runFeatureGenerator(uid, null, null, null, false, null);
+		ResponseEntity<?> response = reCiterController.runFeatureGenerator(uid, null, null, null, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -816,7 +820,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ALL, false, null);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ALL, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -843,7 +847,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_ONLY, false, null);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_ONLY, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -864,7 +868,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_ONLY, false, null);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_ONLY, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -885,7 +889,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_NULL, false, null);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_NULL, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -917,7 +921,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_AND_NULL, false, null);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_AND_NULL, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -949,7 +953,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_REJECTED, false, null);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_REJECTED, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -978,7 +982,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.NULL, false, null);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.NULL, false, null,false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());

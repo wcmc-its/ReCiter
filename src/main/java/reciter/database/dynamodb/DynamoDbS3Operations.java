@@ -234,6 +234,8 @@ public class DynamoDbS3Operations {
 
 } 
 			/*catch (IOException | S3Exception e) {
+			    return OBJECT_MAPPER.readValue(objectContent, objectClass);
+			} catch (IOException | S3Exception e) {
 			    log.error("Error retrieving object from S3: {}", e.getMessage());
 			}*/
 		
