@@ -172,6 +172,7 @@ public class DynamoDbS3Operations {
 		if (s3 == null || bucketName == null) {
 			return null;
 		}
+		log.info("retrieveLargeItem from S3: key={}, bucket={}, objectClass={}", keyName, bucketName, objectClass);
 		try {
 			//S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 			
