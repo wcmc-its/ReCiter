@@ -22,6 +22,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.exception.SdkServiceException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -60,85 +61,38 @@ public class DynamoDbS3Operations {
 	 * @param object
 	 * @param keyName
 	 */
-	public void saveLargeItem(String bucketName, Object object, String keyName) {
+	public boolean saveLargeItem(String bucketName, Object object, String keyName) {
 		// Skip S3 entirely when client or bucket is unavailable (e.g., standalone
-		// local mode with aws.s3.use=false). The previous code's else branch
-		// dereferenced bucketName.toLowerCase() unconditionally, producing
-		// NullPointerException for any Analysis object large enough to spill
-		// (>400KB DynamoDB item limit). The S3 cache is best-effort; callers
-		// don't depend on it for the API response.
+		// local mode with aws.s3.use=false).
 		if (s3 == null || bucketName == null) {
-			return;
+			return false;
 		}
 
-		if(s3 != null && bucketName != null && !s3ObjectExists(bucketName.toLowerCase(), keyName)) {
-			
-			//AmazonS3Config.createFolder(bucketName, AnalysisOutput.class.getName(), s3);
-			String objectContentString = null;
-			try {
-				objectContentString = OBJECT_MAPPER.writeValueAsString(object);
-			} catch (JsonProcessingException e) {
-				log.error(e.getMessage());
-			}
-			byte[] objectContentBytes;
-			if(objectContentString!=null)
-			{	
-				objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
-				InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
-				PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-				        .bucket(bucketName.toLowerCase())
-				        .key(keyName)
-				        .contentType(CONTENT_TYPE)
-				        .contentLength((long) objectContentBytes.length)
-				        .build();
-	
-				
-	
-				try{
-					s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
-				} catch(SdkServiceException e) {
-					// The call was transmitted successfully, but Amazon S3 couldn't process 
-		            // it, so it returned an error response.
-					log.error("S3 putObject failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
-				}
-			}
-		} else {
-			log.info("Deleting Object from bucket " + bucketName + " with keyName " + keyName);
-			DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-			        .bucket(bucketName.toLowerCase())
-			        .key(keyName)
-			        .build();
+		byte[] objectContentBytes;
+		try {
+			objectContentBytes = OBJECT_MAPPER.writeValueAsString(object).getBytes(StandardCharsets.UTF_8);
+		} catch (JsonProcessingException e) {
+			log.error("S3 offload failed to serialize key={}: {}", keyName, e.getMessage(), e);
+			return false;
+		}
 
-			s3.deleteObject(deleteObjectRequest);
+		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+				.bucket(bucketName.toLowerCase())
+				.key(keyName)
+				.contentType(CONTENT_TYPE)
+				.contentLength((long) objectContentBytes.length)
+				.build();
 
-			//s3.deleteObject(bucketName.toLowerCase(), keyName);
-			//Delete the object and insert it again
-			String objectContentString = null;
-			try {
-				objectContentString = OBJECT_MAPPER.writeValueAsString(object);
-			} catch (JsonProcessingException e) {
-				log.error(e.getMessage());
-			}
-			byte[] objectContentBytes;
-			if(objectContentString!=null)
-			{
-				objectContentBytes = objectContentString.getBytes(StandardCharsets.UTF_8);
-				InputStream fileInputStream = new ByteArrayInputStream(objectContentBytes);
-				PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-				        .bucket(bucketName.toLowerCase())
-				        .key(keyName)
-				        .contentType(CONTENT_TYPE)
-				        .contentLength((long) objectContentBytes.length)
-				        .build();
-				try{
-					s3.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, objectContentBytes.length));
-				}
-				catch(SdkServiceException e) {
-					// The call was transmitted successfully, but Amazon S3 couldn't process 
-		            // it, so it returned an error response.
-					log.error("S3 putObject (replace) failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
-				}
-			}
+		try {
+			// putObject overwrites an existing key in place. The previous code deleted the
+			// object first and only then re-uploaded, so a failed re-upload destroyed the
+			// payload while the DynamoDB row still claimed the record was S3-backed.
+			s3.putObject(putObjectRequest,
+					RequestBody.fromInputStream(new ByteArrayInputStream(objectContentBytes), objectContentBytes.length));
+			return true;
+		} catch (SdkException e) {
+			log.error("S3 putObject failed for bucket={} key={}: {}", bucketName, keyName, e.getMessage(), e);
+			return false;
 		}
 	}
 	
