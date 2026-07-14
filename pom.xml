@@ -348,7 +348,7 @@
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-dynamodb-model</artifactId>
-			<version>3.0.2</version>
+			<version>3.0.4</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.auth0/java-jwt -->
