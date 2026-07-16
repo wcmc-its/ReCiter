@@ -44,7 +44,13 @@ public class AnalysisServiceImpl implements AnalysisService{
 		} catch(DynamoDbException addbe) {
 			if(isS3Use && !isDynamoDbLocal) {
 				log.info("Storing item in s3 since it item size exceeds more than 400kb");
-				ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, analysis.getReCiterFeature(), AnalysisOutput.class.getSimpleName() + "/" + analysis.getUid());
+				if(!ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, analysis.getReCiterFeature(), AnalysisOutput.class.getSimpleName() + "/" + analysis.getUid())) {
+					// Saving the row with the S3 flag set after a failed upload leaves a record
+					// pointing at a payload that does not exist, which reads back as an empty
+					// analysis forever. Leave the previous record in place and fail loudly.
+					throw new IllegalStateException("S3 offload failed for uid " + analysis.getUid()
+							+ "; previous Analysis record left intact", addbe);
+				}
 				analysis.setReCiterFeature(null);
 				analysis.setUsingS3(true);
 				analysisOutputRepository.save(analysis);
@@ -71,10 +77,17 @@ public class AnalysisServiceImpl implements AnalysisService{
 				&&
 				analysisOutput.isUsingS3()) {
 			log.info("Retreving analysis from s3 for {} " , uid);
-			
+
 			ReCiterFeature reCiterFeature = (ReCiterFeature) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, AnalysisOutput.class.getSimpleName() + "/" + uid.trim(), ReCiterFeature.class);
+			if(reCiterFeature == null) {
+				// The row says the payload lives in S3 but nothing came back. Callers see an
+				// analysis with no features, which is indistinguishable from "this person has
+				// no articles" -- name it here so it shows up as an error rather than silence.
+				log.error("Analysis for uid {} is flagged S3-backed but no payload was read from bucket {}; "
+						+ "returning a record with no features", uid, AmazonS3Config.BUCKET_NAME);
+			}
 			analysisOutput.setReCiterFeature(reCiterFeature);
-		} 
+		}
 		return analysisOutput;
 	}
 
