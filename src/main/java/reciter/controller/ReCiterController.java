@@ -43,7 +43,19 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -61,6 +73,7 @@ import reciter.api.parameters.UseGoldStandard;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
+import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.engine.Engine;
 import reciter.engine.EngineOutput;
@@ -78,6 +91,7 @@ import reciter.model.pubmed.PubMedArticle;
 import reciter.model.scopus.ScopusArticle;
 import reciter.service.AnalysisService;
 import reciter.service.ESearchResultService;
+import reciter.service.ExternalArticleService;
 import reciter.service.IdentityService;
 import reciter.service.PubMedService;
 import reciter.service.ScopusService;
@@ -121,6 +135,13 @@ public class ReCiterController {
     
     @Autowired
     private FeedbackLogQueryService feedbackLogQueryService;
+
+
+    @Autowired
+    private ExternalArticleService externalArticleService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("${use.scopus.articles}")
     private boolean useScopusArticles;
@@ -171,6 +192,7 @@ public class ReCiterController {
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath,curatedBy);
         }
+    	reconcileExternalArticles(Collections.singletonList(goldStandard));
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
@@ -204,6 +226,7 @@ public class ReCiterController {
     	} else {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
         }
+    	reconcileExternalArticles(goldStandard);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
@@ -580,7 +603,9 @@ public class ReCiterController {
     		@RequestParam(required = false) UseGoldStandard useGoldStandard, 
     		@RequestParam(required = false) FilterFeedbackType filterByFeedback, 
     		@RequestParam(required = false) boolean analysisRefreshFlag,
-    		@RequestParam(required = false) RetrievalRefreshFlag retrievalRefreshFlag) {
+    		@RequestParam(required = false) RetrievalRefreshFlag retrievalRefreshFlag,
+    		@RequestParam(value = "includeExternal", required = false, defaultValue = "false") boolean includeExternal) {
+
     	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
         
@@ -739,7 +764,7 @@ public class ReCiterController {
 			}	
             stopWatch.stop();
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-            return new ResponseEntity<>(analysis.getReCiterFeature(), HttpStatus.OK);
+            return featureGeneratorResponse(analysis.getReCiterFeature(), uid, includeExternal);
         } else {
             if (useGoldStandard == null) {
                 strategyParameters.setUseGoldStandardEvidence(true);
@@ -886,7 +911,45 @@ public class ReCiterController {
         }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-        return new ResponseEntity<>(reCiterOutputFeature, HttpStatus.OK);
+        return featureGeneratorResponse(reCiterOutputFeature, uid, includeExternal);
+    }
+
+    /**
+     * With includeExternal=true, appends the person's manually added external-source
+     * articles (Scopus/WoS/OpenAlex) as a sibling "externalArticles" field — they are
+     * read at serialization time and never enter feature generation or Analysis.
+     * Suppressed rows (superseded by a PubMed record with the same DOI) are excluded.
+     */
+    /**
+     * Post-update supersede reconciliation (#660) — runs for every flag including
+     * DELETE, since removing an acceptance is what un-suppresses an external row.
+     */
+    private void reconcileExternalArticles(List<GoldStandard> goldStandards) {
+        for (GoldStandard goldStandard : goldStandards) {
+            if (goldStandard != null && goldStandard.getUid() != null) {
+                externalArticleService.reconcileWithGoldStandard(goldStandard.getUid());
+            }
+        }
+    }
+
+    private ResponseEntity<Object> featureGeneratorResponse(ReCiterFeature reCiterFeature, String uid, boolean includeExternal) {
+        if (!includeExternal || reCiterFeature == null) {
+            return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
+        }
+        try {
+            List<ExternalArticle> externalArticles = externalArticleService.findByUid(uid.trim()).stream()
+                    .filter(externalArticle -> !Boolean.TRUE.equals(externalArticle.getSuppressed()))
+                    .collect(Collectors.toList());
+            ObjectNode responseBody = objectMapper.valueToTree(reCiterFeature);
+            responseBody.set("externalArticles", objectMapper.valueToTree(externalArticles));
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (Exception e) {
+            // The scoring result must never fail on the optional external-article sidecar;
+            // the absent externalArticles field (vs empty array) signals the degradation.
+            log.warn("Could not append external articles for uid {}; returning scoring result without them: {}",
+                    uid, e.getMessage());
+            return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
+        }
     }
     
     @Operation(summary = "Article retrieval by UID.", description =  "This api returns all the publication for a supplied uid.")

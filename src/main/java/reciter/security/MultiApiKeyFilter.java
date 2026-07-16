@@ -1,6 +1,8 @@
 package reciter.security;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -63,7 +65,7 @@ public class MultiApiKeyFilter extends OncePerRequestFilter {
 				Optional.ofNullable(request.getHeader("api-key"))
 		        .filter(key -> !key.isEmpty())
 		        .ifPresent(apiKey -> {
-		        	 if (!apiKey.equals(consumerPrincipalRequestValue)) {
+		        	 if (!constantTimeEquals(apiKey, consumerPrincipalRequestValue)) {
 		        		 throw new BadCredentialsException("Invalid API key");
 		                }
 		                UsernamePasswordAuthenticationToken auth =
@@ -77,7 +79,7 @@ public class MultiApiKeyFilter extends OncePerRequestFilter {
 				Optional.ofNullable(request.getHeader("api-key"))
 		        .filter(key -> !key.isEmpty())
 		        .ifPresent(apiKey -> {
-		        	 if (!apiKey.equals(adminPrincipalRequestValue)) {
+		        	 if (!constantTimeEquals(apiKey, adminPrincipalRequestValue)) {
 		        		 throw new BadCredentialsException("Invalid API key");
 		                }
 		                UsernamePasswordAuthenticationToken auth =
@@ -112,5 +114,21 @@ public class MultiApiKeyFilter extends OncePerRequestFilter {
 	    }
 
 	    return false;
+	}
+
+	/**
+	 * Constant-time comparison of the supplied api-key against the expected value,
+	 * to avoid leaking the key through response-timing side channels (String.equals
+	 * short-circuits on the first differing byte). Returns false (rather than
+	 * throwing) when either value is null/absent, preserving the prior reject-on-
+	 * mismatch behavior.
+	 */
+	static boolean constantTimeEquals(String provided, String expected) {
+		if (provided == null || expected == null) {
+			return false;
+		}
+		return MessageDigest.isEqual(
+				provided.getBytes(StandardCharsets.UTF_8),
+				expected.getBytes(StandardCharsets.UTF_8));
 	}
 }

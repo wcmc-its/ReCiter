@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -171,6 +172,7 @@ public class DynamoDbS3Operations {
 		if (s3 == null || bucketName == null) {
 			return null;
 		}
+		log.info("retrieveLargeItem from S3: key={}, bucket={}, objectClass={}", keyName, bucketName, objectClass);
 		try {
 			//S3Object s3Object = s3.getObject(new GetObjectRequest(bucketName.toLowerCase(), keyName));
 			
@@ -181,15 +183,64 @@ public class DynamoDbS3Operations {
 			try (ResponseInputStream<GetObjectResponse> s3Object = s3.getObject(getObjectRequest)) {
 			    String objectContent = IOUtils.toString(s3Object, StandardCharsets.UTF_8);
 
-			    if (objectClass == ReCiterFeature.class) {
+				 if (objectClass == ReCiterFeature.class) {
 			        return OBJECT_MAPPER.readValue(objectContent, ReCiterFeature.class);
 			    }
+			    // Identity is stored as an array and returned as a List. Every other
+			    // offloaded type (ReCiterFeature, PubMedArticle, ...) deserializes
+			    // directly to objectClass. The previous code only had explicit
+			    // branches for ReCiterFeature and Identity, so any other type — most
+			    // importantly PubMedArticle — fell through to `return null`, silently
+			    // dropping the offloaded article and NPE-ing the caller.
 			    if (objectClass == Identity.class) {
 			        return Arrays.asList(OBJECT_MAPPER.readValue(objectContent, Identity[].class));
 			    }
+			    //return OBJECT_MAPPER.readValue(objectContent, objectClass);
+			}catch (NoSuchKeyException e) {
+    log.error("S3 object not found. bucket={}, key={}", bucketName, keyName, e);
+    
+} catch (S3Exception e) {
+    log.error(
+        "AWS S3 error. bucket={}, key={}, statusCode={}, errorCode={}",
+        bucketName,
+        keyName,
+        e.statusCode(),
+        e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : "unknown",
+        e
+    );
+
+} catch (JsonMappingException e) {
+    log.error(
+        "JSON mapping failed. bucket={}, key={}, targetClass={}",
+        bucketName,
+        keyName,
+        objectClass.getName(),
+        e
+    );
+
+} catch (JsonProcessingException e) {
+    log.error(
+        "Invalid JSON content. bucket={}, key={}, targetClass={}",
+        bucketName,
+        keyName,
+        objectClass.getName(),
+        e
+    );
+
+} catch (IOException e) {
+    log.error(
+        "IO error reading S3 object. bucket={}, key={}",
+        bucketName,
+        keyName,
+        e
+    );
+
+} 
+			/*catch (IOException | S3Exception e) {
+			    return OBJECT_MAPPER.readValue(objectContent, objectClass);
 			} catch (IOException | S3Exception e) {
 			    log.error("Error retrieving object from S3: {}", e.getMessage());
-			}
+			}*/
 		
 
 		

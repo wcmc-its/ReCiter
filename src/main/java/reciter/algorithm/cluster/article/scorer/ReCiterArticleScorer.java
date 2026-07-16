@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.RemoveReCiterArticleStrategyContext;
-import reciter.storage.s3.AwsScoringClients;
 import reciter.algorithm.evidence.author.authorcount.AuthorCountStrategyContext;
 import reciter.algorithm.evidence.author.authorcount.strategy.AuthorCountStrategy;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorStrategyContext;
@@ -74,10 +73,9 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -646,9 +644,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
     
         
         } catch (Exception e) {
-			slf4jLogger.error("Unexpected exception while uploading CSV file to S3. fileName={}, bucketName={}",
-					fileName, feedbackScoreBucketName, e);
-			
+			slf4jLogger.error("Unexpected exception while uploading CSV file to S3. fileName={}, bucketName={}",fileName, feedbackScoreBucketName, e);
 			return false;			 
         }
  	}

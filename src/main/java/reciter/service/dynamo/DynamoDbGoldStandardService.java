@@ -72,7 +72,6 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     }
 
     private void saveInternal(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath, int curatedBy) {
-    	
     	// Resolve provenance strategy: caller-supplied source, or default
     	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
     			? provenanceSource : PM_MANUAL_STRATEGY;
@@ -339,7 +338,8 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						auditLog.addAll(newEntries);
     						goldStandardNew.setAuditLog(auditLog);
     					}
-    					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff
+    					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff.
+    					// Bulk/list (PUT) path carries no interactive curator id -> curatedBy = 0.
     					recordFeedbackLogAndArticleProvenance(uid,
     							batchIncomingAccepted, batchIncomingRejected,
     							existingAccepted, existingRejected, entryPath,0);

@@ -1,5 +1,6 @@
 package reciter.database.dynamodb.repository;
 
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

@@ -8,6 +8,11 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 
+/**
+ * springdoc-openapi configuration (replaces the abandoned springfox in #634 Stage 2).
+ * Preserves the former springfox {@code Docket} scope (controllers under
+ * {@code reciter.controller}, paths under {@code /reciter/**}) and API info/contact/license.
+ */
 @Configuration
 public class SwaggerConfig {
 	@Bean
