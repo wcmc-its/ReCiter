@@ -155,6 +155,16 @@ public class ReCiterController {
     @Value("${reciter.feature.generator.keywordCountMax}")
     private double keywordsMax;
 
+    // Rolling lookback for ONLY_NEWLY_ADDED_PUBLICATIONS retrieval. A transient PubMed
+    // failure (429 / HTML error) that returns 0 articles still advances the retrievalDate
+    // watermark, so a fixed 1-day window would slide past the missed day forever. Re-scanning
+    // a wider [EDAT] buffer each run lets the next run pick up anything a failed run dropped.
+    // Queries are author-name-scoped, so a wider date filter adds only a few PMIDs — no extra
+    // requests, no approach to the count thresholds. Gaps longer than this window are covered
+    // by the periodic ALL_PUBLICATIONS sweep + error-aware watermark tracked in #689.
+    @Value("${reciter.retrieval.onlyNewlyAdded.lookbackDays:30}")
+    private int onlyNewlyAddedLookbackDays;
+
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
     
@@ -443,7 +453,7 @@ public class ReCiterController {
                     identities.add(identity);
             	eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
             	if (eSearchResult != null) {
-            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(Date.from(eSearchResult.getRetrievalDate()))).minusDays(1);
+            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(Date.from(eSearchResult.getRetrievalDate()))).minusDays(onlyNewlyAddedLookbackDays);
             	} else {
             		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
             	}
