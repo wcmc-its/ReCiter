@@ -60,6 +60,7 @@ import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.ReCiterStringUtil;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 import reciter.xml.retriever.pubmed.PubMedQueryType;
+import reciter.xml.retriever.pubmed.RetrievalErrorTracker;
 
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
@@ -490,6 +491,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
 		Set<Long> existingPmids = new HashSet<>();
 		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
+		// Watermark guard (#689): remember where retrievalDate stood before this run and clear the
+		// per-run error flag. savePubMedArticles advances retrievalDate to now() as strategies run;
+		// if any strategy's PubMed call fails below, we roll it back at the end so the next
+		// ONLY_NEWLY_ADDED run re-covers this window instead of skipping past a silently-missed day.
+		java.time.Instant preRunRetrievalDate = existingESearch != null ? existingESearch.getRetrievalDate() : null;
+		RetrievalErrorTracker.reset();
+		try { // body left un-reindented to keep the diff reviewable; the finally rolls the watermark back
 		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
 			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
 				if (esp.getPmids() != null) {
@@ -780,7 +788,27 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			scopusService.save(scopusArticlesByDoi);
 		}
 		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
-		
+		} finally {
+			// Watermark guard (#689): ALWAYS runs — even if a strategy threw after savePubMedArticles
+			// already advanced retrievalDate — so a failed run never leaves the watermark skipped past
+			// a silently-dropped window. Only rolls back when a prior watermark existed; ALL_PUBLICATIONS
+			// deletes the ESearchResult first, so preRunRetrievalDate is null there and nothing rolls back.
+			// The rollback is self-guarded so a DynamoDB hiccup here cannot mask the original exception.
+			if (RetrievalErrorTracker.hadError() && preRunRetrievalDate != null) {
+				try {
+					reciter.database.dynamodb.model.ESearchResult esr = eSearchResultService.findByUid(uid);
+					if (esr != null) {
+						esr.setRetrievalDate(preRunRetrievalDate);
+						eSearchResultService.save(esr);
+						slf4jLogger.warn("Retrieval for uid=[{}] hit PubMed failures; rolled retrievalDate back to [{}] "
+								+ "so the next ONLY_NEWLY_ADDED run re-covers this window.", uid, preRunRetrievalDate);
+					}
+				} catch (Exception rollbackEx) {
+					slf4jLogger.error("Failed to roll retrievalDate back for uid=[{}]", uid, rollbackEx);
+				}
+			}
+		}
+
 	}
 	
 	
