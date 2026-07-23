@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -38,6 +39,8 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
     private static final Logger log = LoggerFactory.getLogger(DynamoDbGoldStandardService.class);
     private static final String PM_MANUAL_STRATEGY = "PublicationManagerManual";
+    // Bounded optimistic-concurrency retries for the contended single-accept path.
+    private static final int MAX_ATTEMPTS = 8;
 
     private final DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
     private final ESearchResultService eSearchResultService;
@@ -76,24 +79,53 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
     			? provenanceSource : PM_MANUAL_STRATEGY;
 
-    	// Capture incoming PMIDs before merge logic mutates them
+    	// Capture incoming request state before merge logic mutates it. Retries re-merge
+    	// from this clean slate so the read-merge-write is idempotent across attempts.
     	List<Long> incomingAcceptedPmids = (goldStandard.getKnownPmids() != null)
     			? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
     	List<Long> incomingRejectedPmids = (goldStandard.getRejectedPmids() != null)
     			? new ArrayList<>(goldStandard.getRejectedPmids()) : Collections.emptyList();
+    	List<GoldStandardAuditLog> incomingAudit = (goldStandard.getAuditLog() == null)
+    			? null : new ArrayList<>(goldStandard.getAuditLog());
 
     	if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.save(goldStandard);
-    	} else {
+    		return;
+    	}
+
+    	// Optimistic-concurrency retry loop: read -> merge -> conditional write. On a
+    	// ConditionalCheckFailedException another replica committed first; re-read, re-merge
+    	// and retry. Side-effect writes (FeedbackLog / ArticleProvenance / PmidProvenance) are
+    	// deferred until AFTER the item durably commits so retries never duplicate them.
+    	boolean committed = false;
+    	List<Long> committedExistingAccepted = Collections.emptyList();
+    	List<Long> committedExistingRejected = Collections.emptyList();
+    	for (int attempt = 1; attempt <= MAX_ATTEMPTS && !committed; attempt++) {
+    		// Reset the request object to the incoming state so each attempt merges idempotently.
+    		goldStandard.setKnownPmids(new ArrayList<>(incomingAcceptedPmids));
+    		goldStandard.setRejectedPmids(new ArrayList<>(incomingRejectedPmids));
+    		goldStandard.setAuditLog(incomingAudit == null ? null : new ArrayList<>(incomingAudit));
+
     		GoldStandard goldStandardDdb = findByUid(goldStandard.getUid());
     		if(goldStandardDdb == null) {
-    			dynamoDbGoldStandardRepository.save(goldStandard);
-    		} else {
-    			List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
-    			List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
-    			// Snapshot existing lists before merge mutates them (for audit log diff)
-    			List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
-    			List<Long> existingRejected = (rejectedPmids != null) ? new ArrayList<>(rejectedPmids) : Collections.emptyList();
+    			// Create path: conditional on absence so a concurrent create is not clobbered.
+    			// If another writer created it first, loop back to find + merge.
+    			if(dynamoDbGoldStandardRepository.saveIfAbsent(goldStandard)) {
+    				committed = true;
+    				committedExistingAccepted = Collections.emptyList();
+    				committedExistingRejected = Collections.emptyList();
+    			}
+    			continue;
+    		}
+    		List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
+    		List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
+    		// Pre-image of the stored lists for the conditional write; null => attribute absent
+    		// (handled by the attribute_not_exists branch of the condition expression).
+    		List<Long> preKnown = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : null;
+    		List<Long> preRejected = (rejectedPmids != null) ? new ArrayList<>(rejectedPmids) : null;
+    		// Snapshot existing lists before merge mutates them (for audit log diff)
+    		List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
+    		List<Long> existingRejected = (rejectedPmids != null) ? new ArrayList<>(rejectedPmids) : Collections.emptyList();
     			if(goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
     				//This portion deals with cases when deleting a pmid from GoldStandard it will delete it from eSearchResult as well if it exists
     				ESearchResult eSearchResult = eSearchResultService.findByUid(goldStandard.getUid());
@@ -222,17 +254,36 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     					auditLog.addAll(newEntries);
     					goldStandard.setAuditLog(auditLog);
     				}
-    				// Phase 33-02: FeedbackLog rows + ArticleProvenance D-11/D-13 transitions
-    				// for the diff. Inside the same UPDATE branch where existingAccepted/Rejected
-    				// are in scope.
-    				recordFeedbackLogAndArticleProvenance(
-    						goldStandard.getUid(),
-    						incomingAcceptedPmids, incomingRejectedPmids,
-    						existingAccepted, existingRejected,
-    						entryPath,curatedBy);
     			}
-    			dynamoDbGoldStandardRepository.save(goldStandard);
+    			// Conditional persist guarded on the pre-image of knownpmids/rejectedpmids.
+    			// false => another replica committed first: back off briefly and retry.
+    			if(dynamoDbGoldStandardRepository.saveIfUnchanged(goldStandard, preKnown, preRejected)) {
+    				committed = true;
+    				committedExistingAccepted = existingAccepted;
+    				committedExistingRejected = existingRejected;
+    			} else {
+    				try {
+    					Thread.sleep(20 + ThreadLocalRandom.current().nextInt(60));
+    				} catch (InterruptedException ie) {
+    					Thread.currentThread().interrupt();
+    					throw new RuntimeException("Interrupted while retrying GoldStandard update for uid=" + goldStandard.getUid(), ie);
+    				}
+    			}
     		}
+
+    	if (!committed) {
+    		throw new RuntimeException("GoldStandard update contended after " + MAX_ATTEMPTS + " attempts for uid=" + goldStandard.getUid());
+    	}
+
+    	// Side-effect writes run once, AFTER the item is durably committed, using the
+    	// existing-state snapshot from the attempt that actually committed so the diff
+    	// reflects the true transition. Retries never reach here => no duplicate FeedbackLog.
+    	if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    		recordFeedbackLogAndArticleProvenance(
+    				goldStandard.getUid(),
+    				incomingAcceptedPmids, incomingRejectedPmids,
+    				committedExistingAccepted, committedExistingRejected,
+    				entryPath, curatedBy);
     	}
 
     	// Track provenance for accepted PMIDs. saveIfNotExists ensures we
@@ -256,6 +307,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		saveListInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
 	}
 
+	// TODO(goldstandard-race): saveListInternal has the same non-atomic read-modify-write; apply saveIfUnchanged+retry here too (lower priority — interactive single-accept path is saveInternal).
 	private void saveListInternal(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath) {
 		// Resolve provenance strategy: caller-supplied source, or default
 		String strategy = (provenanceSource != null && !provenanceSource.isBlank())
