@@ -53,6 +53,9 @@ public class PubMedArticleRetriever {
             log.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
         }
         if (responseEntity == null) {
+            // Fetch failed (tool 500 / NCBI 429). Flag the run so the engine rolls the
+            // retrievalDate watermark back instead of treating this as "no articles". #689
+            reciter.xml.retriever.pubmed.RetrievalErrorTracker.markError();
             return Collections.emptyList();
         }
         PubMedArticle[] pubMedArticles = responseEntity.getBody();
