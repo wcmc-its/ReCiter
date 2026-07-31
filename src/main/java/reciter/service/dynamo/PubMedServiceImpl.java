@@ -115,7 +115,11 @@ public class PubMedServiceImpl implements PubMedService {
 	            if (sizeInBytes > 400 * 1024 && isS3Use && !isDynamoDbLocal) 
 	            {
 	         		log.info("Storing item in s3 since it item size exceeds more than 400kb PMID: "+article.getPmid() + " and Size :" + sizeInBytes/1024 +" KB");
-					ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, article.getPubMedArticle(), PubMedArticle.class.getSimpleName() + "/" + article.getPmid());
+					if(!ddbs3.saveLargeItem(AmazonS3Config.BUCKET_NAME, article.getPubMedArticle(), PubMedArticle.class.getSimpleName() + "/" + article.getPmid())) {
+						// Same reasoning as AnalysisServiceImpl.save: never flag the row S3-backed
+						// unless the payload actually landed, or the article body is lost.
+						throw new IllegalStateException("S3 offload failed for pmid " + article.getPmid());
+					}
 					article.setPubMedArticle(null);
 					article.setUsingS3(true);
 	            } else if(isDynamoDbLocal){
