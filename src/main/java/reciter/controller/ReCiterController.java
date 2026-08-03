@@ -20,7 +20,7 @@ package reciter.controller;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,6 +102,7 @@ import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
 import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
+import reciter.xml.retriever.pubmed.RetrievalWindow;
 
 @Tag(name = "ReCiterController", description = "Operations on ReCiter API.")
 @RestController
@@ -157,7 +158,16 @@ public class ReCiterController {
 
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
-    
+
+    @Value("${retrieval.incremental.lookback-days:90}")
+    private int incrementalLookbackDays;
+
+    @Value("${retrieval.full-sweep.max-age-days:180}")
+    private int fullSweepMaxAgeDays;
+
+    @Value("${retrieval.full-sweep.jitter-days:45}")
+    private int fullSweepJitterDays;
+
 
     @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description ="This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @Parameters({
@@ -442,14 +452,33 @@ public class ReCiterController {
             	if (identity != null)
                     identities.add(identity);
             	eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
-            	if (eSearchResult != null) {
-            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(Date.from(eSearchResult.getRetrievalDate()))).minusDays(1);
-            	} else {
+            	if (eSearchResult == null) {
             		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
             	}
-            	
+
+            	// Coverage guard: a passed retrieval window is never revisited, so an article missed
+            	// by one run stays missed forever. Bound both sides of that — floor how far back an
+            	// incremental run reaches, and cap how stale the last full sweep may get. See
+            	// RetrievalWindow for the reasoning; both bounds are config-tunable and can be
+            	// switched off by setting their *-days properties to 0.
+            	RetrievalRefreshFlag effectiveFlag = refreshFlag;
+            	Instant lastFullSweep = RetrievalWindow.lastFullSweep(eSearchResult);
+            	if (RetrievalWindow.fullSweepDue(lastFullSweep, initial, uid, fullSweepMaxAgeDays, fullSweepJitterDays)) {
+            		// Deliberately NOT deleting the ESearchResult the way the manual ALL_PUBLICATIONS
+            		// path does: savePubMedArticles upserts per strategy, so the sweep refreshes the
+            		// entries in place. That keeps the uid's candidate pmids intact if the sweep dies
+            		// midway, and leaves #691's watermark rollback able to schedule a retry.
+            		effectiveFlag = RetrievalRefreshFlag.ALL_PUBLICATIONS;
+            		log.info("Retrieval coverage: uid=[{}] last full sweep=[{}] exceeds maxAge={}d (+jitter {}d) - escalating ONLY_NEWLY_ADDED to ALL_PUBLICATIONS",
+            				uid, lastFullSweep, fullSweepMaxAgeDays, fullSweepJitterDays);
+            	} else {
+            		startDate = RetrievalWindow.incrementalStart(eSearchResult.getRetrievalDate(), initial, incrementalLookbackDays);
+            		log.info("Retrieval coverage: uid=[{}] incremental window start=[{}] (watermark=[{}], floor={}d)",
+            				uid, startDate, eSearchResult.getRetrievalDate(), incrementalLookbackDays);
+            	}
+
             	try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
+                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), effectiveFlag);
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+e);
                     stopWatch.stop();
