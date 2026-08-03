@@ -20,7 +20,6 @@ package reciter.controller;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -161,12 +160,6 @@ public class ReCiterController {
 
     @Value("${retrieval.incremental.lookback-days:90}")
     private int incrementalLookbackDays;
-
-    @Value("${retrieval.full-sweep.max-age-days:180}")
-    private int fullSweepMaxAgeDays;
-
-    @Value("${retrieval.full-sweep.jitter-days:45}")
-    private int fullSweepJitterDays;
 
 
     @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description ="This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
@@ -456,29 +449,17 @@ public class ReCiterController {
             		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
             	}
 
-            	// Coverage guard: a passed retrieval window is never revisited, so an article missed
-            	// by one run stays missed forever. Bound both sides of that — floor how far back an
-            	// incremental run reaches, and cap how stale the last full sweep may get. See
-            	// RetrievalWindow for the reasoning; both bounds are config-tunable and can be
-            	// switched off by setting their *-days properties to 0.
-            	RetrievalRefreshFlag effectiveFlag = refreshFlag;
-            	Instant lastFullSweep = RetrievalWindow.lastFullSweep(eSearchResult);
-            	if (RetrievalWindow.fullSweepDue(lastFullSweep, initial, uid, fullSweepMaxAgeDays, fullSweepJitterDays)) {
-            		// Deliberately NOT deleting the ESearchResult the way the manual ALL_PUBLICATIONS
-            		// path does: savePubMedArticles upserts per strategy, so the sweep refreshes the
-            		// entries in place. That keeps the uid's candidate pmids intact if the sweep dies
-            		// midway, and leaves #691's watermark rollback able to schedule a retry.
-            		effectiveFlag = RetrievalRefreshFlag.ALL_PUBLICATIONS;
-            		log.info("Retrieval coverage: uid=[{}] last full sweep=[{}] exceeds maxAge={}d (+jitter {}d) - escalating ONLY_NEWLY_ADDED to ALL_PUBLICATIONS",
-            				uid, lastFullSweep, fullSweepMaxAgeDays, fullSweepJitterDays);
-            	} else {
-            		startDate = RetrievalWindow.incrementalStart(eSearchResult.getRetrievalDate(), initial, incrementalLookbackDays);
-            		log.info("Retrieval coverage: uid=[{}] incremental window start=[{}] (watermark=[{}], floor={}d)",
-            				uid, startDate, eSearchResult.getRetrievalDate(), incrementalLookbackDays);
-            	}
+            	// Coverage floor (#695): a passed retrieval window is never revisited, so an article
+            	// missed by one run — a swallowed PubMed failure, a client timeout, a night the job
+            	// did not run — stayed missed forever. Flooring how far back the window reaches turns
+            	// that permanent loss into a bounded delay. See RetrievalWindow for the reasoning;
+            	// set retrieval.incremental.lookback-days=0 to restore the watermark-only window.
+            	startDate = RetrievalWindow.incrementalStart(eSearchResult.getRetrievalDate(), initial, incrementalLookbackDays);
+            	log.info("Retrieval coverage: uid=[{}] incremental window start=[{}] (watermark=[{}], floor={}d)",
+            			uid, startDate, eSearchResult.getRetrievalDate(), incrementalLookbackDays);
 
             	try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), effectiveFlag);
+                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+e);
                     stopWatch.stop();

@@ -21,7 +21,9 @@ package reciter.xml.retriever.engine;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,19 +112,26 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 	 * @param uid
 	 */
 	protected void savePubMedArticles(Collection<PubMedArticle> pubMedArticles, String uid, String retrievalStrategyName, List<PubMedQueryResult> pubMedQueryResults, QueryType queryType, RetrievalRefreshFlag refreshFlag) {
-		// Save the articles.
-		List<PubMedArticle> pubMedArticleList = new ArrayList<>(pubMedArticles);
-		if(pubMedArticleList != null) {
-			log.info("pubMedArticleList size {}", pubMedArticleList.size());
-		}
+		// Read the existing search result first: it receives the upserted strategy entry
+		// below, and it also tells us which pmids this uid already has persisted.
+		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
+
+		// Save the articles. On incremental runs, skip articles whose pmid is already on
+		// the uid's ESearchResult (#695): the floored lookback window re-retrieves the same
+		// span nightly, and without this every run would re-write that whole span to
+		// DynamoDB/S3. Full sweeps still re-persist everything, so revised PubMed records
+		// are refreshed at sweep cadence.
+		List<PubMedArticle> pubMedArticleList = articlesToPersist(pubMedArticles, eSearchResultDb, refreshFlag);
+		log.info("pubMedArticleList size {} (retrieved {})", pubMedArticleList.size(), pubMedArticles.size());
 		pubMedService.save(pubMedArticleList);
 
-		// Save the search result.
+		// Save the search result. The strategy entry always records every retrieved pmid,
+		// including ones whose article write was skipped above.
 		List<Long> pmids = new ArrayList<>();
 		for (PubMedArticle pubMedArticle : pubMedArticles) {
 			pmids.add(pubMedArticle.getMedlinecitation().getMedlinecitationpmid().getPmid());
 		}
-		
+
 		ESearchPmid eSearchPmid = null;
 		if(!pmids.isEmpty()){
 			reciter.database.dynamodb.model.ESearchPmid.RetrievalRefreshFlag eSearchPmidRefreshFlag;
@@ -138,7 +147,6 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				log.info("eSearchPmid {} ",eSearchPmid);
 			}
 		}
-		ESearchResult eSearchResultDb = eSearchResultService.findByUid(uid);
 		if (eSearchResultDb == null) {
 			List<ESearchPmid> eSearchPmids = new ArrayList<>();
 			if(eSearchPmid != null) {
@@ -167,5 +175,35 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchResultService.save(eSearchResultDb);
 			}
 		}
+	}
+
+	/**
+	 * Articles worth persisting from this retrieval. On an ONLY_NEWLY_ADDED run, pmids
+	 * already recorded on the uid's ESearchResult (under any strategy) were persisted by
+	 * an earlier run and are dropped here; everything else — full sweeps, uids with no
+	 * prior result — is persisted unchanged. Pure so the filter is unit-testable.
+	 */
+	static List<PubMedArticle> articlesToPersist(Collection<PubMedArticle> pubMedArticles, ESearchResult existingResult, RetrievalRefreshFlag refreshFlag) {
+		List<PubMedArticle> articles = new ArrayList<>(pubMedArticles);
+		if (refreshFlag != RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS
+				|| existingResult == null || existingResult.getESearchPmids() == null) {
+			return articles;
+		}
+		Set<Long> knownPmids = new HashSet<>();
+		for (ESearchPmid entry : existingResult.getESearchPmids()) {
+			if (entry != null && entry.getPmids() != null) {
+				knownPmids.addAll(entry.getPmids());
+			}
+		}
+		if (knownPmids.isEmpty()) {
+			return articles;
+		}
+		List<PubMedArticle> toPersist = new ArrayList<>(articles.size());
+		for (PubMedArticle article : articles) {
+			if (!knownPmids.contains(article.getMedlinecitation().getMedlinecitationpmid().getPmid())) {
+				toPersist.add(article);
+			}
+		}
+		return toPersist;
 	}
 }
