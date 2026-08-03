@@ -1,5 +1,7 @@
 package reciter.service.dynamo;
 
+import java.time.Instant;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,16 @@ public class ESearchResultServiceImpl implements ESearchResultService {
 	@Override
 	public void delete(String uid) {
 		eSearchResultRepository.deleteById(uid);
+	}
+
+	@Override
+	public void stampLastFullSweepIfNewer(String uid, Instant sweepTime) {
+		eSearchResultRepository.stampLastFullSweepIfNewer(uid, sweepTime);
+	}
+
+	@Override
+	public Instant findLastFullSweep(String uid) {
+		return eSearchResultRepository.findLastFullSweep(uid);
 	}
 
 }
