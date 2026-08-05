@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,6 +46,7 @@ import reciter.api.parameters.GoldStandardUpdateFlag;
 import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.api.parameters.UseGoldStandard;
 import reciter.database.dynamodb.model.AnalysisOutput;
+import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.engine.StrategyParameters;
@@ -701,6 +703,131 @@ public class ReCiterControllerTest {
 				any(Date.class), eq(RetrievalRefreshFlag.ALL_PUBLICATIONS));
 	}
 
+	// ---- #696: staleness escalation on ONLY_NEWLY_ADDED requests ----
+
+	private ESearchResult eSearchResultWithFullSweepDaysAgo(long daysAgo) {
+		ESearchResult result = new ESearchResult();
+		result.setUid(testUid);
+		result.setRetrievalDate(Instant.now());
+		List<ESearchPmid> entries = new ArrayList<>();
+		entries.add(new ESearchPmid(Arrays.asList(1L, 2L), "EmailRetrievalStrategy",
+				Instant.now().minus(daysAgo, ChronoUnit.DAYS),
+				ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS));
+		result.setESearchPmids(entries);
+		return result;
+	}
+
+	@Test
+	public void testEscalatesWhenInferredLastSweepExceedsMaxAge() throws IOException {
+		// No persisted stamp yet (pre-A2 record): the decision falls back to the
+		// lookupType inference, which shows a sweep 120 days ago against a 90-day max.
+		ReflectionTestUtils.setField(reCiterController, "fullSweepJitterDays", 0);
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(eSearchResultWithFullSweepDaysAgo(120));
+		when(eSearchResultService.findLastFullSweep(testUid.trim())).thenReturn(null);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, 90);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ALL_PUBLICATIONS));
+		// Escalation refreshes the item in place; only the manual ALL path deletes it.
+		verify(eSearchResultService, never()).delete(anyString());
+		assertEquals("true", response.getHeaders().getFirst("X-Reciter-Escalated"));
+		assertEquals("ALL_PUBLICATIONS", response.getHeaders().getFirst("X-Reciter-Retrieval-Mode"));
+		assertEquals("false", response.getHeaders().getFirst("X-Reciter-Auto-Upgraded"));
+	}
+
+	@Test
+	public void testDoesNotEscalateBelowMaxAge() throws IOException {
+		ReflectionTestUtils.setField(reCiterController, "fullSweepJitterDays", 0);
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(eSearchResultWithFullSweepDaysAgo(30));
+		when(eSearchResultService.findLastFullSweep(testUid.trim())).thenReturn(null);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, 90);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS));
+		assertEquals("false", response.getHeaders().getFirst("X-Reciter-Escalated"));
+		assertEquals("ONLY_NEWLY_ADDED_PUBLICATIONS", response.getHeaders().getFirst("X-Reciter-Retrieval-Mode"));
+	}
+
+	@Test
+	public void testPersistedStampIsPreferredOverStaleInference() throws IOException {
+		// Entries claim a 400-day-old sweep, but the persisted stamp (written by a
+		// clean sweep) says 10 days ago. The stamp wins: no escalation.
+		ReflectionTestUtils.setField(reCiterController, "fullSweepJitterDays", 0);
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(eSearchResultWithFullSweepDaysAgo(400));
+		when(eSearchResultService.findLastFullSweep(testUid.trim()))
+				.thenReturn(Instant.now().minus(10, ChronoUnit.DAYS));
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, 90);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS));
+		assertEquals("false", response.getHeaders().getFirst("X-Reciter-Escalated"));
+	}
+
+	@Test
+	public void testStalePersistedStampEscalatesEvenWhenEntriesLookFresh() throws IOException {
+		// The inverse: incremental runs keep re-stamping entries (E13), so entries can
+		// look fresh while the real last full sweep is 200 days old. The stamp wins.
+		ReflectionTestUtils.setField(reCiterController, "fullSweepJitterDays", 0);
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(eSearchResultWithFullSweepDaysAgo(5));
+		when(eSearchResultService.findLastFullSweep(testUid.trim()))
+				.thenReturn(Instant.now().minus(200, ChronoUnit.DAYS));
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, 90);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ALL_PUBLICATIONS));
+		assertEquals("true", response.getHeaders().getFirst("X-Reciter-Escalated"));
+	}
+
+	@Test
+	public void testParameterlessRequestNeverEscalates() throws IOException {
+		// A uid that has NEVER been fully swept, on a request without fullSweepMaxAgeDays
+		// (Publication Manager, ad-hoc callers): must stay incremental — and must not
+		// even read the stamp, since the decision is disabled.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		ESearchResult neverSwept = eSearchResultWithFullSweepDaysAgo(2000);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(neverSwept);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS));
+		verify(eSearchResultService, never()).findLastFullSweep(anyString());
+		assertEquals("false", response.getHeaders().getFirst("X-Reciter-Escalated"));
+	}
+
+	@Test
+	public void testZeroMaxAgeNeverEscalates() throws IOException {
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(eSearchResultWithFullSweepDaysAgo(2000));
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, 0);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS));
+		verify(eSearchResultService, never()).findLastFullSweep(anyString());
+		assertEquals("false", response.getHeaders().getFirst("X-Reciter-Escalated"));
+	}
+
 	@Test
 	public void testRetrieveBulkFeatureGeneratorWithUids() {
 		// Arrange
@@ -803,7 +930,7 @@ public class ReCiterControllerTest {
 		when(identityService.findByUid(uid)).thenReturn(null);
 
 		// Act
-		ResponseEntity<?> response = reCiterController.runFeatureGenerator(uid, null, null, null, false, null,false);
+		ResponseEntity<?> response = reCiterController.runFeatureGenerator(uid, null, null, null, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -820,7 +947,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ALL, false, null,false);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ALL, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -847,7 +974,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_ONLY, false, null,false);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_ONLY, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -868,7 +995,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_ONLY, false, null,false);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_ONLY, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -889,7 +1016,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_NULL, false, null,false);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_NULL, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -921,7 +1048,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_AND_NULL, false, null,false);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.REJECTED_AND_NULL, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -953,7 +1080,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_REJECTED, false, null,false);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ACCEPTED_AND_REJECTED, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -982,7 +1109,7 @@ public class ReCiterControllerTest {
 
 		// Act
 		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
-				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.NULL, false, null,false);
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.NULL, false, null, null, false);
 
 		// Assert
 		assertEquals(HttpStatus.OK, response.getStatusCode());

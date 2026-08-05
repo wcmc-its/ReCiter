@@ -20,6 +20,7 @@ package reciter.xml.retriever.engine;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -162,10 +163,15 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				// appended a new ESearchPmid for the same strategy without removing the prior
 				// entry, growing the ESearchResult item unbounded toward the 400KB DynamoDB cap.
 				String newStrategyName = eSearchPmid.getRetrievalStrategyName();
+				ESearchPmid existingEntry = eSearchPmids.stream()
+						.filter(existing -> existing != null
+								&& existing.getRetrievalStrategyName() != null
+								&& existing.getRetrievalStrategyName().equalsIgnoreCase(newStrategyName))
+						.findFirst().orElse(null);
 				eSearchPmids.removeIf(existing -> existing != null
 						&& existing.getRetrievalStrategyName() != null
 						&& existing.getRetrievalStrategyName().equalsIgnoreCase(newStrategyName));
-				eSearchPmids.add(eSearchPmid);
+				eSearchPmids.add(upsertedStrategyEntry(existingEntry, eSearchPmid));
 			}
 			if(!eSearchPmids.isEmpty()) {
 				eSearchResultService.save(new ESearchResult(uid, Instant.now(), eSearchPmids, queryType));
@@ -175,6 +181,66 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchResultService.save(eSearchResultDb);
 			}
 		}
+	}
+
+	/**
+	 * The strategy entry to store when a retrieval upserts over an existing one.
+	 * Normally the incoming entry replaces the old one wholesale — but an incremental
+	 * run must not downgrade an entry's {@code lookupType} from ALL_PUBLICATIONS
+	 * (#696/E13): {@code ArticleSizeStrategy} filters entries on that marker to compute
+	 * {@code articleCountScore}, so erasing it perturbs scoring, and the escalation
+	 * fallback infers last-full-sweep from the same marker's {@code retrievalDate}.
+	 *
+	 * <p>When the downgrade is refused, the stored entry keeps the ALL_PUBLICATIONS
+	 * marker AND the full sweep's retrievalDate — bumping the date on an incremental
+	 * run would make the person look freshly swept and suppress a due escalation —
+	 * while the pmid lists are merged, so the full-sweep article count is preserved and
+	 * newly discovered articles still register. Pure so the rule is unit-testable.
+	 */
+	static ESearchPmid upsertedStrategyEntry(ESearchPmid existing, ESearchPmid incoming) {
+		if (existing == null || incoming == null
+				|| existing.getLookupType() != ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS
+				|| incoming.getLookupType() == ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS) {
+			return incoming;
+		}
+		List<Long> mergedPmids = new ArrayList<>();
+		Set<Long> seen = new HashSet<>();
+		for (List<Long> pmidList : Arrays.asList(existing.getPmids(), incoming.getPmids())) {
+			if (pmidList == null) {
+				continue;
+			}
+			for (Long pmid : pmidList) {
+				if (pmid != null && seen.add(pmid)) {
+					mergedPmids.add(pmid);
+				}
+			}
+		}
+		log.info("Refusing lookupType downgrade for strategy {} : keeping ALL_PUBLICATIONS marker "
+				+ "(sweep date {}), merged pmids {} -> {}", incoming.getRetrievalStrategyName(),
+				existing.getRetrievalDate(),
+				incoming.getPmids() == null ? 0 : incoming.getPmids().size(), mergedPmids.size());
+		return new ESearchPmid(mergedPmids, incoming.getRetrievalStrategyName(),
+				existing.getRetrievalDate(), ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS);
+	}
+
+	/**
+	 * Stamp {@code lastFullSweep} after an ALL_PUBLICATIONS retrieval — but only when
+	 * every strategy completed without entering the error-swallow path (#696). Stamping
+	 * after a swallowed failure would lock the loss in until the next scheduled sweep,
+	 * 30–365 days away, which is strictly worse than not stamping: an unstamped person
+	 * simply stays due and the sweep is retried. The write itself is conditional and
+	 * never regresses a newer stamp (see ESearchResultRepository).
+	 */
+	protected void stampLastFullSweepIfClean(String uid, RetrievalRefreshFlag refreshFlag) {
+		if (refreshFlag != RetrievalRefreshFlag.ALL_PUBLICATIONS) {
+			return;
+		}
+		if (reciter.xml.retriever.pubmed.RetrievalErrorTracker.hadError()) {
+			log.warn("Full sweep for uid=[{}] hit PubMed failures; NOT stamping lastFullSweep so the "
+					+ "sweep stays due and is retried.", uid);
+			return;
+		}
+		eSearchResultService.stampLastFullSweepIfNewer(uid, Instant.now());
 	}
 
 	/**

@@ -18,6 +18,8 @@
  *******************************************************************************/
 package reciter.service;
 
+import java.time.Instant;
+
 import reciter.database.dynamodb.model.ESearchResult;
 
 public interface ESearchResultService {
@@ -29,4 +31,17 @@ public interface ESearchResultService {
 	void deleteAll();
 
 	void delete(String uid);
+
+	/**
+	 * Record that a clean ALL_PUBLICATIONS sweep completed for this uid (#696). The
+	 * write is conditional and non-regressing: an existing newer stamp is never moved
+	 * backward, so a Publication Manager sweep racing the batch cannot regress it.
+	 */
+	void stampLastFullSweepIfNewer(String uid, Instant sweepTime);
+
+	/**
+	 * The uid's persisted lastFullSweep stamp, or null if the uid has never had a
+	 * clean full sweep recorded (callers then fall back to the lookupType inference).
+	 */
+	Instant findLastFullSweep(String uid);
 }
