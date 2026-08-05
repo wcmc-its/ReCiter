@@ -20,7 +20,6 @@ package reciter.controller;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,6 +101,7 @@ import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
 import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
+import reciter.xml.retriever.pubmed.RetrievalWindow;
 
 @Tag(name = "ReCiterController", description = "Operations on ReCiter API.")
 @RestController
@@ -157,7 +157,10 @@ public class ReCiterController {
 
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
-    
+
+    @Value("${retrieval.incremental.lookback-days:90}")
+    private int incrementalLookbackDays;
+
 
     @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description ="This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @Parameters({
@@ -442,12 +445,19 @@ public class ReCiterController {
             	if (identity != null)
                     identities.add(identity);
             	eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
-            	if (eSearchResult != null) {
-            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(Date.from(eSearchResult.getRetrievalDate()))).minusDays(1);
-            	} else {
+            	if (eSearchResult == null) {
             		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
             	}
-            	
+
+            	// Coverage floor (#695): a passed retrieval window is never revisited, so an article
+            	// missed by one run — a swallowed PubMed failure, a client timeout, a night the job
+            	// did not run — stayed missed forever. Flooring how far back the window reaches turns
+            	// that permanent loss into a bounded delay. See RetrievalWindow for the reasoning;
+            	// set retrieval.incremental.lookback-days=0 to restore the watermark-only window.
+            	startDate = RetrievalWindow.incrementalStart(eSearchResult.getRetrievalDate(), initial, incrementalLookbackDays);
+            	log.info("Retrieval coverage: uid=[{}] incremental window start=[{}] (watermark=[{}], floor={}d)",
+            			uid, startDate, eSearchResult.getRetrievalDate(), incrementalLookbackDays);
+
             	try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
                 } catch (IOException e) {
