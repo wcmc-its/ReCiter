@@ -60,6 +60,7 @@ import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.ReCiterStringUtil;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 import reciter.xml.retriever.pubmed.PubMedQueryType;
+import reciter.xml.retriever.pubmed.RetrievalErrorTracker;
 
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
@@ -146,12 +147,19 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	private Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
 		slf4jLogger.info("Coming into retrieveData section without date range****");
 		Set<Long> uniquePmids = new HashSet<>();
-		
+
 		QueryType queryType = null;
-		
+
 		//eSearchResultService.delete();
-		
+
 		String uid = identity.getUid();
+
+		// Clean-completion tracking (#696): clear the per-run PubMed-failure flag so the
+		// lastFullSweep stamp at the end of this method reflects THIS run only. This is the
+		// RetrievalErrorTracker discipline #691 established for retrieveDataByDateRange,
+		// extended to the full-sweep path — which is the path both manual and escalated
+		// ALL_PUBLICATIONS requests take.
+		RetrievalErrorTracker.reset();
 
 		// Phase 1 provenance tracking state
 		Set<Long> nonGsStrategyPmids = new HashSet<>();
@@ -476,9 +484,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			scopusService.save(scopusArticlesByDoi);
 		}
 		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
+
+		// Record the completed full sweep (#696) — only if no strategy entered the
+		// error-swallow path during this run. A strategy that threw outright never
+		// reaches this line, which is the same outcome: no stamp, person stays due.
+		stampLastFullSweepIfClean(uid, refreshFlag);
+
 		return uniquePmids;
 	}
-	
+
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
 		slf4jLogger.info("Coming in retrieveData section with date range****");
 		Set<Long> uniquePmids = new HashSet<>();
@@ -490,6 +504,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
 		Set<Long> existingPmids = new HashSet<>();
 		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
+		// Watermark guard (#689): remember where retrievalDate stood before this run and clear the
+		// per-run error flag. savePubMedArticles advances retrievalDate to now() as strategies run;
+		// if any strategy's PubMed call fails below, we roll it back at the end so the next
+		// ONLY_NEWLY_ADDED run re-covers this window instead of skipping past a silently-missed day.
+		java.time.Instant preRunRetrievalDate = existingESearch != null ? existingESearch.getRetrievalDate() : null;
+		RetrievalErrorTracker.reset();
+		try { // body left un-reindented to keep the diff reviewable; the finally rolls the watermark back
 		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
 			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
 				if (esp.getPmids() != null) {
@@ -780,7 +801,30 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			scopusService.save(scopusArticlesByDoi);
 		}
 		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
-		
+		} finally {
+			// Watermark guard (#689): ALWAYS runs — even if a strategy threw after savePubMedArticles
+			// already advanced retrievalDate — so a failed run never leaves the watermark skipped past
+			// a silently-dropped window. This guard covers the ONLY_NEWLY_ADDED path only:
+			// ALL_PUBLICATIONS runs — manual, escalated (#696), or auto-upgraded — never route here
+			// (AsyncRetrievalEngine dispatches them to retrieveData), so this rollback does NOT protect
+			// them. Their failure handling lives in retrieveData instead: a sweep that hit the swallow
+			// path skips the lastFullSweep stamp, so the person stays due and the sweep is retried.
+			// The rollback is self-guarded so a DynamoDB hiccup here cannot mask the original exception.
+			if (RetrievalErrorTracker.hadError() && preRunRetrievalDate != null) {
+				try {
+					reciter.database.dynamodb.model.ESearchResult esr = eSearchResultService.findByUid(uid);
+					if (esr != null) {
+						esr.setRetrievalDate(preRunRetrievalDate);
+						eSearchResultService.save(esr);
+						slf4jLogger.warn("Retrieval for uid=[{}] hit PubMed failures; rolled retrievalDate back to [{}] "
+								+ "so the next ONLY_NEWLY_ADDED run re-covers this window.", uid, preRunRetrievalDate);
+					}
+				} catch (Exception rollbackEx) {
+					slf4jLogger.error("Failed to roll retrievalDate back for uid=[{}]", uid, rollbackEx);
+				}
+			}
+		}
+
 	}
 	
 	

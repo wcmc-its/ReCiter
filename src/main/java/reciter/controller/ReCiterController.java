@@ -20,7 +20,7 @@ package reciter.controller;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StopWatch;
@@ -102,6 +103,8 @@ import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
 import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
+import reciter.xml.retriever.pubmed.RetrievalEscalationTracker;
+import reciter.xml.retriever.pubmed.RetrievalWindow;
 
 @Tag(name = "ReCiterController", description = "Operations on ReCiter API.")
 @RestController
@@ -157,7 +160,22 @@ public class ReCiterController {
 
     @Value("${reciter.feature.generator.group.uids.maxCount}")
     private int uidsMaxCount;
-    
+
+    @Value("${retrieval.incremental.lookback-days:90}")
+    private int incrementalLookbackDays;
+
+    // Server-side default for fullSweepMaxAgeDays when the request does not carry it.
+    // MUST stay 0: escalation only ever runs when a caller explicitly requests it and
+    // is counting the escalations against a budget (#696). Publication Manager and
+    // ad-hoc callers hit these endpoints too, and silently upgrading their seconds-long
+    // incremental into an unbounded re-disambiguation would be both a latency
+    // regression and an unbudgeted sweep.
+    @Value("${retrieval.full-sweep.max-age-days:0}")
+    private int fullSweepMaxAgeDaysDefault;
+
+    @Value("${retrieval.full-sweep.jitter-days:45}")
+    private int fullSweepJitterDays;
+
 
     @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description ="This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
     @Parameters({
@@ -395,9 +413,12 @@ public class ReCiterController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @GetMapping(value = "/reciter/retrieve/articles/by/uid", produces = "application/json")
-    public ResponseEntity retrieveArticlesByUid(@RequestParam(required = false) String uid,@RequestParam(required = false) RetrievalRefreshFlag refreshFlag) {
+    public ResponseEntity retrieveArticlesByUid(@RequestParam(required = false) String uid,
+    		@RequestParam(required = false) RetrievalRefreshFlag refreshFlag,
+    		@RequestParam(required = false) Integer fullSweepMaxAgeDays) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for an UID");
         stopWatch.start("Retrieve Articles for an UID");
+        RetrievalEscalationTracker.reset();
         List<Identity> identities = new ArrayList<>();
         LocalDate initial = LocalDate.now();
         LocalDate startDate = initial.withDayOfMonth(1);
@@ -425,10 +446,11 @@ public class ReCiterController {
             		eSearchResult == null){
                 if (eSearchResult != null)
                     eSearchResultService.delete(uid.trim());
-                
+
                 if (identity != null)
                     identities.add(identity);
 
+                RetrievalEscalationTracker.setMode(RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 try {
                     aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 } catch (IOException e) {
@@ -442,14 +464,64 @@ public class ReCiterController {
             	if (identity != null)
                     identities.add(identity);
             	eSearchResult = eSearchResultService.findByUid(uid.trim()) ;
-            	if (eSearchResult != null) {
-            		startDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(Date.from(eSearchResult.getRetrievalDate()))).minusDays(1);
-            	} else {
+            	if (eSearchResult == null) {
             		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("The uid supplied failed to retrieve articles. Try running with ALL_PUBLICATIONS refreshFlag");
             	}
-            	
+
+            	// Staleness escalation (#696): when the request carries a positive
+            	// fullSweepMaxAgeDays and this person's last full sweep is older than that
+            	// (plus a stable per-person jitter that spreads clustered sweep cohorts),
+            	// run the full ALL_PUBLICATIONS retrieval instead of the incremental one.
+            	// An absent or non-positive parameter means floor only, NEVER escalate —
+            	// the server default (retrieval.full-sweep.max-age-days) stays 0, so only
+            	// callers that opt in and budget the cost (the batch client) get sweeps.
+            	int maxAgeDays = fullSweepMaxAgeDays != null ? fullSweepMaxAgeDays : fullSweepMaxAgeDaysDefault;
+            	RetrievalRefreshFlag effectiveFlag = refreshFlag;
+            	if (maxAgeDays > 0) {
+            		// Persisted stamp first; while it is still null (stamps only appear as
+            		// clean sweeps complete post-deploy), fall back to the lookupType
+            		// inference from the item's own entries. The inference errs toward
+            		// looking staler than reality (incremental runs erase the marker), i.e.
+            		// toward an extra sweep — bounded by the client's budget and gone after
+            		// the person's first clean sweep stamps a real value. The inferred value
+            		// is never written back.
+            		Instant lastFullSweep = eSearchResultService.findLastFullSweep(uid.trim());
+            		boolean inferred = false;
+            		if (lastFullSweep == null) {
+            			lastFullSweep = RetrievalWindow.inferredLastFullSweep(eSearchResult);
+            			inferred = true;
+            		}
+            		if (RetrievalWindow.fullSweepDue(lastFullSweep, initial, uid.trim(), maxAgeDays, fullSweepJitterDays)) {
+            			effectiveFlag = RetrievalRefreshFlag.ALL_PUBLICATIONS;
+            			RetrievalEscalationTracker.markEscalated();
+            			log.info("Retrieval coverage: uid=[{}] last full sweep=[{}]{} exceeds maxAge={}d (+stable per-uid jitter over {}d) - escalating ONLY_NEWLY_ADDED to ALL_PUBLICATIONS",
+            					uid, lastFullSweep, inferred ? " (inferred)" : " (persisted)", maxAgeDays, fullSweepJitterDays);
+            		}
+            	}
+
+            	if (effectiveFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
+            		// Escalated sweep. Deliberately NOT deleting the ESearchResult the way the
+            		// manual ALL_PUBLICATIONS path does: savePubMedArticles upserts per strategy,
+            		// so the sweep refreshes entries in place and the uid's candidate pmids
+            		// survive a sweep that dies midway. Note this path runs retrieveData, NOT
+            		// retrieveDataByDateRange — #691's watermark rollback does not apply here.
+            		// Failure handling is the lastFullSweep stamp instead: a sweep that hit the
+            		// error-swallow path is not stamped, so the person stays due and the sweep
+            		// is retried on a later run.
+            	} else {
+            		// Coverage floor (#695): a passed retrieval window is never revisited, so an article
+            		// missed by one run — a swallowed PubMed failure, a client timeout, a night the job
+            		// did not run — stayed missed forever. Flooring how far back the window reaches turns
+            		// that permanent loss into a bounded delay. See RetrievalWindow for the reasoning;
+            		// set retrieval.incremental.lookback-days=0 to restore the watermark-only window.
+            		startDate = RetrievalWindow.incrementalStart(eSearchResult.getRetrievalDate(), initial, incrementalLookbackDays);
+            		log.info("Retrieval coverage: uid=[{}] incremental window start=[{}] (watermark=[{}], floor={}d)",
+            				uid, startDate, eSearchResult.getRetrievalDate(), incrementalLookbackDays);
+            	}
+
+            	RetrievalEscalationTracker.setMode(effectiveFlag);
             	try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), refreshFlag);
+                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), effectiveFlag);
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+e);
                     stopWatch.stop();
@@ -463,7 +535,32 @@ public class ReCiterController {
 
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-        return ResponseEntity.ok().body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
+        return ResponseEntity.ok()
+                .headers(retrievalSignalHeaders())
+                .body("Successfully retrieved all candidate articles for " + uid + " and refreshed all search results");
+    }
+
+    /** Convenience overload for callers that do not opt into full-sweep escalation. */
+    public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
+        return retrieveArticlesByUid(uid, refreshFlag, null);
+    }
+
+    /**
+     * Response-signal headers for the retrieval endpoints (#696). The batch client
+     * budgets ALL_PUBLICATIONS escalations per night but cannot observe the server-side
+     * decision from the response body, so the controller reports it here:
+     * X-Reciter-Retrieval-Mode (retrieval actually executed, NONE when cached),
+     * X-Reciter-Escalated (staleness escalation — the value counted against the
+     * budget), and X-Reciter-Auto-Upgraded (forced full retrieval because the uid had
+     * no ESearchResult — counted separately, because those sweeps are unbudgeted).
+     */
+    private HttpHeaders retrievalSignalHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        RetrievalRefreshFlag mode = RetrievalEscalationTracker.getMode();
+        headers.set("X-Reciter-Retrieval-Mode", mode == null ? "NONE" : mode.name());
+        headers.set("X-Reciter-Escalated", Boolean.toString(RetrievalEscalationTracker.wasEscalated()));
+        headers.set("X-Reciter-Auto-Upgraded", Boolean.toString(RetrievalEscalationTracker.wasAutoUpgraded()));
+        return headers;
     }
     
     @Operation(summary = "Retrieve pending articles for a group of users.",  description = "Retrieve pending articles for a group of users.")
@@ -600,15 +697,17 @@ public class ReCiterController {
     @GetMapping(value = "/reciter/feature-generator/by/uid", produces = "application/json")
     public ResponseEntity runFeatureGenerator(@RequestParam String uid,
     		@RequestParam(required = false)	Double authorshipLikelihoodScore ,
-    		@RequestParam(required = false) UseGoldStandard useGoldStandard, 
-    		@RequestParam(required = false) FilterFeedbackType filterByFeedback, 
+    		@RequestParam(required = false) UseGoldStandard useGoldStandard,
+    		@RequestParam(required = false) FilterFeedbackType filterByFeedback,
     		@RequestParam(required = false) boolean analysisRefreshFlag,
     		@RequestParam(required = false) RetrievalRefreshFlag retrievalRefreshFlag,
+    		@RequestParam(required = false) Integer fullSweepMaxAgeDays,
     		@RequestParam(value = "includeExternal", required = false, defaultValue = "false") boolean includeExternal) {
 
     	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
-        
+        RetrievalEscalationTracker.reset();
+
         final double totalScore;
         if(authorshipLikelihoodScore == null) {
         	totalScore = totalArticleScoreStandardizedDefault; // Configuring the totalScore in multiple of 10's in application.properties file
@@ -773,7 +872,7 @@ public class ReCiterController {
             } else if (useGoldStandard == UseGoldStandard.AS_EVIDENCE) {
                 strategyParameters.setUseGoldStandardEvidence(true);
             }
-            parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag);
+            parameters = initializeEngineParameters(uid, authorshipLikelihoodScore, retrievalRefreshFlag, fullSweepMaxAgeDays);
             if (parameters == null) {
                 stopWatch.stop();
                 log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -933,8 +1032,11 @@ public class ReCiterController {
     }
 
     private ResponseEntity<Object> featureGeneratorResponse(ReCiterFeature reCiterFeature, String uid, boolean includeExternal) {
+        // Every 200 from the feature generator carries the retrieval-signal headers
+        // (#696) so the batch client can count escalations against its nightly budget.
+        HttpHeaders retrievalSignal = retrievalSignalHeaders();
         if (!includeExternal || reCiterFeature == null) {
-            return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
+            return new ResponseEntity<>(reCiterFeature, retrievalSignal, HttpStatus.OK);
         }
         try {
             List<ExternalArticle> externalArticles = externalArticleService.findByUid(uid.trim()).stream()
@@ -942,13 +1044,13 @@ public class ReCiterController {
                     .collect(Collectors.toList());
             ObjectNode responseBody = objectMapper.valueToTree(reCiterFeature);
             responseBody.set("externalArticles", objectMapper.valueToTree(externalArticles));
-            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+            return new ResponseEntity<>(responseBody, retrievalSignal, HttpStatus.OK);
         } catch (Exception e) {
             // The scoring result must never fail on the optional external-article sidecar;
             // the absent externalArticles field (vs empty array) signals the degradation.
             log.warn("Could not append external articles for uid {}; returning scoring result without them: {}",
                     uid, e.getMessage());
-            return new ResponseEntity<>(reCiterFeature, HttpStatus.OK);
+            return new ResponseEntity<>(reCiterFeature, retrievalSignal, HttpStatus.OK);
         }
     }
     
@@ -1172,7 +1274,7 @@ public class ReCiterController {
     }
 
 
-    private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag) {
+    private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag, Integer fullSweepMaxAgeDays) {
         // find identity
         Identity identity = identityService.findByUid(uid);
         ESearchResult eSearchResults = null;
@@ -1184,9 +1286,14 @@ public class ReCiterController {
                 log.warn("No ESearchResult for uid={}; upgrading requested flag={} to ALL_PUBLICATIONS",
                          uid, retrievalRefreshFlag);
                 retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
+                // Marked AFTER the call: retrieveArticlesByUid resets the tracker on entry.
+                // Auto-upgrades are reported separately from escalations (#696) — they are
+                // unbudgeted full sweeps, and folding them into the escalation count would
+                // make the client's "budget is holding" signal a false one.
+                RetrievalEscalationTracker.markAutoUpgraded();
                 eSearchResults = eSearchResultService.findByUid(uid);
             } else if(eSearchResults != null && (retrievalRefreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS || retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS)) {
-            	retrieveArticlesByUid(uid, retrievalRefreshFlag);
+            	retrieveArticlesByUid(uid, retrievalRefreshFlag, fullSweepMaxAgeDays);
             	eSearchResults = eSearchResultService.findByUid(uid);
             }
         } catch (EmptyResultDataAccessException e) {
