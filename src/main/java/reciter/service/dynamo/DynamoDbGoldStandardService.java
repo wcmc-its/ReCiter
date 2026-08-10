@@ -89,6 +89,9 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     		if(goldStandardDdb == null) {
     			dynamoDbGoldStandardRepository.save(goldStandard);
     		} else {
+    			//fix for issue # 692, get the version from the existing record and set it to the new record before saving it to avoid version conflict exception
+       		    goldStandard.setVersion(goldStandardDdb.getVersion());
+       		
     			List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
     			List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
     			// Snapshot existing lists before merge mutates them (for audit log diff)
@@ -280,7 +283,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     		List<String> goldStandardUids = goldStandard.stream().map(GoldStandard::getUid).collect(Collectors.toList());
     		
     		List<GoldStandard> goldStandardDdbList = findByUids(goldStandardUids);
-    		if(goldStandardDdbList == null|| (goldStandardDdbList != null && goldStandardDdbList.size() == 0)) {
+    		if(goldStandardDdbList == null|| goldStandardDdbList.isEmpty() || (goldStandardDdbList != null && goldStandardDdbList.size() == 0)) {
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
     		} else {
     			for(GoldStandard goldStandardDdb: goldStandardDdbList) {
@@ -288,7 +291,13 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     				List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
     				List<Long> existingRejected = (goldStandardDdb.getRejectedPmids() != null) ? new ArrayList<>(goldStandardDdb.getRejectedPmids()) : Collections.emptyList();
     				GoldStandard goldStandardNew = goldStandard.stream().filter(gs -> gs.getUid().equalsIgnoreCase(goldStandardDdb.getUid())).findFirst().get();
-        			if(acceptedPmids != null && acceptedPmids.size() > 0) {
+        			
+    				// fix for issue #692 (bulk path): carry forward the version for existing
+                    // records so the SDK's conditional write compares against the correct
+                    // current value instead of treating it as a create.
+                    goldStandardNew.setVersion(goldStandardDdb.getVersion());
+                    
+    				if(acceptedPmids != null && acceptedPmids.size() > 0) {
         				if(goldStandardNew != null && goldStandardNew.getKnownPmids() != null && goldStandardNew.getKnownPmids().size() > 0) {
 	        				for(Long acceptedPmidNew: goldStandardNew.getKnownPmids()) {
 	        					if(!acceptedPmids.contains(acceptedPmidNew)) {
