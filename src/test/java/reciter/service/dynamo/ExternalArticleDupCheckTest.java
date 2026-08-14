@@ -131,19 +131,28 @@ public class ExternalArticleDupCheckTest {
                 Collections.emptyList(),
                 Arrays.asList(existing));
         assertEquals(Level.BLOCKED, result.getLevel());
-        assertEquals("ALREADY_ADDED", result.getMatches().get(0).getType());
+        ExternalArticleDupCheck.Match match = result.getMatches().get(0);
+        assertEquals("ALREADY_ADDED", match.getType());
+        assertEquals("A Title", match.getTitle());
+        assertEquals("2020", match.getPubYear());
     }
 
     @Test
     public void titleAndYearCollisionWarns() {
+        ReCiterArticleFeature matched = pubmedArticle(44444L, null, "Deep learning for author disambiguation", "2023-09-15");
+        matched.setJournalTitleVerbose("Journal of Disambiguation");
         Result result = ExternalArticleDupCheck.check(
                 candidate("OPENALEX:W123", null, null, "Deep Learning for Author Disambiguation!", "2023"),
                 Collections.emptyList(),
                 Collections.emptyList(),
-                Arrays.asList(pubmedArticle(44444L, null, "Deep learning for author disambiguation", "2023-09-15")),
+                Arrays.asList(matched),
                 Collections.emptyList());
         assertEquals(Level.WARNING, result.getLevel());
-        assertEquals("TITLE_YEAR_MATCH", result.getMatches().get(0).getType());
+        ExternalArticleDupCheck.Match match = result.getMatches().get(0);
+        assertEquals("TITLE_YEAR_MATCH", match.getType());
+        assertEquals("Deep learning for author disambiguation", match.getTitle());
+        assertEquals("Journal of Disambiguation", match.getJournal());
+        assertEquals("2023", match.getPubYear());
     }
 
     @Test

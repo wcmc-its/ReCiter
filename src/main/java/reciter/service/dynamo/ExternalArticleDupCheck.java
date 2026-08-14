@@ -28,11 +28,21 @@ public final class ExternalArticleDupCheck {
         private final String type;
         private final String matchedId;
         private final String detail;
+        private final String title;
+        private final String journal;
+        private final String pubYear;
 
         Match(String type, String matchedId, String detail) {
+            this(type, matchedId, detail, null, null, null);
+        }
+
+        Match(String type, String matchedId, String detail, String title, String journal, String pubYear) {
             this.type = type;
             this.matchedId = matchedId;
             this.detail = detail;
+            this.title = title;
+            this.journal = journal;
+            this.pubYear = pubYear;
         }
 
         public String getType() {
@@ -45,6 +55,23 @@ public final class ExternalArticleDupCheck {
 
         public String getDetail() {
             return detail;
+        }
+
+        /** Matched record's title, when known — null for the two gold-standard PMID
+         * matches (a GoldStandard entry carries no title, only the PMID). */
+        public String getTitle() {
+            return title;
+        }
+
+        /** Matched record's journal/venue, when known — null where the underlying
+         * record doesn't carry one (e.g. gold-standard PMID matches). */
+        public String getJournal() {
+            return journal;
+        }
+
+        /** Matched record's publication year, when known. */
+        public String getPubYear() {
+            return pubYear;
         }
     }
 
@@ -81,19 +108,24 @@ public final class ExternalArticleDupCheck {
         String candidateYear = year(candidate.getPubDate());
 
         for (ExternalArticle existing : safe(existingExternal)) {
+            String existingYear = year(existing.getPubDate());
             if (existing.getArticleId() != null && existing.getArticleId().equals(candidate.getArticleId())) {
                 blocked.add(new Match("ALREADY_ADDED", existing.getArticleId(),
-                        "This external article was already added for this person."));
+                        "This external article was already added for this person.",
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             } else if (candidate.getPmid() != null && candidate.getPmid().equals(existing.getPmid())) {
                 blocked.add(new Match("PMID_MATCH_EXTERNAL", existing.getArticleId(),
-                        "An external article with the same PMID was already added from " + existing.getSourceType() + "."));
+                        "An external article with the same PMID was already added from " + existing.getSourceType() + ".",
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             } else if (candidateDoi != null && candidateDoi.equals(normalizeDoi(existing.getDoi()))) {
                 blocked.add(new Match("DOI_MATCH_EXTERNAL", existing.getArticleId(),
-                        "An external article with the same DOI was already added from " + existing.getSourceType() + "."));
+                        "An external article with the same DOI was already added from " + existing.getSourceType() + ".",
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             } else if (titleYearCollision(candidateTitle, candidateYear,
-                    normalizeTitle(existing.getTitle()), year(existing.getPubDate()))) {
+                    normalizeTitle(existing.getTitle()), existingYear)) {
                 warnings.add(new Match("TITLE_YEAR_MATCH_EXTERNAL", existing.getArticleId(),
-                        "An external article with a matching title and year was already added: " + existing.getTitle()));
+                        "An external article with a matching title and year was already added: " + existing.getTitle(),
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             }
         }
 
@@ -107,16 +139,20 @@ public final class ExternalArticleDupCheck {
         }
 
         for (ReCiterArticleFeature feature : safe(candidateArticles)) {
+            String featureYear = year(feature.getPublicationDateStandardized());
             if (candidate.getPmid() != null && feature.getPmid() == candidate.getPmid()) {
                 blocked.add(new Match("PMID_IN_CANDIDATES", String.valueOf(feature.getPmid()),
-                        "This PMID exists in the person's PubMed candidate set; adjudicate it via normal feedback instead."));
+                        "This PMID exists in the person's PubMed candidate set; adjudicate it via normal feedback instead.",
+                        feature.getArticleTitle(), feature.getJournalTitleVerbose(), featureYear));
             } else if (candidateDoi != null && candidateDoi.equals(normalizeDoi(feature.getDoi()))) {
                 blocked.add(new Match("DOI_MATCH", String.valueOf(feature.getPmid()),
-                        "A PubMed article with the same DOI exists in the person's candidate set (PMID " + feature.getPmid() + ")."));
+                        "A PubMed article with the same DOI exists in the person's candidate set (PMID " + feature.getPmid() + ").",
+                        feature.getArticleTitle(), feature.getJournalTitleVerbose(), featureYear));
             } else if (titleYearCollision(candidateTitle, candidateYear,
-                    normalizeTitle(feature.getArticleTitle()), year(feature.getPublicationDateStandardized()))) {
+                    normalizeTitle(feature.getArticleTitle()), featureYear)) {
                 warnings.add(new Match("TITLE_YEAR_MATCH", String.valueOf(feature.getPmid()),
-                        "A PubMed article with a matching title and year exists (PMID " + feature.getPmid() + "): " + feature.getArticleTitle()));
+                        "A PubMed article with a matching title and year exists (PMID " + feature.getPmid() + "): " + feature.getArticleTitle(),
+                        feature.getArticleTitle(), feature.getJournalTitleVerbose(), featureYear));
             }
         }
 
