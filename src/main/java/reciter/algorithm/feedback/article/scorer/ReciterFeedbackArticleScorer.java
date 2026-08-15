@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,14 +34,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
-import reciter.storage.s3.AwsScoringClients;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
@@ -92,10 +90,9 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -111,6 +108,10 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private List<ReCiterArticle> reciterArticles;
 	private Identity identity;
 	public static StrategyParameters strategyParameters;
+	
+	 // ── Thread-safe, expensive to construct — shared constant ──
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    
 	/**
 	 * Journal Category Score
 	 */
@@ -131,7 +132,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext journalTitleSimilarityStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
 
-	ExecutorService executorService = Executors.newWorkStealingPool(15);
+	//ExecutorService executorService = Executors.newWorkStealingPool(15);
 	
 	public ReciterFeedbackArticleScorer(List<ReCiterArticle> articles,Identity identity,EngineParameters parameters,StrategyParameters strategyParameters)
 	{
@@ -140,84 +141,89 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		this.identity = identity;
 
 		// Configure informed absence for target author name strategy
-		TargetAuthorNameFeedbackStrategy targetAuthorNameStrategy = new TargetAuthorNameFeedbackStrategy();
+		var targetAuthorNameStrategy = new TargetAuthorNameFeedbackStrategy();
 		targetAuthorNameStrategy.setInformedAbsenceConfig(
 			strategyParameters.isInformedAbsenceEnabled(),
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceTargetAuthorNameStrength());
 
 		// Configure informed absence for co-author name strategy
-		CoauthorNameFeedbackStrategy coAuthorNameStrategy = new CoauthorNameFeedbackStrategy();
+		var coAuthorNameStrategy = new CoauthorNameFeedbackStrategy();
 		coAuthorNameStrategy.setInformedAbsenceConfig(
 			strategyParameters.isInformedAbsenceEnabled(),
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceCoAuthorNameStrength());
 
-		JournalFeedbackStrategy journalStrategy = new JournalFeedbackStrategy();
+		var journalStrategy = new JournalFeedbackStrategy();
 		journalStrategy.setInformedAbsenceConfig(
 			strategyParameters.isInformedAbsenceEnabled(),
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceJournalStrength());
 
-		JournalSubFieldFeedbackStrategy journalSubFieldStrategy = new JournalSubFieldFeedbackStrategy();
+		var journalSubFieldStrategy = new JournalSubFieldFeedbackStrategy();
 		journalSubFieldStrategy.setInformedAbsenceConfig(
 			strategyParameters.isInformedAbsenceEnabled(),
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceJournalSubFieldStrength());
 
-		OrcidFeedbackStrategy orcidStrategy = new OrcidFeedbackStrategy();
+		var orcidStrategy = new OrcidFeedbackStrategy();
 		orcidStrategy.setInformedAbsenceConfig(
 			strategyParameters.isInformedAbsenceEnabled(),
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceOrcidStrength());
+		
+		var organizationStrategy = new OrganizationFeedbackStrategy();
+		organizationStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceOrganizationStrength());
+		
+		var keywordStrategy = new KeywordFeedbackStrategy(strategyParameters);
+		keywordStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceKeywordStrength());
+		
+		var institutionStrategy = new InstitutionFeedbackStrategy();
+		institutionStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceInstitutionStrength());
+		
+		var emailStrategy = new EmailFeedbackStrategy();
+		emailStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceEmailStrength());
+		
+		var citesStrategy = new CitesFeedbackStrategy();
+		citesStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceCitesStrength());
+		
+		var bibCouplingStrategy = new BibliographicCouplingFeedbackStrategy();
+		bibCouplingStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceBibliographicCouplingStrength());
 
 		this.journalStrategyContext = new JournalFeedbackStrategyContext(journalStrategy);
 		this.journalSubFieldStrategyContext = new JournalSubFieldFeedbackStrategyContext(journalSubFieldStrategy);
 		this.orcidStrategyContext = new OrcidFeedbackStrategyContext(orcidStrategy);
 		this.yearStrategyContext = new YearFeedbackStrategyContext(new YearFeedbackStrategy());
 		this.targetAuthorNameStrategyContext = new TargetAuthorNameFeedbackStrategyContext(targetAuthorNameStrategy);
-		OrganizationFeedbackStrategy organizationStrategy = new OrganizationFeedbackStrategy();
-		organizationStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceOrganizationStrength());
 		this.organizationStrategyContext = new OrganizationFeedbackStrategyContext(organizationStrategy);
 		this.orcidCoAuthorStrategyContext = new OrcidCoauthorFeedbackStrategyContext(new OrcidCoauthorFeedbackStrategy());
-		KeywordFeedbackStrategy keywordStrategy = new KeywordFeedbackStrategy(strategyParameters);
-		keywordStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceKeywordStrength());
 		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(keywordStrategy);
 		TextSimilarityFeedbackStrategy textSimilarityStrategy = new TextSimilarityFeedbackStrategy(strategyParameters);
 		this.textSimilarityStrategyContext = new TextSimilarityFeedbackStrategyContext(textSimilarityStrategy);
 		JournalTitleSimilarityFeedbackStrategy journalTitleSimilarityStrategy = new JournalTitleSimilarityFeedbackStrategy(strategyParameters);
 		this.journalTitleSimilarityStrategyContext = new JournalTitleSimilarityFeedbackStrategyContext(journalTitleSimilarityStrategy);
-		InstitutionFeedbackStrategy institutionStrategy = new InstitutionFeedbackStrategy();
-		institutionStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceInstitutionStrength());
 		this.institutionStrategyContext = new InstitutionFeedbackStrategyContext(institutionStrategy);
-
-		EmailFeedbackStrategy emailStrategy = new EmailFeedbackStrategy();
-		emailStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceEmailStrength());
 		this.emailStrategyContext = new EmailFeedbackStrategyContext(emailStrategy);
 		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(coAuthorNameStrategy);
-		CitesFeedbackStrategy citesStrategy = new CitesFeedbackStrategy();
-		citesStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceCitesStrength());
 		this.citesStrategyContext = new CitesFeedbackStrategyContext(citesStrategy);
-		BibliographicCouplingFeedbackStrategy bibCouplingStrategy = new BibliographicCouplingFeedbackStrategy();
-		bibCouplingStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceBibliographicCouplingStrength());
 		this.bibliographicCouplingStrategyContext = new BibliographicCouplingFeedbackStrategyContext(bibCouplingStrategy);
 		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
 
@@ -225,94 +231,82 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	public void runFeedbackArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) 
 	{
-		 List<Future<?>> futures = new ArrayList<>();
+		 // Java 21 GA: virtual-thread-per-task executor, auto-closed by try-with-resources
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
-		if(strategyParameters.isFeedbackScoreJournal()) {
-			futures.add(submitAndLogTime("Journal Category", executorService, journalStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreJournalSubField()) {
-			futures.add(submitAndLogTime("Journal SubField Category", executorService, journalSubFieldStrategyContext, reCiterArticles, identity));
+            var futures = new ArrayList<CompletableFuture<Void>>();
+            
+            if(strategyParameters.isFeedbackScoreJournal()) {
+    			futures.add(runStrategy("Journal Category",  journalStrategyContext, reCiterArticles, identity, executor));
+    		}
+            if(strategyParameters.isFeedbackScoreJournalSubField()) {
+    			futures.add(runStrategy("Journal SubField Category", journalSubFieldStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreOrcid()) {
-			futures.add(submitAndLogTime("Orcid Category", executorService, orcidStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreOrcid()) {
+    			futures.add(runStrategy("Orcid Category", orcidStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreYear()) {
-			futures.add(submitAndLogTime("Year Category", executorService, yearStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreYear()) {
+    			futures.add(runStrategy("Year Category", yearStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreEmail()) {
-			futures.add(submitAndLogTime("Email Category", executorService, emailStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreEmail()) {
+    			futures.add(runStrategy("Email Category", emailStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreOrganization()) {
-			futures.add(submitAndLogTime("Organization Category", executorService, organizationStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreOrganization()) {
+    			futures.add(runStrategy("Organization Category", organizationStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreInstitution()) {
-			futures.add(submitAndLogTime("Institution Category", executorService, institutionStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreInstitution()) {
+    			futures.add(runStrategy("Institution Category", institutionStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreTargetAuthorName()) {
-			futures.add(submitAndLogTime("Target Author Name Category", executorService, targetAuthorNameStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreTargetAuthorName()) {
+    			futures.add(runStrategy("Target Author Name Category", targetAuthorNameStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreOrcidCoAuthor()) {
-			futures.add(submitAndLogTime("Orcid coAuthor Category", executorService, orcidCoAuthorStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreKeyword()) {
-			futures.add(submitAndLogTime("Keyword Category", executorService, keywordStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreTextSimilarity()) {
-			futures.add(submitAndLogTime("Text Similarity Category", executorService, textSimilarityStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreJournalTitleSimilarity()) {
-			futures.add(submitAndLogTime("Journal Title Similarity Category", executorService, journalTitleSimilarityStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreCoauthorName()) {
-			futures.add(submitAndLogTime("CoAuthorName Category", executorService, coAuthorNameStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreOrcidCoAuthor()) {
+    			futures.add(runStrategy("Orcid coAuthor Category", orcidCoAuthorStrategyContext, reCiterArticles, identity, executor));
+    		}
+    		if(strategyParameters.isFeedbackScoreKeyword()) {
+    			futures.add(runStrategy("Keyword Category", keywordStrategyContext, reCiterArticles, identity, executor));
+    		}
+    		if(strategyParameters.isFeedbackScoreTextSimilarity()) {
+    			futures.add(runStrategy("Text Similarity Category", textSimilarityStrategyContext, reCiterArticles, identity, executor));
+    		}
+    		if(strategyParameters.isFeedbackScoreJournalTitleSimilarity()) {
+    			futures.add(runStrategy("Journal Title Similarity Category", journalTitleSimilarityStrategyContext, reCiterArticles, identity, executor));
+    		}
+    		if(strategyParameters.isFeedbackScoreCoauthorName()) {
+    			futures.add(runStrategy("CoAuthorName Category", coAuthorNameStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreCites()) {
-			futures.add(submitAndLogTime("Cites Category", executorService, citesStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreCites()) {
+    			futures.add(runStrategy("Cites Category", citesStrategyContext, reCiterArticles, identity, executor));
 
-		}
-		if(strategyParameters.isFeedbackScoreBibliographicCoupling()) {
-			futures.add(submitAndLogTime("Bibliographic Coupling Category", executorService, bibliographicCouplingStrategyContext, reCiterArticles, identity));
-		}
-		//futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
-		// Shutdown executorService after submitting all tasks
-        executorService.shutdown();
-        
-        // Wait for all tasks to complete
-        try {
-            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        boolean allTasksCompleted = true;
-        // Print execution times from futures
-        for (Future<?> future : futures) {
-            try {
-                future.get(); // Ensure all tasks are completed
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Task execution interrupted or encountered an error", e);
-                allTasksCompleted=false;
-            }
-        }
-        if (allTasksCompleted) {
-        	//Export item Level Data
-        	exportArticleItemLevelReport(reCiterArticles, identity);
-            // All tasks completed successfully
-            exportArticlesConsolidateReport(reCiterArticles, identity);
-         	((ReCiterArticleStrategyContext) feedbackEvidenceStrategyContext).executeStrategy(reCiterArticles);
-         	executePythonScriptForArticleFeedbackTotal(reCiterArticles,identity);
-	    } else {
-            log.error("One or more tasks failed; report generation may be incomplete.");
-        }
+    		}
+    		if(strategyParameters.isFeedbackScoreBibliographicCoupling()) {
+    			futures.add(runStrategy("Bibliographic Coupling Category", bibliographicCouplingStrategyContext, reCiterArticles, identity, executor));
+    		}
+    		 // Wait for ALL strategies; run post-processing only if all succeeded
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("One or more scoring tasks failed; report generation may be incomplete.", ex);
+                        } else {
+                            log.info("All feedback scoring strategy contexts completed successfully.");
+                            // Post-processing — runs only when ALL strategies succeed
+                            exportArticleItemLevelReport(reCiterArticles, identity);
+                            exportArticlesConsolidateReport(reCiterArticles, identity);
+                            ((ReCiterArticleStrategyContext) feedbackEvidenceStrategyContext).executeStrategy(reCiterArticles);
+                            executePythonScriptForArticleFeedbackTotal(reCiterArticles, identity);
+                        }
+                    })
+                    .join(); // blocks calling thread until all tasks + whenComplete finish
 
-
+        } // executor auto-closed here; virtual threads terminate automatically when done
 	}
 	
 	private Future<?> submitAndLogTime(String category, ExecutorService executorService,
@@ -327,6 +321,35 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
 		});
 	}
+	
+	 /**
+     * Submits a single feedback strategy as a virtual-thread task.
+     * .exceptionally() logs per-task failures without cancelling siblings.
+     */
+    private CompletableFuture<Void> runStrategy(String category,
+                                                StrategyContext context,
+                                                List<ReCiterArticle> reCiterArticles,
+                                                Identity identity,
+                                                Executor executor) {
+        return CompletableFuture.runAsync(() -> {
+            var stopWatch = new StopWatch(category);
+            stopWatch.start(category);
+
+            // Java 21: pattern matching instanceof — no explicit cast needed
+            if (context instanceof TargetAuthorFeedbackStrategyContext feedbackCtx) {
+                feedbackCtx.executeFeedbackStrategy(reCiterArticles, identity);
+            }
+
+            stopWatch.stop();
+            // Parameterized logging — zero allocation when INFO is disabled
+            log.info("{} took {}s", stopWatch.getId(), stopWatch.getTotalTimeSeconds());
+
+        }, executor).exceptionally(ex -> {
+            log.error("Strategy '{}' failed", category, ex);
+            return null; // siblings continue despite this failure
+        });
+    }
+	
 	private void exportArticlesConsolidateReport(List<ReCiterArticle> reCiterArticles, Identity identity )
 	{
 		// printing all the article lookup PMID and CoAuthors associated with other

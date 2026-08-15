@@ -28,9 +28,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +63,7 @@ import reciter.xml.retriever.pubmed.PubMedQueryType;
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
+	private final static Logger log = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
 
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
@@ -92,73 +91,66 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		DERIVED
 	}
 	
-	private class AsyncRetrievalEngine extends Thread {
-
-		private final Identity identity;
-		private final Date startDate;
-		private final Date endDate;
-		private final RetrievalRefreshFlag refreshFlag;
-		
-		public AsyncRetrievalEngine(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) {
-			this.identity = identity;
-			this.startDate = startDate;
-			this.endDate = endDate;
-			this.refreshFlag = refreshFlag;
-		}
-		
-		@Override
-		public void run() {
-			try {
-				// If the eSearchResult collection doesn't contain any information regarding this person,
-				// then we'd want to perform a full retrieval because this will be first time that ReCiter
-				// retrieve PubMed and Scopus articles for this person.
-				slf4jLogger.info("this.refreshFlag in Alias run" + this.refreshFlag);
-				if(this.refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
-					slf4jLogger.info("Starting full retrieval for uid=[" + identity.getUid() + "].");
-					retrieveData(identity, this.refreshFlag);
-				} else if(this.refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
-					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=["
-						+ startDate + "] endDate=[" + endDate + "].");
-					retrieveDataByDateRange(identity, startDate, endDate, this.refreshFlag);
-				}
-			} catch (IOException e) {
-				slf4jLogger.error("Unabled to retrieve. " + identity.getUid(), e);
-			}
-		}
-	}
-
 	@Override
 	public boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
-		ExecutorService executorService = Executors.newWorkStealingPool(15);//Executors.newFixedThreadPool(10);
-		for (Identity identity : identities) {
-			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate, refreshFlag));
-		}
-		executorService.shutdown();
-		try {
-			executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("Thread interrupted while waiting for retrieval to finish.");
-			return false;
-		}
-		return true;
-	}
-	
+		 // Java 21 GA: virtual-thread-per-task executor, auto-closed
+       try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+
+           var futures = identities.stream()
+                   .map(identity -> CompletableFuture.runAsync(() -> {
+                       try {
+                           log.info("refreshFlag in retrieveArticlesByDateRange: {}", refreshFlag);
+
+                           // Java 21: switch expression replaces if/else chain
+                           switch (refreshFlag) {
+                               case ALL_PUBLICATIONS -> {
+                                   log.info("Starting full retrieval for uid=[{}]", identity.getUid());
+                                   retrieveData(identity, refreshFlag);
+                               }
+                               case ONLY_NEWLY_ADDED_PUBLICATIONS -> {
+                                   log.info("Starting date-range retrieval for uid=[{}] startDate=[{}] endDate=[{}]",
+                                           identity.getUid(), startDate, endDate);
+                                   retrieveDataByDateRange(identity, startDate, endDate, refreshFlag);
+                               }
+                           }
+                       } catch (IOException e) {
+                           // Wrap checked exception so CompletableFuture can propagate it
+                           throw new RuntimeException("Retrieval failed for uid=[" + identity.getUid() + "]", e);
+                       }
+                   }, executor)
+                   .exceptionally(ex -> {
+                       // Per-identity failure: log it, let other identities continue
+                       log.error("Retrieval failed for uid=[{}]", ex.getMessage(), ex);
+                       return null;
+                   }))
+                   .toList(); // Java 21: Stream.toList() — unmodifiable, allocation-efficient
+
+           // Wait for ALL identity retrievals to finish
+           CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                   .whenComplete((result, ex) -> {
+                       if (ex != null) {
+                           log.error("One or more identity retrievals failed.", ex);
+                       } else {
+                           log.info("All identity retrievals completed successfully. count={}", identities.size());
+                       }
+                   })
+                   .join();
+
+       } // executor.close() called here automatically
+
+       return true;
+   }	
 	private Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
-		slf4jLogger.info("Coming into retrieveData section without date range****");
 		Set<Long> uniquePmids = new HashSet<>();
 		
 		QueryType queryType = null;
-		
-		//eSearchResultService.delete();
-		
 		String uid = identity.getUid();
-
-		// Phase 1 provenance tracking state
-		Set<Long> nonGsStrategyPmids = new HashSet<>();
-		Map<Long, String> newPmidStrategy = new LinkedHashMap<>();
-		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
+		var nonGsStrategyPmids = new HashSet<Long>();
+		var newPmidStrategy = new LinkedHashMap<Long, String>();
+		var backfillPmids = new HashSet<Long>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
+		
 		// Build set of already-known PMIDs from existing ESearchResult
-		Set<Long> existingPmids = new HashSet<>();
+		var existingPmids = new HashSet<Long>();
 		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
 		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
 			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
@@ -172,9 +164,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		identityAuthorNames(identity, identityNames);
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
 
-		if(useStrictQueryOnly) {
-			queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
-		}
+		if(useStrictQueryOnly) queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
+		
 
 		// Initialize as an empty map up front so all strategies use putAll uniformly.
 		// (Phase 36 FIX-05) GoldStandard retrieval now runs LAST after Email/FNI/Aff/Dept/Grant/etc.
@@ -187,30 +178,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
-		slf4jLogger.info("pubMedArticles in retrieveData section without date range****"+pubMedArticles.size());
-		/*if (pubMedArticles.size() > 0) {
-			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
-
-			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
-
-			// Update alias.
-			List<PubMedAlias> pubMedAliases = new ArrayList<>();
-			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
-				PubMedAlias pubMedAlias = new PubMedAlias();
-				pubMedAlias.setAuthorName(entry.getValue());
-				pubMedAlias.setPmid(entry.getKey());
-				slf4jLogger.info("new alias for uid=[" + identity.getUid() + "], alias=[" + entry.getValue() + "] from pmid=[" + entry.getKey() + "]");
-				pubMedAliases.add(pubMedAlias);
-			}
-
-			identity.setPubMedAlias(pubMedAliases);
-			Date date = new Date();
-			identity.setDateInitialRun(date);
-			identity.setDateLastRun(date);
-			identityService.save(identity);
-
-			uniquePmids.addAll(pubMedArticles.keySet());
-		}*/
+		log.info("pubMedArticles in retrieveData section without date range****"+pubMedArticles.size());
 
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
@@ -224,7 +192,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		} else {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		}
-		//if (r1.getPubMedArticles().size() > 0) {
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
@@ -248,7 +215,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			// This avoids a separate live eSearch call during the scoring phase.
 			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
 			eSearchCountService.save(new ESearchCount(uid, trueCount));
-			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
+			log.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 
 		if(r1.getPubMedQueryResults() != null
@@ -268,7 +235,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r2.getPubMedArticles(), affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
+				log.info("Skipping {} since no affiliation for {}",affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -287,7 +254,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r4.getPubMedArticles(), departmentRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
+				log.info("Skipping {} since no departments for {}",departmentRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
@@ -299,7 +266,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r5.getPubMedArticles(), grantRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
+				log.info("Skipping {} since no grants for {}", grantRetrievalStrategy.getRetrievalStrategyName(),identity.getUid());
 			}
 
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -318,7 +285,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r7.getPubMedArticles(), knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
+				log.info("Skipping {} since no Known Relationships for {}",knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -355,17 +322,17 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
 				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
 			orcidForRetrieval = identity.getOrcid().trim();
-			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+			log.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
 		}
 		if (orcidForRetrieval == null) {
 			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
 			if (orcidForRetrieval != null) {
-				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+				log.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
 						orcidForRetrieval, uid);
 				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
 				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
 				identity.setOrcid(orcidForRetrieval);
-				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+				log.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
 						orcidForRetrieval, uid);
 			}
 		}
@@ -391,18 +358,17 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// to use the retrieved-PMID semantic consistently.
 		if (queryType != QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP) {
 			eSearchCountService.save(new ESearchCount(uid, nonGsStrategyPmids.size()));
-			slf4jLogger.info("Stored final eSearchCount={} for uid={}", nonGsStrategyPmids.size(), uid);
+			log.info("Stored final eSearchCount={} for uid={}", nonGsStrategyPmids.size(), uid);
 		}
 
 		// Phase 1: Write provenance records for newly discovered PMIDs
 		if (!newPmidStrategy.isEmpty()) {
-			Date now = new Date();
 			List<PmidProvenance> provenanceRecords = new ArrayList<>();
 			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
 				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
 			}
 			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
-			slf4jLogger.info("Wrote {} provenance records for uid={}", provenanceRecords.size(), uid);
+			log.info("Wrote {} provenance records for uid={}", provenanceRecords.size(), uid);
 		}
 
 		if (useScopusArticles) {
@@ -423,7 +389,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+			log.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
 					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
 
 			List<String> dois = new ArrayList<>();
@@ -445,7 +411,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+			log.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
 					uid, notFoundPmids.size(), dois.size(), noDoisCount);
 
 			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
@@ -459,7 +425,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
 						doiMatchSuccess++;
 					} else {
-						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+						log.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
 								uid, scopusArticle.getDoi());
 						doiMatchFailed++;
 					}
@@ -469,18 +435,17 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
 
-			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+			log.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
 					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
 					notFoundPmids.size() - doiMatchSuccess);
 
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
+		log.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
 		return uniquePmids;
 	}
 	
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
-		slf4jLogger.info("Coming in retrieveData section with date range****");
 		Set<Long> uniquePmids = new HashSet<>();
 		QueryType queryType = null;
 		String uid = identity.getUid();
@@ -516,7 +481,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
-		slf4jLogger.info("pubMedArticles in retrieveData section with date range****"+pubMedArticles.size());
+		log.info("pubMedArticles in retrieveData section with date range {}",pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
@@ -578,7 +543,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			// Store the true eSearch count for scoring.
 			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
 			eSearchCountService.save(new ESearchCount(uid, trueCount));
-			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
+			log.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 
 		if(r1.getPubMedQueryResults() != null
@@ -596,7 +561,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
 				trackNewPmids(r2.getPubMedArticles(), affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
-				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
+				log.info("Skipping {} since no affiliation for {}",affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
@@ -613,7 +578,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r4.getPubMedArticles(), departmentRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
+				log.info("Skipping {} since no departments for {}",departmentRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
@@ -623,7 +588,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
 				trackNewPmids(r5.getPubMedArticles(), grantRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
-				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
+				log.info("Skipping {} since no grants for {}" ,grantRetrievalStrategy.getRetrievalStrategyName(),identity.getUid());
 			}
 
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
@@ -639,7 +604,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
 				trackNewPmids(r7.getPubMedArticles(), knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
-				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
+				log.info("Skipping {} since no Known Relationships for {}",knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r8.getPubMedArticles());
@@ -670,15 +635,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
 				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
 			orcidForRetrieval = identity.getOrcid().trim();
-			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+			log.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
 		}
 		if (orcidForRetrieval == null) {
 			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
 			if (orcidForRetrieval != null) {
-				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+				log.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
 						orcidForRetrieval, uid);
 				identity.setOrcid(orcidForRetrieval);
-				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+				log.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
 						orcidForRetrieval, uid);
 			}
 		}
@@ -697,16 +662,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 		// Phase 1: Write provenance records for newly discovered PMIDs (no ESearchCount always-save for date-range runs)
 		if (!newPmidStrategy.isEmpty()) {
-			Date now = new Date();
 			List<PmidProvenance> provenanceRecords = new ArrayList<>();
 			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
 				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
 			}
 			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
-			slf4jLogger.info("Wrote {} provenance records (date-range) for uid={}", provenanceRecords.size(), uid);
+			log.info("Wrote {} provenance records (date-range) for uid={}", provenanceRecords.size(), uid);
 		}
 
-		slf4jLogger.info("uniquePmids in retrieveData section with date range****"+uniquePmids.size());
+		log.info("uniquePmids in retrieveData section with date range {} ", uniquePmids.size());
 		//List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		//scopusService.save(scopusArticles);
 		if (useScopusArticles) {
@@ -727,7 +691,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+			log.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
 					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
 
 			List<String> dois = new ArrayList<>();
@@ -749,7 +713,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+			log.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
 					uid, notFoundPmids.size(), dois.size(), noDoisCount);
 
 			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
@@ -763,7 +727,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
 						doiMatchSuccess++;
 					} else {
-						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+						log.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
 								uid, scopusArticle.getDoi());
 						doiMatchFailed++;
 					}
@@ -773,13 +737,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
 
-			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+			log.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
 					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
 					notFoundPmids.size() - doiMatchSuccess);
 
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
+		log.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
 		
 	}
 	
@@ -834,7 +798,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 						sanitizationUtils.sanitizeArticleAuthorNames(reCiterArticle));
 				acceptedReCiterArticles.add(reCiterArticle);
 			} catch (Exception e) {
-				slf4jLogger.warn("Could not translate PMID {} for ORCID inference: {}",
+				log.warn("Could not translate PMID {} for ORCID inference: {}",
 						knownPmid, e.getMessage());
 			}
 		}
