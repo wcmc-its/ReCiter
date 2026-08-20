@@ -2,7 +2,9 @@ package reciter.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -66,10 +69,15 @@ public class ExternalArticleControllerFeedbackTest {
         return body;
     }
 
-    @Test
-    public void rejectedSuppressesRowAndLogs() {
+    private void happyPathStubs() {
         when(identityService.findByUid("dnr4021")).thenReturn(new Identity());
         when(externalArticleService.find("dnr4021", "SCOPUS:85142207731")).thenReturn(existing);
+        when(feedbackLogService.recordAction(any(FeedbackLog.class))).thenReturn(true);
+    }
+
+    @Test
+    public void rejectedSuppressesRowAndLogsFirst() {
+        happyPathStubs();
 
         FeedbackRequest body = request("REJECTED", "dnr4021");
         body.setNote("not mine");
@@ -77,10 +85,12 @@ public class ExternalArticleControllerFeedbackTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(Boolean.TRUE, existing.getSuppressed());
-        verify(externalArticleService).save(existing);
 
+        // The authoritative history row must land before the suppressed-cache flip.
+        InOrder order = inOrder(feedbackLogService, externalArticleService);
         ArgumentCaptor<FeedbackLog> logged = ArgumentCaptor.forClass(FeedbackLog.class);
-        verify(feedbackLogService).recordAction(logged.capture());
+        order.verify(feedbackLogService).recordAction(logged.capture());
+        order.verify(externalArticleService).save(existing);
         assertEquals("REJECTED", logged.getValue().getFeedback());
         assertEquals("dnr4021", logged.getValue().getActorPersonIdentifier());
         assertEquals("not mine", logged.getValue().getNote());
@@ -88,10 +98,26 @@ public class ExternalArticleControllerFeedbackTest {
     }
 
     @Test
+    public void rejectedTakesOwnershipOfSupersedeSuppression() {
+        existing.setSuppressed(Boolean.TRUE);
+        existing.setSupersededByPmid(12345L);
+        happyPathStubs();
+
+        ResponseEntity<Object> response =
+                externalArticleController.recordExternalArticleFeedback(request("REJECTED", "dnr4021"));
+
+        // supersededByPmid cleared so the reconciler's auto-un-suppress can't
+        // resurrect an explicitly rejected row once PMID 12345 leaves the gold standard.
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(Boolean.TRUE, existing.getSuppressed());
+        assertNull(existing.getSupersededByPmid());
+        verify(externalArticleService).save(existing);
+    }
+
+    @Test
     public void acceptedUnsuppressesRow() {
         existing.setSuppressed(Boolean.TRUE);
-        when(identityService.findByUid("dnr4021")).thenReturn(new Identity());
-        when(externalArticleService.find("dnr4021", "SCOPUS:85142207731")).thenReturn(existing);
+        happyPathStubs();
 
         // lower-case on the wire should still work
         ResponseEntity<Object> response =
@@ -100,15 +126,13 @@ public class ExternalArticleControllerFeedbackTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(Boolean.FALSE, existing.getSuppressed());
         verify(externalArticleService).save(existing);
-        verify(feedbackLogService).recordAction(any(FeedbackLog.class));
     }
 
     @Test
     public void acceptedLeavesSupersedeSuppressionAlone() {
         existing.setSuppressed(Boolean.TRUE);
         existing.setSupersededByPmid(12345L);
-        when(identityService.findByUid("dnr4021")).thenReturn(new Identity());
-        when(externalArticleService.find("dnr4021", "SCOPUS:85142207731")).thenReturn(existing);
+        happyPathStubs();
 
         ResponseEntity<Object> response =
                 externalArticleController.recordExternalArticleFeedback(request("ACCEPTED", "curator99"));
@@ -121,8 +145,7 @@ public class ExternalArticleControllerFeedbackTest {
 
     @Test
     public void pendingLogsWithoutTouchingRow() {
-        when(identityService.findByUid("dnr4021")).thenReturn(new Identity());
-        when(externalArticleService.find("dnr4021", "SCOPUS:85142207731")).thenReturn(existing);
+        happyPathStubs();
 
         ResponseEntity<Object> response =
                 externalArticleController.recordExternalArticleFeedback(request("PENDING", "curator99"));
@@ -136,6 +159,7 @@ public class ExternalArticleControllerFeedbackTest {
     public void feedbackOnNeverAddedCandidateStillLogs() {
         when(identityService.findByUid("dnr4021")).thenReturn(new Identity());
         when(externalArticleService.find("dnr4021", "SCOPUS:85142207731")).thenReturn(null);
+        when(feedbackLogService.recordAction(any(FeedbackLog.class))).thenReturn(true);
 
         ResponseEntity<Object> response =
                 externalArticleController.recordExternalArticleFeedback(request("REJECTED", "curator99"));
@@ -147,6 +171,20 @@ public class ExternalArticleControllerFeedbackTest {
         Map<String, Object> body = (Map<String, Object>) response.getBody();
         assertNotNull(body);
         assertEquals(Boolean.FALSE, body.get("rowExists"));
+    }
+
+    @Test
+    public void failedLogWriteFailsRequestBeforeAnyFlip() {
+        when(identityService.findByUid("dnr4021")).thenReturn(new Identity());
+        when(externalArticleService.find("dnr4021", "SCOPUS:85142207731")).thenReturn(existing);
+        when(feedbackLogService.recordAction(any(FeedbackLog.class))).thenReturn(false);
+
+        ResponseEntity<Object> response =
+                externalArticleController.recordExternalArticleFeedback(request("REJECTED", "dnr4021"));
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(Boolean.FALSE, existing.getSuppressed());
+        verify(externalArticleService, never()).save(any());
     }
 
     @Test
