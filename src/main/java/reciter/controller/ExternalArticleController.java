@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -149,9 +150,11 @@ public class ExternalArticleController {
                     + "per call — who acted distinguishes reject-from-dispute, not the action name. REJECTED suppresses "
                     + "an existing ExternalArticle row; ACCEPTED un-suppresses it unless the supersede rule owns the "
                     + "suppression (supersededByPmid set); PENDING only logs. A candidate that was never added has no "
-                    + "row to flip — the feedback is still logged. actorPersonIdentifier is trusted as-is: the caller "
-                    + "(the PM proxy) derives it from the acting user's session, never the browser request — same "
-                    + "trust-boundary recipe as the goldstandard endpoint's curatedBy param.")
+                    + "row to flip — the feedback is still logged. REJECTED also takes ownership of the suppression "
+                    + "(clears supersededByPmid) so the supersede reconciler cannot resurrect an explicitly rejected "
+                    + "row. actorPersonIdentifier is trusted as-is: the caller (the PM proxy) derives it from the "
+                    + "acting user's session, never the browser request — same trust-boundary recipe as the "
+                    + "goldstandard endpoint's curatedBy param.")
     @PatchMapping(value = "/reciter/external-article/feedback", produces = "application/json")
     public ResponseEntity<Object> recordExternalArticleFeedback(@RequestBody FeedbackRequest request) {
         if (request == null || request.getUid() == null || request.getUid().trim().isEmpty()) {
@@ -168,7 +171,7 @@ public class ExternalArticleController {
         FeedbackLogService.Feedback feedback;
         try {
             feedback = FeedbackLogService.Feedback.valueOf(
-                    request.getAction() == null ? "" : request.getAction().trim().toUpperCase());
+                    request.getAction() == null ? "" : request.getAction().trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(errorBody("action is required and must be one of ACCEPTED, REJECTED, PENDING."));
@@ -181,9 +184,21 @@ public class ExternalArticleController {
         }
 
         ExternalArticle existing = externalArticleService.find(uid, articleId);
+        // The FeedbackLog row is the authoritative record here (suppressed is only a
+        // denormalized cache), so it is written first and its failure fails the request
+        // before any state changes — unlike the add/delete paths, where it is a side-log.
+        if (!logFeedback(uid, articleId, feedback, request.getActorPersonIdentifier().trim(), request.getNote())) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(errorBody("Failed to record the feedback; nothing was changed. Retry."));
+        }
         if (existing != null) {
             if (feedback == FeedbackLogService.Feedback.REJECTED) {
+                // A human rejection takes ownership of the suppression: clearing
+                // supersededByPmid keeps reconcileWithGoldStandard's auto-un-suppress
+                // (which fires when the superseding PMID leaves the gold standard)
+                // from resurrecting an explicitly rejected row.
                 existing.setSuppressed(Boolean.TRUE);
+                existing.setSupersededByPmid(null);
                 externalArticleService.save(existing);
             } else if (feedback == FeedbackLogService.Feedback.ACCEPTED
                     && existing.getSupersededByPmid() == null) {
@@ -192,7 +207,6 @@ public class ExternalArticleController {
                 externalArticleService.save(existing);
             }
         }
-        logFeedback(uid, articleId, feedback, request.getActorPersonIdentifier().trim(), request.getNote());
         log.info("External article {} for uid {} feedback {} by {}", articleId, uid, feedback,
                 request.getActorPersonIdentifier().trim());
 
@@ -216,9 +230,13 @@ public class ExternalArticleController {
         private String note;
     }
 
-    /** Best-effort append to FeedbackLog — recordAction never throws (matches the GoldStandard path). */
-    private void logFeedback(String uid, String articleId, FeedbackLogService.Feedback feedback,
-                             String actorPersonIdentifier, String note) {
+    /**
+     * Append to FeedbackLog. recordAction never throws; the boolean says whether the row
+     * was written — the add/delete paths ignore it (best-effort side-log, matching the
+     * GoldStandard path), the feedback endpoint fails the request on it.
+     */
+    private boolean logFeedback(String uid, String articleId, FeedbackLogService.Feedback feedback,
+                                String actorPersonIdentifier, String note) {
         FeedbackLog logEntry = new FeedbackLog();
         logEntry.setUid(uid);
         logEntry.setArticleId(articleId);
@@ -229,7 +247,7 @@ public class ExternalArticleController {
         long epoch = Instant.now().getEpochSecond();
         logEntry.setCreateTimestamp(epoch);
         logEntry.setModifyTimestamp(epoch);
-        feedbackLogService.recordAction(logEntry);
+        return feedbackLogService.recordAction(logEntry);
     }
 
     private String validate(ExternalArticle externalArticle) {

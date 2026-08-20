@@ -30,15 +30,13 @@ public interface FeedbackLogService {
     }
 
     /**
-     * Record a single curator action.
+     * Record a single curator action. Never throws — all failures are logged and
+     * reported through the return value, so callers on best-effort paths can ignore
+     * it and callers for whom this row is the authoritative record can react.
      *
-     * @param uid                 person identifier
-     * @param pmid                PubMed ID
-     * @param feedback            ACCEPTED, REJECTED, or PENDING
-     * @param curatedBy           userID of the curator (or 0 if unknown — e.g., when the
-     *                            action is inferred from a GoldStandard list-replace API call
-     *                            that doesn't carry a userID)
-     * @param actionEpochSeconds  curator action time, epoch seconds (used in sk and timestamps)
+     * @param feedbackLog  row to write; uid, feedback, articleId, curatedBy and the
+     *                     timestamps are the caller's to set (sk and src are set here)
+     * @return true if the row was written, false if it was skipped or the write failed
      */
-    void recordAction(FeedbackLog feedbackLog);
+    boolean recordAction(FeedbackLog feedbackLog);
 }

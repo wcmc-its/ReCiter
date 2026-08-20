@@ -36,15 +36,16 @@ public class FeedbackLogServiceImpl implements FeedbackLogService {
     }
 
     @Override
-	public void recordAction(FeedbackLog feedbackLog) {
+	public boolean recordAction(FeedbackLog feedbackLog) {
 		if (feedbackLog == null || feedbackLog.getUid() == null || feedbackLog.getUid().isEmpty()) {
-			log.warn("recordAction called with null/empty uid; skipping (pmid={})", feedbackLog.getArticleId());
-			return;
+			log.warn("recordAction called with null/empty uid; skipping (pmid={})",
+					feedbackLog == null ? null : feedbackLog.getArticleId());
+			return false;
 		}
 		if (feedbackLog.getFeedback() == null) {
 			log.warn("recordAction called with null feedback; skipping (uid={} pmid={})", feedbackLog.getUid(),
 					feedbackLog.getArticleId());
-			return;
+			return false;
 		}
 
 		for (int attempt = 0; attempt < SK_RETRY_LIMIT; attempt++) {
@@ -55,7 +56,7 @@ public class FeedbackLogServiceImpl implements FeedbackLogService {
 			try {
 				// Pass the object directly just like ESearchResultRepository!
 				feedbackLogRepository.save(feedbackLog);
-				return;
+				return true;
 			} catch (ConditionalCheckFailedException race) {
 				// If a collision happens, log it and the loop will retry with a fresh SK
 				log.info("FeedbackLog sk collision for uid={} sk={}; retrying (attempt {})", feedbackLog.getUid(), sk,
@@ -63,10 +64,19 @@ public class FeedbackLogServiceImpl implements FeedbackLogService {
 			} catch (DynamoDbException e) {
 				log.warn("FeedbackLog write failed for uid={} articleId={}: {}", feedbackLog.getUid(),
 						feedbackLog.getArticleId(), e.getMessage());
-				return;
+				return false;
+			} catch (RuntimeException e) {
+				// SdkClientException (network/credentials) is not a DynamoDbException —
+				// without this, a logging failure would surface as a 500 after the
+				// caller's durable write already committed.
+				log.warn("FeedbackLog write failed for uid={} articleId={}: {}", feedbackLog.getUid(),
+						feedbackLog.getArticleId(), e.toString());
+				return false;
 			}
 		}
-
+		log.warn("FeedbackLog write gave up after {} sk collisions for uid={} articleId={}", SK_RETRY_LIMIT,
+				feedbackLog.getUid(), feedbackLog.getArticleId());
+		return false;
 	}
 
     /**
