@@ -1,5 +1,6 @@
 package reciter.service.dynamo;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +56,26 @@ public class ExternalArticleServiceImpl implements ExternalArticleService {
     @Override
     public void delete(String uid, String articleId) {
     	externalArticleRepository.delete(uid, articleId);
+    }
+
+    @Override
+    public ExternalArticle dispute(ExternalArticle externalArticle, String actingUid, String disputeNote) {
+        externalArticle.setDisputedBy(actingUid);
+        externalArticle.setDisputedAt(Instant.now().toString());
+        externalArticle.setDisputeNote(disputeNote);
+        externalArticle.setSuppressed(Boolean.TRUE);
+        save(externalArticle);
+        return externalArticle;
+    }
+
+    @Override
+    public ExternalArticle resolveDispute(ExternalArticle externalArticle, String actingUid, String resolution) {
+        externalArticle.setDisputeResolvedBy(actingUid);
+        externalArticle.setDisputeResolvedAt(Instant.now().toString());
+        externalArticle.setDisputeResolution(resolution);
+        externalArticle.setSuppressed(Boolean.FALSE);
+        save(externalArticle);
+        return externalArticle;
     }
 
     @Override

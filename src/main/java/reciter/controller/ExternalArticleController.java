@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Data;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.database.dynamodb.model.GoldStandard;
@@ -127,6 +129,54 @@ public class ExternalArticleController {
         externalArticleService.delete(uid.trim(), articleId.trim());
         log.info("External article {} deleted for uid {}", articleId, uid);
         return new ResponseEntity<>(existing, HttpStatus.OK);
+    }
+
+    @Operation(summary = "File, retract, or resolve a dispute on an external-source article.",
+            description = "action=DISPUTE immediately suppresses the row and records disputedBy/disputedAt/disputeNote, "
+                    + "permanently. action=RETRACT (the disputing faculty member undoing their own dispute) or "
+                    + "action=RESOLVE (a curator clearing it) both un-suppress the row and record "
+                    + "disputeResolvedBy/disputeResolvedAt/disputeResolution — the original dispute fields are never "
+                    + "cleared, only appended to. actingUid is trusted as-is: the caller (the PM proxy) is responsible "
+                    + "for deriving it from the acting user's session, never the request body — same recipe as the "
+                    + "goldstandard endpoint's curatedBy param, except actingUid is a real uid string here, not that "
+                    + "param's long-standing always-0 int placeholder.")
+    @PatchMapping(value = "/reciter/external-article/by/uid", produces = "application/json")
+    public ResponseEntity<Object> updateExternalArticleDispute(@RequestParam(value = "uid") String uid,
+                                                                @RequestParam(value = "articleId") String articleId,
+                                                                @RequestParam(value = "actingUid") String actingUid,
+                                                                @RequestBody(required = false) DisputeRequest disputeRequest) {
+        if (actingUid == null || actingUid.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("actingUid is required."));
+        }
+        String action = disputeRequest == null || disputeRequest.getAction() == null
+                ? null : disputeRequest.getAction().trim().toUpperCase();
+        if (!"DISPUTE".equals(action) && !"RETRACT".equals(action) && !"RESOLVE".equals(action)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(errorBody("action is required and must be one of DISPUTE, RETRACT, RESOLVE."));
+        }
+        ExternalArticle existing = externalArticleService.find(uid.trim(), articleId.trim());
+        if (existing == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(errorBody("No external article '" + articleId + "' found for uid '" + uid + "'."));
+        }
+
+        ExternalArticle updated;
+        String trimmedActingUid = actingUid.trim();
+        if ("DISPUTE".equals(action)) {
+            updated = externalArticleService.dispute(existing, trimmedActingUid, disputeRequest.getDisputeNote());
+        } else {
+            String resolution = "RETRACT".equals(action) ? "RETRACTED" : "CLEARED";
+            updated = externalArticleService.resolveDispute(existing, trimmedActingUid, resolution);
+        }
+        log.info("External article {} for uid {} dispute action {} by {}", articleId, uid, action, trimmedActingUid);
+        return new ResponseEntity<>(updated, HttpStatus.OK);
+    }
+
+    /** PATCH body for {@link #updateExternalArticleDispute}. */
+    @Data
+    public static class DisputeRequest {
+        private String action;
+        private String disputeNote;
     }
 
     private String validate(ExternalArticle externalArticle) {

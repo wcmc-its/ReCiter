@@ -22,4 +22,20 @@ public interface ExternalArticleService {
      * longer accepted. Never throws; returns the number of rows changed.
      */
     int reconcileWithGoldStandard(String uid);
+
+    /**
+     * Files a dispute: sets disputedBy/disputedAt/disputeNote (permanent, first-write-only
+     * in practice) and immediately suppresses the row. Does not touch supersededByPmid, so
+     * the row stays immune to reconcileWithGoldStandard's auto-un-suppress path. Saves and
+     * returns the mutated row.
+     */
+    ExternalArticle dispute(ExternalArticle externalArticle, String actingUid, String disputeNote);
+
+    /**
+     * Resolves a filed dispute — either the disputing faculty member retracting it
+     * ({@code resolution="RETRACTED"}) or a curator clearing it ({@code resolution="CLEARED"}).
+     * Un-suppresses the row and records disputeResolvedBy/disputeResolvedAt/disputeResolution;
+     * never clears the original dispute fields. Saves and returns the mutated row.
+     */
+    ExternalArticle resolveDispute(ExternalArticle externalArticle, String actingUid, String resolution);
 }
