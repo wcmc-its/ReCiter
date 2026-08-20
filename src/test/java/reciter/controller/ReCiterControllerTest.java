@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -112,7 +113,13 @@ public class ReCiterControllerTest {
 	private Double defaultScoreThreshold = 0.7;
 
 	@BeforeEach
-	public void setUp() {
+	public void setUp() throws IOException {
+		// retrieveArticlesByDateRange returning false now means "a retrieval worker
+		// crashed"; default the mock to a clean run so only tests that stub a failure
+		// (or doThrow) exercise the error paths.
+		lenient().when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(), any(), any()))
+				.thenReturn(true);
+
 		// Set the necessary properties
 		ReflectionTestUtils.setField(reCiterController, "useScopusArticles", true);
 		ReflectionTestUtils.setField(reCiterController, "totalArticleScoreStandardizedDefault", 0.7);
@@ -687,6 +694,46 @@ public class ReCiterControllerTest {
 	}
 
 	@Test
+	public void testRetrieveArticlesByUidRetrievalCrashReturns500() throws IOException {
+		// A retrieval worker crashed: retrieveArticlesByDateRange reports false (a
+		// successful run that found nothing still returns true). The endpoint must
+		// answer with the 500 error shape, not a misleading success.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(null);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				eq(RetrievalRefreshFlag.ALL_PUBLICATIONS))).thenReturn(false);
+
+		// Act
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		// Assert
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		assertTrue(response.getBody().toString().contains("failed to retrieve articles"));
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ALL_PUBLICATIONS));
+	}
+
+	@Test
+	public void testRetrieveArticlesByUidRetrievalCrashOnIncrementalReturns500() throws IOException {
+		// Same crash gate on the ONLY_NEWLY_ADDED_PUBLICATIONS path.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(testESearchResult);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				eq(RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS))).thenReturn(false);
+
+		// Act
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		// Assert
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		assertTrue(response.getBody().toString().contains("failed to retrieve articles"));
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS));
+	}
+
+	@Test
 	public void testRetrieveArticlesByUidNullRefreshFlagNoExistingESearchResult() throws IOException {
 		// Arrange
 		when(identityService.findByUid(testUid)).thenReturn(identity);
@@ -936,6 +983,31 @@ public class ReCiterControllerTest {
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
 		assertEquals("The uid provided '" + uid + "' was not found in the Identity table", response.getBody());
 		verify(identityService, times(1)).findByUid(uid);
+	}
+
+	@Test
+	public void testRunFeatureGeneratorAutoUpgradeRetrievalCrashReturns404AndNeverSavesAnalysis() throws IOException {
+		// The uid has no ESearchResult, so initializeEngineParameters auto-upgrades to a
+		// full ALL_PUBLICATIONS retrieval — which crashes (retrieveArticlesByDateRange
+		// reports false → 500 from retrieveArticlesByUid). Feature generation must bail
+		// out to the 404, and the Analysis row must NOT be overwritten with a
+		// zero-feature result built from the empty candidate set.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(analysisService.findByUid(testUid.trim())).thenReturn(null);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(null);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				eq(RetrievalRefreshFlag.ALL_PUBLICATIONS))).thenReturn(false);
+
+		// Act
+		ResponseEntity<?> response = reCiterController.runFeatureGenerator(testUid, testScore,
+				UseGoldStandard.AS_EVIDENCE, FilterFeedbackType.ALL, false, null, null, false);
+
+		// Assert
+		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+		assertTrue(response.getBody().toString().contains("does not have any candidate records"));
+		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
+				any(Date.class), eq(RetrievalRefreshFlag.ALL_PUBLICATIONS));
+		verify(analysisService, never()).save(any(AnalysisOutput.class));
 	}
 
 	@Test
