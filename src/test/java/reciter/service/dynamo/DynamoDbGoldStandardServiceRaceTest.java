@@ -66,7 +66,7 @@ public class DynamoDbGoldStandardServiceRaceTest {
 
 	/** Fresh baseline on every read: a concurrent writer already committed pmid 100. */
 	private GoldStandard baselineWith100() {
-		return new GoldStandard(UID, new ArrayList<>(Collections.singletonList(100L)), new ArrayList<>(), null);
+		return new GoldStandard(UID, new ArrayList<>(Collections.singletonList(100L)), new ArrayList<>(), null, null);
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class DynamoDbGoldStandardServiceRaceTest {
 				.thenReturn(false)
 				.thenReturn(true);
 
-		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null);
+		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null, null);
 		service.save(request, GoldStandardUpdateFlag.UPDATE, "TestSource", EntryPath.CANDIDATE_LIST, 7);
 
 		// Persisted twice (one conflict, one success); the committed item carries BOTH pmids.
@@ -102,10 +102,10 @@ public class DynamoDbGoldStandardServiceRaceTest {
 	@Test
 	public void noConflictCommitsInOneAttempt() {
 		when(goldStandardRepository.findById(UID))
-				.thenReturn(Optional.of(new GoldStandard(UID, new ArrayList<>(Arrays.asList(100L)), new ArrayList<>(), null)));
+				.thenReturn(Optional.of(new GoldStandard(UID, new ArrayList<>(Arrays.asList(100L)), new ArrayList<>(), null, null)));
 		when(goldStandardRepository.saveIfUnchanged(any(GoldStandard.class), any(), any())).thenReturn(true);
 
-		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null);
+		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null, null);
 		service.save(request, GoldStandardUpdateFlag.UPDATE, "TestSource", EntryPath.CANDIDATE_LIST, 7);
 
 		ArgumentCaptor<GoldStandard> persisted = ArgumentCaptor.forClass(GoldStandard.class);
