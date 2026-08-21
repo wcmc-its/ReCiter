@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,12 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Data;
 import reciter.database.dynamodb.model.AnalysisOutput;
 import reciter.database.dynamodb.model.ExternalArticle;
+import reciter.database.dynamodb.model.FeedbackLog;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.service.AnalysisService;
 import reciter.service.ExternalArticleService;
+import reciter.service.FeedbackLogService;
 import reciter.service.IdentityService;
 import reciter.service.dynamo.ExternalArticleDupCheck;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
@@ -58,6 +63,9 @@ public class ExternalArticleController {
 
     @Autowired
     private IdentityService identityService;
+
+    @Autowired
+    private FeedbackLogService feedbackLogService;
 
     @Operation(summary = "Add an external-source article for a person.",
             description = "Adds a publication from Scopus, Web of Science, or OpenAlex. Blocks on PMID/DOI duplicates "
@@ -101,6 +109,8 @@ public class ExternalArticleController {
         externalArticle.setSuppressed(Boolean.FALSE);
         externalArticle.setSupersededByPmid(null);
         externalArticleService.save(externalArticle);
+        logFeedback(externalArticle.getUid(), externalArticle.getArticleId(),
+                FeedbackLogService.Feedback.ACCEPTED, externalArticle.getAddedBy(), null);
         log.info("External article {} added for uid {} from {} (method={}, force={})",
                 externalArticle.getArticleId(), externalArticle.getUid(), externalArticle.getSourceType(),
                 externalArticle.getMethod(), force);
@@ -118,15 +128,126 @@ public class ExternalArticleController {
             description = "Deleting is the revoke path — there is deliberately no sameAs assert/revoke model.")
     @DeleteMapping(value = "/reciter/external-article/by/uid", produces = "application/json")
     public ResponseEntity<Object> deleteExternalArticle(@RequestParam(value = "uid") String uid,
-                                                        @RequestParam(value = "articleId") String articleId) {
+                                                        @RequestParam(value = "articleId") String articleId,
+                                                        @RequestParam(value = "actorPersonIdentifier", required = false) String actorPersonIdentifier) {
         ExternalArticle existing = externalArticleService.find(uid.trim(), articleId.trim());
         if (existing == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(errorBody("No external article '" + articleId + "' found for uid '" + uid + "'."));
         }
         externalArticleService.delete(uid.trim(), articleId.trim());
+        // Delete is the revoke of a prior accept — logged as PENDING (back to no assertion),
+        // matching the reopen/undo vocabulary. Actor is optional until PM starts sending it.
+        logFeedback(uid.trim(), articleId.trim(), FeedbackLogService.Feedback.PENDING,
+                actorPersonIdentifier, null);
         log.info("External article {} deleted for uid {}", articleId, uid);
         return new ResponseEntity<>(existing, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Record feedback on an external-source article.",
+            description = "One endpoint for curator actions (reject/dismiss/reopen a Scopus/OpenAlex candidate) and "
+                    + "faculty actions (dispute/retract/resolve an already-accepted row). Appends one FeedbackLog row "
+                    + "per call — who acted distinguishes reject-from-dispute, not the action name. REJECTED suppresses "
+                    + "an existing ExternalArticle row; ACCEPTED un-suppresses it unless the supersede rule owns the "
+                    + "suppression (supersededByPmid set); PENDING only logs. A candidate that was never added has no "
+                    + "row to flip — the feedback is still logged. REJECTED also takes ownership of the suppression "
+                    + "(clears supersededByPmid) so the supersede reconciler cannot resurrect an explicitly rejected "
+                    + "row. actorPersonIdentifier is trusted as-is: the caller (the PM proxy) derives it from the "
+                    + "acting user's session, never the browser request — same trust-boundary recipe as the "
+                    + "goldstandard endpoint's curatedBy param.")
+    @PatchMapping(value = "/reciter/external-article/feedback", produces = "application/json")
+    public ResponseEntity<Object> recordExternalArticleFeedback(@RequestBody FeedbackRequest request) {
+        if (request == null || request.getUid() == null || request.getUid().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("uid is required."));
+        }
+        if (request.getArticleId() == null
+                || !ARTICLE_ID_PATTERN.matcher(request.getArticleId().trim()).matches()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(errorBody("articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>."));
+        }
+        if (request.getActorPersonIdentifier() == null || request.getActorPersonIdentifier().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("actorPersonIdentifier is required."));
+        }
+        FeedbackLogService.Feedback feedback;
+        try {
+            feedback = FeedbackLogService.Feedback.valueOf(
+                    request.getAction() == null ? "" : request.getAction().trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(errorBody("action is required and must be one of ACCEPTED, REJECTED, PENDING."));
+        }
+        String uid = request.getUid().trim();
+        String articleId = request.getArticleId().trim();
+        if (identityService.findByUid(uid) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(errorBody("The uid provided '" + uid + "' was not found in the Identity table"));
+        }
+
+        ExternalArticle existing = externalArticleService.find(uid, articleId);
+        // The FeedbackLog row is the authoritative record here (suppressed is only a
+        // denormalized cache), so it is written first and its failure fails the request
+        // before any state changes — unlike the add/delete paths, where it is a side-log.
+        if (!logFeedback(uid, articleId, feedback, request.getActorPersonIdentifier().trim(), request.getNote())) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(errorBody("Failed to record the feedback; nothing was changed. Retry."));
+        }
+        if (existing != null) {
+            if (feedback == FeedbackLogService.Feedback.REJECTED) {
+                // A human rejection takes ownership of the suppression: clearing
+                // supersededByPmid keeps reconcileWithGoldStandard's auto-un-suppress
+                // (which fires when the superseding PMID leaves the gold standard)
+                // from resurrecting an explicitly rejected row.
+                existing.setSuppressed(Boolean.TRUE);
+                existing.setSupersededByPmid(null);
+                externalArticleService.save(existing);
+            } else if (feedback == FeedbackLogService.Feedback.ACCEPTED
+                    && existing.getSupersededByPmid() == null) {
+                // A supersede-owned suppression (#660) is not feedback's to clear.
+                existing.setSuppressed(Boolean.FALSE);
+                externalArticleService.save(existing);
+            }
+        }
+        log.info("External article {} for uid {} feedback {} by {}", articleId, uid, feedback,
+                request.getActorPersonIdentifier().trim());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", "LOGGED");
+        body.put("uid", uid);
+        body.put("articleId", articleId);
+        body.put("action", feedback.name());
+        body.put("rowExists", existing != null);
+        body.put("suppressed", existing == null ? null : existing.getSuppressed());
+        return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    /** PATCH body for {@link #recordExternalArticleFeedback}. */
+    @Data
+    public static class FeedbackRequest {
+        private String uid;
+        private String articleId;
+        private String action;
+        private String actorPersonIdentifier;
+        private String note;
+    }
+
+    /**
+     * Append to FeedbackLog. recordAction never throws; the boolean says whether the row
+     * was written — the add/delete paths ignore it (best-effort side-log, matching the
+     * GoldStandard path), the feedback endpoint fails the request on it.
+     */
+    private boolean logFeedback(String uid, String articleId, FeedbackLogService.Feedback feedback,
+                                String actorPersonIdentifier, String note) {
+        FeedbackLog logEntry = new FeedbackLog();
+        logEntry.setUid(uid);
+        logEntry.setArticleId(articleId);
+        logEntry.setFeedback(feedback.name());
+        logEntry.setCuratedBy(0); // no admin_users.userID on this path; actorPersonIdentifier carries identity
+        logEntry.setActorPersonIdentifier(actorPersonIdentifier);
+        logEntry.setNote(note);
+        long epoch = Instant.now().getEpochSecond();
+        logEntry.setCreateTimestamp(epoch);
+        logEntry.setModifyTimestamp(epoch);
+        return feedbackLogService.recordAction(logEntry);
     }
 
     private String validate(ExternalArticle externalArticle) {
