@@ -982,7 +982,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	 * @param identity
 	 * @return
 	 */
-	private void identityAuthorNames(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
+	void identityAuthorNames(Identity identity, Map<IdentityNameType, Set<AuthorName>> identityNames) {
 		Set<AuthorName> identityAuthorNames  = new HashSet<AuthorName>();
 		Set<AuthorName> identityDerivedNames = new HashSet<AuthorName>();
 		AuthorName identityPrimaryName = identity.getPrimaryName();
@@ -1009,6 +1009,12 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		
 		if(identity.getAlternateNames() != null) {
 			for(AuthorName authorName: identity.getAlternateNames()) {
+				// An alternate name deserialized from the Identity table can carry a null
+				// firstName or lastName, which every dereference below would NPE on — skip it.
+				if(authorName == null || authorName.getFirstName() == null || authorName.getLastName() == null) {
+					slf4jLogger.warn("uid: {} has a malformed alternate name (null firstName or lastName); skipping it", identity.getUid());
+					continue;
+				}
 				authorName.setFirstName(ReCiterStringUtil.deAccent(authorName.getFirstName().replaceAll("[\"()]", "")));
 				authorName.setLastName(ReCiterStringUtil.deAccent(authorName.getLastName().replaceAll("(,Jr|, Jr|, MD PhD|,MD PhD|, MD-PhD|,MD-PhD|, PhD|,PhD|, MD|,MD|, III|,III|, II|,II|, Sr|,Sr|Jr|MD PhD|MD-PhD|PhD|MD|III|II|Sr)$", "")));
 				if(authorName.getMiddleName() != null) {
