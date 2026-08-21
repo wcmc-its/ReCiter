@@ -1064,7 +1064,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// blank one (an Identity primaryName can carry middleName "") must behave exactly
 		// like null — both as a constructor argument and as a first-name substitute below.
 		String middleName = identityName.getMiddleName();
-		if(middleName != null && middleName.trim().isEmpty()) {
+		if(middleName != null && middleName.isBlank()) {
 			middleName = null;
 		}
 		// A malformed Identity can carry a null first or last name (see #715/#717), and an
@@ -1072,7 +1072,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// this PR exists to stop. Read each once, guard each once.
 		String lastName = identityName.getLastName();
 		String firstName = identityName.getFirstName();
-		if(lastName != null && !lastName.trim().isEmpty()
+		if(lastName != null && !lastName.isBlank()
 				&& (lastName.contains(" ") || lastName.contains("."))) {
 			// The pattern splits on whitespace and hyphens, never on a period, so a
 			// period-without-space surname ("St.John") enters this branch but splits into a
