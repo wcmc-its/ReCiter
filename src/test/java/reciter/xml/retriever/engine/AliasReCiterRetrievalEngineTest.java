@@ -39,6 +39,22 @@ public class AliasReCiterRetrievalEngineTest {
 		return name;
 	}
 
+	/**
+	 * The no-arg constructor leaves firstName/lastName null, which is exactly the shape
+	 * DynamoDB deserialization produces for a malformed Identity (#715/#717). The setters
+	 * reject null, so this is the only way to build that state.
+	 */
+	private static AuthorName rawName(String firstName, String lastName) {
+		AuthorName name = new AuthorName();
+		if (firstName != null) {
+			name.setFirstName(firstName);
+		}
+		if (lastName != null) {
+			name.setLastName(lastName);
+		}
+		return name;
+	}
+
 	private static Set<String> flattened(Set<AuthorName> names) {
 		return names.stream()
 				.map(n -> n.getFirstName() + "|" + n.getMiddleName() + "|" + n.getLastName())
@@ -168,6 +184,76 @@ public class AliasReCiterRetrievalEngineTest {
 		identity.setUid("prs4005");
 
 		assertTrue(emptyButCleanEngine.retrieveArticlesByDateRange(Collections.singletonList(identity),
+				new Date(), new Date(), RetrievalRefreshFlag.ALL_PUBLICATIONS));
+	}
+
+	@Test
+	public void periodWithoutSpaceSurnameDerivesNothingInsteadOfThrowing() {
+		// "St.John" satisfies contains(".") but the split pattern matches whitespace and
+		// hyphens only, so it returns ONE element — indexing [1] threw
+		// ArrayIndexOutOfBoundsException inside the retrieval worker.
+		assertTrue(engine.deriveAdditionalName(new AuthorName("Manuel", null, "St.John")).isEmpty());
+		assertTrue(engine.deriveAdditionalName(new AuthorName("Manuel", null, "O.Brien")).isEmpty());
+	}
+
+	@Test
+	public void periodWithSpaceSurnameStillDerivesBothHalves() {
+		// The regression guard for the fix above: a period AND a space still splits.
+		Set<AuthorName> derived = engine.deriveAdditionalName(new AuthorName("Manuel", null, "Della. Robbia"));
+
+		assertEquals(Set.of("Della.", "Robbia"),
+				derived.stream().map(AuthorName::getLastName).collect(Collectors.toSet()));
+	}
+
+	@Test
+	public void blankAndNullLastNamesDeriveNothingInsteadOfThrowing() {
+		assertTrue(engine.deriveAdditionalName(rawName("Manuel", "")).isEmpty());
+		assertTrue(engine.deriveAdditionalName(rawName("Manuel", " ")).isEmpty());
+		assertTrue(engine.deriveAdditionalName(rawName("Manuel", null)).isEmpty());
+	}
+
+	@Test
+	public void nullFirstNameDerivesWithoutThrowing() {
+		// Null firstName must not NPE on contains(); the surname half still derives.
+		Set<AuthorName> derived = engine.deriveAdditionalName(
+				rawName(null, "Hidalgo Medina"));
+
+		assertEquals(Set.of("Hidalgo", "Medina"),
+				derived.stream().map(AuthorName::getLastName).collect(Collectors.toSet()));
+	}
+
+	@Test
+	public void trailingWhitespaceInitialIsTreatedAsAnInitial() {
+		// "W. " is the same initial as "W."; the untrimmed length()==2 check skipped it.
+		assertEquals(Set.of("Clay||Bracken"),
+				flattened(engine.deriveAdditionalName(new AuthorName("W. ", "Clay", "Bracken"))));
+		assertEquals(flattened(engine.deriveAdditionalName(new AuthorName("W.", "Clay", "Bracken"))),
+				flattened(engine.deriveAdditionalName(new AuthorName("W. ", "Clay", "Bracken"))));
+	}
+
+	@Test
+	public void genuineOneLetterFirstNameIsUnaffectedByTheTrimNormalization() {
+		// A real one-letter first name carries neither a space nor a period, so it never
+		// reaches the initial-detection branch: it derives only via the length()==1 case.
+		assertEquals(Set.of("Clay||Bracken"),
+				flattened(engine.deriveAdditionalName(new AuthorName("W", "Clay", "Bracken"))));
+		assertTrue(engine.deriveAdditionalName(new AuthorName("W", null, "Bracken")).isEmpty());
+	}
+
+	@Test
+	public void errorFromRetrievalWorkerIsRecordedBeforeItIsRethrown() throws IOException {
+		// An Error is recorded and rethrown; returning false proves the uid reached
+		// failedUids before the rethrow left the catch block.
+		AliasReCiterRetrievalEngine erroringEngine = new AliasReCiterRetrievalEngine() {
+			@Override
+			Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) {
+				throw new StackOverflowError("simulated worker Error");
+			}
+		};
+		Identity identity = new Identity();
+		identity.setUid("mah4006");
+
+		assertFalse(erroringEngine.retrieveArticlesByDateRange(Collections.singletonList(identity),
 				new Date(), new Date(), RetrievalRefreshFlag.ALL_PUBLICATIONS));
 	}
 }
