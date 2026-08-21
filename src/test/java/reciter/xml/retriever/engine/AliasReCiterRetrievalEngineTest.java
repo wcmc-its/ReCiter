@@ -5,8 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 
 /**
  * Covers the blank-middleName hazard in deriveAdditionalName (an Identity primaryName
@@ -78,6 +82,32 @@ public class AliasReCiterRetrievalEngineTest {
 		// AuthorName(_, null, _) stores middleName as "".
 		Set<AuthorName> derived = engine.deriveAdditionalName(new AuthorName("W", "Clay", "Bracken"));
 		assertEquals(Set.of("Clay||Bracken"), flattened(derived));
+	}
+
+	@Test
+	public void malformedAlternateNamesAreSkippedWithoutThrowing() {
+		// The kns2002 shape: an alternate name deserialized from the Identity table with a
+		// null firstName. identityAuthorNames used to NPE on the first dereference; it must
+		// skip the malformed entries and still produce the rest.
+		Identity identity = new Identity();
+		identity.setUid("kns2002");
+		identity.setPrimaryName(new AuthorName("Katherine", null, "Smith"));
+
+		AuthorName nullFirstName = new AuthorName(); // constructor would turn null into ""
+		nullFirstName.setLastName("Smith");
+		AuthorName nullLastName = new AuthorName();
+		nullLastName.setFirstName("Kate");
+		AuthorName valid = new AuthorName("Kate", null, "Smith");
+		identity.setAlternateNames(Arrays.asList(nullFirstName, nullLastName, valid));
+
+		Map<IdentityNameType, Set<AuthorName>> identityNames = new HashMap<>();
+		engine.identityAuthorNames(identity, identityNames);
+
+		Set<AuthorName> original = identityNames.get(IdentityNameType.ORIGINAL);
+		assertEquals(2, original.size()); // primary + the valid alternate; malformed skipped
+		assertTrue(original.stream().anyMatch(n -> "Katherine".equals(n.getFirstName())));
+		assertTrue(original.stream().anyMatch(n -> "Kate".equals(n.getFirstName())));
+		assertTrue(original.stream().noneMatch(n -> n.getFirstName() == null || n.getLastName() == null));
 	}
 
 	@Test
