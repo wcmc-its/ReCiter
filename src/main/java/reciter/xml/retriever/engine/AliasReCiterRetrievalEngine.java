@@ -120,6 +120,20 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				if(this.refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
 					slf4jLogger.info("Starting full retrieval for uid=[" + identity.getUid() + "].");
 					retrieveData(identity, this.refreshFlag);
+					// The strategies SWALLOW a PubMed tool 500 / NCBI 429: AbstractRetrievalStrategy
+					// and PubMedArticleRetriever catch, mark the thread-local tracker, and return
+					// empty rather than throwing. Nothing reaches the catch below, so a tool-wide
+					// outage looks to the gate like a clean run that simply found nothing. On THIS
+					// path retrieveArticlesByUid has already deleted the prior ESearchResult, so
+					// scoring that empty candidate set overwrites the Analysis row with zero
+					// features and answers 200 — the May 3-4 shape (#720). Record it as a failure.
+					// The incremental path needs no equivalent: #691 rolls its watermark back and
+					// leaves the prior ESearchResult in place.
+					if (RetrievalErrorTracker.hadError()) {
+						slf4jLogger.error("Retrieval for uid=[" + identity.getUid()
+								+ "] finished with swallowed PubMed failures; treating the run as failed.");
+						failedUids.add(identity.getUid());
+					}
 				} else if(this.refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
 					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=["
 						+ startDate + "] endDate=[" + endDate + "].");
@@ -163,7 +177,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		return true;
 	}
 	
-	private Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
+	/** Package-private, not private, so a test can override it to simulate strategy behaviour. */
+	Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
 		slf4jLogger.info("Coming into retrieveData section without date range****");
 		Set<Long> uniquePmids = new HashSet<>();
 
