@@ -1502,4 +1502,38 @@ public class ReCiterControllerTest {
 		verify(analysisService, times(1)).findByUid(testUid.trim());
 	}
 
+
+	@Test
+	public void testDropMalformedAlternateNamesFiltersNullNameParts() {
+		Identity identity = new Identity();
+		identity.setUid("kns2002");
+		reciter.model.identity.AuthorName good = new reciter.model.identity.AuthorName("Kristina", "Nori", "Shigyo");
+		reciter.model.identity.AuthorName noFirst = new reciter.model.identity.AuthorName();
+		noFirst.setLastName("Shigyo");
+		identity.setAlternateNames(new ArrayList<>(Arrays.asList(noFirst, good, null)));
+
+		ReCiterController.dropMalformedAlternateNames(identity);
+
+		assertEquals(1, identity.getAlternateNames().size());
+		assertEquals("Shigyo", identity.getAlternateNames().get(0).getLastName());
+		assertEquals("Kristina", identity.getAlternateNames().get(0).getFirstName());
+	}
+
+	@Test
+	public void testDropMalformedAlternateNamesLeavesValidNamesAndNullsAlone() {
+		Identity identity = new Identity();
+		identity.setUid("abc1001");
+		List<reciter.model.identity.AuthorName> names = new ArrayList<>(Arrays.asList(
+				new reciter.model.identity.AuthorName("Jane", null, "Doe")));
+		identity.setAlternateNames(names);
+
+		ReCiterController.dropMalformedAlternateNames(identity);
+		assertEquals(names, identity.getAlternateNames());
+
+		identity.setAlternateNames(null);
+		ReCiterController.dropMalformedAlternateNames(identity);
+		assertNull(identity.getAlternateNames());
+
+		ReCiterController.dropMalformedAlternateNames(null);
+	}
 }
