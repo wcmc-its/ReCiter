@@ -338,7 +338,7 @@
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-identity-model</artifactId>
-			<version>3.0.2</version>
+			<version>3.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
