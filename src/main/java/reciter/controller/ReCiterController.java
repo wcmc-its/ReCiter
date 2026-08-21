@@ -1287,6 +1287,7 @@ public class ReCiterController {
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag, Integer fullSweepMaxAgeDays) {
         // find identity
         Identity identity = identityService.findByUid(uid);
+        dropMalformedAlternateNames(identity);
         ESearchResult eSearchResults = null;
 	        // find search results for this identity
 	        //To Avoid 404 errors when multi threading
@@ -1418,5 +1419,27 @@ public class ReCiterController {
             parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
+    }
+
+    /**
+     * An alternate name with a null firstName or lastName (they exist in the Identity
+     * table, e.g. kns2002) NPEs downstream consumers that dereference name parts
+     * (AuthorNameSanitizationUtils, GenderProbability, name-matching strategies).
+     * Drop them once at the load boundary instead of guarding every consumer.
+     * The filtered list lives only in this request; nothing writes it back.
+     * Package-private for testing.
+     */
+    static void dropMalformedAlternateNames(Identity identity) {
+        if (identity == null || identity.getAlternateNames() == null) {
+            return;
+        }
+        List<reciter.model.identity.AuthorName> usable = identity.getAlternateNames().stream()
+                .filter(n -> n != null && n.getFirstName() != null && n.getLastName() != null)
+                .collect(Collectors.toList());
+        if (usable.size() != identity.getAlternateNames().size()) {
+            log.warn("uid: {} has {} malformed alternate name(s) (null firstName or lastName); dropping for this run",
+                    identity.getUid(), identity.getAlternateNames().size() - usable.size());
+            identity.setAlternateNames(usable);
+        }
     }
 }

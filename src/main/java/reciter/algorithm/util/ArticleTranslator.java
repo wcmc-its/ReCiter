@@ -205,7 +205,12 @@ public class ArticleTranslator {
                     }
 
                     String affiliation = author.getAffiliation();
-                    AuthorName authorName = new AuthorName(firstName, middleName, lastName);
+                    // AuthorName's constructor derives an initial by substring(0, 1) of any
+                    // non-null firstName/middleName, so a blank-or-whitespace value crashes
+                    // with StringIndexOutOfBoundsException (e.g. a PubMed author with an
+                    // empty <ForeName>). Normalize blanks to null, which the constructor
+                    // handles. lastName is null-guarded above and never substringed.
+                    AuthorName authorName = new AuthorName(blankToNull(firstName), blankToNull(middleName), lastName);
 
                     ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, affiliation);
                     reCiterAuthor.setRank(i++);
@@ -221,9 +226,13 @@ public class ArticleTranslator {
 
         // Translating Keywords.
         ReCiterArticleKeywords articleKeywords = new ReCiterArticleKeywords();
-        if (keywordList != null) {
+        if (keywordList != null && keywordList.getKeywordlist() != null) {
             for (MedlineCitationKeyword keyword : keywordList.getKeywordlist()) {
-                articleKeywords.addKeyword(keyword.getKeyword());
+                // A keyword list can contain null entries (observed in PubMed data) —
+                // skip them, and defensively skip entries whose keyword text is null.
+                if (keyword != null && keyword.getKeyword() != null) {
+                    articleKeywords.addKeyword(keyword.getKeyword());
+                }
             }
         }
 
@@ -533,6 +542,19 @@ public class ArticleTranslator {
         return reCiterArticle;
     }
     
+    /**
+     * Normalizes a blank-or-whitespace name part to null so that AuthorName's
+     * constructor (which substrings any non-null value to derive the initial)
+     * cannot throw StringIndexOutOfBoundsException on it.
+     * Package-private for testing.
+     */
+    static String blankToNull(String namePart) {
+        if (namePart == null || namePart.isBlank()) {
+            return null;
+        }
+        return namePart;
+    }
+
     /**
      * Phase 1: Determine canonical publication type from PubMed publication types.
      *
