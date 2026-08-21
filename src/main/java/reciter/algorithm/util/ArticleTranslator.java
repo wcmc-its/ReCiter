@@ -549,7 +549,7 @@ public class ArticleTranslator {
      * Package-private for testing.
      */
     static String blankToNull(String namePart) {
-        if (namePart == null || namePart.trim().isEmpty()) {
+        if (namePart == null || namePart.isBlank()) {
             return null;
         }
         return namePart;
