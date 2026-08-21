@@ -452,7 +452,13 @@ public class ReCiterController {
 
                 RetrievalEscalationTracker.setMode(RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS);
+                    // false = a retrieval worker crashed (a successful run that found nothing
+                    // still returns true), so the candidate set must not be treated as complete.
+                    if (!aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS)) {
+                        stopWatch.stop();
+                        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
+                    }
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+ e);
                     stopWatch.stop();
@@ -521,7 +527,11 @@ public class ReCiterController {
 
             	RetrievalEscalationTracker.setMode(effectiveFlag);
             	try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), effectiveFlag);
+                    if (!aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), effectiveFlag)) {
+                        stopWatch.stop();
+                        log.error(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
+                    }
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+e);
                     stopWatch.stop();
@@ -1285,15 +1295,28 @@ public class ReCiterController {
             if (eSearchResults == null) {
                 log.warn("No ESearchResult for uid={}; upgrading requested flag={} to ALL_PUBLICATIONS",
                          uid, retrievalRefreshFlag);
-                retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
+                ResponseEntity retrievalResponse = retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 // Marked AFTER the call: retrieveArticlesByUid resets the tracker on entry.
                 // Auto-upgrades are reported separately from escalations (#696) — they are
                 // unbudgeted full sweeps, and folding them into the escalation count would
                 // make the client's "budget is holding" signal a false one.
                 RetrievalEscalationTracker.markAutoUpgraded();
+                if (retrievalResponse == null || retrievalResponse.getStatusCode().isError()) {
+                    // The retrieval FAILED (a crashed worker, not a successful run that found
+                    // nothing): scoring the empty candidate set now would overwrite the prior
+                    // Analysis row with a zero-feature result. Bail out to the caller's 404.
+                    log.error("Retrieval failed for uid={} (status={}); skipping feature generation",
+                            uid, retrievalResponse.getStatusCode());
+                    return null;
+                }
                 eSearchResults = eSearchResultService.findByUid(uid);
             } else if(eSearchResults != null && (retrievalRefreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS || retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS)) {
-            	retrieveArticlesByUid(uid, retrievalRefreshFlag, fullSweepMaxAgeDays);
+            	ResponseEntity retrievalResponse = retrieveArticlesByUid(uid, retrievalRefreshFlag, fullSweepMaxAgeDays);
+            	if (retrievalResponse == null || retrievalResponse.getStatusCode().isError()) {
+            		log.error("Retrieval failed for uid={} (status={}); skipping feature generation",
+            				uid, retrievalResponse.getStatusCode());
+            		return null;
+            	}
             	eSearchResults = eSearchResultService.findByUid(uid);
             }
         } catch (EmptyResultDataAccessException e) {
