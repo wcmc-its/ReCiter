@@ -1302,7 +1302,7 @@ public class ReCiterController {
                 // unbudgeted full sweeps, and folding them into the escalation count would
                 // make the client's "budget is holding" signal a false one.
                 RetrievalEscalationTracker.markAutoUpgraded();
-                if (retrievalResponse.getStatusCode().isError()) {
+                if (retrievalResponse == null || retrievalResponse.getStatusCode().isError()) {
                     // The retrieval FAILED (a crashed worker, not a successful run that found
                     // nothing): scoring the empty candidate set now would overwrite the prior
                     // Analysis row with a zero-feature result. Bail out to the caller's 404.
@@ -1313,7 +1313,7 @@ public class ReCiterController {
                 eSearchResults = eSearchResultService.findByUid(uid);
             } else if(eSearchResults != null && (retrievalRefreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS || retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS)) {
             	ResponseEntity retrievalResponse = retrieveArticlesByUid(uid, retrievalRefreshFlag, fullSweepMaxAgeDays);
-            	if (retrievalResponse.getStatusCode().isError()) {
+            	if (retrievalResponse == null || retrievalResponse.getStatusCode().isError()) {
             		log.error("Retrieval failed for uid={} (status={}); skipping feature generation",
             				uid, retrievalResponse.getStatusCode());
             		return null;
