@@ -37,7 +37,7 @@ public class FeedbackLogServiceImpl implements FeedbackLogService {
 
     @Override
 	public boolean recordAction(FeedbackLog feedbackLog) {
-		if (feedbackLog == null || feedbackLog.getUid() == null || feedbackLog.getUid().isEmpty()) {
+		if (feedbackLog == null || feedbackLog.getUid() == null || feedbackLog.getUid().isBlank()) {
 			log.warn("recordAction called with null/empty uid; skipping (pmid={})",
 					feedbackLog == null ? null : feedbackLog.getArticleId());
 			return false;

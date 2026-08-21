@@ -157,7 +157,7 @@ public class ExternalArticleController {
                     + "goldstandard endpoint's curatedBy param.")
     @PatchMapping(value = "/reciter/external-article/feedback", produces = "application/json")
     public ResponseEntity<Object> recordExternalArticleFeedback(@RequestBody FeedbackRequest request) {
-        if (request == null || request.getUid() == null || request.getUid().trim().isEmpty()) {
+        if (request == null || request.getUid() == null || request.getUid().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("uid is required."));
         }
         if (request.getArticleId() == null
@@ -165,7 +165,7 @@ public class ExternalArticleController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(errorBody("articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>."));
         }
-        if (request.getActorPersonIdentifier() == null || request.getActorPersonIdentifier().trim().isEmpty()) {
+        if (request.getActorPersonIdentifier() == null || request.getActorPersonIdentifier().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("actorPersonIdentifier is required."));
         }
         FeedbackLogService.Feedback feedback;
