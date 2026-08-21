@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import reciter.api.parameters.RetrievalRefreshFlag;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.xml.retriever.pubmed.RetrievalErrorTracker;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 
 /**
@@ -131,5 +132,42 @@ public class AliasReCiterRetrievalEngineTest {
 
 		assertTrue(engine.retrieveArticlesByDateRange(Collections.singletonList(identity),
 				new Date(), new Date(), RetrievalRefreshFlag.FALSE));
+	}
+
+	@Test
+	public void swallowedPubMedFailureOnFullSweepIsReportedAsFailure() throws IOException {
+		// The strategies do not throw on a PubMed tool 500 / NCBI 429; they mark the
+		// thread-local tracker and return empty. Without the tracker check the run looks
+		// clean and the caller scores an empty candidate set over a populated Analysis row.
+		AliasReCiterRetrievalEngine swallowingEngine = new AliasReCiterRetrievalEngine() {
+			@Override
+			Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) {
+				RetrievalErrorTracker.markError();
+				return Collections.emptySet();
+			}
+		};
+		Identity identity = new Identity();
+		identity.setUid("prs4005");
+
+		assertFalse(swallowingEngine.retrieveArticlesByDateRange(Collections.singletonList(identity),
+				new Date(), new Date(), RetrievalRefreshFlag.ALL_PUBLICATIONS));
+	}
+
+	@Test
+	public void cleanFullSweepFindingNothingStillReportsSuccess() throws IOException {
+		// The gate must stay "a retrieval failed", never "nothing was retrieved": a person
+		// with genuinely no articles has to keep returning 200.
+		AliasReCiterRetrievalEngine emptyButCleanEngine = new AliasReCiterRetrievalEngine() {
+			@Override
+			Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) {
+				RetrievalErrorTracker.reset();
+				return Collections.emptySet();
+			}
+		};
+		Identity identity = new Identity();
+		identity.setUid("prs4005");
+
+		assertTrue(emptyButCleanEngine.retrieveArticlesByDateRange(Collections.singletonList(identity),
+				new Date(), new Date(), RetrievalRefreshFlag.ALL_PUBLICATIONS));
 	}
 }
