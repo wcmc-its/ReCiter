@@ -110,7 +110,9 @@ public class ApplicationContextSmokeTest {
      */
     @Test
     public void springdocApiDocsAreGenerated() throws Exception {
-        mockMvc.perform(get("/v3/api-docs/reciter"))
+        // springdoc.api-docs.path is /reciter/v3/api-docs, so the "reciter" group document
+        // is served at {api-docs.path}/{group}, i.e. the group name is reciter-group.
+        mockMvc.perform(get("/reciter/v3/api-docs/reciter-group"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("\"openapi\"")))
                 .andExpect(content().string(containsString("/reciter/ping")))
