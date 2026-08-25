@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ import reciter.service.ArticleProvenanceService;
 import reciter.service.ESearchResultService;
 import reciter.service.FeedbackLogService;
 import reciter.service.PmidProvenanceService;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 @Service("DynamoDbGoldStandardService")
 @RequiredArgsConstructor
@@ -44,7 +46,8 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     private final PmidProvenanceService pmidProvenanceService;
     private final FeedbackLogService feedbackLogService;
     private final ArticleProvenanceService articleProvenanceService;
-
+    private static final int MAX_ATTEMPTS = 8;
+    
     // ---- Phase 33-02 4-arg overloads -----------------------------------------------------------
     // Existing 3-arg save() callers default entryPath to CANDIDATE_LIST. Controllers that want to
     // distinguish PUBMED_SEARCH actions invoke the 4-arg overload directly.
@@ -78,19 +81,41 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
     	// Capture incoming PMIDs before merge logic mutates them
     	List<Long> incomingAcceptedPmids = (goldStandard.getKnownPmids() != null)
-    			? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
-    	List<Long> incomingRejectedPmids = (goldStandard.getRejectedPmids() != null)
-    			? new ArrayList<>(goldStandard.getRejectedPmids()) : Collections.emptyList();
+                ? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
+        List<Long> incomingRejectedPmids = (goldStandard.getRejectedPmids() != null)
+                ? new ArrayList<>(goldStandard.getRejectedPmids()) : Collections.emptyList();
+        List<GoldStandardAuditLog> incomingAudit = (goldStandard.getAuditLog() == null)
+                ? null : new ArrayList<>(goldStandard.getAuditLog());
 
     	if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.save(goldStandard);
-    	} else {
-    		GoldStandard goldStandardDdb = findByUid(goldStandard.getUid());
+    		return;
+    	} 
+    	boolean committed = false;
+        List<Long> committedExistingAccepted = Collections.emptyList();
+        List<Long> committedExistingRejected = Collections.emptyList();
+        
+        // RETRY LOOP: Required to handle ConditionalCheckFailedException gracefully
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS && !committed; attempt++) {
+            try {
+            	// Reset the request object to the incoming state for idempotency on retries
+            	goldStandard.setKnownPmids(new ArrayList<>(incomingAcceptedPmids));
+                goldStandard.setRejectedPmids(new ArrayList<>(incomingRejectedPmids));
+                goldStandard.setAuditLog(incomingAudit == null ? null : new ArrayList<>(incomingAudit));
+
+                GoldStandard goldStandardDdb = findByUid(goldStandard.getUid());
     		if(goldStandardDdb == null) {
+    			// The SDK's VersionedRecordExtension automatically ensures this behaves like an insert.
+                // If version is null, it enforces attribute_not_exists(version) on the putItem.
     			dynamoDbGoldStandardRepository.save(goldStandard);
-    		} else {
+    			committed = true;
+                committedExistingAccepted = Collections.emptyList();
+                committedExistingRejected = Collections.emptyList();
+                continue;
+    		} 
     			//fix for issue # 692, get the version from the existing record and set it to the new record before saving it to avoid version conflict exception
-       		    goldStandard.setVersion(goldStandardDdb.getVersion());
+                // Set the version from the DB so the Enhanced Client knows which version we are mutating
+    		    goldStandard.setVersion(goldStandardDdb.getVersion());
        		
     			List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
     			List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
@@ -201,12 +226,8 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	    			}
     			}
     			
-    			if(goldStandardDdb.getAuditLog() != null
-						&&
-						goldStandardDdb.getAuditLog().size() > 0) {
-					if(goldStandard.getAuditLog() != null
-							&&
-							goldStandard.getAuditLog().size() > 0) {
+				if (goldStandardDdb.getAuditLog() != null && goldStandardDdb.getAuditLog().size() > 0) {
+					if (goldStandard.getAuditLog() != null && goldStandard.getAuditLog().size() > 0) {
 						goldStandard.getAuditLog().addAll(goldStandardDdb.getAuditLog());
 					} else {
 						goldStandard.setAuditLog(goldStandardDdb.getAuditLog());
@@ -237,17 +258,40 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						entryPath,curatedBy);
     			}
     			dynamoDbGoldStandardRepository.save(goldStandard);
+    			// If we get here, the write succeeded without contention.
+                committed = true;
+                committedExistingAccepted = existingAccepted;
+                committedExistingRejected = existingRejected;
     		}
-    	}
+    		catch (ConditionalCheckFailedException e) {
+                // Another thread modified this record. Back off and let the loop try again.
+                log.warn("Optimistic locking failure for uid={}, attempt {}. Retrying...", goldStandard.getUid(), attempt);
+                try {
+                    Thread.sleep(20 + ThreadLocalRandom.current().nextInt(60));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted while retrying GoldStandard update", ie);
+                }
+            }
+            }	
+			if (!committed) {
+				throw new RuntimeException("GoldStandard update contended after " + MAX_ATTEMPTS + " attempts for uid="+ goldStandard.getUid());
+			}
 
-    	// Track provenance for accepted PMIDs. saveIfNotExists ensures we
-    	// don't overwrite existing automated-retrieval provenance — only
-    	// truly new PMIDs (e.g., manually added via Publication Manager)
-    	// get a provenance record.
-    	if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE
-    			&& !incomingAcceptedPmids.isEmpty()) {
-    		writeProvenanceForAcceptedPmids(goldStandard.getUid(), incomingAcceptedPmids, strategy);
-    	}
+				// --- SIDE EFFECTS (Only run once after successful commit) ---
+				if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+					recordFeedbackLogAndArticleProvenance(goldStandard.getUid(), incomingAcceptedPmids,
+							incomingRejectedPmids, committedExistingAccepted, committedExistingRejected, entryPath,
+							curatedBy);
+				}
+
+				// Track provenance for accepted PMIDs. saveIfNotExists ensures we
+				// don't overwrite existing automated-retrieval provenance — only
+				// truly new PMIDs (e.g., manually added via Publication Manager)
+				// get a provenance record.
+				if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE && !incomingAcceptedPmids.isEmpty()) {
+					writeProvenanceForAcceptedPmids(goldStandard.getUid(), incomingAcceptedPmids, strategy);
+				}
     }
 
     @Override
@@ -260,7 +304,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	                 String provenanceSource, EntryPath entryPath) {
 		saveListInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
 	}
-
+	// TODO(goldstandard-race): saveListInternal has the same non-atomic read-modify-write; apply saveIfUnchanged+retry here too (lower priority — interactive single-accept path is saveInternal).
 	private void saveListInternal(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath) {
 		// Resolve provenance strategy: caller-supplied source, or default
 		String strategy = (provenanceSource != null && !provenanceSource.isBlank())
