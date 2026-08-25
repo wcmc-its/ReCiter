@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -46,8 +45,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     private final PmidProvenanceService pmidProvenanceService;
     private final FeedbackLogService feedbackLogService;
     private final ArticleProvenanceService articleProvenanceService;
-    private static final int MAX_ATTEMPTS = 8;
-    
+
     // ---- Phase 33-02 4-arg overloads -----------------------------------------------------------
     // Existing 3-arg save() callers default entryPath to CANDIDATE_LIST. Controllers that want to
     // distinguish PUBMED_SEARCH actions invoke the 4-arg overload directly.
@@ -79,162 +77,173 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     	String strategy = (provenanceSource != null && !provenanceSource.isBlank())
     			? provenanceSource : PM_MANUAL_STRATEGY;
 
-    	// Capture incoming PMIDs before merge logic mutates them
-    	List<Long> incomingAcceptedPmids = (goldStandard.getKnownPmids() != null)
-                ? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
-        List<Long> incomingRejectedPmids = (goldStandard.getRejectedPmids() != null)
-                ? new ArrayList<>(goldStandard.getRejectedPmids()) : Collections.emptyList();
-        List<GoldStandardAuditLog> incomingAudit = (goldStandard.getAuditLog() == null)
-                ? null : new ArrayList<>(goldStandard.getAuditLog());
 
     	if(goldStandardUpdateFlag == GoldStandardUpdateFlag.REFRESH) {
     		dynamoDbGoldStandardRepository.save(goldStandard);
     		return;
     	} 
-    	boolean committed = false;
-        List<Long> committedExistingAccepted = Collections.emptyList();
-        List<Long> committedExistingRejected = Collections.emptyList();
-        
-        // RETRY LOOP: Required to handle ConditionalCheckFailedException gracefully
-        for (int attempt = 1; attempt <= MAX_ATTEMPTS && !committed; attempt++) {
-            try {
-            	// Reset the request object to the incoming state for idempotency on retries
-            	goldStandard.setKnownPmids(new ArrayList<>(incomingAcceptedPmids));
-                goldStandard.setRejectedPmids(new ArrayList<>(incomingRejectedPmids));
-                goldStandard.setAuditLog(incomingAudit == null ? null : new ArrayList<>(incomingAudit));
+    	// Capture incoming PMIDs before merge logic mutates them
+    	List<Long> incomingAcceptedPmids = (goldStandard.getKnownPmids() != null)
+    			? new ArrayList<>(goldStandard.getKnownPmids()) : Collections.emptyList();
+    	List<Long> incomingRejectedPmids = (goldStandard.getRejectedPmids() != null)
+    			? new ArrayList<>(goldStandard.getRejectedPmids()) : Collections.emptyList();
+    	 try {
+             // --- FIRST ATTEMPT ---
+             processAndSave(goldStandard, goldStandardUpdateFlag, strategy, entryPath, curatedBy, incomingAcceptedPmids, incomingRejectedPmids);
+         } catch (ConditionalCheckFailedException e) {
+             // --- COLLISION CAUGHT: SECOND ATTEMPT ---
+             log.warn("Collision detected for uid={}. Fetching updated record from DB and trying one more time.", goldStandard.getUid());
+             
+             // We must reset the object's PMIDs to the original incoming request 
+             // because the first failed attempt modified them in memory
+             goldStandard.setKnownPmids(new ArrayList<>(incomingAcceptedPmids));
+             goldStandard.setRejectedPmids(new ArrayList<>(incomingRejectedPmids));
+             
+             // Call the exact same function again to re-read and re-save
+             processAndSave(goldStandard, goldStandardUpdateFlag, strategy, entryPath, curatedBy, incomingAcceptedPmids, incomingRejectedPmids);
+         }
 
-                GoldStandard goldStandardDdb = findByUid(goldStandard.getUid());
-    		if(goldStandardDdb == null) {
-    			// The SDK's VersionedRecordExtension automatically ensures this behaves like an insert.
-                // If version is null, it enforces attribute_not_exists(version) on the putItem.
-    			dynamoDbGoldStandardRepository.save(goldStandard);
-    			committed = true;
-                committedExistingAccepted = Collections.emptyList();
-                committedExistingRejected = Collections.emptyList();
-                continue;
-    		} 
-    			//fix for issue # 692, get the version from the existing record and set it to the new record before saving it to avoid version conflict exception
-                // Set the version from the DB so the Enhanced Client knows which version we are mutating
-    		    goldStandard.setVersion(goldStandardDdb.getVersion());
+
+    	// Track provenance for accepted PMIDs. saveIfNotExists ensures we
+    	// don't overwrite existing automated-retrieval provenance — only
+    	// truly new PMIDs (e.g., manually added via Publication Manager)
+    	// get a provenance record.
+    	if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE
+    			&& !incomingAcceptedPmids.isEmpty()) {
+    		writeProvenanceForAcceptedPmids(goldStandard.getUid(), incomingAcceptedPmids, strategy);
+    	}
+    }
+    
+    /**
+     * HELPER FUNCTION: Contains your EXACT original logic for reading, merging, and saving.
+     */
+    private void processAndSave(GoldStandard goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String strategy, EntryPath entryPath, int curatedBy, List<Long> incomingAcceptedPmids, List<Long> incomingRejectedPmids) {
+        GoldStandard goldStandardDdb = findByUid(goldStandard.getUid());
+        
+        if(goldStandardDdb == null) {
+            dynamoDbGoldStandardRepository.save(goldStandard);
+        } else {
+            //fix for issue # 692, get the version from the existing record and set it to the new record before saving it to avoid version conflict exception
+            goldStandard.setVersion(goldStandardDdb.getVersion());
        		
-    			List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
-    			List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
-    			// Snapshot existing lists before merge mutates them (for audit log diff)
-    			List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
-    			List<Long> existingRejected = (rejectedPmids != null) ? new ArrayList<>(rejectedPmids) : Collections.emptyList();
-    			if(goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
-    				//This portion deals with cases when deleting a pmid from GoldStandard it will delete it from eSearchResult as well if it exists
-    				ESearchResult eSearchResult = eSearchResultService.findByUid(goldStandard.getUid());
-    				if(eSearchResult != null && eSearchResult.getESearchPmids() != null && eSearchResult.getESearchPmids().size() > 0) {
-    					List<ESearchPmid> eSearchPmidGS = eSearchResult.getESearchPmids().stream().filter(eSearchPmid -> eSearchPmid.getRetrievalStrategyName().equalsIgnoreCase("GoldStandardRetrievalStrategy")).collect(Collectors.toList());
-    					if(eSearchPmidGS != null && !eSearchPmidGS.isEmpty()) {
-    						for(ESearchPmid eSearchPmid: eSearchPmidGS) {
-		    					if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
-		    						eSearchPmid.getPmids().removeAll(goldStandard.getKnownPmids());
-		    					}
-		    					if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
-		    						eSearchPmid.getPmids().removeAll(goldStandard.getRejectedPmids());
-		    					}
-    						}
-    					}
-    					
-    					eSearchResultService.save(eSearchResult);
-    				}
-    				
-    				if(acceptedPmids != null && acceptedPmids.size() > 0) {
-        				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
-        					for(Long acceptedPmid: goldStandard.getKnownPmids()) {
-        						if(acceptedPmids.contains(acceptedPmid)) {
-    	    						acceptedPmids.remove(acceptedPmid);
-    	    					}
-        					}
-        				}
-        				
-        			}
-    				
-    				if(rejectedPmids != null && rejectedPmids.size() > 0) {
-        				if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
-        					for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
-        						if(rejectedPmids.contains(rejectedPmid)) {
-        							rejectedPmids.remove(rejectedPmid);
-    	    					}
-        					}
-        				}
-        			}
-    				if(acceptedPmids == null) {
-    					goldStandard.setKnownPmids(new ArrayList<Long>());
-    				} else {
-    					goldStandard.setKnownPmids(acceptedPmids);
-    				}
-    				if(rejectedPmids == null) {
-    					goldStandard.setRejectedPmids(new ArrayList<Long>());
-    				} else {
-    					goldStandard.setRejectedPmids(rejectedPmids);
-    				}
-    			} else if(goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
-    			
-	     			if(acceptedPmids != null && acceptedPmids.size() > 0) {
-	    				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
-		    				for(Long acceptedPmid: goldStandard.getKnownPmids()) {
-		    					if(!acceptedPmids.contains(acceptedPmid)) {
-		    						acceptedPmids.add(acceptedPmid);
-		    					}
-		    					if(rejectedPmids != null && rejectedPmids.size() > 0) {
-		    						if(rejectedPmids.contains(acceptedPmid)) {
-		    							rejectedPmids.remove(acceptedPmid);
-		    						}
-		    					}
-		    				}
-	    				}
-	    				goldStandard.setKnownPmids(acceptedPmids);
-	    			} else {
-	    				if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
-	    					for(Long acceptedPmid: goldStandard.getKnownPmids()) {
-	    						if(goldStandard.getRejectedPmids() != null) {
-		    						if(goldStandard.getRejectedPmids().contains(acceptedPmid)) {
-		    							goldStandard.getRejectedPmids().remove(acceptedPmid);
-		    						}
-	    						}
-	    					}
-	    				}
-	    			}
-	     			
-	    			if(rejectedPmids != null && rejectedPmids.size() > 0) {
-	    				if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
-		    				for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
-		    					if(!rejectedPmids.contains(rejectedPmid)) {
-		    						rejectedPmids.add(rejectedPmid);
-		    					}
-		    					if(acceptedPmids != null && acceptedPmids.size() > 0) {
-		    						if(acceptedPmids.contains(rejectedPmid)) {
-		    							acceptedPmids.remove(rejectedPmid);
-		    						}
-		    					}
-		    				}
-	    				}
-	    				goldStandard.setRejectedPmids(rejectedPmids);
-	    			} else {
-	    				if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
-	    					for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
-	    						if(goldStandard.getKnownPmids() != null) {
-		    						if(goldStandard.getKnownPmids().contains(rejectedPmid)) {
-		    							goldStandard.getKnownPmids().remove(rejectedPmid);
-		    						}
-	    						}
-	    					}
-	    				}
-	    			}
-    			}
-    			
-				if (goldStandardDdb.getAuditLog() != null && goldStandardDdb.getAuditLog().size() > 0) {
-					if (goldStandard.getAuditLog() != null && goldStandard.getAuditLog().size() > 0) {
-						goldStandard.getAuditLog().addAll(goldStandardDdb.getAuditLog());
-					} else {
-						goldStandard.setAuditLog(goldStandardDdb.getAuditLog());
-					}
-				}
-    			// Create audit log entries for changes in this update
-    			if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+            List<Long> acceptedPmids = goldStandardDdb.getKnownPmids();
+            List<Long> rejectedPmids = goldStandardDdb.getRejectedPmids();
+            
+            // Snapshot existing lists before merge mutates them (for audit log diff)
+            List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
+            List<Long> existingRejected = (rejectedPmids != null) ? new ArrayList<>(rejectedPmids) : Collections.emptyList();
+            
+            if(goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
+                //This portion deals with cases when deleting a pmid from GoldStandard it will delete it from eSearchResult as well if it exists
+                ESearchResult eSearchResult = eSearchResultService.findByUid(goldStandard.getUid());
+                if(eSearchResult != null && eSearchResult.getESearchPmids() != null && eSearchResult.getESearchPmids().size() > 0) {
+                    List<ESearchPmid> eSearchPmidGS = eSearchResult.getESearchPmids().stream().filter(eSearchPmid -> eSearchPmid.getRetrievalStrategyName().equalsIgnoreCase("GoldStandardRetrievalStrategy")).collect(Collectors.toList());
+                    if(eSearchPmidGS != null && !eSearchPmidGS.isEmpty()) {
+                        for(ESearchPmid eSearchPmid: eSearchPmidGS) {
+                            if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+                                eSearchPmid.getPmids().removeAll(goldStandard.getKnownPmids());
+                            }
+                            if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+                                eSearchPmid.getPmids().removeAll(goldStandard.getRejectedPmids());
+                            }
+                        }
+                    }
+                    eSearchResultService.save(eSearchResult);
+                }
+                
+                if(acceptedPmids != null && acceptedPmids.size() > 0) {
+                    if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+                        for(Long acceptedPmid: goldStandard.getKnownPmids()) {
+                            if(acceptedPmids.contains(acceptedPmid)) {
+                                acceptedPmids.remove(acceptedPmid);
+                            }
+                        }
+                    }
+                }
+                
+                if(rejectedPmids != null && rejectedPmids.size() > 0) {
+                    if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+                        for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
+                            if(rejectedPmids.contains(rejectedPmid)) {
+                                rejectedPmids.remove(rejectedPmid);
+                            }
+                        }
+                    }
+                }
+                if(acceptedPmids == null) {
+                    goldStandard.setKnownPmids(new ArrayList<Long>());
+                } else {
+                    goldStandard.setKnownPmids(acceptedPmids);
+                }
+                if(rejectedPmids == null) {
+                    goldStandard.setRejectedPmids(new ArrayList<Long>());
+                } else {
+                    goldStandard.setRejectedPmids(rejectedPmids);
+                }
+            } else if(goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+            
+                if(acceptedPmids != null && acceptedPmids.size() > 0) {
+                    if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+                        for(Long acceptedPmid: goldStandard.getKnownPmids()) {
+                            if(!acceptedPmids.contains(acceptedPmid)) {
+                                acceptedPmids.add(acceptedPmid);
+                            }
+                            if(rejectedPmids != null && rejectedPmids.size() > 0) {
+                                if(rejectedPmids.contains(acceptedPmid)) {
+                                    rejectedPmids.remove(acceptedPmid);
+                                }
+                            }
+                        }
+                    }
+                    goldStandard.setKnownPmids(acceptedPmids);
+                } else {
+                    if(goldStandard.getKnownPmids() != null && goldStandard.getKnownPmids().size() > 0) {
+                        for(Long acceptedPmid: goldStandard.getKnownPmids()) {
+                            if(goldStandard.getRejectedPmids() != null) {
+                                if(goldStandard.getRejectedPmids().contains(acceptedPmid)) {
+                                    goldStandard.getRejectedPmids().remove(acceptedPmid);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if(rejectedPmids != null && rejectedPmids.size() > 0) {
+                    if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+                        for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
+                            if(!rejectedPmids.contains(rejectedPmid)) {
+                                rejectedPmids.add(rejectedPmid);
+                            }
+                            if(acceptedPmids != null && acceptedPmids.size() > 0) {
+                                if(acceptedPmids.contains(rejectedPmid)) {
+                                    acceptedPmids.remove(rejectedPmid);
+                                }
+                            }
+                        }
+                    }
+                    goldStandard.setRejectedPmids(rejectedPmids);
+                } else {
+                    if(goldStandard.getRejectedPmids() != null && goldStandard.getRejectedPmids().size() > 0) {
+                        for(Long rejectedPmid: goldStandard.getRejectedPmids()) {
+                            if(goldStandard.getKnownPmids() != null) {
+                                if(goldStandard.getKnownPmids().contains(rejectedPmid)) {
+                                    goldStandard.getKnownPmids().remove(rejectedPmid);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if(goldStandardDdb.getAuditLog() != null && goldStandardDdb.getAuditLog().size() > 0) {
+                if(goldStandard.getAuditLog() != null && goldStandard.getAuditLog().size() > 0) {
+                    goldStandard.getAuditLog().addAll(goldStandardDdb.getAuditLog());
+                } else {
+                    goldStandard.setAuditLog(goldStandardDdb.getAuditLog());
+                }
+            }
+			// Create audit log entries for changes in this update
+           if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
     				List<GoldStandardAuditLog> newEntries = buildAuditEntries(
     						goldStandard.getUid(), incomingAcceptedPmids, incomingRejectedPmids,
     						existingAccepted, existingRejected, strategy);
@@ -257,41 +266,8 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     						goldStandard.getKnownPmids(), goldStandard.getRejectedPmids(),
     						entryPath,curatedBy);
     			}
-    			dynamoDbGoldStandardRepository.save(goldStandard);
-    			// If we get here, the write succeeded without contention.
-                committed = true;
-                committedExistingAccepted = existingAccepted;
-                committedExistingRejected = existingRejected;
-    		}
-    		catch (ConditionalCheckFailedException e) {
-                // Another thread modified this record. Back off and let the loop try again.
-                log.warn("Optimistic locking failure for uid={}, attempt {}. Retrying...", goldStandard.getUid(), attempt);
-                try {
-                    Thread.sleep(20 + ThreadLocalRandom.current().nextInt(60));
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Interrupted while retrying GoldStandard update", ie);
-                }
-            }
-            }	
-			if (!committed) {
-				throw new RuntimeException("GoldStandard update contended after " + MAX_ATTEMPTS + " attempts for uid="+ goldStandard.getUid());
-			}
-
-				// --- SIDE EFFECTS (Only run once after successful commit) ---
-				if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
-					recordFeedbackLogAndArticleProvenance(goldStandard.getUid(), incomingAcceptedPmids,
-							incomingRejectedPmids, committedExistingAccepted, committedExistingRejected, entryPath,
-							curatedBy);
-				}
-
-				// Track provenance for accepted PMIDs. saveIfNotExists ensures we
-				// don't overwrite existing automated-retrieval provenance — only
-				// truly new PMIDs (e.g., manually added via Publication Manager)
-				// get a provenance record.
-				if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE && !incomingAcceptedPmids.isEmpty()) {
-					writeProvenanceForAcceptedPmids(goldStandard.getUid(), incomingAcceptedPmids, strategy);
-				}
+            dynamoDbGoldStandardRepository.save(goldStandard);
+        }
     }
 
     @Override
@@ -304,7 +280,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	                 String provenanceSource, EntryPath entryPath) {
 		saveListInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
 	}
-	// TODO(goldstandard-race): saveListInternal has the same non-atomic read-modify-write; apply saveIfUnchanged+retry here too (lower priority — interactive single-accept path is saveInternal).
+
 	private void saveListInternal(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath) {
 		// Resolve provenance strategy: caller-supplied source, or default
 		String strategy = (provenanceSource != null && !provenanceSource.isBlank())
@@ -395,7 +371,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     					}
     					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff.
     					// Bulk/list (PUT) path carries no interactive curator id -> curatedBy = 0.
-    					// goldStandardNew holds the MERGED lists at this point.
+						// goldStandardNew holds the MERGED lists at this point.
     					recordFeedbackLogAndArticleProvenance(uid,
     							batchIncomingAccepted, batchIncomingRejected,
     							existingAccepted, existingRejected,
@@ -508,14 +484,15 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
 		Set<Long> newlyRejected = new HashSet<>(incomingRejSet);
 		newlyRejected.removeAll(existingRejSet);
-
-		// PENDING = pmids that actually LEFT the gold standard, so the diff must run
+		
+        // PENDING = pmids that actually LEFT the gold standard, so the diff must run
 		// against the FINAL merged state, not the incoming request body. UPDATE has
 		// merge semantics: a caller sending a single pmid (e.g. the AAR queue) is not
 		// asserting the rest of the set left. Diffing against incoming marked every
 		// other known pmid PENDING on every such accept — flooding FeedbackLog with
 		// bogus rows (1,435 for one uid on 2026-08-14). Under a pure merge this set is
 		// empty; it only fires if a caller path genuinely removes pmids.
+		
 		Set<Long> previouslyClassified = new HashSet<>();
 		previouslyClassified.addAll(existingAccSet);
 		previouslyClassified.addAll(existingRejSet);
@@ -589,4 +566,3 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		log.info("Tracked provenance ({}) for {} accepted PMIDs for uid={}", strategy, pmids.size(), uid);
 	}
 }
-
