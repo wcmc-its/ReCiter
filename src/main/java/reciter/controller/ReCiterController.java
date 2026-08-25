@@ -452,7 +452,13 @@ public class ReCiterController {
 
                 RetrievalEscalationTracker.setMode(RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS);
+                    // false = a retrieval worker crashed (a successful run that found nothing
+                    // still returns true), so the candidate set must not be treated as complete.
+                    if (!aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS)) {
+                        stopWatch.stop();
+                        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
+                    }
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+ e);
                     stopWatch.stop();
@@ -521,7 +527,11 @@ public class ReCiterController {
 
             	RetrievalEscalationTracker.setMode(effectiveFlag);
             	try {
-                    aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), effectiveFlag);
+                    if (!aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), effectiveFlag)) {
+                        stopWatch.stop();
+                        log.error(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
+                    }
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+e);
                     stopWatch.stop();
@@ -1277,6 +1287,7 @@ public class ReCiterController {
     private EngineParameters initializeEngineParameters(String uid, Double totalStandardizedArticleScore, RetrievalRefreshFlag retrievalRefreshFlag, Integer fullSweepMaxAgeDays) {
         // find identity
         Identity identity = identityService.findByUid(uid);
+        dropMalformedAlternateNames(identity);
         ESearchResult eSearchResults = null;
 	        // find search results for this identity
 	        //To Avoid 404 errors when multi threading
@@ -1285,15 +1296,28 @@ public class ReCiterController {
             if (eSearchResults == null) {
                 log.warn("No ESearchResult for uid={}; upgrading requested flag={} to ALL_PUBLICATIONS",
                          uid, retrievalRefreshFlag);
-                retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
+                ResponseEntity retrievalResponse = retrieveArticlesByUid(uid, RetrievalRefreshFlag.ALL_PUBLICATIONS);
                 // Marked AFTER the call: retrieveArticlesByUid resets the tracker on entry.
                 // Auto-upgrades are reported separately from escalations (#696) — they are
                 // unbudgeted full sweeps, and folding them into the escalation count would
                 // make the client's "budget is holding" signal a false one.
                 RetrievalEscalationTracker.markAutoUpgraded();
+                if (retrievalResponse == null || retrievalResponse.getStatusCode().isError()) {
+                    // The retrieval FAILED (a crashed worker, not a successful run that found
+                    // nothing): scoring the empty candidate set now would overwrite the prior
+                    // Analysis row with a zero-feature result. Bail out to the caller's 404.
+                    log.error("Retrieval failed for uid={} (status={}); skipping feature generation",
+                            uid, retrievalResponse.getStatusCode());
+                    return null;
+                }
                 eSearchResults = eSearchResultService.findByUid(uid);
             } else if(eSearchResults != null && (retrievalRefreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS || retrievalRefreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS)) {
-            	retrieveArticlesByUid(uid, retrievalRefreshFlag, fullSweepMaxAgeDays);
+            	ResponseEntity retrievalResponse = retrieveArticlesByUid(uid, retrievalRefreshFlag, fullSweepMaxAgeDays);
+            	if (retrievalResponse == null || retrievalResponse.getStatusCode().isError()) {
+            		log.error("Retrieval failed for uid={} (status={}); skipping feature generation",
+            				uid, retrievalResponse.getStatusCode());
+            		return null;
+            	}
             	eSearchResults = eSearchResultService.findByUid(uid);
             }
         } catch (EmptyResultDataAccessException e) {
@@ -1395,5 +1419,27 @@ public class ReCiterController {
             parameters.setTotalStandardzizedArticleScore(totalStandardizedArticleScore); // Configuring the totalScore in multiple of 10's in application.properties file
         }
         return parameters;
+    }
+
+    /**
+     * An alternate name with a null firstName or lastName (they exist in the Identity
+     * table, e.g. kns2002) NPEs downstream consumers that dereference name parts
+     * (AuthorNameSanitizationUtils, GenderProbability, name-matching strategies).
+     * Drop them once at the load boundary instead of guarding every consumer.
+     * The filtered list lives only in this request; nothing writes it back.
+     * Package-private for testing.
+     */
+    static void dropMalformedAlternateNames(Identity identity) {
+        if (identity == null || identity.getAlternateNames() == null) {
+            return;
+        }
+        List<reciter.model.identity.AuthorName> usable = identity.getAlternateNames().stream()
+                .filter(n -> n != null && n.getFirstName() != null && n.getLastName() != null)
+                .collect(Collectors.toList());
+        if (usable.size() != identity.getAlternateNames().size()) {
+            log.warn("uid: {} has {} malformed alternate name(s) (null firstName or lastName); dropping for this run",
+                    identity.getUid(), identity.getAlternateNames().size() - usable.size());
+            identity.setAlternateNames(usable);
+        }
     }
 }

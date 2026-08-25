@@ -71,6 +71,8 @@ public class FeedbackLogQueryService {
         e.articleId       = feedbackLog.getArticleId();
         e.feedback        = feedbackLog.getFeedback();
         e.curatedBy       = feedbackLog.getCuratedBy();
+        e.actorPersonIdentifier = feedbackLog.getActorPersonIdentifier();
+        e.note            = feedbackLog.getNote();
         e.createTimestamp = feedbackLog.getCreateTimestamp();
         e.sk              = feedbackLog.getSk();
         e.src             = feedbackLog.getSrc();

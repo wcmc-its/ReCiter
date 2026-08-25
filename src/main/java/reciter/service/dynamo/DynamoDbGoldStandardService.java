@@ -234,18 +234,29 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 					}
 				}
     			// Create audit log entries for changes in this update
-				if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
-					List<GoldStandardAuditLog> newEntries = buildAuditEntries(goldStandard.getUid(),
-							incomingAcceptedPmids, incomingRejectedPmids, existingAccepted, existingRejected, strategy);
-					if (!newEntries.isEmpty()) {
-						List<GoldStandardAuditLog> auditLog = goldStandard.getAuditLog();
-						if (auditLog == null) {
-							auditLog = new ArrayList<>();
-						}
-						auditLog.addAll(newEntries);
-						goldStandard.setAuditLog(auditLog);
-					}
-				}
+    			if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    				List<GoldStandardAuditLog> newEntries = buildAuditEntries(
+    						goldStandard.getUid(), incomingAcceptedPmids, incomingRejectedPmids,
+    						existingAccepted, existingRejected, strategy);
+    				if (!newEntries.isEmpty()) {
+    					List<GoldStandardAuditLog> auditLog = goldStandard.getAuditLog();
+    					if (auditLog == null) {
+    						auditLog = new ArrayList<>();
+    					}
+    					auditLog.addAll(newEntries);
+    					goldStandard.setAuditLog(auditLog);
+    				}
+    				// Phase 33-02: FeedbackLog rows + ArticleProvenance D-11/D-13 transitions
+    				// for the diff. Inside the same UPDATE branch where existingAccepted/Rejected
+    				// are in scope. goldStandard holds the MERGED lists at this point — the
+    				// final state the save below persists.
+    				recordFeedbackLogAndArticleProvenance(
+    						goldStandard.getUid(),
+    						incomingAcceptedPmids, incomingRejectedPmids,
+    						existingAccepted, existingRejected,
+    						goldStandard.getKnownPmids(), goldStandard.getRejectedPmids(),
+    						entryPath,curatedBy);
+    			}
     			dynamoDbGoldStandardRepository.save(goldStandard);
     			// If we get here, the write succeeded without contention.
                 committed = true;
@@ -384,9 +395,12 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     					}
     					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff.
     					// Bulk/list (PUT) path carries no interactive curator id -> curatedBy = 0.
+    					// goldStandardNew holds the MERGED lists at this point.
     					recordFeedbackLogAndArticleProvenance(uid,
     							batchIncomingAccepted, batchIncomingRejected,
-    							existingAccepted, existingRejected, entryPath,0);
+    							existingAccepted, existingRejected,
+    							goldStandardNew.getKnownPmids(), goldStandardNew.getRejectedPmids(),
+    							entryPath,0);
     				}
     			}
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
@@ -481,6 +495,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	private void recordFeedbackLogAndArticleProvenance(String uid,
 			List<Long> incomingAccepted, List<Long> incomingRejected,
 			List<Long> existingAccepted, List<Long> existingRejected,
+			List<Long> finalAccepted, List<Long> finalRejected,
 			EntryPath entryPath,int curatedBy) {
 		long actionEpoch = System.currentTimeMillis() / 1000L;
 		Set<Long> incomingAccSet = new HashSet<>(incomingAccepted);
@@ -494,12 +509,23 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		Set<Long> newlyRejected = new HashSet<>(incomingRejSet);
 		newlyRejected.removeAll(existingRejSet);
 
+		// PENDING = pmids that actually LEFT the gold standard, so the diff must run
+		// against the FINAL merged state, not the incoming request body. UPDATE has
+		// merge semantics: a caller sending a single pmid (e.g. the AAR queue) is not
+		// asserting the rest of the set left. Diffing against incoming marked every
+		// other known pmid PENDING on every such accept — flooding FeedbackLog with
+		// bogus rows (1,435 for one uid on 2026-08-14). Under a pure merge this set is
+		// empty; it only fires if a caller path genuinely removes pmids.
 		Set<Long> previouslyClassified = new HashSet<>();
 		previouslyClassified.addAll(existingAccSet);
 		previouslyClassified.addAll(existingRejSet);
 		Set<Long> stillClassified = new HashSet<>();
-		stillClassified.addAll(incomingAccSet);
-		stillClassified.addAll(incomingRejSet);
+		if (finalAccepted != null) {
+			stillClassified.addAll(finalAccepted);
+		}
+		if (finalRejected != null) {
+			stillClassified.addAll(finalRejected);
+		}
 		Set<Long> newlyPending = new HashSet<>(previouslyClassified);
 		newlyPending.removeAll(stillClassified);
 
