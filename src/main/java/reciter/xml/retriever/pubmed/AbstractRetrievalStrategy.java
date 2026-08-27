@@ -284,6 +284,9 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
 		}
 		if (responseEntity == null) {
+			// Count query failed (tool 500 / NCBI error). Flag the run so the engine rolls the
+			// retrievalDate watermark back instead of treating this as a legitimate "0 results". #689
+			RetrievalErrorTracker.markError();
 			return 0;
 		}
 		int results = responseEntity.getBody();
