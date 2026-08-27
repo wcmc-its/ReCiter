@@ -31,6 +31,7 @@ public class DynamoDbGoldStandardRepositoryTest {
 	public void setUp() {
 		goldStandard1 = new GoldStandard("uid1", Arrays.asList(123L, 456L), Arrays.asList(779L), null,null);
 		goldStandard2 = new GoldStandard("uid2", Arrays.asList(5678L, 8760L), Arrays.asList(799L), null,null);
+
 	}
 
 	@Test
