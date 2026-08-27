@@ -493,6 +493,130 @@ public class ReCiterControllerTest {
 	}
 
 	@Test
+	public void testRetrieveESearchResultByUidSuccess() {
+		// Arrange
+		when(eSearchResultService.findByUid(testUid)).thenReturn(testESearchResult);
+
+		// Act
+		ResponseEntity<ESearchResult> response = reCiterController.retrieveESearchResultByUid(testUid);
+
+		// Assert
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(testESearchResult, response.getBody());
+		verify(eSearchResultService, times(1)).findByUid(testUid);
+	}
+
+	@Test
+	public void testRetrieveESearchResultByUidNotFound() {
+		// Arrange
+		when(eSearchResultService.findByUid("nonexistent")).thenReturn(null);
+
+		// Act
+		ResponseEntity<ESearchResult> response = reCiterController.retrieveESearchResultByUid("nonexistent");
+
+		// Assert
+		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+		assertNull(response.getBody());
+		verify(eSearchResultService, times(1)).findByUid("nonexistent");
+	}
+
+	@Test
+	public void testRetrieveESearchResultPmidsByUidsDedupesAcrossStrategies() {
+		// Arrange: two strategies for testUid overlapping on 23456L, plus one uid with no record
+		ESearchPmid strategyOne = new ESearchPmid();
+		strategyOne.setPmids(Arrays.asList(23456L, 12345L));
+		strategyOne.setRetrievalStrategyName("FullNameRetrievalStrategy");
+
+		ESearchPmid strategyTwo = new ESearchPmid();
+		strategyTwo.setPmids(Arrays.asList(23456L, 34567L));
+		strategyTwo.setRetrievalStrategyName("FirstNameInitialRetrievalStrategy");
+
+		ESearchResult resultForTestUid = new ESearchResult();
+		resultForTestUid.setUid(testUid);
+		resultForTestUid.setESearchPmids(Arrays.asList(strategyOne, strategyTwo));
+
+		when(eSearchResultService.findByUids(Arrays.asList(testUid, "missingUid")))
+				.thenReturn(Arrays.asList(resultForTestUid, null));
+
+		// Act
+		ResponseEntity response = reCiterController.retrieveESearchResultPmidsByUids(Arrays.asList(testUid, "missingUid"));
+
+		// Assert
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, List<Long>> body = (java.util.Map<String, List<Long>>) response.getBody();
+		assertEquals(1, body.size());
+		assertTrue(body.containsKey(testUid));
+		assertFalse(body.containsKey("missingUid"));
+		assertEquals(Arrays.asList(12345L, 23456L, 34567L), body.get(testUid));
+		verify(eSearchResultService, times(1)).findByUids(Arrays.asList(testUid, "missingUid"));
+	}
+
+	@Test
+	public void testRetrieveESearchResultPmidsByUidsNullList() {
+		// Act
+		ResponseEntity response = reCiterController.retrieveESearchResultPmidsByUids(null);
+
+		// Assert
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		verify(eSearchResultService, never()).findByUids(any());
+	}
+
+	@Test
+	public void testRetrieveESearchResultPmidsByUidsEmptyList() {
+		// Act
+		ResponseEntity response = reCiterController.retrieveESearchResultPmidsByUids(Collections.emptyList());
+
+		// Assert
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		verify(eSearchResultService, never()).findByUids(any());
+	}
+
+	@Test
+	public void testRetrieveESearchResultPmidsByUidsExceedsMax() {
+		// Arrange
+		List<String> tooManyUids = new ArrayList<>();
+		for (int i = 0; i < 1001; i++) {
+			tooManyUids.add("uid" + i);
+		}
+
+		// Act
+		ResponseEntity response = reCiterController.retrieveESearchResultPmidsByUids(tooManyUids);
+
+		// Assert
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		verify(eSearchResultService, never()).findByUids(any());
+	}
+
+	@Test
+	public void testProjectRetrievedPmidsByUidDedupesSortsAndOmitsNulls() {
+		// Arrange
+		ESearchPmid strategyOne = new ESearchPmid();
+		strategyOne.setPmids(Arrays.asList(300L, 100L));
+
+		ESearchPmid strategyTwo = new ESearchPmid();
+		strategyTwo.setPmids(Arrays.asList(100L, 200L));
+
+		ESearchResult withPmids = new ESearchResult();
+		withPmids.setUid("uidWithData");
+		withPmids.setESearchPmids(Arrays.asList(strategyOne, strategyTwo));
+
+		ESearchResult withNoStrategies = new ESearchResult();
+		withNoStrategies.setUid("uidWithNoStrategies");
+		withNoStrategies.setESearchPmids(null);
+
+		List<ESearchResult> input = Arrays.asList(withPmids, null, withNoStrategies);
+
+		// Act
+		java.util.Map<String, List<Long>> result = ReCiterController.projectRetrievedPmidsByUid(input);
+
+		// Assert
+		assertEquals(2, result.size());
+		assertEquals(Arrays.asList(100L, 200L, 300L), result.get("uidWithData"));
+		assertEquals(Collections.emptyList(), result.get("uidWithNoStrategies"));
+	}
+
+	@Test
 	public void testRetrieveArticlesSuccess() throws IOException {
 		// Arrange
 		when(identityService.findAll()).thenReturn(identityList);

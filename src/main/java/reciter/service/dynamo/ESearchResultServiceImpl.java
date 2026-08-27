@@ -1,6 +1,7 @@
 package reciter.service.dynamo;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,11 @@ public class ESearchResultServiceImpl implements ESearchResultService {
     @Override
     public ESearchResult findByUid(String uid) {
         return eSearchResultRepository.findById(uid).orElseGet(() -> null);
+    }
+
+    @Override
+    public List<ESearchResult> findByUids(List<String> uids) {
+        return eSearchResultRepository.findAllById(uids);
     }
 
 

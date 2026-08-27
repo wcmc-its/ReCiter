@@ -19,6 +19,7 @@
 package reciter.service;
 
 import java.time.Instant;
+import java.util.List;
 
 import reciter.database.dynamodb.model.ESearchResult;
 
@@ -27,6 +28,12 @@ public interface ESearchResultService {
 	void save(ESearchResult eSearchResult);
 
 	ESearchResult findByUid(String uid);
+
+	/**
+	 * Batch lookup: one ESearchResult per requested uid, in request order, with
+	 * {@code null} in place of any uid that has no ESearchResult record.
+	 */
+	List<ESearchResult> findByUids(List<String> uids);
 
 	void deleteAll();
 
