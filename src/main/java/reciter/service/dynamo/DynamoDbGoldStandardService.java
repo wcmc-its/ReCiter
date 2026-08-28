@@ -255,18 +255,24 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     					auditLog.addAll(newEntries);
     					goldStandard.setAuditLog(auditLog);
     				}
-    				// Phase 33-02: FeedbackLog rows + ArticleProvenance D-11/D-13 transitions
-    				// for the diff. Inside the same UPDATE branch where existingAccepted/Rejected
-    				// are in scope. goldStandard holds the MERGED lists at this point — the
-    				// final state the save below persists.
-    				recordFeedbackLogAndArticleProvenance(
-    						goldStandard.getUid(),
-    						incomingAcceptedPmids, incomingRejectedPmids,
-    						existingAccepted, existingRejected,
-    						goldStandard.getKnownPmids(), goldStandard.getRejectedPmids(),
-    						entryPath,curatedBy);
+    				
     			}
+            // SAVE TO DATABASE FIRST
+            // If this fails, it throws the exception and instantly jumps to the catch block
             dynamoDbGoldStandardRepository.save(goldStandard);
+            
+            // 2. FIRE SIDE EFFECTS ONLY ON SUCCESS
+            // If we reach this line, the save was 100% successful and there was no collision
+            // Phase 33-02: FeedbackLog rows + ArticleProvenance D-11/D-13 transitions
+			// for the diff. Inside the same UPDATE branch where existingAccepted/Rejected
+			// are in scope. goldStandard holds the MERGED lists at this point — the
+			// final state the save below persists.
+			recordFeedbackLogAndArticleProvenance(
+					goldStandard.getUid(),
+					incomingAcceptedPmids, incomingRejectedPmids,
+					existingAccepted, existingRejected,
+					goldStandard.getKnownPmids(), goldStandard.getRejectedPmids(),
+					entryPath,curatedBy);
         }
     }
 
