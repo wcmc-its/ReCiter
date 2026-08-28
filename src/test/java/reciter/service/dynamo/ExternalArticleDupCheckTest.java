@@ -12,6 +12,7 @@ import org.junit.Test;
 import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.service.dynamo.ExternalArticleDupCheck.Level;
+import reciter.service.dynamo.ExternalArticleDupCheck.MatchType;
 import reciter.service.dynamo.ExternalArticleDupCheck.Result;
 
 public class ExternalArticleDupCheckTest {
@@ -56,7 +57,7 @@ public class ExternalArticleDupCheckTest {
                 Collections.emptyList(),
                 Collections.emptyList());
         assertEquals(Level.BLOCKED, result.getLevel());
-        assertEquals("PMID_IN_GOLD_STANDARD", result.getMatches().get(0).getType());
+        assertEquals(MatchType.PMID_IN_GOLD_STANDARD, result.getMatches().get(0).getType());
     }
 
     @Test
@@ -68,7 +69,7 @@ public class ExternalArticleDupCheckTest {
                 Collections.emptyList(),
                 Collections.emptyList());
         assertEquals(Level.BLOCKED, result.getLevel());
-        assertEquals("PMID_REJECTED_IN_GOLD_STANDARD", result.getMatches().get(0).getType());
+        assertEquals(MatchType.PMID_REJECTED_IN_GOLD_STANDARD, result.getMatches().get(0).getType());
     }
 
     @Test
@@ -80,7 +81,7 @@ public class ExternalArticleDupCheckTest {
                 Arrays.asList(pubmedArticle(22222L, null, "Any Title", "2020-01-01")),
                 Collections.emptyList());
         assertEquals(Level.BLOCKED, result.getLevel());
-        assertEquals("PMID_IN_CANDIDATES", result.getMatches().get(0).getType());
+        assertEquals(MatchType.PMID_IN_CANDIDATES, result.getMatches().get(0).getType());
     }
 
     @Test
@@ -93,7 +94,7 @@ public class ExternalArticleDupCheckTest {
                 Collections.emptyList(),
                 Arrays.asList(existing));
         assertEquals(Level.BLOCKED, result.getLevel());
-        assertEquals("PMID_MATCH_EXTERNAL", result.getMatches().get(0).getType());
+        assertEquals(MatchType.PMID_MATCH_EXTERNAL, result.getMatches().get(0).getType());
     }
 
     @Test
@@ -105,7 +106,7 @@ public class ExternalArticleDupCheckTest {
                 Arrays.asList(pubmedArticle(33333L, "10.1000/abc", "Original Title", "2021-05-01")),
                 Collections.emptyList());
         assertEquals(Level.BLOCKED, result.getLevel());
-        assertEquals("DOI_MATCH", result.getMatches().get(0).getType());
+        assertEquals(MatchType.DOI_MATCH, result.getMatches().get(0).getType());
     }
 
     @Test
@@ -118,7 +119,7 @@ public class ExternalArticleDupCheckTest {
                 Collections.emptyList(),
                 Arrays.asList(existing));
         assertEquals(Level.BLOCKED, result.getLevel());
-        assertEquals("DOI_MATCH_EXTERNAL", result.getMatches().get(0).getType());
+        assertEquals(MatchType.DOI_MATCH_EXTERNAL, result.getMatches().get(0).getType());
     }
 
     @Test
@@ -132,7 +133,7 @@ public class ExternalArticleDupCheckTest {
                 Arrays.asList(existing));
         assertEquals(Level.BLOCKED, result.getLevel());
         ExternalArticleDupCheck.Match match = result.getMatches().get(0);
-        assertEquals("ALREADY_ADDED", match.getType());
+        assertEquals(MatchType.ALREADY_ADDED, match.getType());
         assertEquals("A Title", match.getTitle());
         assertEquals("2020", match.getPubYear());
     }
@@ -149,7 +150,7 @@ public class ExternalArticleDupCheckTest {
                 Collections.emptyList());
         assertEquals(Level.WARNING, result.getLevel());
         ExternalArticleDupCheck.Match match = result.getMatches().get(0);
-        assertEquals("TITLE_YEAR_MATCH", match.getType());
+        assertEquals(MatchType.TITLE_YEAR_MATCH, match.getType());
         assertEquals("Deep learning for author disambiguation", match.getTitle());
         assertEquals("Journal of Disambiguation", match.getJournal());
         assertEquals("2023", match.getPubYear());
@@ -164,7 +165,7 @@ public class ExternalArticleDupCheckTest {
                 Arrays.asList(pubmedArticle(44444L, null, "Deep learning for author disambiguation", null)),
                 Collections.emptyList());
         assertEquals(Level.WARNING, result.getLevel());
-        assertEquals("TITLE_YEAR_MATCH", result.getMatches().get(0).getType());
+        assertEquals(MatchType.TITLE_YEAR_MATCH, result.getMatches().get(0).getType());
     }
 
     @Test
@@ -226,6 +227,40 @@ public class ExternalArticleDupCheckTest {
     public void normalizers() {
         assertEquals("10.1000/abc", ExternalArticleDupCheck.normalizeDoi(" https://dx.doi.org/10.1000/ABC "));
         assertNull(ExternalArticleDupCheck.normalizeDoi("  "));
+    }
+
+    /** Every form a curator or an upstream source can hand us for the same DOI must
+     * normalize to one string, or the BLOCKED DOI paths silently miss real duplicates. */
+    @Test
+    public void normalizeDoiFoldsEveryCommonPrefixForm() {
+        String expected = "10.1000/abc";
+        for (String variant : Arrays.asList(
+                "10.1000/abc",
+                "10.1000/ABC",
+                "  10.1000/abc  ",
+                "doi:10.1000/abc",
+                "DOI: 10.1000/abc",
+                "http://doi.org/10.1000/abc",
+                "https://doi.org/10.1000/abc",
+                "http://dx.doi.org/10.1000/abc",
+                "https://dx.doi.org/10.1000/ABC")) {
+            assertEquals(variant, expected, ExternalArticleDupCheck.normalizeDoi(variant));
+        }
+        assertNull(ExternalArticleDupCheck.normalizeDoi(null));
+        assertNull(ExternalArticleDupCheck.normalizeDoi("https://doi.org/"));
+    }
+
+    /** A "doi:"-prefixed external DOI must still BLOCK against the bare form in the
+     * person's PubMed candidate set — the case the folding above exists for. */
+    @Test
+    public void doiPrefixVariantStillBlocksAgainstCandidateSet() {
+        Result result = ExternalArticleDupCheck.check(
+                candidate("SCOPUS:1", null, "doi: 10.1000/ABC", "Some title", "2024"),
+                null, null,
+                Collections.singletonList(pubmedArticle(111L, "10.1000/abc", "Other title", "2024-01-01")),
+                Collections.emptyList());
+        assertEquals(Level.BLOCKED, result.getLevel());
+        assertEquals(MatchType.DOI_MATCH, result.getMatches().get(0).getType());
         assertEquals("deep learning 2 0", ExternalArticleDupCheck.normalizeTitle("Deep-Learning: 2.0?"));
         assertEquals("2023", ExternalArticleDupCheck.year("2023-09-15"));
         assertNull(ExternalArticleDupCheck.year("n.d."));
