@@ -18,9 +18,12 @@
  *******************************************************************************/
 package reciter.tfidf;
 
-import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.Test;
 
 import reciter.utils.ReCiterStringUtil;
 
@@ -31,20 +34,20 @@ public class ReCiterStringUtilTest {
 		String s = "King's College School of Medicine and Dentistry, University of London (United Kingdom) 1974";
 		String[] tokens = ReCiterStringUtil.tokenize(s);
 		
-		assertEquals("Size of tokens: ", 13, tokens.length);
-		assertEquals("0th elem=", "Kings", tokens[0]);
-		assertEquals("1th elem=", "College", tokens[1]);
-		assertEquals("2th elem=", "School", tokens[2]);
-		assertEquals("3th elem=", "of", tokens[3]);
-		assertEquals("4th elem=", "Medicine", tokens[4]);
-		assertEquals("5th elem=", "and", tokens[5]);
-		assertEquals("6th elem=", "Dentistry", tokens[6]);
-		assertEquals("7th elem=", "University", tokens[7]);
-		assertEquals("8th elem=", "of", tokens[8]);
-		assertEquals("9th elem=", "London", tokens[9]);
-		assertEquals("10th elem=", "United", tokens[10]);
-		assertEquals("1th elem=", "Kingdom", tokens[11]);
-		assertEquals("12th elem=", "1974", tokens[12]);
+		assertEquals(13, tokens.length, "Size of tokens: ");
+		assertEquals("Kings", tokens[0], "0th elem=");
+		assertEquals("College", tokens[1], "1th elem=");
+		assertEquals("School", tokens[2], "2th elem=");
+		assertEquals("of", tokens[3], "3th elem=");
+		assertEquals("Medicine", tokens[4], "4th elem=");
+		assertEquals("and", tokens[5], "5th elem=");
+		assertEquals("Dentistry", tokens[6], "6th elem=");
+		assertEquals("University", tokens[7], "7th elem=");
+		assertEquals("of", tokens[8], "8th elem=");
+		assertEquals("London", tokens[9], "9th elem=");
+		assertEquals("United", tokens[10], "10th elem=");
+		assertEquals("Kingdom", tokens[11], "11th elem=");
+		assertEquals("1974", tokens[12], "12th elem=");
 	}
 	
 	@Test
@@ -53,7 +56,7 @@ public class ReCiterStringUtilTest {
 		String s2 = "King's College Hospital King's College Hospital London United Kingdom";
 		
 		int numOverlap = ReCiterStringUtil.computeNumberOfOverlapTokens(s1, s2);
-		assertEquals("Number of overlaps: ", 5, numOverlap);
+		assertEquals(5, numOverlap, "Number of overlaps: ");
 	}
 	
 	@Test
@@ -61,7 +64,7 @@ public class ReCiterStringUtilTest {
 		String s1 = "Antony";
 		String s2 = "Anthony";
 		int dist = ReCiterStringUtil.levenshteinDistance(s1, s2);
-		assertEquals("Distance should be 1", 1, dist);
+		assertEquals(1, dist, "Distance should be 1");
 	}
 	
 	@Test
@@ -69,7 +72,7 @@ public class ReCiterStringUtilTest {
 		String s1 = "Bi-Sen";
 		String s2 = "BiSen";
 		int dist = ReCiterStringUtil.levenshteinDistance(s1, s2);
-		assertEquals("Distance should be 1", 1, dist);
+		assertEquals(1, dist, "Distance should be 1");
 	}
 	
 	@Test
@@ -77,60 +80,59 @@ public class ReCiterStringUtilTest {
 		String s1 = "Jeffery";
 		String s2 = "Jeffrey";
 		int dist = ReCiterStringUtil.levenshteinDistance(s1, s2);
-		assertEquals("Distance should be 2", 2, dist);
+		assertEquals(2, dist, "Distance should be 2");
 	}
 	
 	@Test
 	public void testDeAccent1() {
 		String s = "å";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
-		assertEquals("equal", "a", deAccentedS);
+	    assertEquals("a", deAccentedS, "equal");
 	}
 	
 	@Test
 	public void testDeAccent2() {
 		String s = "Ibáñez";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
-		assertEquals("equal", "Ibanez", deAccentedS);
+		assertEquals("Ibanez", deAccentedS, "equal");
 	}
 	
 	@Test
 	public void testDeAccent3() {
 		String s = "Guzmán";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
-		assertEquals("equal", "Guzman", deAccentedS);
-	}
+		 assertEquals("Guzman", deAccentedS, "equal");	}
 	
 	@Test
 	public void testDeAccent4() {
 		String s = "ö";
 		String deAccentedS = ReCiterStringUtil.deAccent(s);
-		assertEquals("equal", "o", deAccentedS);
+		 assertEquals("o", deAccentedS, "equal");
 	}
 
 	@Test
 	public void testStripBackslashesWithBackslashDash() {
 		String s = "Non\\-alcoholic fatty liver disease";
 		String result = ReCiterStringUtil.stripBackslashes(s);
-		assertEquals("Backslash-dash should be stripped", "Non-alcoholic fatty liver disease", result);
+		assertEquals("Non-alcoholic fatty liver disease", result, "Backslash-dash should be stripped");
 	}
 
 	@Test
 	public void testStripBackslashesNoBackslashes() {
 		String s = "Normal title without backslashes";
 		String result = ReCiterStringUtil.stripBackslashes(s);
-		assertEquals("String without backslashes should be unchanged", "Normal title without backslashes", result);
+		assertEquals("Normal title without backslashes", result, "String without backslashes should be unchanged");
 	}
 
 	@Test
 	public void testStripBackslashesNull() {
 		String result = ReCiterStringUtil.stripBackslashes(null);
-		assertEquals("Null input should return null", null, result);
+		assertNull(result, "Null input should return null");
 	}
 
 	@Test
 	public void testStripBackslashesEmpty() {
 		String result = ReCiterStringUtil.stripBackslashes("");
-		assertEquals("Empty string should return empty", "", result);
+		assertEquals("", result, "Empty string should return empty");
 	}
 }

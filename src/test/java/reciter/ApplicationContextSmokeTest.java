@@ -1,20 +1,18 @@
 package reciter;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import reciter.consumer.service.CognitoAuthService;
@@ -50,7 +48,6 @@ import software.amazon.awssdk.services.s3.S3Client;
  * asserts that springdoc (which replaced springfox) actually generates the OpenAPI
  * document for the {@code reciter} controller group.
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
@@ -96,10 +93,10 @@ public class ApplicationContextSmokeTest {
 
     @Test
     public void contextLoads() {
-        assertNotNull("Spring application context should load", context);
+        assertNotNull( context, "Spring application context should load" );
         // A concrete bean from the DynamoDB wiring path proves the persistence config
         // wired (the surface Stage 1 will rework when spring-data-dynamodb is removed).
-        assertNotNull("DynamoDbConfig should be wired", context.getBean(DynamoDbConfig.class));
+        assertNotNull( context.getBean(DynamoDbConfig.class), "DynamoDbConfig should be wired" );
     }
 
     /**
@@ -110,7 +107,7 @@ public class ApplicationContextSmokeTest {
      */
     @Test
     public void springdocApiDocsAreGenerated() throws Exception {
-        mockMvc.perform(get("/v3/api-docs/reciter"))
+    	mockMvc.perform(get("/reciter/v3/api-docs/reciter-group"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("\"openapi\"")))
                 .andExpect(content().string(containsString("/reciter/ping")))

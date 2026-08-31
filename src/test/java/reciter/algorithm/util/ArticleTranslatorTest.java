@@ -1,30 +1,30 @@
 package reciter.algorithm.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.model.article.ReCiterArticle;
 import reciter.model.pubmed.MedlineCitationCommentsCorrections;
 import reciter.model.pubmed.PubMedArticle;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ArticleTranslatorTest {
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private PubMedArticle pubmedArticle;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         when(pubmedArticle.getPubmeddata()).thenReturn(null);
         when(pubmedArticle.getMedlinecitation().getArticle().getJournal()).thenReturn(null);

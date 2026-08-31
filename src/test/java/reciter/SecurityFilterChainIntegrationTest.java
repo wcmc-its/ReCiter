@@ -1,20 +1,20 @@
 package reciter;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import reciter.consumer.service.CognitoAuthService;
@@ -52,7 +52,6 @@ import software.amazon.awssdk.services.s3.S3Client;
  * paths check that security did <i>not</i> reject the request (not 401/403); a downstream 200/400/500
  * from the mocked services is irrelevant to what the security chain is being asserted to do.
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = "spring.security.enabled=true")
 @AutoConfigureMockMvc(addFilters = true)
@@ -77,9 +76,14 @@ public class SecurityFilterChainIntegrationTest {
      * are in the environment (apiKeySetter requirement). Skip cleanly when they are absent so a
      * plain `mvn test` stays green.
      */
-    @BeforeClass
+    @BeforeAll
     public static void requireApiKeysInEnv() {
-        Assume.assumeNotNull(System.getenv("ADMIN_API_KEY"), System.getenv("CONSUMER_API_KEY"));
+		String adminApiKey = System.getenv("ADMIN_API_KEY");
+		String consumerApiKey = System.getenv("CONSUMER_API_KEY");
+
+		Assumptions.assumeTrue(
+				adminApiKey != null && !adminApiKey.isBlank() && consumerApiKey != null && !consumerApiKey.isBlank(),
+				"ADMIN_API_KEY and CONSUMER_API_KEY must be set");
     }
 
     /** WebSecurityCustomizer always ignores /reciter/ping -> reachable with no api-key. */
@@ -98,7 +102,8 @@ public class SecurityFilterChainIntegrationTest {
     public void protectedPathRequiresKey() throws Exception {
         int sc = mockMvc.perform(get("/reciter/find/all/identity"))
                         .andReturn().getResponse().getStatus();
-        org.junit.Assert.assertTrue("expected 401 or 403, got " + sc, sc == 401 || sc == 403);
+        
+		assertTrue(sc == 401 || sc == 403, "expected 401 or 403, got " + sc);
     }
 
     /**
@@ -113,8 +118,9 @@ public class SecurityFilterChainIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
                         .andReturn().getResponse().getStatus();
-        org.junit.Assert.assertNotEquals("security must not reject this permitAll path", 401, sc);
-        org.junit.Assert.assertNotEquals("security must not reject this permitAll path", 403, sc);
+        
+		assertNotEquals(401, sc, "security must not reject this permitAll path");
+		assertNotEquals(403, sc, "security must not reject this permitAll path");
     }
 
     /**
@@ -128,7 +134,8 @@ public class SecurityFilterChainIntegrationTest {
         String adminKey = System.getenv("ADMIN_API_KEY");
         int sc = mockMvc.perform(get("/reciter/find/all/identity").header("api-key", adminKey))
                         .andReturn().getResponse().getStatus();
-        org.junit.Assert.assertNotEquals("valid api-key must not be rejected by security", 401, sc);
-        org.junit.Assert.assertNotEquals("valid api-key must not be rejected by security", 403, sc);
+        
+		assertNotEquals(401, sc, "valid api-key must not be rejected by security");
+		assertNotEquals(403, sc, "valid api-key must not be rejected by security");
     }
 }

@@ -1,14 +1,14 @@
 package reciter.xml.retriever.pubmed;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.util.ReflectionTestUtils.invokeMethod;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
@@ -33,7 +33,7 @@ public class SecondInitialRetrievalStrategyTest {
 	public void singleUppercase_noAlternates_returnsNull() {
 		Identity id = identity(name("Eulho", null, "Jung"), Collections.<AuthorName>emptySet());
 		String keyword = invokeMethod(strategy, "getStrategySpecificKeyword", id);
-		assertNull("Single-uppercase first name with no alternates must not produce '()'", keyword);
+		assertNull(keyword,"Single-uppercase first name with no alternates must not produce '()'");
 	}
 
 	// Same bug with single-uppercase alternates that also fail the >=2 check
@@ -43,7 +43,7 @@ public class SecondInitialRetrievalStrategyTest {
 		alts.add(name("eulho", null, "jung"));
 		Identity id = identity(name("Eulho", null, "Jung"), alts);
 		String keyword = invokeMethod(strategy, "getStrategySpecificKeyword", id);
-		assertNull("All-lowercase variants should not produce '()'", keyword);
+		assertNull(keyword,"All-lowercase variants should not produce '()'");
 	}
 
 	// Positive case: two-uppercase first name should still produce a normal author query

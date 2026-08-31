@@ -1027,8 +1027,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 							&&
 							possibleLastName[1].length() >=4) {
 				
-				AuthorName authorName1 = new AuthorName(firstName, middleName, possibleLastName[0].trim());
-				AuthorName authorName2 = new AuthorName(firstName, middleName, possibleLastName[1].trim());
+						String safeFirstName = firstName == null ? "" : firstName;
+						AuthorName authorName1 = new AuthorName(safeFirstName, middleName, possibleLastName[0].trim());
+						AuthorName authorName2 = new AuthorName(safeFirstName, middleName, possibleLastName[1].trim());	
 				derivedAuthorNames.add(authorName1);
 				derivedAuthorNames.add(authorName2);
 			}
@@ -1039,26 +1040,25 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			// neither a space nor a period, so it never reaches this branch at all.
 			String trimmedFirstName = firstName.trim();
 			if (trimmedFirstName.length() == 2 && trimmedFirstName.endsWith(".") && middleName != null) {
-				AuthorName authorName1 = new AuthorName(middleName, null, lastName);// W.[firstName] Clay[middleName]
-																					// Bracken[lastName]
+				AuthorName authorName1 = new AuthorName(middleName, null, lastName);// W.[firstName] Clay[middleName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
-			if(firstName.length() >=3 && Character.isWhitespace(firstName.charAt(1))) {
-				//String[] possibleFirstName = identityName.getFirstName().split("\\s+", 2);
-				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(2)), middleName, lastName);//W Clay[firstName] Bracken[lastName]
+			if (firstName.length() >= 3 && Character.isWhitespace(firstName.charAt(1))) {
+				// String[] possibleFirstName = identityName.getFirstName().split("\\s+", 2);
+				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(2)), middleName, lastName);// W Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
-			}	
-			if(firstName.length() >=4 && Character.isWhitespace(firstName.charAt(1)) && firstName.charAt(2) == '.') {
-				//String[] possibleFirstName = identityName.getFirstName().split(".\\s+", 2);
-				AuthorName authorName1 = new AuthorName(Character.toString(identityName.getFirstName().charAt(3)), middleName,lastName);//W. Clay[firstName] Bracken[lastName]
+			}
+			if (firstName.length() >= 4 && Character.isWhitespace(firstName.charAt(1)) && firstName.charAt(2) == '.') {
+				// String[] possibleFirstName = identityName.getFirstName().split(".\\s+", 2);
+				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(3)), middleName, lastName);// W.Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
 		}
-		if(firstName.length() ==1 && middleName != null) {//Case for W[firstName] Clay[middleName] Bracken[lastName]
+		if (firstName != null && firstName.length() == 1 && middleName != null) {// Case for W[firstName] Clay[middleName] Bracken[lastName]
 			AuthorName authorName1 = new AuthorName(middleName, null, lastName);
 			derivedAuthorNames.add(authorName1);
 		}
-		
+
 		return derivedAuthorNames;
 	}
 }
