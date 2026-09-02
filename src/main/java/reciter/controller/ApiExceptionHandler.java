@@ -15,8 +15,9 @@ import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedExce
 /**
  * Centralized mapping of Bean Validation failures and write-once conditional-put
  * conflicts to RFC 7807 problem bodies. Scoped to these three exception types
- * only, so existing endpoints that don't use {@code @Valid} or conditional puts
- * are unaffected.
+ * only; existing endpoints declare no Bean Validation constraints and existing
+ * conditional writers catch ConditionalCheckFailedException themselves, so
+ * their behavior is unchanged.
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {

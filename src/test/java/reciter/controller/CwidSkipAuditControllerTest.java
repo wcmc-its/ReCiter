@@ -142,12 +142,11 @@ public class CwidSkipAuditControllerTest {
 				.andExpect(jsonPath("$", hasSize(0)));
 	}
 
-	// getWithWhitespaceCwidIsBadRequest was dropped: under standalone MockMvc
-	// (with and without an explicit LocalValidatorFactoryBean), a whitespace
-	// @PathVariable cwid does not trigger HandlerMethodValidationException and
-	// observably returns 200, not 400 — the built-in Spring 6.1+ method
-	// validation for annotated simple parameters appears not to be wired by
-	// StandaloneMockMvcBuilder's RequestMappingHandlerAdapter. The @NotBlank
-	// constraint is still present on the controller method and is exercised
-	// against a full ApplicationContext in production.
+	@Test
+	public void getWithWhitespaceCwidIsBadRequest() throws Exception {
+		// URI-template form so MockMvc encodes the blank to %20 and the path variable is genuinely " ".
+		mockMvc().perform(get(BASE_PATH + "/{cwid}", " ")).andExpect(status().isBadRequest());
+
+		verify(cwidSkipAuditService, never()).findByCwid(any());
+	}
 }
