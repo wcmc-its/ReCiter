@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -66,6 +65,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.api.parameters.FilterFeedbackType;
@@ -345,12 +347,13 @@ public class ReCiterController {
     })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "The ESearchResult retrieval for supplied uid is successful"),
+            @ApiResponse(responseCode = "400", description = "uid is blank"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "404", description = "No ESearchResult record exists for the supplied uid")
     })
     @GetMapping(value = "/reciter/esearchresult/{uid}", produces = "application/json")
-    public ResponseEntity<ESearchResult> retrieveESearchResultByUid(@PathVariable String uid) {
+    public ResponseEntity<ESearchResult> retrieveESearchResultByUid(@PathVariable @NotBlank String uid) {
         StopWatch stopWatch = new StopWatch("Get the ESearchResult by passing an uid");
         stopWatch.start("Get the ESearchResult by passing an uid");
         ESearchResult eSearchResult = eSearchResultService.findByUid(uid);
@@ -368,58 +371,20 @@ public class ReCiterController {
     })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the pmid map for the supplied uids"),
-            @ApiResponse(responseCode = "400", description = "The uid list was null, empty, or exceeded the maximum allowed size"),
+            @ApiResponse(responseCode = "400", description = "The uid list was empty or exceeded the maximum allowed size"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden")
     })
     @PostMapping(value = "/reciter/esearchresult/retrieved-pmids", produces = "application/json")
     @ResponseBody
-    public ResponseEntity retrieveESearchResultPmidsByUids(@RequestBody(required = false) List<String> uids) {
-        if (uids == null || uids.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a non-empty list of uids");
-        }
-        if (uids.size() > ESEARCH_RESULT_BATCH_MAX_UIDS) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The maximum number of uids allowed per request is " + ESEARCH_RESULT_BATCH_MAX_UIDS);
-        }
+    public ResponseEntity<Map<String, List<Long>>> retrieveESearchResultPmidsByUids(
+            @RequestBody @NotEmpty @Size(max = ESEARCH_RESULT_BATCH_MAX_UIDS) List<String> uids) {
         StopWatch stopWatch = new StopWatch("Retrieve the union of retrieved pmids for a batch of uids");
         stopWatch.start("Retrieve the union of retrieved pmids for a batch of uids");
-        List<ESearchResult> eSearchResults = eSearchResultService.findByUids(uids);
-        Map<String, List<Long>> pmidsByUid = projectRetrievedPmidsByUid(eSearchResults);
+        Map<String, List<Long>> pmidsByUid = eSearchResultService.findRetrievedPmidsByUids(uids);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-        return new ResponseEntity<>(pmidsByUid, HttpStatus.OK);
-    }
-
-    /**
-     * Projects a batch of ESearchResult records (as returned by
-     * {@link ESearchResultService#findByUids(List)}, one entry per requested uid,
-     * null where no record exists) into uid -&gt; sorted, deduplicated pmids -- the
-     * union of every retrieval strategy's ESearchPmid#getPmids() for that uid. A null
-     * entry (no ESearchResult record for that uid) contributes no key to the result;
-     * the caller distinguishes "no retrieved corpus" from "empty corpus" by key
-     * presence, not by an empty array. Package-private so it can be unit-tested
-     * directly without going through the controller/service layers.
-     */
-    static Map<String, List<Long>> projectRetrievedPmidsByUid(List<ESearchResult> eSearchResults) {
-        Map<String, List<Long>> pmidsByUid = new HashMap<>();
-        if (eSearchResults == null) {
-            return pmidsByUid;
-        }
-        for (ESearchResult eSearchResult : eSearchResults) {
-            if (eSearchResult == null || eSearchResult.getUid() == null) {
-                continue;
-            }
-            Set<Long> pmids = new TreeSet<>();
-            if (eSearchResult.getESearchPmids() != null) {
-                for (ESearchPmid eSearchPmid : eSearchResult.getESearchPmids()) {
-                    if (eSearchPmid != null && eSearchPmid.getPmids() != null) {
-                        pmids.addAll(eSearchPmid.getPmids());
-                    }
-                }
-            }
-            pmidsByUid.put(eSearchResult.getUid(), new ArrayList<>(pmids));
-        }
-        return pmidsByUid;
+        return ResponseEntity.ok(pmidsByUid);
     }
 
     @Operation(summary = "Bulk cleanup: delete records from all UID-keyed tables", description = "Deletes Identity, GoldStandard, AnalysisOutput, and ESearchResult records for a list of UIDs. Intended for external validation cleanup.")

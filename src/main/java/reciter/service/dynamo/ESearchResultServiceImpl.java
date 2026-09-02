@@ -1,11 +1,17 @@
 package reciter.service.dynamo;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import reciter.database.dynamodb.model.ESearchPmid;
 import reciter.database.dynamodb.model.ESearchResult;
 import reciter.database.dynamodb.repository.ESearchResultRepository;
 import reciter.service.ESearchResultService;
@@ -26,9 +32,30 @@ public class ESearchResultServiceImpl implements ESearchResultService {
         return eSearchResultRepository.findById(uid).orElseGet(() -> null);
     }
 
+    // #732: eSearchResultRepository.findAllById returns one entry per requested uid,
+    // in request order, with null in place of any uid that has no ESearchResult
+    // record. A null entry (no ESearchResult record for that uid) contributes no key
+    // to the result; the caller distinguishes "no retrieved corpus" from "empty
+    // corpus" by key presence, not by an empty array.
     @Override
-    public List<ESearchResult> findByUids(List<String> uids) {
-        return eSearchResultRepository.findAllById(uids);
+    public Map<String, List<Long>> findRetrievedPmidsByUids(List<String> uids) {
+        List<ESearchResult> eSearchResults = eSearchResultRepository.findAllById(uids);
+        Map<String, List<Long>> pmidsByUid = new HashMap<>();
+        for (ESearchResult eSearchResult : eSearchResults) {
+            if (eSearchResult == null || eSearchResult.getUid() == null) {
+                continue;
+            }
+            Set<Long> pmids = new TreeSet<>();
+            if (eSearchResult.getESearchPmids() != null) {
+                for (ESearchPmid eSearchPmid : eSearchResult.getESearchPmids()) {
+                    if (eSearchPmid != null && eSearchPmid.getPmids() != null) {
+                        pmids.addAll(eSearchPmid.getPmids());
+                    }
+                }
+            }
+            pmidsByUid.put(eSearchResult.getUid(), new ArrayList<>(pmids));
+        }
+        return pmidsByUid;
     }
 
 
