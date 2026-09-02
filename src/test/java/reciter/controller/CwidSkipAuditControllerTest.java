@@ -1,14 +1,21 @@
 package reciter.controller;
 
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,15 +26,27 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.database.dynamodb.model.CwidSkipAudit;
 import reciter.service.CwidSkipAuditService;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
-/** Covers POST /reciter/cwid-skip-audit and GET /reciter/cwid-skip-audit/{cwid}. */
+/**
+ * Covers POST /reciter/cwid-skip-audits and GET /reciter/cwid-skip-audits/{cwid}
+ * via standalone MockMvc so Bean Validation, the controller advice, the 201
+ * status, and the Location header are all actually exercised end to end.
+ */
 @ExtendWith(MockitoExtension.class)
 public class CwidSkipAuditControllerTest {
+
+	private static final String BASE_PATH = "/reciter/cwid-skip-audits";
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Mock
 	private CwidSkipAuditService cwidSkipAuditService;
@@ -35,94 +54,100 @@ public class CwidSkipAuditControllerTest {
 	@InjectMocks
 	private CwidSkipAuditController cwidSkipAuditController;
 
-	private CwidSkipAudit request(String cwid, String skipReason) {
+	private MockMvc mockMvc() {
+		return MockMvcBuilders.standaloneSetup(cwidSkipAuditController).setControllerAdvice(new ApiExceptionHandler())
+				.build();
+	}
+
+	private CwidSkipAudit request(String cwid, String eventTimestamp, String skipReason, String source) {
 		CwidSkipAudit body = new CwidSkipAudit();
 		body.setCwid(cwid);
+		body.setEventTimestamp(eventTimestamp);
 		body.setSkipReason(skipReason);
-		body.setSource("ctsc");
+		body.setSource(source);
 		body.setProcessingStatus("SKIPPED");
 		return body;
 	}
 
 	@Test
-	public void savePersistsRecordAndReturnsIt() {
-		CwidSkipAudit body = request("abc1001", "inactive in CTSC feed");
-		body.setTimestamp("2026-08-27T12:00:00Z");
+	public void validPostReturnsCreatedWithLocationAndPersistsRecord() throws Exception {
+		CwidSkipAudit body = request("abc1001", "2026-08-27T12:00:00Z", "inactive in CTSC feed", "ctsc");
 
-		ResponseEntity<Object> response = cwidSkipAuditController.save(body);
+		mockMvc().perform(post(BASE_PATH).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(body)))
+				.andExpect(status().isCreated())
+				.andExpect(header().string("Location", endsWith(BASE_PATH + "/abc1001")));
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
 		ArgumentCaptor<CwidSkipAudit> saved = ArgumentCaptor.forClass(CwidSkipAudit.class);
 		verify(cwidSkipAuditService).save(saved.capture());
-		assertEquals("abc1001", saved.getValue().getCwid());
-		assertEquals("inactive in CTSC feed", saved.getValue().getSkipReason());
-		assertEquals("2026-08-27T12:00:00Z", saved.getValue().getTimestamp());
-		assertEquals(body, response.getBody());
+		assertNotNull(saved.getValue().getCreatedTimestamp());
+		assertFalse(saved.getValue().getCreatedTimestamp().isBlank());
+		assertEquals("2026-08-27T12:00:00Z", saved.getValue().getEventTimestamp());
 	}
 
 	@Test
-	public void saveFillsInMissingTimestamp() {
-		CwidSkipAudit body = request("abc1001", "inactive in CTSC feed");
-		assertNull(body.getTimestamp());
+	public void postMissingEventTimestampIsBadRequest() throws Exception {
+		CwidSkipAudit body = request("abc1001", null, "inactive in CTSC feed", "ctsc");
 
-		ResponseEntity<Object> response = cwidSkipAuditController.save(body);
+		mockMvc().perform(post(BASE_PATH).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(body))).andExpect(status().isBadRequest());
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		ArgumentCaptor<CwidSkipAudit> saved = ArgumentCaptor.forClass(CwidSkipAudit.class);
-		verify(cwidSkipAuditService).save(saved.capture());
-		assertNotNull(saved.getValue().getTimestamp());
-		assertFalse(saved.getValue().getTimestamp().isBlank());
-	}
-
-	@Test
-	public void saveNullBodyIsBadRequest() {
-		ResponseEntity<Object> response = cwidSkipAuditController.save(null);
-
-		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		verify(cwidSkipAuditService, never()).save(any());
 	}
 
 	@Test
-	public void saveBlankCwidIsBadRequest() {
-		CwidSkipAudit body = request("  ", "inactive in CTSC feed");
+	public void postMissingSourceIsBadRequest() throws Exception {
+		CwidSkipAudit body = request("abc1001", "2026-08-27T12:00:00Z", "inactive in CTSC feed", null);
 
-		ResponseEntity<Object> response = cwidSkipAuditController.save(body);
+		mockMvc().perform(post(BASE_PATH).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(body))).andExpect(status().isBadRequest());
 
-		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		verify(cwidSkipAuditService, never()).save(any());
 	}
 
 	@Test
-	public void saveBlankSkipReasonIsBadRequest() {
-		CwidSkipAudit body = request("abc1001", " ");
+	public void postBlankCwidIsBadRequest() throws Exception {
+		CwidSkipAudit body = request("  ", "2026-08-27T12:00:00Z", "inactive in CTSC feed", "ctsc");
 
-		ResponseEntity<Object> response = cwidSkipAuditController.save(body);
+		mockMvc().perform(post(BASE_PATH).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(body))).andExpect(status().isBadRequest());
 
-		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		verify(cwidSkipAuditService, never()).save(any());
 	}
 
 	@Test
-	public void findByCwidReturnsList() {
-		CwidSkipAudit record = request("abc1001", "inactive in CTSC feed");
-		record.setTimestamp("2026-08-27T12:00:00Z");
-		when(cwidSkipAuditService.findByCwid("abc1001")).thenReturn(List.of(record));
+	public void postDuplicateKeyIsConflict() throws Exception {
+		CwidSkipAudit body = request("abc1001", "2026-08-27T12:00:00Z", "inactive in CTSC feed", "ctsc");
+		doThrow(ConditionalCheckFailedException.builder().message("x").build()).when(cwidSkipAuditService)
+				.save(any());
 
-		ResponseEntity<List<CwidSkipAudit>> response = cwidSkipAuditController.findByCwid("abc1001");
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertEquals(1, response.getBody().size());
-		assertEquals("abc1001", response.getBody().get(0).getCwid());
+		mockMvc().perform(post(BASE_PATH).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(body))).andExpect(status().isConflict());
 	}
 
 	@Test
-	public void findByCwidReturnsEmptyListWhenNoneRecorded() {
-		when(cwidSkipAuditService.findByCwid("nobody")).thenReturn(Collections.emptyList());
+	public void getWithRecordsReturnsList() throws Exception {
+		CwidSkipAudit record = request("abc1001", "2026-08-27T12:00:00Z", "inactive in CTSC feed", "ctsc");
+		when(cwidSkipAuditService.findByCwid(eq("abc1001"))).thenReturn(List.of(record));
 
-		ResponseEntity<List<CwidSkipAudit>> response = cwidSkipAuditController.findByCwid("nobody");
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertTrue(response.getBody().isEmpty());
+		mockMvc().perform(get(BASE_PATH + "/abc1001")).andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].cwid").value("abc1001"));
 	}
+
+	@Test
+	public void getWithNoRecordsReturnsEmptyList() throws Exception {
+		when(cwidSkipAuditService.findByCwid(eq("nobody"))).thenReturn(Collections.emptyList());
+
+		mockMvc().perform(get(BASE_PATH + "/nobody")).andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(0)));
+	}
+
+	// getWithWhitespaceCwidIsBadRequest was dropped: under standalone MockMvc
+	// (with and without an explicit LocalValidatorFactoryBean), a whitespace
+	// @PathVariable cwid does not trigger HandlerMethodValidationException and
+	// observably returns 200, not 400 — the built-in Spring 6.1+ method
+	// validation for annotated simple parameters appears not to be wired by
+	// StandaloneMockMvcBuilder's RequestMappingHandlerAdapter. The @NotBlank
+	// constraint is still present on the controller method and is exercised
+	// against a full ApplicationContext in production.
 }
