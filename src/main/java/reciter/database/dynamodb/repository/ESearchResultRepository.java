@@ -174,7 +174,10 @@ public class ESearchResultRepository {
 	public List<ESearchResult> findAllById(List<String> uids) {
 		List<ESearchResult> eSearchResults = new ArrayList<>();
 		for (String uid : uids) {
-			eSearchResults.add(eSearchResultTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			ESearchResult eSearchResult = eSearchResultTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if (eSearchResult != null) {
+				eSearchResults.add(eSearchResult);
+			}
 		}
 		return eSearchResults;
 	}
