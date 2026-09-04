@@ -127,8 +127,11 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 					// path retrieveArticlesByUid has already deleted the prior ESearchResult, so
 					// scoring that empty candidate set overwrites the Analysis row with zero
 					// features and answers 200 — the May 3-4 shape (#720). Record it as a failure.
-					// The incremental path needs no equivalent: #691 rolls its watermark back and
-					// leaves the prior ESearchResult in place.
+					// The incremental path is protected differently: the engine's per-strategy
+					// union when a run hit failures (#737, upsertedStrategyEntry) stops a
+					// partial batch from shrinking the stored ESearchResult entry, and #691's
+					// watermark rollback keeps the next incremental run from treating the gap
+					// as already covered.
 					if (RetrievalErrorTracker.hadError()) {
 						slf4jLogger.error("Retrieval for uid=[" + identity.getUid()
 								+ "] finished with swallowed PubMed failures; treating the run as failed.");

@@ -444,6 +444,7 @@ public class ReCiterController {
             } else if(refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS
             		||
             		eSearchResult == null){
+                ESearchResult priorESearchResult = eSearchResult;
                 if (eSearchResult != null)
                     eSearchResultService.delete(uid.trim());
 
@@ -455,12 +456,14 @@ public class ReCiterController {
                     // false = a retrieval worker crashed (a successful run that found nothing
                     // still returns true), so the candidate set must not be treated as complete.
                     if (!aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS)) {
+                        restoreESearchResultAfterFailedSweep(uid.trim(), priorESearchResult);
                         stopWatch.stop();
                         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                     }
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+ e);
+                    restoreESearchResultAfterFailedSweep(uid.trim(), priorESearchResult);
                     stopWatch.stop();
                     log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
@@ -553,6 +556,31 @@ public class ReCiterController {
     /** Convenience overload for callers that do not opt into full-sweep escalation. */
     public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
         return retrieveArticlesByUid(uid, refreshFlag, null);
+    }
+
+    /**
+     * Restore the ESearchResult record this uid had before an ALL_PUBLICATIONS sweep
+     * that then failed (#737). The engine has already upserted partial per-strategy
+     * entries into DynamoDB before this method's caller learns the sweep failed (the
+     * #720 gate fires only after retrieveArticlesByDateRange returns) — leaving those
+     * entries in place means the next cache-only or incremental run rebuilds the
+     * Analysis candidate set from the partial data. With no prior record (a first-ever
+     * retrieval), deleting instead of restoring leaves the uid with no ESearchResult at
+     * all, so the next run auto-upgrades to a full sweep (initializeEngineParameters
+     * :1296-1299) rather than being treated as ONLY_NEWLY_ADDED against a partial base.
+     */
+    private void restoreESearchResultAfterFailedSweep(String uid, ESearchResult prior) {
+        try {
+            if (prior != null) {
+                eSearchResultService.save(prior);
+                log.warn("uid=[{}] full sweep failed; restored the pre-sweep ESearchResult so partial per-strategy entries written before the failure don't shrink the next run's Analysis (#737)", uid);
+            } else {
+                eSearchResultService.delete(uid);
+                log.warn("uid=[{}] full sweep failed with no prior ESearchResult; deleted the partial one so the next run auto-upgrades to a full sweep (#737)", uid);
+            }
+        } catch (Exception e) {
+            log.error("uid=[{}] failed to restore ESearchResult after a failed full sweep (#737): {}", uid, e.getMessage(), e);
+        }
     }
 
     /**
