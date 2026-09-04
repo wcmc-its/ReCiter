@@ -171,11 +171,12 @@ public class ESearchResultRepository {
 		return count;
 	}
 
-	public List<ESearchResult> findAllById(List<String> uids) {
-		List<ESearchResult> eSearchResults = new ArrayList<>();
-		for (String uid : uids) {
-			eSearchResults.add(eSearchResultTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+	public List<ESearchResult> findAllById(List<String> uids) {List<ESearchResult> eSearchResults = new ArrayList<>();
+	for (String uid : uids) {
+		ESearchResult eSearchResult = eSearchResultTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+		if(eSearchResult != null) {
+			eSearchResults.add(eSearchResult);
 		}
-		return eSearchResults;
 	}
+	return eSearchResults;}
 }
