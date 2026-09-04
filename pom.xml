@@ -250,6 +250,15 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 		</dependency>
+		<!-- Surefire selects the JUnit Platform provider, which cannot discover JUnit 4
+		     tests on its own. Without the vintage engine the 16 test classes still on
+		     org.junit.Test compile but never run, and report as neither passed nor
+		     skipped. See #721. -->
+		<dependency>
+			<groupId>org.junit.vintage</groupId>
+			<artifactId>junit-vintage-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -338,7 +347,7 @@
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-identity-model</artifactId>
-			<version>3.0.2</version>
+			<version>3.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
@@ -348,7 +357,7 @@
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-dynamodb-model</artifactId>
-			<version>3.0.5</version>
+			<version>3.0.8</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.auth0/java-jwt -->

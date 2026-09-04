@@ -279,10 +279,13 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     	// existing-state snapshot from the attempt that actually committed so the diff
     	// reflects the true transition. Retries never reach here => no duplicate FeedbackLog.
     	if (goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE) {
+    		// goldStandard holds the merged lists the committed save persisted — the
+    		// final state the PENDING diff must run against.
     		recordFeedbackLogAndArticleProvenance(
     				goldStandard.getUid(),
     				incomingAcceptedPmids, incomingRejectedPmids,
     				committedExistingAccepted, committedExistingRejected,
+    				goldStandard.getKnownPmids(), goldStandard.getRejectedPmids(),
     				entryPath, curatedBy);
     	}
 
@@ -392,9 +395,12 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     					}
     					// Phase 33-02: per-uid FeedbackLog + ArticleProvenance writes for the diff.
     					// Bulk/list (PUT) path carries no interactive curator id -> curatedBy = 0.
+    					// goldStandardNew holds the MERGED lists at this point.
     					recordFeedbackLogAndArticleProvenance(uid,
     							batchIncomingAccepted, batchIncomingRejected,
-    							existingAccepted, existingRejected, entryPath,0);
+    							existingAccepted, existingRejected,
+    							goldStandardNew.getKnownPmids(), goldStandardNew.getRejectedPmids(),
+    							entryPath,0);
     				}
     			}
     			dynamoDbGoldStandardRepository.saveAll(goldStandard);
@@ -489,6 +495,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	private void recordFeedbackLogAndArticleProvenance(String uid,
 			List<Long> incomingAccepted, List<Long> incomingRejected,
 			List<Long> existingAccepted, List<Long> existingRejected,
+			List<Long> finalAccepted, List<Long> finalRejected,
 			EntryPath entryPath,int curatedBy) {
 		long actionEpoch = System.currentTimeMillis() / 1000L;
 		Set<Long> incomingAccSet = new HashSet<>(incomingAccepted);
@@ -502,12 +509,24 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		Set<Long> newlyRejected = new HashSet<>(incomingRejSet);
 		newlyRejected.removeAll(existingRejSet);
 
+		// PENDING = pmids that actually LEFT the gold standard, so the diff must run
+		// against the FINAL merged state, not the incoming request body. UPDATE has
+		// merge semantics: a caller sending a partial set (single-pmid accepts, the
+		// daily batch writer) is not asserting the rest of the set left. Diffing
+		// against incoming marked every other known pmid PENDING on every such call —
+		// flooding FeedbackLog with bogus rows (~1.17M rows, 85% of the table, between
+		// 2026-05-05 and 2026-08-20). Under a pure merge this set is empty; it only
+		// fires if a caller path genuinely removes pmids.
 		Set<Long> previouslyClassified = new HashSet<>();
 		previouslyClassified.addAll(existingAccSet);
 		previouslyClassified.addAll(existingRejSet);
 		Set<Long> stillClassified = new HashSet<>();
-		stillClassified.addAll(incomingAccSet);
-		stillClassified.addAll(incomingRejSet);
+		if (finalAccepted != null) {
+			stillClassified.addAll(finalAccepted);
+		}
+		if (finalRejected != null) {
+			stillClassified.addAll(finalRejected);
+		}
 		Set<Long> newlyPending = new HashSet<>(previouslyClassified);
 		newlyPending.removeAll(stillClassified);
 

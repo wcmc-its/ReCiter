@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -60,6 +61,7 @@ import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.ReCiterStringUtil;
 import reciter.xml.retriever.pubmed.AbstractRetrievalStrategy.RetrievalResult;
 import reciter.xml.retriever.pubmed.PubMedQueryType;
+import reciter.xml.retriever.pubmed.RetrievalErrorTracker;
 
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
@@ -98,14 +100,16 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		private final Date startDate;
 		private final Date endDate;
 		private final RetrievalRefreshFlag refreshFlag;
-		
-		public AsyncRetrievalEngine(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) {
+		private final Set<String> failedUids;
+
+		public AsyncRetrievalEngine(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag, Set<String> failedUids) {
 			this.identity = identity;
 			this.startDate = startDate;
 			this.endDate = endDate;
 			this.refreshFlag = refreshFlag;
+			this.failedUids = failedUids;
 		}
-		
+
 		@Override
 		public void run() {
 			try {
@@ -116,13 +120,38 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				if(this.refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
 					slf4jLogger.info("Starting full retrieval for uid=[" + identity.getUid() + "].");
 					retrieveData(identity, this.refreshFlag);
+					// The strategies SWALLOW a PubMed tool 500 / NCBI 429: AbstractRetrievalStrategy
+					// and PubMedArticleRetriever catch, mark the thread-local tracker, and return
+					// empty rather than throwing. Nothing reaches the catch below, so a tool-wide
+					// outage looks to the gate like a clean run that simply found nothing. On THIS
+					// path retrieveArticlesByUid has already deleted the prior ESearchResult, so
+					// scoring that empty candidate set overwrites the Analysis row with zero
+					// features and answers 200 — the May 3-4 shape (#720). Record it as a failure.
+					// The incremental path needs no equivalent: #691 rolls its watermark back and
+					// leaves the prior ESearchResult in place.
+					if (RetrievalErrorTracker.hadError()) {
+						slf4jLogger.error("Retrieval for uid=[" + identity.getUid()
+								+ "] finished with swallowed PubMed failures; treating the run as failed.");
+						failedUids.add(identity.getUid());
+					}
 				} else if(this.refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
 					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=["
 						+ startDate + "] endDate=[" + endDate + "].");
 					retrieveDataByDateRange(identity, startDate, endDate, this.refreshFlag);
 				}
-			} catch (IOException e) {
-				slf4jLogger.error("Unabled to retrieve. " + identity.getUid(), e);
+			} catch (Throwable t) {
+				// ForkJoinPool.execute() stores a task's throwable without ever rethrowing it to
+				// an uncaught-exception handler, so an unrecorded crash here is invisible and the
+				// caller would score an empty candidate set as if retrieval had succeeded. Catch
+				// Throwable, not Exception: an Error (OOM, StackOverflowError, NoClassDefFoundError)
+				// must also mark this uid as failed, or the false-return gate never fires. Record
+				// and log FIRST, then rethrow Errors to preserve JVM Error semantics — the pool
+				// swallows the rethrow, but the uid is already recorded.
+				slf4jLogger.error("Unabled to retrieve. " + identity.getUid(), t);
+				failedUids.add(identity.getUid());
+				if (t instanceof Error) {
+					throw (Error) t;
+				}
 			}
 		}
 	}
@@ -130,8 +159,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	@Override
 	public boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
 		ExecutorService executorService = Executors.newWorkStealingPool(15);//Executors.newFixedThreadPool(10);
+		Set<String> failedUids = ConcurrentHashMap.newKeySet();
 		for (Identity identity : identities) {
-			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate, refreshFlag));
+			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate, refreshFlag, failedUids));
 		}
 		executorService.shutdown();
 		try {
@@ -140,18 +170,31 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			slf4jLogger.error("Thread interrupted while waiting for retrieval to finish.");
 			return false;
 		}
+		if (!failedUids.isEmpty()) {
+			slf4jLogger.error("Retrieval crashed for uids=" + failedUids + ".");
+			return false;
+		}
 		return true;
 	}
 	
-	private Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
+	/** Package-private, not private, so tests can override it to simulate a worker Error
+	 *  or a swallowed strategy failure. */
+	Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
 		slf4jLogger.info("Coming into retrieveData section without date range****");
 		Set<Long> uniquePmids = new HashSet<>();
-		
+
 		QueryType queryType = null;
-		
+
 		//eSearchResultService.delete();
-		
+
 		String uid = identity.getUid();
+
+		// Clean-completion tracking (#696): clear the per-run PubMed-failure flag so the
+		// lastFullSweep stamp at the end of this method reflects THIS run only. This is the
+		// RetrievalErrorTracker discipline #691 established for retrieveDataByDateRange,
+		// extended to the full-sweep path — which is the path both manual and escalated
+		// ALL_PUBLICATIONS requests take.
+		RetrievalErrorTracker.reset();
 
 		// Phase 1 provenance tracking state
 		Set<Long> nonGsStrategyPmids = new HashSet<>();
@@ -476,9 +519,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			scopusService.save(scopusArticlesByDoi);
 		}
 		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
+
+		// Record the completed full sweep (#696) — only if no strategy entered the
+		// error-swallow path during this run. A strategy that threw outright never
+		// reaches this line, which is the same outcome: no stamp, person stays due.
+		stampLastFullSweepIfClean(uid, refreshFlag);
+
 		return uniquePmids;
 	}
-	
+
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
 		slf4jLogger.info("Coming in retrieveData section with date range****");
 		Set<Long> uniquePmids = new HashSet<>();
@@ -490,6 +539,13 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
 		Set<Long> existingPmids = new HashSet<>();
 		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
+		// Watermark guard (#689): remember where retrievalDate stood before this run and clear the
+		// per-run error flag. savePubMedArticles advances retrievalDate to now() as strategies run;
+		// if any strategy's PubMed call fails below, we roll it back at the end so the next
+		// ONLY_NEWLY_ADDED run re-covers this window instead of skipping past a silently-missed day.
+		java.time.Instant preRunRetrievalDate = existingESearch != null ? existingESearch.getRetrievalDate() : null;
+		RetrievalErrorTracker.reset();
+		try { // body left un-reindented to keep the diff reviewable; the finally rolls the watermark back
 		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
 			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
 				if (esp.getPmids() != null) {
@@ -780,7 +836,30 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			scopusService.save(scopusArticlesByDoi);
 		}
 		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
-		
+		} finally {
+			// Watermark guard (#689): ALWAYS runs — even if a strategy threw after savePubMedArticles
+			// already advanced retrievalDate — so a failed run never leaves the watermark skipped past
+			// a silently-dropped window. This guard covers the ONLY_NEWLY_ADDED path only:
+			// ALL_PUBLICATIONS runs — manual, escalated (#696), or auto-upgraded — never route here
+			// (AsyncRetrievalEngine dispatches them to retrieveData), so this rollback does NOT protect
+			// them. Their failure handling lives in retrieveData instead: a sweep that hit the swallow
+			// path skips the lastFullSweep stamp, so the person stays due and the sweep is retried.
+			// The rollback is self-guarded so a DynamoDB hiccup here cannot mask the original exception.
+			if (RetrievalErrorTracker.hadError() && preRunRetrievalDate != null) {
+				try {
+					reciter.database.dynamodb.model.ESearchResult esr = eSearchResultService.findByUid(uid);
+					if (esr != null) {
+						esr.setRetrievalDate(preRunRetrievalDate);
+						eSearchResultService.save(esr);
+						slf4jLogger.warn("Retrieval for uid=[{}] hit PubMed failures; rolled retrievalDate back to [{}] "
+								+ "so the next ONLY_NEWLY_ADDED run re-covers this window.", uid, preRunRetrievalDate);
+					}
+				} catch (Exception rollbackEx) {
+					slf4jLogger.error("Failed to roll retrievalDate back for uid=[{}]", uid, rollbackEx);
+				}
+			}
+		}
+
 	}
 	
 	
@@ -972,47 +1051,61 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	 * @param identityName
 	 * @return
 	 */
-	private Set<AuthorName> deriveAdditionalName(AuthorName identityName) {
-		
+	Set<AuthorName> deriveAdditionalName(AuthorName identityName) {
+
 		Set<AuthorName> derivedAuthorNames = new HashSet<AuthorName>();
-		if(identityName.getLastName().contains(" ") || identityName.getLastName().contains(".")) {
-			String[] possibleLastName = identityName.getLastName().split("\\s+|-", 2);
-			if(possibleLastName[0].length() >=4 
+		// AuthorName's constructor takes substring(0, 1) of any non-null middleName, so a
+		// blank one (an Identity primaryName can carry middleName "") must behave exactly
+		// like null — both as a constructor argument and as a first-name substitute below.
+		String middleName = identityName.getMiddleName();
+		if(middleName != null && middleName.isBlank()) {
+			middleName = null;
+		}
+		// A malformed Identity can carry a null first or last name (see #715/#717), and an
+		// unchecked throw here dies inside a retrieval worker — the swallowed-crash shape
+		// this PR exists to stop. Read each once, guard each once.
+		String lastName = identityName.getLastName();
+		String firstName = identityName.getFirstName();
+		if(lastName != null && !lastName.isBlank()
+				&& (lastName.contains(" ") || lastName.contains("."))) {
+			// The pattern splits on whitespace and hyphens, never on a period, so a
+			// period-without-space surname ("St.John") enters this branch but splits into a
+			// single element. Require both halves before indexing either one.
+			String[] possibleLastName = lastName.split("\\s+|-", 2);
+			if(possibleLastName.length > 1
+					&&
+					possibleLastName[0].length() >=4
 					&&
 					possibleLastName[1].length() >=4) {
-				
-				String middleName = null;
-				if(identityName.getMiddleName() != null) {
-					middleName = identityName.getMiddleName();
-				}
-				AuthorName authorName1 = new AuthorName(identityName.getFirstName(), middleName, possibleLastName[0].trim());
-				AuthorName authorName2 = new AuthorName(identityName.getFirstName(), middleName, possibleLastName[1].trim());
+
+				AuthorName authorName1 = new AuthorName(firstName, middleName, possibleLastName[0].trim());
+				AuthorName authorName2 = new AuthorName(firstName, middleName, possibleLastName[1].trim());
 				derivedAuthorNames.add(authorName1);
 				derivedAuthorNames.add(authorName2);
 			}
 		}
-		if(identityName.getFirstName().contains(" ") || identityName.getFirstName().contains(".")) {
-			String middleName = null;
-			if(identityName.getMiddleName() != null) {
-				middleName = identityName.getMiddleName();
-			}
-			if(identityName.getFirstName().length() ==2 && identityName.getFirstName().trim().endsWith(".") && middleName != null) {
-				AuthorName authorName1 = new AuthorName(middleName, null, identityName.getLastName());//W.[firstName] Clay[middleName] Bracken[lastName]
+		if(firstName != null && (firstName.contains(" ") || firstName.contains("."))) {
+			// Measure the trimmed value: "W. " is the same initial as "W.", which an
+			// untrimmed length check silently skips. A genuine one-letter first name has
+			// neither a space nor a period, so it never reaches this branch at all.
+			String trimmedFirstName = firstName.trim();
+			if(trimmedFirstName.length() ==2 && trimmedFirstName.endsWith(".") && middleName != null) {
+				AuthorName authorName1 = new AuthorName(middleName, null, lastName);//W.[firstName] Clay[middleName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
-			if(identityName.getFirstName().length() >=3 && Character.isWhitespace(identityName.getFirstName().charAt(1))) {
+			if(firstName.length() >=3 && Character.isWhitespace(firstName.charAt(1))) {
 				//String[] possibleFirstName = identityName.getFirstName().split("\\s+", 2);
-				AuthorName authorName1 = new AuthorName(Character.toString(identityName.getFirstName().charAt(2)), middleName, identityName.getLastName());//W Clay[firstName] Bracken[lastName]
+				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(2)), middleName, lastName);//W Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}	
-			if(identityName.getFirstName().length() >=4 && Character.isWhitespace(identityName.getFirstName().charAt(1)) && identityName.getFirstName().charAt(2) == '.') {
+			if(firstName.length() >=4 && Character.isWhitespace(firstName.charAt(1)) && firstName.charAt(2) == '.') {
 				//String[] possibleFirstName = identityName.getFirstName().split(".\\s+", 2);
-				AuthorName authorName1 = new AuthorName(Character.toString(identityName.getFirstName().charAt(3)), middleName, identityName.getLastName());//W. Clay[firstName] Bracken[lastName]
+				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(3)), middleName, lastName);//W. Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
 		}
-		if(identityName.getFirstName().length() ==1 && identityName.getMiddleName() != null) {//Case for W[firstName] Clay[middleName] Bracken[lastName]
-			AuthorName authorName1 = new AuthorName(identityName.getMiddleName(), null, identityName.getLastName());
+		if(firstName != null && firstName.length() ==1 && middleName != null) {//Case for W[firstName] Clay[middleName] Bracken[lastName]
+			AuthorName authorName1 = new AuthorName(middleName, null, lastName);
 			derivedAuthorNames.add(authorName1);
 		}
 		

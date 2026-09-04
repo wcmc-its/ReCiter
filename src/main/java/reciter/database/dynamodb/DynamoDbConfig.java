@@ -71,7 +71,7 @@ public class DynamoDbConfig {
 	private boolean isDynamoDbLocal;
 
 	@Value("${aws.dynamodb.settings.region}")
-	private String dyanmodbRegion;
+	private String dynamodbRegion;
 
 	@Value("${aws.dynamodb.settings.table.readcapacityunits}")
 	private Long READ_CAPACITY_UNITS;
@@ -121,7 +121,7 @@ public class DynamoDbConfig {
 			}
 
 		} else {
-			if (StringUtils.isEmpty(dyanmodbRegion)) {
+			if (StringUtils.isEmpty(dynamodbRegion)) {
 				throw new BeanCreationException(
 						"""
 						The aws.dynamodb.settings.region is not set in application.propeties file. 
@@ -130,7 +130,7 @@ public class DynamoDbConfig {
 						""");
 			}
 
-			dynamoDbClient = DynamoDbClient.builder().region(Region.of(dyanmodbRegion))
+			dynamoDbClient = DynamoDbClient.builder().region(Region.of(dynamodbRegion))
 					.credentialsProvider(DefaultCredentialsProvider.create()).build();
 
 		}
