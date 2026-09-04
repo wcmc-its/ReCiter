@@ -121,11 +121,14 @@ public class DynamoDbGoldStandardRepository {
 	public List<GoldStandard> findAllById(List<String> uids) {
 		List<GoldStandard> goldStandards = new ArrayList<>();
 		for (String uid : uids) {
-			goldStandards.add(goldStandardTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			GoldStandard goldStandard = goldStandardTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if (goldStandard != null) {
+				goldStandards.add(goldStandard);
+			}
 		}
 		return goldStandards;
 	}
-	
+
 	 /**
      * Delete GoldStandard by UID.
      *

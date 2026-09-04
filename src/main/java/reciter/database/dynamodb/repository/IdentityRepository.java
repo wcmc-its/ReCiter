@@ -58,7 +58,10 @@ public class IdentityRepository {
 	public List<Identity> findAllById(List<String> uids) {
 		List<Identity> identities = new ArrayList<>();
 		for (String uid : uids) {
-			identities.add(identityTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			Identity identity = identityTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if(identity != null) {
+				identities.add(identity);
+			}
 		}
 		return identities;
 	}
