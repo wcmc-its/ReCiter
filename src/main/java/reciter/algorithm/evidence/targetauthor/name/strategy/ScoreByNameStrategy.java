@@ -270,7 +270,45 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		}
 	}
 	
-	/** This function matches and scores first name and middle name where middle name is null in identity 
+	/**
+	 * Label a first-name match in which the registered (identity) first name is a
+	 * left-anchored prefix of the article first name, rather than equal to it.
+	 *
+	 * <p>Before issue #746 both callers of this helper reported {@code full-exact}, so a
+	 * byline of "Shuofei" was indistinguishable from a genuine exact match against a
+	 * registered "Shuo". The compensating {@code identitySubstringOfArticle-firstName}
+	 * modifier lives in a different feature, so nothing downstream could tell the two
+	 * apart. Two honest buckets replace it:</p>
+	 * <ul>
+	 *   <li>{@code inferredInitials-prefix} when the registered first name sanitized down
+	 *       to a single letter ('M.' &rarr; M matching "Mayra"). That is an initial match;
+	 *       {@code inferredInitials-exact} (0.441) is the semantically correct score, but
+	 *       moving it there is a numeric change and is deliberately deferred.</li>
+	 *   <li>{@code full-prefix} otherwise (Paul &rarr; PaulJames, Shuo &rarr; Shuofei).</li>
+	 * </ul>
+	 *
+	 * <p>Both scores default to the previous {@code full-exact} value (1.852) so this
+	 * relabel moves no model input. Retuning either is a one-line properties change that
+	 * requires a retrain plus an evaluation sweep, because the type string is itself
+	 * consumed as a numeric feature ({@code nameMatchTypeOrdinal}) by the scoring Lambda.</p>
+	 *
+	 * <p>This helper only assigns the first-name type and score. Callers keep full control
+	 * of the middle-name type/score and the modifier, which are unchanged.</p>
+	 *
+	 * @param identityAuthor the sanitized identity name whose first name matched
+	 * @param authorNameEvidence evidence object to populate
+	 */
+	private void assignFirstNamePrefixEvidence(AuthorName identityAuthor, AuthorNameEvidence authorNameEvidence) {
+		if(identityAuthor.getFirstName() != null && identityAuthor.getFirstName().length() == 1) {
+			authorNameEvidence.setNameMatchFirstType("inferredInitials-prefix");
+			authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeInferredInitialsPrefixScore());
+		} else {
+			authorNameEvidence.setNameMatchFirstType("full-prefix");
+			authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeFullPrefixScore());
+		}
+	}
+
+	/** This function matches and scores first name and middle name where middle name is null in identity
 	 * All of the matching that follows should be evaluated as a series of ifElse statements (once we get a match, we stop). The goal is to match as early on in the process as possible.
 	 * 	Matching should be case insensitive, however, we will pull out some characters below based on case.
 	*/
@@ -327,15 +365,20 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					articleAuthorName.getFirstName().toLowerCase().startsWith(identityAuthor.getFirstName().toLowerCase())) { 
 				//Attempt match where identity.firstName is a left-anchored substring of article.firstName
 				//Example: Paul (identity.firstName) = PaulJames (article.firstName)
-				authorNameEvidence.setNameMatchFirstType("full-exact");
-				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeFullExactScore());
+				//This is NOT an exact match. The same predicate also fires for
+				//Shuo (identity.firstName) = Shuofei (article.firstName), a different given
+				//name, and for a registered name that sanitized down to a single initial:
+				//'M.' -> M (identity.firstName) = Mayra (article.firstName). See issue #746.
+				//The predicate is untouched; only the reported type is split, so exactly the
+				//same articles reach exactly the same score.
+				assignFirstNamePrefixEvidence(identityAuthor, authorNameEvidence);
 				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstName");
 				authorNameEvidence.setNameMatchModifierScore(ReCiterArticleScorer.strategyParameters.getNameMatchModifierIdentitySubstringOfArticleFirstnameScore());
-			} else if(identityAuthor.getFirstName() != null 
-					&& 
-					identityAuthor.getFirstName().toLowerCase().startsWith(articleAuthorName.getFirstName().toLowerCase())) { 
+			} else if(identityAuthor.getFirstName() != null
+					&&
+					identityAuthor.getFirstName().toLowerCase().startsWith(articleAuthorName.getFirstName().toLowerCase())) {
 				//Attempt match where article.firstName is a left-anchored substring of identity.firstName
 				//Example: Paul (identity.firstName) = P (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
@@ -624,26 +667,31 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					articleAuthorName.getFirstName().toLowerCase().matches(identityAuthor.getFirstName().toLowerCase() + "(.*)")) {
 				//Attempt match where identity.firstName + "%" = article.firstName
 				//Example: Robert (identity.firstName) = RobertR (article.firstName)
-				authorNameEvidence.setNameMatchFirstType("full-exact");
-				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeFullExactScore());
+				//Same over-claim as the substring branch in scoreFirstNameMiddleNameNull:
+				//this is a prefix, not an exact match. See issue #746.
+				assignFirstNamePrefixEvidence(identityAuthor, authorNameEvidence);
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeNoMatchScore());
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstName");
 				authorNameEvidence.setNameMatchModifierScore(ReCiterArticleScorer.strategyParameters.getNameMatchModifierIdentitySubstringOfArticleFirstnameScore());
-			} else if(identityAuthor.getFirstName() != null 
-					&& 
-					articleAuthorName.getFirstName() != null  
-					&& 
+			} else if(identityAuthor.getFirstName() != null
+					&&
+					articleAuthorName.getFirstName() != null
+					&&
 					articleAuthorName.getFirstName().toLowerCase().matches("(.*)" + identityAuthor.getFirstName().toLowerCase())) {
 				//Attempt match where "%" + identity.firstName = article.firstName
 				//Example: Cary (identity.firstName) = MCary (article.firstName)
-				authorNameEvidence.setNameMatchFirstType("full-exact");
-				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeFullExactScore());
+				//A right-anchored suffix is not an exact match either. See issue #746.
+				//Unlike the prefix direction this bucket is NOT split by identity name
+				//length: a trailing single letter is a coincidence, not an inferred
+				//initial, so there is no initials bucket it could honestly move to.
+				authorNameEvidence.setNameMatchFirstType("full-suffix");
+				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeFullSuffixScore());
 				authorNameEvidence.setNameMatchMiddleType("noMatch");
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeNoMatchScore());
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-firstName");
 				authorNameEvidence.setNameMatchModifierScore(ReCiterArticleScorer.strategyParameters.getNameMatchModifierIdentitySubstringOfArticleFirstnameScore());
-			} else if(identityAuthor.getFirstName() != null 
+			} else if(identityAuthor.getFirstName() != null
 					&& 
 					identityAuthor.getMiddleName() != null 
 					&& 

@@ -91,6 +91,35 @@ public class StrategyParameters {
     @Value("${nameMatchFirstType.inferredInitials-exact}")
     private double nameMatchFirstTypeInferredInitialsExactScore;
 
+    /**
+     * Score for a registered first name of two or more characters that is a
+     * left-anchored prefix of the article first name (Paul -> PaulJames, but
+     * also Shuo -> Shuofei). Before issue #746 these rows were labelled
+     * "full-exact"; the label is now honest but the score deliberately defaults
+     * to the same value so relabelling changes no model input. Retuning this
+     * number is a separate, retrain-gated change.
+     */
+    @Value("${nameMatchFirstType.full-prefix:1.852}")
+    private double nameMatchFirstTypeFullPrefixScore;
+
+    /**
+     * Score for a registered first name of two or more characters that is a
+     * right-anchored suffix of the article first name (Cary -> MCary). Same
+     * relabel-only contract as {@code full-prefix}.
+     */
+    @Value("${nameMatchFirstType.full-suffix:1.852}")
+    private double nameMatchFirstTypeFullSuffixScore;
+
+    /**
+     * Score for a registered first name that sanitizes down to a SINGLE letter
+     * and merely begins the article first name ('M.' -> M, matching "Mayra").
+     * Semantically this is an initial match and belongs in the
+     * inferredInitials-exact bucket (0.441), but the default preserves the
+     * pre-#746 value so the relabel ships without moving a model feature.
+     */
+    @Value("${nameMatchFirstType.inferredInitials-prefix:1.852}")
+    private double nameMatchFirstTypeInferredInitialsPrefixScore;
+
     @Value("${nameMatchFirstType.full-fuzzy}")
     private double nameMatchFirstTypeFullFuzzyScore;
 
