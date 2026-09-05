@@ -139,11 +139,57 @@ public class AbstractReCiterRetrievalEngineTest {
 	}
 
 	@Test
-	public void incrementalOverIncrementalReplacesTheEntry() {
+	public void incrementalOverIncrementalMergesRatherThanReplacing() {
+		// The regression this method exists to prevent. An incremental run's pmid list is
+		// only that night's window; substituting it for the stored block is what dropped
+		// 1,446 authorship-review rows' pmids out of their scoring inputs on prod, 1,445
+		// of them behind a block that was already incremental. Pmid 1 must survive.
 		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L), "EmailRetrievalStrategy",
 				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
 		ESearchPmid incoming = new ESearchPmid(Arrays.asList(2L), "EmailRetrievalStrategy",
 				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		ESearchPmid stored = AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming);
+
+		assertEquals(Arrays.asList(1L, 2L), stored.getPmids());
+		// Both entries are incremental, so the marker and date track the newer run.
+		assertEquals(ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, stored.getLookupType());
+		assertEquals(TONIGHT, stored.getRetrievalDate());
+	}
+
+	@Test
+	public void anEmptyIncrementalWindowDoesNotEraseTheStoredBlock() {
+		// A strategy that swallows a 429 returns zero articles, indistinguishable from
+		// "no new papers". Before the merge that erased the block outright.
+		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L, 3L), "EmailRetrievalStrategy",
+				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+		ESearchPmid incoming = new ESearchPmid(Collections.emptyList(), "EmailRetrievalStrategy",
+				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		ESearchPmid stored = AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming);
+
+		assertEquals(Arrays.asList(1L, 2L, 3L), stored.getPmids());
+	}
+
+	@Test
+	public void incrementalOverIncrementalDeduplicatesAndKeepsStoredOrder() {
+		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L), "EmailRetrievalStrategy",
+				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+		ESearchPmid incoming = new ESearchPmid(Arrays.asList(2L, 3L), "EmailRetrievalStrategy",
+				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		assertEquals(Arrays.asList(1L, 2L, 3L),
+				AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming).getPmids());
+	}
+
+	@Test
+	public void aFullSweepStillPrunesWhatItNoLongerMatches() {
+		// The merge must NOT apply to a genuine full sweep, or nothing ever prunes and the
+		// item grows toward the 400KB DynamoDB cap (#640-B). Pmid 1 is correctly dropped.
+		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L), "EmailRetrievalStrategy",
+				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+		ESearchPmid incoming = new ESearchPmid(Arrays.asList(2L, 5L), "EmailRetrievalStrategy",
+				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS);
 
 		assertSame(incoming, AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming));
 	}

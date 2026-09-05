@@ -185,24 +185,40 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 
 	/**
 	 * The strategy entry to store when a retrieval upserts over an existing one.
-	 * Normally the incoming entry replaces the old one wholesale — but an incremental
-	 * run must not downgrade an entry's {@code lookupType} from ALL_PUBLICATIONS
-	 * (#696/E13): {@code ArticleSizeStrategy} filters entries on that marker to compute
-	 * {@code articleCountScore}, so erasing it perturbs scoring, and the escalation
-	 * fallback infers last-full-sweep from the same marker's {@code retrievalDate}.
 	 *
-	 * <p>When the downgrade is refused, the stored entry keeps the ALL_PUBLICATIONS
-	 * marker AND the full sweep's retrievalDate — bumping the date on an incremental
-	 * run would make the person look freshly swept and suppress a due escalation —
-	 * while the pmid lists are merged, so the full-sweep article count is preserved and
-	 * newly discovered articles still register. Pure so the rule is unit-testable.
+	 * <p><b>An incremental run's pmid list is only that night's window, so it must be
+	 * MERGED into the stored list, never substituted for it.</b> Substituting is how a
+	 * strategy's block silently shrinks to a handful of recent pmids:
+	 * {@code ReCiterController.initializeEngineParameters} builds the scoring candidate
+	 * set as the union of these blocks, so any pmid dropped here vanishes from the
+	 * person's scoring input even though the article is still in the PubMedArticle cache
+	 * and still in PmidProvenance. Measured on prod 2026-09-05: 1,446 authorship-review
+	 * rows had lost their pmid this way, 1,445 of them behind a block whose stored
+	 * lookupType was already incremental — the exact case the pre-fix guard let through,
+	 * because it only refused the downgrade when the STORED entry was ALL_PUBLICATIONS.
+	 * A within-person paired control put the loss rate at 67% behind an incremental block
+	 * versus 0% behind a full sweep. This also covers the swallowed-429 case: a strategy
+	 * that returns zero articles tonight no longer erases what it found before.
+	 *
+	 * <p>A genuine ALL_PUBLICATIONS sweep still replaces wholesale — it is authoritative
+	 * and is what prunes pmids the person's queries no longer match, which also bounds
+	 * the merged list's growth against the 400KB DynamoDB item cap (#640-B).
+	 *
+	 * <p>When the stored entry is ALL_PUBLICATIONS the merged entry additionally keeps
+	 * that marker AND the full sweep's retrievalDate (#696/E13):
+	 * {@code ArticleSizeStrategy} filters entries on the marker to compute
+	 * {@code articleCountScore}, so erasing it perturbs scoring, and the escalation
+	 * fallback infers last-full-sweep from that same date — bumping it on an incremental
+	 * run would make the person look freshly swept and suppress a due escalation.
+	 * Pure so the rule is unit-testable.
 	 */
 	static ESearchPmid upsertedStrategyEntry(ESearchPmid existing, ESearchPmid incoming) {
 		if (existing == null || incoming == null
-				|| existing.getLookupType() != ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS
 				|| incoming.getLookupType() == ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS) {
 			return incoming;
 		}
+		boolean keepFullSweepMarker =
+				existing.getLookupType() == ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS;
 		List<Long> mergedPmids = new ArrayList<>();
 		Set<Long> seen = new HashSet<>();
 		for (List<Long> pmidList : Arrays.asList(existing.getPmids(), incoming.getPmids())) {
@@ -215,12 +231,14 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				}
 			}
 		}
-		log.info("Refusing lookupType downgrade for strategy {} : keeping ALL_PUBLICATIONS marker "
-				+ "(sweep date {}), merged pmids {} -> {}", incoming.getRetrievalStrategyName(),
-				existing.getRetrievalDate(),
-				incoming.getPmids() == null ? 0 : incoming.getPmids().size(), mergedPmids.size());
+		log.info("Merging incremental upsert for strategy {} : window pmids {} -> stored {}; "
+				+ "keepFullSweepMarker={} (sweep date {})", incoming.getRetrievalStrategyName(),
+				incoming.getPmids() == null ? 0 : incoming.getPmids().size(), mergedPmids.size(),
+				keepFullSweepMarker, existing.getRetrievalDate());
 		return new ESearchPmid(mergedPmids, incoming.getRetrievalStrategyName(),
-				existing.getRetrievalDate(), ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS);
+				keepFullSweepMarker ? existing.getRetrievalDate() : incoming.getRetrievalDate(),
+				keepFullSweepMarker ? ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS
+						: incoming.getLookupType());
 	}
 
 	/**
