@@ -432,6 +432,17 @@ public class StrategyParameters {
 
     @Value("${strategy.feedback.informedAbsence.orcid.strength:0.3}")
     private double informedAbsenceOrcidStrength;
+
+    /**
+     * When true, TargetAuthorNameFeedbackStrategy will NOT apply the informed
+     * absence penalty to a byline that full-exact matches a registered
+     * Identity name (primaryName or an alternateName) which simply has no
+     * curation history yet. Default false: behaviour is unchanged until this
+     * is deliberately turned on, because turning it on shifts a feature
+     * distribution the deployed models were trained against.
+     */
+    @Value("${strategy.feedback.informedAbsence.targetAuthorName.skipUncuratedRegisteredName:false}")
+    private boolean informedAbsenceSkipUncuratedRegisteredName;
     
     @Value("${dynamodb.migrations.Analysis.schema.version}")
     private String analysisSchemaVersion;
