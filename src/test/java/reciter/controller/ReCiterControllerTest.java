@@ -638,6 +638,59 @@ public class ReCiterControllerTest {
 	}
 
 	@Test
+	public void testRetrieveArticlesByUidRefreshAllPublicationsFailedSweepRestoresPrior() throws IOException {
+		// #737 case (g): a failed full sweep with a prior ESearchResult on record must
+		// restore it, so partial per-strategy entries the engine already wrote don't
+		// shrink the next run's Analysis candidate set.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(testESearchResult);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				any(RetrievalRefreshFlag.class))).thenReturn(false);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		verify(eSearchResultService, times(1)).delete(testUid.trim());
+		verify(eSearchResultService, times(1)).save(testESearchResult);
+	}
+
+	@Test
+	public void testRetrieveArticlesByUidRefreshAllPublicationsFailedSweepNoPriorDeletes() throws IOException {
+		// #737 case (h): with no prior ESearchResult (first-ever retrieval), a failed
+		// sweep deletes the partial one instead of restoring, so the next run
+		// auto-upgrades to a full sweep rather than looking like a covered uid.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(null);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				any(RetrievalRefreshFlag.class))).thenReturn(false);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		verify(eSearchResultService, times(1)).delete(testUid.trim());
+		verify(eSearchResultService, never()).save(any(ESearchResult.class));
+	}
+
+	@Test
+	public void testRetrieveArticlesByUidRefreshAllPublicationsSuccessNeverRestores() throws IOException {
+		// #737 case (i): a successful full sweep never touches restore — only the
+		// initial pre-sweep delete happens.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(testESearchResult);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				any(RetrievalRefreshFlag.class))).thenReturn(true);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(eSearchResultService, times(1)).delete(testUid.trim());
+		verify(eSearchResultService, never()).save(any(ESearchResult.class));
+	}
+
+	@Test
 	public void testRetrieveArticlesByUidOnlyNewPublications() throws IOException {
 		// Arrange
 		when(identityService.findByUid(testUid)).thenReturn(identity);

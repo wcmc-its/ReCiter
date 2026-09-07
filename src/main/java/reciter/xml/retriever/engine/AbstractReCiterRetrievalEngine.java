@@ -171,7 +171,20 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				eSearchPmids.removeIf(existing -> existing != null
 						&& existing.getRetrievalStrategyName() != null
 						&& existing.getRetrievalStrategyName().equalsIgnoreCase(newStrategyName));
-				eSearchPmids.add(upsertedStrategyEntry(existingEntry, eSearchPmid));
+				// #737: a run that hit PubMed failures for this uid must not let a partial
+				// batch shrink the stored strategy entry — union instead of replace.
+				boolean runHadFailures = reciter.xml.retriever.pubmed.RetrievalErrorTracker.hadError();
+				ESearchPmid upserted = upsertedStrategyEntry(existingEntry, eSearchPmid, runHadFailures);
+				if (runHadFailures && existingEntry != null
+						&& existingEntry.getPmids() != null && eSearchPmid.getPmids() != null) {
+					int storedCount = upserted.getPmids() == null ? 0 : upserted.getPmids().size();
+					int incomingCount = eSearchPmid.getPmids().size();
+					if (storedCount > incomingCount) {
+						log.warn("uid=[{}] strategy [{}]: run hit PubMed failures; kept {} prior pmids the run did not return (incoming {}, stored {})",
+								uid, newStrategyName, storedCount - incomingCount, incomingCount, storedCount);
+					}
+				}
+				eSearchPmids.add(upserted);
 			}
 			if(!eSearchPmids.isEmpty()) {
 				eSearchResultService.save(new ESearchResult(uid, Instant.now(), eSearchPmids, queryType));
@@ -185,27 +198,76 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 
 	/**
 	 * The strategy entry to store when a retrieval upserts over an existing one.
-	 * Normally the incoming entry replaces the old one wholesale — but an incremental
-	 * run must not downgrade an entry's {@code lookupType} from ALL_PUBLICATIONS
-	 * (#696/E13): {@code ArticleSizeStrategy} filters entries on that marker to compute
-	 * {@code articleCountScore}, so erasing it perturbs scoring, and the escalation
-	 * fallback infers last-full-sweep from the same marker's {@code retrievalDate}.
+	 * Normally the incoming entry replaces the old one wholesale, but two situations
+	 * refuse that replacement and merge pmids instead:
 	 *
-	 * <p>When the downgrade is refused, the stored entry keeps the ALL_PUBLICATIONS
-	 * marker AND the full sweep's retrievalDate — bumping the date on an incremental
-	 * run would make the person look freshly swept and suppress a due escalation —
-	 * while the pmid lists are merged, so the full-sweep article count is preserved and
-	 * newly discovered articles still register. Pure so the rule is unit-testable.
+	 * <p>(1) An incremental run must not downgrade an entry's {@code lookupType} from
+	 * ALL_PUBLICATIONS (#696/E13): {@code ArticleSizeStrategy} filters entries on that
+	 * marker to compute {@code articleCountScore}, so erasing it perturbs scoring, and
+	 * the escalation fallback infers last-full-sweep from the same marker's
+	 * {@code retrievalDate}. The stored entry keeps the ALL_PUBLICATIONS marker AND the
+	 * full sweep's retrievalDate — bumping the date would make the person look freshly
+	 * swept and suppress a due escalation — while the pmid lists are merged. This rule
+	 * applies regardless of {@code runHadFailures}.
+	 *
+	 * <p>(2) A run that hit PubMed failures for this uid (#737) must not let a partial
+	 * batch shrink the stored entry: on 2026-09-01 3 of 8 GoldStandardRetrievalStrategy
+	 * batches for rharrington failed with NCBI connection resets, and the wholesale
+	 * replace this method previously always performed shrank the strategy entry from
+	 * 794 to 394 pmids — which shrank the Analysis candidate set with it, and cache-only
+	 * re-analysis could not heal it since the candidate set is rebuilt from this stored
+	 * entry. When {@code runHadFailures} is true the pmids are unioned (existing first,
+	 * then incoming's not-yet-seen), the lookupType is escalated to ALL_PUBLICATIONS if
+	 * either side already carries it (otherwise incoming's), and retrievalDate is
+	 * incoming's — a failed run should still look attempted, unlike case (1)'s refused
+	 * sweep. When a strategy returns zero pmids the caller never builds an incoming
+	 * entry at all, so a total failure leaves the existing entry untouched (:137, :158);
+	 * only a partial batch reaches this union path.
+	 *
+	 * <p>Outside both cases (clean run, no ALL_PUBLICATIONS downgrade at stake) the
+	 * incoming entry replaces the old one wholesale, unchanged from prior behavior.
+	 * Pure so both rules are unit-testable — no {@code RetrievalErrorTracker} read here.
 	 */
-	static ESearchPmid upsertedStrategyEntry(ESearchPmid existing, ESearchPmid incoming) {
-		if (existing == null || incoming == null
-				|| existing.getLookupType() != ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS
-				|| incoming.getLookupType() == ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS) {
+	static ESearchPmid upsertedStrategyEntry(ESearchPmid existing, ESearchPmid incoming, boolean runHadFailures) {
+		if (existing == null || incoming == null) {
 			return incoming;
 		}
+		boolean existingIsAll = existing.getLookupType() == ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS;
+		boolean incomingIsAll = incoming.getLookupType() == ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS;
+
+		if (existingIsAll && !incomingIsAll) {
+			// Rule b: refused ALL_PUBLICATIONS downgrade — merge, keep existing's date.
+			List<Long> mergedPmids = mergePmids(existing.getPmids(), incoming.getPmids());
+			log.info("Refusing lookupType downgrade for strategy {} : keeping ALL_PUBLICATIONS marker "
+					+ "(sweep date {}), merged pmids {} -> {}", incoming.getRetrievalStrategyName(),
+					existing.getRetrievalDate(),
+					incoming.getPmids() == null ? 0 : incoming.getPmids().size(), mergedPmids.size());
+			return new ESearchPmid(mergedPmids, incoming.getRetrievalStrategyName(),
+					existing.getRetrievalDate(), ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS);
+		}
+
+		if (runHadFailures) {
+			// Rule c (#737): failed run — union, keep incoming's date.
+			List<Long> mergedPmids = mergePmids(existing.getPmids(), incoming.getPmids());
+			ESearchPmid.RetrievalRefreshFlag lookupType = (existingIsAll || incomingIsAll)
+					? ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS
+					: incoming.getLookupType();
+			return new ESearchPmid(mergedPmids, incoming.getRetrievalStrategyName(),
+					incoming.getRetrievalDate(), lookupType);
+		}
+
+		// Rule d: clean run, no ALL_PUBLICATIONS downgrade at stake — replace wholesale.
+		return incoming;
+	}
+
+	/**
+	 * Union of two pmid lists, existing's entries first in their original order, then
+	 * incoming's not-yet-seen entries in their original order. Nulls are skipped.
+	 */
+	private static List<Long> mergePmids(List<Long> existingPmids, List<Long> incomingPmids) {
 		List<Long> mergedPmids = new ArrayList<>();
 		Set<Long> seen = new HashSet<>();
-		for (List<Long> pmidList : Arrays.asList(existing.getPmids(), incoming.getPmids())) {
+		for (List<Long> pmidList : Arrays.asList(existingPmids, incomingPmids)) {
 			if (pmidList == null) {
 				continue;
 			}
@@ -215,12 +277,7 @@ public abstract class AbstractReCiterRetrievalEngine implements ReCiterRetrieval
 				}
 			}
 		}
-		log.info("Refusing lookupType downgrade for strategy {} : keeping ALL_PUBLICATIONS marker "
-				+ "(sweep date {}), merged pmids {} -> {}", incoming.getRetrievalStrategyName(),
-				existing.getRetrievalDate(),
-				incoming.getPmids() == null ? 0 : incoming.getPmids().size(), mergedPmids.size());
-		return new ESearchPmid(mergedPmids, incoming.getRetrievalStrategyName(),
-				existing.getRetrievalDate(), ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS);
+		return mergedPmids;
 	}
 
 	/**
