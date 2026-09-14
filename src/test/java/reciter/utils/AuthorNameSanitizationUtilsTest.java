@@ -70,6 +70,50 @@ public class AuthorNameSanitizationUtilsTest {
 		assertEquals("All check including case sensitive, first case & second case", 3, sanitizedIdentityAuthorMap.size());
 	}
 
+	// #704: alc4061's identity — primary "Alberto Mario" with an EMPTY middle name plus alternates
+	// "Alberto Mario" / null and "Alberto" / null. Two rules fire in one pass (blank-middle and
+	// starts-with) and the old iterator-mutating loop threw IllegalStateException from a second
+	// remove() without an intervening next(), 500-ing every feature-generator call for the uid.
+	// Built with setters, not the 3-arg constructor: that constructor normalises a null middle
+	// name to "", while sanitizeIdentityAuthorNames only sets a middle name when the alias has
+	// one — so production really does mix "" and null, which is what trips the two rules at once.
+	@Test
+	public final void testCheckToIgnoreNameVariantsDoesNotThrowWhenTwoRulesFireInOnePass() {
+		Map<AuthorName, AuthorName> names = new HashMap<AuthorName, AuthorName>();
+		AuthorNameSanitizationUtils utils = new AuthorNameSanitizationUtils();
+		names.put(name("Alberto Mario", "", "Ceballos Arroyo"), name("AlbertoMario", "", "CeballosArroyo"));
+		names.put(name("Alberto Mario", null, "Ceballos Arroyo"), name("AlbertoMario", null, "CeballosArroyo"));
+		names.put(name("Alberto", null, "Ceballos Arroyo"), name("Alberto", null, "CeballosArroyo"));
+		assertEquals(3, names.size());
+		utils.checkToIgnoreNameVariants(names);
+		assertEquals("blank-middle and prefix variants both dropped, one full name kept", 1, names.size());
+		AuthorName kept = names.values().iterator().next();
+		assertEquals("AlbertoMario", kept.getFirstName());
+		assertNull(kept.getMiddleName());
+
+		// a chain where every variant is a prefix of the next and one carries a blank middle:
+		// every pair matches a rule, in every order — must never throw, must never remove the
+		// last name, and the longest full name is the one left standing.
+		names.clear();
+		names.put(name("A", null, "Last"), name("A", null, "Last"));
+		names.put(name("Ab", null, "Last"), name("Ab", null, "Last"));
+		names.put(name("Abc", "", "Last"), name("Abc", "", "Last"));
+		names.put(name("Abc", null, "Last"), name("Abc", null, "Last"));
+		assertEquals(4, names.size());
+		utils.checkToIgnoreNameVariants(names);
+		assertEquals(1, names.size());
+		assertEquals("Abc", names.values().iterator().next().getFirstName());
+		assertNull(names.values().iterator().next().getMiddleName());
+	}
+
+	private static AuthorName name(String first, String middle, String last) {
+		AuthorName n = new AuthorName();
+		n.setFirstName(first);
+		n.setMiddleName(middle);
+		n.setLastName(last);
+		return n;
+	}
+
 	@Test
 	public final void testGenerateSuffixRegex() {
 		//fail("Not yet implemented");

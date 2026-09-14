@@ -1,9 +1,8 @@
 package reciter.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -196,90 +195,51 @@ public class AuthorNameSanitizationUtils {
 	 * @param idenityAuthorNames
 	 */
 	public void checkToIgnoreNameVariants(Map<AuthorName, AuthorName> idenityAuthorNames) {
-		Set<Entry<AuthorName, AuthorName>> sanitizedIdentityAuthorNames =  idenityAuthorNames.entrySet();
-		Set<Entry<AuthorName, AuthorName>> sanitizedIdentityAuthorNamesCopy = new HashSet<>(sanitizedIdentityAuthorNames);
-		Iterator<Map.Entry<AuthorName,AuthorName>> copyIterator = sanitizedIdentityAuthorNamesCopy.iterator();
-		while(copyIterator.hasNext()) {
-			Map.Entry<AuthorName,AuthorName> i = copyIterator.next();
-			Iterator<Map.Entry<AuthorName,AuthorName>> iterator = idenityAuthorNames.entrySet().iterator();
-			while(iterator.hasNext()) {
-				Map.Entry<AuthorName,AuthorName> j = iterator.next();
-			//for(Map.Entry<AuthorName,AuthorName> j : sanitizedIdentityAuthorNames) {
-				if(!i.getValue().equals(j.getValue())) {
-					if(sanitizedIdentityAuthorNames.size() > 1 
-							&&
-							i.getValue() != null 
-							&& 
-							j.getValue() != null
-							&&
-							i.getValue().getFirstName() != null
-							&&
-							j.getValue() != null
-							&&
-							j.getValue().getFirstName() != null
-							&&
-							j.getValue().getLastName() != null) {
-						if(StringUtils.equalsIgnoreCase(i.getValue().getLastName(), j.getValue().getLastName()) 
-								&& 
-								i.getValue().getFirstName().toLowerCase().startsWith(j.getValue().getFirstName().toLowerCase())) {
-							if(j.getValue().getMiddleName() == null && i.getValue().getMiddleName() == null) {
-								iterator.remove();
-								copyIterator.remove();
-								if(iterator.hasNext()) {
-									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
-								}
-								if(copyIterator.hasNext()) {
-									i = copyIterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
-								}
-							}
-							if(j.getValue().getMiddleName() != null && j.getValue().getMiddleName().trim().isEmpty()) {								
-								iterator.remove();
-								copyIterator.remove();
-								if(iterator.hasNext()) {
-									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
-								}
-								if(copyIterator.hasNext()) {
-									i = copyIterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
-								}
-							}
-						}
-						//Case - ajdannen - Throw away Andrew J Dannenberg because Andrew Jess Dannenberg exists
-						if(sanitizedIdentityAuthorNames.size() > 1) {
-							if(i.getValue() != null
-									&&
-									j.getValue() != null
-									&&
-									i.getValue().getLastName() != null 
-									&&
-									j.getValue().getLastName() != null 
-									&&
-									i.getValue().getFirstName() != null 
-									&&
-									j.getValue().getFirstName() != null
-									&&
-									i.getValue().getMiddleName() != null 
-									&&
-									j.getValue().getMiddleName() != null
-									&&
-									StringUtils.equalsIgnoreCase(i.getValue().getLastName(), j.getValue().getLastName()) 
-									&& 
-									StringUtils.equalsIgnoreCase(i.getValue().getFirstName(), j.getValue().getFirstName()) 
-									&&
-									StringUtils.equalsIgnoreCase(i.getValue().getMiddleName(), j.getValue().getMiddleName())) {
-								iterator.remove();
-								copyIterator.remove();
-								if(iterator.hasNext()) {
-									j = iterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
-								}
-								if(copyIterator.hasNext()) {
-									i = copyIterator.next(); //Avoid IllegalStateException thrown by iterator when using remove method
-								}
-							}
-						}
-					}
+		// #704: the previous version mutated the map through two live iterators inside a nested
+		// loop, with three separate blocks each able to call remove() in the same pass. When a
+		// removed entry was the iterator's last, the "advance past it" guard had nothing to
+		// advance to and the next block's remove() threw IllegalStateException — a 500 on every
+		// feature-generator call for any identity whose name variants matched two rules at once
+		// (alc4061: "Alberto Mario" / "" + "Alberto Mario" / null + "Alberto" / null).
+		// Decide over a snapshot, remove from the map by key. Same three rules, no iterator state.
+		List<Entry<AuthorName, AuthorName>> snapshot = new ArrayList<>(idenityAuthorNames.entrySet());
+		for (Entry<AuthorName, AuthorName> i : snapshot) {
+			for (Entry<AuthorName, AuthorName> j : snapshot) {
+				if (idenityAuthorNames.size() <= 1) {
+					return; // never throw away the last remaining name
 				}
+				if (i == j || !idenityAuthorNames.containsKey(j.getKey()) || isNameVariantToIgnore(i.getValue(), j.getValue()) == false) {
+					continue;
+				}
+				idenityAuthorNames.remove(j.getKey());
 			}
 		}
+	}
+
+	/**
+	 * True when {@code candidate} is a lesser variant of {@code full} and should be dropped:
+	 * same last name, and either (1) full's first name starts with candidate's and neither has a
+	 * middle name, (2) same start-with and candidate's middle name is blank, or (3) first, middle
+	 * and last all match ignoring case (the "Andrew J Dannenberg" vs "Andrew Jess Dannenberg" case).
+	 */
+	static boolean isNameVariantToIgnore(AuthorName full, AuthorName candidate) {
+		if (full == null || candidate == null || full.equals(candidate)) {
+			return false;
+		}
+		if (full.getFirstName() == null || candidate.getFirstName() == null || candidate.getLastName() == null
+				|| !StringUtils.equalsIgnoreCase(full.getLastName(), candidate.getLastName())) {
+			return false;
+		}
+		boolean firstStartsWith = full.getFirstName().toLowerCase().startsWith(candidate.getFirstName().toLowerCase());
+		if (firstStartsWith && candidate.getMiddleName() == null && full.getMiddleName() == null) {
+			return true;
+		}
+		if (firstStartsWith && candidate.getMiddleName() != null && candidate.getMiddleName().trim().isEmpty()) {
+			return true;
+		}
+		return full.getMiddleName() != null && candidate.getMiddleName() != null
+				&& StringUtils.equalsIgnoreCase(full.getFirstName(), candidate.getFirstName())
+				&& StringUtils.equalsIgnoreCase(full.getMiddleName(), candidate.getMiddleName());
 	}
 	
 	
