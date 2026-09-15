@@ -219,6 +219,7 @@ public class ReCiterController {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath,curatedBy);
         }
     	reconcileExternalArticles(Collections.singletonList(goldStandard));
+    	patchStoredAnalysisAssertions(Collections.singletonList(goldStandard));
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
@@ -253,6 +254,7 @@ public class ReCiterController {
     		dynamoDbGoldStandardService.save(goldStandard, GoldStandardUpdateFlag.REFRESH, provenanceSource, entryPath);
         }
     	reconcileExternalArticles(goldStandard);
+    	patchStoredAnalysisAssertions(goldStandard);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(goldStandard);
@@ -1119,6 +1121,65 @@ public class ReCiterController {
         for (GoldStandard goldStandard : goldStandards) {
             if (goldStandard != null && goldStandard.getUid() != null) {
                 externalArticleService.reconcileWithGoldStandard(goldStandard.getUid());
+            }
+        }
+    }
+
+    /**
+     * #752: Publication Manager's curate tabs render {@code userAssertion} from the stored
+     * Analysis, which a gold-standard write never touched — an accept stayed under Suggested
+     * until something re-ran the feature generator for that person, which the nightly does
+     * for full-time faculty and never for non-routable cohorts (436 stale pmids across 255
+     * people in a 30-day audit). Patch the field in place from the post-write GoldStandard:
+     * no retrieval, no re-score. Rejected wins over accepted, as in
+     * {@code Analysis.performAnalysis}, so the next feature-generator run writes the same
+     * values and nothing diverges. Suggested/pending counts are recomputed from the list on
+     * the cached read path, so they are left alone. An accepted pmid that is not in the
+     * stored Analysis at all needs retrieval and is out of scope here.
+     *
+     * <p>Best effort: the gold standard is already saved, so a failure here is logged and
+     * the Analysis catches up on the next feature-generator run as before.
+     */
+    void patchStoredAnalysisAssertions(List<GoldStandard> goldStandards) {
+        for (GoldStandard written : goldStandards) {
+            if (written == null || written.getUid() == null) {
+                continue;
+            }
+            String uid = written.getUid().trim();
+            try {
+                // Read back rather than use the request body: UPDATE/DELETE bodies are deltas.
+                GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
+                AnalysisOutput analysis = analysisService.findByUid(uid);
+                if (goldStandard == null || analysis == null || analysis.getReCiterFeature() == null
+                        || analysis.getReCiterFeature().getReCiterArticleFeatures() == null) {
+                    continue;
+                }
+                Set<Long> known = new HashSet<>(goldStandard.getKnownPmids() == null
+                        ? Collections.emptyList() : goldStandard.getKnownPmids());
+                Set<Long> rejected = new HashSet<>(goldStandard.getRejectedPmids() == null
+                        ? Collections.emptyList() : goldStandard.getRejectedPmids());
+                int patched = 0;
+                for (ReCiterArticleFeature article : analysis.getReCiterFeature().getReCiterArticleFeatures()) {
+                    PublicationFeedback assertion = rejected.contains(article.getPmid()) ? PublicationFeedback.REJECTED
+                            : known.contains(article.getPmid()) ? PublicationFeedback.ACCEPTED
+                            : PublicationFeedback.NULL;
+                    if (article.getUserAssertion() != assertion) {
+                        article.setUserAssertion(assertion);
+                        patched++;
+                    }
+                }
+                if (patched == 0) {
+                    continue;
+                }
+                // Save exactly as the feature generator does: usingS3 reset so the offload
+                // decision is re-made from size. Saving with usingS3 still true would store the
+                // patched features inline while the next read still went to the stale S3 copy.
+                analysis.setUsingS3(false);
+                analysisService.save(analysis);
+                log.info("uid=[{}]: patched userAssertion on {} stored article(s) from the gold standard", uid, patched);
+            } catch (Exception e) {
+                log.warn("uid=[{}]: gold standard saved but the stored Analysis could not be patched; "
+                        + "it will catch up on the next feature-generator run: {}", uid, e.getMessage());
             }
         }
     }
