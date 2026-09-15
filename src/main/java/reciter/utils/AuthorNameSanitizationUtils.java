@@ -2,12 +2,11 @@ package reciter.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -191,36 +190,54 @@ public class AuthorNameSanitizationUtils {
 	}
 	
 	/**
-	 * This function checks for if there is other name variant if another complete name exists in Identity
-	 * @param idenityAuthorNames
+	 * Drops lesser name variants when a fuller one exists (see {@link #isNameVariantToIgnore}).
+	 *
+	 * <p>#704: the previous version mutated the map through two live iterators inside a nested
+	 * loop, with three separate blocks each able to call remove() in the same pass. When a
+	 * removed entry was the iterator's last, the "advance past it" guard had nothing to
+	 * advance to and the next block's remove() threw IllegalStateException — a 500 on every
+	 * feature-generator call for any identity whose name variants matched two rules at once
+	 * (alc4061: "Alberto Mario" / "" + "Alberto Mario" / null + "Alberto" / null).
+	 *
+	 * <p>Now: decide over a snapshot of the keys, remove from the map by key. The snapshot is
+	 * sorted fullest-name-first so the survivor never depends on HashMap iteration order, a
+	 * key already dropped is never used as the "full" name that drops others, and the last
+	 * remaining name is never removed.
+	 * @param identityAuthorNames raw identity name → sanitized name; pruned in place
 	 */
-	public void checkToIgnoreNameVariants(Map<AuthorName, AuthorName> idenityAuthorNames) {
-		// #704: the previous version mutated the map through two live iterators inside a nested
-		// loop, with three separate blocks each able to call remove() in the same pass. When a
-		// removed entry was the iterator's last, the "advance past it" guard had nothing to
-		// advance to and the next block's remove() threw IllegalStateException — a 500 on every
-		// feature-generator call for any identity whose name variants matched two rules at once
-		// (alc4061: "Alberto Mario" / "" + "Alberto Mario" / null + "Alberto" / null).
-		// Decide over a snapshot, remove from the map by key. Same three rules, no iterator state.
-		List<Entry<AuthorName, AuthorName>> snapshot = new ArrayList<>(idenityAuthorNames.entrySet());
-		for (Entry<AuthorName, AuthorName> i : snapshot) {
-			for (Entry<AuthorName, AuthorName> j : snapshot) {
-				if (idenityAuthorNames.size() <= 1) {
-					return; // never throw away the last remaining name
-				}
-				if (i == j || !idenityAuthorNames.containsKey(j.getKey()) || isNameVariantToIgnore(i.getValue(), j.getValue()) == false) {
+	public void checkToIgnoreNameVariants(Map<AuthorName, AuthorName> identityAuthorNames) {
+		List<AuthorName> keys = new ArrayList<>(identityAuthorNames.keySet());
+		keys.sort(Comparator.comparingInt((AuthorName k) -> nameLength(identityAuthorNames.get(k))).reversed()
+				.thenComparing(k -> String.valueOf(identityAuthorNames.get(k))));
+		for (AuthorName ik : keys) {
+			AuthorName iv = identityAuthorNames.get(ik);
+			if (iv == null) {
+				continue; // already dropped as a lesser variant of an earlier (fuller) name
+			}
+			for (AuthorName jk : keys) {
+				AuthorName jv = identityAuthorNames.get(jk);
+				if (jv == null || ik.equals(jk)) {
 					continue;
 				}
-				idenityAuthorNames.remove(j.getKey());
+				if (identityAuthorNames.size() > 1 && isNameVariantToIgnore(iv, jv)) {
+					identityAuthorNames.remove(jk);
+				}
 			}
 		}
+	}
+
+	private static int nameLength(AuthorName n) {
+		return n == null ? 0 : StringUtils.length(n.getFirstName()) + StringUtils.length(n.getMiddleName())
+				+ StringUtils.length(n.getLastName());
 	}
 
 	/**
 	 * True when {@code candidate} is a lesser variant of {@code full} and should be dropped:
 	 * same last name, and either (1) full's first name starts with candidate's and neither has a
 	 * middle name, (2) same start-with and candidate's middle name is blank, or (3) first, middle
-	 * and last all match ignoring case (the "Andrew J Dannenberg" vs "Andrew Jess Dannenberg" case).
+	 * and last are all equal ignoring case — a case-only duplicate such as "Andrew J Dannenberg"
+	 * vs "andrew j dannenberg". Rule 3 does NOT collapse a middle initial into a full middle name
+	 * ("Andrew J" vs "Andrew Jess" are both kept); that is the pre-#704 behaviour, preserved.
 	 */
 	static boolean isNameVariantToIgnore(AuthorName full, AuthorName candidate) {
 		if (full == null || candidate == null || full.equals(candidate)) {
