@@ -59,7 +59,10 @@ public class ApplicationUserRepository {
 	public List<ApplicationUser> findAllById(List<String> uids) {
 		List<ApplicationUser> applicationUsers = new ArrayList<>();
 		for (String uid : uids) {
-			applicationUsers.add(applicationUserTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			ApplicationUser applicationUser = applicationUserTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if (applicationUser != null) {
+				applicationUsers.add(applicationUser);
+			}
 		}
 		return applicationUsers;
 	}
