@@ -109,7 +109,7 @@ public class AbstractReCiterRetrievalEngineTest {
 		assertEquals(Collections.singletonList(7L), pmidsOf(toPersist));
 	}
 
-	// ---- lookupType downgrade guard (#696 / E13) and #737 no-shrink-on-failure union ----
+	// ---- lookupType downgrade guard (#696 / E13), #737 no-shrink-on-failure union, #749 incremental merge ----
 
 	private static final Instant SWEEP_DATE = Instant.parse("2026-05-15T00:00:00Z");
 	private static final Instant TONIGHT = Instant.parse("2026-08-03T00:00:00Z");
@@ -147,11 +147,57 @@ public class AbstractReCiterRetrievalEngineTest {
 	}
 
 	@Test
-	public void incrementalOverIncrementalReplacesTheEntry() {
+	public void incrementalOverIncrementalMergesRatherThanReplacing() {
+		// The regression this method exists to prevent. An incremental run's pmid list is
+		// only that night's window; substituting it for the stored block is what dropped
+		// 1,446 authorship-review rows' pmids out of their scoring inputs on prod, 1,445
+		// of them behind a block that was already incremental. Pmid 1 must survive.
 		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L), "EmailRetrievalStrategy",
 				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
 		ESearchPmid incoming = new ESearchPmid(Arrays.asList(2L), "EmailRetrievalStrategy",
 				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		ESearchPmid stored = AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming, false);
+
+		assertEquals(Arrays.asList(1L, 2L), stored.getPmids());
+		// Both entries are incremental, so the marker and date track the newer run.
+		assertEquals(ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, stored.getLookupType());
+		assertEquals(TONIGHT, stored.getRetrievalDate());
+	}
+
+	@Test
+	public void anEmptyIncrementalWindowDoesNotEraseTheStoredBlock() {
+		// A strategy that swallows a 429 returns zero articles, indistinguishable from
+		// "no new papers". Before the merge that erased the block outright.
+		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L, 3L), "EmailRetrievalStrategy",
+				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+		ESearchPmid incoming = new ESearchPmid(Collections.emptyList(), "EmailRetrievalStrategy",
+				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		ESearchPmid stored = AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming, false);
+
+		assertEquals(Arrays.asList(1L, 2L, 3L), stored.getPmids());
+	}
+
+	@Test
+	public void incrementalOverIncrementalDeduplicatesAndKeepsStoredOrder() {
+		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L), "EmailRetrievalStrategy",
+				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+		ESearchPmid incoming = new ESearchPmid(Arrays.asList(2L, 3L), "EmailRetrievalStrategy",
+				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+
+		assertEquals(Arrays.asList(1L, 2L, 3L),
+				AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming, false).getPmids());
+	}
+
+	@Test
+	public void aFullSweepStillPrunesWhatItNoLongerMatches() {
+		// The merge must NOT apply to a genuine full sweep, or nothing ever prunes and the
+		// item grows toward the 400KB DynamoDB cap (#640-B). Pmid 1 is correctly dropped.
+		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L), "EmailRetrievalStrategy",
+				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+		ESearchPmid incoming = new ESearchPmid(Arrays.asList(2L, 5L), "EmailRetrievalStrategy",
+				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS);
 
 		assertSame(incoming, AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming, false));
 	}
@@ -195,15 +241,36 @@ public class AbstractReCiterRetrievalEngineTest {
 	}
 
 	@Test
-	public void cleanRunReplacesTheEntryWholesaleEvenWithFewerIncomingPmids() {
-		// #737 case (b): same inputs as the case-(a) test above, but a clean run keeps
-		// the pre-#737 wholesale-replace behavior — incoming returned as is.
+	public void cleanIncrementalRunAlsoKeepsPriorPmids() {
+		// #737 case (b) as amended by #749: same inputs as the case-(a) test above, on a
+		// clean run. An incremental window never replaces wholesale any more, failures or
+		// not — only a clean ALL_PUBLICATIONS sweep does (aFullSweepStillPrunesWhatItNoLongerMatches).
 		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L, 3L, 4L, 5L), "GoldStandardRetrievalStrategy",
 				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
 		ESearchPmid incoming = new ESearchPmid(Arrays.asList(1L, 2L, 3L), "GoldStandardRetrievalStrategy",
 				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
 
-		assertSame(incoming, AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming, false));
+		ESearchPmid stored = AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming, false);
+
+		assertEquals(Arrays.asList(1L, 2L, 3L, 4L, 5L), stored.getPmids());
+		assertEquals(ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS, stored.getLookupType());
+		assertEquals(TONIGHT, stored.getRetrievalDate());
+	}
+
+	@Test
+	public void failedFullSweepDoesNotShrinkAnIncrementalEntry() {
+		// A partial ALL_PUBLICATIONS sweep must not prune either: union, and the entry
+		// is promoted to ALL_PUBLICATIONS with the sweep's date so it still looks attempted.
+		ESearchPmid existing = new ESearchPmid(Arrays.asList(1L, 2L, 3L), "EmailRetrievalStrategy",
+				SWEEP_DATE, ESearchPmid.RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS);
+		ESearchPmid incoming = new ESearchPmid(Arrays.asList(3L, 4L), "EmailRetrievalStrategy",
+				TONIGHT, ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		ESearchPmid stored = AbstractReCiterRetrievalEngine.upsertedStrategyEntry(existing, incoming, true);
+
+		assertEquals(Arrays.asList(1L, 2L, 3L, 4L), stored.getPmids());
+		assertEquals(ESearchPmid.RetrievalRefreshFlag.ALL_PUBLICATIONS, stored.getLookupType());
+		assertEquals(TONIGHT, stored.getRetrievalDate());
 	}
 
 	@Test
@@ -251,11 +318,11 @@ public class AbstractReCiterRetrievalEngineTest {
 	}
 
 	@Test
-	public void savePubMedArticlesKeepsPriorPmidsOnlyWhenTheRunHadFailures() {
-		// #737 case (f): the rharrington shape — a GoldStandardRetrievalStrategy entry
-		// with 5 prior pmids, a run that only came back with 3 of them. When the run hit
-		// PubMed failures the stored entry must keep all 5; on a clean re-run with the
-		// same partial batch, it replaces wholesale down to 3 as before.
+	public void savePubMedArticlesKeepsPriorPmidsUnlessACleanFullSweepPrunesThem() {
+		// #737 case (f), amended by #749: the rharrington shape — a GoldStandardRetrievalStrategy
+		// entry with 5 prior pmids, a run that only came back with 3 of them. A failed
+		// incremental run keeps all 5; a clean incremental run ALSO keeps all 5 (#749);
+		// only a clean ALL_PUBLICATIONS sweep with the same partial batch prunes down to 3.
 		ESearchResultService eSearchResultService = mock(ESearchResultService.class);
 		PubMedService pubMedService = mock(PubMedService.class);
 		String uid = "rharrington";
@@ -293,8 +360,17 @@ public class AbstractReCiterRetrievalEngineTest {
 
 		ArgumentCaptor<ESearchResult> secondSave = ArgumentCaptor.forClass(ESearchResult.class);
 		verify(eSearchResultService, times(2)).save(secondSave.capture());
-		ESearchPmid afterCleanRun = gsEntryOf(secondSave.getValue(), strategyName);
-		assertEquals(3, afterCleanRun.getPmids().size());
+		List<Long> afterCleanIncrementalPmids = new ArrayList<>(gsEntryOf(secondSave.getValue(), strategyName).getPmids());
+		assertEquals(5, afterCleanIncrementalPmids.size());
+
+		RetrievalErrorTracker.reset();
+		engine.savePubMedArticles(retrieved, uid, strategyName, Collections.emptyList(),
+				QueryType.LENIENT_LOOKUP, RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		ArgumentCaptor<ESearchResult> thirdSave = ArgumentCaptor.forClass(ESearchResult.class);
+		verify(eSearchResultService, times(3)).save(thirdSave.capture());
+		ESearchPmid afterCleanFullSweep = gsEntryOf(thirdSave.getValue(), strategyName);
+		assertEquals(3, afterCleanFullSweep.getPmids().size());
 	}
 
 	// ---- Clean-completion gate on the lastFullSweep stamp (#696) ----
