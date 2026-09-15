@@ -45,7 +45,10 @@ public class PubMedArticleRepository {
 	public List<PubMedArticle> findAllById(List<Long> pmids) {
 		List<PubMedArticle> pubMedArticles = new ArrayList<>();
 		for (Long uid : pmids) {
-			pubMedArticles.add(pubMedArticleTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			PubMedArticle pubMedArticle = pubMedArticleTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if (pubMedArticle != null) {
+				pubMedArticles.add(pubMedArticle);
+			}
 		}
 		return pubMedArticles;
 	}

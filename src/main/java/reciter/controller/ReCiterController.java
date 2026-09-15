@@ -65,6 +65,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import reciter.algorithm.evidence.targetauthor.TargetAuthorSelection;
 import reciter.algorithm.util.ArticleTranslator;
 import reciter.api.parameters.FilterFeedbackType;
@@ -175,6 +178,11 @@ public class ReCiterController {
 
     @Value("${retrieval.full-sweep.jitter-days:45}")
     private int fullSweepJitterDays;
+
+    // #732: bounds a single retrieved-pmids batch request. Not the nightly checker's
+    // total uid count (it can be thousands) -- the client chunks client-side and this
+    // just caps the cost of any one request.
+    private static final int ESEARCH_RESULT_BATCH_MAX_UIDS = 1000;
 
 
     @Operation(summary = "Update the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids)", description ="This api updates the goldstandard by passing GoldStandard model(uid, knownPmids, rejectedPmids).")
@@ -333,6 +341,52 @@ public class ReCiterController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Get the ESearchResult by passing an uid", description = "This api gets the ESearchResult record for the given uid. A 404 response means there is no ESearchResult record for this uid -- that is a valid answer, not a server fault, and callers (e.g. the institutional-client retrieval checker) must be able to distinguish it from a transport error rather than fail-safing on it.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The ESearchResult retrieval for supplied uid is successful"),
+            @ApiResponse(responseCode = "400", description = "uid is blank"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "No ESearchResult record exists for the supplied uid")
+    })
+    @GetMapping(value = "/reciter/esearchresult/{uid}", produces = "application/json")
+    public ResponseEntity<ESearchResult> retrieveESearchResultByUid(@PathVariable @NotBlank String uid) {
+        StopWatch stopWatch = new StopWatch("Get the ESearchResult by passing an uid");
+        stopWatch.start("Get the ESearchResult by passing an uid");
+        ESearchResult eSearchResult = eSearchResultService.findByUid(uid);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        if (eSearchResult == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(eSearchResult);
+    }
+
+    @Operation(summary = "Retrieve the union of retrieved pmids for a batch of uids", description = "This api takes a list of uids and returns, for each uid that has an ESearchResult record, the sorted deduplicated union of pmids across every retrieval strategy's ESearchPmid entry for that uid. A uid with no ESearchResult record is OMITTED from the response map entirely -- callers must treat a missing key as \"no retrieved corpus for this uid\", not as an empty array. The uid list is capped at " + ESEARCH_RESULT_BATCH_MAX_UIDS + " per request; larger batches must be chunked client-side.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the pmid map for the supplied uids"),
+            @ApiResponse(responseCode = "400", description = "The uid list was empty or exceeded the maximum allowed size"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden")
+    })
+    @PostMapping(value = "/reciter/esearchresult/retrieved-pmids", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, List<Long>>> retrieveESearchResultPmidsByUids(
+            @RequestBody @NotEmpty @Size(max = ESEARCH_RESULT_BATCH_MAX_UIDS) List<String> uids) {
+        StopWatch stopWatch = new StopWatch("Retrieve the union of retrieved pmids for a batch of uids");
+        stopWatch.start("Retrieve the union of retrieved pmids for a batch of uids");
+        Map<String, List<Long>> pmidsByUid = eSearchResultService.findRetrievedPmidsByUids(uids);
+        stopWatch.stop();
+        log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok(pmidsByUid);
+    }
+
     @Operation(summary = "Bulk cleanup: delete records from all UID-keyed tables", description = "Deletes Identity, GoldStandard, AnalysisOutput, and ESearchResult records for a list of UIDs. Intended for external validation cleanup.")
     @Parameters({
     	@Parameter(name = "api-key", description = "api-key for this resource", in =ParameterIn.HEADER, schema =@Schema(type ="string"))
@@ -444,6 +498,7 @@ public class ReCiterController {
             } else if(refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS
             		||
             		eSearchResult == null){
+                ESearchResult priorESearchResult = eSearchResult;
                 if (eSearchResult != null)
                     eSearchResultService.delete(uid.trim());
 
@@ -455,12 +510,14 @@ public class ReCiterController {
                     // false = a retrieval worker crashed (a successful run that found nothing
                     // still returns true), so the candidate set must not be treated as complete.
                     if (!aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(identities, Date.valueOf(startDate), Date.valueOf(endDate), RetrievalRefreshFlag.ALL_PUBLICATIONS)) {
+                        restoreESearchResultAfterFailedSweep(uid.trim(), priorESearchResult);
                         stopWatch.stop();
                         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
                     }
                 } catch (IOException e) {
                     log.error("Failed to retrieve articles."+ e);
+                    restoreESearchResultAfterFailedSweep(uid.trim(), priorESearchResult);
                     stopWatch.stop();
                     log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("The uid supplied failed to retrieve articles");
@@ -553,6 +610,31 @@ public class ReCiterController {
     /** Convenience overload for callers that do not opt into full-sweep escalation. */
     public ResponseEntity retrieveArticlesByUid(String uid, RetrievalRefreshFlag refreshFlag) {
         return retrieveArticlesByUid(uid, refreshFlag, null);
+    }
+
+    /**
+     * Restore the ESearchResult record this uid had before an ALL_PUBLICATIONS sweep
+     * that then failed (#737). The engine has already upserted partial per-strategy
+     * entries into DynamoDB before this method's caller learns the sweep failed (the
+     * #720 gate fires only after retrieveArticlesByDateRange returns) — leaving those
+     * entries in place means the next cache-only or incremental run rebuilds the
+     * Analysis candidate set from the partial data. With no prior record (a first-ever
+     * retrieval), deleting instead of restoring leaves the uid with no ESearchResult at
+     * all, so the next run auto-upgrades to a full sweep (initializeEngineParameters
+     * :1296-1299) rather than being treated as ONLY_NEWLY_ADDED against a partial base.
+     */
+    private void restoreESearchResultAfterFailedSweep(String uid, ESearchResult prior) {
+        try {
+            if (prior != null) {
+                eSearchResultService.save(prior);
+                log.warn("uid=[{}] full sweep failed; restored the pre-sweep ESearchResult so partial per-strategy entries written before the failure don't shrink the next run's Analysis (#737)", uid);
+            } else {
+                eSearchResultService.delete(uid);
+                log.warn("uid=[{}] full sweep failed with no prior ESearchResult; deleted the partial one so the next run auto-upgrades to a full sweep (#737)", uid);
+            }
+        } catch (Exception e) {
+            log.error("uid=[{}] failed to restore ESearchResult after a failed full sweep (#737): {}", uid, e.getMessage(), e);
+        }
     }
 
     /**
