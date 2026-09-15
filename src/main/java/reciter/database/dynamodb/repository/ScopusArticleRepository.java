@@ -39,7 +39,10 @@ public class ScopusArticleRepository {
 	public List<ScopusArticle> findAllById(List<String> uids) {
 		List<ScopusArticle> scopusArticles = new ArrayList<>();
 		for (String uid : uids) {
-			scopusArticles.add(scopusArticleTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			ScopusArticle scopusArticle = scopusArticleTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if (scopusArticle != null) {
+				scopusArticles.add(scopusArticle);
+			}
 		}
 		return scopusArticles;
 	}
