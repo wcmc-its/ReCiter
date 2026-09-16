@@ -13,10 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
+import reciter.engine.analysis.evidence.AuthorNameEvidence;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleAuthors;
 import reciter.model.article.ReCiterArticleFeedbackScore;
 import reciter.model.article.ReCiterAuthor;
+import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 
 public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
@@ -27,6 +29,71 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 
 	private static final Pattern PATTERN1 = Pattern.compile("^[A-Z] [A-Z]$");
 	private static final Pattern PATTERN2 = Pattern.compile("^[A-Z] [A-Z][a-z]");
+
+	private static final String FULL_EXACT = "full-exact";
+
+	/**
+	 * Off by default. When enabled, a byline that full-exact matches a registered
+	 * Identity name with no curation history is treated as absence of evidence
+	 * (score 0.0) rather than evidence of absence (informed absence penalty).
+	 */
+	private boolean skipUncuratedRegisteredName = false;
+
+	public void setSkipUncuratedRegisteredName(boolean skipUncuratedRegisteredName) {
+		this.skipUncuratedRegisteredName = skipUncuratedRegisteredName;
+	}
+
+	/**
+	 * True when the byline being scored is a name the institution has already
+	 * REGISTERED for this person - primaryName or one of alternateNames - and
+	 * which simply has not been curated yet.
+	 *
+	 * <p>This reuses the name match ReCiter has already computed upstream in
+	 * ScoreByNameStrategy, which stores its verdict on the article as
+	 * AuthorNameEvidence.nameMatchFirstType; it is not re-derived here. The
+	 * registered-name list is then checked to confirm the byline is a name the
+	 * institution knows about rather than an incidental exact match.
+	 *
+	 * <p>A newly registered publishing name has zero accepted and zero rejected
+	 * articles for the same reason a brand new account has no history: nobody has
+	 * curated it yet. That is not the same signal as a genuinely unfamiliar
+	 * journal or coauthor set, which is why this guard is deliberately scoped to
+	 * the target author name only.
+	 */
+	private boolean isUncuratedRegisteredName(ReCiterArticle article, Identity identity, ReCiterAuthor author) {
+		if (article == null || identity == null || author == null || author.getAuthorName() == null) {
+			return false;
+		}
+		AuthorNameEvidence nameEvidence = article.getAuthorNameEvidence();
+		if (nameEvidence == null || !FULL_EXACT.equalsIgnoreCase(nameEvidence.getNameMatchFirstType())) {
+			return false;
+		}
+		String bylineFirstName = author.getAuthorName().getFirstName();
+		String bylineLastName = author.getAuthorName().getLastName();
+		if (bylineFirstName == null || bylineFirstName.trim().isEmpty()
+				|| bylineLastName == null || bylineLastName.trim().isEmpty()) {
+			return false;
+		}
+		if (isSameRegisteredName(identity.getPrimaryName(), bylineFirstName, bylineLastName)) {
+			return true;
+		}
+		if (identity.getAlternateNames() != null) {
+			for (AuthorName alternateName : identity.getAlternateNames()) {
+				if (isSameRegisteredName(alternateName, bylineFirstName, bylineLastName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean isSameRegisteredName(AuthorName registeredName, String bylineFirstName, String bylineLastName) {
+		if (registeredName == null || registeredName.getFirstName() == null || registeredName.getLastName() == null) {
+			return false;
+		}
+		return registeredName.getFirstName().trim().equalsIgnoreCase(bylineFirstName.trim())
+				&& registeredName.getLastName().trim().equalsIgnoreCase(bylineLastName.trim());
+	}
 
 	@Override
 	public double executeFeedbackStrategy(ReCiterArticle reCiterArticle, Identity identity) {
@@ -133,10 +200,21 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 								// accepted or rejected article, but the researcher has substantial
 								// acceptance history, apply a negative penalty instead of 0.0
 								if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
-									double penalty = computeInformedAbsencePenalty(totalAccepted);
-									scoreAll = penalty;
-									scoreWithout1Accepted = penalty;
-									scoreWithout1Rejected = penalty;
+									if (skipUncuratedRegisteredName
+											&& isUncuratedRegisteredName(article, identity, author)) {
+										// A registered publishing name that nobody has curated yet is
+										// absence of evidence, not evidence of absence. Leave the
+										// scores as computed (0.0) rather than penalising the person
+										// for the institution having just added the name.
+										slf4jLogger.debug(
+											"Informed absence skipped for registered but uncurated byline '{}' on article {}",
+											authorName, article.getArticleId());
+									} else {
+										double penalty = computeInformedAbsencePenalty(totalAccepted);
+										scoreAll = penalty;
+										scoreWithout1Accepted = penalty;
+										scoreWithout1Rejected = penalty;
+									}
 								}
 
 								double feedbackScore= determineFeedbackScore(article.getGoldStandard(),scoreWithout1Accepted, scoreWithout1Rejected, scoreAll);
