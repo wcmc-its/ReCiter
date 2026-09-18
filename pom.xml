@@ -369,7 +369,7 @@
 		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>nimbus-jose-jwt</artifactId>
-			<version>9.1.2</version> <!-- Library to handle JWKs -->
+			<version>9.37.4</version> <!-- Library to handle JWKs -->
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.antlr/antlr4-runtime -->
 		<dependency>
