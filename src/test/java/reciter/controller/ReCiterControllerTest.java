@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -635,6 +636,59 @@ public class ReCiterControllerTest {
 		verify(eSearchResultService, times(1)).findByUid(testUid.trim());
 		verify(aliasReCiterRetrievalEngine, times(1)).retrieveArticlesByDateRange(anyList(), any(Date.class),
 				any(Date.class), eq(RetrievalRefreshFlag.ALL_PUBLICATIONS));
+	}
+
+	@Test
+	public void testRetrieveArticlesByUidRefreshAllPublicationsFailedSweepRestoresPrior() throws IOException {
+		// #737 case (g): a failed full sweep with a prior ESearchResult on record must
+		// restore it, so partial per-strategy entries the engine already wrote don't
+		// shrink the next run's Analysis candidate set.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(testESearchResult);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				any(RetrievalRefreshFlag.class))).thenReturn(false);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		verify(eSearchResultService, times(1)).delete(testUid.trim());
+		verify(eSearchResultService, times(1)).save(testESearchResult);
+	}
+
+	@Test
+	public void testRetrieveArticlesByUidRefreshAllPublicationsFailedSweepNoPriorDeletes() throws IOException {
+		// #737 case (h): with no prior ESearchResult (first-ever retrieval), a failed
+		// sweep deletes the partial one instead of restoring, so the next run
+		// auto-upgrades to a full sweep rather than looking like a covered uid.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(null);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				any(RetrievalRefreshFlag.class))).thenReturn(false);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		verify(eSearchResultService, times(1)).delete(testUid.trim());
+		verify(eSearchResultService, never()).save(any(ESearchResult.class));
+	}
+
+	@Test
+	public void testRetrieveArticlesByUidRefreshAllPublicationsSuccessNeverRestores() throws IOException {
+		// #737 case (i): a successful full sweep never touches restore — only the
+		// initial pre-sweep delete happens.
+		when(identityService.findByUid(testUid)).thenReturn(identity);
+		when(eSearchResultService.findByUid(testUid.trim())).thenReturn(testESearchResult);
+		when(aliasReCiterRetrievalEngine.retrieveArticlesByDateRange(anyList(), any(Date.class), any(Date.class),
+				any(RetrievalRefreshFlag.class))).thenReturn(true);
+
+		ResponseEntity<?> response = reCiterController.retrieveArticlesByUid(testUid,
+				RetrievalRefreshFlag.ALL_PUBLICATIONS);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(eSearchResultService, times(1)).delete(testUid.trim());
+		verify(eSearchResultService, never()).save(any(ESearchResult.class));
 	}
 
 	@Test
@@ -1502,4 +1556,107 @@ public class ReCiterControllerTest {
 		verify(analysisService, times(1)).findByUid(testUid.trim());
 	}
 
+
+	// ---- #752: a gold-standard write patches userAssertion on the stored Analysis ----
+
+	private static ReCiterArticleFeature storedArticle(long pmid, PublicationFeedback assertion) {
+		ReCiterArticleFeature article = new ReCiterArticleFeature();
+		article.setPmid(pmid);
+		article.setUserAssertion(assertion);
+		return article;
+	}
+
+	private static AnalysisOutput storedAnalysis(String uid, boolean usingS3, ReCiterArticleFeature... articles) {
+		ReCiterFeature feature = new ReCiterFeature();
+		feature.setReCiterArticleFeatures(new ArrayList<>(Arrays.asList(articles)));
+		AnalysisOutput analysis = new AnalysisOutput();
+		analysis.setUid(uid);
+		analysis.setUsingS3(usingS3);
+		analysis.setReCiterFeature(feature);
+		return analysis;
+	}
+
+	@Test
+	public void goldStandardWritePatchesStoredAnalysisAssertions() {
+		// The post-write gold standard, not the request body, is the source: UPDATE bodies
+		// are deltas. Pmid 2 is in both lists and must come out REJECTED, as
+		// Analysis.performAnalysis resolves it; pmid 4 was un-accepted and must clear.
+		GoldStandard stored = new GoldStandard();
+		stored.setUid(testUid);
+		stored.setKnownPmids(Arrays.asList(1L, 2L));
+		stored.setRejectedPmids(Arrays.asList(2L, 3L));
+		when(dynamoDbGoldStandardService.findByUid(testUid)).thenReturn(stored);
+		AnalysisOutput analysis = storedAnalysis(testUid, true,
+				storedArticle(1L, PublicationFeedback.NULL),
+				storedArticle(2L, PublicationFeedback.ACCEPTED),
+				storedArticle(3L, PublicationFeedback.NULL),
+				storedArticle(4L, PublicationFeedback.ACCEPTED),
+				storedArticle(5L, PublicationFeedback.NULL));
+		when(analysisService.findByUid(testUid)).thenReturn(analysis);
+
+		ResponseEntity<?> response = reCiterController.updateGoldStandard(validGoldStandard,
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid, 0);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		ArgumentCaptor<AnalysisOutput> saved = ArgumentCaptor.forClass(AnalysisOutput.class);
+		verify(analysisService).save(saved.capture());
+		List<ReCiterArticleFeature> articles = saved.getValue().getReCiterFeature().getReCiterArticleFeatures();
+		assertEquals(PublicationFeedback.ACCEPTED, articles.get(0).getUserAssertion());
+		assertEquals(PublicationFeedback.REJECTED, articles.get(1).getUserAssertion());
+		assertEquals(PublicationFeedback.REJECTED, articles.get(2).getUserAssertion());
+		assertEquals(PublicationFeedback.NULL, articles.get(3).getUserAssertion());
+		assertEquals(PublicationFeedback.NULL, articles.get(4).getUserAssertion());
+		// usingS3 is reset so AnalysisServiceImpl.save re-makes the offload decision from
+		// size; saving with it still true would leave the next read on the stale S3 copy.
+		assertFalse(saved.getValue().isUsingS3());
+	}
+
+	@Test
+	public void goldStandardWriteDoesNotRewriteAnUnchangedAnalysis() {
+		GoldStandard stored = new GoldStandard();
+		stored.setUid(testUid);
+		stored.setKnownPmids(Arrays.asList(1L));
+		stored.setRejectedPmids(null);
+		when(dynamoDbGoldStandardService.findByUid(testUid)).thenReturn(stored);
+		when(analysisService.findByUid(testUid)).thenReturn(storedAnalysis(testUid, false,
+				storedArticle(1L, PublicationFeedback.ACCEPTED),
+				storedArticle(2L, PublicationFeedback.NULL)));
+
+		reCiterController.updateGoldStandard(validGoldStandard, GoldStandardUpdateFlag.UPDATE, testUid, testUid, 0);
+
+		verify(analysisService, never()).save(any(AnalysisOutput.class));
+	}
+
+	@Test
+	public void goldStandardWriteSurvivesAMissingOrFailingAnalysis() {
+		// No stored Analysis yet (never scored): nothing to patch, no error.
+		when(dynamoDbGoldStandardService.findByUid(testUid)).thenReturn(validGoldStandard);
+		when(analysisService.findByUid(testUid)).thenReturn(null);
+		assertEquals(HttpStatus.OK, reCiterController.updateGoldStandard(validGoldStandard,
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid, 0).getStatusCode());
+		verify(analysisService, never()).save(any(AnalysisOutput.class));
+
+		// The Analysis read blows up (e.g. the S3 offload is unreadable): the gold standard
+		// was already saved, so the write still returns 200 and the patch is skipped.
+		when(analysisService.findByUid(testUid)).thenThrow(new RuntimeException("s3 down"));
+		assertEquals(HttpStatus.OK, reCiterController.updateGoldStandard(validGoldStandard,
+				GoldStandardUpdateFlag.UPDATE, testUid, testUid, 0).getStatusCode());
+		verify(analysisService, never()).save(any(AnalysisOutput.class));
+	}
+
+	@Test
+	public void bulkGoldStandardWritePatchesEveryUid() {
+		for (GoldStandard goldStandard : validGoldStandardList) {
+			GoldStandard stored = new GoldStandard();
+			stored.setUid(goldStandard.getUid());
+			stored.setKnownPmids(Arrays.asList(1L));
+			when(dynamoDbGoldStandardService.findByUid(goldStandard.getUid())).thenReturn(stored);
+			when(analysisService.findByUid(goldStandard.getUid())).thenReturn(
+					storedAnalysis(goldStandard.getUid(), false, storedArticle(1L, PublicationFeedback.NULL)));
+		}
+
+		reCiterController.updateGoldStandard(validGoldStandardList, GoldStandardUpdateFlag.UPDATE, testUid, testUid);
+
+		verify(analysisService, times(validGoldStandardList.size())).save(any(AnalysisOutput.class));
+	}
 }
