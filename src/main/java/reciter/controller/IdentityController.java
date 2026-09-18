@@ -313,7 +313,7 @@ public class IdentityController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No uids were supplied in the request");
 		}
 
-		log.info("Finding identity table for{} uid(s) " + uids.size());
+		log.info("Finding identity table for{} uid(s)" ,uids.size());
 		List<Identity> identities;
 		try {
 			identities = identityService.findByUids(uids);
