@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -23,12 +22,14 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class S3UserLogHandler {
 
     private static final Logger log = LoggerFactory.getLogger(S3UserLogHandler.class);
     private S3Client s3Client;
+    
     private final ObjectMapper objectMapper;
 
     @Value("${aws.s3.consumer.api.logs.bucketName}")

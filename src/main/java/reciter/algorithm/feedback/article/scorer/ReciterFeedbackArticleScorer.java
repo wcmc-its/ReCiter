@@ -34,8 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
@@ -98,6 +96,8 @@ import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
 
@@ -616,8 +616,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.parallelStream()
     																	.map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
 														    		    .collect(Collectors.toList());
-	
-    	ObjectMapper objectMapper = new ObjectMapper();
 
     	// Enrich scores with identity names and per-article name evidence for Python scoring
     	String identityFirstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
@@ -631,7 +629,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
     	List<ObjectNode> enrichedScores = articleIdentityFeedbackScore.stream()
     	        .map(score -> {
-    	            ObjectNode node = objectMapper.convertValue(score, ObjectNode.class);
+    	        	 // Use JSON serialization/deserialization instead of convertValue to avoid ObjectNode conflicts
+    	            ObjectNode node = OBJECT_MAPPER.convertValue(score, ObjectNode.class);
     	            node.put("identityFirstName", identityFirstName);
     	            node.put("identityMiddleName", identityMiddleName);
 
@@ -661,14 +660,14 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
         		  File jsonFile = new File(fileName);
 
         		  // Write the User object to the JSON file
-                  objectMapper.writeValue(jsonFile, enrichedScores);
+        		  OBJECT_MAPPER.writeValue(jsonFile, enrichedScores);
                   log.info("JSON data written to file successfully: {}", jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
         	  }
         	  else
         	  {
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
-	        	  objectMapper.writeValue(jsonFile, enrichedScores);
+        		  OBJECT_MAPPER.writeValue(jsonFile, enrichedScores);
 	        	  log.info("JSON written to file successfully. {}", jsonFile.getAbsolutePath() +"-" + fileName);
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
@@ -682,7 +681,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			  }  	
 				  
 			  
-		} catch (IOException e) {
+		} catch (RuntimeException e) {
 			log.error(
 		            "IOException occurred while executing article feedback scoring. identityId={}, fileName={}, articleCount={}, acceptedCount={}, rejectedCount={}",
 		            identity != null ? identity.getUid() : null,

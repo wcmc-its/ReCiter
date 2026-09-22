@@ -22,8 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+
 
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
@@ -77,6 +76,8 @@ import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * @author szd2013
@@ -254,15 +255,13 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		
 	public List<ReCiterArticle> executePythonScriptForArticleIdentityTotalScore(List<ReCiterArticle> reCiterArticles, Identity identity) {
 	    
-		log.info("articles Size :", reCiterArticles.size());
+		log.info("articles Size :{}", reCiterArticles.size());
    	
 		List<ReCiterArticleFeedbackIdentityScore> articleIdentityScore = reCiterArticles.parallelStream()
 				.map(ReCiterArticleScorer::mapToIdentityScore).filter(Objects::nonNull) // Optionally filter out nulls
 				.collect(Collectors.toList());
     	
     	
-    	ObjectMapper objectMapper = new ObjectMapper();
-
     	// Enrich scores with identity names and per-article name evidence for Python scoring
     	String identityFirstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
     	        ? identity.getPrimaryName().getFirstName() : "";
@@ -275,7 +274,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 
     	List<ObjectNode> enrichedScores = articleIdentityScore.stream()
     	        .map(score -> {
-    	            ObjectNode node = objectMapper.convertValue(score, ObjectNode.class);
+    	            ObjectNode node = OBJECT_MAPPER.convertValue(score, ObjectNode.class);
     	            node.put("identityFirstName", identityFirstName);
     	            node.put("identityMiddleName", identityMiddleName);
 
@@ -322,7 +321,7 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
  		
        
 
-		} catch (IOException e) {
+		} catch (RuntimeException e) {
 			log.error("Failed to write/upload identity scoring input or invoke scorer for uid={}, file={}", identity.getUid(), fileName, e);
 			throw new RuntimeException("Identity scoring failed for uid=" + identity.getUid(), e);
 		}

@@ -137,7 +137,7 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 	}
 
 	private static void assertFirst(AuthorNameEvidence e, String type, double score) {
-		assertEquals("nameMatchFirstType", type, e.getNameMatchFirstType());
+		assertEquals(type, e.getNameMatchFirstType(),"nameMatchFirstType");
 		assertEquals(score, e.getNameMatchFirstScore(), 1e-9,"nameMatchFirstScore");
 	}
 
@@ -198,7 +198,7 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 	public void articleInitialAgainstFullRegisteredNameStaysInferredInitialsExact() throws Exception {
 		AuthorNameEvidence e = scoreMiddleNull("Paul", "Albert", "P", "Albert");
 		assertFirst(e, "inferredInitials-exact", INFERRED_INITIALS_EXACT);
-		assertNull("reverse direction sets no modifier", e.getNameMatchModifier());
+		assertNull(e.getNameMatchModifier(),"reverse direction sets no modifier");
 	}
 
 	/** A genuine exact match is still full-exact. */

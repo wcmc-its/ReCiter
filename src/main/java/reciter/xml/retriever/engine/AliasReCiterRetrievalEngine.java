@@ -109,11 +109,21 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
                                case ALL_PUBLICATIONS -> {
                                    log.info("Starting full retrieval for uid=[{}]", identity.getUid());
                                    retrieveData(identity, refreshFlag);
+                                   if (RetrievalErrorTracker.hadError()) {
+                                       log.warn("Retrieval for uid=[{}] completed with swallowed PubMed failures; marking as failed.",
+                                               identity.getUid());
+                                       failedUids.add(identity.getUid());
+                                   }
                                }
                                case ONLY_NEWLY_ADDED_PUBLICATIONS -> {
                                    log.info("Starting date-range retrieval for uid=[{}] startDate=[{}] endDate=[{}]",
                                            identity.getUid(), startDate, endDate);
                                    retrieveDataByDateRange(identity, startDate, endDate, refreshFlag);
+                                   if (RetrievalErrorTracker.hadError()) {
+                                       log.warn("Retrieval for uid=[{}] completed with swallowed PubMed failures; marking as failed.",
+                                               identity.getUid());
+                                       failedUids.add(identity.getUid());
+                                   }
                                }
                            }
                        } catch (Throwable t) {
@@ -137,7 +147,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
                    }, executor)
                    .exceptionally(ex -> {
                        // Per-identity failure: log it, let other identities continue
-                       log.error("Retrieval failed for uid=[{}]", ex.getMessage(), ex);
+                       log.error("Retrieval failed for uid=[{}]", identity.getUid(), ex);
                        return null;
                    }))
                    .toList(); // Java 21: Stream.toList() — unmodifiable, allocation-efficient

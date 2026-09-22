@@ -16,10 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
 import software.amazon.awssdk.core.SdkBytes;
@@ -39,11 +37,15 @@ public class NeuralNetworkModelArticlesScorer {
 
 	private String reciterScoringServiceUrl = System.getenv("RECITERSCORING_SERVICE_URL");
 
+	// ── Java 21: reusable ObjectMapper (thread-safe, expensive to construct) ──
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    
 	public NeuralNetworkModelArticlesScorer() {
 	}
 
 	public JSONArray executeArticleScorePredictor(String goldStandardName, String dataFileName, String s3BucketName,
-			String isS3UploadRequiredString) throws JsonMappingException, JsonProcessingException {
+			String isS3UploadRequiredString){
 
 		StopWatch stopWatch = new StopWatch(goldStandardName);
 		stopWatch.start(goldStandardName);
@@ -76,7 +78,7 @@ public class NeuralNetworkModelArticlesScorer {
 		}
 	}
 
-	public static void main(String args[]) throws JsonMappingException, JsonProcessingException {
+	public static void main(String args[]){
 		NeuralNetworkModelArticlesScorer nn = new NeuralNetworkModelArticlesScorer();
 		JSONArray articlesIdentityFeedbackScoreTotal = nn.executeArticleScorePredictor("feedback",
 				"ajg9004-feedbackIdentityScoringInput.json", "feedbackScore", "false");
@@ -104,7 +106,6 @@ public class NeuralNetworkModelArticlesScorer {
 					goldStandardModelName, articleDataFilename, e);
 		}
 
-		ObjectMapper mapper = new ObjectMapper();
 
 		Map<String, Object> payloadMap = new HashMap<>();
 		payloadMap.put("modelName", goldStandardModelName);
@@ -114,8 +115,8 @@ public class NeuralNetworkModelArticlesScorer {
 
 		String payload = null;
 		try {
-			payload = mapper.writeValueAsString(payloadMap);
-		} catch (JsonProcessingException e) {
+			payload = OBJECT_MAPPER.writeValueAsString(payloadMap);
+		} catch (JacksonException e) {
 			log.error("Failed to serialize local-Lambda scoring payload for model={}, dataFile={}",
 					goldStandardModelName, articleDataFilename, e);
 		}
@@ -180,7 +181,6 @@ public class NeuralNetworkModelArticlesScorer {
 
 		LambdaClient client = AwsScoringClients.lambda(PropertiesUtils.get(LAMBDA_FUNCTION_REGION));
 
-		ObjectMapper mapper = new ObjectMapper();
 
 		Map<String, Object> payloadMap = new HashMap<>();
 		payloadMap.put("modelName", goldStandardModelName);
@@ -190,8 +190,8 @@ public class NeuralNetworkModelArticlesScorer {
 
 		String payloadJson = null;
 		try {
-			payloadJson = mapper.writeValueAsString(payloadMap);
-		} catch (JsonProcessingException e) {
+			payloadJson = OBJECT_MAPPER.writeValueAsString(payloadMap);
+		} catch (JacksonException e) {
 			log.error("Failed to serialize AWS Lambda scoring payload for model={}, dataFile={}", goldStandardModelName,
 					articleDataFilename, e);
 		}

@@ -32,21 +32,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
 
 import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
@@ -71,12 +63,11 @@ import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.utils.AffiliationStrategyUtils;
 import reciter.utils.DegreeYearStrategyUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @SpringBootApplication
-@Configuration
-@EnableAutoConfiguration
 @EnableAsync
-@ComponentScan("reciter")
 public class Application {
 	
 	private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -139,21 +130,12 @@ public class Application {
 	@Value("${aws.reciterscoring.service.portNo}")
 	private String reciterScoringPortNumber;
 	
+	@Autowired
+	private ObjectMapper mapper;
+	
 	
 	public static void main(String[] args) {
-		ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
-		
-		Iterable<ObjectMapper> objectMappers = context.getBeansOfType(ObjectMapper.class)
-	            .values();
-		
-        ObjectMapper objectMapper = Iterables.getFirst(objectMappers, null);
-
-        // Enable Squiggly for Jackson message converter
-        if (objectMapper != null) {
-            for (MappingJackson2HttpMessageConverter converter : context.getBeansOfType(MappingJackson2HttpMessageConverter.class).values()) {
-                converter.setObjectMapper(objectMapper);
-            }
-        }
+		SpringApplication.run(Application.class, args);
 	}
 	
 	
@@ -206,7 +188,6 @@ public class Application {
 		if(reciterScoringService != null && !reciterScoringService.isEmpty()) 
 		{
 			String urlString = "http://localhost:"+ reciterScoringPortNumber +"/2015-03-31/functions/function/invocations";
-	        ObjectMapper mapper = new ObjectMapper();
 	        
 	        Map<String, Object> payloadMap = new HashMap<>();
 	        payloadMap.put("category", "test");
@@ -217,7 +198,7 @@ public class Application {
 	        String payloadJson=null;
 			try {
 				payloadJson = mapper.writeValueAsString(payloadMap);
-			} catch (JsonProcessingException e) {
+			} catch (JacksonException e) {
 				log.error("ReCiter---Scoring payload: Failed to serialize payload map to JSON {} ",e.getMessage());
 			}
 	        
