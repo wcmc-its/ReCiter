@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.engine.analysis.ReCiterArticleFeature;
@@ -20,22 +22,56 @@ import reciter.engine.analysis.ReCiterArticleFeature;
  */
 public final class ExternalArticleDupCheck {
 
+    private static final Pattern YEAR = Pattern.compile("\\d{4}");
+    /** doi.org / dx.doi.org URL forms and the bare "doi:" prefix all denote the same DOI. */
+    private static final Pattern DOI_PREFIX = Pattern.compile("^(https?://(dx\\.)?doi\\.org/|doi:\\s*)");
+
     public enum Level {
         OK, WARNING, BLOCKED
     }
 
+    /**
+     * Why a match fired. Serializes to its own name, so the JSON contract PM reads is
+     * unchanged from when this was a String.
+     *
+     * Note that {@link Match#getMatchedId()} is polymorphic across these: the
+     * *_EXTERNAL and ALREADY_ADDED types carry an ExternalArticle articleId
+     * (e.g. "SCOPUS:2-s2.0-..."), every other type carries a PMID. See #735.
+     */
+    public enum MatchType {
+        ALREADY_ADDED,
+        PMID_MATCH_EXTERNAL,
+        DOI_MATCH_EXTERNAL,
+        TITLE_YEAR_MATCH_EXTERNAL,
+        PMID_IN_GOLD_STANDARD,
+        PMID_REJECTED_IN_GOLD_STANDARD,
+        PMID_IN_CANDIDATES,
+        DOI_MATCH,
+        TITLE_YEAR_MATCH
+    }
+
     public static final class Match {
-        private final String type;
+        private final MatchType type;
         private final String matchedId;
         private final String detail;
+        private final String title;
+        private final String journal;
+        private final String pubYear;
 
-        Match(String type, String matchedId, String detail) {
+        Match(MatchType type, String matchedId, String detail) {
+            this(type, matchedId, detail, null, null, null);
+        }
+
+        Match(MatchType type, String matchedId, String detail, String title, String journal, String pubYear) {
             this.type = type;
             this.matchedId = matchedId;
             this.detail = detail;
+            this.title = title;
+            this.journal = journal;
+            this.pubYear = pubYear;
         }
 
-        public String getType() {
+        public MatchType getType() {
             return type;
         }
 
@@ -46,6 +82,23 @@ public final class ExternalArticleDupCheck {
         public String getDetail() {
             return detail;
         }
+
+        /** Matched record's title, when known — null for the two gold-standard PMID
+         * matches (a GoldStandard entry carries no title, only the PMID). */
+        public String getTitle() {
+            return title;
+        }
+
+        /** Matched record's journal/venue, when known — null where the underlying
+         * record doesn't carry one (e.g. gold-standard PMID matches). */
+        public String getJournal() {
+            return journal;
+        }
+
+        /** Matched record's publication year, when known. */
+        public String getPubYear() {
+            return pubYear;
+        }
     }
 
     public static final class Result {
@@ -54,7 +107,7 @@ public final class ExternalArticleDupCheck {
 
         Result(Level level, List<Match> matches) {
             this.level = level;
-            this.matches = matches;
+            this.matches = List.copyOf(matches);
         }
 
         public Level getLevel() {
@@ -81,42 +134,51 @@ public final class ExternalArticleDupCheck {
         String candidateYear = year(candidate.getPubDate());
 
         for (ExternalArticle existing : safe(existingExternal)) {
+            String existingYear = year(existing.getPubDate());
             if (existing.getArticleId() != null && existing.getArticleId().equals(candidate.getArticleId())) {
-                blocked.add(new Match("ALREADY_ADDED", existing.getArticleId(),
-                        "This external article was already added for this person."));
+                blocked.add(new Match(MatchType.ALREADY_ADDED, existing.getArticleId(),
+                        "This external article was already added for this person.",
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             } else if (candidate.getPmid() != null && candidate.getPmid().equals(existing.getPmid())) {
-                blocked.add(new Match("PMID_MATCH_EXTERNAL", existing.getArticleId(),
-                        "An external article with the same PMID was already added from " + existing.getSourceType() + "."));
+                blocked.add(new Match(MatchType.PMID_MATCH_EXTERNAL, existing.getArticleId(),
+                        "An external article with the same PMID was already added from " + existing.getSourceType() + ".",
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             } else if (candidateDoi != null && candidateDoi.equals(normalizeDoi(existing.getDoi()))) {
-                blocked.add(new Match("DOI_MATCH_EXTERNAL", existing.getArticleId(),
-                        "An external article with the same DOI was already added from " + existing.getSourceType() + "."));
+                blocked.add(new Match(MatchType.DOI_MATCH_EXTERNAL, existing.getArticleId(),
+                        "An external article with the same DOI was already added from " + existing.getSourceType() + ".",
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             } else if (titleYearCollision(candidateTitle, candidateYear,
-                    normalizeTitle(existing.getTitle()), year(existing.getPubDate()))) {
-                warnings.add(new Match("TITLE_YEAR_MATCH_EXTERNAL", existing.getArticleId(),
-                        "An external article with a matching title and year was already added: " + existing.getTitle()));
+                    normalizeTitle(existing.getTitle()), existingYear)) {
+                warnings.add(new Match(MatchType.TITLE_YEAR_MATCH_EXTERNAL, existing.getArticleId(),
+                        "An external article with a matching title and year was already added: " + existing.getTitle(),
+                        existing.getTitle(), existing.getJournalOrVenue(), existingYear));
             }
         }
 
         if (candidate.getPmid() != null && knownPmids != null && knownPmids.contains(candidate.getPmid())) {
-            blocked.add(new Match("PMID_IN_GOLD_STANDARD", String.valueOf(candidate.getPmid()),
+            blocked.add(new Match(MatchType.PMID_IN_GOLD_STANDARD, String.valueOf(candidate.getPmid()),
                     "This PMID is already accepted in the person's gold standard."));
         }
         if (candidate.getPmid() != null && rejectedPmids != null && rejectedPmids.contains(candidate.getPmid())) {
-            blocked.add(new Match("PMID_REJECTED_IN_GOLD_STANDARD", String.valueOf(candidate.getPmid()),
+            blocked.add(new Match(MatchType.PMID_REJECTED_IN_GOLD_STANDARD, String.valueOf(candidate.getPmid()),
                     "This PMID was explicitly rejected by a curator; do not re-add it from an external source."));
         }
 
         for (ReCiterArticleFeature feature : safe(candidateArticles)) {
-            if (candidate.getPmid() != null && feature.getPmid() == candidate.getPmid()) {
-                blocked.add(new Match("PMID_IN_CANDIDATES", String.valueOf(feature.getPmid()),
-                        "This PMID exists in the person's PubMed candidate set; adjudicate it via normal feedback instead."));
+            String featureYear = year(feature.getPublicationDateStandardized());
+            if (candidate.getPmid() != null && candidate.getPmid().longValue() == feature.getPmid()) {
+                blocked.add(new Match(MatchType.PMID_IN_CANDIDATES, String.valueOf(feature.getPmid()),
+                        "This PMID exists in the person's PubMed candidate set; adjudicate it via normal feedback instead.",
+                        feature.getArticleTitle(), feature.getJournalTitleVerbose(), featureYear));
             } else if (candidateDoi != null && candidateDoi.equals(normalizeDoi(feature.getDoi()))) {
-                blocked.add(new Match("DOI_MATCH", String.valueOf(feature.getPmid()),
-                        "A PubMed article with the same DOI exists in the person's candidate set (PMID " + feature.getPmid() + ")."));
+                blocked.add(new Match(MatchType.DOI_MATCH, String.valueOf(feature.getPmid()),
+                        "A PubMed article with the same DOI exists in the person's candidate set (PMID " + feature.getPmid() + ").",
+                        feature.getArticleTitle(), feature.getJournalTitleVerbose(), featureYear));
             } else if (titleYearCollision(candidateTitle, candidateYear,
-                    normalizeTitle(feature.getArticleTitle()), year(feature.getPublicationDateStandardized()))) {
-                warnings.add(new Match("TITLE_YEAR_MATCH", String.valueOf(feature.getPmid()),
-                        "A PubMed article with a matching title and year exists (PMID " + feature.getPmid() + "): " + feature.getArticleTitle()));
+                    normalizeTitle(feature.getArticleTitle()), featureYear)) {
+                warnings.add(new Match(MatchType.TITLE_YEAR_MATCH, String.valueOf(feature.getPmid()),
+                        "A PubMed article with a matching title and year exists (PMID " + feature.getPmid() + "): " + feature.getArticleTitle(),
+                        feature.getArticleTitle(), feature.getJournalTitleVerbose(), featureYear));
             }
         }
 
@@ -158,13 +220,13 @@ public final class ExternalArticleDupCheck {
         return yearA == null || yearB == null || yearA.equals(yearB);
     }
 
-    /** Lowercase, trim, strip any doi.org URL prefix. Returns null for blank input. */
+    /** Lowercase, trim, strip any doi.org URL or "doi:" prefix. Returns null for blank input. */
     static String normalizeDoi(String doi) {
         if (doi == null) {
             return null;
         }
-        String normalized = doi.trim().toLowerCase(Locale.ROOT)
-                .replaceFirst("^https?://(dx\\.)?doi\\.org/", "");
+        String normalized = DOI_PREFIX.matcher(doi.trim().toLowerCase(Locale.ROOT))
+                .replaceFirst("").trim();
         return normalized.isEmpty() ? null : normalized;
     }
 
@@ -184,7 +246,7 @@ public final class ExternalArticleDupCheck {
         if (date == null) {
             return null;
         }
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d{4}").matcher(date);
+        Matcher m = YEAR.matcher(date);
         return m.find() ? m.group() : null;
     }
 
