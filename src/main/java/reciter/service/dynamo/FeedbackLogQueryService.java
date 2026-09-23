@@ -41,7 +41,7 @@ public class FeedbackLogQueryService {
      */
     public List<AuditHistoryEntry> getAuditHistory(String uid) {
         List<AuditHistoryEntry> entries = new ArrayList<>();
-        if (uid == null || uid.isEmpty()) {
+        if (uid == null || uid.isBlank()) {
             return entries;
         }
 

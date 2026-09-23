@@ -141,7 +141,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			
 			PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
 			String countQueryStr = encodedInitialCountQuery == null ? "" : encodedInitialCountQuery.toString().trim();
-			if (countQueryStr.isEmpty() || countQueryStr.equals("()")) {
+			if (countQueryStr.isBlank() || countQueryStr.equals("()")) {
 				slf4jLogger.info("Skipping degenerate count query [{}] for strategy [{}]", countQueryStr, getRetrievalStrategyName());
 				handler = 0;
 			} else {
@@ -333,7 +333,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		// add the remaining pmids
 		String remaining = sb.toString();
-		if (!remaining.isEmpty()) {
+		if (!remaining.isBlank()) {
 			pmidQueries.add(remaining);
 		}
 		List<ScopusArticle> scopusArticlesResult = new ArrayList<ScopusArticle>();

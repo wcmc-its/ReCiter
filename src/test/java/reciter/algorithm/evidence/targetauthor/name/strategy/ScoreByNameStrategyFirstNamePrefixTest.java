@@ -97,7 +97,7 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 		n.setFirstName(first);
 		n.setMiddleName(middle);
 		n.setLastName(last);
-		if (first != null && !first.isEmpty()) {
+		if (first != null && !first.isBlank()) {
 			n.setFirstInitial(first.substring(0, 1));
 		}
 		if (middle != null && !middle.isEmpty()) {

@@ -63,7 +63,7 @@ public class MultiApiKeyFilter extends OncePerRequestFilter {
 	        if(((path.startsWith("/reciter/article-retrieval/") || path.startsWith("/reciter/dev/article-retrieval/"))))
 			{
 				Optional.ofNullable(request.getHeader("api-key"))
-		        .filter(key -> !key.isEmpty())
+		        .filter(key -> !key.isBlank())
 		        .ifPresent(apiKey -> {
 		        	 if (!constantTimeEquals(apiKey, consumerPrincipalRequestValue)) {
 		        		 throw new BadCredentialsException("Invalid API key");
@@ -77,7 +77,7 @@ public class MultiApiKeyFilter extends OncePerRequestFilter {
 			else if(path.startsWith("/reciter/"))
 			{
 				Optional.ofNullable(request.getHeader("api-key"))
-		        .filter(key -> !key.isEmpty())
+		        .filter(key -> !key.isBlank())
 		        .ifPresent(apiKey -> {
 		        	 if (!constantTimeEquals(apiKey, adminPrincipalRequestValue)) {
 		        		 throw new BadCredentialsException("Invalid API key");

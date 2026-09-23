@@ -234,7 +234,7 @@ public class TargetAuthorSelection {
 		for (Entry<ReCiterAuthor, ReCiterAuthor> entry : authors) {
 			ReCiterAuthor author = entry.getValue();
 			ReCiterAuthor originalAuthor = entry.getKey();
-			if (originalAuthor.getAffiliation() != null && !originalAuthor.getAffiliation().isEmpty()) {
+			if (originalAuthor.getAffiliation() != null && !originalAuthor.getAffiliation().isBlank()) {
 				affiliation = originalAuthor.getAffiliation();
 				if(identity!=null && identity.getEmails()!=null && !identity.getEmails().isEmpty() && affiliation != null) {
 					for(String email: identity.getEmails()) {

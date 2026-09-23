@@ -120,7 +120,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 		
 		if(reCiterAuthor != null) {
 			String firstName = reCiterAuthor.getAuthorName().getFirstName().replaceAll("[A-Z-.\"() ]", "").trim();
-			if(!firstName.isEmpty()) {
+			if(!firstName.isBlank()) {
 				articleAuthorFirstNames.add(firstName);
 			}
 			

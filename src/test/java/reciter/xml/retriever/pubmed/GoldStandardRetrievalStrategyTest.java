@@ -146,7 +146,7 @@ public class GoldStandardRetrievalStrategyTest {
 
 	private int countPmidsInChunk(PubMedQueryType qt) {
 		String q = qt.getLenientQuery().getQuery().getStrategyQuery();
-		if (q == null || q.isEmpty()) {
+		if (q == null || q.isBlank()) {
 			return 0;
 		}
 		return q.split(",").length;

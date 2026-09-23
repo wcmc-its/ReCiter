@@ -33,7 +33,7 @@ public enum EntryPath {
      * Returns {@link #CANDIDATE_LIST} (the default) for null, empty, or unrecognized values.
      */
     public static EntryPath fromString(String s) {
-        if (s == null || s.isEmpty()) {
+        if (s == null || s.isBlank()) {
             return CANDIDATE_LIST;
         }
         try {
