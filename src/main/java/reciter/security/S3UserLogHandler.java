@@ -43,7 +43,7 @@ public class S3UserLogHandler {
 
     @PostConstruct
     public void init() {
-        if (apiLogsBucketRegion != null && !apiLogsBucketRegion.isEmpty()) {
+        if (apiLogsBucketRegion != null && !apiLogsBucketRegion.isBlank()) {
 			s3Client = S3Client.builder().credentialsProvider(DefaultCredentialsProvider.create())
 					.region(Region.of(apiLogsBucketRegion)).build();
         } else {

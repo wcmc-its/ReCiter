@@ -44,7 +44,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	            .collect(Collectors.toMap(
 	                ReCiterArticle::getArticleId,
 	                article -> (int)article.getArticleCoAuthors().getAuthors().stream()
-	                    .filter(author -> !author.isTargetAuthor() && author.getOrcid()!=null && !author.getOrcid().isEmpty())
+	                    .filter(author -> !author.isTargetAuthor() && author.getOrcid()!=null && !author.getOrcid().isBlank())
 	                    .map(ReCiterAuthor::getOrcid)
 	                    .count()
 	            ));
@@ -56,7 +56,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	        Map<String, Map<Integer, Long>> nonTargetAuthororcidCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-	                	 .filter(author-> author!=null && author.getOrcid()!=null && !author.getOrcid().isEmpty() && !author.isTargetAuthor())	
+	                	 .filter(author-> author!=null && author.getOrcid()!=null && !author.getOrcid().isBlank() && !author.isTargetAuthor())	
 	                	 .flatMap(author -> {
 	                    	String orcid = author.getOrcid();
 	                    	List<String> orcidList = new ArrayList<>();
@@ -92,7 +92,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 				feedbackOrcidCoAuthorMap = new HashMap<>();
 				listOfAuthors.stream()
 							.filter(author-> author!=null
-							 && author.getOrcid()!=null && !author.getOrcid().isEmpty()
+							 && author.getOrcid()!=null && !author.getOrcid().isBlank()
 							 && !author.isTargetAuthor())
 							.forEach(author->{
 								

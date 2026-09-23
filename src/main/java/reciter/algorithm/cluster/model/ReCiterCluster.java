@@ -257,8 +257,8 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		boolean emailMatch = false;
 		for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 			for(ReCiterAuthor authoro: reCiterArticle.getArticleCoAuthors().getAuthors()) {
-				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isEmpty()) {
-					emailMatch = this.articleCluster.stream().anyMatch(article -> article.getArticleCoAuthors().getAuthors().stream().anyMatch(author -> author.getValidEmail() != null && !author.getValidEmail().isEmpty() &&
+				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isBlank()) {
+					emailMatch = this.articleCluster.stream().anyMatch(article -> article.getArticleCoAuthors().getAuthors().stream().anyMatch(author -> author.getValidEmail() != null && !author.getValidEmail().isBlank() &&
 							StringUtils.equalsIgnoreCase(author.getValidEmail(), authoro.getValidEmail())));
 					if(emailMatch) {
 						return 1;
@@ -348,8 +348,8 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	private int reCiterOverlapCount(ReCiterArticleFeatures reCiterArticleFeature1, ReCiterArticleFeatures reCiterArticleFeature2) {
 		int matchCount = 0;
 		//Journal Feature match
-		if(reCiterArticleFeature1.getJournalName() != null && !reCiterArticleFeature1.getJournalName().isEmpty() && 
-				reCiterArticleFeature2.getJournalName() != null && !reCiterArticleFeature2.getJournalName().isEmpty() &&
+		if(reCiterArticleFeature1.getJournalName() != null && !reCiterArticleFeature1.getJournalName().isBlank() && 
+				reCiterArticleFeature2.getJournalName() != null && !reCiterArticleFeature2.getJournalName().isBlank() &&
 				StringUtils.equalsIgnoreCase(reCiterArticleFeature1.getJournalName(), reCiterArticleFeature2.getJournalName())) {
 			matchCount++;
 		}

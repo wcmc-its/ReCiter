@@ -251,7 +251,7 @@ public class AuthorNameSanitizationUtils {
 		if (firstStartsWith && candidate.getMiddleName() == null && full.getMiddleName() == null) {
 			return true;
 		}
-		if (firstStartsWith && candidate.getMiddleName() != null && candidate.getMiddleName().trim().isEmpty()) {
+		if (firstStartsWith && candidate.getMiddleName() != null && candidate.getMiddleName().isBlank()) {
 			return true;
 		}
 		return full.getMiddleName() != null && candidate.getMiddleName() != null

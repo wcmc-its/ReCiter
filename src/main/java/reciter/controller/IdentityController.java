@@ -246,7 +246,7 @@ public class IdentityController {
     private void validateMandatoryFields(Identity identity) {
         String[] mandatoryFields = getMandatoryFields();
 
-        if (identity == null || identity.getUid() == null || identity.getUid().isEmpty()) {
+        if (identity == null || identity.getUid() == null || identity.getUid().isBlank()) {
             throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
         }
 
@@ -263,19 +263,19 @@ public class IdentityController {
             for (String field : mandatoryFields) {
                 switch (field) {
                     case "firstName":
-                        if (authorName.getFirstName() == null || authorName.getFirstName().isEmpty()) {
+                        if (authorName.getFirstName() == null || authorName.getFirstName().isBlank()) {
                             throw new IllegalArgumentException("Field 'firstName' in AuthorName is required but not provided.");
                         }
                         break;
 
                     case "lastName":
-                        if (authorName.getLastName() == null || authorName.getLastName().isEmpty()) {
+                        if (authorName.getLastName() == null || authorName.getLastName().isBlank()) {
                             throw new IllegalArgumentException("Field 'lastName' in AuthorName is required but not provided.");
                         }
                         break;
 
                     case "firstInitial":
-                        if (authorName.getFirstInitial() == null || authorName.getFirstInitial().isEmpty()) {
+                        if (authorName.getFirstInitial() == null || authorName.getFirstInitial().isBlank()) {
                             throw new IllegalArgumentException("Field 'firstInitial' in AuthorName is required but not provided.");
                         }
                         break;

@@ -109,7 +109,7 @@ public class JournalCategoryStrategy extends AbstractTargetAuthorStrategy {
 		List<ScienceMetrixDepartmentCategory> scienceMetrixDeptCategory = null;
 		if(subfieldId != null 
 				&& 
-				!subfieldId.isEmpty()) {
+				!subfieldId.isBlank()) {
 			scienceMetrixDeptCategory = EngineParameters.getScienceMetrixDepartmentCategories().parallelStream().filter(scienceMetrixDepartmentCategory -> 
 			scienceMetrixDepartmentCategory.getScienceMetrixJournalSubfieldId() == Integer.parseInt(subfieldId)
 					).collect(Collectors.toList());

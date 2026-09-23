@@ -57,7 +57,7 @@ public class JournalTitleSimilarityFeedbackStrategy extends AbstractTargetAuthor
 			for (ReCiterArticle article : reCiterArticles) {
 				if (article == null) continue;
 				String journalTitle = getJournalTitle(article);
-				if (journalTitle != null && !journalTitle.isEmpty()) {
+				if (journalTitle != null && !journalTitle.isBlank()) {
 					articleJournalTitles.put(article.getArticleId(), journalTitle);
 				}
 			}

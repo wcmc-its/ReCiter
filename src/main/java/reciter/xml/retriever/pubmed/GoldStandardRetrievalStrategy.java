@@ -154,7 +154,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	private String requireValidUid(Identity identity) {
-		if (identity == null || identity.getUid() == null || identity.getUid().trim().isEmpty()) {
+		if (identity == null || identity.getUid() == null || identity.getUid().isBlank()) {
 			throw new IllegalArgumentException("Identity UID is missing or blank.");
 		}
 		return identity.getUid().trim();

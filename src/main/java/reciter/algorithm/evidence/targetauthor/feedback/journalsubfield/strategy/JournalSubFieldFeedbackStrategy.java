@@ -99,7 +99,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	            .filter(article -> article.getJournal() != null && article.getJournal().getJournalIssn() != null && !article.getJournal().getJournalIssn().isEmpty())
 	            .map(article -> resolveJournalSubField(article.getJournal().getJournalIssn()))
 	            .filter(Objects::nonNull)
-	            .filter(subField -> !subField.isEmpty())
+	            .filter(subField -> !subField.isBlank())
 	            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 	}
 
@@ -108,7 +108,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	                                                   Map<String, Long> rejectedArticlesCountByJournalSubField) {
 
 	    String journalSubField = resolveJournalSubField(article.getJournal().getJournalIssn());
-	    if (journalSubField == null || journalSubField.isEmpty() || filterJournalSubFields.contains(journalSubField)) {
+	    if (journalSubField == null || journalSubField.isBlank() || filterJournalSubFields.contains(journalSubField)) {
 	        return null; // Skip if no valid subfield
 	    }
 
@@ -183,7 +183,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	        scienceMetrix = findScienceMetrixByIssn(issnElectronic);
 	    }
 
-	    return (scienceMetrix != null && scienceMetrix.getScienceMetrixSubfield() != null && !scienceMetrix.getScienceMetrixSubfield().isEmpty())
+	    return (scienceMetrix != null && scienceMetrix.getScienceMetrixSubfield() != null && !scienceMetrix.getScienceMetrixSubfield().isBlank())
 	            ? scienceMetrix.getScienceMetrixSubfield()
 	            : null;
 	}
@@ -193,7 +193,7 @@ public class JournalSubFieldFeedbackStrategy extends AbstractTargetAuthorFeedbac
 	 * trying both the issn and eissn fields.
 	 */
 	private ScienceMetrix findScienceMetrixByIssn(String issn) {
-	    if (issn == null || issn.isEmpty()) {
+	    if (issn == null || issn.isBlank()) {
 	        return null;
 	    }
 	    for (ScienceMetrix smJournal : EngineParameters.getScienceMetrixJournals()) {
