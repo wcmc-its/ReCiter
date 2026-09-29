@@ -245,7 +245,7 @@ public class ExternalArticleDupCheckTest {
                 "https://doi.org/10.1000/abc",
                 "http://dx.doi.org/10.1000/abc",
                 "https://dx.doi.org/10.1000/ABC")) {
-            assertEquals(variant, expected, ExternalArticleDupCheck.normalizeDoi(variant));
+            assertEquals(expected, ExternalArticleDupCheck.normalizeDoi(variant), variant);
         }
         assertNull(ExternalArticleDupCheck.normalizeDoi(null));
         assertNull(ExternalArticleDupCheck.normalizeDoi("https://doi.org/"));

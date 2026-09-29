@@ -985,7 +985,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				// An alternate name deserialized from the Identity table can carry a null
 				// firstName or lastName, which every dereference below would NPE on — skip it.
 				if(authorName == null || authorName.getFirstName() == null || authorName.getLastName() == null) {
-					slf4jLogger.warn("uid: {} has a malformed alternate name (null firstName or lastName); skipping it", identity.getUid());
+					log.warn("uid: {} has a malformed alternate name (null firstName or lastName); skipping it", identity.getUid());
 					continue;
 				}
 				authorName.setFirstName(ReCiterStringUtil.deAccent(authorName.getFirstName().replaceAll("[\"()]", "")));
