@@ -50,7 +50,7 @@ public class OrcidRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private String constructOrcidQuery(Identity identity) {
 		String orcid = identity.getOrcid();
-		if (orcid != null && !orcid.isEmpty()) {
+		if (orcid != null && !orcid.isBlank()) {
 			return orcid.trim() + "[auid]";
 		}
 		return null;

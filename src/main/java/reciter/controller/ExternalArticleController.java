@@ -102,7 +102,7 @@ public class ExternalArticleController {
                     "Possible duplicate. Retry with force=true to add anyway."));
         }
 
-        if (externalArticle.getDateAdded() == null || externalArticle.getDateAdded().trim().isEmpty()) {
+        if (externalArticle.getDateAdded() == null || externalArticle.getDateAdded().isBlank()) {
             externalArticle.setDateAdded(Instant.now().toString());
         }
         // Owned by the supersede rule (#660), never by the client.
@@ -256,11 +256,11 @@ public class ExternalArticleController {
             return "articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>.";
         }
         externalArticle.setArticleId(externalArticle.getArticleId().trim());
-        if (externalArticle.getTitle() == null || externalArticle.getTitle().trim().isEmpty()) {
+        if (externalArticle.getTitle() == null || externalArticle.getTitle().isBlank()) {
             return "title is required.";
         }
         String prefix = externalArticle.getArticleId().substring(0, externalArticle.getArticleId().indexOf(':'));
-        if (externalArticle.getSourceType() == null || externalArticle.getSourceType().trim().isEmpty()) {
+        if (externalArticle.getSourceType() == null || externalArticle.getSourceType().isBlank()) {
             externalArticle.setSourceType(prefix);
         } else if (!prefix.equals(externalArticle.getSourceType().trim())) {
             return "sourceType '" + externalArticle.getSourceType() + "' does not match articleId prefix '" + prefix + "'.";

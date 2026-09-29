@@ -64,7 +64,7 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 				affiliation = affiliation.replaceFirst("^and ", "").replaceFirst(" and$", "");
 				affiliation = affiliation.replace(" & ", " and");
 
-				if (!affiliation.isEmpty() && !affiliation.contains("Division")
+				if (!affiliation.isBlank() && !affiliation.contains("Division")
 						&& !affiliation.contains("Center") && !affiliation.contains("Centre")
 						&& !affiliation.contains("University") && !affiliation.contains("USA")
 						&& affiliation.length() > 2 && !affiliation.equals("From the")
@@ -94,7 +94,7 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 			 Map<String, Map<Integer, Long>> orgCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.isTargetAuthor())	
+	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isBlank() && author.isTargetAuthor())	
 	                	 .flatMap(author -> {
 	                    	List<String> organizationList = sanitizeAffiliation(author.getAffiliation());
 		                        // Create a stream of (keyword, status) pairs
@@ -126,7 +126,7 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 											 
 											 List<String> organizationList = sanitizeAffiliation(author.getAffiliation());
 											 organizationList.stream()
-											 				.filter(organization -> organization!=null && !organization.isEmpty())
+											 				.filter(organization -> organization!=null && !organization.isBlank())
 											 				.forEach(organization-> {	
 												
 							 					int countAccepted = 0;

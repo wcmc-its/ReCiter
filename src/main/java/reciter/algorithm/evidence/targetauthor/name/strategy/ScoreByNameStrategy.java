@@ -170,7 +170,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		}
 		String firstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
 				? identity.getPrimaryName().getFirstName().trim() : "";
-		if (firstName.isEmpty()) {
+		if (firstName.isBlank()) {
 			return 0.0;
 		}
 		// Split compound names by spaces and hyphens, discard single-char tokens (initials)
