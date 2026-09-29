@@ -134,7 +134,7 @@ public class PubMedQueryType {
 				p.setStart(startDate);
 				p.setEnd(endDate);
 			}
-			if (strategyQuery != null && !strategyQuery.isEmpty()) {
+			if (strategyQuery != null && !strategyQuery.isBlank()) {
 				p.setStrategyQuery(strategyQuery);
 			}
 			return p;

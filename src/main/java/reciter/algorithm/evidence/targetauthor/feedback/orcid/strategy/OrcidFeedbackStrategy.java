@@ -41,7 +41,7 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
                 .map(ReCiterArticleAuthors::getAuthors)
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
-                .filter(author -> author != null && author.getOrcid() != null && !author.getOrcid().isEmpty() && author.isTargetAuthor())
+                .filter(author -> author != null && author.getOrcid() != null && !author.getOrcid().isBlank() && author.isTargetAuthor())
                 .collect(Collectors.groupingBy(
                         ReCiterAuthor::getOrcid,
                         Collectors.counting()
@@ -77,7 +77,7 @@ public class OrcidFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 						feedbackOrcidMap = new HashMap<>();
 					
 				listOfAuthors.stream()
-							.filter(author->author != null && author.isTargetAuthor() && author.getOrcid() != null && !author.getOrcid().isEmpty() )
+							.filter(author->author != null && author.isTargetAuthor() && author.getOrcid() != null && !author.getOrcid().isBlank() )
 							.forEach(author -> {
 
 					 int countAccepted = 0;

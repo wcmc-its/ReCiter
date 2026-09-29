@@ -61,7 +61,6 @@ public class DynamoDbGoldStandardServiceFeedbackDiffTest {
 
     @Test
     public void singlePmidMergeAcceptLogsOnlyTheNewPmid() {
-        when(dynamoDbGoldStandardRepository.saveIfUnchanged(any(), any(), any())).thenReturn(true);
         when(dynamoDbGoldStandardRepository.findById("brk2001"))
                 .thenReturn(Optional.of(existing("brk2001", Arrays.asList(111L, 222L, 333L))));
 
@@ -84,7 +83,6 @@ public class DynamoDbGoldStandardServiceFeedbackDiffTest {
 
     @Test
     public void reAcceptOfKnownPmidLogsNothing() {
-        when(dynamoDbGoldStandardRepository.saveIfUnchanged(any(), any(), any())).thenReturn(true);
         when(dynamoDbGoldStandardRepository.findById("brk2001"))
                 .thenReturn(Optional.of(existing("brk2001", Arrays.asList(111L, 222L))));
 

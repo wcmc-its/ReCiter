@@ -3,6 +3,8 @@ package reciter.service.dynamo;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +30,7 @@ import reciter.service.ArticleProvenanceService;
 import reciter.service.ESearchResultService;
 import reciter.service.FeedbackLogService;
 import reciter.service.PmidProvenanceService;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 /**
  * Regression coverage for the GoldStandard lost-update race: two concurrent single-pmid
@@ -79,18 +82,18 @@ public class DynamoDbGoldStandardServiceRaceTest {
 	public void retryOnConflictMergesBothPmidsAndWritesSideEffectOnce() {
 		// Every read sees the concurrent writer's 100 (fresh copy so attempts don't alias state).
 		when(goldStandardRepository.findById(UID)).thenAnswer(inv -> Optional.of(baselineWith100()));
-		// First persist conflicts, second succeeds.
-		when(goldStandardRepository.saveIfUnchanged(any(GoldStandard.class), any(), any()))
-				.thenReturn(false)
-				.thenReturn(true);
+		// First persist conflicts (stale version), second succeeds.
+		doThrow(ConditionalCheckFailedException.builder().message("stale version").build())
+				.doNothing()
+				.when(goldStandardRepository).save(any(GoldStandard.class));
 
-		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null,null);
+		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null, null);
 
 		service.save(request, GoldStandardUpdateFlag.UPDATE, "TestSource", EntryPath.CANDIDATE_LIST, 7);
 
 		// Persisted twice (one conflict, one success); the committed item carries BOTH pmids.
 		ArgumentCaptor<GoldStandard> persisted = ArgumentCaptor.forClass(GoldStandard.class);
-		verify(goldStandardRepository, times(2)).saveIfUnchanged(persisted.capture(), any(), any());
+		verify(goldStandardRepository, times(2)).save(persisted.capture());
 		GoldStandard committed = persisted.getAllValues().get(persisted.getAllValues().size() - 1);
 		assertTrue(committed.getKnownPmids().contains(100L), "lost update: 100 missing after retry");
 		assertTrue(committed.getKnownPmids().contains(200L), "lost update: 200 missing after retry");
@@ -104,16 +107,16 @@ public class DynamoDbGoldStandardServiceRaceTest {
 	@Test
 	public void noConflictCommitsInOneAttempt() {
 		when(goldStandardRepository.findById(UID))
-				.thenReturn(Optional.of(new GoldStandard(UID, new ArrayList<>(Arrays.asList(100L)), new ArrayList<>(), null,null)));
+				.thenReturn(Optional.of(new GoldStandard(UID, new ArrayList<>(Arrays.asList(100L)), new ArrayList<>(), 1L, null)));
 
-		when(goldStandardRepository.saveIfUnchanged(any(GoldStandard.class), any(), any())).thenReturn(true);
+		doNothing().when(goldStandardRepository).save(any(GoldStandard.class));
 
-		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null,null);
+		GoldStandard request = new GoldStandard(UID, new ArrayList<>(Collections.singletonList(200L)), null, null, null);
 
 		service.save(request, GoldStandardUpdateFlag.UPDATE, "TestSource", EntryPath.CANDIDATE_LIST, 7);
 
 		ArgumentCaptor<GoldStandard> persisted = ArgumentCaptor.forClass(GoldStandard.class);
-		verify(goldStandardRepository, times(1)).saveIfUnchanged(persisted.capture(), any(), any());
+		verify(goldStandardRepository, times(1)).save(persisted.capture());
 		List<Long> known = persisted.getValue().getKnownPmids();
 		assertTrue(known.contains(100L) && known.contains(200L), "merge must union existing and incoming pmids");
 		verify(feedbackLogService, times(1))

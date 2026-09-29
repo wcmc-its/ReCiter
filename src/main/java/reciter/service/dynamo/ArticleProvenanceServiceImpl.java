@@ -44,11 +44,11 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
 
     @Override
     public void upsertRetrievalProvenance(String uid, long pmid, String strategyCode, long epochSeconds) {
-        if (uid == null || uid.isEmpty()) {
+        if (uid == null || uid.isBlank()) {
             log.warn("upsertRetrievalProvenance called with null/empty uid; skipping (pmid={})", pmid);
             return;
         }
-        if (strategyCode == null || strategyCode.isEmpty()) {
+        if (strategyCode == null || strategyCode.isBlank()) {
             log.warn("upsertRetrievalProvenance called with null/empty strategyCode; skipping (uid={} pmid={})", uid, pmid);
             return;
         }
@@ -64,7 +64,7 @@ public class ArticleProvenanceServiceImpl implements ArticleProvenanceService {
 
     @Override
     public void upsertCuratorAction(String uid, long pmid, EntryPath entryPath, long epochSeconds) {
-        if (uid == null || uid.isEmpty()) {
+        if (uid == null || uid.isBlank()) {
             log.warn("upsertCuratorAction called with null/empty uid; skipping (pmid={})", pmid);
             return;
         }

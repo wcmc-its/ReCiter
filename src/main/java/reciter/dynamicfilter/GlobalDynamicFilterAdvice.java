@@ -46,7 +46,7 @@ public class GlobalDynamicFilterAdvice implements ResponseBodyAdvice<Object> {
         if (body == null) return null;
 
         String fieldsParam = request.getParameter("fields");
-        if (fieldsParam == null || fieldsParam.isEmpty()) return body;
+        if (fieldsParam == null || fieldsParam.isBlank()) return body;
 
         Set<String> fieldsSet = Arrays.stream(fieldsParam.split(","))
                 .map(String::trim)
