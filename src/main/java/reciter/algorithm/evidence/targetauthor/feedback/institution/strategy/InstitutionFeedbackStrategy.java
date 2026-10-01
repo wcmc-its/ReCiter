@@ -148,7 +148,7 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 			Map<String, Map<Integer, Long>> instCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.isTargetAuthor() && author.getAffiliation().length() < 850)	
+	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isBlank() && author.isTargetAuthor() && author.getAffiliation().length() < 850)	
 	                	 .flatMap(author -> {
 	                    	List<String> institutionList = sanitizeAffiliation(author.getAffiliation());
 		                        // Create a stream of (keyword, status) pairs
@@ -174,7 +174,7 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 				   			feedbackInstitutionMap = new HashMap<>();   
 									
 								   article.getArticleCoAuthors().getAuthors().stream()
-										.filter(author -> author!=null && author.isTargetAuthor() && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.getAffiliation().length() < 850)
+										.filter(author -> author!=null && author.isTargetAuthor() && author.getAffiliation()!=null && !author.getAffiliation().isBlank() && author.getAffiliation().length() < 850)
 										.forEach(author -> {
 											
 											
@@ -182,7 +182,7 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 											 List<String> institutionList = sanitizeAffiliation(author.getAffiliation());
 											
 											institutionList.stream()
-														   .filter(institution -> institution!=null && !institution.isEmpty())
+														   .filter(institution -> institution!=null && !institution.isBlank())
 														   .forEach(institution -> {
 															   
 													 int countAccepted = 0;

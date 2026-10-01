@@ -510,13 +510,13 @@ public class ArticleTranslator {
         // Volume
         if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
                 && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume() != null
-                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isEmpty()) {
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isBlank()) {
             reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
         }
         // issue
         if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
                 && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue() != null
-                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isEmpty()) {
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isBlank()) {
             reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
         }
 
@@ -549,7 +549,7 @@ public class ArticleTranslator {
      * Package-private for testing.
      */
     static String blankToNull(String namePart) {
-        if (namePart == null || namePart.trim().isEmpty()) {
+        if (namePart == null || namePart.isBlank()) {
             return null;
         }
         return namePart;
@@ -709,7 +709,7 @@ public class ArticleTranslator {
         String journalTitle = reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null
                 ? reCiterArticle.getJournal().getJournalTitle().toLowerCase() : "";
         boolean hasAbstract = reCiterArticle.getPublicationAbstract() != null
-                && !reCiterArticle.getPublicationAbstract().isEmpty();
+                && !reCiterArticle.getPublicationAbstract().isBlank();
         // Distinguish full IMRaD structure (METHODS + RESULTS) from partial structure
         // (has section labels like BACKGROUND/CONCLUSIONS but no methods/results).
         // Full IMRaD strongly confirms original research. Partial structure is weaker —
@@ -908,7 +908,7 @@ public class ArticleTranslator {
      * like "1262-71" (= 1262-1271, NOT single page).
      */
     private static boolean isSinglePageArticle(String pages) {
-        if (pages == null || pages.trim().isEmpty()) {
+        if (pages == null || pages.isBlank()) {
             return false;
         }
         pages = pages.trim();
@@ -971,11 +971,11 @@ public class ArticleTranslator {
 					boolean addCoAuthor = true;
 					for(String ignoredCoAuthorName: ignoredCoAuthorNames) {
 						String[] nameArray = ignoredCoAuthorName.split(" ");
-						if(nameArray[1] != null && !nameArray[1].isEmpty() 
+						if(nameArray[1] != null && !nameArray[1].isBlank() 
 								&&
 								author.getAuthorName().getFirstInitial().equalsIgnoreCase(nameArray[1])
 								&&
-								nameArray[0] != null && !nameArray[0].isEmpty()
+								nameArray[0] != null && !nameArray[0].isBlank()
 								&&
 								author.getAuthorName().getLastName().equalsIgnoreCase(nameArray[0])) { 
 							addCoAuthor = false;

@@ -59,7 +59,7 @@ public class IdentityRepository {
 		List<Identity> identities = new ArrayList<>();
 		for (String uid : uids) {
 			Identity identity = identityTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
-			if (identity != null) {
+			if(identity != null) {
 				identities.add(identity);
 			}
 		}

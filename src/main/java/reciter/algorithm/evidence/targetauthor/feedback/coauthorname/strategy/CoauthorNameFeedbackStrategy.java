@@ -125,7 +125,7 @@ public class CoauthorNameFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 				listOfAuthors.stream()
 				.filter(author -> author != null && !author.isTargetAuthor())
 				.map(author -> processAuthor(author))        // Process each author to get the name
-				.filter(coAuthorName -> coAuthorName != null && !coAuthorName.isEmpty())
+				.filter(coAuthorName -> coAuthorName != null && !coAuthorName.isBlank())
 				.distinct()  // Fix #394: same co-author listed twice on one paper only scored once
 				.forEach(coAuthorName -> {
 

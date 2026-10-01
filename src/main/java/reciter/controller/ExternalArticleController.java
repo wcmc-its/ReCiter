@@ -102,7 +102,7 @@ public class ExternalArticleController {
                     "Possible duplicate. Retry with force=true to add anyway."));
         }
 
-        if (externalArticle.getDateAdded() == null || externalArticle.getDateAdded().trim().isEmpty()) {
+        if (externalArticle.getDateAdded() == null || externalArticle.getDateAdded().isBlank()) {
             externalArticle.setDateAdded(Instant.now().toString());
         }
         // Owned by the supersede rule (#660), never by the client.
@@ -157,7 +157,7 @@ public class ExternalArticleController {
                     + "goldstandard endpoint's curatedBy param.")
     @PatchMapping(value = "/reciter/external-article/feedback", produces = "application/json")
     public ResponseEntity<Object> recordExternalArticleFeedback(@RequestBody FeedbackRequest request) {
-        if (request == null || request.getUid() == null || request.getUid().trim().isEmpty()) {
+        if (request == null || request.getUid() == null || request.getUid().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("uid is required."));
         }
         if (request.getArticleId() == null
@@ -165,7 +165,7 @@ public class ExternalArticleController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(errorBody("articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>."));
         }
-        if (request.getActorPersonIdentifier() == null || request.getActorPersonIdentifier().trim().isEmpty()) {
+        if (request.getActorPersonIdentifier() == null || request.getActorPersonIdentifier().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("actorPersonIdentifier is required."));
         }
         FeedbackLogService.Feedback feedback;
@@ -256,11 +256,11 @@ public class ExternalArticleController {
             return "articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>.";
         }
         externalArticle.setArticleId(externalArticle.getArticleId().trim());
-        if (externalArticle.getTitle() == null || externalArticle.getTitle().trim().isEmpty()) {
+        if (externalArticle.getTitle() == null || externalArticle.getTitle().isBlank()) {
             return "title is required.";
         }
         String prefix = externalArticle.getArticleId().substring(0, externalArticle.getArticleId().indexOf(':'));
-        if (externalArticle.getSourceType() == null || externalArticle.getSourceType().trim().isEmpty()) {
+        if (externalArticle.getSourceType() == null || externalArticle.getSourceType().isBlank()) {
             externalArticle.setSourceType(prefix);
         } else if (!prefix.equals(externalArticle.getSourceType().trim())) {
             return "sourceType '" + externalArticle.getSourceType() + "' does not match articleId prefix '" + prefix + "'.";

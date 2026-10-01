@@ -49,7 +49,6 @@ public class PubMedArticleRepository {
 			if (pubMedArticle != null) {
 				pubMedArticles.add(pubMedArticle);
 			}
-
 		}
 		return pubMedArticles;
 	}

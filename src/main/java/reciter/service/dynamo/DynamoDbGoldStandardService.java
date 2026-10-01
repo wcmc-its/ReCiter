@@ -39,6 +39,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 
     private static final Logger log = LoggerFactory.getLogger(DynamoDbGoldStandardService.class);
     private static final String PM_MANUAL_STRATEGY = "PublicationManagerManual";
+    // Bounded optimistic-concurrency retries for the contended single-accept path.
 
     private final DynamoDbGoldStandardRepository dynamoDbGoldStandardRepository;
     private final ESearchResultService eSearchResultService;
@@ -102,8 +103,6 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
              // Call the exact same function again to re-read and re-save
              processAndSave(goldStandard, goldStandardUpdateFlag, strategy, entryPath, curatedBy, incomingAcceptedPmids, incomingRejectedPmids);
          }
-
-
     	// Track provenance for accepted PMIDs. saveIfNotExists ensures we
     	// don't overwrite existing automated-retrieval provenance — only
     	// truly new PMIDs (e.g., manually added via Publication Manager)
@@ -257,6 +256,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     				}
     				
     			}
+
             // SAVE TO DATABASE FIRST
             // If this fails, it throws the exception and instantly jumps to the catch block
             dynamoDbGoldStandardRepository.save(goldStandard);
@@ -287,6 +287,7 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 		saveListInternal(goldStandard, goldStandardUpdateFlag, provenanceSource, entryPath);
 	}
 
+	// TODO(goldstandard-race): saveListInternal has the same non-atomic read-modify-write; apply saveIfUnchanged+retry here too (lower priority — interactive single-accept path is saveInternal).
 	private void saveListInternal(List<GoldStandard> goldStandard, GoldStandardUpdateFlag goldStandardUpdateFlag, String provenanceSource, EntryPath entryPath) {
 		// Resolve provenance strategy: caller-supplied source, or default
 		String strategy = (provenanceSource != null && !provenanceSource.isBlank())
@@ -319,12 +320,10 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
     				List<Long> existingAccepted = (acceptedPmids != null) ? new ArrayList<>(acceptedPmids) : Collections.emptyList();
     				List<Long> existingRejected = (goldStandardDdb.getRejectedPmids() != null) ? new ArrayList<>(goldStandardDdb.getRejectedPmids()) : Collections.emptyList();
     				GoldStandard goldStandardNew = goldStandard.stream().filter(gs -> gs.getUid().equalsIgnoreCase(goldStandardDdb.getUid())).findFirst().get();
-        			
     				// fix for issue #692 (bulk path): carry forward the version for existing
                     // records so the SDK's conditional write compares against the correct
                     // current value instead of treating it as a create.
                     goldStandardNew.setVersion(goldStandardDdb.getVersion());
-                    
     				if(acceptedPmids != null && acceptedPmids.size() > 0) {
         				if(goldStandardNew != null && goldStandardNew.getKnownPmids() != null && goldStandardNew.getKnownPmids().size() > 0) {
 	        				for(Long acceptedPmidNew: goldStandardNew.getKnownPmids()) {

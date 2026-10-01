@@ -227,7 +227,7 @@ public final class ExternalArticleDupCheck {
         }
         String normalized = DOI_PREFIX.matcher(doi.trim().toLowerCase(Locale.ROOT))
                 .replaceFirst("").trim();
-        return normalized.isEmpty() ? null : normalized;
+        return normalized.isBlank() ? null : normalized;
     }
 
     /** Lowercase, collapse all non-alphanumerics to single spaces. Returns null for blank input. */
@@ -238,7 +238,7 @@ public final class ExternalArticleDupCheck {
         String normalized = title.toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", " ")
                 .trim();
-        return normalized.isEmpty() ? null : normalized;
+        return normalized.isBlank() ? null : normalized;
     }
 
     /** First 4-digit year found in a date string, or null. */

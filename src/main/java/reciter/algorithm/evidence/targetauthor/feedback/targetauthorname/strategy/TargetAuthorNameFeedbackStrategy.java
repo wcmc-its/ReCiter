@@ -64,7 +64,7 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 				    .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
 				        .filter(author -> author != null &&
 				                          author.getAuthorName() != null &&
-				                          !author.getAuthorName().getFirstName().isEmpty() &&  !author.getAuthorName().getLastName().isEmpty() &&
+				                          !author.getAuthorName().getFirstName().isBlank() &&  !author.getAuthorName().getLastName().isBlank() &&
 				                          author.isTargetAuthor())
 				        .map(author -> new AbstractMap.SimpleEntry<>(
 				            formatAuthorName(author.getAuthorName().getFirstName(), author.getAuthorName().getLastName()),
@@ -102,9 +102,9 @@ public class TargetAuthorNameFeedbackStrategy extends AbstractTargetAuthorFeedba
 								author.getAuthorName().getLastName());
 
 						if (author.getAuthorName().getFirstName() != null
-								&& !author.getAuthorName().getFirstName().isEmpty()
+								&& !author.getAuthorName().getFirstName().isBlank()
 								&& author.getAuthorName().getLastName() != null
-								&& !author.getAuthorName().getLastName().isEmpty()
+								&& !author.getAuthorName().getLastName().isBlank()
 								) 
 						{
 							

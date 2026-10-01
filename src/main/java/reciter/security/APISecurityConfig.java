@@ -86,8 +86,8 @@ public class APISecurityConfig {
         log.info("DEBUG: u is " + userPoolId);
 
         // 1. Mandatory Property Validation (The Guard Clause)
-        boolean isConfigMissing = jwkSetUri == null || jwkSetUri.isEmpty() || jwkSetUri.contains("${") ||
-                                  issuerUri == null || issuerUri.isEmpty() || issuerUri.contains("${") ||
+        boolean isConfigMissing = jwkSetUri == null || jwkSetUri.isBlank() || jwkSetUri.contains("${") ||
+                                  issuerUri == null || issuerUri.isBlank() || issuerUri.contains("${") ||
                                   "NONE".equals(userPoolId);
 
         if (isConfigMissing) {

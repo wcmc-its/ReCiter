@@ -162,7 +162,7 @@ public class Application {
 	 */
 	@EventListener(ApplicationReadyEvent.class)
 	public void checkScopusPubmedService() {
-		if(useScopusArticles && scopusService != null && !scopusService.isEmpty()) {
+		if(useScopusArticles && scopusService != null && !scopusService.isBlank()) {
 			try {
 				URL siteURL = new URL(scopusService + "/scopus/ping");
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
@@ -182,7 +182,7 @@ public class Application {
 			}
 		}
 		
-		if(pubmedService != null && !pubmedService.isEmpty()) {
+		if(pubmedService != null && !pubmedService.isBlank()) {
 			try {
 				URL siteURL = new URL(pubmedService  + "/pubmed/ping");
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
@@ -203,7 +203,7 @@ public class Application {
 		}
 		
 		
-		if(reciterScoringService != null && !reciterScoringService.isEmpty()) 
+		if(reciterScoringService != null && !reciterScoringService.isBlank()) 
 		{
 			String urlString = "http://localhost:"+ reciterScoringPortNumber +"/2015-03-31/functions/function/invocations";
 	        ObjectMapper mapper = new ObjectMapper();
@@ -250,7 +250,7 @@ public class Application {
 				log.warn("The property `use.scopus.articles` is set to `false` in the application.properties file, so it will not be using the ReCiter Scopus Retrieval Tool. To install the ReCiter Scopus Retrieval Tool, you would need to go to https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool and set property `use.scopus.articles=true`.");
 			}
 		}
-		if(reciterScoringService == null || reciterScoringService.isEmpty()) {
+		if(reciterScoringService == null || reciterScoringService.isBlank()) {
 			log.warn("ReCiter Application will not run without a ReCiterScoring service. Please download from https://github.com/wcmc-its/ReCiter---Scoring.git and setup ReCiter---Scoring Service.");
 		}
 	}

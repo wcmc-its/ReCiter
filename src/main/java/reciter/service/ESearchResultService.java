@@ -19,6 +19,8 @@
 package reciter.service;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import reciter.database.dynamodb.model.ESearchResult;
 
@@ -27,6 +29,16 @@ public interface ESearchResultService {
 	void save(ESearchResult eSearchResult);
 
 	ESearchResult findByUid(String uid);
+
+	/**
+	 * For each requested uid that HAS an ESearchResult record, the sorted
+	 * deduplicated union of every ESearchPmid's pmids for that uid. A uid with no
+	 * ESearchResult record is OMITTED from the returned map entirely -- callers
+	 * must treat a missing key as "no retrieved corpus for this uid", not as an
+	 * empty array; a present key with an empty list means a record exists but has
+	 * no pmids.
+	 */
+	Map<String, List<Long>> findRetrievedPmidsByUids(List<String> uids);
 
 	void deleteAll();
 
