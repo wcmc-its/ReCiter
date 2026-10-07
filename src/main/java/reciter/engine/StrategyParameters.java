@@ -383,12 +383,6 @@ public class StrategyParameters {
     @Value("${strategy.feedback.score.journalsubfield}")
     private boolean isFeedbackScoreJournalSubField;
     
-    @Value("${strategy.feedback.score.journalfield}")
-    private boolean isFeedbackScoreJournalField;
-    
-    @Value("${strategy.feedback.score.journaldomain}")
-    private boolean isFeedbackScoreJournalDomain;
-    
     @Value("${strategy.feedback.score.cites}")
     private boolean isFeedbackScoreCites;
 
