@@ -19,6 +19,7 @@
 package reciter;
 
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -146,7 +147,7 @@ public class Application {
 	public void checkScopusPubmedService() {
 		if(useScopusArticles && scopusService != null && !scopusService.isBlank()) {
 			try {
-				URL siteURL = new URL(scopusService + "/scopus/ping");
+				URL siteURL = URI.create(scopusService + "/scopus/ping").toURL();
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
 				connection.setRequestMethod("GET");
 				connection.setConnectTimeout(10000);
@@ -166,7 +167,7 @@ public class Application {
 		
 		if(pubmedService != null && !pubmedService.isBlank()) {
 			try {
-				URL siteURL = new URL(pubmedService  + "/pubmed/ping");
+				URL siteURL = URI.create(pubmedService  + "/pubmed/ping").toURL();
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
 				connection.setRequestMethod("GET");
 				connection.setConnectTimeout(10000);
@@ -203,7 +204,7 @@ public class Application {
 			}
 	        
 	        try {
-		            URL url = new URL(urlString);
+		            URL url = URI.create(urlString).toURL();
 		            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		            connection.setRequestMethod("POST");
 		            connection.setRequestProperty("Content-Type", "application/json");

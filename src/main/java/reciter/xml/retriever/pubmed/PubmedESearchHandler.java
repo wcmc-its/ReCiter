@@ -28,7 +28,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 
 /**
  * A SAX handler for parsing the ESearch query from PubMed.
@@ -60,7 +60,7 @@ public class PubmedESearchHandler extends DefaultHandler {
         PubmedESearchHandler webEnvHandler = new PubmedESearchHandler();
         InputStream inputStream = null;
         try {
-            inputStream = new URL(eSearchUrl).openStream();
+            inputStream = URI.create(eSearchUrl).toURL().openStream();
         } catch (IOException e) {
             slf4jLogger.error("Error in executeESearchQuery", e);
         }

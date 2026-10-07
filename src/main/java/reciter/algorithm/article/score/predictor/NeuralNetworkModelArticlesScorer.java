@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -94,7 +95,7 @@ public class NeuralNetworkModelArticlesScorer {
 		URL url = null;
 		HttpURLConnection conn = null;
 		try {
-			url = new URL(reciterScoringServiceUrl + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL));
+			url = URI.create(reciterScoringServiceUrl + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL)).toURL();
 			conn = (HttpURLConnection) url.openConnection();
 			if (conn != null) {
 				conn.setRequestMethod("POST");
