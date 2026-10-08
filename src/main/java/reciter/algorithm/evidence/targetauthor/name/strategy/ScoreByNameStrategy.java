@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Strings;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,7 +248,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				//Example: Cole (identity.lastName) = Cole (article.lastName)
 				authorNameEvidence.setNameMatchLastType("full-exact");
 				authorNameEvidence.setNameMatchLastScore(ReCiterArticleScorer.strategyParameters.getNameMatchLastTypeFullExactScore());
-			}  else if(identityAuthor.getMiddleName() != null && StringUtils.containsIgnoreCase(identityAuthor.getLastName(), articleAuthorName.getLastName())) {
+			}  else if(identityAuthor.getMiddleName() != null && Strings.CI.contains(identityAuthor.getLastName(), articleAuthorName.getLastName())) {
 				//Attempt partial match where "%" + identity.lastName + "%" = article.lastName
 				//Example: Cole (identity.lastName) = Del Cole (article.lastName)
 				authorNameEvidence.setNameMatchLastType("full-exact");

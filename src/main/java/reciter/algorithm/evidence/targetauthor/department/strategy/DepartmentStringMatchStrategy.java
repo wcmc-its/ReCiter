@@ -28,7 +28,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Strings;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,14 +129,14 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 								if(orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DEPARTMENT || orgUnit.getOrganizationalUnitType() == OrganizationalUnitType.DIVISION) {
 									if(orgUnit.getOrganizationalUnitLabel() != null 
 											&& 
-											(StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Center")
+											(Strings.CI.contains(orgUnit.getOrganizationalUnitLabel(), "Center")
 													||
-													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Program")
+													Strings.CI.contains(orgUnit.getOrganizationalUnitLabel(), "Program")
 													||
-													StringUtils.containsIgnoreCase(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
+													Strings.CI.contains(orgUnit.getOrganizationalUnitLabel(), "Institute")) 
 											&& 
 											orgUnit.getOrganizationalUnitLabel().length() > 14) {
-										if(StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(EngineParameters.getRegexForStopWords(), ""), identityDepartment.replaceAll(EngineParameters.getRegexForStopWords(), ""))) {
+										if(Strings.CI.contains(articleAffiliation.replaceAll(EngineParameters.getRegexForStopWords(), ""), identityDepartment.replaceAll(EngineParameters.getRegexForStopWords(), ""))) {
 											//articleAffiliation: "Center for Integrative Medicine, Weill Cornell Medicine, New York, NY, USA."
 											//identityDepartment: "Center for Integrative Medicine"
 											//departmentMatchingScore: 2
@@ -163,7 +162,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 									
 									/*if(orgUnitEvidence.getOrganizationalUnitMatchingScore() == 0 
 											&&
-											StringUtils.containsIgnoreCase(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
+											Strings.CI.contains(articleAffiliation.replaceAll(constructRegexForStopWords(), ""), identityDepartment.replaceAll(constructRegexForStopWords(), ""))) {
 										//This is for https://github.com/wcmc-its/ReCiter/issues/251 - Account for possibility that department name may be missing preposition in article.affiliation
 										if(identityOrgUnitToSynonymMap.size() > 0 &&
 												identityOrgUnitToSynonymMap.entrySet().stream().anyMatch(synonymOrgUnit -> synonymOrgUnit.getValue().contains(identityDepartment))) {
@@ -182,23 +181,23 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 										orgUnitEvidence.setArticleAffiliation(author.getAffiliation());
 										orgUnitEvidence.setOrganizationalUnitMatchingScore(ReCiterArticleScorer.strategyParameters.getOrganizationalUnitDepartmentMatchingScore());
 										isOrgUnitMatch = true;
-									}*/ else if(StringUtils.containsIgnoreCase(articleAffiliation, "Department of " + identityDepartment) 
+									}*/ else if(Strings.CI.contains(articleAffiliation, "Department of " + identityDepartment) 
 											|| 
-											StringUtils.containsIgnoreCase(articleAffiliation, "Division of " + identityDepartment)
+											Strings.CI.contains(articleAffiliation, "Division of " + identityDepartment)
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Dept of " + identityDepartment)
+											Strings.CI.contains(articleAffiliation, "Dept of " + identityDepartment)
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Departments of " + identityDepartment)
+											Strings.CI.contains(articleAffiliation, "Departments of " + identityDepartment)
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Divisions of " + identityDepartment)
+											Strings.CI.contains(articleAffiliation, "Divisions of " + identityDepartment)
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, "Depts of " + identityDepartment)
+											Strings.CI.contains(articleAffiliation, "Depts of " + identityDepartment)
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Department")
+											Strings.CI.contains(articleAffiliation, identityDepartment + " Department")
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Division")
+											Strings.CI.contains(articleAffiliation, identityDepartment + " Division")
 											||
-											StringUtils.containsIgnoreCase(articleAffiliation, identityDepartment + " Dept")) {
+											Strings.CI.contains(articleAffiliation, identityDepartment + " Dept")) {
 										//This addresses https://github.com/wcmc-its/ReCiter/issues/250
 										//articleAffiliation: "Department of Pharmacology, Weill Cornell Medical College. New York, NY 10021, USA. jobuck@med.cornell.edu"
 										//identityDepartment: "Pharmacology"
@@ -313,7 +312,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			String extractedDept = extractDepartment(affiliation);
 			List<OrganizationalUnit> targetAuthorDepts = targetAuthor.getOrganizationalUnits();
 			for (OrganizationalUnit dept : targetAuthorDepts) {
-				if (StringUtils.containsIgnoreCase(extractedDept, dept.getOrganizationalUnitLabel())) {
+				if (Strings.CI.contains(extractedDept, dept.getOrganizationalUnitLabel())) {
 					return true;
 				}
 			}
@@ -331,7 +330,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			for (OrganizationalUnit department : identity.getOrganizationalUnits()) {
 				if (Strings.CI.equals(extractedDept, department.getOrganizationalUnitLabel())) {
 					return true;
-				} else if (StringUtils.containsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel()) && !StringUtils.containsIgnoreCase(extractedDept, "medicine")) {
+				} else if (Strings.CI.contains(extractedDept, department.getOrganizationalUnitLabel()) && !Strings.CI.contains(extractedDept, "medicine")) {
 					// check for substring match - only when the extracted department is not "medicine" because
 					// it is too common.
 					if (reCiterAuthor.getAuthorName().firstInitialMiddleInitialLastNameMatch(identity.getPrimaryName())) {

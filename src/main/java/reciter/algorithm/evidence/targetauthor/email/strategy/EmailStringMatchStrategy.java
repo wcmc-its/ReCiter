@@ -21,7 +21,7 @@ package reciter.algorithm.evidence.targetauthor.email.strategy;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				
 				for (String suffix : emailSuffixes) {
 					String email = identity.getUid() + suffix;
-					if (StringUtils.containsIgnoreCase(affiliation, email)) {
+					if (Strings.CI.contains(affiliation, email)) {
 						reCiterArticle.setClusterInfo(reCiterArticle.getClusterInfo() + " [email matches: " + affiliation + "]");
 						reCiterArticle.getMatchingEmails().add(email);
 						score += 1;
@@ -126,13 +126,13 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			if (author.getAffiliation() != null && author.getAffiliation() != null) {
 				String affiliation = author.getAffiliation();
-				if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[0])) {
+				if (Strings.CI.contains(affiliation, identity.getUid() + defaultSuffixes[0])) {
 					feature.setMedCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[1])) {
+				} else if (Strings.CI.contains(affiliation, identity.getUid() + defaultSuffixes[1])) {
 					feature.setMailMedCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[2])) {
+				} else if (Strings.CI.contains(affiliation, identity.getUid() + defaultSuffixes[2])) {
 					feature.setWeillCornellEdu(1);
-				} else if (StringUtils.containsIgnoreCase(affiliation, identity.getUid() + defaultSuffixes[3])) {
+				} else if (Strings.CI.contains(affiliation, identity.getUid() + defaultSuffixes[3])) {
 					feature.setNypOrg(1);
 				}
 			}

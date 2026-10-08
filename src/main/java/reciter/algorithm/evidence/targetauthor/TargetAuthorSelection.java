@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.Strings;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -485,7 +484,7 @@ public class TargetAuthorSelection {
 							&& 
 							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
 							&& 
-							StringUtils.containsIgnoreCase(sanitizedIdentityName.getFirstName(), author.getAuthorName().getFirstName()))) {
+							Strings.CI.contains(sanitizedIdentityName.getFirstName(), author.getAuthorName().getFirstName()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -505,7 +504,7 @@ public class TargetAuthorSelection {
 							&& 
 							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
 							&& 
-							StringUtils.containsIgnoreCase(sanitizedIdentityName.getFirstName(), author.getAuthorName().getFirstName()))) {
+							Strings.CI.contains(sanitizedIdentityName.getFirstName(), author.getAuthorName().getFirstName()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -549,7 +548,7 @@ public class TargetAuthorSelection {
 							&& 
 							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
 							&& 
-							StringUtils.containsIgnoreCase(author.getAuthorName().getFirstName(), sanitizedIdentityName.getFirstName()))) {
+							Strings.CI.contains(author.getAuthorName().getFirstName(), sanitizedIdentityName.getFirstName()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -567,7 +566,7 @@ public class TargetAuthorSelection {
 							&& 
 							author.getAuthorName().getLastName().equalsIgnoreCase(sanitizedIdentityName.getLastName())
 							&& 
-							StringUtils.containsIgnoreCase(author.getAuthorName().getFirstName(), sanitizedIdentityName.getFirstName()))) {
+							Strings.CI.contains(author.getAuthorName().getFirstName(), sanitizedIdentityName.getFirstName()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -749,7 +748,7 @@ public class TargetAuthorSelection {
 							&& 
 							author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
 							&& 
-							StringUtils.containsIgnoreCase(author.getAuthorName().getLastName(), sanitizedIdentityName.getLastName()))) {
+							Strings.CI.contains(author.getAuthorName().getLastName(), sanitizedIdentityName.getLastName()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -767,7 +766,7 @@ public class TargetAuthorSelection {
 							&& 
 							author.getAuthorName().getFirstInitial().equalsIgnoreCase(sanitizedIdentityName.getFirstInitial())
 							&& 
-							StringUtils.containsIgnoreCase(author.getAuthorName().getLastName(), sanitizedIdentityName.getLastName()))) {
+							Strings.CI.contains(author.getAuthorName().getLastName(), sanitizedIdentityName.getLastName()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -916,7 +915,7 @@ public class TargetAuthorSelection {
 				if(matchCount > 1 && author.isTargetAuthor()) {
 					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
 							&&
-							StringUtils.containsIgnoreCase(sanitizedIdentityName.getLastName().trim(), author.getAuthorName().getLastName().trim()))) {
+							Strings.CI.contains(sanitizedIdentityName.getLastName().trim(), author.getAuthorName().getLastName().trim()))) {
 						author.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
 						originalAuthor.setTargetAuthor(true);
@@ -930,7 +929,7 @@ public class TargetAuthorSelection {
 				else if(matchCount == 0) {
 					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
 							&&
-							StringUtils.containsIgnoreCase(sanitizedIdentityName.getLastName().trim(), author.getAuthorName().getLastName().trim()))) {
+							Strings.CI.contains(sanitizedIdentityName.getLastName().trim(), author.getAuthorName().getLastName().trim()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);

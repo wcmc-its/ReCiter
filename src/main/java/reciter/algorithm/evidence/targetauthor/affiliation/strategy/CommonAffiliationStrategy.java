@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -374,7 +374,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 				identity.getInstitutions().size() > 0) {
 			for(String identityInst: identity.getInstitutions()) {
 				Set<String> santizeInst = new HashSet<String>(Arrays.asList(identityInst.replaceAll(EngineParameters.getRegexForStopWords(), "").split(" ")));
-				List<String> matchingKeywords = santizeInst.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation.trim(), inst.trim())).collect(Collectors.toList());
+				List<String> matchingKeywords = santizeInst.stream().filter(inst -> Strings.CI.contains(affiliation.trim(), inst.trim())).collect(Collectors.toList());
 				if(santizeInst != null 
 						&& 
 						matchingKeywords != null 
@@ -399,7 +399,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					homeInstKeywords.size() > 0) {
 				for(String keywords: homeInstKeywords) {
 					Set<String> keyword = new HashSet<String>(Arrays.asList(keywords.trim().split("\\|")));
-					List<String> matchingKeywords = keyword.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation, inst)).collect(Collectors.toList());
+					List<String> matchingKeywords = keyword.stream().filter(inst -> Strings.CI.contains(affiliation, inst)).collect(Collectors.toList());
 					if(keyword != null 
 							&& 
 							matchingKeywords != null 
@@ -425,7 +425,7 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 					collabInstKeywords.size() > 0) {
 				for(String keywords: collabInstKeywords) {
 					List<String> keyword = Arrays.asList(keywords.trim().split("\\|"));
-					List<String> matchingKeywords = keyword.stream().filter(inst -> StringUtils.containsIgnoreCase(affiliation.trim(), inst.trim())).collect(Collectors.toList());
+					List<String> matchingKeywords = keyword.stream().filter(inst -> Strings.CI.contains(affiliation.trim(), inst.trim())).collect(Collectors.toList());
 					if(keyword != null 
 							&& 
 							matchingKeywords != null 
@@ -524,7 +524,6 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 				List<String> affiliationsMatches = containsWeillCornell(affiliation);
 				if (affiliationsMatches.size() > 0) {
 					reCiterArticle.setFrequentInstitutionalCollaborators(affiliationsMatches);
-					String variantName = affiliation;
 					return true;
 				}
 			}
@@ -535,31 +534,31 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 	protected List<String> containsWeillCornell(String affiliation) {
 		List<String> affiliationsMatches = new ArrayList<String>();
 		
-		if (StringUtils.containsIgnoreCase(affiliation, "weill cornell")) {
+		if (Strings.CI.contains(affiliation, "weill cornell")) {
 			affiliationsMatches.add("weill cornell");
 		}
 		
-		if (StringUtils.containsIgnoreCase(affiliation, "weill-cornell")) {
+		if (Strings.CI.contains(affiliation, "weill-cornell")) {
 			affiliationsMatches.add("weill-cornell");
 		}
 		
-		if (StringUtils.containsIgnoreCase(affiliation, "weill medical")) {
+		if (Strings.CI.contains(affiliation, "weill medical")) {
 			affiliationsMatches.add("weill medical");
 		}
 		
-		if (StringUtils.containsIgnoreCase(affiliation, "cornell medical center")) {
+		if (Strings.CI.contains(affiliation, "cornell medical center")) {
 			affiliationsMatches.add("cornell medical center");
 		}
 		
-		if (StringUtils.containsIgnoreCase(affiliation, "Memorial Sloan-Kettering Cancer Center")) {
+		if (Strings.CI.contains(affiliation, "Memorial Sloan-Kettering Cancer Center")) {
 			affiliationsMatches.add("Memorial Sloan-Kettering Cancer Center");
 		}
 		
-		if (StringUtils.containsIgnoreCase(affiliation, "Sloan-Kettering")) {
+		if (Strings.CI.contains(affiliation, "Sloan-Kettering")) {
 			affiliationsMatches.add("Sloan-Kettering");
 		}
 		
-		if (StringUtils.containsIgnoreCase(affiliation, "Sloan Kettering")) {
+		if (Strings.CI.contains(affiliation, "Sloan Kettering")) {
 			affiliationsMatches.add("Sloan Kettering");
 		}
 		
