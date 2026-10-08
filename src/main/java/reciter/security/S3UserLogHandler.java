@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 
 import jakarta.annotation.PostConstruct;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import reciter.storage.s3.SharedCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
@@ -45,7 +45,7 @@ public class S3UserLogHandler {
     @PostConstruct
     public void init() {
         if (apiLogsBucketRegion != null && !apiLogsBucketRegion.isBlank()) {
-			s3Client = S3Client.builder().credentialsProvider(DefaultCredentialsProvider.create())
+			s3Client = S3Client.builder().credentialsProvider(SharedCredentialsProvider.INSTANCE)
 					.region(Region.of(apiLogsBucketRegion)).build();
         } else {
             throw new IllegalStateException("AWS region is not configured correctly");

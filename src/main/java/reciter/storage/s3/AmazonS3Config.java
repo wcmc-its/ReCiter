@@ -8,7 +8,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -60,7 +59,7 @@ public class AmazonS3Config {
     	
     	if(isS3Use && !isDynamoDbLocal) {
     		final S3Client s3 = S3Client.builder()
-    			    .credentialsProvider(DefaultCredentialsProvider.create())
+    			    .credentialsProvider(SharedCredentialsProvider.INSTANCE)
     			    .region(Region.of(System.getenv("AWS_REGION"))) 
     			    .build();
 	    	
@@ -124,11 +123,11 @@ public class AmazonS3Config {
     }
     
 	private String getAccountIDUsingAccessKey(String accessKey, String secretKey) {
-		// Do NOT close this StsClient. DefaultCredentialsProvider.create() is a JVM-wide singleton;
+		// Do NOT close this StsClient. SharedCredentialsProvider.INSTANCE is the JVM-wide shared provider;
 		// closing any client built with it shuts down the shared IRSA STS connection pool, which
 		// then breaks credential refresh for every other client (incl. DynamoDB) after ~1h. This
 		// runs once at startup, so the single un-closed client lives harmlessly for the app lifetime.
-		StsClient stsClient = StsClient.builder().credentialsProvider(DefaultCredentialsProvider.create())
+		StsClient stsClient = StsClient.builder().credentialsProvider(SharedCredentialsProvider.INSTANCE)
 				.build();
 		GetCallerIdentityResponse callerIdentity = stsClient
 				.getCallerIdentity(GetCallerIdentityRequest.builder().build());

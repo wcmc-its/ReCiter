@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import reciter.storage.s3.SharedCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
@@ -133,7 +133,7 @@ public class DynamoDbConfig {
 			}
 
 			dynamoDbClient = DynamoDbClient.builder().region(Region.of(dynamodbRegion))
-					.credentialsProvider(DefaultCredentialsProvider.create()).build();
+					.credentialsProvider(SharedCredentialsProvider.INSTANCE).build();
 
 		}
 		if (dynamoDbClient != null) {
