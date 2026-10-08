@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +106,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					
 					if(authorNameEvidence.getNameMatchMiddleType() != null 
 							&&
-							StringUtils.equalsIgnoreCase(authorNameEvidence.getNameMatchMiddleType(), "full-exact")
+							Strings.CI.equals(authorNameEvidence.getNameMatchMiddleType(), "full-exact")
 							&&
 							identityAuthorName.getMiddleName() != null
 							&&
@@ -204,9 +205,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			AuthorName articleAuthorNameOriginal = entry.getKey().getAuthorName();
 			if(identityAuthor.getMiddleName() != null 
 				&& 
-				StringUtils.equalsIgnoreCase(identityAuthor.getMiddleName() + identityAuthor.getLastName(), articleAuthorName.getLastName())
+				Strings.CI.equals(identityAuthor.getMiddleName() + identityAuthor.getLastName(), articleAuthorName.getLastName())
 				&&
-				StringUtils.equalsIgnoreCase(identityAuthor.getFirstName(), articleAuthorName.getFirstName())
+				Strings.CI.equals(identityAuthor.getFirstName(), articleAuthorName.getFirstName())
 					) {
 				//Combine following identity.middleName, identity.lastName into mergedName. Now attempt match against article.lastName.
 				//Example: Garcia (identity.middleName) + Marquez (identity.lastName) = GarciaMarquez (article.lastName)
@@ -220,9 +221,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchModifierScore(ReCiterArticleScorer.strategyParameters.getNameMatchModifierCombinedMiddleNameLastNameScore());
 			} else if(identityAuthor.getMiddleName() != null 
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getMiddleName() + identityAuthor.getLastName(), articleAuthorName.getLastName())
+					Strings.CI.equals(identityAuthor.getMiddleName() + identityAuthor.getLastName(), articleAuthorName.getLastName())
 					&&
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeInferredInitialsExactScore());
 				authorNameEvidence.setNameMatchLastType("full-exact");
@@ -243,7 +244,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			Map.Entry<ReCiterAuthor,ReCiterAuthor> entry = articleAuthorNames.entrySet().iterator().next();
 			AuthorName articleAuthorName = entry.getValue().getAuthorName();
 			AuthorName articleAuthorNameOriginal = entry.getKey().getAuthorName();
-			if(StringUtils.equalsIgnoreCase(identityAuthor.getLastName(), articleAuthorName.getLastName())) {
+			if(Strings.CI.equals(identityAuthor.getLastName(), articleAuthorName.getLastName())) {
 				//Attempt full exact match where identity.lastName = article.lastName.
 				//Example: Cole (identity.lastName) = Cole (article.lastName)
 				authorNameEvidence.setNameMatchLastType("full-exact");
@@ -320,7 +321,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			
 			if(identityAuthor.getFirstName() != null 
 					&&
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getFirstName(), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstName = article.firstName
 				//Example: Paul (identity.firstName) = Paul (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -335,7 +336,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&&
 					articleAuthorName.getLastName() != null
 					&& 
-					StringUtils.equalsIgnoreCase((identityAuthor.getFirstName() + identityAuthor.getLastName()).replaceAll("[\\s-]+", ""), (articleAuthorName.getFirstName() + articleAuthorName.getLastName()).replaceAll("[\\s-]+", ""))) {
+					Strings.CI.equals((identityAuthor.getFirstName() + identityAuthor.getLastName()).replaceAll("[\\s-]+", ""), (articleAuthorName.getFirstName() + articleAuthorName.getLastName()).replaceAll("[\\s-]+", ""))) {
 				//Attempt match where identity.firstName + identity.lastName = article.firstName + article.lastName
 				//Example: Landys (identity.firstName) + Lopez quezada (identity.lastName) = Landys Lopez (article.firstName) + Quezada (article.lastName)
 				authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -352,7 +353,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&&
 					identityAuthorNameOriginal.getFirstName() != null && (identityAuthorNameOriginal.getFirstName().contains(" ") || identityAuthorNameOriginal.getFirstName().contains("-"))
 					&&
-					StringUtils.equalsIgnoreCase(Arrays.stream(identityAuthorNameOriginal.getFirstName().split("[-\\s]")).map(s -> s.charAt(0)).collect(Collectors.toList()).stream().map(String::valueOf).collect(Collectors.joining()), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(Arrays.stream(identityAuthorNameOriginal.getFirstName().split("[-\\s]")).map(s -> s.charAt(0)).collect(Collectors.toList()).stream().map(String::valueOf).collect(Collectors.joining()), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstName + identity.lastName = article.firstName + article.lastName
 				//Example: Landys (identity.firstName) + Lopez quezada (identity.lastName) = Landys Lopez (article.firstName) + Quezada (article.lastName)
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
@@ -391,7 +392,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName().length() >= 3 
 					&&
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName().substring(0, 3),articleAuthorName.getFirstName().substring(0, 3))) {
+					Strings.CI.equals(identityAuthor.getFirstName().substring(0, 3),articleAuthorName.getFirstName().substring(0, 3))) {
 				//Attempt match where first three characters of identity.firstName = first three characters of article.firstName
 				//Example: Paul (identity.firstName) = Pau (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
@@ -411,7 +412,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 			} else if(identityAuthor.getFirstName() != null 
 					&&
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstInitial(),articleAuthorName.getFirstInitial())) {
+					Strings.CI.equals(identityAuthor.getFirstInitial(),articleAuthorName.getFirstInitial())) {
 				//Attempt match where first character of identity.firstName = first character of article.firstName
 				//Example: Paul (identity.firstName) = Peter (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-conflictingAllButInitials");
@@ -455,7 +456,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName() + identityAuthor.getMiddleName(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getFirstName() + identityAuthor.getMiddleName(), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstName + identity.middleName = article.firstName
 				//Example: Paul (identity.firstName) + James (identity.middleName) = PaulJames (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -483,7 +484,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName() + identityAuthor.getMiddleInitial(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getFirstName() + identityAuthor.getMiddleInitial(), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstName + identity.middleInitial = article.firstName
 				//Example: Paul (identity.firstName) + J (identity.middleInitial) = PaulJ (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -511,9 +512,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					(StringUtils.equalsIgnoreCase(identityAuthor.getFirstInitial() + identityAuthor.getMiddleInitial(), articleAuthorName.getFirstName())
+					(Strings.CI.equals(identityAuthor.getFirstInitial() + identityAuthor.getMiddleInitial(), articleAuthorName.getFirstName())
 					||
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstInitial() + " " + identityAuthor.getMiddleInitial(), articleAuthorName.getFirstName()))) //When inferring initials, also attempt match by adding space: identity.firstInitial + " " + identity.middleInitial = article.firstName
+					Strings.CI.equals(identityAuthor.getFirstInitial() + " " + identityAuthor.getMiddleInitial(), articleAuthorName.getFirstName()))) //When inferring initials, also attempt match by adding space: identity.firstInitial + " " + identity.middleInitial = article.firstName
 			{
 				//Attempt match where identity.firstInitial + identity.middleInitial = article.firstName
 				//Example: P (identity.firstInitial) + J (identity.middleInitial) = PJ (article.firstName)
@@ -527,7 +528,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstInitial() + identityAuthor.getMiddleName(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getFirstInitial() + identityAuthor.getMiddleName(), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstInitial + identity.middleName = article.firstName
 				//Example: M (identity.firstInitial) + Carrington (identity.middleName) = MCarrington (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
@@ -542,7 +543,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&&
 					articleAuthorName.getLastName() != null
 					&& 
-					StringUtils.equalsIgnoreCase((identityAuthor.getFirstName() + identityAuthor.getLastName()).replaceAll("[\\s-]+", ""), (articleAuthorName.getFirstName() + articleAuthorName.getLastName()).replaceAll("[\\s-]+", ""))) {
+					Strings.CI.equals((identityAuthor.getFirstName() + identityAuthor.getLastName()).replaceAll("[\\s-]+", ""), (articleAuthorName.getFirstName() + articleAuthorName.getLastName()).replaceAll("[\\s-]+", ""))) {
 				//Attempt match where identity.firstName + identity.lastName = article.firstName + article.lastName
 				//Example: Landys (identity.firstName) + Lopez quezada (identity.lastName) = Landys Lopez (article.firstName) + Quezada (article.lastName)
 				authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -586,7 +587,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getFirstName(), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstName = article.firstName
 				//Example: Paul (identity.firstName) = Paul (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-exact");
@@ -599,7 +600,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getMiddleInitial() + identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getMiddleInitial() + identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
 				authorNameEvidence.setNameMatchFirstScore(ReCiterArticleScorer.strategyParameters.getNameMatchFirstTypeInferredInitialsExactScore());
 				authorNameEvidence.setNameMatchMiddleType("inferredInitials-exact");
@@ -614,7 +615,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					(identityAuthor.getFirstName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1 || identityAuthor.getMiddleName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1) //check if there is more than 1 capital letters
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName().chars().filter(Character::isUpperCase)
+					Strings.CI.equals(identityAuthor.getFirstName().chars().filter(Character::isUpperCase)
 	                           .mapToObj(c -> Character.toString((char)c))
 	                           .collect(Collectors.joining()) + 
 	                           identityAuthor.getMiddleName().chars().filter(Character::isUpperCase)
@@ -633,7 +634,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					identityAuthor.getFirstName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1 //check if there is more than 1 capital letters
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName().chars().filter(Character::isUpperCase)
+					Strings.CI.equals(identityAuthor.getFirstName().chars().filter(Character::isUpperCase)
 	                           .mapToObj(c -> Character.toString((char)c))
 	                           .collect(Collectors.joining()) , 
 							articleAuthorName.getFirstName())) {
@@ -650,7 +651,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					articleAuthorName.getFirstName() != null  
 					&& 
 					identityAuthor.getFirstName().codePoints().filter(c-> c>='A' && c<='Z').count() > 1 && //check if there is more than 1 capital letters
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName().chars().filter(Character::isUpperCase)
+					Strings.CI.equals(identityAuthor.getFirstName().chars().filter(Character::isUpperCase)
 	                           .mapToObj(c -> Character.toString((char)c))
 	                           .collect(Collectors.joining()) + identityAuthor.getMiddleName() , 
 							articleAuthorName.getFirstName())) {
@@ -697,7 +698,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getMiddleName(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getMiddleName(), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.middleName = article.firstName
 				//Example: Clifford (identity.middleName) = Clifford (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("noMatch");
@@ -768,7 +769,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName().length() >=3 
 					&&
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName().substring(0, 3), articleAuthorName.getFirstName().substring(0, 3))) {
+					Strings.CI.equals(identityAuthor.getFirstName().substring(0, 3), articleAuthorName.getFirstName().substring(0, 3))) {
 				//Attempt match where first three characters of identity.firstName = first three characters of identity.firstName.
 				//Example: Massimiliano (identity.firstName) = Massimo (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-fuzzy");
@@ -796,7 +797,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null  
 					&& 
-					StringUtils.equalsIgnoreCase(identityAuthor.getMiddleName() + identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getMiddleName() + identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.middleName + identity.firstInitial = article.firstName
 				//Example: Carrington (identity.middleName) + M (identity.firstInitial) = CarringtonM (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
@@ -811,7 +812,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&&
 					articleAuthorName.getFirstName().length() == 1 
 					&&
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(identityAuthor.getFirstInitial(), articleAuthorName.getFirstName())) {
 				//Attempt match where article.firstName is only one character and identity.firstName = first character of article.firstName.
 				//Example: Jessica (identity.firstName) = J (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");  
@@ -826,7 +827,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&&
 					articleAuthorName.getFirstName().length() > 0
 					&&
-					StringUtils.equalsIgnoreCase(identityAuthor.getFirstName().substring(0, 1), articleAuthorName.getFirstName().substring(0, 1))) {
+					Strings.CI.equals(identityAuthor.getFirstName().substring(0, 1), articleAuthorName.getFirstName().substring(0, 1))) {
 				//Attempt match where first character of identity.firstName = first character of identity.firstName.
 				//Example: Jessica (identity.firstName) = Jochen (article.firstName)
 				authorNameEvidence.setNameMatchFirstType("full-conflictingAllButInitials");
@@ -1028,7 +1029,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 						idenityAuthorNames.get(j).getFirstName() != null
 						&&
 						idenityAuthorNames.get(j).getLastName() != null) {
-					if(StringUtils.equalsIgnoreCase(idenityAuthorNames.get(i).getLastName(), idenityAuthorNames.get(j).getLastName()) && 
+					if(Strings.CI.equals(idenityAuthorNames.get(i).getLastName(), idenityAuthorNames.get(j).getLastName()) && 
 							idenityAuthorNames.get(i).getFirstName().startsWith(idenityAuthorNames.get(j).getFirstName())) {
 						if(idenityAuthorNames.get(j).getMiddleName() == null) {
 							idenityAuthorNames.remove(j);
@@ -1056,9 +1057,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 								&&
 								idenityAuthorNames.get(j).getMiddleName() != null
 								&&
-								StringUtils.equalsIgnoreCase(idenityAuthorNames.get(i).getLastName(), idenityAuthorNames.get(j).getLastName()) 
+								Strings.CI.equals(idenityAuthorNames.get(i).getLastName(), idenityAuthorNames.get(j).getLastName()) 
 								&& 
-								StringUtils.equalsIgnoreCase(idenityAuthorNames.get(i).getFirstName(), idenityAuthorNames.get(j).getFirstName()) 
+								Strings.CI.equals(idenityAuthorNames.get(i).getFirstName(), idenityAuthorNames.get(j).getFirstName()) 
 								&&
 								idenityAuthorNames.get(i).getMiddleName().startsWith(idenityAuthorNames.get(j).getMiddleName())) {
 								idenityAuthorNames.remove(j);

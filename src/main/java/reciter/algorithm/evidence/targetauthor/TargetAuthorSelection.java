@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -674,11 +675,11 @@ public class TargetAuthorSelection {
 							&&
 							sanitizedIdentityName.getMiddleInitial() != null && sanitizedIdentityName.getMiddleInitial().length() > 0
 							&& 
-							(StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstInitial().trim(), sanitizedIdentityName.getMiddleInitial().trim())) //FirstInitial to MiddleInitial
+							(Strings.CI.equals(author.getAuthorName().getFirstInitial().trim(), sanitizedIdentityName.getMiddleInitial().trim())) //FirstInitial to MiddleInitial
 							&&
-							(StringUtils.equalsIgnoreCase(author.getAuthorName().getMiddleInitial().trim(), sanitizedIdentityName.getFirstInitial().trim()))//MiddleInitial to First Initial
+							(Strings.CI.equals(author.getAuthorName().getMiddleInitial().trim(), sanitizedIdentityName.getFirstInitial().trim()))//MiddleInitial to First Initial
 							&&
-							(StringUtils.equalsIgnoreCase(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))//Exact lastname match
+							(Strings.CI.equals(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))//Exact lastname match
 						    )) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
@@ -699,11 +700,11 @@ public class TargetAuthorSelection {
 							&&
 							sanitizedIdentityName.getMiddleInitial() != null && sanitizedIdentityName.getMiddleInitial().length() > 0
 							&& 
-							(StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstInitial().trim(), sanitizedIdentityName.getMiddleInitial().trim())) //FirstInitial to MiddleInitial
+							(Strings.CI.equals(author.getAuthorName().getFirstInitial().trim(), sanitizedIdentityName.getMiddleInitial().trim())) //FirstInitial to MiddleInitial
 							&&
-							(StringUtils.equalsIgnoreCase(author.getAuthorName().getMiddleInitial().trim(), sanitizedIdentityName.getFirstInitial().trim()))//MiddleInitial to First Initial
+							(Strings.CI.equals(author.getAuthorName().getMiddleInitial().trim(), sanitizedIdentityName.getFirstInitial().trim()))//MiddleInitial to First Initial
 							&&
-							(StringUtils.equalsIgnoreCase(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))//Exact lastname match
+							(Strings.CI.equals(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))//Exact lastname match
 						    )) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
@@ -807,7 +808,7 @@ public class TargetAuthorSelection {
 				if(matchCount > 1 && author.isTargetAuthor()) {
 					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
 							&&
-							StringUtils.equalsIgnoreCase(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))) {
+							Strings.CI.equals(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -821,7 +822,7 @@ public class TargetAuthorSelection {
 				else if(matchCount == 0) {
 					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getLastName() != null
 							&&
-							StringUtils.equalsIgnoreCase(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))) {
+							Strings.CI.equals(author.getAuthorName().getLastName().trim(), sanitizedIdentityName.getLastName().trim()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -861,7 +862,7 @@ public class TargetAuthorSelection {
 				if(matchCount > 1 && author.isTargetAuthor()) {
 					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
 							&&
-							StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstName().trim(), sanitizedIdentityName.getFirstName().trim()))) {
+							Strings.CI.equals(author.getAuthorName().getFirstName().trim(), sanitizedIdentityName.getFirstName().trim()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -875,7 +876,7 @@ public class TargetAuthorSelection {
 				else if(matchCount == 0) {
 					if(sanitizedIdentityAuthors.stream().anyMatch(sanitizedIdentityName -> sanitizedIdentityName.getFirstName() != null
 							&&
-							StringUtils.equalsIgnoreCase(author.getAuthorName().getFirstName().trim(), sanitizedIdentityName.getFirstName().trim()))) {
+							Strings.CI.equals(author.getAuthorName().getFirstName().trim(), sanitizedIdentityName.getFirstName().trim()))) {
 						author.setTargetAuthor(true);
 						originalAuthor.setTargetAuthor(true);
 						multipleMarkedTargetAuthor.add(entry);
@@ -1521,7 +1522,7 @@ public class TargetAuthorSelection {
 		for (ReCiterAuthor author : authors) {
 			if(author.getAuthorName().getFirstInitial() != null && identity.getPrimaryName().getFirstInitial() != null) {
 				if(matchCount > 1 && author.isTargetAuthor()) {
-					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+					if(Strings.CI.equals(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
 						author.setTargetAuthor(true);
 						count++;
@@ -1530,7 +1531,7 @@ public class TargetAuthorSelection {
 						author.setTargetAuthor(false);
 				}
 				else if(matchCount == 0 && !author.isTargetAuthor()) {
-					if(StringUtils.equalsIgnoreCase(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
+					if(Strings.CI.equals(ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial().trim()), ReCiterStringUtil.deAccent(identity.getPrimaryName().getFirstInitial().trim())) ||
 							identity.getAlternateNames().stream().anyMatch(alternateName -> ReCiterStringUtil.deAccent(author.getAuthorName().getFirstInitial()).equalsIgnoreCase(ReCiterStringUtil.deAccent(alternateName.getFirstInitial())))) {
 						author.setTargetAuthor(true);
 						count++;

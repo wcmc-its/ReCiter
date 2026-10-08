@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
@@ -259,7 +259,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 			for(ReCiterAuthor authoro: reCiterArticle.getArticleCoAuthors().getAuthors()) {
 				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isBlank()) {
 					emailMatch = this.articleCluster.stream().anyMatch(article -> article.getArticleCoAuthors().getAuthors().stream().anyMatch(author -> author.getValidEmail() != null && !author.getValidEmail().isBlank() &&
-							StringUtils.equalsIgnoreCase(author.getValidEmail(), authoro.getValidEmail())));
+							Strings.CI.equals(author.getValidEmail(), authoro.getValidEmail())));
 					if(emailMatch) {
 						return 1;
 					}
@@ -285,7 +285,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 							&&
 							articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() 
 							&&
-							StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
+							Strings.CI.equals(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
 							if(match) {
 								return 1;
 							}
@@ -317,7 +317,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 					if(meshHeading != null && MeshMajorClusteringStrategy.isMeshMajor(meshHeading)) {
 						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getMeshHeadings() != null && 
 								articleList.getMeshHeadings().stream().anyMatch(mesh -> MeshMajorClusteringStrategy.isMeshMajor(mesh) && 
-								StringUtils.equalsIgnoreCase(mesh.getDescriptorName().getDescriptorName(), meshHeading.getDescriptorName().getDescriptorName()) && 
+								Strings.CI.equals(mesh.getDescriptorName().getDescriptorName(), meshHeading.getDescriptorName().getDescriptorName()) && 
 								EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
 								EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 4000L
 								));
@@ -350,7 +350,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		//Journal Feature match
 		if(reCiterArticleFeature1.getJournalName() != null && !reCiterArticleFeature1.getJournalName().isBlank() && 
 				reCiterArticleFeature2.getJournalName() != null && !reCiterArticleFeature2.getJournalName().isBlank() &&
-				StringUtils.equalsIgnoreCase(reCiterArticleFeature1.getJournalName(), reCiterArticleFeature2.getJournalName())) {
+				Strings.CI.equals(reCiterArticleFeature1.getJournalName(), reCiterArticleFeature2.getJournalName())) {
 			matchCount++;
 		}
 		//MeshMajor Feature match

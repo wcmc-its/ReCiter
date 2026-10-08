@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1476,7 +1476,7 @@ public class ReCiterController {
         Set<Long> pmids = new HashSet<>();
         if(eSearchResults != null && eSearchResults.getESearchPmids() != null) {
 	        for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
-	            if (!strategyParameters.isUseGoldStandardEvidence() && StringUtils.equalsIgnoreCase(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
+	            if (!strategyParameters.isUseGoldStandardEvidence() && Strings.CI.equals(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
 	                log.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
 	            } else {
 	                pmids.addAll(eSearchPmid.getPmids());

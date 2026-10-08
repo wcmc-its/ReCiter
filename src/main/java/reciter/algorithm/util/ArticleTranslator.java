@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -425,7 +425,7 @@ public class ArticleTranslator {
                 String scopusAuthorLastName = scopusAuthor.getSurname();
                 for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
                     String reCiterAuthorLastName = reCiterAuthor.getAuthorName().getLastName();
-                    if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, reCiterAuthorLastName)) {
+                    if (Strings.CI.equals(scopusAuthorLastName, reCiterAuthorLastName)) {
                         String reCiterAuthorFirstName = reCiterAuthor.getAuthorName().getFirstName();
                         String reCiterAuthorFirstInitial = reCiterAuthor.getAuthorName().getFirstInitial();
                         if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {

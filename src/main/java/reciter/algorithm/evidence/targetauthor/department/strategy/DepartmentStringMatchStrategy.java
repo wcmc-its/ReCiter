@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,8 +78,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 				boolean isFirstNameInitialMatchFromEmailFetched = false;
 				if (identity.getAlternateNames() != null) {
 					for (AuthorName authorName : identity.getAlternateNames()) {
-						if (StringUtils.equalsIgnoreCase(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
-								StringUtils.equalsIgnoreCase(authorName.getLastName(), author.getAuthorName().getLastName())) {
+						if (Strings.CI.equals(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
+								Strings.CI.equals(authorName.getLastName(), author.getAuthorName().getLastName())) {
 							isFirstNameInitialMatchFromEmailFetched = true;
 							break;
 						}
@@ -328,7 +329,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			extractedDept = extractDepartment(affiliation);
 			slf4jLogger.info("Extracted department=[" + extractedDept + "] for author=[" + identity.getUid() + "] in pmid=[" + pmid + "].");
 			for (OrganizationalUnit department : identity.getOrganizationalUnits()) {
-				if (StringUtils.equalsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel())) {
+				if (Strings.CI.equals(extractedDept, department.getOrganizationalUnitLabel())) {
 					return true;
 				} else if (StringUtils.containsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel()) && !StringUtils.containsIgnoreCase(extractedDept, "medicine")) {
 					// check for substring match - only when the extracted department is not "medicine" because
@@ -344,7 +345,7 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 
 			//			if (identity.getAlternateDepartmentNames() != null) {
 			//				for (String alternateDeptName : identity.getAlternateDepartmentNames()) {
-			//					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+			//					if (Strings.CI.equals(alternateDeptName, extractedDept)) {
 			//						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
 			//								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
 			//						return true;
@@ -360,14 +361,14 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 					extractedDept = extractDepartment(affiliation);
 
 					for (OrganizationalUnit department : identity.getOrganizationalUnits()) {
-						if (StringUtils.equalsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel())) {
+						if (Strings.CI.equals(extractedDept, department.getOrganizationalUnitLabel())) {
 							return true;
 						}
 					}
 
 					//					if (identity.getAlternateDepartmentNames() != null) {
 					//						for (String alternateDeptName : identity.getAlternateDepartmentNames()) {
-					//							if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+					//							if (Strings.CI.equals(alternateDeptName, extractedDept)) {
 					//								slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
 					//										"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
 					//								return true;
@@ -394,14 +395,14 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 			//				departments.add(extractedDept);
 			//			}
 			for (OrganizationalUnit department : identity.getOrganizationalUnits()) {
-				if (StringUtils.equalsIgnoreCase(extractedDept, department.getOrganizationalUnitLabel())) {
+				if (Strings.CI.equals(extractedDept, department.getOrganizationalUnitLabel())) {
 					return true;
 				}
 			}
 
 			//			if (identity.getAlternateDepartmentNames() != null) {
 			//				for (String alternateDeptName : identity.getAlternateDepartmentNames()) {
-			//					if (StringUtils.equalsIgnoreCase(alternateDeptName, extractedDept)) {
+			//					if (Strings.CI.equals(alternateDeptName, extractedDept)) {
 			//						//						slf4jLogger.info("PMID=[" + pmid + "] - Extracted Deptment From Article=[" + extractedDept + 
 			//						//								"] Alternate Dept Name=[" + alternateDeptName + "] Is Gold=[" + isGoldStandard + "]");
 			//						return true;
@@ -442,8 +443,8 @@ public class DepartmentStringMatchStrategy extends AbstractTargetAuthorStrategy 
 				boolean isFirstNameInitialMatchFromEmailFetched = false;
 				if (identity.getAlternateNames() != null) {
 					for (AuthorName authorName : identity.getAlternateNames()) {
-						if (StringUtils.equalsIgnoreCase(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
-								StringUtils.equalsIgnoreCase(authorName.getLastName(), author.getAuthorName().getLastName())) {
+						if (Strings.CI.equals(authorName.getFirstInitial(), author.getAuthorName().getFirstInitial()) &&
+								Strings.CI.equals(authorName.getLastName(), author.getAuthorName().getLastName())) {
 							isFirstNameInitialMatchFromEmailFetched = true;
 							break;
 						}

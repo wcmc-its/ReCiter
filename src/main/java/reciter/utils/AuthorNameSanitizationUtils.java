@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.StringUtils;
 
 import lombok.NoArgsConstructor;
@@ -244,7 +245,7 @@ public class AuthorNameSanitizationUtils {
 			return false;
 		}
 		if (full.getFirstName() == null || candidate.getFirstName() == null || candidate.getLastName() == null
-				|| !StringUtils.equalsIgnoreCase(full.getLastName(), candidate.getLastName())) {
+				|| !Strings.CI.equals(full.getLastName(), candidate.getLastName())) {
 			return false;
 		}
 		boolean firstStartsWith = full.getFirstName().toLowerCase().startsWith(candidate.getFirstName().toLowerCase());
@@ -255,8 +256,8 @@ public class AuthorNameSanitizationUtils {
 			return true;
 		}
 		return full.getMiddleName() != null && candidate.getMiddleName() != null
-				&& StringUtils.equalsIgnoreCase(full.getFirstName(), candidate.getFirstName())
-				&& StringUtils.equalsIgnoreCase(full.getMiddleName(), candidate.getMiddleName());
+				&& Strings.CI.equals(full.getFirstName(), candidate.getFirstName())
+				&& Strings.CI.equals(full.getMiddleName(), candidate.getMiddleName());
 	}
 	
 	
