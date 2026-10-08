@@ -419,8 +419,6 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 			String uid, List<Long> incomingAccepted, List<Long> incomingRejected,
 			List<Long> existingAccepted, List<Long> existingRejected, String source) {
 		List<GoldStandardAuditLog> entries = new ArrayList<>();
-		Date now = new Date();
-
 		List<Long> newlyAccepted = new ArrayList<>(incomingAccepted);
 		newlyAccepted.removeAll(existingAccepted);
 		if (!newlyAccepted.isEmpty()) {

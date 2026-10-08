@@ -6,8 +6,6 @@ import java.security.MessageDigest;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -29,7 +27,6 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class MultiApiKeyFilter extends OncePerRequestFilter {
 
-	private static final Logger log = LoggerFactory.getLogger(MultiApiKeyFilter.class);
 	
 	private String adminPrincipalRequestValue = System.getenv("ADMIN_API_KEY");
 	    

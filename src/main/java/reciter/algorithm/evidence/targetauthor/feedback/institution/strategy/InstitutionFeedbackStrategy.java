@@ -11,9 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackScore;
@@ -22,7 +19,6 @@ import reciter.model.identity.Identity;
 
 public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(InstitutionFeedbackStrategy.class);
 	private static final List<String> targetKeywords = Arrays.asList("Center", "Centre", "Centro", "Clinic", "Colegio",
 			"College", "Corporation", "Foundation", "Health System", "Hospital", "Institut", "Institute", "Institution",
 			"Istituto", "Klinik", "LLC", "New York Presbyterian", "New York-Presbyterian", "NewYork Presbyterian",
