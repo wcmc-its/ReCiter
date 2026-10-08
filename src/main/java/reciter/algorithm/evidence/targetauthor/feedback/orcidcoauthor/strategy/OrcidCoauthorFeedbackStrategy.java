@@ -49,10 +49,6 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                    .count()
 	            ));
 	        
-	        nonTargetAuthorOrcidCountPerPmid.forEach((key, value) -> {
-	        	slf4jLogger.info("nonTargetAuthorOrcidCountPerPmid : " + key + " = " + value);
-	        });
-	        
 	        Map<String, Map<Integer, Long>> nonTargetAuthororcidCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
@@ -75,13 +71,6 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                        Collectors.counting()
 	                    )
 	                ));
-	        
-	        nonTargetAuthororcidCountsByArticleStatus.forEach((outerKey, innerMap) -> {
-	        	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus : " + outerKey);
-	            innerMap.forEach((innerKey, value) -> {
-	            	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus innerMap  :  " + innerKey + " = " + value);
-	            });
-	        });
 	        
 	        reCiterArticles.stream()
 	        		.filter(article->article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null)

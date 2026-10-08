@@ -676,7 +676,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
 			  {  
 				  List<ReCiterArticle> articlesScores =  mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
-				  articlesScores.forEach(article -> log.info("articles : " + article));
 			  	 return articlesScores;	
 			  }  	
 				  
