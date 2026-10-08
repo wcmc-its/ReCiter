@@ -52,6 +52,9 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
 	private static final int nodeSize = 7;
 
+	// RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
+	private static final RestTemplate REST_TEMPLATE = new RestTemplate();
+
 	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
 	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
 	private static final int scopusNodeSize = 3;
@@ -274,7 +277,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
 		String nodeUrl = PUBMED_SERVICE.endsWith("/pubmed")?PUBMED_SERVICE + "/query-number-pubmed-articles/":PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
 		
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate restTemplate = REST_TEMPLATE;
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<Integer> responseEntity = null;
 		slf4jLogger.info("PubMedQuery: " + pubMedQueryType);
@@ -296,7 +299,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery) {
 		String nodeUrl = loadBalance();
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate restTemplate = REST_TEMPLATE;
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<PubMedArticle[]> responseEntity = null;
 		try {
@@ -338,7 +341,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		List<ScopusArticle> scopusArticlesResult = new ArrayList<ScopusArticle>();
 		for (String pmidQuery : pmidQueries) {
-			RestTemplate restTemplate = new RestTemplate();
+			RestTemplate restTemplate = REST_TEMPLATE;
 			try {
 				slf4jLogger.info("Sending web request: " + nodeUrl + pmidQuery);
 				ResponseEntity<ScopusArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl + pmidQuery, ScopusArticle[].class);
