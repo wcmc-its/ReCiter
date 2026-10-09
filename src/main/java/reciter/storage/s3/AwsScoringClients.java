@@ -1,5 +1,6 @@
 package reciter.storage.s3;
 
+import reciter.utils.EnvUtils;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -31,7 +32,8 @@ public final class AwsScoringClients {
                 if (c == null) {
                     c = S3Client.builder()
                             .credentialsProvider(SharedCredentialsProvider.INSTANCE)
-                            .region(Region.of(System.getenv("AWS_REGION")))
+                            .region(Region.of(EnvUtils.require("AWS_REGION", System.getenv("AWS_REGION"))))
+                            
                             .build();
                     s3 = c;
                 }

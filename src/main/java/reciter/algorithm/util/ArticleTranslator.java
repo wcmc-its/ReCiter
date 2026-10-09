@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -309,7 +310,8 @@ public class ArticleTranslator {
             Date date = localDate.toDate();
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             reCiterArticle.setPublicationDateStandardized(df.format(date));
-            df = new SimpleDateFormat("yyyy MMM dd");
+           // TODO  If the application becomes locale-specific, replace Locale.ENGLISH with the user's/application locale.
+            df = new SimpleDateFormat("yyyy MMM dd",Locale.ENGLISH);  
             reCiterArticle.setPublicationDateDisplay(df.format(date));
         }
         

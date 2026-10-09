@@ -43,6 +43,7 @@ import reciter.model.scopus.ScopusArticle;
 import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.scopus.retriever.ScopusArticleRetriever;
+import reciter.utils.EnvUtils;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 
 @Configurable
@@ -275,7 +276,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
 
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
-		String nodeUrl = PUBMED_SERVICE.endsWith("/pubmed")?PUBMED_SERVICE + "/query-number-pubmed-articles/":PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
+		String pubmedService = EnvUtils.require("PUBMED_SERVICE", PUBMED_SERVICE);
+		String nodeUrl = pubmedService.endsWith("/pubmed")?pubmedService + "/query-number-pubmed-articles/":pubmedService + "/pubmed/query-number-pubmed-articles/";
 		
 		RestTemplate restTemplate = REST_TEMPLATE;
 		slf4jLogger.info("Sending web request: " + nodeUrl);
@@ -286,13 +288,15 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		} catch (Exception e) {
 			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
 		}
-		if (responseEntity == null) {
-			// Count query failed (tool 500 / NCBI error). Flag the run so the engine rolls the
-			// retrievalDate watermark back instead of treating this as a legitimate "0 results". #689
+		Integer body = (responseEntity == null) ? null : responseEntity.getBody();
+		if (body == null) {
+			// Count query failed (tool 500 / NCBI error) or returned an empty body. Flag the run so
+			// the engine rolls the retrievalDate watermark back instead of treating this as a
+			// legitimate "0 results". #689
 			RetrievalErrorTracker.markError();
 			return 0;
 		}
-		int results = responseEntity.getBody();
+		int results = body;
 		slf4jLogger.info("Returned results for query:" + pubMedQueryType + ":" + results);
 		return results;
 	}
