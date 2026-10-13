@@ -312,9 +312,6 @@ public class AbstractReCiterRetrievalEngineTest {
 				return true;
 			}
 
-			@Override
-			public void retrieveByPmids(String uid, List<Long> pmids) {
-			}
 		};
 		engine.eSearchResultService = service;
 		return engine;

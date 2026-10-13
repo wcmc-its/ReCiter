@@ -819,22 +819,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	}
 	
-	
-
-	@Override
-	public void retrieveByPmids(String uid, List<Long> pmids) throws IOException {
-		//Not being used
-		/*if (!pmids.isEmpty()) {
-			RetrievalResult result = goldStandardRetrievalStrategy.retrievePubMedArticles(pmids);
-			if (result.getPubMedArticles().size() > 0) {
-				savePubMedArticles(result.getPubMedArticles().values(), uid, 
-						goldStandardRetrievalStrategy.getRetrievalStrategyName(), result.getPubMedQueryResults(), null);
-			}
-			List<ScopusArticle> scopusArticles = goldStandardRetrievalStrategy.retrieveScopus(pmids);
-			scopusService.save(scopusArticles);
-		}*/
-	}
-	
 	/**
 	 * Infer the target author's ORCID by scanning accepted (known) PubMed articles.
 	 * Uses the full TargetAuthorSelection pipeline (19-step name matching cascade)
