@@ -86,7 +86,6 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 							authorNameEvidence.getNameMatchLastType() != null 
 							&&
 							authorNameEvidence.getNameMatchModifier() != null) {
-						slf4jLogger.info("Combine following identity.middleName, identity.lastName into mergedName. Now attempt match against article.lastName.");
 					}
 					else {
 						if(!isNotNullIdentityMiddleName(identity.getSanitizedNames().values())) {
