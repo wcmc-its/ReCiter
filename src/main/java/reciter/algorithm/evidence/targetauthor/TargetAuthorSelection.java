@@ -35,10 +35,7 @@ public class TargetAuthorSelection {
 	public void identifyTargetAuthor(List<ReCiterArticle> reciterArticles, Identity identity) {
 		
 		for(ReCiterArticle reciterArticle: reciterArticles) {
-			//Setting this for debug purposes
-			if(reciterArticle.getArticleId() == 15590364) {
-				slf4jLogger.info("here");
-			}
+			
 			ReCiterArticleAuthors authors = reciterArticle.getArticleCoAuthors();
 			Set<Entry<ReCiterAuthor, ReCiterAuthor>> sanitizedAritcleAuthors = authors.getSanitizedAuthorMap().entrySet();
 			List<AuthorName> sanitizedIdentityAuthors = new ArrayList<AuthorName>(identity.getSanitizedNames().values());
