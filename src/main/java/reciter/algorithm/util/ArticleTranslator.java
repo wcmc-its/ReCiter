@@ -342,7 +342,7 @@ public class ArticleTranslator {
             reCiterArticle.setPublicationDateStandardized(df.format(date));
             
             if(reCiterArticle.getPublicationDateDisplay()== null) {
-            	df = new SimpleDateFormat("yyyy MMM dd");
+            	df = new SimpleDateFormat("yyyy MMM dd", Locale.ENGLISH);
                 reCiterArticle.setPublicationDateDisplay(df.format(date));
             }
         }
