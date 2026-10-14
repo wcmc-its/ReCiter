@@ -110,7 +110,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 			//double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy;
 			//reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(totalArticleScoreNonStandardized, 2));
 			reCiterArticle.setAverageClusteringEvidence(averageClusteringEvidence);
-			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
+			//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
 		});
 	}
 	

@@ -22,8 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
@@ -36,7 +34,6 @@ import reciter.model.identity.Identity;
 
 public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(EmailStringMatchStrategy.class);
 	private List<String> emailSuffixes;
 	
 	private final String[] defaultSuffixes = ReCiterArticleScorer.strategyParameters.getDefaultSuffixes().trim().split(",");
@@ -110,7 +107,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 				}
 				if(emailEvidence.getEmailMatch() != null) {
 					reCiterArticle.setEmailEvidence(emailEvidence);
-					slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + emailEvidence.toString());
+					//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + emailEvidence.toString());
 					break;
 				}
 			}
