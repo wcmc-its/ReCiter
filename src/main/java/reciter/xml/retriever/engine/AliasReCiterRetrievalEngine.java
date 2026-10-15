@@ -28,9 +28,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -919,7 +922,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			String uid, Set<Long> existingPmids, Map<Long, String> newPmidStrategy,
 			Set<Long> backfillPmids) {
 		long nowEpochSeconds = System.currentTimeMillis() / 1000L;
-		for (Long pmid : articles.keySet()) {
+		
+		List<Long> pmids = new ArrayList<>(articles.keySet());
+		for (Long pmid : pmids) {
 			// Legacy PmidProvenance attribution (new-only)
 			if (!existingPmids.contains(pmid) && !newPmidStrategy.containsKey(pmid)) {
 				newPmidStrategy.put(pmid, strategyName);
@@ -928,8 +933,23 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pmidProvenanceService.updateStrategyIfBackfill(uid, pmid, strategyName);
 				backfillPmids.remove(pmid);
 			}
-			// Phase 33-01: ArticleProvenance upsert for EVERY retrieved PMID
-			articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
+		}
+		// Phase 33-01: ArticleProvenance upsert for EVERY retrieved PMID, 10 at a time.
+	    // invokeAll waits for all of them, so the next strategy only starts after these are done.
+		Semaphore permits = new Semaphore(10);
+		try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+			executor.invokeAll(pmids.stream().<Callable<Void>>map(pmid -> () -> {
+				permits.acquire();
+				try {
+					articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
+				} finally {
+					permits.release();
+				}
+				return null;
+			}).toList());
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while recording ArticleProvenance", e);
 		}
 	}
 
