@@ -69,7 +69,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 				}
 						
 			});
-			
+			/* Not being used
 			if(articleAuthorFirstNames.size() > 0) {
 				Map<String, Long> firstNameFrequencyCounts = articleAuthorFirstNames.stream().collect(Collectors.groupingBy(e -> e , Collectors.counting()));
 				if(firstNameFrequencyCounts.size() > 0) {
@@ -79,7 +79,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 						//reCiterCluster.setClusterReliabilityScore(Math.pow(mostCommonNameRatio, ReCiterArticleScorer.strategyParameters.getClusterReliabilityScoreFactor()));
 					}
 				}
-			}
+			} */
 		
 		double averageClusterScore = getAverageClusterScore(reCiterCluster);
 		populateAverageClusterEvidence(reCiterCluster, averageClusterScore);

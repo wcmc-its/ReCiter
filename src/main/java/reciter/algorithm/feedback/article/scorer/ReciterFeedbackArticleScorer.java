@@ -462,8 +462,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
        
 		String feedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
 		byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
-        // Create InputStream from CSV content
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
         
         // Upload the CSV file
         try {

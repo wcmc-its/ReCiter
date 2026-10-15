@@ -269,6 +269,8 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		return 0;
 	}
 	
+	
+	
 	/**
 	 * @param o The ReCiterCluster to compare to
 	 * @param comparisonType what kind of comparison happening e.g. email or grants etc.
@@ -276,6 +278,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	 */
 	public int compareTo(ReCiterCluster o, String comparisonType) {
 		boolean match = false;
+		/* Not being used dead code
 		if(comparisonType.equalsIgnoreCase("grant")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 				/*if(reCiterArticle.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold) {
@@ -292,9 +295,10 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 						}
 						
 					}
-				}*/
+				}-- commented
 			}
-		} else if(comparisonType.equalsIgnoreCase("cites")) {
+		} else */
+		if(comparisonType.equalsIgnoreCase("cites")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 					//A cites B
 					match = this.articleCluster.stream().anyMatch(articleList -> reCiterArticle.getCommentsCorrectionsPmids() != null && 
@@ -327,7 +331,9 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 					}
 				}
 			}
-		} else if(comparisonType.equalsIgnoreCase("tepid")) {
+		} 
+		/* Not being used dead code
+		else if(comparisonType.equalsIgnoreCase("tepid")) {
 			int matchCount = 0;
 			double clusterSimilarityScore = 0;
 			for(ReCiterArticle reCiterArticleo: o.getArticleCluster()) {
@@ -337,11 +343,11 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 						clusterSimilarityScore = computeClusterSimilarityScore(reCiterArticle.getReCiterArticleFeatures().getFeatureCount(), reCiterArticleo.getReCiterArticleFeatures().getFeatureCount(), matchCount);
 						/*if(clusterSimilarityScore > ReCiterEngine.clusterSimilarityThresholdScore) {
 							return 1;
-						}*/
+						}
 					}
 				}
 			}
-		}
+		} */
 		return 0;
 	}
 	
