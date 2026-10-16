@@ -72,7 +72,7 @@ public class CognitoAccessTokenController {
 
         
         // 2. Validate the fields are present
-        if (user == null || pass == null || user.trim().isEmpty() || pass.trim().isEmpty()) {
+        if (user == null || pass == null || user.isBlank() || pass.isBlank()) {
             return ResponseEntity.badRequest().body(new ApiResponse<>("Payload must contain 'userName' and 'password'", null, 400));
         }
     	

@@ -246,7 +246,7 @@ public class IdentityController {
     private void validateMandatoryFields(Identity identity) {
         String[] mandatoryFields = getMandatoryFields();
 
-        if (identity == null || identity.getUid() == null || identity.getUid().isEmpty()) {
+        if (identity == null || identity.getUid() == null || identity.getUid().isBlank()) {
             throw new IllegalArgumentException("Field 'Uid' in Identity is required but not provided.");
         }
 
@@ -263,19 +263,19 @@ public class IdentityController {
             for (String field : mandatoryFields) {
                 switch (field) {
                     case "firstName":
-                        if (authorName.getFirstName() == null || authorName.getFirstName().isEmpty()) {
+                        if (authorName.getFirstName() == null || authorName.getFirstName().isBlank()) {
                             throw new IllegalArgumentException("Field 'firstName' in AuthorName is required but not provided.");
                         }
                         break;
 
                     case "lastName":
-                        if (authorName.getLastName() == null || authorName.getLastName().isEmpty()) {
+                        if (authorName.getLastName() == null || authorName.getLastName().isBlank()) {
                             throw new IllegalArgumentException("Field 'lastName' in AuthorName is required but not provided.");
                         }
                         break;
 
                     case "firstInitial":
-                        if (authorName.getFirstInitial() == null || authorName.getFirstInitial().isEmpty()) {
+                        if (authorName.getFirstInitial() == null || authorName.getFirstInitial().isBlank()) {
                             throw new IllegalArgumentException("Field 'firstInitial' in AuthorName is required but not provided.");
                         }
                         break;
@@ -284,4 +284,51 @@ public class IdentityController {
         }
       }
     }
+    
+    /**
+     * Finds identities for a list of supplied UIDs.
+     *
+     * @param uids the UIDs to find
+     * @return 200 with the matching identities, or 404 if none of the supplied
+     *         UIDs were found in the Identity table
+     */
+    @Operation(summary = "Find the identity table for a list of Uids supplied", description = "This api finds for a list of identities in identity table.")
+    @Parameters({
+    	@Parameter(name = "api-key", description = "api-key for this resource",in =ParameterIn.HEADER, schema =@Schema(type ="string"))
+    })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Identity List found successfully"),
+            @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
+            @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
+    })
+    @PostMapping(value = "/reciter/find/identities/by/uids/", produces = "application/json")
+	public ResponseEntity<?> findIdentitiesByUids(@RequestBody List<String> uids) {
+		StopWatch stopWatch = new StopWatch("Find the identity table for a list of uids supplied");
+		stopWatch.start("Find the identity table for a list of uids supplied");
+
+		if (uids == null || uids.isEmpty()) {
+			log.warn("findIdentitiesByUids called with no uids supplied");
+			stopWatch.stop();
+			log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No uids were supplied in the request");
+		}
+
+		log.info("Finding identity table for{} uid(s) " + uids.size());
+		List<Identity> identities;
+		try {
+			identities = identityService.findByUids(uids);
+		} catch (Exception e) {
+			log.error("Error occurred while finding identities by uids: {}",uids,e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					 .body("An error occurred while searching for the uids '" + uids + "'");
+		}
+		if (identities == null || identities.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body("The uids provided '" + uids + "' was not found in the Identity table");
+		}
+		stopWatch.stop();
+		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+		return new ResponseEntity<>(identities, HttpStatus.OK);
+	}
 }

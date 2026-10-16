@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
@@ -257,9 +257,9 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		boolean emailMatch = false;
 		for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 			for(ReCiterAuthor authoro: reCiterArticle.getArticleCoAuthors().getAuthors()) {
-				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isEmpty()) {
-					emailMatch = this.articleCluster.stream().anyMatch(article -> article.getArticleCoAuthors().getAuthors().stream().anyMatch(author -> author.getValidEmail() != null && !author.getValidEmail().isEmpty() &&
-							StringUtils.equalsIgnoreCase(author.getValidEmail(), authoro.getValidEmail())));
+				if(authoro.getValidEmail() != null && !authoro.getValidEmail().isBlank()) {
+					emailMatch = this.articleCluster.stream().anyMatch(article -> article.getArticleCoAuthors().getAuthors().stream().anyMatch(author -> author.getValidEmail() != null && !author.getValidEmail().isBlank() &&
+							Strings.CI.equals(author.getValidEmail(), authoro.getValidEmail())));
 					if(emailMatch) {
 						return 1;
 					}
@@ -269,6 +269,8 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 		return 0;
 	}
 	
+	
+	
 	/**
 	 * @param o The ReCiterCluster to compare to
 	 * @param comparisonType what kind of comparison happening e.g. email or grants etc.
@@ -276,6 +278,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	 */
 	public int compareTo(ReCiterCluster o, String comparisonType) {
 		boolean match = false;
+		/* Not being used dead code
 		if(comparisonType.equalsIgnoreCase("grant")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 				/*if(reCiterArticle.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold) {
@@ -285,16 +288,17 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 							&&
 							articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() 
 							&&
-							StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
+							Strings.CI.equals(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
 							if(match) {
 								return 1;
 							}
 						}
 						
 					}
-				}*/
+				}-- commented
 			}
-		} else if(comparisonType.equalsIgnoreCase("cites")) {
+		} else */
+		if(comparisonType.equalsIgnoreCase("cites")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 					//A cites B
 					match = this.articleCluster.stream().anyMatch(articleList -> reCiterArticle.getCommentsCorrectionsPmids() != null && 
@@ -317,7 +321,7 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 					if(meshHeading != null && MeshMajorClusteringStrategy.isMeshMajor(meshHeading)) {
 						match = this.articleCluster.stream().anyMatch(articleList -> articleList.getMeshHeadings() != null && 
 								articleList.getMeshHeadings().stream().anyMatch(mesh -> MeshMajorClusteringStrategy.isMeshMajor(mesh) && 
-								StringUtils.equalsIgnoreCase(mesh.getDescriptorName().getDescriptorName(), meshHeading.getDescriptorName().getDescriptorName()) && 
+								Strings.CI.equals(mesh.getDescriptorName().getDescriptorName(), meshHeading.getDescriptorName().getDescriptorName()) && 
 								EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
 								EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 4000L
 								));
@@ -327,7 +331,9 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 					}
 				}
 			}
-		} else if(comparisonType.equalsIgnoreCase("tepid")) {
+		} 
+		/* Not being used dead code
+		else if(comparisonType.equalsIgnoreCase("tepid")) {
 			int matchCount = 0;
 			double clusterSimilarityScore = 0;
 			for(ReCiterArticle reCiterArticleo: o.getArticleCluster()) {
@@ -337,20 +343,20 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 						clusterSimilarityScore = computeClusterSimilarityScore(reCiterArticle.getReCiterArticleFeatures().getFeatureCount(), reCiterArticleo.getReCiterArticleFeatures().getFeatureCount(), matchCount);
 						/*if(clusterSimilarityScore > ReCiterEngine.clusterSimilarityThresholdScore) {
 							return 1;
-						}*/
+						}
 					}
 				}
 			}
-		}
+		} */
 		return 0;
 	}
 	
 	private int reCiterOverlapCount(ReCiterArticleFeatures reCiterArticleFeature1, ReCiterArticleFeatures reCiterArticleFeature2) {
 		int matchCount = 0;
 		//Journal Feature match
-		if(reCiterArticleFeature1.getJournalName() != null && !reCiterArticleFeature1.getJournalName().isEmpty() && 
-				reCiterArticleFeature2.getJournalName() != null && !reCiterArticleFeature2.getJournalName().isEmpty() &&
-				StringUtils.equalsIgnoreCase(reCiterArticleFeature1.getJournalName(), reCiterArticleFeature2.getJournalName())) {
+		if(reCiterArticleFeature1.getJournalName() != null && !reCiterArticleFeature1.getJournalName().isBlank() && 
+				reCiterArticleFeature2.getJournalName() != null && !reCiterArticleFeature2.getJournalName().isBlank() &&
+				Strings.CI.equals(reCiterArticleFeature1.getJournalName(), reCiterArticleFeature2.getJournalName())) {
 			matchCount++;
 		}
 		//MeshMajor Feature match

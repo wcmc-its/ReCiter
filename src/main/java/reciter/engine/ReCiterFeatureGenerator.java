@@ -336,7 +336,7 @@ public class ReCiterFeatureGenerator {
                 reCiterArticleAuthorFeature.setTargetAuthor(reCiterArticleAuthor.isTargetAuthor());
 
                 // Orcid
-                if(reCiterArticleAuthor.getOrcid() != null && !reCiterArticleAuthor.getOrcid().isEmpty()) {
+                if(reCiterArticleAuthor.getOrcid() != null && !reCiterArticleAuthor.getOrcid().isBlank()) {
                     Pattern pattern = Pattern.compile("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}");
                     Matcher matcher = pattern.matcher(reCiterArticleAuthor.getOrcid());
                     if(matcher.find()) {
@@ -344,7 +344,7 @@ public class ReCiterFeatureGenerator {
                     }
                 }
                 //EqualContrib
-                if(reCiterArticleAuthor.getEqualContrib()!=null && !reCiterArticleAuthor.getEqualContrib().isEmpty())
+                if(reCiterArticleAuthor.getEqualContrib()!=null && !reCiterArticleAuthor.getEqualContrib().isBlank())
                 {
                 	reCiterArticleAuthorFeature.setEqualContrib(ReCiterStringUtil.stripBackslashes(reCiterArticleAuthor.getEqualContrib()));
                 }

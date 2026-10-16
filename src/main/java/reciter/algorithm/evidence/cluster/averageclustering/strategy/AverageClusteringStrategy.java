@@ -69,7 +69,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 				}
 						
 			});
-			
+			/* Not being used
 			if(articleAuthorFirstNames.size() > 0) {
 				Map<String, Long> firstNameFrequencyCounts = articleAuthorFirstNames.stream().collect(Collectors.groupingBy(e -> e , Collectors.counting()));
 				if(firstNameFrequencyCounts.size() > 0) {
@@ -79,7 +79,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 						//reCiterCluster.setClusterReliabilityScore(Math.pow(mostCommonNameRatio, ReCiterArticleScorer.strategyParameters.getClusterReliabilityScoreFactor()));
 					}
 				}
-			}
+			} */
 		
 		double averageClusterScore = getAverageClusterScore(reCiterCluster);
 		populateAverageClusterEvidence(reCiterCluster, averageClusterScore);
@@ -110,7 +110,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 			//double totalArticleScoreNonStandardized = reCiterArticle.getTotalArticleScoreWithoutClustering() - clusterScoreDiscrepancy;
 			//reCiterArticle.setTotalArticleScoreNonStandardized(roundAvoid(totalArticleScoreNonStandardized, 2));
 			reCiterArticle.setAverageClusteringEvidence(averageClusteringEvidence);
-			slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
+			//slf4jLogger.info("Pmid: " + reCiterArticle.getArticleId() + " " + averageClusteringEvidence);
 		});
 	}
 	
@@ -120,7 +120,7 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 		
 		if(reCiterAuthor != null) {
 			String firstName = reCiterAuthor.getAuthorName().getFirstName().replaceAll("[A-Z-.\"() ]", "").trim();
-			if(!firstName.isEmpty()) {
+			if(!firstName.isBlank()) {
 				articleAuthorFirstNames.add(firstName);
 			}
 			

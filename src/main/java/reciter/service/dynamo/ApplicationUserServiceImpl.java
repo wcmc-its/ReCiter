@@ -17,11 +17,11 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 	@Override
 	public boolean createUser(ApplicationUser appUser) {
 		if(appUser.getId() != null
-				&& !appUser.getId().isEmpty()
+				&& !appUser.getId().isBlank()
 				&& appUser.getUsername() != null
-				&& !appUser.getUsername().isEmpty()
+				&& !appUser.getUsername().isBlank()
 				&& appUser.getPassword() != null
-				&& !appUser.getPassword().isEmpty()) {
+				&& !appUser.getPassword().isBlank()) {
 			             // Per-password random salt. BCrypt embeds the salt in the stored hash, so
 						// authenticateUser()/checkpw() still verifies correctly. Previously a single
 						// per-bean salt was reused for every account, defeating per-user salting.
@@ -36,9 +36,9 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 	@Override
 	public boolean authenticateUser(ApplicationUser appUser) {
 		if(appUser.getId() != null
-				&& !appUser.getId().isEmpty()
+				&& !appUser.getId().isBlank()
 				&& appUser.getPassword() != null
-				&& !appUser.getPassword().isEmpty()) {
+				&& !appUser.getPassword().isBlank()) {
 			ApplicationUser validUser = applicationUserRepository.findById(appUser.getId().trim()).orElseGet(() -> null);
 			if(validUser == null) {
 				return false;
