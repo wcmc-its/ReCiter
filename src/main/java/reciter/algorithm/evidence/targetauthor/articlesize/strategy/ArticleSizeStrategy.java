@@ -123,8 +123,7 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 				double logScore = Math.log(Math.max(trueCount, 1));
 				articleCountEvidence.setCountArticlesRetrieved(trueCount);
 				articleCountEvidence.setArticleCountScore(logScore);
-				slf4jLogger.info("Pmid: {} using stored eSearchCount={}, articleCountScore=log({})={}",
-						reCiterArticle.getArticleId(), trueCount, trueCount, logScore);
+				//	slf4jLogger.info("Pmid: {} using stored eSearchCount={}, articleCountScore=log({})={}",reCiterArticle.getArticleId(), trueCount, trueCount, logScore);
 
 			} else if (eSearchResult != null && this.numberOfArticles > 0) {
 				// Fallback: use retrieved PMID count with linear formula.

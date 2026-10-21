@@ -76,7 +76,7 @@ public class EmailFeatureClusteringStrategy extends AbstractClusteringStrategy {
 	private void checkForValidEmail(ReCiterArticle reCiterArticle) {
 		for (ReCiterAuthor author : reCiterArticle.getArticleCoAuthors().getAuthors()) {
 			String affiliation = null;
-			if (author.getAffiliation() != null && !author.getAffiliation().isEmpty()) {
+			if (author.getAffiliation() != null && !author.getAffiliation().isBlank()) {
 				affiliation = author.getAffiliation();
 			}
 			if(affiliation != null) {

@@ -43,6 +43,7 @@ import reciter.model.scopus.ScopusArticle;
 import reciter.pubmed.retriever.PubMedArticleRetriever;
 import reciter.pubmed.retriever.PubMedQuery;
 import reciter.scopus.retriever.ScopusArticleRetriever;
+import reciter.utils.EnvUtils;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 
 @Configurable
@@ -51,6 +52,9 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String nodeUrlBegin = "https://reciter-pubmed-retrieval-";
 	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
 	private static final int nodeSize = 7;
+
+	// RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
+	private static final RestTemplate REST_TEMPLATE = new RestTemplate();
 
 	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
 	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
@@ -141,7 +145,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 			
 			PubMedQuery encodedInitialCountQuery = pubMedQueryType.getLenientCountQuery().getQuery();
 			String countQueryStr = encodedInitialCountQuery == null ? "" : encodedInitialCountQuery.toString().trim();
-			if (countQueryStr.isEmpty() || countQueryStr.equals("()")) {
+			if (countQueryStr.isBlank() || countQueryStr.equals("()")) {
 				slf4jLogger.info("Skipping degenerate count query [{}] for strategy [{}]", countQueryStr, getRetrievalStrategyName());
 				handler = 0;
 			} else {
@@ -272,9 +276,10 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
 
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
-		String nodeUrl = PUBMED_SERVICE.endsWith("/pubmed")?PUBMED_SERVICE + "/query-number-pubmed-articles/":PUBMED_SERVICE + "/pubmed/query-number-pubmed-articles/";
+		String pubmedService = EnvUtils.require("PUBMED_SERVICE", PUBMED_SERVICE);
+		String nodeUrl = pubmedService.endsWith("/pubmed")?pubmedService + "/query-number-pubmed-articles/":pubmedService + "/pubmed/query-number-pubmed-articles/";
 		
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate restTemplate = REST_TEMPLATE;
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<Integer> responseEntity = null;
 		slf4jLogger.info("PubMedQuery: " + pubMedQueryType);
@@ -283,17 +288,22 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		} catch (Exception e) {
 			slf4jLogger.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
 		}
-		if (responseEntity == null) {
+		Integer body = (responseEntity == null) ? null : responseEntity.getBody();
+		if (body == null) {
+			// Count query failed (tool 500 / NCBI error) or returned an empty body. Flag the run so
+			// the engine rolls the retrievalDate watermark back instead of treating this as a
+			// legitimate "0 results". #689
+			RetrievalErrorTracker.markError();
 			return 0;
 		}
-		int results = responseEntity.getBody();
+		int results = body;
 		slf4jLogger.info("Returned results for query:" + pubMedQueryType + ":" + results);
 		return results;
 	}
 
 	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery) {
 		String nodeUrl = loadBalance();
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate restTemplate = REST_TEMPLATE;
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<PubMedArticle[]> responseEntity = null;
 		try {
@@ -330,12 +340,12 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		// add the remaining pmids
 		String remaining = sb.toString();
-		if (!remaining.isEmpty()) {
+		if (!remaining.isBlank()) {
 			pmidQueries.add(remaining);
 		}
 		List<ScopusArticle> scopusArticlesResult = new ArrayList<ScopusArticle>();
 		for (String pmidQuery : pmidQueries) {
-			RestTemplate restTemplate = new RestTemplate();
+			RestTemplate restTemplate = REST_TEMPLATE;
 			try {
 				slf4jLogger.info("Sending web request: " + nodeUrl + pmidQuery);
 				ResponseEntity<ScopusArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl + pmidQuery, ScopusArticle[].class);

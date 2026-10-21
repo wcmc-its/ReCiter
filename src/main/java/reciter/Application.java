@@ -19,6 +19,7 @@
 package reciter;
 
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -32,21 +33,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
 
 import reciter.database.dyanmodb.files.GenderFileImport;
 import reciter.database.dyanmodb.files.IdentityFileImport;
@@ -71,12 +64,11 @@ import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.utils.AffiliationStrategyUtils;
 import reciter.utils.DegreeYearStrategyUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @SpringBootApplication
-@Configuration
-@EnableAutoConfiguration
 @EnableAsync
-@ComponentScan("reciter")
 public class Application {
 	
 	private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -127,11 +119,11 @@ public class Application {
 	@Value("${strategy.authorAffiliationScoringStrategy.institutionStopwords}")
     private String instAfflInstitutionStopwords;
     
-    private String scopusService = System.getenv("SCOPUS_SERVICE");
+    private static final String SCOPUS_SERVICE = System.getenv("SCOPUS_SERVICE");
     
-    private String pubmedService = System.getenv("PUBMED_SERVICE");
+    private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
     
-    private String reciterScoringService = System.getenv("RECITERSCORING_SERVICE_URL");
+    private static final String RECITERSCORING_SERVICE = System.getenv("RECITERSCORING_SERVICE_URL");
     
 	@Autowired 
 	private Environment env;
@@ -139,21 +131,12 @@ public class Application {
 	@Value("${aws.reciterscoring.service.portNo}")
 	private String reciterScoringPortNumber;
 	
+	@Autowired
+	private ObjectMapper mapper;
+	
 	
 	public static void main(String[] args) {
-		ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
-		
-		Iterable<ObjectMapper> objectMappers = context.getBeansOfType(ObjectMapper.class)
-	            .values();
-		
-        ObjectMapper objectMapper = Iterables.getFirst(objectMappers, null);
-
-        // Enable Squiggly for Jackson message converter
-        if (objectMapper != null) {
-            for (MappingJackson2HttpMessageConverter converter : context.getBeansOfType(MappingJackson2HttpMessageConverter.class).values()) {
-                converter.setObjectMapper(objectMapper);
-            }
-        }
+		SpringApplication.run(Application.class, args);
 	}
 	
 	
@@ -162,9 +145,9 @@ public class Application {
 	 */
 	@EventListener(ApplicationReadyEvent.class)
 	public void checkScopusPubmedService() {
-		if(useScopusArticles && scopusService != null && !scopusService.isEmpty()) {
+		if(useScopusArticles && SCOPUS_SERVICE != null && !SCOPUS_SERVICE.isBlank()) {
 			try {
-				URL siteURL = new URL(scopusService + "/scopus/ping");
+				URL siteURL = URI.create(SCOPUS_SERVICE + "/scopus/ping").toURL();
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
 				connection.setRequestMethod("GET");
 				connection.setConnectTimeout(10000);
@@ -172,19 +155,19 @@ public class Application {
 	 
 				int code = connection.getResponseCode();
 				if (code == 200) {
-					log.info("The Scopus Service endpoint {} provided is valid and reachable", scopusService);
+					log.info("The Scopus Service endpoint {} provided is valid and reachable", SCOPUS_SERVICE);
 				} else {
-					log.info("The Scopus Service endpoint {} provided is not valid and not reachable", scopusService);
+					log.info("The Scopus Service endpoint {} provided is not valid and not reachable", SCOPUS_SERVICE);
 				}
 			} catch (Exception e) {
-				log.error("Failed to connect to Scopus service endpoint Wrong domain - Exception {}", scopusService, e);
+				log.error("Failed to connect to Scopus service endpoint Wrong domain - Exception {}", SCOPUS_SERVICE, e);
 	 
 			}
 		}
 		
-		if(pubmedService != null && !pubmedService.isEmpty()) {
+		if(PUBMED_SERVICE != null && !PUBMED_SERVICE.isBlank()) {
 			try {
-				URL siteURL = new URL(pubmedService  + "/pubmed/ping");
+				URL siteURL = URI.create(PUBMED_SERVICE  + "/pubmed/ping").toURL();
 				HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection();
 				connection.setRequestMethod("GET");
 				connection.setConnectTimeout(10000);
@@ -192,9 +175,9 @@ public class Application {
 	 
 				int code = connection.getResponseCode();
 				if (code == 200) {
-					log.info("The Pubmed Service endpoint {} provided is valid and reachable",pubmedService);
+					log.info("The Pubmed Service endpoint {} provided is valid and reachable",PUBMED_SERVICE);
 				} else {
-					log.info("The Pubmed Service endpoint {} provided is not valid and not reachable",pubmedService);
+					log.info("The Pubmed Service endpoint {} provided is not valid and not reachable",PUBMED_SERVICE);
 				}
 			} catch (Exception e) {
 				log.error("Wrong domain - Exception: " + e.getMessage());
@@ -203,10 +186,9 @@ public class Application {
 		}
 		
 		
-		if(reciterScoringService != null && !reciterScoringService.isEmpty()) 
+		if(RECITERSCORING_SERVICE != null && !RECITERSCORING_SERVICE.isBlank()) 
 		{
 			String urlString = "http://localhost:"+ reciterScoringPortNumber +"/2015-03-31/functions/function/invocations";
-	        ObjectMapper mapper = new ObjectMapper();
 	        
 	        Map<String, Object> payloadMap = new HashMap<>();
 	        payloadMap.put("category", "test");
@@ -217,12 +199,12 @@ public class Application {
 	        String payloadJson=null;
 			try {
 				payloadJson = mapper.writeValueAsString(payloadMap);
-			} catch (JsonProcessingException e) {
+			} catch (JacksonException e) {
 				log.error("ReCiter---Scoring payload: Failed to serialize payload map to JSON {} ",e.getMessage());
 			}
 	        
 	        try {
-		            URL url = new URL(urlString);
+		            URL url = URI.create(urlString).toURL();
 		            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		            connection.setRequestMethod("POST");
 		            connection.setRequestProperty("Content-Type", "application/json");
@@ -230,27 +212,27 @@ public class Application {
 		            connection.getOutputStream().write(payloadJson.getBytes("UTF-8"));
 		            int responseCode = connection.getResponseCode();
 		            if (responseCode == 200) {
-						log.info("The reciterScoring Service endpoint {} provided is valid and reachable",reciterScoringService);
+						log.info("The reciterScoring Service endpoint {} provided is valid and reachable",RECITERSCORING_SERVICE);
 					} else {
-						log.info("The ReciterScoring Service endpoint {} provided is not valid and not reachable",reciterScoringService);
+						log.info("The ReciterScoring Service endpoint {} provided is not valid and not reachable",RECITERSCORING_SERVICE);
 					}
 	        }catch (Exception e) {
 				log.error("ReCiter---Scoring Container is not running. Please start the service: {}" , e.getMessage());
 			}
 		}
 		
-		if(pubmedService == null) {
+		if(PUBMED_SERVICE == null) {
 			log.warn("ReCiter Application will not run without a pubmed service. Please download from https://github.com/wcmc-its/ReCiter-PubMed-Retrieval-Tool.git and setup Pubmed Service.");
 		}
 		
-		if(scopusService == null) {
+		if(SCOPUS_SERVICE == null) {
 			if(useScopusArticles) {
 				log.warn("The property `use.scopus.articles` is set to `true` in the application.properties file. If you haven't done so already, please be sure to install the ReCiter Scopus Retrieval Tool, located at https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool. If you wish to run ReCiter without the Scopus service, set `use.scopus.articles=false`.");
 			} else {
 				log.warn("The property `use.scopus.articles` is set to `false` in the application.properties file, so it will not be using the ReCiter Scopus Retrieval Tool. To install the ReCiter Scopus Retrieval Tool, you would need to go to https://github.com/wcmc-its/ReCiter-Scopus-Retrieval-Tool and set property `use.scopus.articles=true`.");
 			}
 		}
-		if(reciterScoringService == null || reciterScoringService.isEmpty()) {
+		if(RECITERSCORING_SERVICE == null || RECITERSCORING_SERVICE.isBlank()) {
 			log.warn("ReCiter Application will not run without a ReCiterScoring service. Please download from https://github.com/wcmc-its/ReCiter---Scoring.git and setup ReCiter---Scoring Service.");
 		}
 	}

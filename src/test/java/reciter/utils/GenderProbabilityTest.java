@@ -1,6 +1,7 @@
 package reciter.utils;
 
-import static org.junit.Assert.assertNotNull;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -9,10 +10,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,14 +25,14 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GenderProbabilityTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(GenderProbabilityTest.class);
 	
 	private static List<Gender> genders;
 	
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/files/Gender.json"));
 		Type listType = new TypeToken<List<Gender>>() {}.getType();
@@ -66,8 +67,8 @@ public class GenderProbabilityTest {
 			log.error("Cannot parse Json", e);
 		}
 		
-		if(reCiterArticle != null) {
-			assertNotNull("Article has gender probability", GenderProbability.getGenderArticleProbability(reCiterArticle));
+		if (reCiterArticle != null) {
+			assertNotNull(GenderProbability.getGenderArticleProbability(reCiterArticle),"Article has gender probability");
 		}
 	}
 

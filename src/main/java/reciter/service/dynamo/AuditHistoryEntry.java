@@ -14,6 +14,10 @@ public class AuditHistoryEntry {
     public String feedback;
     /** Curator's admin_users.userID (0 = unknown; pre-Phase-34 rows are 0). */
     public int curatedBy;
+    /** CWID of the person who acted (curator or faculty; null on rows written before the field existed). */
+    public String actorPersonIdentifier;
+    /** Optional free-text note attached to the action (e.g. a dispute reason). */
+    public String note;
     /** Action time, epoch seconds (UTC). */
     public long createTimestamp;
     /** FeedbackLog sort key ({@code <epoch>#<hex>}); useful for stable ordering. */
