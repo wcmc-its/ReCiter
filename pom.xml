@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.cornell.weill.reciter</groupId>
 	<artifactId>reciter</artifactId>
-	<version>4.0.0</version>
+	<version>4.0.0-SNAPSHOT</version>
 	<name>ReCiter</name>
 	<description>ReCiter is a publication suggestions engine</description>
 	<url>https://github.com/wcmc-its/ReCiter</url>
@@ -50,7 +50,7 @@
 		<connection>scm:git:git://github.com/wcmc-its/ReCiter.git</connection>
 		<developerConnection>scm:git:git@github.com:wcmc-its/ReCiter.git</developerConnection>
 		<url>https://github.com/wcmc-its/ReCiter</url>
-		<tag>4.0.0</tag>
+		<tag>4.0.0-SNAPSHOT</tag>
 	</scm>
 
 	<properties>
@@ -322,31 +322,31 @@
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-scopus-model</artifactId>
-			<version>4.0.0</version>
+			<version>4.0.0-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-pubmed-model</artifactId>
-			<version>4.0.0</version>
+			<version>4.0.0-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-identity-model</artifactId>
-			<version>4.0.0</version>
+			<version>4.0.0-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-article-model</artifactId>
-			<version>4.0.0</version>
+			<version>4.0.0-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>edu.cornell.weill.reciter</groupId>
 			<artifactId>reciter-dynamodb-model</artifactId>
-			<version>4.0.0</version>
+			<version>4.0.0-SNAPSHOT</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.auth0/java-jwt -->
