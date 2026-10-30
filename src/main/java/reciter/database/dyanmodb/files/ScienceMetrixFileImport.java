@@ -1,6 +1,6 @@
 package reciter.database.dyanmodb.files;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import reciter.database.dynamodb.model.ScienceMetrix;
 import reciter.service.ScienceMetrixService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * This class deals with import of ScienceMetrix from files and import it into dynamodb
@@ -27,13 +27,17 @@ public class ScienceMetrixFileImport {
 	@Autowired
 	private ScienceMetrixService scienceMetrixService;
 	
+	@Autowired
+	private ObjectMapper mapper;
+	
 	public void importScienceMetrix() {
-		ObjectMapper mapper = new ObjectMapper();
 		List<ScienceMetrix> scienceMetrixBeans = null;
-		try {
-			scienceMetrixBeans = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/ScienceMetrix.json"), ScienceMetrix[].class));
-		} catch (IOException e) {
-			log.error("IOException", e);
+		try (InputStream is = getClass().getResourceAsStream("/files/ScienceMetrix.json")) {
+			scienceMetrixBeans = Arrays.asList(mapper.readValue(is, ScienceMetrix[].class));
+		} catch (JacksonException e) {
+			log.error("Failed to read science metrix beans from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading science metrix beans from file", e);
 		}
 		if(scienceMetrixBeans != null 
 				&&

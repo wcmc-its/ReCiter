@@ -2,7 +2,6 @@ package reciter.database.dynamodb;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
@@ -14,10 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.model.identity.Identity;
@@ -34,6 +29,9 @@ import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * This class allows you to store dynamodb items which exceeds dynamodb item limit of 400kb in s3.
@@ -50,8 +48,9 @@ public class DynamoDbS3Operations {
 	@Autowired
 	private S3Client  s3;
 	
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-			.registerModule(new JavaTimeModule());
+	// JSR-310 (java.time) support is now built into jackson-databind 3.x by default —
+    // no separate module/dependency to register.
+	private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 	
 	private static final String CONTENT_TYPE = "application/json";
 	
@@ -71,7 +70,7 @@ public class DynamoDbS3Operations {
 		byte[] objectContentBytes;
 		try {
 			objectContentBytes = OBJECT_MAPPER.writeValueAsString(object).getBytes(StandardCharsets.UTF_8);
-		} catch (JsonProcessingException e) {
+		} catch (JacksonException e) {
 			log.error("S3 offload failed to serialize key={}: {}", keyName, e.getMessage(), e);
 			return false;
 		}
@@ -163,16 +162,7 @@ public class DynamoDbS3Operations {
         e
     );
 
-} catch (JsonMappingException e) {
-    log.error(
-        "JSON mapping failed. bucket={}, key={}, targetClass={}",
-        bucketName,
-        keyName,
-        objectClass.getName(),
-        e
-    );
-
-} catch (JsonProcessingException e) {
+} catch (JacksonException e) {
     log.error(
         "Invalid JSON content. bucket={}, key={}, targetClass={}",
         bucketName,

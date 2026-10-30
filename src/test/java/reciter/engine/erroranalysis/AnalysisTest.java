@@ -1,14 +1,15 @@
 package reciter.engine.erroranalysis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import reciter.model.article.ReCiterArticle;
 
@@ -114,8 +115,8 @@ public class AnalysisTest {
         assertEquals(0.0, a.getPrecision(), DELTA);
         assertEquals(0.0, a.getRecall(), DELTA);
         assertEquals(0.0, a.getAccuracy(), DELTA);
-        assertFalse("precision must not be NaN", Double.isNaN(a.getPrecision()));
-        assertFalse("accuracy must not be NaN", Double.isNaN(a.getAccuracy()));
+        assertFalse( Double.isNaN(a.getPrecision()),"precision must not be NaN");
+        assertFalse( Double.isNaN(a.getAccuracy()),"accuracy must not be NaN");
     }
 
     @Test

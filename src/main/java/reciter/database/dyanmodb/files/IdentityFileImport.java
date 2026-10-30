@@ -1,6 +1,6 @@
 package reciter.database.dyanmodb.files;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import reciter.database.dynamodb.model.Identity;
 import reciter.service.IdentityService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * This class deals with import of Identity from files and import it into dynamodb
@@ -28,16 +28,20 @@ public class IdentityFileImport {
 	@Autowired
 	private IdentityService identityService;
 	
+	@Autowired
+	private ObjectMapper mapper;
+	
 	/**
 	 * This function imports identity data to identity table
 	 */
 	public void importIdentity() {
-		ObjectMapper mapper = new ObjectMapper();
 		List<Identity> identities = null;
-		try {
-			identities = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/Identity.json"), Identity[].class));
-		} catch (IOException e) {
-			log.error("IOException", e);
+		try (InputStream is = getClass().getResourceAsStream("/files/Identity.json")) {
+			identities = Arrays.asList(mapper.readValue(is, Identity[].class));
+		} catch (JacksonException e) {
+			log.error("Failed to read identities from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading identities from file", e);
 		}
 		if(identities != null 
 				&&

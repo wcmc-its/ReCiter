@@ -44,7 +44,7 @@ public class PubMedQuery {
         if (start != null && end != null) {
             parts.add("((" + dt.format(start) + ":" + dt.format(end) + "[EDAT]" + ") OR (" + dt.format(start) + ":" + dt.format(end) + "[DP]))");
         }
-        if (strategyQuery != null && !strategyQuery.isEmpty()) {
+        if (strategyQuery != null && !strategyQuery.isBlank()) {
             parts.add(strategyQuery);
         }
 
