@@ -34,7 +34,7 @@ public class PubMedArticleRetriever {
 
 	private static final Logger log = LoggerFactory.getLogger(PubMedArticleRetriever.class);
 	
-    private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
+    private static final String PUBMED_SERVICE = EnvUtils.get("PUBMED_SERVICE");
 
     // RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
     private static final RestTemplate REST_TEMPLATE = new RestTemplate();

@@ -1,5 +1,6 @@
 package reciter.database.dyanmodb.files;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.InstitutionAfid;
 import reciter.service.dynamo.IDynamoDbInstitutionAfidService;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -34,10 +36,12 @@ public class InstitutionAfidFileImport {
 	 */
 	public void importInstitutionAfids() {
 		List<InstitutionAfid> institutionAfids = null;
-		try {
-			institutionAfids = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/InstitutionAfid.json"), InstitutionAfid[].class));
-		} catch (Exception e) {
+		try (InputStream is = getClass().getResourceAsStream("/files/InstitutionAfid.json")) {
+			institutionAfids = Arrays.asList(mapper.readValue(is, InstitutionAfid[].class));
+		} catch (JacksonException e) {
 			log.error("Failed to read institution afids from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading institution afids from file", e);
 		}
 		if(institutionAfids != null 
 				&&

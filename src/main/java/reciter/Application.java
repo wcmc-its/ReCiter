@@ -64,6 +64,7 @@ import reciter.service.dynamo.DynamoDbInstitutionAfidService;
 import reciter.service.dynamo.DynamoDbMeshTermService;
 import reciter.utils.AffiliationStrategyUtils;
 import reciter.utils.DegreeYearStrategyUtils;
+import reciter.utils.EnvUtils;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
@@ -119,11 +120,11 @@ public class Application {
 	@Value("${strategy.authorAffiliationScoringStrategy.institutionStopwords}")
     private String instAfflInstitutionStopwords;
     
-    private static final String SCOPUS_SERVICE = System.getenv("SCOPUS_SERVICE");
+    private static final String SCOPUS_SERVICE = EnvUtils.get("SCOPUS_SERVICE");
     
-    private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
+    private static final String PUBMED_SERVICE = EnvUtils.get("PUBMED_SERVICE");
     
-    private static final String RECITERSCORING_SERVICE = System.getenv("RECITERSCORING_SERVICE_URL");
+    private static final String RECITERSCORING_SERVICE = EnvUtils.get("RECITERSCORING_SERVICE_URL");
     
 	@Autowired 
 	private Environment env;

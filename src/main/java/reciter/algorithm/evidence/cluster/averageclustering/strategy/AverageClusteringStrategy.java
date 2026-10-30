@@ -1,11 +1,7 @@
 package reciter.algorithm.evidence.cluster.averageclustering.strategy;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,18 +65,6 @@ public class AverageClusteringStrategy extends AbstractClusterStrategy {
 				}
 						
 			});
-			/* Not being used
-			if(articleAuthorFirstNames.size() > 0) {
-				Map<String, Long> firstNameFrequencyCounts = articleAuthorFirstNames.stream().collect(Collectors.groupingBy(e -> e , Collectors.counting()));
-				if(firstNameFrequencyCounts.size() > 0) {
-					Long maxFrequencyCount = Collections.max(firstNameFrequencyCounts.entrySet(), Comparator.comparingLong(Map.Entry::getValue)).getValue();
-					if(articleAuthorFirstNames.size() > 0) {
-						double mostCommonNameRatio = (double) maxFrequencyCount.longValue()/articleAuthorFirstNames.size();
-						//reCiterCluster.setClusterReliabilityScore(Math.pow(mostCommonNameRatio, ReCiterArticleScorer.strategyParameters.getClusterReliabilityScoreFactor()));
-					}
-				}
-			} */
-		
 		double averageClusterScore = getAverageClusterScore(reCiterCluster);
 		populateAverageClusterEvidence(reCiterCluster, averageClusterScore);
 		

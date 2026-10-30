@@ -852,26 +852,25 @@ public class ReCiterController {
                 knownPmids = goldStandard.getKnownPmids();
             }
             //Count pending pubs
-			ReCiterFeature reCiterFeature = analysis.getReCiterFeature();
-			if(reCiterFeature!=null && reCiterFeature.getReCiterArticleFeatures()!=null)
+			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
-				reCiterFeature.setCountPendingArticles(reCiterFeature.getReCiterArticleFeatures().stream().filter(
+				analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream().filter(
 						reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&& reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
 						.count());
 			}
-			else if(reCiterFeature!=null)
+			else if(analysis.getReCiterFeature()!=null)
 			{
-				reCiterFeature.setCountPendingArticles(0);
+				analysis.getReCiterFeature().setCountPendingArticles(0);
 			}
 			//All the results are filtered based on filterByFeedback
-        	if(reCiterFeature!=null && reCiterFeature.getReCiterArticleFeatures()!=null)
+        	if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
 				// FIX (#640-A): Compute precision/recall/accuracy ONCE over the FULL candidate
 				// set BEFORE any display filtering. Previously each filterByFeedback branch ran
 				// performAnalysis over the already-filtered subset, so e.g. ACCEPTED_ONLY removed
 				// every REJECTED (false-positive) row and precision collapsed to TP/(TP+0)=1.0.
-				List<ReCiterArticle> fullCandidateSet = reCiterFeature.getReCiterArticleFeatures().stream()
+				List<ReCiterArticle> fullCandidateSet = analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 					    .map(featureArticle -> {
 					        ReCiterArticle article = new ReCiterArticle(featureArticle.getPmid());
 					        article.setAuthorshipLikelihoodScore(featureArticle.getAuthorshipLikelihoodScore());
@@ -880,13 +879,13 @@ public class ReCiterController {
 					    })
 					    .collect(Collectors.toList());
 				Analysis featureAnalysis = Analysis.performAnalysis(fullCandidateSet,knownPmids);
-				reCiterFeature.setPrecision(featureAnalysis.getPrecision());
-				reCiterFeature.setRecall(featureAnalysis.getRecall());
-				reCiterFeature.setOverallAccuracy(featureAnalysis.getAccuracy());
+				analysis.getReCiterFeature().setPrecision(featureAnalysis.getPrecision());
+				analysis.getReCiterFeature().setRecall(featureAnalysis.getRecall());
+				analysis.getReCiterFeature().setOverallAccuracy(featureAnalysis.getAccuracy());
 
 				// Apply the display filter ONLY to the returned article list (metrics already set above).
 				if(filterByFeedback == FilterFeedbackType.ALL || filterByFeedback == null) {
-					reCiterFeature.setReCiterArticleFeatures(reCiterFeature.getReCiterArticleFeatures().stream()
+					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 								&&
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
@@ -896,19 +895,19 @@ public class ReCiterController {
 								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 								)
 								.collect(Collectors.toList()));
-					reCiterFeature.setCountSuggestedArticles(reCiterFeature.getReCiterArticleFeatures().size());
+					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_ONLY) {
-					reCiterFeature.setReCiterArticleFeatures(reCiterFeature.getReCiterArticleFeatures().stream()
+					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED)
 							.collect(Collectors.toList()));
-					reCiterFeature.setCountSuggestedArticles(reCiterFeature.getReCiterArticleFeatures().size());
+					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 				} else if(filterByFeedback == FilterFeedbackType.REJECTED_ONLY) {
-					reCiterFeature.setReCiterArticleFeatures(reCiterFeature.getReCiterArticleFeatures().stream()
+					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					reCiterFeature.setCountSuggestedArticles(reCiterFeature.getReCiterArticleFeatures().size());
+					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_NULL) {
-					reCiterFeature.setReCiterArticleFeatures(reCiterFeature.getReCiterArticleFeatures().stream()
+					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
 							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 							&& 
@@ -917,9 +916,9 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 							)
 							.collect(Collectors.toList()));
-					reCiterFeature.setCountSuggestedArticles(reCiterFeature.getReCiterArticleFeatures().size());
+					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 				} else if(filterByFeedback == FilterFeedbackType.REJECTED_AND_NULL) {
-					reCiterFeature.setReCiterArticleFeatures(reCiterFeature.getReCiterArticleFeatures().stream()
+					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> (reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
 							.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 							&&
@@ -928,35 +927,35 @@ public class ReCiterController {
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED
 							)
 							.collect(Collectors.toList()));
-					reCiterFeature.setCountSuggestedArticles(reCiterFeature.getReCiterArticleFeatures().size());
+					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 				} else if(filterByFeedback == FilterFeedbackType.ACCEPTED_AND_REJECTED) {
-					reCiterFeature.setReCiterArticleFeatures(reCiterFeature.getReCiterArticleFeatures().stream()
+					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getUserAssertion() == PublicationFeedback.ACCEPTED
 							||
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.REJECTED)
 							.collect(Collectors.toList()));
-					reCiterFeature.setCountSuggestedArticles(reCiterFeature.getReCiterArticleFeatures().size());
+					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 				} else if(filterByFeedback == FilterFeedbackType.NULL) {
-					reCiterFeature.setReCiterArticleFeatures(reCiterFeature.getReCiterArticleFeatures().stream()
+					analysis.getReCiterFeature().setReCiterArticleFeatures(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
 							//.filter(reCiterArticleFeature -> reCiterArticleFeature.getTotalArticleScoreStandardized() >= totalScore
 							.filter(reCiterArticleFeature -> reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
 							&&
 							reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL)
 							.collect(Collectors.toList()));
-					reCiterFeature.setCountSuggestedArticles(reCiterFeature.getReCiterArticleFeatures().size());
+					analysis.getReCiterFeature().setCountSuggestedArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().size());
 				}
 			}
-			else if(reCiterFeature!=null)
+			else if(analysis.getReCiterFeature()!=null)
 			{
-				reCiterFeature.setReCiterArticleFeatures(new ArrayList<reciter.engine.analysis.ReCiterArticleFeature>());
-				reCiterFeature.setCountSuggestedArticles(0);
-				reCiterFeature.setPrecision(0.0);
-				reCiterFeature.setRecall(0.0);
-				reCiterFeature.setOverallAccuracy(null);
+				analysis.getReCiterFeature().setReCiterArticleFeatures(new ArrayList<reciter.engine.analysis.ReCiterArticleFeature>());
+				analysis.getReCiterFeature().setCountSuggestedArticles(0);
+				analysis.getReCiterFeature().setPrecision(0.0);
+				analysis.getReCiterFeature().setRecall(0.0);
+				analysis.getReCiterFeature().setOverallAccuracy(null);
 			}	
             stopWatch.stop();
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-            return featureGeneratorResponse(reCiterFeature, uid, includeExternal);
+            return featureGeneratorResponse(analysis.getReCiterFeature(), uid, includeExternal);
         } else {
             if (useGoldStandard == null) {
                 strategyParameters.setUseGoldStandardEvidence(true);

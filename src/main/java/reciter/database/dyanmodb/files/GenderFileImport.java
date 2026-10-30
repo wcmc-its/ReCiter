@@ -1,5 +1,6 @@
 package reciter.database.dyanmodb.files;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.Gender;
 import reciter.service.GenderService;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
@@ -28,10 +30,12 @@ public class GenderFileImport {
 	 */
 	public void importGender() {
 		List<Gender> genders = null;
-		try {
-			genders = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/Gender.json"), Gender[].class));
-		} catch (Exception e) {
+		try (InputStream is = getClass().getResourceAsStream("/files/Gender.json")) {
+			genders = Arrays.asList(mapper.readValue(is, Gender[].class));
+		} catch (JacksonException e) {
 			log.error("Failed to read genders from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading genders from file", e);
 		}
 		if(genders != null 
 				&&

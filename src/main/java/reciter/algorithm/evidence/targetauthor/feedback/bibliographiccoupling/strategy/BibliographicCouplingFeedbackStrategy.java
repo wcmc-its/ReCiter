@@ -104,10 +104,6 @@ public class BibliographicCouplingFeedbackStrategy extends AbstractTargetAuthorF
 					}
 				}
 
-				// Leave-one-out: if article X is accepted, it was counted above — subtract 1
-				//int adjustedCountAccepted = countAccepted;
-				//int adjustedCountRejected = countRejected;
-
 				double scoreAll = computeScore(countAccepted, countRejected);
 				if (countAccepted == 0 && countRejected == 0 && totalAccepted > 0) {
 					scoreAll = computeInformedAbsencePenalty(totalAccepted);

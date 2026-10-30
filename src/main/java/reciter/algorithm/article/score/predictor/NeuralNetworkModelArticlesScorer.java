@@ -44,8 +44,8 @@ public class NeuralNetworkModelArticlesScorer {
 	private static final String MODEL_NAME = "modelName";
 
 	private static final String LAMBDA_FUNCTION_REGION = "aws.lambda.region";
-
-	private static final String RECITERSCORING_SERVICE_URL = System.getenv("RECITERSCORING_SERVICE_URL");
+	private static final String RECITERSCORING_SERVICE_URL = EnvUtils.get("RECITERSCORING_SERVICE_URL");
+	private static final String LAMBDA_FUNCTION_INVOCATION_URL = "local.lambda.function.invocation.url";
 
 	// ── Java 21: reusable ObjectMapper (thread-safe, expensive to construct) ──
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -60,12 +60,12 @@ public class NeuralNetworkModelArticlesScorer {
 		StopWatch stopWatch = new StopWatch(goldStandardName);
 		stopWatch.start(goldStandardName);
 		JSONArray authorshipLikelihoodScore;
-		boolean useLocal = "false".equalsIgnoreCase(isS3UploadRequiredString);
-		if (useLocal) {
-			authorshipLikelihoodScore = callLocalLambda(goldStandardName, dataFileName, s3BucketName,
-					                    isS3UploadRequiredString);
+		
+		if (isS3UploadRequiredString != null && !isS3UploadRequiredString.equalsIgnoreCase("")
+				&& (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) {
+			authorshipLikelihoodScore = callLocalLambda(goldStandardName, dataFileName, s3BucketName,isS3UploadRequiredString);
 		} else {
-			String lambdaFunction = EnvUtils.require("reciterScoringLambdaFunction", System.getenv("RECITER_SCORING_LAMBDA_FUNCTION"));
+			String lambdaFunction = EnvUtils.require("reciterScoringLambdaFunction", EnvUtils.get("RECITER_SCORING_LAMBDA_FUNCTION"));
 			log.info("lambdaFunction Name: {}" ,lambdaFunction);
 
 			authorshipLikelihoodScore = callAwsLambda(goldStandardName, dataFileName, s3BucketName,
@@ -122,7 +122,7 @@ public class NeuralNetworkModelArticlesScorer {
 		
 		HttpURLConnection conn = null;
 		try {
-			URL url = URI.create(System.getenv("RECITERSCORING_SERVICE_URL") + PropertiesUtils.get("local.lambda.function.invocation.url")).toURL();
+			URL url = URI.create(EnvUtils.require("RECITERSCORING_SERVICE_URL", RECITERSCORING_SERVICE_URL) + PropertiesUtils.get(LAMBDA_FUNCTION_INVOCATION_URL)).toURL();
 			conn = (HttpURLConnection) url.openConnection();
 			if (conn != null) {
 				conn.setRequestMethod("POST");

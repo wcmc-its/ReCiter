@@ -19,6 +19,7 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -70,6 +70,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 	private final static Logger log = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
 
+	// Matches the previous work-stealing pool size: the retrieval service tolerates at most this many concurrent retrievals.
+	private static final int MAX_CONCURRENT_RETRIEVALS = 15;
+
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
 	
@@ -99,11 +102,24 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	@Override
 	public boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
 		Set<String> failedUids = ConcurrentHashMap.newKeySet(); 
+
+		// A null identity/uid cannot be retrieved or recorded in failedUids (newKeySet rejects nulls):
+		// skip it, keep retrieving the others, and report the run as failed at the end.
+		List<Identity> validIdentities = identities.stream()
+				.filter(identity -> identity != null && identity.getUid() != null)
+				.toList();
+		boolean hadInvalidIdentity = validIdentities.size() < identities.size();
+		if (hadInvalidIdentity) {
+			log.error("Skipping {} identities with a null identity or uid.", identities.size() - validIdentities.size());
+		}
+
+		Semaphore retrievalPermits = new Semaphore(MAX_CONCURRENT_RETRIEVALS);
 		// Java 21 GA: virtual-thread-per-task executor, auto-closed
        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
-           var futures = identities.stream()
+           var futures = validIdentities.stream()
                    .map(identity -> CompletableFuture.runAsync(() -> {
+                       retrievalPermits.acquireUninterruptibly();
                        try {
                            log.info("refreshFlag in retrieveArticlesByDateRange: {}", refreshFlag);
 
@@ -129,28 +145,19 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
                                    }
                                }
                            }
-                       } catch (Throwable t) {
-                    	   
-                    	// ForkJoinPool.execute() stores a task's throwable without ever rethrowing it to
-           				// an uncaught-exception handler, so an unrecorded crash here is invisible and the
-           				// caller would score an empty candidate set as if retrieval had succeeded. Catch
-           				// Throwable, not Exception: an Error (OOM, StackOverflowError, NoClassDefFoundError)
-           				// must also mark this uid as failed, or the false-return gate never fires. Record
-           				// and log FIRST, then rethrow Errors to preserve JVM Error semantics — the pool
-           				// swallows the rethrow, but the uid is already recorded.
-							log.error("Unabled to retrieve. " + identity.getUid(), t);
-							failedUids.add(identity.getUid());
-							if (t instanceof Error) {
-								throw (Error) t;
-							}
-
-                           // Wrap checked exception so CompletableFuture can propagate it
-                           throw new RuntimeException("Retrieval failed for uid=[" + identity.getUid() + "]", t);
+                       } catch (IOException e) {
+                           // A Runnable cannot throw a checked exception: surface it to the exceptionally stage.
+                           throw new UncheckedIOException(e);
+                       } finally {
+                           retrievalPermits.release();
                        }
                    }, executor)
                    .exceptionally(ex -> {
-                       // Per-identity failure: log it, let other identities continue
-                       log.error("Retrieval failed for uid=[{}]", identity.getUid(), ex);
+                       // Single place that records a failed uid. runAsync hands any Throwable, including an
+                       // Error (OOM, StackOverflowError), to this stage, so the false-return gate still fires.
+                       // Returning null lets the other identities continue.
+                       log.error("Failed to retrieve publications for uid=[{}]", identity.getUid(), ex);
+                       failedUids.add(identity.getUid());
                        return null;
                    }))
                    .toList(); // Java 21: Stream.toList() — unmodifiable, allocation-efficient
@@ -159,7 +166,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
 			// Then we check if any failed, log your specific error, and return false
-			if (!failedUids.isEmpty()) {
+			if (!failedUids.isEmpty() || hadInvalidIdentity) {
 				log.error("Retrieval crashed for uids={}.", failedUids);
 				return false;
 			}
@@ -187,7 +194,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		var backfillPmids = new HashSet<Long>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
 		
 		// Build set of already-known PMIDs from existing ESearchResult
-		var existingPmids = new HashSet<Long>();
+		Set<Long> existingPmids = new HashSet<>();
 		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
 		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
 			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
@@ -935,18 +942,20 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			}
 		}
 		// Phase 33-01: ArticleProvenance upsert for EVERY retrieved PMID, 10 at a time.
-	    // invokeAll waits for all of them, so the next strategy only starts after these are done.
+	    // A permit is taken before each task is submitted, so at most 10 tasks exist at once however many pmids
+	    // there are, and the executor close() waits for all of them: the next strategy only starts after these are done.
 		Semaphore permits = new Semaphore(10);
 		try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			executor.invokeAll(pmids.stream().<Callable<Void>>map(pmid -> () -> {
+			for (Long pmid : pmids) {
 				permits.acquire();
-				try {
-					articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
-				} finally {
-					permits.release();
-				}
-				return null;
-			}).toList());
+				executor.submit(() -> {
+					try {
+						articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
+					} finally {
+						permits.release();
+					}
+				});
+			}
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new IllegalStateException("Interrupted while recording ArticleProvenance", e);

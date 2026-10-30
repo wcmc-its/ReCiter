@@ -1,5 +1,6 @@
 package reciter.database.dyanmodb.files;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.MeshTerm;
 import reciter.service.IDynamoDbMeshTermService;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -32,10 +34,12 @@ public class MeshTermFileImport {
 	 */
 	public void importMeshTerms() {
 		List<MeshTerm> meshTerms = null;
-		try {
-			meshTerms = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/MeshTerm.json"), MeshTerm[].class));
-		} catch (Exception e) {
+		try (InputStream is = getClass().getResourceAsStream("/files/MeshTerm.json")) {
+			meshTerms = Arrays.asList(mapper.readValue(is, MeshTerm[].class));
+		} catch (JacksonException e) {
 			log.error("Failed to read mesh terms from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading mesh terms from file", e);
 		}
 		if(meshTerms != null 
 				&&

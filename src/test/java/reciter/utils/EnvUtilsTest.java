@@ -13,8 +13,11 @@ public class EnvUtilsTest {
     }
 
     @Test
-    public void emptyValueIsReturnedUnchanged() {
-        assertEquals("", EnvUtils.require("PUBMED_SERVICE", ""));
+    public void blankValueIsRejected() {
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> EnvUtils.require("PUBMED_SERVICE", "  "));
+        assertEquals("Required environment variable PUBMED_SERVICE is not set", e.getMessage());
+        assertThrows(IllegalStateException.class, () -> EnvUtils.require("PUBMED_SERVICE", ""));
     }
 
     @Test

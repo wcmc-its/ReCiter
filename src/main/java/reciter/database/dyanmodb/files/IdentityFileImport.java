@@ -1,5 +1,6 @@
 package reciter.database.dyanmodb.files;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.Identity;
 import reciter.service.IdentityService;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -34,10 +36,12 @@ public class IdentityFileImport {
 	 */
 	public void importIdentity() {
 		List<Identity> identities = null;
-		try {
-			identities = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/Identity.json"), Identity[].class));
-		} catch (Exception e) {
+		try (InputStream is = getClass().getResourceAsStream("/files/Identity.json")) {
+			identities = Arrays.asList(mapper.readValue(is, Identity[].class));
+		} catch (JacksonException e) {
 			log.error("Failed to read identities from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading identities from file", e);
 		}
 		if(identities != null 
 				&&

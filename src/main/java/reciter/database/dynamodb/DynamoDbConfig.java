@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import reciter.storage.s3.SharedCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
@@ -44,12 +44,6 @@ import software.amazon.awssdk.services.dynamodb.model.TableStatus;
 public class DynamoDbConfig {
 	
 	private static final Logger log = LoggerFactory.getLogger(DynamoDbConfig.class);
-
-	private String amazonDynamoDBEndpoint = System.getenv("AMAZON_DYNAMODB_ENDPOINT");
-
-	private String amazonAWSAccessKey = System.getenv("AMAZON_AWS_ACCESS_KEY");
-
-	private String amazonAWSSecretKey = System.getenv("AMAZON_AWS_SECRET_KEY");
 
 	private final static String BASE_PACKAGE = "reciter.database.dynamodb.model";
 
@@ -133,7 +127,7 @@ public class DynamoDbConfig {
 			}
 
 			dynamoDbClient = DynamoDbClient.builder().region(Region.of(dynamodbRegion))
-					.credentialsProvider(SharedCredentialsProvider.INSTANCE).build();
+					.credentialsProvider(DefaultCredentialsProvider.builder().build()).build();
 
 		}
 		if (dynamoDbClient != null) {

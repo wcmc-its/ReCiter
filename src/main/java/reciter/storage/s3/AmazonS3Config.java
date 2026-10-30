@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
 import reciter.utils.EnvUtils;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -27,11 +28,7 @@ public class AmazonS3Config {
 	
 	private static final Logger log = LoggerFactory.getLogger(AmazonS3Config.class);
 	
-	private static final String amazonAWSAccessKey = System.getenv("AMAZON_AWS_ACCESS_KEY");
-
-    private static final String amazonAWSSecretKey = System.getenv("AMAZON_AWS_SECRET_KEY");
-    
-    private static final String AWS_REGION=System.getenv("AWS_REGION");
+    private static final String AWS_REGION=EnvUtils.get("AWS_REGION");
     
     @Value("${aws.s3.use}")
     private boolean isS3Use;
@@ -62,7 +59,7 @@ public class AmazonS3Config {
     	
     	if(isS3Use && !isDynamoDbLocal) {
     		final S3Client s3 = S3Client.builder()
-    			    .credentialsProvider(SharedCredentialsProvider.INSTANCE)
+    			    .credentialsProvider(DefaultCredentialsProvider.builder().build())
     			    .region(Region.of(EnvUtils.require("AWS_REGION", AWS_REGION))) 
     			    .build();
 	    	
@@ -74,7 +71,7 @@ public class AmazonS3Config {
     }
     
     private void createBucket(S3Client s3) {
-    	String accountNumber = getAccountIDUsingAccessKey(amazonAWSAccessKey, amazonAWSSecretKey);
+    	String accountNumber = getAccountIDUsingAccessKey();
     	BUCKET_NAME = s3BucketName.toLowerCase() + "-" + EnvUtils.require("AWS_REGION", AWS_REGION).toLowerCase() + "-" + accountNumber;
     	if(!isDynamicBucketName) {
     		BUCKET_NAME = s3BucketName;
@@ -125,12 +122,12 @@ public class AmazonS3Config {
         }
     }
     
-	private String getAccountIDUsingAccessKey(String accessKey, String secretKey) {
+	private String getAccountIDUsingAccessKey() {
 		// Do NOT close this StsClient. SharedCredentialsProvider.INSTANCE is the JVM-wide shared provider;
 		// closing any client built with it shuts down the shared IRSA STS connection pool, which
 		// then breaks credential refresh for every other client (incl. DynamoDB) after ~1h. This
 		// runs once at startup, so the single un-closed client lives harmlessly for the app lifetime.
-		StsClient stsClient = StsClient.builder().credentialsProvider(SharedCredentialsProvider.INSTANCE)
+		StsClient stsClient = StsClient.builder().credentialsProvider(DefaultCredentialsProvider.builder().build())
 				.build();
 		GetCallerIdentityResponse callerIdentity = stsClient
 				.getCallerIdentity(GetCallerIdentityRequest.builder().build());

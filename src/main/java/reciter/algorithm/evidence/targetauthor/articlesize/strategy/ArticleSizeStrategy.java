@@ -22,9 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import reciter.ApplicationContextHolder;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
@@ -48,8 +45,6 @@ import reciter.service.ESearchResultService;
  */
 public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 	
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(ArticleSizeStrategy.class);
-
 	private static final int FIRST_LEVEL = 200;
 	private static final int SECOND_LEVEL = 500;
 	private int numberOfArticles;
@@ -123,7 +118,6 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 				double logScore = Math.log(Math.max(trueCount, 1));
 				articleCountEvidence.setCountArticlesRetrieved(trueCount);
 				articleCountEvidence.setArticleCountScore(logScore);
-				//	slf4jLogger.info("Pmid: {} using stored eSearchCount={}, articleCountScore=log({})={}",reCiterArticle.getArticleId(), trueCount, trueCount, logScore);
 
 			} else if (eSearchResult != null && this.numberOfArticles > 0) {
 				// Fallback: use retrieved PMID count with linear formula.
@@ -169,8 +163,6 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 									- ReCiterArticleScorer.strategyParameters.getArticleCountThresholdScore())
 									/ ReCiterArticleScorer.strategyParameters.getArticleCountWeight());
 				}
-				//enable if requrired for debugging
-				//slf4jLogger.info("Pmid: {} {}", reCiterArticle.getArticleId(), articleCountEvidence.toString());
 			}
 
 			reCiterArticle.setArticleCountEvidence(articleCountEvidence);
@@ -181,7 +173,6 @@ public class ArticleSizeStrategy extends AbstractTargetAuthorStrategy {
 
 	@Override
 	public void populateFeature(ReCiterArticle reCiterArticle, Identity identity, Feature feature) {
-		// TODO Auto-generated method stub
 		
 	}
 }

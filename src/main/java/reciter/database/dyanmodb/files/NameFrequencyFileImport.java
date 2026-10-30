@@ -1,5 +1,6 @@
 package reciter.database.dyanmodb.files;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.NameFrequency;
 import reciter.service.NameFrequencyService;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 
@@ -26,10 +28,12 @@ public class NameFrequencyFileImport {
 
 	public void importNameFrequency() {
 		List<NameFrequency> nameFrequencies = null;
-		try {
-			nameFrequencies = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/NameFrequency.json"), NameFrequency[].class));
-		} catch (Exception e) {
+		try (InputStream is = getClass().getResourceAsStream("/files/NameFrequency.json")) {
+			nameFrequencies = Arrays.asList(mapper.readValue(is, NameFrequency[].class));
+		} catch (JacksonException e) {
 			log.error("Failed to read name frequencies from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading name frequencies from file", e);
 		}
 		if(nameFrequencies != null
 				&&

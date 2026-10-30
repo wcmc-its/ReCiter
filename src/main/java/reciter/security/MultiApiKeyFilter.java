@@ -19,6 +19,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import reciter.utils.EnvUtils;
 
 /**
  * @author mjangari
@@ -28,9 +29,9 @@ import jakarta.servlet.http.HttpServletResponse;
 public class MultiApiKeyFilter extends OncePerRequestFilter {
 
 	
-	private String adminPrincipalRequestValue = System.getenv("ADMIN_API_KEY");
+	private String adminPrincipalRequestValue = EnvUtils.get("ADMIN_API_KEY");
 	    
-	private String consumerPrincipalRequestValue = System.getenv("CONSUMER_API_KEY");
+	private String consumerPrincipalRequestValue = EnvUtils.get("CONSUMER_API_KEY");
 		
 	@Value("${spring.security.enabled}")
 	private boolean securityEnabled;

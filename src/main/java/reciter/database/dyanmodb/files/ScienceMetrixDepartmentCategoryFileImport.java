@@ -1,5 +1,6 @@
 package reciter.database.dyanmodb.files;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import reciter.database.dynamodb.model.ScienceMetrixDepartmentCategory;
 import reciter.service.ScienceMetrixDepartmentCategoryService;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -31,10 +33,12 @@ public class ScienceMetrixDepartmentCategoryFileImport {
 	
 	public void importScienceMetrixDepartmentCategory() {
 		List<ScienceMetrixDepartmentCategory> sciMetrixDeptCatgeoryBeans = null;
-		try {
-			sciMetrixDeptCatgeoryBeans = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/ScienceMetrixDepartmentCategory.json"), ScienceMetrixDepartmentCategory[].class));
-		} catch (Exception e) {
+		try (InputStream is = getClass().getResourceAsStream("/files/ScienceMetrixDepartmentCategory.json")) {
+			sciMetrixDeptCatgeoryBeans = Arrays.asList(mapper.readValue(is, ScienceMetrixDepartmentCategory[].class));
+		} catch (JacksonException e) {
 			log.error("Failed to read science metrix department categories from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading science metrix department categories from file", e);
 		}
 		if(sciMetrixDeptCatgeoryBeans != null 
 				&&

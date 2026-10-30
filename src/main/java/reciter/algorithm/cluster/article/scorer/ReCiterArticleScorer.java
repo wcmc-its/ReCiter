@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -69,7 +71,6 @@ import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -209,42 +210,43 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 		 try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 			 
 			     var futures = new ArrayList<CompletableFuture<Void>>();
+			     Set<String> failedCategories = ConcurrentHashMap.newKeySet();
 				
-				futures.add(runStrategy("name Category", nameStrategyContext, reCiterArticles, identity,executor));
+				futures.add(runStrategy("name Category", nameStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				
 				if (strategyParameters.isEmail()) 
-					futures.add(runStrategy("Email Category", emailStrategyContext, reCiterArticles, identity, executor));
+					futures.add(runStrategy("Email Category", emailStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isGrant()) 
-					futures.add(runStrategy("Grant Category", grantStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("Grant Category", grantStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isKnownRelationship()) 
-					futures.add(runStrategy("KnownRelationships Category", knownRelationshipsStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("KnownRelationships Category", knownRelationshipsStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isEducationYearDiscrepancy()) 
-					futures.add(runStrategy("educationYearDiscrepancy Category", educationYearDiscrepancyStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("educationYearDiscrepancy Category", educationYearDiscrepancyStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isDepartment()) 
-					futures.add(runStrategy("departmentStringMatch Category", departmentStringMatchStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("departmentStringMatch Category", departmentStringMatchStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isJournalCategory()) 
-					futures.add(runStrategy("journalCategory Category", journalCategoryStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("journalCategory Category", journalCategoryStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isAffiliation()) 
-					futures.add(runStrategy("affiliation Category", affiliationStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("affiliation Category", affiliationStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isArticleSize()) 
-					futures.add(runStrategy("articleSize Category", articleSizeStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("articleSize Category", articleSizeStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if (strategyParameters.isPersonType()) 
-					futures.add(runStrategy("personType Category", personTypeStrategyContext, reCiterArticles, identity,executor));
-				futures.add(runStrategy("authorCount Category", authorCountStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("personType Category", personTypeStrategyContext, reCiterArticles, identity, executor, failedCategories));
+				futures.add(runStrategy("authorCount Category", authorCountStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				if(strategyParameters.isGender()) 
-					futures.add(runStrategy("gender Category", genderStrategyContext, reCiterArticles, identity,executor));
+					futures.add(runStrategy("gender Category", genderStrategyContext, reCiterArticles, identity, executor, failedCategories));
 				
 				// Wait for ALL strategies to complete, then log overall result
 		        CompletableFuture
 		                .allOf(futures.toArray(new CompletableFuture[0]))
-		                .whenComplete((result, ex) -> {
-		                    if (ex != null) {
-		                        log.error("One or more scoring tasks failed; report may be incomplete.", ex);
-		                    } else {
-		                        log.info("All Identity score strategy contexts completed successfully.");
-		                    }
-		                })
 		                .join(); // blocks calling thread until all tasks finish
+
+		        if (failedCategories.isEmpty()) {
+		            log.info("All Identity score strategy contexts completed successfully.");
+		        } else {
+		            log.error("Scoring strategies failed for uid=[{}]: {}; report may be incomplete.",
+		                    identity.getUid(), failedCategories);
+		        }
 
 		    } // executor.close() called here automatically — no manual shutdown() needed
 		}
@@ -505,17 +507,17 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
 	private boolean uploadJsonFileIntoS3(String keyName,File fileName)
 	{
 		String feedbackScoreBucketName = PropertiesUtils.get(AWS_S3_FEEDBACK_SCORE_BUCKET_NAME);
+		
+		 if (StringUtils.isBlank(feedbackScoreBucketName)) {
+	            log.error("S3 bucket name property '{}' is missing or blank.", AWS_S3_FEEDBACK_SCORE_BUCKET_NAME);
+	            return false;
+	        }
         
 		// Upload the python file
         try {
         	
         	final S3Client s3 = AwsScoringClients.s3();
         	try {
-                HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
-                        .bucket(feedbackScoreBucketName)
-                        .build();
-
-                s3.headBucket(headBucketRequest); // If successful, the bucket exists
                 log.info("Uploading files to S3 bucket {}",feedbackScoreBucketName);
                 
                 // Upload file
@@ -559,23 +561,27 @@ public class ReCiterArticleScorer extends AbstractArticleScorer {
                                                  StrategyContext context,
                                                  List<ReCiterArticle> reCiterArticles,
                                                  Identity identity,
-                                                 Executor executor) {
+                                                 Executor executor,
+                                                 Set<String> failedCategories) {
         return CompletableFuture.runAsync(() -> {
             var stopWatch = new StopWatch(category);
             stopWatch.start(category);
 
-            // Java 21: pattern matching instanceof — no explicit cast needed
-            if (context instanceof RemoveReCiterArticleStrategyContext removeCtx) {
-                removeCtx.executeStrategy(reCiterArticles, identity);
-            } else if (context instanceof TargetAuthorStrategyContext targetCtx) {
-                targetCtx.executeStrategy(reCiterArticles, identity);
+            try {
+                // Java 21: pattern matching instanceof — no explicit cast needed
+                if (context instanceof RemoveReCiterArticleStrategyContext removeCtx) {
+                    removeCtx.executeStrategy(reCiterArticles, identity);
+                } else if (context instanceof TargetAuthorStrategyContext targetCtx) {
+                    targetCtx.executeStrategy(reCiterArticles, identity);
+                }
+            } finally {
+                stopWatch.stop();
+                log.info("{} took {} s", stopWatch.getId(), stopWatch.getTotalTimeSeconds());
             }
-
-            stopWatch.stop();
-            log.info("{} took {} s", stopWatch.getId(), stopWatch.getTotalTimeSeconds());
 
         }, executor).exceptionally(ex -> {
             log.error("Strategy '{}' failed", category, ex);
+            failedCategories.add(category);
             return null; // null = completed exceptionally but siblings continue
         });
     }

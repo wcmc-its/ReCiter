@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -38,6 +39,8 @@ public class ScopusArticleRepository {
 	private static final int AWS_MAX_WRITE_BATCH = 25;
 	private static final int AWS_MAX_READ_BATCH = 100;
 	private static final int MAX_UNPROCESSED_RETRIES = 5;
+	private static final long BACKOFF_BASE_MILLIS = 50L;
+	private static final long BACKOFF_MAX_MILLIS = 2_000L;
 
 	private final DynamoDbEnhancedClient enhancedClient;
 	private final DynamoDbTable<ScopusArticle> scopusArticleTable;
@@ -60,9 +63,17 @@ public class ScopusArticleRepository {
 		scopusArticleTable.putItem(scopusArticle);
 	}
 
+	/**
+	 * Writes the given articles in batches.
+	 *
+	 * @throws IllegalArgumentException if the list contains null elements
+	 */
 	public void saveAll(List<ScopusArticle> scopusArticles) {
 		if (scopusArticles == null || scopusArticles.isEmpty()) {
 			return;
+		}
+		if (scopusArticles.stream().anyMatch(Objects::isNull)) {
+			throw new IllegalArgumentException("scopusArticles must not contain null elements");
 		}
 
 		final int effectiveBatchSize = Math.clamp(configuredWriteBatchSize, 1, AWS_MAX_WRITE_BATCH);
@@ -102,8 +113,10 @@ public class ScopusArticleRepository {
 	}
 
 	/**
-	 * Returns the stored articles for the given ids, in input order, skipping ids that are not stored
-	 * (same contract as the former one-getItem-per-id loop).
+	 * Returns the stored articles for the given ids, in input order, skipping null ids and ids that are
+	 * not stored (same contract as the former one-getItem-per-id loop). If an id appears more than once
+	 * in the input, the matching article is returned once per occurrence; only the DynamoDB request keys
+	 * are de-duplicated, to avoid redundant reads and the duplicate-key rejection of BatchGetItem.
 	 */
 	public List<ScopusArticle> findAllById(List<String> uids) {
 		if (uids == null || uids.isEmpty()) {
@@ -113,7 +126,15 @@ public class ScopusArticleRepository {
 		final int effectiveBatchSize = Math.clamp(configuredReadBatchSize, 1, AWS_MAX_READ_BATCH);
 		final int concurrencyLimit = Math.max(1, maxConcurrentBatches);
 
-		List<List<String>> chunks = partition(uids, effectiveBatchSize);
+		// DynamoDB rejects duplicate keys in one BatchGetItem and null keys are invalid: query distinct, non-null ids only.
+		List<String> distinctUids = uids.stream()
+									.filter(id-> id !=null && !id.isBlank())
+									.distinct()
+									.toList();
+		if(distinctUids.isEmpty()){
+			return new ArrayList<>();
+		}
+		List<List<String>> chunks = partition(distinctUids, effectiveBatchSize);
 		Semaphore semaphore = new Semaphore(concurrencyLimit);
 
 		Map<String, ScopusArticle> fetched = new java.util.HashMap<>();
@@ -121,7 +142,7 @@ public class ScopusArticleRepository {
 			List<Callable<List<ScopusArticle>>> tasks = chunks.stream().<Callable<List<ScopusArticle>>>map(chunk -> () -> {
 				semaphore.acquire();
 				try {
-					return readBatchWithRetry(chunk);
+					return readBatch(chunk);
 				} finally {
 					semaphore.release();
 				}
@@ -176,46 +197,23 @@ public class ScopusArticleRepository {
 		}
 	}
 
-	private List<ScopusArticle> readBatchWithRetry(List<String> keys) {
-		List<String> pendingKeys = new ArrayList<>(keys);
+	private List<ScopusArticle> readBatch(List<String> keys) {
+		ReadBatch.Builder<ScopusArticle> batchBuilder = ReadBatch.builder(ScopusArticle.class)
+				.mappedTableResource(scopusArticleTable);
+		keys.forEach(k -> batchBuilder.addGetItem(r -> r.key(Key.builder().partitionValue(k).build())));
+
+		// The Enhanced Client follows UnprocessedKeys across pages itself, so no manual retry is needed.
 		List<ScopusArticle> collected = new ArrayList<>();
-		int attempts = 0;
-
-		while (!pendingKeys.isEmpty()) {
-			ReadBatch.Builder<ScopusArticle> batchBuilder = ReadBatch.builder(ScopusArticle.class)
-					.mappedTableResource(scopusArticleTable);
-			pendingKeys.forEach(k -> batchBuilder.addGetItem(r -> r.key(Key.builder().partitionValue(k).build())));
-
-			Iterable<BatchGetResultPage> pages = enhancedClient.batchGetItem(
-					BatchGetItemEnhancedRequest.builder().addReadBatch(batchBuilder.build()).build());
-
-			List<Key> unprocessedKeys = new ArrayList<>();
-			for (BatchGetResultPage page : pages) {
-				collected.addAll(page.resultsForTable(scopusArticleTable));
-				List<Key> pageUnprocessed = page.unprocessedKeysForTable(scopusArticleTable);
-				if (pageUnprocessed != null) {
-					unprocessedKeys.addAll(pageUnprocessed);
-				}
-			}
-
-			if (unprocessedKeys.isEmpty()) {
-				break;
-			}
-
-			attempts++;
-			if (attempts > MAX_UNPROCESSED_RETRIES) {
-				log.warn("Exceeded max retries for {} read keys. Returning partial batch results.",
-						unprocessedKeys.size());
-				break;
-			}
-			backoffSleep(attempts);
-			pendingKeys = unprocessedKeys.stream().map(k -> k.partitionKeyValue().s()).toList();
+		for (BatchGetResultPage page : enhancedClient.batchGetItem(
+				BatchGetItemEnhancedRequest.builder().addReadBatch(batchBuilder.build()).build())) {
+			collected.addAll(page.resultsForTable(scopusArticleTable));
 		}
 		return collected;
 	}
 
 	private void backoffSleep(int attempt) {
-		long delay = (long) Math.pow(2, attempt) * 50L + ThreadLocalRandom.current().nextLong(25);
+		long exponential = Math.min(BACKOFF_MAX_MILLIS, BACKOFF_BASE_MILLIS << Math.min(attempt, 10));
+		long delay = exponential + ThreadLocalRandom.current().nextLong(25);
 		try {
 			Thread.sleep(Duration.ofMillis(delay));
 		} catch (InterruptedException e) {

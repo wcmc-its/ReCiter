@@ -3,6 +3,7 @@ package reciter.algorithm.evidence.targetauthor.name.strategy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -55,12 +56,19 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			checkToIgnoreNameVariants(sanitizedIdentityAuthor);
 		}*/
 		
-		List<AuthorNameEvidence> authorNameEvidences = new ArrayList<AuthorNameEvidence>(identity.getSanitizedNames().size());
+		// A null map is treated like an empty one instead of failing with a NullPointerException.
+		final Map<AuthorName, AuthorName> sanitizedNames = identity.getSanitizedNames() != null
+				? identity.getSanitizedNames() : Collections.emptyMap();
+		List<AuthorNameEvidence> authorNameEvidences = new ArrayList<AuthorNameEvidence>(sanitizedNames.size());
 		
 		for(ReCiterArticle reCiterArticle: reCiterArticles) {
 			ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 			
-			Map<ReCiterAuthor, ReCiterAuthor> sanitizedTargetAuthor = authors.getSanitizedAuthorMap()
+			// An article without authors (or without a sanitized author map) has no target author,
+			// so it takes the same "nullTargetAuthor-MatchNotAttempted" path as any other such article.
+			Map<ReCiterAuthor, ReCiterAuthor> sanitizedAuthorMap = (authors != null && authors.getSanitizedAuthorMap() != null)
+					? authors.getSanitizedAuthorMap() : Collections.<ReCiterAuthor, ReCiterAuthor>emptyMap();
+			Map<ReCiterAuthor, ReCiterAuthor> sanitizedTargetAuthor = sanitizedAuthorMap
 			.entrySet()
 			.stream()
 			.filter(sanitizedArticleAuthor -> sanitizedArticleAuthor.getKey().getAuthorName() != null && sanitizedArticleAuthor.getKey().isTargetAuthor())
@@ -70,9 +78,12 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			int targetAuthorCount = getTargetAuthorCount(reCiterArticle);
 			if(targetAuthorCount >=1) {			
 				//sanitizeTargetAuthorNames(reCiterArticle, sanitizedTargetAuthor);
-				for(Entry<AuthorName, AuthorName> entry: identity.getSanitizedNames().entrySet()) {
+				for(Entry<AuthorName, AuthorName> entry: sanitizedNames.entrySet()) {
 					AuthorName identityAuthorNameOriginal = entry.getKey();
 					AuthorName identityAuthorName = entry.getValue();
+					if(identityAuthorName == null) {
+						continue;
+					}
 					authorNameEvidence = new AuthorNameEvidence();
 					//Combine following identity.middleName, identity.lastName into mergedName. Now attempt match against article.lastName.
 					//Example: Garcia (identity.middleName) + Marquez (identity.lastName) = GarciaMarques (article.lastName)
@@ -88,7 +99,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 							authorNameEvidence.getNameMatchModifier() != null) {
 					}
 					else {
-						if(!isNotNullIdentityMiddleName(identity.getSanitizedNames().values())) {
+						if(!isNotNullIdentityMiddleName(sanitizedNames.values())) {
 							scoreFirstNameMiddleNameNull(identityAuthorName, identityAuthorNameOriginal, sanitizedTargetAuthor, authorNameEvidence);
 						} else {
 							if(identityAuthorName.getMiddleName() == null) {
@@ -254,7 +265,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchLastScore(ReCiterArticleScorer.strategyParameters.getNameMatchLastTypeFullExactScore());
 				authorNameEvidence.setNameMatchModifier("identitySubstringOfArticle-lastName");
 				authorNameEvidence.setNameMatchModifierScore(ReCiterArticleScorer.strategyParameters.getNameMatchModifierIdentitySubstringOfArticleLastnameScore());
-			} else if(identityAuthor.getLastName().length() >= 4 && ReCiterStringUtil.levenshteinDistance(identityAuthor.getLastName(), articleAuthorName.getLastName()) <= 1) {
+			} else if(identityAuthor.getLastName() != null && articleAuthorName.getLastName() != null && identityAuthor.getLastName().length() >= 4 && ReCiterStringUtil.levenshteinDistance(identityAuthor.getLastName(), articleAuthorName.getLastName()) <= 1) {
 				//Attempt match where identity.lastName >= 4 characters and levenshteinDistance between identity.lastName and article.lastName is <=1.
 				//Example: Kaushal (identity.lastName) = Kaushai (article.lastName)
 				authorNameEvidence.setNameMatchLastType("full-fuzzy");
@@ -349,7 +360,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&& 
 					articleAuthorName.getFirstName() != null
 					&&
-					identityAuthorNameOriginal.getFirstName() != null && (identityAuthorNameOriginal.getFirstName().contains(" ") || identityAuthorNameOriginal.getFirstName().contains("-"))
+					identityAuthorNameOriginal != null && identityAuthorNameOriginal.getFirstName() != null && (identityAuthorNameOriginal.getFirstName().contains(" ") || identityAuthorNameOriginal.getFirstName().contains("-"))
 					&&
 					Strings.CI.equals(Arrays.stream(identityAuthorNameOriginal.getFirstName().split("[-\\s]")).map(s -> s.charAt(0)).collect(Collectors.toList()).stream().map(String::valueOf).collect(Collectors.joining()), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstName + identity.lastName = article.firstName + article.lastName
@@ -360,6 +371,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 				
 			} else if(identityAuthor.getFirstName() != null 
+					&&
+					articleAuthorName.getFirstName() != null
 					&&
 					articleAuthorName.getFirstName().toLowerCase().startsWith(identityAuthor.getFirstName().toLowerCase())) { 
 				//Attempt match where identity.firstName is a left-anchored substring of article.firstName
@@ -377,6 +390,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchModifierScore(ReCiterArticleScorer.strategyParameters.getNameMatchModifierIdentitySubstringOfArticleFirstnameScore());
 			} else if(identityAuthor.getFirstName() != null
 					&&
+					articleAuthorName.getFirstName() != null
+					&&
 					identityAuthor.getFirstName().toLowerCase().startsWith(articleAuthorName.getFirstName().toLowerCase())) {
 				//Attempt match where article.firstName is a left-anchored substring of identity.firstName
 				//Example: Paul (identity.firstName) = P (article.firstName)
@@ -386,6 +401,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 			} else if(identityAuthor.getFirstName() != null 
 					&& 
+					articleAuthorName.getFirstName() != null
+					&&
 					identityAuthor.getFirstName().length() >= 3 
 					&& 
 					articleAuthorName.getFirstName().length() >= 3 
@@ -399,6 +416,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 			} else if(identityAuthor.getFirstName() != null 
 					&&
+					articleAuthorName.getFirstName() != null
+					&&
 					identityAuthor.getFirstName().length() >= 4 
 					&& 
 					ReCiterStringUtil.levenshteinDistance(identityAuthor.getFirstName(), articleAuthorName.getFirstName()) == 1) {
@@ -409,6 +428,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 				authorNameEvidence.setNameMatchMiddleType("identityNull-MatchNotAttempted");
 				authorNameEvidence.setNameMatchMiddleScore(ReCiterArticleScorer.strategyParameters.getNameMatchMiddleTypeIdentityNullMatchNotAttemptedScore());
 			} else if(identityAuthor.getFirstName() != null 
+					&&
+					articleAuthorName.getFirstName() != null
 					&&
 					Strings.CI.equals(identityAuthor.getFirstInitial(),articleAuthorName.getFirstInitial())) {
 				//Attempt match where first character of identity.firstName = first character of article.firstName
@@ -849,8 +870,11 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	private int getTargetAuthorCount(ReCiterArticle reCiterArticle) {
 		int targetAuthorCount = 0;
 		
+		if(reCiterArticle.getArticleCoAuthors() == null || reCiterArticle.getArticleCoAuthors().getAuthors() == null) {
+			return 0;
+		}
 		for(ReCiterAuthor targetAuthorName: reCiterArticle.getArticleCoAuthors().getAuthors()) {
-			if(targetAuthorName.isTargetAuthor()) {
+			if(targetAuthorName != null && targetAuthorName.isTargetAuthor()) {
 				targetAuthorCount++;
 			}
 		}

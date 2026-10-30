@@ -136,13 +136,6 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	 * @return
 	 */
 	public boolean containsNameVariant(ReCiterAuthor targetAuthor) {
-//		for (ReCiterArticle article : articleCluster) {
-//			for (ReCiterAuthor author : article.getArticleCoAuthors().getAuthors()) {
-//				if (targetAuthor.getAuthorName().isNameVariant(author.getAuthorName())) {
-//					return true;
-//				}
-//			}
-//		}
 		return false;
 	}
 
@@ -278,26 +271,6 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 	 */
 	public int compareTo(ReCiterCluster o, String comparisonType) {
 		boolean match = false;
-		/* Not being used dead code
-		if(comparisonType.equalsIgnoreCase("grant")) {
-			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
-				/*if(reCiterArticle.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold) {
-					for(ReCiterArticleGrant granto: reCiterArticle.getGrantList()) {
-						if(granto.getSanitizedGrantID() != null && !granto.getSanitizedGrantID().isEmpty()) {
-							match = this.articleCluster.stream().anyMatch(articleList -> articleList.getGrantList().stream().filter(articlegrant -> articlegrant.getSanitizedGrantID() != null).count() <= ReCiterEngine.clutseringGrantsThreshold
-							&&
-							articleList.getGrantList().stream().anyMatch(grant -> grant.getSanitizedGrantID() != null && !grant.getSanitizedGrantID().isEmpty() 
-							&&
-							Strings.CI.equals(grant.getSanitizedGrantID().trim(), granto.getSanitizedGrantID().trim())));
-							if(match) {
-								return 1;
-							}
-						}
-						
-					}
-				}-- commented
-			}
-		} else */
 		if(comparisonType.equalsIgnoreCase("cites")) {
 			for(ReCiterArticle reCiterArticle: o.getArticleCluster()) {
 					//A cites B
@@ -332,22 +305,6 @@ public class ReCiterCluster implements Comparable<ReCiterCluster>{
 				}
 			}
 		} 
-		/* Not being used dead code
-		else if(comparisonType.equalsIgnoreCase("tepid")) {
-			int matchCount = 0;
-			double clusterSimilarityScore = 0;
-			for(ReCiterArticle reCiterArticleo: o.getArticleCluster()) {
-				for(ReCiterArticle reCiterArticle: this.articleCluster) {
-					matchCount = reCiterOverlapCount(reCiterArticle.getReCiterArticleFeatures(), reCiterArticleo.getReCiterArticleFeatures());
-					if(matchCount > 0 && reCiterArticle.getReCiterArticleFeatures().getFeatureCount() >= 3 && reCiterArticleo.getReCiterArticleFeatures().getFeatureCount() >= 3) {
-						clusterSimilarityScore = computeClusterSimilarityScore(reCiterArticle.getReCiterArticleFeatures().getFeatureCount(), reCiterArticleo.getReCiterArticleFeatures().getFeatureCount(), matchCount);
-						/*if(clusterSimilarityScore > ReCiterEngine.clusterSimilarityThresholdScore) {
-							return 1;
-						}
-					}
-				}
-			}
-		} */
 		return 0;
 	}
 	

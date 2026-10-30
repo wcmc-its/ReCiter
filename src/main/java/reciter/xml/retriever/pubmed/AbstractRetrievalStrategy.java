@@ -273,7 +273,7 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.DOI_MODIFIER, new ArrayList<String>(dois));
 	}
 
-	private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
+	private static final String PUBMED_SERVICE = EnvUtils.get("PUBMED_SERVICE");
 
 	protected int getNumberOfResults(PubMedQuery pubMedQueryType) throws IOException {
 		String pubmedService = EnvUtils.require("PUBMED_SERVICE", PUBMED_SERVICE);

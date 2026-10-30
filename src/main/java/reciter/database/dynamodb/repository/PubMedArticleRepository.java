@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -40,6 +41,8 @@ public class PubMedArticleRepository {
 	private static final int AWS_MAX_WRITE_BATCH = 25;
 	private static final int AWS_MAX_READ_BATCH = 100;
 	private static final int MAX_UNPROCESSED_RETRIES = 5;
+	private static final long BACKOFF_BASE_MILLIS = 50L;
+	private static final long BACKOFF_MAX_MILLIS = 2_000L;
 
 	private final DynamoDbEnhancedClient enhancedClient;
 	private final DynamoDbTable<PubMedArticle> pubMedArticleTable;
@@ -71,9 +74,17 @@ public class PubMedArticleRepository {
 		return pubMedArticleTable.scan().items().stream().count();
 	}
 
+	/**
+	 * Writes the given articles in batches.
+	 *
+	 * @throws IllegalArgumentException if the list contains null elements
+	 */
 	public void saveAll(List<PubMedArticle> pubMedArticles) {
 		if (pubMedArticles == null || pubMedArticles.isEmpty()) {
 			return;
+		}
+		if (pubMedArticles.stream().anyMatch(Objects::isNull)) {
+			throw new IllegalArgumentException("pubMedArticles must not contain null elements");
 		}
 
 		final int effectiveBatchSize = Math.clamp(configuredWriteBatchSize, 1, AWS_MAX_WRITE_BATCH);
@@ -107,6 +118,12 @@ public class PubMedArticleRepository {
 		}
 	}
 
+	/**
+	 * Returns the stored articles for the given pmids, in input order, skipping null pmids and pmids that are
+	 * not stored (same contract as the former one-getItem-per-id loop). If a pmid appears more than once
+	 * in the input, the matching article is returned once per occurrence; only the DynamoDB request keys
+	 * are de-duplicated, to avoid redundant reads and the duplicate-key rejection of BatchGetItem.
+	 */
 	public List<PubMedArticle> findAllById(List<Long> pmids) {
 		if (pmids == null || pmids.isEmpty()) {
 			return List.of();
@@ -115,8 +132,9 @@ public class PubMedArticleRepository {
 		final int effectiveBatchSize = Math.clamp(configuredReadBatchSize, 1, AWS_MAX_READ_BATCH);
 		final int concurrencyLimit = Math.max(1, maxConcurrentBatches);
 
-		// Direct partition - no overhead
-		List<List<Long>> chunks = partition(pmids, effectiveBatchSize);
+		// DynamoDB rejects duplicate keys in one BatchGetItem and null keys are invalid: query distinct, non-null ids only.
+		List<Long> distinctPmids = pmids.stream().filter(Objects::nonNull).distinct().toList();
+		List<List<Long>> chunks = partition(distinctPmids, effectiveBatchSize);
 		Semaphore semaphore = new Semaphore(concurrencyLimit);
 
 		List<PubMedArticle> fetchedArticles = new ArrayList<>();
@@ -125,7 +143,7 @@ public class PubMedArticleRepository {
 			List<Callable<List<PubMedArticle>>> tasks = chunks.stream().<Callable<List<PubMedArticle>>>map(chunk -> () -> {
 				semaphore.acquire();
 				try {
-					return readBatchWithRetry(chunk);
+					return readBatch(chunk);
 				} finally {
 					semaphore.release();
 				}
@@ -186,52 +204,23 @@ public class PubMedArticleRepository {
 		}
 	}
 
-	private List<PubMedArticle> readBatchWithRetry(List<Long> keys) {
-		List<Long> pendingKeys = new ArrayList<>(keys);
+	private List<PubMedArticle> readBatch(List<Long> keys) {
+		ReadBatch.Builder<PubMedArticle> batchBuilder = ReadBatch.builder(PubMedArticle.class)
+				.mappedTableResource(pubMedArticleTable);
+		keys.forEach(k -> batchBuilder.addGetItem(r -> r.key(Key.builder().partitionValue(k).build())));
+
+		// The Enhanced Client follows UnprocessedKeys across pages itself, so no manual retry is needed.
 		List<PubMedArticle> collected = new ArrayList<>();
-		int attempts = 0;
-
-		while (!pendingKeys.isEmpty()) {
-			ReadBatch.Builder<PubMedArticle> batchBuilder = ReadBatch.builder(PubMedArticle.class)
-					.mappedTableResource(pubMedArticleTable);
-			
-			pendingKeys.forEach(k -> batchBuilder.addGetItem(r -> r.key(Key.builder().partitionValue(k).build())));
-
-			Iterable<BatchGetResultPage> pages = enhancedClient.batchGetItem(
-					BatchGetItemEnhancedRequest.builder().addReadBatch(batchBuilder.build()).build()
-			);
-
-			List<Key> unprocessedKeys = new ArrayList<>();
-			
-			for (BatchGetResultPage page : pages) {
-				collected.addAll(page.resultsForTable(pubMedArticleTable));
-				List<Key> pageUnprocessed = page.unprocessedKeysForTable(pubMedArticleTable);
-				if (pageUnprocessed != null) {
-					unprocessedKeys.addAll(pageUnprocessed);
-				}
-			}
-
-			if (unprocessedKeys.isEmpty()) {
-				break;
-			}
-
-			attempts++;
-			if (attempts > MAX_UNPROCESSED_RETRIES) {
-				log.warn("Exceeded max retries for {} read keys. Returning partial batch results.", unprocessedKeys.size());
-				break;
-			}
-
-			pendingKeys = unprocessedKeys.stream()
-			        .map(k -> Long.valueOf(k.partitionKeyValue().n()))
-			        .toList();
-
+		for (BatchGetResultPage page : enhancedClient.batchGetItem(
+				BatchGetItemEnhancedRequest.builder().addReadBatch(batchBuilder.build()).build())) {
+			collected.addAll(page.resultsForTable(pubMedArticleTable));
 		}
-
 		return collected;
 	}
 
 	private void backoffSleep(int attempt) {
-		long delay = (long) Math.pow(2, attempt) * 50L + ThreadLocalRandom.current().nextLong(25);
+		long exponential = Math.min(BACKOFF_MAX_MILLIS, BACKOFF_BASE_MILLIS << Math.min(attempt, 10));
+		long delay = exponential + ThreadLocalRandom.current().nextLong(25);
 		try {
 			Thread.sleep(Duration.ofMillis(delay));
 		} catch (InterruptedException e) {

@@ -50,7 +50,7 @@ public class ScopusArticleRetriever<T> {
      */
     public static final String DOI_MODIFIER = "doi";
 
-    private static final String SCOPUS_SERVICE = System.getenv("SCOPUS_SERVICE");
+    private static final String SCOPUS_SERVICE = EnvUtils.get("SCOPUS_SERVICE");
 
     // RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
     private static final RestTemplate REST_TEMPLATE = new RestTemplate();
