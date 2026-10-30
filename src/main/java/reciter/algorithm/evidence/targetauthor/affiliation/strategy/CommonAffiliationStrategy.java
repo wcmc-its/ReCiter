@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
-import reciter.algorithm.evidence.cluster.averageclustering.strategy.AverageClusteringStrategy;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.EngineParameters;
 import reciter.engine.Feature;
@@ -286,8 +285,8 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 		if(overallScore != 0) {
 			NonTargetAuthorScopusAffiliation  nonTargetAuthorScopusAffiliationEvidence = new NonTargetAuthorScopusAffiliation();
 			nonTargetAuthorScopusAffiliationEvidence.setNonTargetAuthorInstitutionalAffiliationSource(InstitutionalAffiliationSource.SCOPUS);
-			nonTargetAuthorScopusAffiliationEvidence.setNonTargetAuthorInstitutionalAffiliationScore(AverageClusteringStrategy.roundAvoid(overallScore, 2));
-			totalAffiliationScore = totalAffiliationScore + AverageClusteringStrategy.roundAvoid(overallScore, 2);
+			nonTargetAuthorScopusAffiliationEvidence.setNonTargetAuthorInstitutionalAffiliationScore(roundAvoid(overallScore, 2));
+			totalAffiliationScore = totalAffiliationScore + roundAvoid(overallScore, 2);
 			if(matchingKnownInstitutionIds != null 
 					&&
 					matchingKnownInstitutionIds.size() > 0) {
@@ -570,5 +569,10 @@ public class CommonAffiliationStrategy extends AbstractTargetAuthorStrategy {
 		if (containsWeillCornell(reCiterArticle)) {
 			feature.setWeillCornellAffiliation(1);
 		}
+	}
+	
+	private  double roundAvoid(double value, int places) {
+	    double scale = Math.pow(10, places);
+	    return Math.round(value * scale) / scale;
 	}
 }

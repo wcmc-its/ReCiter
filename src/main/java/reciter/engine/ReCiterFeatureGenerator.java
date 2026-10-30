@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.api.parameters.UseGoldStandard;
 import reciter.engine.analysis.ReCiterArticleAuthorFeature;
 import reciter.engine.analysis.ReCiterArticleFeature;
@@ -29,6 +28,8 @@ import reciter.engine.erroranalysis.Analysis;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleMeshHeading;
 import reciter.model.article.ReCiterAuthor;
+import reciter.model.article.ReCiterCitationYNEnum;
+import reciter.model.article.ReCiterMeshHeadingQualifierName;
 import reciter.model.identity.Identity;
 import reciter.utils.ReCiterStringUtil;
 import lombok.Data;
@@ -226,7 +227,7 @@ public class ReCiterFeatureGenerator {
             if(reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
                 List<ReCiterArticleFeature.ArticleKeyword> articleKeywords = new ArrayList<>();
                 for (ReCiterArticleMeshHeading reCiterArticleMeshHeading : reCiterArticle.getMeshHeadings()) {
-                    if(MeshMajorClusteringStrategy.isMeshMajor(reCiterArticleMeshHeading)) {
+                    if(isMeshMajor(reCiterArticleMeshHeading)) {
                         ReCiterArticleFeature.ArticleKeyword articleKeyword = new ArticleKeyword(reCiterArticleMeshHeading.getDescriptorName().getDescriptorName(), KeywordType.MESH_MAJOR, EngineParameters.getMeshCountMap().get(reCiterArticleMeshHeading.getDescriptorName().getDescriptorName()));
                         articleKeywords.add(articleKeyword);
                     }
@@ -572,6 +573,21 @@ public ReCiterFeature updateFeedbackFeatures(ReCiterFeature reCiterFeature,final
 				.collect(Collectors.toList()));
 
 		return reCiterFeature;
+	}
+
+	private boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
+		// Easy case:
+		if (meshHeading.getDescriptorName().getMajorTopicYN().equals(ReCiterCitationYNEnum.Y.name())) {
+			return true;
+		}
+		// Single subheading or Multiple subheading:
+		for (ReCiterMeshHeadingQualifierName qualifierName : meshHeading.getQualifierNameList()) {
+			if (qualifierName.getMajorTopicYN() == ReCiterCitationYNEnum.Y) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 	
 }

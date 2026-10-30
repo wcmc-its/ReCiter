@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
 import reciter.engine.StrategyParameters;
 import reciter.model.article.ReCiterArticle;
@@ -996,7 +995,7 @@ public class ArticleTranslator {
 		//MeshMajor Feature
 		if(reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
 			for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
-				if(MeshMajorClusteringStrategy.isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
+				if(isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
 						EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 100000L) {
 					reCiterArticleFeatures.getMeshMajor().add(meshHeading.getDescriptorName().getDescriptorName());
 				}
@@ -1027,4 +1026,19 @@ public class ArticleTranslator {
 		reCiterArticle.setReCiterArticleFeatures(reCiterArticleFeatures);
     			
     }
+    
+    private static boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
+		// Easy case:
+		if (meshHeading.getDescriptorName().getMajorTopicYN().equals(ReCiterCitationYNEnum.Y.name())) {
+			return true;
+		}
+		// Single subheading or Multiple subheading:
+		for (ReCiterMeshHeadingQualifierName qualifierName : meshHeading.getQualifierNameList()) {
+			if (qualifierName.getMajorTopicYN() == ReCiterCitationYNEnum.Y) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

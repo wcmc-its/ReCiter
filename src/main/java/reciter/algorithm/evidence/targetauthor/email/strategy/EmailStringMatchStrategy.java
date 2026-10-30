@@ -20,11 +20,12 @@ package reciter.algorithm.evidence.targetauthor.email.strategy;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Strings;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.EmailFeatureClusteringStrategy;
 import reciter.algorithm.evidence.targetauthor.AbstractTargetAuthorStrategy;
 import reciter.engine.Feature;
 import reciter.engine.analysis.evidence.EmailEvidence;
@@ -100,7 +101,7 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 							emailEvidence.setEmailMatchScore(ReCiterArticleScorer.strategyParameters.getEmailMatchScore());
 							break;
 						} else {
-							emailEvidence.setEmailMatch(EmailFeatureClusteringStrategy.sanitizeAffiliation(affiliation));
+							emailEvidence.setEmailMatch(sanitizeAffiliation(affiliation));
 							emailEvidence.setEmailMatchScore(ReCiterArticleScorer.strategyParameters.getEmailNoMatchScore());
 						}
 					}
@@ -146,5 +147,14 @@ public class EmailStringMatchStrategy extends AbstractTargetAuthorStrategy {
 
 	public void setEmailSuffixes(List<String> emailSuffixes) {
 		this.emailSuffixes = emailSuffixes;
+	}
+	
+	private  String sanitizeAffiliation(String affiliation) {
+		Pattern pattern = Pattern.compile("([a-z0-9_.-]+)@([a-z0-9_.-]+[a-z])");
+		Matcher matcher = pattern.matcher(affiliation.toLowerCase());
+		while(matcher.find()) {
+			return matcher.group();
+		}
+		return null;
 	}
 }
