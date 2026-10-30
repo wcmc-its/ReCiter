@@ -37,7 +37,7 @@ public class TargetAuthorSelection {
 		for(ReCiterArticle reciterArticle: reciterArticles) {
 			//Setting this for debug purposes
 			if(reciterArticle.getArticleId() == 15590364) {
-				slf4jLogger.info("here");
+				slf4jLogger.debug("here");
 			}
 			ReCiterArticleAuthors authors = reciterArticle.getArticleCoAuthors();
 			Set<Entry<ReCiterAuthor, ReCiterAuthor>> sanitizedAritcleAuthors = authors.getSanitizedAuthorMap().entrySet();
@@ -63,82 +63,82 @@ public class TargetAuthorSelection {
 	            if(lastMiddleFirstMatchCount == 0 || lastMiddleFirstMatchCount > 1)
 	            	lastNameMiddleInitialFirstMatchCount = checkExactLastMiddleInitialFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastMiddleFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastMiddleFirstMatchCount ==1) {
-	            	slf4jLogger.info("Exact Last Name, Middle Name and First Name Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Exact Last Name, Middle Name and First Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameMiddleInitialFirstMatchCount == 0 || lastNameMiddleInitialFirstMatchCount > 1)
 	            	lastNameFirstNameMatchCount = checkExactLastFirstNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameMiddleInitialFirstMatchCount == 1) {
-	            	slf4jLogger.info("Last Name Middle Initial and First Name Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Last Name Middle Initial and First Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstNameMatchCount == 0 || lastNameFirstNameMatchCount > 1)
 	            	lastNameFirstNameSubstringIdentityMatchCount = checkExactLastFirstNamePartialSubstringIdentityMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstNameMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstNameMatchCount == 1) {
-	            	slf4jLogger.info("Last Name First Name exact Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Last Name First Name exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstNameSubstringIdentityMatchCount == 0 || lastNameFirstNameSubstringIdentityMatchCount > 1)
 	            	lastNameFirstNameIdentitySubstringMatchCount = checkExactLastFirstNamePartialIdentityPartialSubstringMatch(authors.getSanitizedAuthorMap().entrySet(), sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstNameSubstringIdentityMatchCount == 1) {
-	            	slf4jLogger.info("Last Name First Name partial match of Identity Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Last Name First Name partial match of Identity Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstNameIdentitySubstringMatchCount == 0 || lastNameFirstNameIdentitySubstringMatchCount > 1)
 	            	lastNameFirstInitialMatchCount = checkExactLastFirstInitialNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMiddleInitialFirstMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstNameIdentitySubstringMatchCount == 1) {
-	            	slf4jLogger.info("Last Name Identity First name partial of Article Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Last Name Identity First name partial of Article Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameFirstInitialMatchCount == 0 || lastNameFirstInitialMatchCount > 1)
 	            	emailMatchcount = checkEmailMatch(sanitizedAritcleAuthors, identity, emailMatchcount, multipleMarkedTargetAuthor);
 	            if(lastNameFirstInitialMatchCount == 1) {	
-	            	slf4jLogger.info("Last Name First Initial exact Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Last Name First Initial exact Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(emailMatchcount == 0 || emailMatchcount > 1)
 	            	middleToFirstInitialAndFirstInitialToMiddleMatchCount = checkFirstInitialTomiddleInitialAndmiddleInitialToFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameFirstInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(emailMatchcount == 1) {
-	            	slf4jLogger.info("Email Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Email Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 0 || middleToFirstInitialAndFirstInitialToMiddleMatchCount > 1)
 	            	lastNamePartialFirstInitialMatchCount = checkPartialLastNameFirstInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, middleToFirstInitialAndFirstInitialToMiddleMatchCount, multipleMarkedTargetAuthor);
 	            if(middleToFirstInitialAndFirstInitialToMiddleMatchCount == 1) {
-	            	slf4jLogger.info("Middle intial to first initial and first intial to middle initial Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Middle intial to first initial and first intial to middle initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNamePartialFirstInitialMatchCount == 0 || lastNamePartialFirstInitialMatchCount > 1)
 	            	lastNameMatchCount = checkLastNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNamePartialFirstInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNamePartialFirstInitialMatchCount == 1) {
-	            	slf4jLogger.info("Last Name Partial First Initial Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Last Name Partial First Initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(lastNameMatchCount == 0 || lastNameMatchCount > 1)
 	            	firstNameMatchCount = checkFirstNameExactMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastNameMatchCount, multipleMarkedTargetAuthor);
 	            if(lastNameMatchCount == 1) {
-	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(firstNameMatchCount == 0 || firstNameMatchCount > 1)
 	            	fullLastNameToIdentityPartialMatchCount = checkLastNameFullArticleToIdentityPartialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameMatchCount, multipleMarkedTargetAuthor);
 	            if(firstNameMatchCount == 1) {
-	            	slf4jLogger.info("Exact First name match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Exact First name match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 	            
 	            if(fullLastNameToIdentityPartialMatchCount == 1) {
-	            	slf4jLogger.info("Full Last Name match to partial Identity Last Name: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Full Last Name match to partial Identity Last Name: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 
@@ -147,7 +147,7 @@ public class TargetAuthorSelection {
 	            if(fullLastNameToIdentityPartialMatchCount == 0 || fullLastNameToIdentityPartialMatchCount > 1)
 	            	firstNameLastInitialMatchCount = checkFirstNameAndLastInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, fullLastNameToIdentityPartialMatchCount, multipleMarkedTargetAuthor);
 	            if(firstNameLastInitialMatchCount == 1) {
-	            	slf4jLogger.info("First Name and Last Initial Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("First Name and Last Initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 
@@ -156,7 +156,7 @@ public class TargetAuthorSelection {
 	            if(firstNameLastInitialMatchCount == 0 || firstNameLastInitialMatchCount > 1)
 	            	middleNameToLastNameMatchCount = checkMiddleNameToLastNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstNameLastInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(middleNameToLastNameMatchCount == 1) {
-	            	slf4jLogger.info("Identity Middle Name to Article Last Name Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Identity Middle Name to Article Last Name Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 
@@ -165,7 +165,7 @@ public class TargetAuthorSelection {
 	            if(middleNameToLastNameMatchCount == 0 || middleNameToLastNameMatchCount > 1)
 	            	firstLastSwapMatchCount = checkFirstLastNameSwapMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, middleNameToLastNameMatchCount, multipleMarkedTargetAuthor);
 	            if(firstLastSwapMatchCount == 1) {
-	            	slf4jLogger.info("First-Last Name Swap Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("First-Last Name Swap Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 
@@ -176,7 +176,7 @@ public class TargetAuthorSelection {
 	            if(firstLastSwapMatchCount == 0 || firstLastSwapMatchCount > 1)
 	            	lastToFirstAndInitialMatchCount = checkLastNameToFirstNameAndFirstInitialToLastInitialMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, firstLastSwapMatchCount, multipleMarkedTargetAuthor);
 	            if(lastToFirstAndInitialMatchCount == 1) {
-	            	slf4jLogger.info("Identity Last-to-Article First + Initial Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Identity Last-to-Article First + Initial Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 
@@ -186,7 +186,7 @@ public class TargetAuthorSelection {
 	            if(lastToFirstAndInitialMatchCount == 0 || lastToFirstAndInitialMatchCount > 1)
 	            	bothInitialsMatchCount = checkBothInitialsMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, lastToFirstAndInitialMatchCount, multipleMarkedTargetAuthor);
 	            if(bothInitialsMatchCount == 1) {
-	            	slf4jLogger.info("Both Initials Match found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Both Initials Match found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 
@@ -196,7 +196,7 @@ public class TargetAuthorSelection {
 	            if(bothInitialsMatchCount == 0 || bothInitialsMatchCount > 1)
 	            	fuzzyLastNameMatchCount = checkFuzzyLastNameMatch(sanitizedAritcleAuthors, sanitizedIdentityAuthors, bothInitialsMatchCount, multipleMarkedTargetAuthor);
 	            if(fuzzyLastNameMatchCount == 1) {
-	            	slf4jLogger.info("Fuzzy Last Name Match (Levenshtein <= 2) found for article: " + reciterArticle.getArticleId());
+	            	slf4jLogger.debug("Fuzzy Last Name Match (Levenshtein <= 2) found for article: " + reciterArticle.getArticleId());
 	            	continue;
 	            }
 
@@ -205,10 +205,10 @@ public class TargetAuthorSelection {
 	            	assignTargetAuthorFalse(authors.getAuthors());
 	            }
 	            else if(fuzzyLastNameMatchCount > 1) {
-	            	slf4jLogger.info(fuzzyLastNameMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId() + ". Attempting disambiguation...");
+	            	slf4jLogger.debug(fuzzyLastNameMatchCount + " authors were marked as target author for article " + reciterArticle.getArticleId() + ". Attempting disambiguation...");
 	            	int disambiguatedCount = disambiguateMultipleMatches(multipleMarkedTargetAuthor, sanitizedIdentityAuthors);
 	            	if(disambiguatedCount == 1) {
-	            		slf4jLogger.info("Disambiguation resolved to 1 target author for article: " + reciterArticle.getArticleId());
+	            		slf4jLogger.debug("Disambiguation resolved to 1 target author for article: " + reciterArticle.getArticleId());
 	            	} else {
 	            		slf4jLogger.info("Disambiguation could not resolve: " + disambiguatedCount + " authors remain for article " + reciterArticle.getArticleId());
 	            	}

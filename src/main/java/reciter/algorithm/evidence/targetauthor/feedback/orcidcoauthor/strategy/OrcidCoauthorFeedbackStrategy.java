@@ -37,7 +37,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 
 		try {
-			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
+			slf4jLogger.debug("reCiterArticles size: ", reCiterArticles.size());
 			
 	     // Process the articles to count non-target author ORCIDs per PMID
 	        Map<Long, Integer> nonTargetAuthorOrcidCountPerPmid = reCiterArticles.stream()
@@ -50,7 +50,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	            ));
 	        
 	        nonTargetAuthorOrcidCountPerPmid.forEach((key, value) -> {
-	        	slf4jLogger.info("nonTargetAuthorOrcidCountPerPmid : " + key + " = " + value);
+	        	slf4jLogger.debug("nonTargetAuthorOrcidCountPerPmid : " + key + " = " + value);
 	        });
 	        
 	        Map<String, Map<Integer, Long>> nonTargetAuthororcidCountsByArticleStatus = reCiterArticles.stream()
@@ -77,9 +77,9 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                ));
 	        
 	        nonTargetAuthororcidCountsByArticleStatus.forEach((outerKey, innerMap) -> {
-	        	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus : " + outerKey);
+	        	slf4jLogger.debug("nonTargetAuthororcidCountsByArticleStatus : " + outerKey);
 	            innerMap.forEach((innerKey, value) -> {
-	            	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus innerMap  :  " + innerKey + " = " + value);
+	            	slf4jLogger.debug("nonTargetAuthororcidCountsByArticleStatus innerMap  :  " + innerKey + " = " + value);
 	            });
 	        });
 	        
@@ -142,10 +142,10 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 								 feedbackScore = determineFeedbackScore(article.getGoldStandard(), sumAccepted, sumRejected, scoreAll);
 							 }
 
-							slf4jLogger.info("sumAccepted :" + sumAccepted + "\nSumRejected : " + sumRejected +"\n ScoreAll :" + scoreAll);
-							slf4jLogger.info("Feedback Score:"+feedbackScore);
+							slf4jLogger.debug("sumAccepted :" + sumAccepted + "\nSumRejected : " + sumRejected +"\n ScoreAll :" + scoreAll);
+							slf4jLogger.debug("Feedback Score:"+feedbackScore);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
-							slf4jLogger.info("exportedFeedbackScore:"+exportedFeedbackScore);
+							slf4jLogger.debug("exportedFeedbackScore:"+exportedFeedbackScore);
 							ReCiterArticleFeedbackScore feedbackOrcid = populateArticleFeedbackScore(article.getArticleId(),author.getOrcid(),
 									   countAccepted,countRejected,
 									   scoreAll,sumAccepted,
