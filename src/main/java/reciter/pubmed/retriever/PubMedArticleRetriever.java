@@ -28,12 +28,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import reciter.model.pubmed.PubMedArticle;
+import reciter.utils.EnvUtils;
 
 public class PubMedArticleRetriever {
 
 	private static final Logger log = LoggerFactory.getLogger(PubMedArticleRetriever.class);
 	
-    private static final String PUBMED_SERVICE = System.getenv("PUBMED_SERVICE");
+    private static final String PUBMED_SERVICE = EnvUtils.get("PUBMED_SERVICE");
+
+    // RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
+    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
 
     /**
      * Initializes and starts threads that handles the retrieval process. Partition the number of articles
@@ -43,19 +47,25 @@ public class PubMedArticleRetriever {
         if (numberOfPubmedArticles == 0) {
             return Collections.emptyList();
         }
-        String nodeUrl = PUBMED_SERVICE.endsWith("/pubmed")?PUBMED_SERVICE + "/query-complex/" :PUBMED_SERVICE + "/pubmed/query-complex/";
-        RestTemplate restTemplate = new RestTemplate();
+        String pubmedService = EnvUtils.require("PUBMED_SERVICE", PUBMED_SERVICE);
+        String nodeUrl = pubmedService.endsWith("/pubmed")?pubmedService + "/query-complex/" :pubmedService + "/pubmed/query-complex/";
+        RestTemplate restTemplate = REST_TEMPLATE;
         log.info("Sending web request: for query: " + pubMedQuery + ":" + nodeUrl);
         ResponseEntity<PubMedArticle[]> responseEntity = null;
         try {
             responseEntity = restTemplate.postForEntity(nodeUrl, pubMedQuery, PubMedArticle[].class);
+            PubMedArticle[] pubMedArticles = (responseEntity == null) ? null : responseEntity.getBody();
+            if (pubMedArticles == null) {
+                // Fetch failed (tool 500 / NCBI 429) or returned an empty body. Flag the run so the
+                // engine rolls the retrievalDate watermark back instead of treating this as "no articles". #689
+                reciter.xml.retriever.pubmed.RetrievalErrorTracker.markError();
+                return Collections.emptyList();
+            }
+            return Arrays.asList(pubMedArticles);
         } catch (Exception e) {
             log.error("Unable to retrieve via external REST api=[" + nodeUrl + "]", e);
-        }
-        if (responseEntity == null) {
+            reciter.xml.retriever.pubmed.RetrievalErrorTracker.markError();
             return Collections.emptyList();
         }
-        PubMedArticle[] pubMedArticles = responseEntity.getBody();
-        return Arrays.asList(pubMedArticles);
     }
 }

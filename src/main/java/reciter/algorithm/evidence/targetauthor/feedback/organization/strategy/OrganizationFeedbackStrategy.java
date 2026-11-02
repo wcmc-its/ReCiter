@@ -10,9 +10,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
 import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
@@ -22,7 +19,6 @@ import reciter.model.identity.Identity;
 
 public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(OrganizationFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackOrganizationMap = null;
 	List<ReCiterAuthor> listOfAuthors = null;
 	List<ReCiterArticle> validOrganizations = null;
@@ -64,7 +60,7 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 				affiliation = affiliation.replaceFirst("^and ", "").replaceFirst(" and$", "");
 				affiliation = affiliation.replace(" & ", " and");
 
-				if (!affiliation.isEmpty() && !affiliation.contains("Division")
+				if (!affiliation.isBlank() && !affiliation.contains("Division")
 						&& !affiliation.contains("Center") && !affiliation.contains("Centre")
 						&& !affiliation.contains("University") && !affiliation.contains("USA")
 						&& affiliation.length() > 2 && !affiliation.equals("From the")
@@ -94,7 +90,7 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 			 Map<String, Map<Integer, Long>> orgCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.isTargetAuthor())	
+	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isBlank() && author.isTargetAuthor())	
 	                	 .flatMap(author -> {
 	                    	List<String> organizationList = sanitizeAffiliation(author.getAffiliation());
 		                        // Create a stream of (keyword, status) pairs
@@ -126,7 +122,7 @@ public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackSt
 											 
 											 List<String> organizationList = sanitizeAffiliation(author.getAffiliation());
 											 organizationList.stream()
-											 				.filter(organization -> organization!=null && !organization.isEmpty())
+											 				.filter(organization -> organization!=null && !organization.isBlank())
 											 				.forEach(organization-> {	
 												
 							 					int countAccepted = 0;

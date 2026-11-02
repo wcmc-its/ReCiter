@@ -1,8 +1,9 @@
 package reciter.feedback;
 
-import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Coverage for {@link EntryPath#fromString(String)}, the PM-UI -> Java decoder.

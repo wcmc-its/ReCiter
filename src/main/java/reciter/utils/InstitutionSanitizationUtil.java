@@ -12,13 +12,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.model.identity.Identity;
 import reciter.model.identity.OrganizationalUnit;
 import reciter.model.identity.OrganizationalUnit.OrganizationalUnitType;
 import reciter.model.identity.OrganizationalUnitSynonym;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 public class InstitutionSanitizationUtil {
 

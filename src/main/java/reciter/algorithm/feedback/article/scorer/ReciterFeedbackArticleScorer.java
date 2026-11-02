@@ -1,7 +1,6 @@
 package reciter.algorithm.feedback.article.scorer;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -17,11 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,14 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import reciter.algorithm.article.score.predictor.NeuralNetworkModelArticlesScorer;
 import reciter.algorithm.evidence.StrategyContext;
 import reciter.algorithm.evidence.article.ReCiterArticleStrategyContext;
-import reciter.storage.s3.AwsScoringClients;
 import reciter.algorithm.evidence.article.feedbackevidence.FeedbackEvidenceStrategyContext;
 import reciter.algorithm.evidence.article.feedbackevidence.strategy.FeedbackEvidenceStrategy;
 import reciter.algorithm.evidence.feedback.targetauthor.TargetAuthorFeedbackStrategyContext;
@@ -92,25 +86,30 @@ import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackIdentityScore;
 import reciter.model.article.ReCiterAuthor;
 import reciter.model.identity.Identity;
+import reciter.storage.s3.AwsScoringClients;
 import reciter.utils.PropertiesUtils;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer {
 
 	
+	private static final String AWS_S3_FEEDBACK_SCORE_BUCKET_NAME = "aws.s3.feedback.score.bucketName";
 	private static final Logger log = LoggerFactory.getLogger(ReciterFeedbackArticleScorer.class);
 	private static final int ACCEPTED_ASSERTION =1;
 	private static final int REJECTED_ASSERTION =-1;
 	private List<ReCiterArticle> reciterArticles;
 	private Identity identity;
 	public static StrategyParameters strategyParameters;
+	
+	 // ── Thread-safe, expensive to construct — shared constant ──
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    
 	/**
 	 * Journal Category Score
 	 */
@@ -131,7 +130,7 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	private StrategyContext journalTitleSimilarityStrategyContext;
 	private StrategyContext feedbackEvidenceStrategyContext;
 
-	ExecutorService executorService = Executors.newWorkStealingPool(15);
+	//ExecutorService executorService = Executors.newWorkStealingPool(15);
 	
 	public ReciterFeedbackArticleScorer(List<ReCiterArticle> articles,Identity identity,EngineParameters parameters,StrategyParameters strategyParameters)
 	{
@@ -170,54 +169,59 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			strategyParameters.isInformedAbsenceEnabled(),
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceOrcidStrength());
+		
+		OrganizationFeedbackStrategy organizationStrategy = new OrganizationFeedbackStrategy();
+		organizationStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceOrganizationStrength());
+		
+		KeywordFeedbackStrategy keywordStrategy = new KeywordFeedbackStrategy(strategyParameters);
+		keywordStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceKeywordStrength());
+		
+		InstitutionFeedbackStrategy institutionStrategy = new InstitutionFeedbackStrategy();
+		institutionStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceInstitutionStrength());
+		
+		EmailFeedbackStrategy emailStrategy = new EmailFeedbackStrategy();
+		emailStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceEmailStrength());
+		
+		CitesFeedbackStrategy citesStrategy = new CitesFeedbackStrategy();
+		citesStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceCitesStrength());
+		
+		BibliographicCouplingFeedbackStrategy bibCouplingStrategy = new BibliographicCouplingFeedbackStrategy();
+		bibCouplingStrategy.setInformedAbsenceConfig(
+			strategyParameters.isInformedAbsenceEnabled(),
+			strategyParameters.getInformedAbsenceScale(),
+			strategyParameters.getInformedAbsenceBibliographicCouplingStrength());
 
 		this.journalStrategyContext = new JournalFeedbackStrategyContext(journalStrategy);
 		this.journalSubFieldStrategyContext = new JournalSubFieldFeedbackStrategyContext(journalSubFieldStrategy);
 		this.orcidStrategyContext = new OrcidFeedbackStrategyContext(orcidStrategy);
 		this.yearStrategyContext = new YearFeedbackStrategyContext(new YearFeedbackStrategy());
 		this.targetAuthorNameStrategyContext = new TargetAuthorNameFeedbackStrategyContext(targetAuthorNameStrategy);
-		OrganizationFeedbackStrategy organizationStrategy = new OrganizationFeedbackStrategy();
-		organizationStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceOrganizationStrength());
 		this.organizationStrategyContext = new OrganizationFeedbackStrategyContext(organizationStrategy);
 		this.orcidCoAuthorStrategyContext = new OrcidCoauthorFeedbackStrategyContext(new OrcidCoauthorFeedbackStrategy());
-		KeywordFeedbackStrategy keywordStrategy = new KeywordFeedbackStrategy(strategyParameters);
-		keywordStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceKeywordStrength());
 		this.keywordStrategyContext = new KeywordFeedbackStrategyContext(keywordStrategy);
 		TextSimilarityFeedbackStrategy textSimilarityStrategy = new TextSimilarityFeedbackStrategy(strategyParameters);
 		this.textSimilarityStrategyContext = new TextSimilarityFeedbackStrategyContext(textSimilarityStrategy);
 		JournalTitleSimilarityFeedbackStrategy journalTitleSimilarityStrategy = new JournalTitleSimilarityFeedbackStrategy(strategyParameters);
 		this.journalTitleSimilarityStrategyContext = new JournalTitleSimilarityFeedbackStrategyContext(journalTitleSimilarityStrategy);
-		InstitutionFeedbackStrategy institutionStrategy = new InstitutionFeedbackStrategy();
-		institutionStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceInstitutionStrength());
 		this.institutionStrategyContext = new InstitutionFeedbackStrategyContext(institutionStrategy);
-
-		EmailFeedbackStrategy emailStrategy = new EmailFeedbackStrategy();
-		emailStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceEmailStrength());
 		this.emailStrategyContext = new EmailFeedbackStrategyContext(emailStrategy);
 		this.coAuthorNameStrategyContext = new CoauthorNameFeedbackStrategyContext(coAuthorNameStrategy);
-		CitesFeedbackStrategy citesStrategy = new CitesFeedbackStrategy();
-		citesStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceCitesStrength());
 		this.citesStrategyContext = new CitesFeedbackStrategyContext(citesStrategy);
-		BibliographicCouplingFeedbackStrategy bibCouplingStrategy = new BibliographicCouplingFeedbackStrategy();
-		bibCouplingStrategy.setInformedAbsenceConfig(
-			strategyParameters.isInformedAbsenceEnabled(),
-			strategyParameters.getInformedAbsenceScale(),
-			strategyParameters.getInformedAbsenceBibliographicCouplingStrength());
 		this.bibliographicCouplingStrategyContext = new BibliographicCouplingFeedbackStrategyContext(bibCouplingStrategy);
 		this.feedbackEvidenceStrategyContext = new FeedbackEvidenceStrategyContext(new FeedbackEvidenceStrategy());
 
@@ -225,108 +229,118 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	public void runFeedbackArticleScorer(List<ReCiterArticle> reCiterArticles, Identity identity) 
 	{
-		 List<Future<?>> futures = new ArrayList<>();
+		 // Java 21 GA: virtual-thread-per-task executor, auto-closed by try-with-resources
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
-		if(strategyParameters.isFeedbackScoreJournal()) {
-			futures.add(submitAndLogTime("Journal Category", executorService, journalStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreJournalSubField()) {
-			futures.add(submitAndLogTime("Journal SubField Category", executorService, journalSubFieldStrategyContext, reCiterArticles, identity));
+            var futures = new ArrayList<CompletableFuture<Void>>();
+            Set<String> failedCategories = ConcurrentHashMap.newKeySet();
+            
+            if(strategyParameters.isFeedbackScoreJournal()) {
+    			futures.add(runStrategy("Journal Category",  journalStrategyContext, reCiterArticles, identity, executor, failedCategories));
+    		}
+            if(strategyParameters.isFeedbackScoreJournalSubField()) {
+    			futures.add(runStrategy("Journal SubField Category", journalSubFieldStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreOrcid()) {
-			futures.add(submitAndLogTime("Orcid Category", executorService, orcidStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreOrcid()) {
+    			futures.add(runStrategy("Orcid Category", orcidStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreYear()) {
-			futures.add(submitAndLogTime("Year Category", executorService, yearStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreYear()) {
+    			futures.add(runStrategy("Year Category", yearStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreEmail()) {
-			futures.add(submitAndLogTime("Email Category", executorService, emailStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreEmail()) {
+    			futures.add(runStrategy("Email Category", emailStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreOrganization()) {
-			futures.add(submitAndLogTime("Organization Category", executorService, organizationStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreOrganization()) {
+    			futures.add(runStrategy("Organization Category", organizationStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreInstitution()) {
-			futures.add(submitAndLogTime("Institution Category", executorService, institutionStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreInstitution()) {
+    			futures.add(runStrategy("Institution Category", institutionStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreTargetAuthorName()) {
-			futures.add(submitAndLogTime("Target Author Name Category", executorService, targetAuthorNameStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreTargetAuthorName()) {
+    			futures.add(runStrategy("Target Author Name Category", targetAuthorNameStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreOrcidCoAuthor()) {
-			futures.add(submitAndLogTime("Orcid coAuthor Category", executorService, orcidCoAuthorStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreKeyword()) {
-			futures.add(submitAndLogTime("Keyword Category", executorService, keywordStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreTextSimilarity()) {
-			futures.add(submitAndLogTime("Text Similarity Category", executorService, textSimilarityStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreJournalTitleSimilarity()) {
-			futures.add(submitAndLogTime("Journal Title Similarity Category", executorService, journalTitleSimilarityStrategyContext, reCiterArticles, identity));
-		}
-		if(strategyParameters.isFeedbackScoreCoauthorName()) {
-			futures.add(submitAndLogTime("CoAuthorName Category", executorService, coAuthorNameStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreOrcidCoAuthor()) {
+    			futures.add(runStrategy("Orcid coAuthor Category", orcidCoAuthorStrategyContext, reCiterArticles, identity, executor, failedCategories));
+    		}
+    		if(strategyParameters.isFeedbackScoreKeyword()) {
+    			futures.add(runStrategy("Keyword Category", keywordStrategyContext, reCiterArticles, identity, executor, failedCategories));
+    		}
+    		if(strategyParameters.isFeedbackScoreTextSimilarity()) {
+    			futures.add(runStrategy("Text Similarity Category", textSimilarityStrategyContext, reCiterArticles, identity, executor, failedCategories));
+    		}
+    		if(strategyParameters.isFeedbackScoreJournalTitleSimilarity()) {
+    			futures.add(runStrategy("Journal Title Similarity Category", journalTitleSimilarityStrategyContext, reCiterArticles, identity, executor, failedCategories));
+    		}
+    		if(strategyParameters.isFeedbackScoreCoauthorName()) {
+    			futures.add(runStrategy("CoAuthorName Category", coAuthorNameStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreCites()) {
-			futures.add(submitAndLogTime("Cites Category", executorService, citesStrategyContext, reCiterArticles, identity));
+    		}
+    		if(strategyParameters.isFeedbackScoreCites()) {
+    			futures.add(runStrategy("Cites Category", citesStrategyContext, reCiterArticles, identity, executor, failedCategories));
 
-		}
-		if(strategyParameters.isFeedbackScoreBibliographicCoupling()) {
-			futures.add(submitAndLogTime("Bibliographic Coupling Category", executorService, bibliographicCouplingStrategyContext, reCiterArticles, identity));
-		}
-		//futures.add(submitAndLogTime("authors Count Category", executorService, authorCountStrategyContext, reCiterArticles, identity));
-		// Shutdown executorService after submitting all tasks
-        executorService.shutdown();
-        
-        // Wait for all tasks to complete
-        try {
-            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        boolean allTasksCompleted = true;
-        // Print execution times from futures
-        for (Future<?> future : futures) {
-            try {
-                future.get(); // Ensure all tasks are completed
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Task execution interrupted or encountered an error", e);
-                allTasksCompleted=false;
+    		}
+    		if(strategyParameters.isFeedbackScoreBibliographicCoupling()) {
+    			futures.add(runStrategy("Bibliographic Coupling Category", bibliographicCouplingStrategyContext, reCiterArticles, identity, executor, failedCategories));
+    		}
+    		 // Wait for ALL strategies; run post-processing only if all succeeded
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .join(); // blocks calling thread until all tasks finish
+
+            if (failedCategories.isEmpty()) {
+                log.info("All feedback scoring strategy contexts completed successfully.");
+                // Post-processing — runs only when ALL strategies succeed
+                exportArticleItemLevelReport(reCiterArticles, identity);
+                exportArticlesConsolidateReport(reCiterArticles, identity);
+                ((ReCiterArticleStrategyContext) feedbackEvidenceStrategyContext).executeStrategy(reCiterArticles);
+                executePythonScriptForArticleFeedbackTotal(reCiterArticles, identity);
+            } else {
+                log.error("Feedback scoring strategies failed for uid=[{}]: {}; report generation may be incomplete.",
+                        identity.getUid(), failedCategories);
             }
-        }
-        if (allTasksCompleted) {
-        	//Export item Level Data
-        	exportArticleItemLevelReport(reCiterArticles, identity);
-            // All tasks completed successfully
-            exportArticlesConsolidateReport(reCiterArticles, identity);
-         	((ReCiterArticleStrategyContext) feedbackEvidenceStrategyContext).executeStrategy(reCiterArticles);
-         	executePythonScriptForArticleFeedbackTotal(reCiterArticles,identity);
-	    } else {
-            log.error("One or more tasks failed; report generation may be incomplete.");
-        }
 
-
+        } // executor auto-closed here; virtual threads terminate automatically when done
 	}
 	
-	private Future<?> submitAndLogTime(String category, ExecutorService executorService,
-			StrategyContext context,List<ReCiterArticle> reCiterArticles, Identity identity) 
-	{
+	
+	 /**
+     * Submits a single feedback strategy as a virtual-thread task.
+     * .exceptionally() logs per-task failures without cancelling siblings.
+     */
+    private CompletableFuture<Void> runStrategy(String category,
+                                                StrategyContext context,
+                                                List<ReCiterArticle> reCiterArticles,
+                                                Identity identity,
+                                                Executor executor,
+                                                Set<String> failedCategories) {
+        return CompletableFuture.runAsync(() -> {
+            var stopWatch = new StopWatch(category);
+            stopWatch.start(category);
 
-		return executorService.submit(() -> {
-		StopWatch stopWatch = new StopWatch(category);
-		stopWatch.start(category);
-		((TargetAuthorFeedbackStrategyContext)context).executeFeedbackStrategy(reCiterArticles, identity);
-		stopWatch.stop();
-		log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
-		});
-	}
+            try {
+                // Java 21: pattern matching instanceof — no explicit cast needed
+                if (context instanceof TargetAuthorFeedbackStrategyContext feedbackCtx) {
+                    feedbackCtx.executeFeedbackStrategy(reCiterArticles, identity);
+                }
+            } finally {
+                stopWatch.stop();
+                // Parameterized logging — zero allocation when INFO is disabled
+                log.info("{} took {}s", stopWatch.getId(), stopWatch.getTotalTimeSeconds());
+            }
+
+        }, executor).exceptionally(ex -> {
+            log.error("Strategy '{}' failed", category, ex);
+            failedCategories.add(category);
+            return null; // siblings continue despite this failure
+        });
+    }
+	
 	private void exportArticlesConsolidateReport(List<ReCiterArticle> reCiterArticles, Identity identity )
 	{
 		// printing all the article lookup PMID and CoAuthors associated with other
@@ -437,31 +451,23 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	private boolean uploadCsvToS3(String csvContent,String fileName) {
        
-		String feedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
+		String feedbackScoreBucketName = PropertiesUtils.get(AWS_S3_FEEDBACK_SCORE_BUCKET_NAME);
+		
+		if (StringUtils.isBlank(feedbackScoreBucketName)) {
+            log.error("S3 bucket name property '{}' is missing or blank.", AWS_S3_FEEDBACK_SCORE_BUCKET_NAME);
+            return false;
+        }
 		byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
-        // Create InputStream from CSV content
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
         
         // Upload the CSV file
         try {
-        	final S3Client s3 = AwsScoringClients.s3();
-        	// Check if the bucket exists
-	        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
-	                .bucket(feedbackScoreBucketName)
-	                .build();
-	        try {
-	  				s3.headBucket(headBucketRequest);
-	  				log.info("Uploading CSV file to S3 bucket: {}",feedbackScoreBucketName);
-	  			} catch (S3Exception e) {
-	  				if (e.statusCode() == 404) {
-	  					log.error("S3 bucket does not exist: {}" , feedbackScoreBucketName);
-	  				} else {
-	  					log.error("Error checking bucket existence: {}" ,e.getMessage());
-	  				}
-	  				return false;
-	  			}
-	  	        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-	  					.bucket(feedbackScoreBucketName.toLowerCase()).key(fileName).contentType("text/csv").build();
+        	    final S3Client s3 = AwsScoringClients.s3();
+        	    
+        	    PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+	  					         .bucket(feedbackScoreBucketName.toLowerCase())
+	  					         .key(fileName)
+	  					         .contentType("text/csv")
+	  					         .build();
 	  	        PutObjectResponse putObjectResponse = s3.putObject(putObjectRequest, RequestBody.fromBytes(csvBytes));
 	  	        
 	  	        if (putObjectResponse.sdkHttpResponse().isSuccessful()) {
@@ -471,6 +477,14 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 						log.error("Failed to upload CSV file to S3. fileName={}, bucketName={}", fileName,feedbackScoreBucketName);
 	                  return false;
 	              }
+	          } catch (S3Exception e) {
+					if (e.statusCode() == 404) {
+						log.error("S3 bucket does not exist: {}", feedbackScoreBucketName);
+					} else {
+						log.error("S3 error while uploading CSV. fileName={}, bucketName={}, status={}, message={}", fileName,
+								feedbackScoreBucketName, e.statusCode(), e.getMessage());
+					}
+					return false;
 	          } catch (Exception e) {
 					log.error("Unexpected exception while uploading CSV to S3. fileName={}, bucketName={}", fileName,feedbackScoreBucketName, e);
 	  			return false;			 
@@ -593,8 +607,6 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
     	List<ReCiterArticleFeedbackIdentityScore> articleIdentityFeedbackScore = reCiterArticles.parallelStream()
     																	.map( article -> mapToFeedbackScore(article, countAccepted, countRejected))
 														    		    .collect(Collectors.toList());
-	
-    	ObjectMapper objectMapper = new ObjectMapper();
 
     	// Enrich scores with identity names and per-article name evidence for Python scoring
     	String identityFirstName = (identity.getPrimaryName() != null && identity.getPrimaryName().getFirstName() != null)
@@ -608,7 +620,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
     	List<ObjectNode> enrichedScores = articleIdentityFeedbackScore.stream()
     	        .map(score -> {
-    	            ObjectNode node = objectMapper.convertValue(score, ObjectNode.class);
+    	        	 // Use JSON serialization/deserialization instead of convertValue to avoid ObjectNode conflicts
+    	            ObjectNode node = OBJECT_MAPPER.convertValue(score, ObjectNode.class);
     	            node.put("identityFirstName", identityFirstName);
     	            node.put("identityMiddleName", identityMiddleName);
 
@@ -630,22 +643,22 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 
 		String fileName = StringUtils.join(identity.getUid(), "-feedbackIdentityScoringInput.json");
 		boolean isS3UploadRequired = isS3UploadRequired();
-		String feedbackIdentityS3BucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
+		String feedbackIdentityS3BucketName = PropertiesUtils.get(AWS_S3_FEEDBACK_SCORE_BUCKET_NAME);
         try {
 			NeuralNetworkModelArticlesScorer nnmodel = new NeuralNetworkModelArticlesScorer();
         	  if(isS3UploadRequired)
         	  {
         		  File jsonFile = new File(fileName);
-
+        		  
         		  // Write the User object to the JSON file
-                  objectMapper.writeValue(jsonFile, enrichedScores);
+        		  OBJECT_MAPPER.writeValue(jsonFile, enrichedScores);
                   log.info("JSON data written to file successfully: {}", jsonFile.getAbsolutePath());
                   uploadJsonFileIntoS3(fileName, jsonFile);
         	  }
         	  else
         	  {
         		  File jsonFile = new File("src/main/resources/scripts/"+fileName);
-	        	  objectMapper.writeValue(jsonFile, enrichedScores);
+        		  OBJECT_MAPPER.writeValue(jsonFile, enrichedScores);
 	        	  log.info("JSON written to file successfully. {}", jsonFile.getAbsolutePath() +"-" + fileName);
         	  }
         	  String isS3UploadRequiredString = Boolean.toString(isS3UploadRequired);
@@ -654,12 +667,11 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			  if(articlesIdentityFeedbackScoreTotal!=null && articlesIdentityFeedbackScoreTotal.length() > 0)
 			  {  
 				  List<ReCiterArticle> articlesScores =  mapAuthorshipLikelihoodScore(reCiterArticles, articlesIdentityFeedbackScoreTotal);
-				  articlesScores.forEach(article -> log.info("articles : " + article));
 			  	 return articlesScores;	
 			  }  	
 				  
 			  
-		} catch (IOException e) {
+		} catch (RuntimeException e) {
 			log.error(
 		            "IOException occurred while executing article feedback scoring. identityId={}, fileName={}, articleCount={}, acceptedCount={}, rejectedCount={}",
 		            identity != null ? identity.getUid() : null,
@@ -839,25 +851,16 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 	}
 	private boolean uploadJsonFileIntoS3(String keyName,File file)
 	{
-		String feedbackScoreBucketName = PropertiesUtils.get("aws.s3.feedback.score.bucketName");
-        
-		// Upload the python file
-				 S3Client s3 = AwsScoringClients.s3();
+		String feedbackScoreBucketName = PropertiesUtils.get(AWS_S3_FEEDBACK_SCORE_BUCKET_NAME);
+		
+		if (StringUtils.isBlank(feedbackScoreBucketName)) {
+            log.error("S3 bucket name property '{}' is missing or blank.", AWS_S3_FEEDBACK_SCORE_BUCKET_NAME);
+            return false;
+        }
 				 try {
-					// Check if the bucket exists
-				        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
-				                .bucket(feedbackScoreBucketName)
-				                .build();
-				        try {
-							s3.headBucket(headBucketRequest);
-							log.info("Uploading files to S3 bucket: {}", feedbackScoreBucketName);
-						} catch (S3Exception e) {
-							if (e.statusCode() == 404) {
-								log.error("S3 bucket does not exist: {}" , feedbackScoreBucketName);
-								return false;
-							}
-						}
-				        // Upload file
+					    // Upload the python file
+					    S3Client s3 = AwsScoringClients.s3();
+					    // Upload file
 			            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
 			                    .bucket(feedbackScoreBucketName.toLowerCase())
 			                    .key(keyName)
@@ -869,11 +872,18 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			                log.info("JSON file uploaded successfully to S3 bucket:{} ", feedbackScoreBucketName);
 			                return true;
 			            } else {
-			                log.error("Failed to upload JSON file to S3.");
+			            	log.error("Failed to upload JSON file '{}' to S3 bucket: {}. HTTP status={}",
+			                        keyName, feedbackScoreBucketName, putObjectResponse.sdkHttpResponse().statusCode());
 			                return false;
 			            }
-			            
-					
+		        } catch (S3Exception e) {
+					if (e.statusCode() == 404) {
+						log.error("S3 bucket does not exist: {}", feedbackScoreBucketName);
+					} else {
+						log.error("S3 error while uploading JSON file. keyName={}, bucketName={}, status={}, message={}", keyName,
+								feedbackScoreBucketName, e.statusCode(), e.getMessage());
+					}
+					return false;
 		        } catch (Exception e) {
 					log.error(
 							"Unexpected exception while uploading JSON file to S3. keyName={}, filePath={}, bucketName={}",

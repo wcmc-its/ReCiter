@@ -57,11 +57,14 @@ public class GenderRepository {
 	}
 
 	public List<Gender> findAllById(List<String> uids) {
-		List<Gender> entities = new ArrayList<>();
+		List<Gender> genderList = new ArrayList<>();
 		for (String uid : uids) {
-			entities.add(genderTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			Gender gender = genderTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if (gender != null) {
+				genderList.add(gender);
+			}
 		}
-		return entities;
+		return genderList;
 	}
 
 	public boolean existsById(String genderSource) {

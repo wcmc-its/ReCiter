@@ -25,6 +25,7 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthResponse;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthFlowType;
+import reciter.utils.EnvUtils;
 
 @Service
 public class CognitoAuthService {
@@ -32,10 +33,10 @@ public class CognitoAuthService {
 	private static final Logger log = LoggerFactory.getLogger(CognitoAuthService.class);
 
     // These should be injected from Kubernetes Secrets/Env Vars
-    private final String USER_POOL_ID = System.getenv("AWS_COGNITO_USER_POOL_ID");
-    private final String CLIENT_ID = System.getenv("MASTER_CLIENT_ID");
-    private final String CLIENT_SECRET = System.getenv("MASTER_CLIENT_SECRET");
-    private final String AWS_REGION = System.getenv("AWS_REGION");
+    private final String USER_POOL_ID = EnvUtils.get("AWS_COGNITO_USER_POOL_ID");
+    private final String CLIENT_ID = EnvUtils.get("MASTER_CLIENT_ID");
+    private final String CLIENT_SECRET = EnvUtils.get("MASTER_CLIENT_SECRET");
+    private final String AWS_REGION = EnvUtils.get("AWS_REGION");
     
     
     

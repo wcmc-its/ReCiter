@@ -134,5 +134,5 @@ reciter.iml
 # Scoring test artifacts
 *-feedbackIdentityScoringInput.json
 *-identityOnlyScoringInput.json
-*-consolidated.csv
-*-item_level.csv
+*_consolidated.csv
+*_item_level.csv

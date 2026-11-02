@@ -11,9 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
 import reciter.model.article.ReCiterArticle;
 import reciter.model.article.ReCiterArticleFeedbackScore;
@@ -22,7 +19,6 @@ import reciter.model.identity.Identity;
 
 public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(InstitutionFeedbackStrategy.class);
 	private static final List<String> targetKeywords = Arrays.asList("Center", "Centre", "Centro", "Clinic", "Colegio",
 			"College", "Corporation", "Foundation", "Health System", "Hospital", "Institut", "Institute", "Institution",
 			"Istituto", "Klinik", "LLC", "New York Presbyterian", "New York-Presbyterian", "NewYork Presbyterian",
@@ -148,7 +144,7 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 			Map<String, Map<Integer, Long>> instCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.isTargetAuthor() && author.getAffiliation().length() < 850)	
+	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isBlank() && author.isTargetAuthor() && author.getAffiliation().length() < 850)	
 	                	 .flatMap(author -> {
 	                    	List<String> institutionList = sanitizeAffiliation(author.getAffiliation());
 		                        // Create a stream of (keyword, status) pairs
@@ -174,7 +170,7 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 				   			feedbackInstitutionMap = new HashMap<>();   
 									
 								   article.getArticleCoAuthors().getAuthors().stream()
-										.filter(author -> author!=null && author.isTargetAuthor() && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.getAffiliation().length() < 850)
+										.filter(author -> author!=null && author.isTargetAuthor() && author.getAffiliation()!=null && !author.getAffiliation().isBlank() && author.getAffiliation().length() < 850)
 										.forEach(author -> {
 											
 											
@@ -182,7 +178,7 @@ public class InstitutionFeedbackStrategy extends AbstractTargetAuthorFeedbackStr
 											 List<String> institutionList = sanitizeAffiliation(author.getAffiliation());
 											
 											institutionList.stream()
-														   .filter(institution -> institution!=null && !institution.isEmpty())
+														   .filter(institution -> institution!=null && !institution.isBlank())
 														   .forEach(institution -> {
 															   
 													 int countAccepted = 0;

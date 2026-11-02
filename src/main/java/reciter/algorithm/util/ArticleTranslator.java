@@ -28,20 +28,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
 import reciter.engine.StrategyParameters;
 import reciter.model.article.ReCiterArticle;
@@ -205,7 +204,12 @@ public class ArticleTranslator {
                     }
 
                     String affiliation = author.getAffiliation();
-                    AuthorName authorName = new AuthorName(firstName, middleName, lastName);
+                    // AuthorName's constructor derives an initial by substring(0, 1) of any
+                    // non-null firstName/middleName, so a blank-or-whitespace value crashes
+                    // with StringIndexOutOfBoundsException (e.g. a PubMed author with an
+                    // empty <ForeName>). Normalize blanks to null, which the constructor
+                    // handles. lastName is null-guarded above and never substringed.
+                    AuthorName authorName = new AuthorName(blankToNull(firstName), blankToNull(middleName), lastName);
 
                     ReCiterAuthor reCiterAuthor = new ReCiterAuthor(authorName, affiliation);
                     reCiterAuthor.setRank(i++);
@@ -221,9 +225,13 @@ public class ArticleTranslator {
 
         // Translating Keywords.
         ReCiterArticleKeywords articleKeywords = new ReCiterArticleKeywords();
-        if (keywordList != null) {
+        if (keywordList != null && keywordList.getKeywordlist() != null) {
             for (MedlineCitationKeyword keyword : keywordList.getKeywordlist()) {
-                articleKeywords.addKeyword(keyword.getKeyword());
+                // A keyword list can contain null entries (observed in PubMed data) —
+                // skip them, and defensively skip entries whose keyword text is null.
+                if (keyword != null && keyword.getKeyword() != null) {
+                    articleKeywords.addKeyword(keyword.getKeyword());
+                }
             }
         }
 
@@ -301,7 +309,8 @@ public class ArticleTranslator {
             Date date = localDate.toDate();
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             reCiterArticle.setPublicationDateStandardized(df.format(date));
-            df = new SimpleDateFormat("yyyy MMM dd");
+           // TODO  If the application becomes locale-specific, replace Locale.ENGLISH with the user's/application locale.
+            df = new SimpleDateFormat("yyyy MMM dd",Locale.ENGLISH);  
             reCiterArticle.setPublicationDateDisplay(df.format(date));
         }
         
@@ -332,7 +341,7 @@ public class ArticleTranslator {
             reCiterArticle.setPublicationDateStandardized(df.format(date));
             
             if(reCiterArticle.getPublicationDateDisplay()== null) {
-            	df = new SimpleDateFormat("yyyy MMM dd");
+            	df = new SimpleDateFormat("yyyy MMM dd", Locale.ENGLISH);
                 reCiterArticle.setPublicationDateDisplay(df.format(date));
             }
         }
@@ -417,7 +426,7 @@ public class ArticleTranslator {
                 String scopusAuthorLastName = scopusAuthor.getSurname();
                 for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
                     String reCiterAuthorLastName = reCiterAuthor.getAuthorName().getLastName();
-                    if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, reCiterAuthorLastName)) {
+                    if (Strings.CI.equals(scopusAuthorLastName, reCiterAuthorLastName)) {
                         String reCiterAuthorFirstName = reCiterAuthor.getAuthorName().getFirstName();
                         String reCiterAuthorFirstInitial = reCiterAuthor.getAuthorName().getFirstInitial();
                         if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
@@ -501,13 +510,13 @@ public class ArticleTranslator {
         // Volume
         if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
                 && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume() != null
-                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isEmpty()) {
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume().isBlank()) {
             reCiterArticle.setVolume(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getVolume());
         }
         // issue
         if (hasJournal && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue() != null
                 && pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue() != null
-                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isEmpty()) {
+                && !pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue().isBlank()) {
             reCiterArticle.setIssue(pubmedArticle.getMedlinecitation().getArticle().getJournal().getJournalissue().getIssue());
         }
 
@@ -533,6 +542,19 @@ public class ArticleTranslator {
         return reCiterArticle;
     }
     
+    /**
+     * Normalizes a blank-or-whitespace name part to null so that AuthorName's
+     * constructor (which substrings any non-null value to derive the initial)
+     * cannot throw StringIndexOutOfBoundsException on it.
+     * Package-private for testing.
+     */
+    static String blankToNull(String namePart) {
+        if (namePart == null || namePart.isBlank()) {
+            return null;
+        }
+        return namePart;
+    }
+
     /**
      * Phase 1: Determine canonical publication type from PubMed publication types.
      *
@@ -687,7 +709,7 @@ public class ArticleTranslator {
         String journalTitle = reCiterArticle.getJournal() != null && reCiterArticle.getJournal().getJournalTitle() != null
                 ? reCiterArticle.getJournal().getJournalTitle().toLowerCase() : "";
         boolean hasAbstract = reCiterArticle.getPublicationAbstract() != null
-                && !reCiterArticle.getPublicationAbstract().isEmpty();
+                && !reCiterArticle.getPublicationAbstract().isBlank();
         // Distinguish full IMRaD structure (METHODS + RESULTS) from partial structure
         // (has section labels like BACKGROUND/CONCLUSIONS but no methods/results).
         // Full IMRaD strongly confirms original research. Partial structure is weaker —
@@ -886,7 +908,7 @@ public class ArticleTranslator {
      * like "1262-71" (= 1262-1271, NOT single page).
      */
     private static boolean isSinglePageArticle(String pages) {
-        if (pages == null || pages.trim().isEmpty()) {
+        if (pages == null || pages.isBlank()) {
             return false;
         }
         pages = pages.trim();
@@ -949,11 +971,11 @@ public class ArticleTranslator {
 					boolean addCoAuthor = true;
 					for(String ignoredCoAuthorName: ignoredCoAuthorNames) {
 						String[] nameArray = ignoredCoAuthorName.split(" ");
-						if(nameArray[1] != null && !nameArray[1].isEmpty() 
+						if(nameArray[1] != null && !nameArray[1].isBlank() 
 								&&
 								author.getAuthorName().getFirstInitial().equalsIgnoreCase(nameArray[1])
 								&&
-								nameArray[0] != null && !nameArray[0].isEmpty()
+								nameArray[0] != null && !nameArray[0].isBlank()
 								&&
 								author.getAuthorName().getLastName().equalsIgnoreCase(nameArray[0])) { 
 							addCoAuthor = false;
@@ -973,7 +995,7 @@ public class ArticleTranslator {
 		//MeshMajor Feature
 		if(reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
 			for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
-				if(MeshMajorClusteringStrategy.isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
+				if(isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
 						EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 100000L) {
 					reCiterArticleFeatures.getMeshMajor().add(meshHeading.getDescriptorName().getDescriptorName());
 				}
@@ -1004,4 +1026,19 @@ public class ArticleTranslator {
 		reCiterArticle.setReCiterArticleFeatures(reCiterArticleFeatures);
     			
     }
+    
+    private static boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
+		// Easy case:
+		if (meshHeading.getDescriptorName().getMajorTopicYN().equals(ReCiterCitationYNEnum.Y.name())) {
+			return true;
+		}
+		// Single subheading or Multiple subheading:
+		for (ReCiterMeshHeadingQualifierName qualifierName : meshHeading.getQualifierNameList()) {
+			if (qualifierName.getMajorTopicYN() == ReCiterCitationYNEnum.Y) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

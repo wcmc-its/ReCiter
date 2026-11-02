@@ -62,14 +62,14 @@ public class EmailFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy 
 			 Map<String, Map<Integer, Long>> emailCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isEmpty() && author.isTargetAuthor())	
+	                	 .filter(author-> author!=null && author.getAffiliation()!=null && !author.getAffiliation().isBlank() && author.isTargetAuthor())	
 	                	 .flatMap(author -> {
 	                    	String email = sanitizeAffiliation(author);
 
 	                    	List<String> emailList = new ArrayList<>();
 
 	                        // Extract keyword from descriptorName if majorTopicYN is Y
-	                        if(email!=null && !email.isEmpty())
+	                        if(email!=null && !email.isBlank())
 	                        {
 	                            emailList.add(email);
 	                        }

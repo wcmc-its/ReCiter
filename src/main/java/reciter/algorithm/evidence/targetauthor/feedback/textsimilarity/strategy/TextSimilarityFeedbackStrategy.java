@@ -69,7 +69,7 @@ public class TextSimilarityFeedbackStrategy extends AbstractTargetAuthorFeedback
 			for (ReCiterArticle article : reCiterArticles) {
 				if (article == null) continue;
 				String text = getArticleText(article);
-				if (text != null && !text.isEmpty()) {
+				if (text != null && !text.isBlank()) {
 					articleTokens.put(article.getArticleId(), tokenize(text));
 				}
 			}

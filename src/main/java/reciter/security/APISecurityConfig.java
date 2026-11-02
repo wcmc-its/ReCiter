@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import reciter.utils.EnvUtils;
 
 /**
  * @author mjangari
@@ -86,8 +87,8 @@ public class APISecurityConfig {
         log.info("DEBUG: u is " + userPoolId);
 
         // 1. Mandatory Property Validation (The Guard Clause)
-        boolean isConfigMissing = jwkSetUri == null || jwkSetUri.isEmpty() || jwkSetUri.contains("${") ||
-                                  issuerUri == null || issuerUri.isEmpty() || issuerUri.contains("${") ||
+        boolean isConfigMissing = jwkSetUri == null || jwkSetUri.isBlank() || jwkSetUri.contains("${") ||
+                                  issuerUri == null || issuerUri.isBlank() || issuerUri.contains("${") ||
                                   "NONE".equals(userPoolId);
 
         if (isConfigMissing) {
@@ -108,7 +109,7 @@ public class APISecurityConfig {
         // 3. Audience Validator — handles ArrayList<String> from Cognito ID tokens
         OAuth2TokenValidator<Jwt> audValidator = new JwtClaimValidator<List<String>>(
             JwtClaimNames.AUD,
-            audList -> audList != null && audList.contains(System.getenv("MASTER_CLIENT_ID"))
+            audList -> audList != null && audList.contains(EnvUtils.get("MASTER_CLIENT_ID"))
         );
 
         // 4. Timestamp Validator — checks 'exp' and 'nbf' with a 30s clock skew

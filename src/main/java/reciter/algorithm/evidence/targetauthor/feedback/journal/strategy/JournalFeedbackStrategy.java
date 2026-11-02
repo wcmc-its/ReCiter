@@ -43,7 +43,7 @@ public class JournalFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 
 			// Count articles based on status per journal title
 	        Map<String, Map<Integer, Long>> journalTitleCountByArticleStatus = reCiterArticles.stream()
-	        	.filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isEmpty())	
+	        	.filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isBlank())	
 	            .collect(Collectors.groupingBy(
 	                article -> article.getJournal().getJournalTitle(),  // Group by journal title
 	                Collectors.groupingBy(
@@ -53,7 +53,7 @@ public class JournalFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 	            ));
 
 	        reCiterArticles.stream()
-	        .filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isEmpty())	
+	        .filter(article -> article!=null && article.getJournal()!=null  && article.getJournal().getJournalTitle()!=null && !article.getJournal().getJournalTitle().isBlank())	
 			 	.forEach(article -> {
 			 	
 			 	int countAccepted = 0;
