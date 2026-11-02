@@ -64,7 +64,7 @@ public class PubMedServiceImpl implements PubMedService {
         Iterator<reciter.database.dynamodb.model.PubMedArticle> iterator = pubMedRepository.findAllById(pmids).iterator();
         pubMedArticles = new ArrayList<>(pmids.size());
        
-		log.info("PubMed Article size in findByPmids is :" + pmids.size());
+		log.debug("PubMed Article size in findByPmids is :" + pmids.size());
         while (iterator.hasNext()) {
         	 PubMedArticle pubarticle =null;
         	reciter.database.dynamodb.model.PubMedArticle pubMedArticle = iterator.next();
@@ -73,7 +73,7 @@ public class PubMedServiceImpl implements PubMedService {
         	if(pubMedArticle!=null && pubMedArticle.isUsingS3())
         	{
         		PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pubMedArticle.getPmid(), PubMedArticle.class);
-    			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
+    			log.debug("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
 				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
         	}
         	 if (pubMedArticle == null) continue; // Skip the rest of the loop for this null element
@@ -96,9 +96,9 @@ public class PubMedServiceImpl implements PubMedService {
         reciter.database.dynamodb.model.PubMedArticle pubMedArticle = pubMedRepository.findById(pmid).orElseGet(() -> null);
 		performResourceCleanup(pubMedArticle);
         if (pubMedArticle != null && pubMedArticle.isUsingS3()) {
-    			log.info("Retreving pubmed article from s3 for " + pmid);
+    			log.debug("Retreving pubmed article from s3 for " + pmid);
     			PubMedArticle pubMedArticleOutput = (PubMedArticle) ddbs3.retrieveLargeItem(AmazonS3Config.BUCKET_NAME, PubMedArticle.class.getSimpleName() + "/" + pmid, PubMedArticle.class);
-    			log.info("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
+    			log.debug("PubMed Article retrieved from the S3 is : "+pubMedArticleOutput);
 				pubMedArticle.setPubMedArticle(pubMedArticleOutput);
     		} 
             return pubMedArticle.getPubMedArticle();
