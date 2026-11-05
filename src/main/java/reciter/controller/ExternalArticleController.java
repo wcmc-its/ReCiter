@@ -41,7 +41,7 @@ import reciter.service.dynamo.IDynamoDbGoldStandardService;
 
 /**
  * CRUD for publications manually added from non-PubMed sources (Scopus, Web of
- * Science, OpenAlex). These records never enter feature generation or scoring;
+ * Science, OpenAlex, WorldCat, Crossref). These records never enter feature generation or scoring;
  * they surface in feature-generator output only via includeExternal=true.
  */
 @Tag(name = "ExternalArticleController", description = "Operations on manually added external-source articles.")
@@ -50,7 +50,14 @@ public class ExternalArticleController {
 
     private static final Logger log = LoggerFactory.getLogger(ExternalArticleController.class);
 
-    private static final Pattern ARTICLE_ID_PATTERN = Pattern.compile("^(SCOPUS|WOS|OPENALEX|WORLDCAT):\\S+$");
+    private static final Pattern ARTICLE_ID_PATTERN = Pattern.compile(
+            "^(?:(SCOPUS|WOS|OPENALEX|WORLDCAT):\\S+|CROSSREF:10\\.\\d{4,9}/[^\\sA-Z]+)$");
+
+    /** reciterdb external_article.article_id is VARCHAR(96); a CROSSREF id carries the whole DOI. */
+    static final int MAX_CROSSREF_ARTICLE_ID_LENGTH = 96;
+
+    private static final String ARTICLE_ID_FORMAT_ERROR = "articleId is required and must be a prefixed identifier: "
+            + "SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, WORLDCAT:<id>, or CROSSREF:<lowercased DOI starting 10.>.";
 
     @Autowired
     private ExternalArticleService externalArticleService;
@@ -68,7 +75,7 @@ public class ExternalArticleController {
     private FeedbackLogService feedbackLogService;
 
     @Operation(summary = "Add an external-source article for a person.",
-            description = "Adds a publication from Scopus, Web of Science, or OpenAlex. Blocks on PMID/DOI duplicates "
+            description = "Adds a publication from Scopus, Web of Science, OpenAlex, WorldCat, or Crossref. Blocks on PMID/DOI duplicates "
                     + "against the person's PubMed record and existing external articles; warns on fuzzy title+year "
                     + "collisions unless force=true.")
     @PostMapping(value = "/reciter/external-article/by/uid", produces = "application/json")
@@ -160,10 +167,9 @@ public class ExternalArticleController {
         if (request == null || request.getUid() == null || request.getUid().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("uid is required."));
         }
-        if (request.getArticleId() == null
-                || !ARTICLE_ID_PATTERN.matcher(request.getArticleId().trim()).matches()) {
+        if (articleIdError(request.getArticleId()) != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(errorBody("articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>."));
+                    .body(errorBody(articleIdError(request.getArticleId())));
         }
         if (request.getActorPersonIdentifier() == null || request.getActorPersonIdentifier().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("actorPersonIdentifier is required."));
@@ -251,9 +257,9 @@ public class ExternalArticleController {
     }
 
     private String validate(ExternalArticle externalArticle) {
-        if (externalArticle.getArticleId() == null
-                || !ARTICLE_ID_PATTERN.matcher(externalArticle.getArticleId().trim()).matches()) {
-            return "articleId is required and must be a prefixed identifier: SCOPUS:<id>, WOS:<id>, OPENALEX:<id>, or WORLDCAT:<id>.";
+        String articleIdError = articleIdError(externalArticle.getArticleId());
+        if (articleIdError != null) {
+            return articleIdError;
         }
         externalArticle.setArticleId(externalArticle.getArticleId().trim());
         if (externalArticle.getTitle() == null || externalArticle.getTitle().isBlank()) {
@@ -264,6 +270,23 @@ public class ExternalArticleController {
             externalArticle.setSourceType(prefix);
         } else if (!prefix.equals(externalArticle.getSourceType().trim())) {
             return "sourceType '" + externalArticle.getSourceType() + "' does not match articleId prefix '" + prefix + "'.";
+        }
+        if ("CROSSREF".equals(prefix)) {
+            // The id is the DOI. Pin the doi field to it so the dup check (which compares doi
+            // fields) catches the same work added from OpenAlex/Scopus, in both directions.
+            externalArticle.setDoi(externalArticle.getArticleId().substring(prefix.length() + 1));
+        }
+        return null;
+    }
+
+    /** Null when the id is acceptable, else the 400 message. */
+    static String articleIdError(String articleId) {
+        if (articleId == null || !ARTICLE_ID_PATTERN.matcher(articleId.trim()).matches()) {
+            return ARTICLE_ID_FORMAT_ERROR;
+        }
+        if (articleId.trim().startsWith("CROSSREF:") && articleId.trim().length() > MAX_CROSSREF_ARTICLE_ID_LENGTH) {
+            return "articleId '" + articleId.trim() + "' is longer than " + MAX_CROSSREF_ARTICLE_ID_LENGTH
+                    + " characters (the reciterdb article_id width); this DOI cannot be added as a CROSSREF article.";
         }
         return null;
     }
