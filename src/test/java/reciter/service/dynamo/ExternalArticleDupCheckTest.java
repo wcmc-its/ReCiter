@@ -265,4 +265,26 @@ public class ExternalArticleDupCheckTest {
         assertEquals("2023", ExternalArticleDupCheck.year("2023-09-15"));
         assertNull(ExternalArticleDupCheck.year("n.d."));
     }
+
+    /** A CROSSREF row stays CROSSREF forever, so the same DOI arriving from another source must
+     * BLOCK on DOI — in both directions (#1060 in PM). */
+    @Test
+    public void crossrefAndOpenAlexSameDoiBlockBothWays() {
+        ExternalArticle crossref = candidate("CROSSREF:10.1016/j.surg.2026.110815", null,
+                "10.1016/j.surg.2026.110815", "Crossref Title", "2026");
+        ExternalArticle openalex = candidate("OPENALEX:W999", null,
+                "https://doi.org/10.1016/J.SURG.2026.110815", "OpenAlex Title", "2026");
+
+        Result crossrefAfterOpenAlex = ExternalArticleDupCheck.check(crossref,
+                null, null, null, Collections.singletonList(openalex));
+        assertEquals(Level.BLOCKED, crossrefAfterOpenAlex.getLevel());
+        assertEquals(MatchType.DOI_MATCH_EXTERNAL, crossrefAfterOpenAlex.getMatches().get(0).getType());
+        assertEquals("OPENALEX:W999", crossrefAfterOpenAlex.getMatches().get(0).getMatchedId());
+
+        Result openAlexAfterCrossref = ExternalArticleDupCheck.check(openalex,
+                null, null, null, Collections.singletonList(crossref));
+        assertEquals(Level.BLOCKED, openAlexAfterCrossref.getLevel());
+        assertEquals(MatchType.DOI_MATCH_EXTERNAL, openAlexAfterCrossref.getMatches().get(0).getType());
+        assertEquals("CROSSREF:10.1016/j.surg.2026.110815", openAlexAfterCrossref.getMatches().get(0).getMatchedId());
+    }
 }
