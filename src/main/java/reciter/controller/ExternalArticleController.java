@@ -152,7 +152,7 @@ public class ExternalArticleController {
     }
 
     @Operation(summary = "Record feedback on an external-source article.",
-            description = "One endpoint for curator actions (reject/dismiss/reopen a Scopus/OpenAlex candidate) and "
+            description = "One endpoint for curator actions (reject/dismiss/reopen a Scopus/OpenAlex/Crossref candidate) and "
                     + "faculty actions (dispute/retract/resolve an already-accepted row). Appends one FeedbackLog row "
                     + "per call — who acted distinguishes reject-from-dispute, not the action name. REJECTED suppresses "
                     + "an existing ExternalArticle row; ACCEPTED un-suppresses it unless the supersede rule owns the "
