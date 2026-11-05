@@ -1109,7 +1109,7 @@ public class ReCiterController {
 
     /**
      * With includeExternal=true, appends the person's manually added external-source
-     * articles (Scopus/WoS/OpenAlex) as a sibling "externalArticles" field — they are
+     * articles (Scopus/WoS/OpenAlex/Crossref) as a sibling "externalArticles" field — they are
      * read at serialization time and never enter feature generation or Analysis.
      * Suppressed rows (superseded by a PubMed record with the same DOI) are excluded.
      */
