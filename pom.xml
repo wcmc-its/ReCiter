@@ -47,7 +47,7 @@
 	</developers>
 
 	<scm>
-		<connection>scm:git:git://github.com/wcmc-its/ReCiter.git</connection>
+		<connection>scm:git:https://github.com/wcmc-its/ReCiter.git</connection>
 		<developerConnection>scm:git:git@github.com:wcmc-its/ReCiter.git</developerConnection>
 		<url>https://github.com/wcmc-its/ReCiter</url>
 		<tag>4.0.0</tag>
@@ -57,6 +57,20 @@
 		<java.version>21</java.version>
 		<log4j2.version>2.24.3</log4j2.version>
 	</properties>
+	
+	<repositories>
+		<repository>
+			<id>central-snapshots</id>
+			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<resources>
@@ -67,7 +81,6 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
@@ -125,7 +138,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.1.2</version>
 				<executions>
 					<execution>
 						<id>copy</id>
