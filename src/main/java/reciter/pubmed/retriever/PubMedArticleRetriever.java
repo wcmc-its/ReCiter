@@ -36,8 +36,11 @@ public class PubMedArticleRetriever {
 	
     private static final String PUBMED_SERVICE = EnvUtils.get("PUBMED_SERVICE");
 
-    // RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
-    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public PubMedArticleRetriever(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     /**
      * Initializes and starts threads that handles the retrieval process. Partition the number of articles
@@ -49,7 +52,6 @@ public class PubMedArticleRetriever {
         }
         String pubmedService = EnvUtils.require("PUBMED_SERVICE", PUBMED_SERVICE);
         String nodeUrl = pubmedService.endsWith("/pubmed")?pubmedService + "/query-complex/" :pubmedService + "/pubmed/query-complex/";
-        RestTemplate restTemplate = REST_TEMPLATE;
         log.info("Sending web request: for query: " + pubMedQuery + ":" + nodeUrl);
         ResponseEntity<PubMedArticle[]> responseEntity = null;
         try {

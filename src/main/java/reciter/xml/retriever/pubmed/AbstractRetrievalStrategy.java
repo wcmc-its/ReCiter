@@ -31,6 +31,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -53,8 +54,8 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
 	private static final int nodeSize = 7;
 
-	// RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
-	private static final RestTemplate REST_TEMPLATE = new RestTemplate();
+	@Autowired
+	private RestTemplate restTemplate;
 
 	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
 	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";
@@ -257,19 +258,19 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	}
 
 	public List<PubMedArticle> retrievePubMed(PubMedQuery pubMedQuery, int numberOfPubmedArticles)  {
-		PubMedArticleRetriever pubMedArticleRetriever = new PubMedArticleRetriever();
+		PubMedArticleRetriever pubMedArticleRetriever = new PubMedArticleRetriever(restTemplate);
 		return pubMedArticleRetriever.retrievePubMed(pubMedQuery, numberOfPubmedArticles);
 	}
 
 	@Override
 	public List<ScopusArticle> retrieveScopus(Collection<Long> pmids) {
-		ScopusArticleRetriever<Long> scopusArticleRetriever = new ScopusArticleRetriever<Long>();
+		ScopusArticleRetriever<Long> scopusArticleRetriever = new ScopusArticleRetriever<Long>(restTemplate);
 		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.PMID_MODIFIER, new ArrayList<Long>(pmids));
 	}
 	
 	@Override
 	public List<ScopusArticle> retrieveScopusDoi(Collection<String> dois) {
-		ScopusArticleRetriever<String> scopusArticleRetriever = new ScopusArticleRetriever<String>();
+		ScopusArticleRetriever<String> scopusArticleRetriever = new ScopusArticleRetriever<String>(restTemplate);
 		return scopusArticleRetriever.retrieveScopus(ScopusArticleRetriever.DOI_MODIFIER, new ArrayList<String>(dois));
 	}
 
@@ -279,7 +280,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		String pubmedService = EnvUtils.require("PUBMED_SERVICE", PUBMED_SERVICE);
 		String nodeUrl = pubmedService.endsWith("/pubmed")?pubmedService + "/query-number-pubmed-articles/":pubmedService + "/pubmed/query-number-pubmed-articles/";
 		
-		RestTemplate restTemplate = REST_TEMPLATE;
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<Integer> responseEntity = null;
 		slf4jLogger.info("PubMedQuery: " + pubMedQueryType);
@@ -303,7 +303,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 
 	private List<PubMedArticle> retrievePubMedViaRest(String pubMedQuery) {
 		String nodeUrl = loadBalance();
-		RestTemplate restTemplate = REST_TEMPLATE;
 		slf4jLogger.info("Sending web request: " + nodeUrl);
 		ResponseEntity<PubMedArticle[]> responseEntity = null;
 		try {
@@ -345,7 +344,6 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 		}
 		List<ScopusArticle> scopusArticlesResult = new ArrayList<ScopusArticle>();
 		for (String pmidQuery : pmidQueries) {
-			RestTemplate restTemplate = REST_TEMPLATE;
 			try {
 				slf4jLogger.info("Sending web request: " + nodeUrl + pmidQuery);
 				ResponseEntity<ScopusArticle[]> responseEntity = restTemplate.getForEntity(nodeUrl + pmidQuery, ScopusArticle[].class);

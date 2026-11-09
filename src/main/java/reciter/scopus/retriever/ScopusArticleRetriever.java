@@ -52,8 +52,11 @@ public class ScopusArticleRetriever<T> {
 
     private static final String SCOPUS_SERVICE = EnvUtils.get("SCOPUS_SERVICE");
 
-    // RestTemplate is thread-safe; share one instance instead of rebuilding its converters on every call.
-    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public ScopusArticleRetriever(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     /**
      * Modifier options: "pmid" or "doi".
@@ -68,7 +71,6 @@ public class ScopusArticleRetriever<T> {
         }
         String scopusService = EnvUtils.require("SCOPUS_SERVICE", SCOPUS_SERVICE);
         String nodeUrl = scopusService.endsWith("/scopus")?scopusService + "/query/": scopusService + "/scopus/query/";
-        RestTemplate restTemplate = REST_TEMPLATE;
         log.info("Sending web request for query " + queryParams + " modifier:" + queryModifier + ":" + nodeUrl);
         List<Object> pmidList = new ArrayList<>();
         for (T t : queryParams) {
