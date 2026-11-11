@@ -31,7 +31,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -54,8 +53,11 @@ public abstract class AbstractRetrievalStrategy implements RetrievalStrategy {
 	private static final String nodeUrlEnd = ".herokuapp.com/reciter/retrieve/pubmed/by/query?";
 	private static final int nodeSize = 7;
 
-	@Autowired
-	private RestTemplate restTemplate;
+	protected final RestTemplate restTemplate;
+
+	protected AbstractRetrievalStrategy(RestTemplate restTemplate) {
+		this.restTemplate = restTemplate;
+	}
 
 	private static final String scopusNodeUrlBegin = "https://reciter-scopus-retrieval-";
 	private static final String scopusNodeUrlEnd = ".herokuapp.com/reciter/retrieve/scopus/by/pmids/";

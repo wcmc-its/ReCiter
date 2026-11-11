@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,7 +40,7 @@ public class GoldStandardRetrievalStrategyTest {
 
 	@BeforeEach
 	public void setUp() {
-		strategy = new GoldStandardRetrievalStrategy();
+		strategy = new GoldStandardRetrievalStrategy(new RestTemplate());
 		ReflectionTestUtils.setField(strategy, "dynamoDbGoldStandardService", dynamoDbGoldStandardService);
 	}
 

@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.util.ReflectionTestUtils.invokeMethod;
@@ -15,7 +16,7 @@ import reciter.model.identity.Identity;
 
 public class SecondInitialRetrievalStrategyTest {
 
-	private final SecondInitialRetrievalStrategy strategy = new SecondInitialRetrievalStrategy();
+	private final SecondInitialRetrievalStrategy strategy = new SecondInitialRetrievalStrategy(new RestTemplate());
 
 	private Identity identity(AuthorName primary, Set<AuthorName> alternates) {
 		Identity id = new Identity();
