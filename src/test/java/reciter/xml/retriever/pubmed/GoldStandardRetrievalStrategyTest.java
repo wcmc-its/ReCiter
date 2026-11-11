@@ -35,12 +35,15 @@ public class GoldStandardRetrievalStrategyTest {
 
 	@Mock
 	private IDynamoDbGoldStandardService dynamoDbGoldStandardService;
+	
+	@Mock
+	private RestTemplate restTemplate;
 
 	private GoldStandardRetrievalStrategy strategy;
 
 	@BeforeEach
 	public void setUp() {
-		strategy = new GoldStandardRetrievalStrategy(new RestTemplate());
+		strategy = new GoldStandardRetrievalStrategy(restTemplate);
 		ReflectionTestUtils.setField(strategy, "dynamoDbGoldStandardService", dynamoDbGoldStandardService);
 	}
 

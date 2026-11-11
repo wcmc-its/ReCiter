@@ -3,6 +3,7 @@ package reciter.xml.retriever.pubmed;
 import org.springframework.web.client.RestTemplate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.util.ReflectionTestUtils.invokeMethod;
 
 import java.util.Collections;
@@ -16,7 +17,7 @@ import reciter.model.identity.Identity;
 
 public class SecondInitialRetrievalStrategyTest {
 
-	private final SecondInitialRetrievalStrategy strategy = new SecondInitialRetrievalStrategy(new RestTemplate());
+	private final SecondInitialRetrievalStrategy strategy = new SecondInitialRetrievalStrategy(mock(RestTemplate.class));
 
 	private Identity identity(AuthorName primary, Set<AuthorName> alternates) {
 		Identity id = new Identity();
