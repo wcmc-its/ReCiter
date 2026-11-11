@@ -145,6 +145,8 @@ public class ReciterFeedbackArticleScorer extends AbstractFeedbackArticleScorer 
 			strategyParameters.isInformedAbsenceEnabled(),
 			strategyParameters.getInformedAbsenceScale(),
 			strategyParameters.getInformedAbsenceTargetAuthorNameStrength());
+		targetAuthorNameStrategy.setSkipUncuratedRegisteredName(
+			strategyParameters.isInformedAbsenceSkipUncuratedRegisteredName());
 
 		// Configure informed absence for co-author name strategy
 		CoauthorNameFeedbackStrategy coAuthorNameStrategy = new CoauthorNameFeedbackStrategy();
