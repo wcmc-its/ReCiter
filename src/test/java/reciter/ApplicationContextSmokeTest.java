@@ -118,4 +118,14 @@ public class ApplicationContextSmokeTest {
                 .andExpect(content().string(containsString("/reciter/ping")))
                 .andExpect(content().string(containsString("ReCiter publication management system")));
     }
+
+    /** Without these schemes Swagger UI has no Authorize button, so every "Try it out" 401s. */
+    @Test
+    public void springdocDeclaresApiKeyAndBearerSchemes() throws Exception {
+        mockMvc.perform(get("/reciter/v3/api-docs/reciter-group"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"securitySchemes\"")))
+                .andExpect(content().string(containsString("\"name\":\"api-key\"")))
+                .andExpect(content().string(containsString("\"scheme\":\"bearer\"")));
+    }
 }
