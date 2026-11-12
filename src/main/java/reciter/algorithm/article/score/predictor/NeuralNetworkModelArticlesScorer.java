@@ -46,6 +46,7 @@ public class NeuralNetworkModelArticlesScorer {
 	private static final String LAMBDA_FUNCTION_REGION = "aws.lambda.region";
 	private static final String RECITERSCORING_SERVICE_URL = EnvUtils.get("RECITERSCORING_SERVICE_URL");
 	private static final String LAMBDA_FUNCTION_INVOCATION_URL = "local.lambda.function.invocation.url";
+	private static final String LAMBDA_NAME = "RECITER_SCORING_LAMBDA_FUNCTION";
 
 	// ── Java 21: reusable ObjectMapper (thread-safe, expensive to construct) ──
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -65,7 +66,7 @@ public class NeuralNetworkModelArticlesScorer {
 				&& (isS3UploadRequiredString == "false" || isS3UploadRequiredString.equalsIgnoreCase("false"))) {
 			authorshipLikelihoodScore = callLocalLambda(goldStandardName, dataFileName, s3BucketName,isS3UploadRequiredString);
 		} else {
-			String lambdaFunction = EnvUtils.require("reciterScoringLambdaFunction", EnvUtils.get("RECITER_SCORING_LAMBDA_FUNCTION"));
+			String lambdaFunction = EnvUtils.require("reciterScoringLambdaFunction", EnvUtils.get(LAMBDA_NAME));
 			log.info("lambdaFunction Name: {}" ,lambdaFunction);
 
 			authorshipLikelihoodScore = callAwsLambda(goldStandardName, dataFileName, s3BucketName,
