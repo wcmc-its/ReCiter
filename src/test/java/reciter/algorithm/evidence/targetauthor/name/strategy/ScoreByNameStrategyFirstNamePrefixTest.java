@@ -9,7 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -284,5 +287,73 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 					key + " must still equal nameMatchFirstType.full-exact; "
 							+ "changing it requires a model retrain (issue #746)");
 		}
+	}
+
+	// ---- null safety -------------------------------------------------------
+
+	private static final String[] SCORERS = { "scoreCombinedMiddleLastName", "scoreLastName",
+			"scoreFirstNameMiddleNameNull", "scoreFirstNameMiddleName" };
+
+	private void invokeScorer(String methodName, AuthorName identity,
+			Map<ReCiterAuthor, ReCiterAuthor> articleAuthors, AuthorNameEvidence evidence) throws Exception {
+		Method m = ScoreByNameStrategy.class.getDeclaredMethod(methodName, AuthorName.class,
+				AuthorName.class, Map.class, AuthorNameEvidence.class);
+		m.setAccessible(true);
+		m.invoke(strategy, identity, identity, articleAuthors, evidence);
+	}
+
+	@Test
+	public void scorersIgnoreNullIdentityAuthor() throws Exception {
+		for (String scorer : SCORERS) {
+			AuthorNameEvidence e = new AuthorNameEvidence();
+			invokeScorer(scorer, null, articleAuthor(name("Paul", null, "Cole")), e);
+			assertNull(e.getNameMatchFirstType(), scorer);
+			assertNull(e.getNameMatchLastType(), scorer);
+		}
+	}
+
+	@Test
+	public void scorersIgnoreNullArticleAuthorOrName() throws Exception {
+		AuthorName identity = name("Paul", "James", "Cole");
+		Map<ReCiterAuthor, ReCiterAuthor> nullValue = new LinkedHashMap<>();
+		nullValue.put(new ReCiterAuthor(name("Paul", null, "Cole"), null), null);
+		Map<ReCiterAuthor, ReCiterAuthor> nullName = new LinkedHashMap<>();
+		ReCiterAuthor noName = new ReCiterAuthor(null, null);
+		nullName.put(noName, noName);
+		for (String scorer : SCORERS) {
+			AuthorNameEvidence e1 = new AuthorNameEvidence();
+			invokeScorer(scorer, identity, nullValue, e1);
+			assertNull(e1.getNameMatchFirstType(), scorer);
+			AuthorNameEvidence e2 = new AuthorNameEvidence();
+			invokeScorer(scorer, identity, nullName, e2);
+			assertNull(e2.getNameMatchFirstType(), scorer);
+		}
+	}
+
+	@Test
+	public void middleNameCheckSkipsNullIdentityNames() throws Exception {
+		Method m = ScoreByNameStrategy.class.getDeclaredMethod("isNotNullIdentityMiddleName",
+				java.util.Collection.class);
+		m.setAccessible(true);
+		List<AuthorName> names = new ArrayList<>(Arrays.asList(null, name("Paul", "James", "Cole")));
+		assertTrue((Boolean) m.invoke(strategy, names));
+		assertEquals(false, m.invoke(strategy, new ArrayList<AuthorName>(Arrays.asList((AuthorName) null))));
+	}
+
+	@Test
+	public void highestScoreOfNoEvidenceIsAnEmptyEvidence() throws Exception {
+		Method m = ScoreByNameStrategy.class.getDeclaredMethod("calculateHighestScore", List.class);
+		m.setAccessible(true);
+		assertNotNull(m.invoke(strategy, new ArrayList<AuthorNameEvidence>()));
+	}
+
+	@Test
+	public void scorerIgnoresNullInitials() throws Exception {
+		AuthorName identity = name("Paul", "James", "Cole");
+		identity.setFirstInitial(null);
+		identity.setMiddleInitial(null);
+		// Must not throw; branches that need an initial simply do not match.
+		invokeScorer("scoreFirstNameMiddleName", identity,
+				articleAuthor(name("PaulJ", null, "Cole")), new AuthorNameEvidence());
 	}
 }
