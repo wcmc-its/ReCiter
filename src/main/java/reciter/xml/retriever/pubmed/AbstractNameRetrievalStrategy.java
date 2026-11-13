@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,6 +37,11 @@ import reciter.pubmed.retriever.PubMedQuery;
 import reciter.xml.retriever.engine.AliasReCiterRetrievalEngine.IdentityNameType;
 
 public abstract class AbstractNameRetrievalStrategy extends AbstractRetrievalStrategy {
+
+	protected AbstractNameRetrievalStrategy(RestTemplate restTemplate) {
+		super(restTemplate);
+	}
+
 
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(AbstractNameRetrievalStrategy.class);
 

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,6 +42,11 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 @Component("orcidRetrievalStrategy")
 public class OrcidRetrievalStrategy extends AbstractRetrievalStrategy {
 
+	public OrcidRetrievalStrategy(RestTemplate restTemplate) {
+		super(restTemplate);
+	}
+
+
 	private static final String retrievalStrategyName = "OrcidRetrievalStrategy";
 
 	@Override
@@ -50,7 +56,7 @@ public class OrcidRetrievalStrategy extends AbstractRetrievalStrategy {
 
 	private String constructOrcidQuery(Identity identity) {
 		String orcid = identity.getOrcid();
-		if (orcid != null && !orcid.isEmpty()) {
+		if (orcid != null && !orcid.isBlank()) {
 			return orcid.trim() + "[auid]";
 		}
 		return null;

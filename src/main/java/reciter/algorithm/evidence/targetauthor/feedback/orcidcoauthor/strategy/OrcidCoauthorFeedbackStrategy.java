@@ -44,19 +44,15 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	            .collect(Collectors.toMap(
 	                ReCiterArticle::getArticleId,
 	                article -> (int)article.getArticleCoAuthors().getAuthors().stream()
-	                    .filter(author -> !author.isTargetAuthor() && author.getOrcid()!=null && !author.getOrcid().isEmpty())
+	                    .filter(author -> !author.isTargetAuthor() && author.getOrcid()!=null && !author.getOrcid().isBlank())
 	                    .map(ReCiterAuthor::getOrcid)
 	                    .count()
 	            ));
 	        
-	        nonTargetAuthorOrcidCountPerPmid.forEach((key, value) -> {
-	        	slf4jLogger.info("nonTargetAuthorOrcidCountPerPmid : " + key + " = " + value);
-	        });
-	        
 	        Map<String, Map<Integer, Long>> nonTargetAuthororcidCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
 	                .flatMap(article -> article.getArticleCoAuthors().getAuthors().stream()
-	                	 .filter(author-> author!=null && author.getOrcid()!=null && !author.getOrcid().isEmpty() && !author.isTargetAuthor())	
+	                	 .filter(author-> author!=null && author.getOrcid()!=null && !author.getOrcid().isBlank() && !author.isTargetAuthor())	
 	                	 .flatMap(author -> {
 	                    	String orcid = author.getOrcid();
 	                    	List<String> orcidList = new ArrayList<>();
@@ -76,13 +72,6 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                    )
 	                ));
 	        
-	        nonTargetAuthororcidCountsByArticleStatus.forEach((outerKey, innerMap) -> {
-	        	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus : " + outerKey);
-	            innerMap.forEach((innerKey, value) -> {
-	            	slf4jLogger.info("nonTargetAuthororcidCountsByArticleStatus innerMap  :  " + innerKey + " = " + value);
-	            });
-	        });
-	        
 	        reCiterArticles.stream()
 	        		.filter(article->article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null)
 	        		.forEach(article->{
@@ -92,7 +81,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 				feedbackOrcidCoAuthorMap = new HashMap<>();
 				listOfAuthors.stream()
 							.filter(author-> author!=null
-							 && author.getOrcid()!=null && !author.getOrcid().isEmpty()
+							 && author.getOrcid()!=null && !author.getOrcid().isBlank()
 							 && !author.isTargetAuthor())
 							.forEach(author->{
 								
@@ -142,10 +131,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 								 feedbackScore = determineFeedbackScore(article.getGoldStandard(), sumAccepted, sumRejected, scoreAll);
 							 }
 
-							slf4jLogger.info("sumAccepted :" + sumAccepted + "\nSumRejected : " + sumRejected +"\n ScoreAll :" + scoreAll);
-							slf4jLogger.info("Feedback Score:"+feedbackScore);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
-							slf4jLogger.info("exportedFeedbackScore:"+exportedFeedbackScore);
 							ReCiterArticleFeedbackScore feedbackOrcid = populateArticleFeedbackScore(article.getArticleId(),author.getOrcid(),
 									   countAccepted,countRejected,
 									   scoreAll,sumAccepted,

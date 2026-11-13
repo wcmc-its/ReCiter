@@ -23,7 +23,7 @@ public class SwaggerConfig {
 
 	@Bean
 	public OpenAPI apiInfo() {
-		return new OpenAPI().info(new Info().title("ReCiter publication management system").version("2.1.3")
+		return new OpenAPI().info(new Info().title("ReCiter publication management system").version("4.0.0")
 				.contact(new Contact().name("Paul J. Albert").url("https://github.com/wcmc-its/ReCiter")
 						.email("paa2013@med.cornell.edu"))
 				.description(

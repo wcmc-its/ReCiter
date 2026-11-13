@@ -134,7 +134,7 @@ public class KeywordFeedbackStrategy extends AbstractTargetAuthorFeedbackStrateg
 												 
 												 String keyword = extractKeyword(meshHeading);
 												
-												if(keyword!=null && !keyword.isEmpty())
+												if(keyword!=null && !keyword.isBlank())
 												{	
 													
 													if(keywordCountsByArticleStatus!=null && keywordCountsByArticleStatus.size() > 0)

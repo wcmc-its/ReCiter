@@ -59,7 +59,10 @@ public class AnalysisOutputRepository {
 	public List<AnalysisOutput> findAllById(List<String> uids) {
 		List<AnalysisOutput> analysisOutputs = new ArrayList<>();
 		for (String uid : uids) {
-			analysisOutputs.add(analysisTable.getItem(r -> r.key(k -> k.partitionValue(uid))));
+			AnalysisOutput analysisOutput = analysisTable.getItem(r -> r.key(k -> k.partitionValue(uid)));
+			if (analysisOutput != null) {
+				analysisOutputs.add(analysisOutput);
+			}
 		}
 		return analysisOutputs;
 	}

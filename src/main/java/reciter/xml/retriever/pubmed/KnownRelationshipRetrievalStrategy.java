@@ -1,5 +1,6 @@
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
@@ -24,6 +25,11 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
  */
 @Component("knownRelationshipRetrievalStrategy")
 public class KnownRelationshipRetrievalStrategy extends AbstractNameRetrievalStrategy {
+
+	public KnownRelationshipRetrievalStrategy(RestTemplate restTemplate) {
+		super(restTemplate);
+	}
+
 	
 	private static final String retrievalStrategyName = "KnownRelationshipRetrievalStrategy";
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(KnownRelationshipRetrievalStrategy.class);

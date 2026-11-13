@@ -1,20 +1,21 @@
 package reciter.database.dynamodb.repository;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.database.dynamodb.model.FeedbackLog;
 import reciter.service.FeedbackLogService;
@@ -28,7 +29,7 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
  * <p>Covers schema matching, unique sort-key formatting, and Phase 33-02 
  * idempotency / retry semantics using the repository pattern.
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FeedbackLogServiceImplTest {
 
     @Mock
@@ -37,7 +38,7 @@ public class FeedbackLogServiceImplTest {
     private FeedbackLogServiceImpl service;
     private FeedbackLog logEntry;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         service = new FeedbackLogServiceImpl(feedbackLogRepository);
         // Fresh initialization before each test run prevents state pollution
@@ -87,8 +88,8 @@ public class FeedbackLogServiceImplTest {
         
         String sk = captureSavedEntry().getSk();
         // Format assertion: "<epoch>#<8-hex>"
-        assertTrue("sk should match epoch#hex format: " + sk, sk.matches("^\\d+#[0-9a-f]{8}$"));
-        assertTrue("sk should start with the epoch: " + sk, sk.startsWith("1700000000#"));
+		assertTrue(sk.matches("^\\d+#[0-9a-f]{8}$"), "sk should match epoch#hex format: " + sk);
+		assertTrue(sk.startsWith("1700000000#"), "sk should start with the epoch: " + sk);
     }
 
     @Test

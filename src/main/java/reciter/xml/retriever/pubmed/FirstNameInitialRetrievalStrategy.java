@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import java.util.Date;
 import java.util.Set;
 
@@ -32,6 +33,11 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("firstNameInitialRetrievalStrategy")
 public class FirstNameInitialRetrievalStrategy extends AbstractNameRetrievalStrategy {
+
+	public FirstNameInitialRetrievalStrategy(RestTemplate restTemplate) {
+		super(restTemplate);
+	}
+
 
 	private static final String retrievalStrategyName = "FirstNameInitialRetrievalStrategy";
 	private final static Logger slf4jLogger = LoggerFactory.getLogger(FirstNameInitialRetrievalStrategy.class);

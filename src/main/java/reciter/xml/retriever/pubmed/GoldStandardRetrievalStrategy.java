@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +40,11 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("goldStandardRetrievalStrategy")
 public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
+
+	public GoldStandardRetrievalStrategy(RestTemplate restTemplate) {
+		super(restTemplate);
+	}
+
 
 	private static final String retrievalStrategyName = "GoldStandardRetrievalStrategy";
 
@@ -154,7 +160,7 @@ public class GoldStandardRetrievalStrategy extends AbstractRetrievalStrategy {
 	}
 
 	private String requireValidUid(Identity identity) {
-		if (identity == null || identity.getUid() == null || identity.getUid().trim().isEmpty()) {
+		if (identity == null || identity.getUid() == null || identity.getUid().isBlank()) {
 			throw new IllegalArgumentException("Identity UID is missing or blank.");
 		}
 		return identity.getUid().trim();
