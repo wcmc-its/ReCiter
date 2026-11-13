@@ -44,16 +44,12 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	@Override
 	public double executeStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 		
-		//List<AuthorName> sanitizedIdentityAuthor = new ArrayList<AuthorName>();
-		//Set<AuthorName> sanitizedTargetAuthor = new HashSet<AuthorName>();
-		
-		
 		AuthorNameEvidence authorNameEvidence;
 		
-		/*if(identity != null) { 
-			sanitizeIdentityAuthorNames(identity, sanitizedIdentityAuthor);
-			checkToIgnoreNameVariants(sanitizedIdentityAuthor);
-		}*/
+		// Nothing to score without an identity or articles; avoids a NullPointerException below.
+		if(identity == null || reCiterArticles == null) {
+			return 1;
+		}
 		
 		// A null map is treated like an empty one instead of failing with a NullPointerException.
 		final Map<AuthorName, AuthorName> sanitizedNames = identity.getSanitizedNames() != null
@@ -61,6 +57,9 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 		List<AuthorNameEvidence> authorNameEvidences = new ArrayList<AuthorNameEvidence>(sanitizedNames.size());
 		
 		for(ReCiterArticle reCiterArticle: reCiterArticles) {
+			if (reCiterArticle == null) {
+		        continue;
+		    }
 			ReCiterArticleAuthors authors = reCiterArticle.getArticleCoAuthors();
 			
 			// An article without authors (or without a sanitized author map) has no target author,
@@ -70,7 +69,8 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 			Map<ReCiterAuthor, ReCiterAuthor> sanitizedTargetAuthor = sanitizedAuthorMap
 			.entrySet()
 			.stream()
-			.filter(sanitizedArticleAuthor -> sanitizedArticleAuthor.getKey().getAuthorName() != null && sanitizedArticleAuthor.getKey().isTargetAuthor())
+			.filter(sanitizedArticleAuthor -> sanitizedArticleAuthor.getKey() != null && sanitizedArticleAuthor.getValue() != null
+					&& sanitizedArticleAuthor.getKey().getAuthorName() != null && sanitizedArticleAuthor.getKey().isTargetAuthor())
 			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 			
 			
@@ -207,15 +207,15 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	}
 
 	private void scoreCombinedMiddleLastName(AuthorName identityAuthor, AuthorName identityAuthorNameOriginal, Map<ReCiterAuthor, ReCiterAuthor> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
-		if(articleAuthorNames.size() > 0) {
+		if(articleAuthorNames != null && articleAuthorNames.size() > 0) {
 			Map.Entry<ReCiterAuthor,ReCiterAuthor> entry = articleAuthorNames.entrySet().iterator().next();
 			// Nothing to compare against when the identity name or the article author/name is missing.
-			if(identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
+			if(entry == null || identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
 				return;
 			}
 			AuthorName articleAuthorName = entry.getValue().getAuthorName();
 			AuthorName articleAuthorNameOriginal = entry.getKey() != null ? entry.getKey().getAuthorName() : null;
-			if(identityAuthor.getMiddleName() != null 
+			if(identityAuthor.getMiddleName() != null && identityAuthor.getLastName() !=null
 				&& 
 				Strings.CI.equals(identityAuthor.getMiddleName() + identityAuthor.getLastName(), articleAuthorName.getLastName())
 				&&
@@ -252,10 +252,10 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	}
 	
 	private void scoreLastName(AuthorName identityAuthor, AuthorName identityAuthorNameOriginal, Map<ReCiterAuthor, ReCiterAuthor> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
-		if(!articleAuthorNames.isEmpty()) {
+		if(articleAuthorNames != null && !articleAuthorNames.isEmpty()) {
 			Map.Entry<ReCiterAuthor,ReCiterAuthor> entry = articleAuthorNames.entrySet().iterator().next();
 			// Nothing to compare against when the identity name or the article author/name is missing.
-			if(identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
+			if(entry == null || identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
 				return;
 			}
 			AuthorName articleAuthorName = entry.getValue().getAuthorName();
@@ -330,10 +330,10 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	 * 	Matching should be case insensitive, however, we will pull out some characters below based on case.
 	*/
 	private void scoreFirstNameMiddleNameNull(AuthorName identityAuthor, AuthorName identityAuthorNameOriginal, Map<ReCiterAuthor, ReCiterAuthor> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
-		if(articleAuthorNames.size() > 0) {
+		if(articleAuthorNames != null && articleAuthorNames.size() > 0) {
 			Map.Entry<ReCiterAuthor,ReCiterAuthor> entry = articleAuthorNames.entrySet().iterator().next();
 			// Nothing to compare against when the identity name or the article author/name is missing.
-			if(identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
+			if(entry == null || identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
 				return;
 			}
 			AuthorName articleAuthorName = entry.getValue().getAuthorName();
@@ -373,7 +373,7 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 					&&
 					identityAuthorNameOriginal != null && identityAuthorNameOriginal.getFirstName() != null && (identityAuthorNameOriginal.getFirstName().contains(" ") || identityAuthorNameOriginal.getFirstName().contains("-"))
 					&&
-					Strings.CI.equals(Arrays.stream(identityAuthorNameOriginal.getFirstName().split("[-\\s]")).map(s -> s.charAt(0)).collect(Collectors.toList()).stream().map(String::valueOf).collect(Collectors.joining()), articleAuthorName.getFirstName())) {
+					Strings.CI.equals(Arrays.stream(identityAuthorNameOriginal.getFirstName().split("[-\\s]")).filter(s -> !s.isEmpty()).map(s -> s.charAt(0)).collect(Collectors.toList()).stream().map(String::valueOf).collect(Collectors.joining()), articleAuthorName.getFirstName())) {
 				//Attempt match where identity.firstName + identity.lastName = article.firstName + article.lastName
 				//Example: Landys (identity.firstName) + Lopez quezada (identity.lastName) = Landys Lopez (article.firstName) + Quezada (article.lastName)
 				authorNameEvidence.setNameMatchFirstType("inferredInitials-exact");
@@ -476,10 +476,10 @@ public class ScoreByNameStrategy extends AbstractTargetAuthorStrategy {
 	 * @param authorNameEvidence
 	 */
 	private void scoreFirstNameMiddleName(AuthorName identityAuthor, AuthorName identityAuthorNameOriginal, Map<ReCiterAuthor, ReCiterAuthor> articleAuthorNames, AuthorNameEvidence authorNameEvidence) {
-		if(!articleAuthorNames.isEmpty()) {
+		if(articleAuthorNames != null && !articleAuthorNames.isEmpty()) {
 			Map.Entry<ReCiterAuthor,ReCiterAuthor> entry = articleAuthorNames.entrySet().iterator().next();
 			// Nothing to compare against when the identity name or the article author/name is missing.
-			if(identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
+			if(entry == null || identityAuthor == null || entry.getValue() == null || entry.getValue().getAuthorName() == null) {
 				return;
 			}
 			AuthorName articleAuthorName = entry.getValue().getAuthorName();

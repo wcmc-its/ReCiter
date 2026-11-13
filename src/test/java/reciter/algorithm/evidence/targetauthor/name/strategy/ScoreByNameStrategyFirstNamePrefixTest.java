@@ -356,4 +356,30 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 		invokeScorer("scoreFirstNameMiddleName", identity,
 				articleAuthor(name("PaulJ", null, "Cole")), new AuthorNameEvidence());
 	}
+
+	@Test
+	public void scorersIgnoreNullMapAndNullEntry() throws Exception {
+		for (String scorer : SCORERS) {
+			AuthorNameEvidence e = new AuthorNameEvidence();
+			invokeScorer(scorer, name("Paul", "James", "Cole"), null, e);
+			assertNull(e.getNameMatchFirstType(), scorer);
+		}
+	}
+
+	@Test
+	public void executeStrategyIgnoresNullIdentityAndArticles() {
+		assertEquals(1, strategy.executeStrategy((List<reciter.model.article.ReCiterArticle>) null,
+				new reciter.model.identity.Identity()), 0);
+		assertEquals(1, strategy.executeStrategy(new ArrayList<reciter.model.article.ReCiterArticle>(),
+				(reciter.model.identity.Identity) null), 0);
+	}
+
+	@Test
+	public void emptyFirstNameTokenDoesNotThrow() throws Exception {
+		AuthorName identity = name("Jean-Pierre", null, "Cole");
+		AuthorName original = name("-Jean-Pierre", null, "Cole");
+		AuthorNameEvidence e = new AuthorNameEvidence();
+		scoreFirstNameMiddleNameNull.invoke(strategy, identity, original,
+				articleAuthor(name("JP", null, "Cole")), e);
+	}
 }
