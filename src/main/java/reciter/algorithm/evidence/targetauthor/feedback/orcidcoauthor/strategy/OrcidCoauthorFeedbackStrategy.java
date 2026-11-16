@@ -37,7 +37,7 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	public double executeFeedbackStrategy(List<ReCiterArticle> reCiterArticles, Identity identity) {
 
 		try {
-			slf4jLogger.info("reCiterArticles size: ", reCiterArticles.size());
+			slf4jLogger.debug("reCiterArticles size: ", reCiterArticles.size());
 			
 	     // Process the articles to count non-target author ORCIDs per PMID
 	        Map<Long, Integer> nonTargetAuthorOrcidCountPerPmid = reCiterArticles.stream()
@@ -48,6 +48,10 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                    .map(ReCiterAuthor::getOrcid)
 	                    .count()
 	            ));
+	        
+	        nonTargetAuthorOrcidCountPerPmid.forEach((key, value) -> {
+	        	slf4jLogger.debug("nonTargetAuthorOrcidCountPerPmid : " + key + " = " + value);
+	        });
 	        
 	        Map<String, Map<Integer, Long>> nonTargetAuthororcidCountsByArticleStatus = reCiterArticles.stream()
 	        		 .filter(article -> article!=null && article.getArticleCoAuthors() !=null && article.getArticleCoAuthors().getAuthors()!=null && article.getArticleCoAuthors().getAuthors().size() > 0)
@@ -71,6 +75,13 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 	                        Collectors.counting()
 	                    )
 	                ));
+	        
+	        nonTargetAuthororcidCountsByArticleStatus.forEach((outerKey, innerMap) -> {
+	        	slf4jLogger.debug("nonTargetAuthororcidCountsByArticleStatus : " + outerKey);
+	            innerMap.forEach((innerKey, value) -> {
+	            	slf4jLogger.debug("nonTargetAuthororcidCountsByArticleStatus innerMap  :  " + innerKey + " = " + value);
+	            });
+	        });
 	        
 	        reCiterArticles.stream()
 	        		.filter(article->article!=null && article.getArticleCoAuthors()!=null && article.getArticleCoAuthors().getAuthors()!=null)
@@ -131,7 +142,10 @@ public class OrcidCoauthorFeedbackStrategy extends AbstractTargetAuthorFeedbackS
 								 feedbackScore = determineFeedbackScore(article.getGoldStandard(), sumAccepted, sumRejected, scoreAll);
 							 }
 
+							slf4jLogger.debug("sumAccepted :" + sumAccepted + "\nSumRejected : " + sumRejected +"\n ScoreAll :" + scoreAll);
+							slf4jLogger.debug("Feedback Score:"+feedbackScore);
 							String exportedFeedbackScore = decimalFormat.format(feedbackScore);
+							slf4jLogger.debug("exportedFeedbackScore:"+exportedFeedbackScore);
 							ReCiterArticleFeedbackScore feedbackOrcid = populateArticleFeedbackScore(article.getArticleId(),author.getOrcid(),
 									   countAccepted,countRejected,
 									   scoreAll,sumAccepted,
