@@ -1,13 +1,14 @@
 package reciter.service.dynamo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import reciter.database.dynamodb.model.ExternalArticle;
 import reciter.engine.analysis.ReCiterArticleFeature;
@@ -244,7 +245,7 @@ public class ExternalArticleDupCheckTest {
                 "https://doi.org/10.1000/abc",
                 "http://dx.doi.org/10.1000/abc",
                 "https://dx.doi.org/10.1000/ABC")) {
-            assertEquals(variant, expected, ExternalArticleDupCheck.normalizeDoi(variant));
+            assertEquals(expected, ExternalArticleDupCheck.normalizeDoi(variant), variant);
         }
         assertNull(ExternalArticleDupCheck.normalizeDoi(null));
         assertNull(ExternalArticleDupCheck.normalizeDoi("https://doi.org/"));

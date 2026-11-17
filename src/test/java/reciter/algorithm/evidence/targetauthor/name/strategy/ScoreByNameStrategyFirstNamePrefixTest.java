@@ -1,18 +1,23 @@
 package reciter.algorithm.evidence.targetauthor.name.strategy;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import reciter.algorithm.cluster.article.scorer.ReCiterArticleScorer;
 import reciter.engine.StrategyParameters;
@@ -51,7 +56,7 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 	private Method scoreFirstNameMiddleNameNull;
 	private Method scoreFirstNameMiddleName;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		StrategyParameters params = new StrategyParameters();
 		// Read by the ScoreByNameStrategy field initializer.
@@ -135,8 +140,8 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 	}
 
 	private static void assertFirst(AuthorNameEvidence e, String type, double score) {
-		assertEquals("nameMatchFirstType", type, e.getNameMatchFirstType());
-		assertEquals("nameMatchFirstScore", score, e.getNameMatchFirstScore(), 1e-9);
+		assertEquals(type, e.getNameMatchFirstType(),"nameMatchFirstType");
+		assertEquals(score, e.getNameMatchFirstScore(), 1e-9,"nameMatchFirstScore");
 	}
 
 	// ---- the defect --------------------------------------------------------
@@ -185,7 +190,7 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 	@Test
 	public void singleLetterClassDoesNotFallThroughToAConflictBucket() throws Exception {
 		AuthorNameEvidence e = scoreMiddleNull("M", "Rivera", "Mayra", "Rivera");
-		assertTrue("must not land in a negative bucket", e.getNameMatchFirstScore() > 0);
+		assertTrue(e.getNameMatchFirstScore() > 0,"must not land in a negative bucket");
 		assertEquals(FULL_EXACT, e.getNameMatchFirstScore(), 1e-9);
 	}
 
@@ -196,7 +201,7 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 	public void articleInitialAgainstFullRegisteredNameStaysInferredInitialsExact() throws Exception {
 		AuthorNameEvidence e = scoreMiddleNull("Paul", "Albert", "P", "Albert");
 		assertFirst(e, "inferredInitials-exact", INFERRED_INITIALS_EXACT);
-		assertNull("reverse direction sets no modifier", e.getNameMatchModifier());
+		assertNull(e.getNameMatchModifier(),"reverse direction sets no modifier");
 	}
 
 	/** A genuine exact match is still full-exact. */
@@ -268,7 +273,7 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 		Properties props = new Properties();
 		try (InputStream in = getClass().getClassLoader()
 				.getResourceAsStream("application.properties")) {
-			assertNotNull("application.properties must be on the test classpath", in);
+			assertNotNull(in,"application.properties must be on the test classpath");
 			props.load(in);
 		}
 		String fullExact = props.getProperty("nameMatchFirstType.full-exact");
@@ -278,9 +283,103 @@ public class ScoreByNameStrategyFirstNamePrefixTest {
 				"nameMatchFirstType.inferredInitials-prefix" }) {
 			String value = props.getProperty(key);
 			assertNotNull(key + " must be declared", value);
-			assertEquals(key + " must still equal nameMatchFirstType.full-exact; "
-					+ "changing it requires a model retrain (issue #746)",
-					Double.parseDouble(fullExact), Double.parseDouble(value), 1e-9);
+			assertEquals(Double.parseDouble(fullExact), Double.parseDouble(value), 1e-9,
+					key + " must still equal nameMatchFirstType.full-exact; "
+							+ "changing it requires a model retrain (issue #746)");
 		}
+	}
+
+	// ---- null safety -------------------------------------------------------
+
+	private static final String[] SCORERS = { "scoreCombinedMiddleLastName", "scoreLastName",
+			"scoreFirstNameMiddleNameNull", "scoreFirstNameMiddleName" };
+
+	private void invokeScorer(String methodName, AuthorName identity,
+			Map<ReCiterAuthor, ReCiterAuthor> articleAuthors, AuthorNameEvidence evidence) throws Exception {
+		Method m = ScoreByNameStrategy.class.getDeclaredMethod(methodName, AuthorName.class,
+				AuthorName.class, Map.class, AuthorNameEvidence.class);
+		m.setAccessible(true);
+		m.invoke(strategy, identity, identity, articleAuthors, evidence);
+	}
+
+	@Test
+	public void scorersIgnoreNullIdentityAuthor() throws Exception {
+		for (String scorer : SCORERS) {
+			AuthorNameEvidence e = new AuthorNameEvidence();
+			invokeScorer(scorer, null, articleAuthor(name("Paul", null, "Cole")), e);
+			assertNull(e.getNameMatchFirstType(), scorer);
+			assertNull(e.getNameMatchLastType(), scorer);
+		}
+	}
+
+	@Test
+	public void scorersIgnoreNullArticleAuthorOrName() throws Exception {
+		AuthorName identity = name("Paul", "James", "Cole");
+		Map<ReCiterAuthor, ReCiterAuthor> nullValue = new LinkedHashMap<>();
+		nullValue.put(new ReCiterAuthor(name("Paul", null, "Cole"), null), null);
+		Map<ReCiterAuthor, ReCiterAuthor> nullName = new LinkedHashMap<>();
+		ReCiterAuthor noName = new ReCiterAuthor(null, null);
+		nullName.put(noName, noName);
+		for (String scorer : SCORERS) {
+			AuthorNameEvidence e1 = new AuthorNameEvidence();
+			invokeScorer(scorer, identity, nullValue, e1);
+			assertNull(e1.getNameMatchFirstType(), scorer);
+			AuthorNameEvidence e2 = new AuthorNameEvidence();
+			invokeScorer(scorer, identity, nullName, e2);
+			assertNull(e2.getNameMatchFirstType(), scorer);
+		}
+	}
+
+	@Test
+	public void middleNameCheckSkipsNullIdentityNames() throws Exception {
+		Method m = ScoreByNameStrategy.class.getDeclaredMethod("isNotNullIdentityMiddleName",
+				java.util.Collection.class);
+		m.setAccessible(true);
+		List<AuthorName> names = new ArrayList<>(Arrays.asList(null, name("Paul", "James", "Cole")));
+		assertTrue((Boolean) m.invoke(strategy, names));
+		assertEquals(false, m.invoke(strategy, new ArrayList<AuthorName>(Arrays.asList((AuthorName) null))));
+	}
+
+	@Test
+	public void highestScoreOfNoEvidenceIsAnEmptyEvidence() throws Exception {
+		Method m = ScoreByNameStrategy.class.getDeclaredMethod("calculateHighestScore", List.class);
+		m.setAccessible(true);
+		assertNotNull(m.invoke(strategy, new ArrayList<AuthorNameEvidence>()));
+	}
+
+	@Test
+	public void scorerIgnoresNullInitials() throws Exception {
+		AuthorName identity = name("Paul", "James", "Cole");
+		identity.setFirstInitial(null);
+		identity.setMiddleInitial(null);
+		// Must not throw; branches that need an initial simply do not match.
+		invokeScorer("scoreFirstNameMiddleName", identity,
+				articleAuthor(name("PaulJ", null, "Cole")), new AuthorNameEvidence());
+	}
+
+	@Test
+	public void scorersIgnoreNullMapAndNullEntry() throws Exception {
+		for (String scorer : SCORERS) {
+			AuthorNameEvidence e = new AuthorNameEvidence();
+			invokeScorer(scorer, name("Paul", "James", "Cole"), null, e);
+			assertNull(e.getNameMatchFirstType(), scorer);
+		}
+	}
+
+	@Test
+	public void executeStrategyIgnoresNullIdentityAndArticles() {
+		assertEquals(1, strategy.executeStrategy((List<reciter.model.article.ReCiterArticle>) null,
+				new reciter.model.identity.Identity()), 0);
+		assertEquals(1, strategy.executeStrategy(new ArrayList<reciter.model.article.ReCiterArticle>(),
+				(reciter.model.identity.Identity) null), 0);
+	}
+
+	@Test
+	public void emptyFirstNameTokenDoesNotThrow() throws Exception {
+		AuthorName identity = name("Jean-Pierre", null, "Cole");
+		AuthorName original = name("-Jean-Pierre", null, "Cole");
+		AuthorNameEvidence e = new AuthorNameEvidence();
+		scoreFirstNameMiddleNameNull.invoke(strategy, identity, original,
+				articleAuthor(name("JP", null, "Cole")), e);
 	}
 }

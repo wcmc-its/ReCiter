@@ -1,12 +1,15 @@
 package reciter.dynamicfilter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.ser.PropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+
 
 import java.util.Map;
+
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectWriter;
+import tools.jackson.databind.ser.BeanPropertyWriter;
+import tools.jackson.databind.ser.PropertyFilter;
+import tools.jackson.databind.ser.std.SimpleBeanPropertyFilter;
+import tools.jackson.databind.ser.std.SimpleFilterProvider;
 
 public class DynamicFilterProvider {
 
@@ -19,7 +22,7 @@ public class DynamicFilterProvider {
     public ObjectWriter getWriter(ObjectMapper mapper) {
         PropertyFilter filter = new SimpleBeanPropertyFilter() {
             @Override
-            protected boolean include(com.fasterxml.jackson.databind.ser.BeanPropertyWriter writer) {
+            protected boolean include(BeanPropertyWriter writer) {
                 return fields == null || fields.containsKey(writer.getName());
             }
         };

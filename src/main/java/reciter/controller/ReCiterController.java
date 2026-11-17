@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +54,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -108,6 +106,8 @@ import reciter.utils.InstitutionSanitizationUtil;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 import reciter.xml.retriever.pubmed.RetrievalEscalationTracker;
 import reciter.xml.retriever.pubmed.RetrievalWindow;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @Tag(name = "ReCiterController", description = "Operations on ReCiter API.")
 @RestController
@@ -833,16 +833,17 @@ public class ReCiterController {
         		analysis != null
         		&&
         		(useGoldStandard == UseGoldStandard.AS_EVIDENCE || useGoldStandard == null)) {//This was added to ensure to use analysis results only in evidence mode
+        	/* Not being used
         	List<Long> finalArticles =null;
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
 				finalArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
-				List<Long> selectedArticles = analysis.getReCiterFeature().getReCiterArticleFeatures().stream().map(article -> article.getPmid()).collect(Collectors.toList());
         	}
 			else
 			{
 				finalArticles = new ArrayList<Long>(Arrays.asList(0L));;
-			}	
+			}*/
+			
 			GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         	List<Long> knownPmids = null;
             if (goldStandard == null) {
@@ -853,13 +854,10 @@ public class ReCiterController {
             //Count pending pubs
 			if(analysis.getReCiterFeature()!=null && analysis.getReCiterFeature().getReCiterArticleFeatures()!=null)
 			{
-				analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream()
-								.filter(reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
-								&&
-								reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
-								.count());
-				
-				
+				analysis.getReCiterFeature().setCountPendingArticles(analysis.getReCiterFeature().getReCiterArticleFeatures().stream().filter(
+						reCiterArticleFeature -> (reCiterArticleFeature.getAuthorshipLikelihoodScore() >= totalScore
+								&& reCiterArticleFeature.getUserAssertion() == PublicationFeedback.NULL))
+						.count());
 			}
 			else if(analysis.getReCiterFeature()!=null)
 			{
@@ -1476,7 +1474,7 @@ public class ReCiterController {
         Set<Long> pmids = new HashSet<>();
         if(eSearchResults != null && eSearchResults.getESearchPmids() != null) {
 	        for (ESearchPmid eSearchPmid : eSearchResults.getESearchPmids()) {
-	            if (!strategyParameters.isUseGoldStandardEvidence() && StringUtils.equalsIgnoreCase(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
+	            if (!strategyParameters.isUseGoldStandardEvidence() && Strings.CI.equals(eSearchPmid.getRetrievalStrategyName(), "GoldStandardRetrievalStrategy")) {
 	                log.info("Running in Testing mode so goldStandardRetreivalStrategy is removed");
 	            } else {
 	                pmids.addAll(eSearchPmid.getPmids());

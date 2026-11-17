@@ -28,6 +28,4 @@ import reciter.model.identity.Identity;
 public interface ReCiterRetrievalEngine {
 
 	boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException;
-	
-	void retrieveByPmids(String uid, List<Long> pmids) throws IOException;
 }

@@ -19,12 +19,9 @@
 package reciter.engine;
 
 import lombok.Data;
-import reciter.algorithm.cluster.model.ReCiterCluster;
 import reciter.engine.analysis.ReCiterArticleFeature;
 import reciter.engine.analysis.ReCiterFeature;
 import reciter.engine.erroranalysis.Analysis;
-
-import java.util.List;
 
 @Data
 public class EngineOutput {
@@ -32,5 +29,5 @@ public class EngineOutput {
     private Analysis analysis;
     private ReCiterFeature reCiterFeature;
     private ReCiterArticleFeature reCiterArticleFeature;
-    private List<ReCiterCluster> reCiterClusters;
+    //private List<ReCiterCluster> reCiterClusters;
 }

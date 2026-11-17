@@ -12,13 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reciter.database.dynamodb.DynamoDbS3Operations;
 import reciter.database.dynamodb.repository.PubMedArticleRepository;
 import reciter.model.pubmed.PubMedArticle;
 import reciter.service.PubMedService;
 import reciter.storage.s3.AmazonS3Config;
+import tools.jackson.databind.ObjectMapper;
 
 @Service("pubMedService")
 public class PubMedServiceImpl implements PubMedService {
@@ -36,6 +36,9 @@ public class PubMedServiceImpl implements PubMedService {
     
     @Value("${aws.dynamoDb.local}")
     private boolean isDynamoDbLocal;
+    
+    @Autowired
+	private ObjectMapper objectMapper;
 
     @Override
     public void save(Collection<PubMedArticle> pubMedArticles) {
@@ -105,11 +108,10 @@ public class PubMedServiceImpl implements PubMedService {
         
     }
     private void offloadLargeFields(reciter.database.dynamodb.model.PubMedArticle article, String bucketName) {
-        ObjectMapper mapper = new ObjectMapper();
         try {
         	 
 	            // Estimate item size as JSON
-	            String json = mapper.writeValueAsString(article);
+	            String json = objectMapper.writeValueAsString(article);
 	            int sizeInBytes = json.getBytes(StandardCharsets.UTF_8).length;
 	
 	            if (sizeInBytes > 400 * 1024 && isS3Use && !isDynamoDbLocal) 

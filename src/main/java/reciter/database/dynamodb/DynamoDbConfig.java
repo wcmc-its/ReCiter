@@ -45,13 +45,7 @@ public class DynamoDbConfig {
 	
 	private static final Logger log = LoggerFactory.getLogger(DynamoDbConfig.class);
 
-	private String amazonDynamoDBEndpoint = System.getenv("AMAZON_DYNAMODB_ENDPOINT");
-
-	private String amazonAWSAccessKey = System.getenv("AMAZON_AWS_ACCESS_KEY");
-
-	private String amazonAWSSecretKey = System.getenv("AMAZON_AWS_SECRET_KEY");
-
-	private String basePackage = "reciter.database.dynamodb.model";
+	private final static String BASE_PACKAGE = "reciter.database.dynamodb.model";
 
 	@Value("${aws.dynamoDb.local.port}")
 	private String dynamoDbLocalPort;
@@ -133,7 +127,7 @@ public class DynamoDbConfig {
 			}
 
 			dynamoDbClient = DynamoDbClient.builder().region(Region.of(dynamodbRegion))
-					.credentialsProvider(DefaultCredentialsProvider.create()).build();
+					.credentialsProvider(DefaultCredentialsProvider.builder().build()).build();
 
 		}
 		if (dynamoDbClient != null) {
@@ -162,7 +156,7 @@ public class DynamoDbConfig {
 	    var scanner = new ClassPathScanningCandidateComponentProvider(false);
 	    scanner.addIncludeFilter(new AnnotationTypeFilter(DynamoDbBean.class));
 
-	    for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+	    for (BeanDefinition bd : scanner.findCandidateComponents(BASE_PACKAGE)) {
 
 	        Class<?> clazz;
 	        try {

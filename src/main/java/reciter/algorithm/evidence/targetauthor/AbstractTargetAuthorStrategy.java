@@ -18,7 +18,7 @@
  *******************************************************************************/
 package reciter.algorithm.evidence.targetauthor;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,18 +51,18 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 				String[] targetAuthorLastNameArray = targetAuthorLastName.split("\\s+");
 				if (targetAuthorLastNameArray.length > 1) {
 					for (int i = 0; i < targetAuthorLastNameArray.length; i++) {
-						if (StringUtils.equalsIgnoreCase(lastName, targetAuthorLastNameArray[i])) {
+						if (Strings.CI.equals(lastName, targetAuthorLastNameArray[i])) {
 							partNameMatch = true;
 							break;
 						}
 					}
 				}
-				if (StringUtils.equalsIgnoreCase(lastName, targetAuthorLastName) || partNameMatch) {
+				if (Strings.CI.equals(lastName, targetAuthorLastName) || partNameMatch) {
 					if (middleInitial.length() == 0) {
 						// If first name is only a first initial, and no middle name.
 						// check using first name of target author.
 						if (firstName.length() == 1) {
-							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstNameInitial)) {
+							if (Strings.CI.equals(firstName, targetAuthorFirstNameInitial)) {
 								return true;
 							}
 						} else {
@@ -77,15 +77,15 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 							// Case: PMID = 12069979, first name = "Juan", in db name = "Juan Miguel".
 							boolean isFirstNameMatchByPart = isFirstNameMatchByPart(targetAuthorFirstName, firstName);
 							
-							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance || isFirstNameMatchByPart) {
+							if (Strings.CI.equals(firstName, targetAuthorFirstName) || isAcceptableDistance || isFirstNameMatchByPart) {
 								return true;
 							}
 						}
 					} // If first name is full, and middle initial exist.
 					else {
 						if (firstName.length() == 1) {
-							if (StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstNameInitial) &&
-								StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial)) {
+							if (Strings.CI.equals(firstName, targetAuthorFirstNameInitial) &&
+								Strings.CI.equals(middleInitial, targetAuthorMiddleInitial)) {
 								return true;
 							}
 						} else {
@@ -100,8 +100,8 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 							// Case: PMID = 12069979, first name = "Juan", in db name = "Juan Miguel".
 							boolean isFirstNameMatchByPart = isFirstNameMatchByPart(targetAuthorFirstName, firstName);
 							
-							if ((StringUtils.equalsIgnoreCase(firstName, targetAuthorFirstName) || isAcceptableDistance || isFirstNameMatchByPart) &&
-								StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial)) {
+							if ((Strings.CI.equals(firstName, targetAuthorFirstName) || isAcceptableDistance || isFirstNameMatchByPart) &&
+								Strings.CI.equals(middleInitial, targetAuthorMiddleInitial)) {
 								return true;
 							}
 						}
@@ -118,7 +118,7 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 		String[] firstNameParts = targetAuthorFirstName.split("\\s+");
 		if (firstNameParts.length > 0) {
 			for (int i = 0; i < firstNameParts.length; i++) {
-				if (StringUtils.equalsIgnoreCase(firstName, firstNameParts[i])) {
+				if (Strings.CI.equals(firstName, firstNameParts[i])) {
 					isFirstNameMatchByPart = true;
 					break;
 				}
@@ -139,9 +139,9 @@ public abstract class AbstractTargetAuthorStrategy implements TargetAuthorStrate
 				String targetAuthorMiddleInitial = identity.getPrimaryName().getMiddleInitial();
 				String targetAuthorLastName = identity.getPrimaryName().getLastName();
 
-				if (StringUtils.equalsIgnoreCase(firstInitial, targetAuthorFirstInitial) &&
-						StringUtils.equalsIgnoreCase(middleInitial, targetAuthorMiddleInitial) &&
-						StringUtils.equalsIgnoreCase(lastName, targetAuthorLastName))
+				if (Strings.CI.equals(firstInitial, targetAuthorFirstInitial) &&
+						Strings.CI.equals(middleInitial, targetAuthorMiddleInitial) &&
+						Strings.CI.equals(lastName, targetAuthorLastName))
 
 					return true;
 			}

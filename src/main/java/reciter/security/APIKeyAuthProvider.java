@@ -9,12 +9,13 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import java.util.List;
+import reciter.utils.EnvUtils;
 
 @Component
 public class APIKeyAuthProvider implements AuthenticationProvider {
 
-    private static final String ADMIN_API_KEY = System.getenv("ADMIN_API_KEY");
-    private static final String CONSUMER_API_KEY = System.getenv("CONSUMER_API_KEY");
+    private static final String ADMIN_API_KEY = EnvUtils.get("ADMIN_API_KEY");
+    private static final String CONSUMER_API_KEY = EnvUtils.get("CONSUMER_API_KEY");
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {

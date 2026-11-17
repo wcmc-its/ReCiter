@@ -27,7 +27,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +78,7 @@ public class PubMedPersistenceWorker implements Runnable {
 			dir.mkdirs();
 		}
 
-		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(url).openStream(), "UTF-8"));
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(URI.create(url).toURL().openStream(), "UTF-8"));
 		String outputFileName = commonDirectory + uid + "/" + xmlFileName + ".xml";
 		BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileName), "UTF-8"));
 

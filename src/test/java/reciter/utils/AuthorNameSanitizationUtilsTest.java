@@ -1,6 +1,9 @@
 package reciter.utils;
 
-import static org.junit.Assert.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -10,34 +13,34 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import reciter.engine.StrategyParameters;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class AuthorNameSanitizationUtilsTest {
 
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -59,13 +62,13 @@ public class AuthorNameSanitizationUtilsTest {
 		sanitizedIdentityAuthorMap.put(new AuthorName("Jo", null, "Stuebgen"), new AuthorName("Jo", null, "Stuebgen"));
 		authorNameSanitizationUtils.checkToIgnoreNameVariants(sanitizedIdentityAuthorMap);
 		//Check for AuthorName firstName starts with other AuthorName and middle name is null or empty
-		assertEquals("Removed one name", 1, sanitizedIdentityAuthorMap.size());
+		assertEquals(1, sanitizedIdentityAuthorMap.size(), "Removed one name");
 		assertEquals("JoergPatrick", sanitizedIdentityAuthorMap.values().iterator().next().getFirstName());
 		sanitizedIdentityAuthorMap.clear();
 		sanitizedIdentityAuthorMap.put(new AuthorName("Joerg-Patrick", null, "Stuebgen"), new AuthorName("JoergPatrick", null, "Stuebgen"));
 		sanitizedIdentityAuthorMap.put(new AuthorName("JoE", null, "Stuebgen"), new AuthorName("JoE", null, "Stuebgen"));
 		authorNameSanitizationUtils.checkToIgnoreNameVariants(sanitizedIdentityAuthorMap);
-		assertEquals("Case ensitive check", 1, sanitizedIdentityAuthorMap.size());
+		assertEquals(1, sanitizedIdentityAuthorMap.size(), "Case sensitive check");
 		assertEquals("JoergPatrick", sanitizedIdentityAuthorMap.values().iterator().next().getFirstName());
 		
 		
@@ -76,7 +79,7 @@ public class AuthorNameSanitizationUtilsTest {
 		sanitizedIdentityAuthorMap.put(new AuthorName("Joseph", "Patrick", "Stuebgen"), new AuthorName("Joseph", "Patrick", "Stuebgen"));
 		sanitizedIdentityAuthorMap.put(new AuthorName("Jose", "Patrick", "Stuebgen"), new AuthorName("Jose", "Patrick", "Stuebgen"));
 		authorNameSanitizationUtils.checkToIgnoreNameVariants(sanitizedIdentityAuthorMap);
-		assertEquals("All check including case sensitive, first case & second case", 3, sanitizedIdentityAuthorMap.size());
+		assertEquals(3, sanitizedIdentityAuthorMap.size(), "All checks including case sensitive, first case & second case");
 		// JoE and Jo are prefixes of JoergPatrick with no middle name; Jose/Patrick survives
 		// because a non-blank middle name is never dropped by the prefix rules.
 		assertEquals(new HashSet<>(Arrays.asList("JoergPatrick", "Joseph", "Jose")), firstNames(sanitizedIdentityAuthorMap));
@@ -100,7 +103,7 @@ public class AuthorNameSanitizationUtilsTest {
 		names.put(name("Alberto", null, "Ceballos Arroyo"), name("Alberto", null, "CeballosArroyo"));
 		assertEquals(3, names.size());
 		utils.checkToIgnoreNameVariants(names);
-		assertEquals("blank-middle and prefix variants both dropped, one full name kept", 1, names.size());
+		assertEquals( 1, names.size(),"blank-middle and prefix variants both dropped, one full name kept");
 		AuthorName kept = names.values().iterator().next();
 		assertEquals("AlbertoMario", kept.getFirstName());
 		assertNull(kept.getMiddleName());

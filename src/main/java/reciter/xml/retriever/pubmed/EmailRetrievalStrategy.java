@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,6 +40,11 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
  */
 @Component("emailRetrievalStrategy")
 public class EmailRetrievalStrategy extends AbstractRetrievalStrategy {
+
+	public EmailRetrievalStrategy(RestTemplate restTemplate) {
+		super(restTemplate);
+	}
+
 
 	private static final String retrievalStrategyName = "EmailRetrievalStrategy";
 

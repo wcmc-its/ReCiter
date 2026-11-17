@@ -3,7 +3,6 @@ package reciter.service.dynamo;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -419,8 +418,6 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 			String uid, List<Long> incomingAccepted, List<Long> incomingRejected,
 			List<Long> existingAccepted, List<Long> existingRejected, String source) {
 		List<GoldStandardAuditLog> entries = new ArrayList<>();
-		Date now = new Date();
-
 		List<Long> newlyAccepted = new ArrayList<>(incomingAccepted);
 		newlyAccepted.removeAll(existingAccepted);
 		if (!newlyAccepted.isEmpty()) {
@@ -562,7 +559,6 @@ public class DynamoDbGoldStandardService implements IDynamoDbGoldStandardService
 	 */
 	private void writeProvenanceForAcceptedPmids(String uid, List<Long> pmids, String strategy) {
 		List<PmidProvenance> provenanceRecords = new ArrayList<>();
-		Date now = new Date();
 		for (Long pmid : pmids) {
 			PmidProvenance provenance = new PmidProvenance(uid, pmid, Instant.now(), strategy);
 			provenanceRecords.add(provenance);

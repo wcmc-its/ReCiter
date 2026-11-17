@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.xml.retriever.pubmed;
 
+import org.springframework.web.client.RestTemplate;
 import java.util.Date;
 import java.util.Set;
 
@@ -30,6 +31,11 @@ import reciter.xml.retriever.pubmed.PubMedQueryType.PubMedQueryBuilder;
 
 @Component("grantRetrievalStrategy")
 public class GrantRetrievalStrategy extends AbstractNameRetrievalStrategy {
+
+	public GrantRetrievalStrategy(RestTemplate restTemplate) {
+		super(restTemplate);
+	}
+
 
 	private static final String retrievalStrategyName = "GrantRetrievalStrategy";
 

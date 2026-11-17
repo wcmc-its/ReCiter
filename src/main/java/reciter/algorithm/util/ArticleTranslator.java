@@ -28,20 +28,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import reciter.algorithm.cluster.similarity.clusteringstrategy.article.MeshMajorClusteringStrategy;
 import reciter.engine.EngineParameters;
 import reciter.engine.StrategyParameters;
 import reciter.model.article.ReCiterArticle;
@@ -310,7 +309,8 @@ public class ArticleTranslator {
             Date date = localDate.toDate();
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             reCiterArticle.setPublicationDateStandardized(df.format(date));
-            df = new SimpleDateFormat("yyyy MMM dd");
+           // TODO  If the application becomes locale-specific, replace Locale.ENGLISH with the user's/application locale.
+            df = new SimpleDateFormat("yyyy MMM dd",Locale.ENGLISH);  
             reCiterArticle.setPublicationDateDisplay(df.format(date));
         }
         
@@ -341,7 +341,7 @@ public class ArticleTranslator {
             reCiterArticle.setPublicationDateStandardized(df.format(date));
             
             if(reCiterArticle.getPublicationDateDisplay()== null) {
-            	df = new SimpleDateFormat("yyyy MMM dd");
+            	df = new SimpleDateFormat("yyyy MMM dd", Locale.ENGLISH);
                 reCiterArticle.setPublicationDateDisplay(df.format(date));
             }
         }
@@ -426,7 +426,7 @@ public class ArticleTranslator {
                 String scopusAuthorLastName = scopusAuthor.getSurname();
                 for (ReCiterAuthor reCiterAuthor : reCiterArticle.getArticleCoAuthors().getAuthors()) {
                     String reCiterAuthorLastName = reCiterAuthor.getAuthorName().getLastName();
-                    if (StringUtils.equalsIgnoreCase(scopusAuthorLastName, reCiterAuthorLastName)) {
+                    if (Strings.CI.equals(scopusAuthorLastName, reCiterAuthorLastName)) {
                         String reCiterAuthorFirstName = reCiterAuthor.getAuthorName().getFirstName();
                         String reCiterAuthorFirstInitial = reCiterAuthor.getAuthorName().getFirstInitial();
                         if (scopusAuthorFirstName != null && scopusAuthorFirstName.length() > 1) {
@@ -995,7 +995,7 @@ public class ArticleTranslator {
 		//MeshMajor Feature
 		if(reCiterArticle.getMeshHeadings() != null && !reCiterArticle.getMeshHeadings().isEmpty()) {
 			for(ReCiterArticleMeshHeading meshHeading: reCiterArticle.getMeshHeadings()) {
-				if(MeshMajorClusteringStrategy.isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
+				if(isMeshMajor(meshHeading) && EngineParameters.getMeshCountMap() != null && EngineParameters.getMeshCountMap().containsKey(meshHeading.getDescriptorName().getDescriptorName()) &&
 						EngineParameters.getMeshCountMap().get(meshHeading.getDescriptorName().getDescriptorName()) < 100000L) {
 					reCiterArticleFeatures.getMeshMajor().add(meshHeading.getDescriptorName().getDescriptorName());
 				}
@@ -1026,4 +1026,19 @@ public class ArticleTranslator {
 		reCiterArticle.setReCiterArticleFeatures(reCiterArticleFeatures);
     			
     }
+    
+    private static boolean isMeshMajor(ReCiterArticleMeshHeading meshHeading) {
+		// Easy case:
+		if (meshHeading.getDescriptorName().getMajorTopicYN().equals(ReCiterCitationYNEnum.Y.name())) {
+			return true;
+		}
+		// Single subheading or Multiple subheading:
+		for (ReCiterMeshHeadingQualifierName qualifierName : meshHeading.getQualifierNameList()) {
+			if (qualifierName.getMajorTopicYN() == ReCiterCitationYNEnum.Y) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

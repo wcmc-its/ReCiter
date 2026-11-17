@@ -18,13 +18,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import reciter.database.dynamodb.model.AnalysisOutput;
@@ -78,6 +77,12 @@ public class ExternalArticleController {
             description = "Adds a publication from Scopus, Web of Science, OpenAlex, WorldCat, or Crossref. Blocks on PMID/DOI duplicates "
                     + "against the person's PubMed record and existing external articles; warns on fuzzy title+year "
                     + "collisions unless force=true.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "External article added"),
+            @ApiResponse(responseCode = "400", description = "Validation failed (articleId prefix, title, or sourceType mismatch)"),
+            @ApiResponse(responseCode = "404", description = "The uid was not found in the Identity table"),
+            @ApiResponse(responseCode = "409", description = "BLOCKED duplicate, or WARNING fuzzy duplicate when force=false")
+    })
     @PostMapping(value = "/reciter/external-article/by/uid", produces = "application/json")
     public ResponseEntity<Object> addExternalArticle(@RequestParam(value = "uid") String uid,
                                                      @RequestParam(value = "force", required = false, defaultValue = "false") boolean force,
@@ -126,6 +131,9 @@ public class ExternalArticleController {
 
     @Operation(summary = "List external-source articles for a person.",
             description = "Returns all manually added external articles for the uid, including suppressed rows.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "External articles for the uid (possibly empty)")
+    })
     @GetMapping(value = "/reciter/external-article/by/uid",  produces = "application/json")
     public ResponseEntity<List<ExternalArticle>> findExternalArticles(@RequestParam(value = "uid") String uid) {
         return new ResponseEntity<>(externalArticleService.findByUid(uid.trim()), HttpStatus.OK);
@@ -133,6 +141,10 @@ public class ExternalArticleController {
 
     @Operation(summary = "Delete an external-source article for a person.",
             description = "Deleting is the revoke path — there is deliberately no sameAs assert/revoke model.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The deleted external article"),
+            @ApiResponse(responseCode = "404", description = "No external article with that articleId exists for the uid")
+    })
     @DeleteMapping(value = "/reciter/external-article/by/uid", produces = "application/json")
     public ResponseEntity<Object> deleteExternalArticle(@RequestParam(value = "uid") String uid,
                                                         @RequestParam(value = "articleId") String articleId,
@@ -162,6 +174,12 @@ public class ExternalArticleController {
                     + "row. actorPersonIdentifier is trusted as-is: the caller (the PM proxy) derives it from the "
                     + "acting user's session, never the browser request — same trust-boundary recipe as the "
                     + "goldstandard endpoint's curatedBy param.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Feedback logged (status LOGGED)"),
+            @ApiResponse(responseCode = "400", description = "uid, articleId, actorPersonIdentifier or action missing or invalid"),
+            @ApiResponse(responseCode = "404", description = "The uid was not found in the Identity table"),
+            @ApiResponse(responseCode = "500", description = "FeedbackLog write failed; nothing was changed")
+    })
     @PatchMapping(value = "/reciter/external-article/feedback", produces = "application/json")
     public ResponseEntity<Object> recordExternalArticleFeedback(@RequestBody FeedbackRequest request) {
         if (request == null || request.getUid() == null || request.getUid().isBlank()) {

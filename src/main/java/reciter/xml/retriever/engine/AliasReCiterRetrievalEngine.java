@@ -19,6 +19,7 @@
 package reciter.xml.retriever.engine;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,10 +29,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Semaphore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +68,10 @@ import reciter.xml.retriever.pubmed.RetrievalErrorTracker;
 @Component("aliasReCiterRetrievalEngine")
 public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine {
 
-	private final static Logger slf4jLogger = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
+	private final static Logger log = LoggerFactory.getLogger(AliasReCiterRetrievalEngine.class);
+
+	// Matches the previous work-stealing pool size: the retrieval service tolerates at most this many concurrent retrievals.
+	private static final int MAX_CONCURRENT_RETRIEVALS = 15;
 
 	@Value("${use.scopus.articles}")
 	private boolean useScopusArticles;
@@ -94,115 +99,100 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		DERIVED
 	}
 	
-	private class AsyncRetrievalEngine extends Thread {
-
-		private final Identity identity;
-		private final Date startDate;
-		private final Date endDate;
-		private final RetrievalRefreshFlag refreshFlag;
-		private final Set<String> failedUids;
-
-		public AsyncRetrievalEngine(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag, Set<String> failedUids) {
-			this.identity = identity;
-			this.startDate = startDate;
-			this.endDate = endDate;
-			this.refreshFlag = refreshFlag;
-			this.failedUids = failedUids;
-		}
-
-		@Override
-		public void run() {
-			try {
-				// If the eSearchResult collection doesn't contain any information regarding this person,
-				// then we'd want to perform a full retrieval because this will be first time that ReCiter
-				// retrieve PubMed and Scopus articles for this person.
-				slf4jLogger.info("this.refreshFlag in Alias run" + this.refreshFlag);
-				if(this.refreshFlag == RetrievalRefreshFlag.ALL_PUBLICATIONS) {
-					slf4jLogger.info("Starting full retrieval for uid=[" + identity.getUid() + "].");
-					retrieveData(identity, this.refreshFlag);
-					// The strategies SWALLOW a PubMed tool 500 / NCBI 429: AbstractRetrievalStrategy
-					// and PubMedArticleRetriever catch, mark the thread-local tracker, and return
-					// empty rather than throwing. Nothing reaches the catch below, so a tool-wide
-					// outage looks to the gate like a clean run that simply found nothing. On THIS
-					// path retrieveArticlesByUid has already deleted the prior ESearchResult, so
-					// scoring that empty candidate set overwrites the Analysis row with zero
-					// features and answers 200 — the May 3-4 shape (#720). Record it as a failure.
-					// The incremental path is protected differently: the engine's per-strategy
-					// union when a run hit failures (#737, upsertedStrategyEntry) stops a
-					// partial batch from shrinking the stored ESearchResult entry, and #691's
-					// watermark rollback keeps the next incremental run from treating the gap
-					// as already covered.
-					if (RetrievalErrorTracker.hadError()) {
-						slf4jLogger.error("Retrieval for uid=[" + identity.getUid()
-								+ "] finished with swallowed PubMed failures; treating the run as failed.");
-						failedUids.add(identity.getUid());
-					}
-				} else if(this.refreshFlag == RetrievalRefreshFlag.ONLY_NEWLY_ADDED_PUBLICATIONS) {
-					slf4jLogger.info("Starting date range retrieval for uid=[" + identity.getUid() + "] startDate=["
-						+ startDate + "] endDate=[" + endDate + "].");
-					retrieveDataByDateRange(identity, startDate, endDate, this.refreshFlag);
-				}
-			} catch (Throwable t) {
-				// ForkJoinPool.execute() stores a task's throwable without ever rethrowing it to
-				// an uncaught-exception handler, so an unrecorded crash here is invisible and the
-				// caller would score an empty candidate set as if retrieval had succeeded. Catch
-				// Throwable, not Exception: an Error (OOM, StackOverflowError, NoClassDefFoundError)
-				// must also mark this uid as failed, or the false-return gate never fires. Record
-				// and log FIRST, then rethrow Errors to preserve JVM Error semantics — the pool
-				// swallows the rethrow, but the uid is already recorded.
-				slf4jLogger.error("Unabled to retrieve. " + identity.getUid(), t);
-				failedUids.add(identity.getUid());
-				if (t instanceof Error) {
-					throw (Error) t;
-				}
-			}
-		}
-	}
-
 	@Override
 	public boolean retrieveArticlesByDateRange(List<Identity> identities, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
-		ExecutorService executorService = Executors.newWorkStealingPool(15);//Executors.newFixedThreadPool(10);
-		Set<String> failedUids = ConcurrentHashMap.newKeySet();
-		for (Identity identity : identities) {
-			executorService.execute(new AsyncRetrievalEngine(identity, startDate, endDate, refreshFlag, failedUids));
+		Set<String> failedUids = ConcurrentHashMap.newKeySet(); 
+
+		// A null identity/uid cannot be retrieved or recorded in failedUids (newKeySet rejects nulls):
+		// skip it, keep retrieving the others, and report the run as failed at the end.
+		List<Identity> validIdentities = identities.stream()
+				.filter(identity -> identity != null && identity.getUid() != null)
+				.toList();
+		boolean hadInvalidIdentity = validIdentities.size() < identities.size();
+		if (hadInvalidIdentity) {
+			log.error("Skipping {} identities with a null identity or uid.", identities.size() - validIdentities.size());
 		}
-		executorService.shutdown();
-		try {
-			executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		} catch (InterruptedException e) {
-			slf4jLogger.error("Thread interrupted while waiting for retrieval to finish.");
-			return false;
-		}
-		if (!failedUids.isEmpty()) {
-			slf4jLogger.error("Retrieval crashed for uids=" + failedUids + ".");
-			return false;
-		}
-		return true;
-	}
+
+		Semaphore retrievalPermits = new Semaphore(MAX_CONCURRENT_RETRIEVALS);
+		// Java 21 GA: virtual-thread-per-task executor, auto-closed
+       try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+
+           var futures = validIdentities.stream()
+                   .map(identity -> CompletableFuture.runAsync(() -> {
+                       retrievalPermits.acquireUninterruptibly();
+                       try {
+                           log.info("refreshFlag in retrieveArticlesByDateRange: {}", refreshFlag);
+
+                           // Java 21: switch expression replaces if/else chain
+                           switch (refreshFlag) {
+                               case ALL_PUBLICATIONS -> {
+                                   log.info("Starting full retrieval for uid=[{}]", identity.getUid());
+                                   retrieveData(identity, refreshFlag);
+                                   if (RetrievalErrorTracker.hadError()) {
+                                       log.warn("Retrieval for uid=[{}] completed with swallowed PubMed failures; marking as failed.",
+                                               identity.getUid());
+                                       failedUids.add(identity.getUid());
+                                   }
+                               }
+                               case ONLY_NEWLY_ADDED_PUBLICATIONS -> {
+                                   log.info("Starting date-range retrieval for uid=[{}] startDate=[{}] endDate=[{}]",
+                                           identity.getUid(), startDate, endDate);
+                                   retrieveDataByDateRange(identity, startDate, endDate, refreshFlag);
+                                   if (RetrievalErrorTracker.hadError()) {
+                                       log.warn("Retrieval for uid=[{}] completed with swallowed PubMed failures; marking as failed.",
+                                               identity.getUid());
+                                       failedUids.add(identity.getUid());
+                                   }
+                               }
+                           }
+                       } catch (IOException e) {
+                           // A Runnable cannot throw a checked exception: surface it to the exceptionally stage.
+                           throw new UncheckedIOException(e);
+                       } finally {
+                           retrievalPermits.release();
+                       }
+                   }, executor)
+                   .exceptionally(ex -> {
+                       // Single place that records a failed uid. runAsync hands any Throwable, including an
+                       // Error (OOM, StackOverflowError), to this stage, so the false-return gate still fires.
+                       // Returning null lets the other identities continue.
+                       log.error("Failed to retrieve publications for uid=[{}]", identity.getUid(), ex);
+                       failedUids.add(identity.getUid());
+                       return null;
+                   }))
+                   .toList(); // Java 21: Stream.toList() — unmodifiable, allocation-efficient
+
+           // Wait for ALL identity retrievals to finish
+           CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+			// Then we check if any failed, log your specific error, and return false
+			if (!failedUids.isEmpty() || hadInvalidIdentity) {
+				log.error("Retrieval crashed for uids={}.", failedUids);
+				return false;
+			}
+
+       } // executor.close() called here automatically
+       log.info("All identity retrievals completed successfully. count={}", identities.size());
+       return true;
+   }	
 	
-	/** Package-private, not private, so tests can override it to simulate a worker Error
-	 *  or a swallowed strategy failure. */
 	Set<Long> retrieveData(Identity identity, RetrievalRefreshFlag refreshFlag) throws IOException {
-		slf4jLogger.info("Coming into retrieveData section without date range****");
 		Set<Long> uniquePmids = new HashSet<>();
-
+		
 		QueryType queryType = null;
-
-		//eSearchResultService.delete();
-
 		String uid = identity.getUid();
-
+		
 		// Clean-completion tracking (#696): clear the per-run PubMed-failure flag so the
 		// lastFullSweep stamp at the end of this method reflects THIS run only. This is the
 		// RetrievalErrorTracker discipline #691 established for retrieveDataByDateRange,
 		// extended to the full-sweep path — which is the path both manual and escalated
 		// ALL_PUBLICATIONS requests take.
 		RetrievalErrorTracker.reset();
-
-		// Phase 1 provenance tracking state
-		Set<Long> nonGsStrategyPmids = new HashSet<>();
-		Map<Long, String> newPmidStrategy = new LinkedHashMap<>();
-		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
+		
+		var nonGsStrategyPmids = new HashSet<Long>();
+		var newPmidStrategy = new LinkedHashMap<Long, String>();
+		var backfillPmids = new HashSet<Long>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
+		
 		// Build set of already-known PMIDs from existing ESearchResult
 		Set<Long> existingPmids = new HashSet<>();
 		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
@@ -218,9 +208,8 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		identityAuthorNames(identity, identityNames);
 		boolean useStrictQueryOnly = identityNames.entrySet().stream().anyMatch(entry -> entry.getKey() == IdentityNameType.DERIVED && entry.getValue().size() > 0);
 
-		if(useStrictQueryOnly) {
-			queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
-		}
+		if(useStrictQueryOnly) queryType = QueryType.STRICT_COMPOUND_NAME_LOOKUP;
+		
 
 		// Initialize as an empty map up front so all strategies use putAll uniformly.
 		// (Phase 36 FIX-05) GoldStandard retrieval now runs LAST after Email/FNI/Aff/Dept/Grant/etc.
@@ -233,30 +222,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
-		slf4jLogger.info("pubMedArticles in retrieveData section without date range****"+pubMedArticles.size());
-		/*if (pubMedArticles.size() > 0) {
-			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
-
-			slf4jLogger.info("Found " + aliasSet.size() + " new alias for uid=[" + uid + "]");
-
-			// Update alias.
-			List<PubMedAlias> pubMedAliases = new ArrayList<>();
-			for (Map.Entry<Long, AuthorName> entry : aliasSet.entrySet()) {
-				PubMedAlias pubMedAlias = new PubMedAlias();
-				pubMedAlias.setAuthorName(entry.getValue());
-				pubMedAlias.setPmid(entry.getKey());
-				slf4jLogger.info("new alias for uid=[" + identity.getUid() + "], alias=[" + entry.getValue() + "] from pmid=[" + entry.getKey() + "]");
-				pubMedAliases.add(pubMedAlias);
-			}
-
-			identity.setPubMedAlias(pubMedAliases);
-			Date date = new Date();
-			identity.setDateInitialRun(date);
-			identity.setDateLastRun(date);
-			identityService.save(identity);
-
-			uniquePmids.addAll(pubMedArticles.keySet());
-		}*/
+		log.info("pubMedArticles in retrieveData section without date range****"+pubMedArticles.size());
 
 		// TODO parallelize by putting save in a separate thread.
 		savePubMedArticles(pubMedArticles.values(), uid, emailRetrievalStrategy.getRetrievalStrategyName(), retrievalResult.getPubMedQueryResults(), queryType, refreshFlag);
@@ -270,7 +236,6 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		} else {
 			r1 = firstNameInitialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
 		}
-		//if (r1.getPubMedArticles().size() > 0) {
 		if(r1.getPubMedQueryResults() != null
 				&&
 				r1.getPubMedQueryResults().size() > 0
@@ -294,7 +259,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			// This avoids a separate live eSearch call during the scoring phase.
 			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
 			eSearchCountService.save(new ESearchCount(uid, trueCount));
-			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
+			log.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 
 		if(r1.getPubMedQueryResults() != null
@@ -314,7 +279,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r2.getPubMedArticles(), affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
+				log.info("Skipping {} since no affiliation for {}",affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -333,7 +298,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r4.getPubMedArticles(), departmentRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
+				log.info("Skipping {} since no departments for {}",departmentRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
@@ -345,7 +310,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r5.getPubMedArticles(), grantRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
+				log.info("Skipping {} since no grants for {}", grantRetrievalStrategy.getRetrievalStrategyName(),identity.getUid());
 			}
 
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -364,7 +329,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r7.getPubMedArticles(), knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
+				log.info("Skipping {} since no Known Relationships for {}",knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, useStrictQueryOnly);
@@ -401,17 +366,17 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
 				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
 			orcidForRetrieval = identity.getOrcid().trim();
-			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+			log.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
 		}
 		if (orcidForRetrieval == null) {
 			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
 			if (orcidForRetrieval != null) {
-				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+				log.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
 						orcidForRetrieval, uid);
 				// Set in-memory so OrcidRetrievalStrategy.constructOrcidQuery() can read it.
 				// Do NOT persist to DynamoDB — Identity.orcid is for human-asserted ORCIDs only.
 				identity.setOrcid(orcidForRetrieval);
-				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+				log.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
 						orcidForRetrieval, uid);
 			}
 		}
@@ -437,18 +402,17 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// to use the retrieved-PMID semantic consistently.
 		if (queryType != QueryType.STRICT_EXCEEDS_THRESHOLD_LOOKUP) {
 			eSearchCountService.save(new ESearchCount(uid, nonGsStrategyPmids.size()));
-			slf4jLogger.info("Stored final eSearchCount={} for uid={}", nonGsStrategyPmids.size(), uid);
+			log.info("Stored final eSearchCount={} for uid={}", nonGsStrategyPmids.size(), uid);
 		}
 
 		// Phase 1: Write provenance records for newly discovered PMIDs
 		if (!newPmidStrategy.isEmpty()) {
-			Date now = new Date();
 			List<PmidProvenance> provenanceRecords = new ArrayList<>();
 			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
 				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
 			}
 			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
-			slf4jLogger.info("Wrote {} provenance records for uid={}", provenanceRecords.size(), uid);
+			log.info("Wrote {} provenance records for uid={}", provenanceRecords.size(), uid);
 		}
 
 		if (useScopusArticles) {
@@ -469,7 +433,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+			log.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
 					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
 
 			List<String> dois = new ArrayList<>();
@@ -491,7 +455,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+			log.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
 					uid, notFoundPmids.size(), dois.size(), noDoisCount);
 
 			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
@@ -505,7 +469,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
 						doiMatchSuccess++;
 					} else {
-						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+						log.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
 								uid, scopusArticle.getDoi());
 						doiMatchFailed++;
 					}
@@ -515,24 +479,23 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
 
-			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+			log.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
 					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
 					notFoundPmids.size() - doiMatchSuccess);
 
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
-
+		log.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
+		
 		// Record the completed full sweep (#696) — only if no strategy entered the
 		// error-swallow path during this run. A strategy that threw outright never
 		// reaches this line, which is the same outcome: no stamp, person stays due.
 		stampLastFullSweepIfClean(uid, refreshFlag);
-
+		
 		return uniquePmids;
 	}
-
+	
 	public void retrieveDataByDateRange(Identity identity, Date startDate, Date endDate, RetrievalRefreshFlag refreshFlag) throws IOException {
-		slf4jLogger.info("Coming in retrieveData section with date range****");
 		Set<Long> uniquePmids = new HashSet<>();
 		QueryType queryType = null;
 		String uid = identity.getUid();
@@ -542,13 +505,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		Set<Long> backfillPmids = new HashSet<>(pmidProvenanceService.findPmidsByUidAndStrategy(uid, "BACKFILL_FROM_ESEARCHRESULT"));
 		Set<Long> existingPmids = new HashSet<>();
 		reciter.database.dynamodb.model.ESearchResult existingESearch = eSearchResultService.findByUid(uid);
+		
 		// Watermark guard (#689): remember where retrievalDate stood before this run and clear the
 		// per-run error flag. savePubMedArticles advances retrievalDate to now() as strategies run;
 		// if any strategy's PubMed call fails below, we roll it back at the end so the next
 		// ONLY_NEWLY_ADDED run re-covers this window instead of skipping past a silently-missed day.
-		java.time.Instant preRunRetrievalDate = existingESearch != null ? existingESearch.getRetrievalDate() : null;
-		RetrievalErrorTracker.reset();
-		try { // body left un-reindented to keep the diff reviewable; the finally rolls the watermark back
+				java.time.Instant preRunRetrievalDate = existingESearch != null ? existingESearch.getRetrievalDate() : null;
+				RetrievalErrorTracker.reset();
+				try { // body left un-reindented to keep the diff reviewable; the finally rolls the watermark back
+		
 		if (existingESearch != null && existingESearch.getESearchPmids() != null) {
 			for (reciter.database.dynamodb.model.ESearchPmid esp : existingESearch.getESearchPmids()) {
 				if (esp.getPmids() != null) {
@@ -575,7 +540,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		// Retrieve by email.
 		RetrievalResult retrievalResult = emailRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 		pubMedArticles.putAll(retrievalResult.getPubMedArticles());
-		slf4jLogger.info("pubMedArticles in retrieveData section with date range****"+pubMedArticles.size());
+		log.info("pubMedArticles in retrieveData section with date range {}",pubMedArticles.size());
 		/*if (pubMedArticles.size() > 0) {
 			Map<Long, AuthorName> aliasSet = AuthorNameUtils.calculatePotentialAlias(identity, pubMedArticles.values());
 
@@ -637,7 +602,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			// Store the true eSearch count for scoring.
 			int trueCount = r1.getPubMedQueryResults().get(0).getNumResult();
 			eSearchCountService.save(new ESearchCount(uid, trueCount));
-			slf4jLogger.info("Stored eSearchCount={} for uid={}", trueCount, uid);
+			log.info("Stored eSearchCount={} for uid={}", trueCount, uid);
 		}
 
 		if(r1.getPubMedQueryResults() != null
@@ -655,7 +620,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				uniquePmids.addAll(r2.getPubMedArticles().keySet());
 				trackNewPmids(r2.getPubMedArticles(), affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
-				slf4jLogger.info("Skipping " + affiliationInDbRetrievalStrategy.getRetrievalStrategyName() + " since no affiliation for " + identity.getUid());
+				log.info("Skipping {} since no affiliation for {}",affiliationInDbRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			RetrievalResult r3 = affiliationRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
@@ -672,7 +637,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				trackNewPmids(r4.getPubMedArticles(), departmentRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 
 			} else {
-				slf4jLogger.info("Skipping " + departmentRetrievalStrategy.getRetrievalStrategyName() + " since no departments for " + identity.getUid());
+				log.info("Skipping {} since no departments for {}",departmentRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 
 			if(identity.getGrants() != null && !identity.getGrants().isEmpty()) {
@@ -682,7 +647,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				uniquePmids.addAll(r5.getPubMedArticles().keySet());
 				trackNewPmids(r5.getPubMedArticles(), grantRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
-				slf4jLogger.info("Skipping " + grantRetrievalStrategy.getRetrievalStrategyName() + " since no grants for " + identity.getUid());
+				log.info("Skipping {} since no grants for {}" ,grantRetrievalStrategy.getRetrievalStrategyName(),identity.getUid());
 			}
 
 			RetrievalResult r6 = fullNameRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
@@ -698,7 +663,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				uniquePmids.addAll(r7.getPubMedArticles().keySet());
 				trackNewPmids(r7.getPubMedArticles(), knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), uid, existingPmids, newPmidStrategy, backfillPmids);
 			} else {
-				slf4jLogger.info("Skipping " + knownRelationshipRetrievalStrategy.getRetrievalStrategyName() + " since no Known Relationships for " + identity.getUid());
+				log.info("Skipping {} since no Known Relationships for {}",knownRelationshipRetrievalStrategy.getRetrievalStrategyName(), identity.getUid());
 			}
 			RetrievalResult r8 = secondIntialRetrievalStrategy.retrievePubMedArticles(identity, identityNames, startDate, endDate, useStrictQueryOnly);
 			pubMedArticles.putAll(r8.getPubMedArticles());
@@ -729,15 +694,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if (identity.getOrcid() != null && !identity.getOrcid().isEmpty()
 				&& !"NOT SET".equalsIgnoreCase(identity.getOrcid().trim())) {
 			orcidForRetrieval = identity.getOrcid().trim();
-			slf4jLogger.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
+			log.info("Using asserted ORCID [{}] for uid=[{}]", orcidForRetrieval, uid);
 		}
 		if (orcidForRetrieval == null) {
 			orcidForRetrieval = inferOrcidFromAcceptedArticles(pubMedArticles, goldStandard, identity);
 			if (orcidForRetrieval != null) {
-				slf4jLogger.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
+				log.info("Inferred ORCID [{}] from accepted articles for uid=[{}]",
 						orcidForRetrieval, uid);
 				identity.setOrcid(orcidForRetrieval);
-				slf4jLogger.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
+				log.info("Using inferred ORCID [{}] (in-memory only) for retrieval, uid=[{}]",
 						orcidForRetrieval, uid);
 			}
 		}
@@ -756,16 +721,15 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 
 		// Phase 1: Write provenance records for newly discovered PMIDs (no ESearchCount always-save for date-range runs)
 		if (!newPmidStrategy.isEmpty()) {
-			Date now = new Date();
 			List<PmidProvenance> provenanceRecords = new ArrayList<>();
 			for (Map.Entry<Long, String> entry : newPmidStrategy.entrySet()) {
 				provenanceRecords.add(new PmidProvenance(uid, entry.getKey(), Instant.now(), entry.getValue()));
 			}
 			pmidProvenanceService.saveAllIfNotExists(provenanceRecords);
-			slf4jLogger.info("Wrote {} provenance records (date-range) for uid={}", provenanceRecords.size(), uid);
+			log.info("Wrote {} provenance records (date-range) for uid={}", provenanceRecords.size(), uid);
 		}
 
-		slf4jLogger.info("uniquePmids in retrieveData section with date range****"+uniquePmids.size());
+		log.info("uniquePmids in retrieveData section with date range {} ", uniquePmids.size());
 		//List<ScopusArticle> scopusArticles = emailRetrievalStrategy.retrieveScopus(uniquePmids);
 		//scopusService.save(scopusArticles);
 		if (useScopusArticles) {
@@ -786,7 +750,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
+			log.info("Scopus PMID lookup for uid=[{}]: queried={}, matched={}, notFound={}",
 					uid, uniquePmids.size(), foundPmids.size(), notFoundPmids.size());
 
 			List<String> dois = new ArrayList<>();
@@ -808,7 +772,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				}
 			}
 
-			slf4jLogger.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
+			log.info("Scopus DOI fallback for uid=[{}]: notFoundPmids={}, withDoi={}, withoutDoi={}",
 					uid, notFoundPmids.size(), dois.size(), noDoisCount);
 
 			List<ScopusArticle> scopusArticlesByDoi = emailRetrievalStrategy.retrieveScopusDoi(dois);
@@ -822,7 +786,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 						scopusArticle.setPubmedId(doiToPmid.get(scopusArticle.getDoi().toLowerCase()));
 						doiMatchSuccess++;
 					} else {
-						slf4jLogger.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
+						log.warn("Scopus DOI fallback: DOI mismatch for uid=[{}] — Scopus returned doi=[{}] which has no reverse PMID mapping",
 								uid, scopusArticle.getDoi());
 						doiMatchFailed++;
 					}
@@ -832,53 +796,37 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pmidsByDoi.add(scopusArticle.getPubmedId());
 			}
 
-			slf4jLogger.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
+			log.info("Scopus DOI fallback results for uid=[{}]: doisQueried={}, scopusReturned={}, pmidInjected={}, pmidFailed={}, stillUnmatched={}",
 					uid, dois.size(), scopusArticlesByDoi.size(), doiMatchSuccess, doiMatchFailed,
 					notFoundPmids.size() - doiMatchSuccess);
 
 			scopusService.save(scopusArticlesByDoi);
 		}
-		slf4jLogger.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
-		} finally {
-			// Watermark guard (#689): ALWAYS runs — even if a strategy threw after savePubMedArticles
-			// already advanced retrievalDate — so a failed run never leaves the watermark skipped past
-			// a silently-dropped window. This guard covers the ONLY_NEWLY_ADDED path only:
-			// ALL_PUBLICATIONS runs — manual, escalated (#696), or auto-upgraded — never route here
-			// (AsyncRetrievalEngine dispatches them to retrieveData), so this rollback does NOT protect
-			// them. Their failure handling lives in retrieveData instead: a sweep that hit the swallow
-			// path skips the lastFullSweep stamp, so the person stays due and the sweep is retried.
-			// The rollback is self-guarded so a DynamoDB hiccup here cannot mask the original exception.
-			if (RetrievalErrorTracker.hadError() && preRunRetrievalDate != null) {
-				try {
-					reciter.database.dynamodb.model.ESearchResult esr = eSearchResultService.findByUid(uid);
-					if (esr != null) {
-						esr.setRetrievalDate(preRunRetrievalDate);
-						eSearchResultService.save(esr);
-						slf4jLogger.warn("Retrieval for uid=[{}] hit PubMed failures; rolled retrievalDate back to [{}] "
-								+ "so the next ONLY_NEWLY_ADDED run re-covers this window.", uid, preRunRetrievalDate);
-					}
-				} catch (Exception rollbackEx) {
-					slf4jLogger.error("Failed to roll retrievalDate back for uid=[{}]", uid, rollbackEx);
+		log.info("Finished retrieval for uid=[{}], uniquePmids={}", identity.getUid(), uniquePmids.size());
+
+	} finally {
+		// a silently-dropped window. This guard covers the ONLY_NEWLY_ADDED path only:
+		// ALL_PUBLICATIONS runs — manual, escalated (#696), or auto-upgraded — never route here
+		// (AsyncRetrievalEngine dispatches them to retrieveData), so this rollback does NOT protect
+		// them. Their failure handling lives in retrieveData instead: a sweep that hit the swallow
+		// path skips the lastFullSweep stamp, so the person stays due and the sweep is retried.
+		if (RetrievalErrorTracker.hadError() && preRunRetrievalDate != null) {
+			try {
+				reciter.database.dynamodb.model.ESearchResult esr = eSearchResultService.findByUid(uid);
+				if (esr != null) {
+					esr.setRetrievalDate(preRunRetrievalDate);
+					eSearchResultService.save(esr);
+					log.warn(
+							"Retrieval for uid=[{}] hit PubMed failures; rolled retrievalDate back to [{}] "
+									+ "so the next ONLY_NEWLY_ADDED run re-covers this window.",
+							uid, preRunRetrievalDate);
 				}
+			} catch (Exception rollbackEx) {
+				log.error("Failed to roll retrievalDate back for uid=[{}]", uid, rollbackEx);
 			}
 		}
-
 	}
-	
-	
 
-	@Override
-	public void retrieveByPmids(String uid, List<Long> pmids) throws IOException {
-		//Not being used
-		/*if (!pmids.isEmpty()) {
-			RetrievalResult result = goldStandardRetrievalStrategy.retrievePubMedArticles(pmids);
-			if (result.getPubMedArticles().size() > 0) {
-				savePubMedArticles(result.getPubMedArticles().values(), uid, 
-						goldStandardRetrievalStrategy.getRetrievalStrategyName(), result.getPubMedQueryResults(), null);
-			}
-			List<ScopusArticle> scopusArticles = goldStandardRetrievalStrategy.retrieveScopus(pmids);
-			scopusService.save(scopusArticles);
-		}*/
 	}
 	
 	/**
@@ -916,7 +864,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 						sanitizationUtils.sanitizeArticleAuthorNames(reCiterArticle));
 				acceptedReCiterArticles.add(reCiterArticle);
 			} catch (Exception e) {
-				slf4jLogger.warn("Could not translate PMID {} for ORCID inference: {}",
+				log.warn("Could not translate PMID {} for ORCID inference: {}",
 						knownPmid, e.getMessage());
 			}
 		}
@@ -981,7 +929,9 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 			String uid, Set<Long> existingPmids, Map<Long, String> newPmidStrategy,
 			Set<Long> backfillPmids) {
 		long nowEpochSeconds = System.currentTimeMillis() / 1000L;
-		for (Long pmid : articles.keySet()) {
+		
+		List<Long> pmids = new ArrayList<>(articles.keySet());
+		for (Long pmid : pmids) {
 			// Legacy PmidProvenance attribution (new-only)
 			if (!existingPmids.contains(pmid) && !newPmidStrategy.containsKey(pmid)) {
 				newPmidStrategy.put(pmid, strategyName);
@@ -990,8 +940,25 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				pmidProvenanceService.updateStrategyIfBackfill(uid, pmid, strategyName);
 				backfillPmids.remove(pmid);
 			}
-			// Phase 33-01: ArticleProvenance upsert for EVERY retrieved PMID
-			articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
+		}
+		// Phase 33-01: ArticleProvenance upsert for EVERY retrieved PMID, 10 at a time.
+	    // A permit is taken before each task is submitted, so at most 10 tasks exist at once however many pmids
+	    // there are, and the executor close() waits for all of them: the next strategy only starts after these are done.
+		Semaphore permits = new Semaphore(10);
+		try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+			for (Long pmid : pmids) {
+				permits.acquire();
+				executor.submit(() -> {
+					try {
+						articleProvenanceService.upsertRetrievalProvenance(uid, pmid, strategyName, nowEpochSeconds);
+					} finally {
+						permits.release();
+					}
+				});
+			}
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while recording ArticleProvenance", e);
 		}
 	}
 
@@ -1031,7 +998,7 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 				// An alternate name deserialized from the Identity table can carry a null
 				// firstName or lastName, which every dereference below would NPE on — skip it.
 				if(authorName == null || authorName.getFirstName() == null || authorName.getLastName() == null) {
-					slf4jLogger.warn("uid: {} has a malformed alternate name (null firstName or lastName); skipping it", identity.getUid());
+					log.warn("uid: {} has a malformed alternate name (null firstName or lastName); skipping it", identity.getUid());
 					continue;
 				}
 				authorName.setFirstName(ReCiterStringUtil.deAccent(authorName.getFirstName().replaceAll("[\"()]", "")));
@@ -1060,9 +1027,10 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 	 * @param identityName
 	 * @return
 	 */
-	Set<AuthorName> deriveAdditionalName(AuthorName identityName) {
-
+	 Set<AuthorName> deriveAdditionalName(AuthorName identityName) {
+		
 		Set<AuthorName> derivedAuthorNames = new HashSet<AuthorName>();
+		
 		// AuthorName's constructor takes substring(0, 1) of any non-null middleName, so a
 		// blank one (an Identity primaryName can carry middleName "") must behave exactly
 		// like null — both as a constructor argument and as a first-name substitute below.
@@ -1070,54 +1038,56 @@ public class AliasReCiterRetrievalEngine extends AbstractReCiterRetrievalEngine 
 		if(middleName != null && middleName.isBlank()) {
 			middleName = null;
 		}
+		
 		// A malformed Identity can carry a null first or last name (see #715/#717), and an
 		// unchecked throw here dies inside a retrieval worker — the swallowed-crash shape
 		// this PR exists to stop. Read each once, guard each once.
-		String lastName = identityName.getLastName();
-		String firstName = identityName.getFirstName();
-		if(lastName != null && !lastName.isBlank()
-				&& (lastName.contains(" ") || lastName.contains("."))) {
-			// The pattern splits on whitespace and hyphens, never on a period, so a
-			// period-without-space surname ("St.John") enters this branch but splits into a
-			// single element. Require both halves before indexing either one.
-			String[] possibleLastName = lastName.split("\\s+|-", 2);
-			if(possibleLastName.length > 1
-					&&
-					possibleLastName[0].length() >=4
-					&&
-					possibleLastName[1].length() >=4) {
-
-				AuthorName authorName1 = new AuthorName(firstName, middleName, possibleLastName[0].trim());
-				AuthorName authorName2 = new AuthorName(firstName, middleName, possibleLastName[1].trim());
+				String lastName = identityName.getLastName();
+				String firstName = identityName.getFirstName();
+				if(lastName != null && !lastName.isBlank()
+						&& (lastName.contains(" ") || lastName.contains("."))) {
+					// The pattern splits on whitespace and hyphens, never on a period, so a
+					// period-without-space surname ("St.John") enters this branch but splits into a
+					// single element. Require both halves before indexing either one.
+					String[] possibleLastName = lastName.split("\\s+|-", 2);
+					if(possibleLastName.length > 1
+							&&
+							possibleLastName[0].length() >=4
+							&&
+							possibleLastName[1].length() >=4) {
+				
+						String safeFirstName = firstName == null ? "" : firstName;
+						AuthorName authorName1 = new AuthorName(safeFirstName, middleName, possibleLastName[0].trim());
+						AuthorName authorName2 = new AuthorName(safeFirstName, middleName, possibleLastName[1].trim());	
 				derivedAuthorNames.add(authorName1);
 				derivedAuthorNames.add(authorName2);
 			}
 		}
-		if(firstName != null && (firstName.contains(" ") || firstName.contains("."))) {
+		if (firstName != null && (firstName.contains(" ") || firstName.contains("."))) {
 			// Measure the trimmed value: "W. " is the same initial as "W.", which an
 			// untrimmed length check silently skips. A genuine one-letter first name has
 			// neither a space nor a period, so it never reaches this branch at all.
 			String trimmedFirstName = firstName.trim();
-			if(trimmedFirstName.length() ==2 && trimmedFirstName.endsWith(".") && middleName != null) {
-				AuthorName authorName1 = new AuthorName(middleName, null, lastName);//W.[firstName] Clay[middleName] Bracken[lastName]
+			if (trimmedFirstName.length() == 2 && trimmedFirstName.endsWith(".") && middleName != null) {
+				AuthorName authorName1 = new AuthorName(middleName, null, lastName);// W.[firstName] Clay[middleName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
-			if(firstName.length() >=3 && Character.isWhitespace(firstName.charAt(1))) {
-				//String[] possibleFirstName = identityName.getFirstName().split("\\s+", 2);
-				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(2)), middleName, lastName);//W Clay[firstName] Bracken[lastName]
+			if (firstName.length() >= 3 && Character.isWhitespace(firstName.charAt(1))) {
+				// String[] possibleFirstName = identityName.getFirstName().split("\\s+", 2);
+				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(2)), middleName, lastName);// W Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
-			}	
-			if(firstName.length() >=4 && Character.isWhitespace(firstName.charAt(1)) && firstName.charAt(2) == '.') {
-				//String[] possibleFirstName = identityName.getFirstName().split(".\\s+", 2);
-				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(3)), middleName, lastName);//W. Clay[firstName] Bracken[lastName]
+			}
+			if (firstName.length() >= 4 && Character.isWhitespace(firstName.charAt(1)) && firstName.charAt(2) == '.') {
+				// String[] possibleFirstName = identityName.getFirstName().split(".\\s+", 2);
+				AuthorName authorName1 = new AuthorName(Character.toString(firstName.charAt(3)), middleName, lastName);// W.Clay[firstName] Bracken[lastName]
 				derivedAuthorNames.add(authorName1);
 			}
 		}
-		if(firstName != null && firstName.length() ==1 && middleName != null) {//Case for W[firstName] Clay[middleName] Bracken[lastName]
+		if (firstName != null && firstName.length() == 1 && middleName != null) {// Case for W[firstName] Clay[middleName] Bracken[lastName]
 			AuthorName authorName1 = new AuthorName(middleName, null, lastName);
 			derivedAuthorNames.add(authorName1);
 		}
-		
+
 		return derivedAuthorNames;
 	}
 }

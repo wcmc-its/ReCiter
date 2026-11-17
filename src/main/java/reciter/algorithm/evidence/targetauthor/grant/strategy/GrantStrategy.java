@@ -90,14 +90,14 @@ public class GrantStrategy extends AbstractTargetAuthorStrategy {
 			for (ReCiterArticleGrant grant : reCiterArticle.getGrantList()) {
 				for (String identityGrantId : sanitizedIdentityGrants) {
 					//log.info("identity grant {}", identityGrantId);
-					if (grant.getGrantID() != null && org.apache.commons.lang3.StringUtils.equalsIgnoreCase(grant.getSanitizedGrantID(), identityGrantId)) {
+					if (grant.getGrantID() != null && org.apache.commons.lang3.Strings.CI.equals(grant.getSanitizedGrantID(), identityGrantId)) {
 						Grant analysisGrant = new Grant();
 						analysisGrant.setArticleGrant(grant.getGrantID());
 						analysisGrant.setInstitutionGrant(identityGrantId);
 						analysisGrant.setGrantMatchScore(ReCiterArticleScorer.strategyParameters.getGrantMatchScore());
 						score += 1;
 						reCiterArticle.getMatchingGrantList().add(grant);
-						if(!grants.stream().anyMatch(matchingGrant -> org.apache.commons.lang3.StringUtils.equalsIgnoreCase(identityGrantId, matchingGrant.getInstitutionGrant()))) {
+						if(!grants.stream().anyMatch(matchingGrant -> org.apache.commons.lang3.Strings.CI.equals(identityGrantId, matchingGrant.getInstitutionGrant()))) {
 							grants.add(analysisGrant);
 						}
 						

@@ -10,9 +10,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import reciter.algorithm.evidence.feedback.targetauthor.AbstractTargetAuthorFeedbackStrategy;
 import reciter.engine.EngineParameters;
 import reciter.model.article.ReCiterArticle;
@@ -22,7 +19,6 @@ import reciter.model.identity.Identity;
 
 public class OrganizationFeedbackStrategy extends AbstractTargetAuthorFeedbackStrategy {
 
-	private static final Logger slf4jLogger = LoggerFactory.getLogger(OrganizationFeedbackStrategy.class);
 	Map<String, List<ReCiterArticleFeedbackScore>> feedbackOrganizationMap = null;
 	List<ReCiterAuthor> listOfAuthors = null;
 	List<ReCiterArticle> validOrganizations = null;

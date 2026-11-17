@@ -12,6 +12,12 @@ package reciter.xml.retriever.pubmed;
  * ThreadLocal cleanly scopes the flag to that run: the engine calls {@link #reset()} before a
  * run and checks {@link #hadError()} after, rolling the watermark back on failure. Fail-safe —
  * a stale or unset flag at worst triggers an extra (idempotent) re-scan, never data loss.
+ *
+ * <p>Threading assumption: {@link #markError()} must run on the same thread that later calls
+ * {@link #hadError()}. Each uid is retrieved on its own thread, which also isolates uids from one
+ * another. If retrieval is ever moved onto other threads (parallel streams, executors), a failure
+ * marked there would be silently lost, so the flag would have to be replaced by an explicit
+ * per-run result.
  */
 public final class RetrievalErrorTracker {
 

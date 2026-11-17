@@ -1,6 +1,6 @@
 package reciter.database.dyanmodb.files;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import reciter.database.dynamodb.model.NameFrequency;
 import reciter.service.NameFrequencyService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 
 @Component
@@ -21,16 +21,19 @@ public class NameFrequencyFileImport {
 	private static final Logger log = LoggerFactory.getLogger(NameFrequencyFileImport.class);
 
 	@Autowired
-	
 	private NameFrequencyService nameFrequencyService;
+	
+	@Autowired
+	private ObjectMapper mapper;
 
 	public void importNameFrequency() {
-		ObjectMapper mapper = new ObjectMapper();
 		List<NameFrequency> nameFrequencies = null;
-		try {
-			nameFrequencies = Arrays.asList(mapper.readValue(getClass().getResourceAsStream("/files/NameFrequency.json"), NameFrequency[].class));
-		} catch (IOException e) {
-			log.error("IOException", e);
+		try (InputStream is = getClass().getResourceAsStream("/files/NameFrequency.json")) {
+			nameFrequencies = Arrays.asList(mapper.readValue(is, NameFrequency[].class));
+		} catch (JacksonException e) {
+			log.error("Failed to read name frequencies from file", e);
+		} catch (Exception e) {
+			log.error("Unexpected error while reading name frequencies from file", e);
 		}
 		if(nameFrequencies != null
 				&&

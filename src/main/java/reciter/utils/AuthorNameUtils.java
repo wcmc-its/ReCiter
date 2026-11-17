@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,28 +49,28 @@ public class AuthorNameUtils {
 	 */
 	public static boolean isFullNameMatch(AuthorName name, AuthorName other) {
 
-		return StringUtils.equalsIgnoreCase(name.getFirstName(), other.getFirstName()) &&
-				StringUtils.equalsIgnoreCase(name.getMiddleName(), other.getMiddleName()) &&
-				StringUtils.equalsIgnoreCase(name.getLastName(), other.getLastName());
+		return Strings.CI.equals(name.getFirstName(), other.getFirstName()) &&
+				Strings.CI.equals(name.getMiddleName(), other.getMiddleName()) &&
+				Strings.CI.equals(name.getLastName(), other.getLastName());
 	}
 	
 	public static boolean isFirstNameInitialMatch(AuthorName name, AuthorName other) {
 		if (name != null && other != null) {
-			return StringUtils.equalsIgnoreCase(name.getFirstInitial(), other.getFirstInitial());
+			return Strings.CI.equals(name.getFirstInitial(), other.getFirstInitial());
 		}
 		return false;
 	}
 	
 	public static boolean isFirstNameMatch(AuthorName name, AuthorName other) {
-		return StringUtils.equalsIgnoreCase(name.getFirstName(), other.getFirstName());
+		return Strings.CI.equals(name.getFirstName(), other.getFirstName());
 	}
 	
 	public static boolean isMiddleNameMatch(AuthorName name, AuthorName other) {
-		return StringUtils.equalsIgnoreCase(name.getMiddleName(), name.getMiddleName());
+		return Strings.CI.equals(name.getMiddleName(), name.getMiddleName());
 	}
 	
 	public static boolean isLastNameMatch(AuthorName name, AuthorName other) {
-		return StringUtils.equalsIgnoreCase(name.getLastName(), other.getLastName());
+		return Strings.CI.equals(name.getLastName(), other.getLastName());
 	}
 	
 	public static boolean isLastNameAndFirstInitialMatch(AuthorName name, AuthorName other) {
