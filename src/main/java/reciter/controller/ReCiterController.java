@@ -371,7 +371,7 @@ public class ReCiterController {
     public ResponseEntity<ESearchResult> retrieveESearchResultByUid(@PathVariable @NotBlank String uid) {
         StopWatch stopWatch = new StopWatch("Get the ESearchResult by passing an uid");
         stopWatch.start("Get the ESearchResult by passing an uid");
-        ESearchResult eSearchResult = eSearchResultService.findByUid(uid);
+        ESearchResult eSearchResult = eSearchResultService.findByUid(UidCanonicalizer.canonicalize(uid));
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         if (eSearchResult == null) {
@@ -1437,7 +1437,7 @@ public class ReCiterController {
     public ResponseEntity<List<AuditHistoryEntry>> retrieveFeedbackLogByUid(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Get curation audit history by uid");
         stopWatch.start("Get curation audit history by uid");
-        List<AuditHistoryEntry> history = feedbackLogQueryService.getAuditHistory(uid);
+        List<AuditHistoryEntry> history = feedbackLogQueryService.getAuditHistory(UidCanonicalizer.canonicalize(uid));
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
         return ResponseEntity.ok(history);

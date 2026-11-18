@@ -84,6 +84,8 @@ public class ExternalArticleController {
                                                      @RequestParam(value = "force", required = false, defaultValue = "false") boolean force,
                                                      @RequestBody ExternalArticle externalArticle) {
         externalArticle.setUid(UidCanonicalizer.canonicalize(uid));
+        // addedBy is the curator's CWID (also the FeedbackLog actor): same canonical form.
+        externalArticle.setAddedBy(UidCanonicalizer.canonicalizeOptional(externalArticle.getAddedBy()));
         String validationError = validate(externalArticle);
         if (validationError != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(validationError));
@@ -139,6 +141,8 @@ public class ExternalArticleController {
                                                         @RequestParam(value = "articleId") String articleId,
                                                         @RequestParam(value = "actorPersonIdentifier", required = false) String actorPersonIdentifier) {
         uid = UidCanonicalizer.canonicalize(uid);
+        // Optional until PM sends it; when present it is a CWID and is canonicalized too.
+        actorPersonIdentifier = UidCanonicalizer.canonicalizeOptional(actorPersonIdentifier);
         ExternalArticle existing = externalArticleService.find(uid, articleId.trim());
         if (existing == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -185,6 +189,7 @@ public class ExternalArticleController {
                     .body(errorBody("action is required and must be one of ACCEPTED, REJECTED, PENDING."));
         }
         String uid = UidCanonicalizer.canonicalize(request.getUid());
+        String actor = UidCanonicalizer.canonicalize(request.getActorPersonIdentifier());
         String articleId = request.getArticleId().trim();
         if (identityService.findByUid(uid) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -195,7 +200,7 @@ public class ExternalArticleController {
         // The FeedbackLog row is the authoritative record here (suppressed is only a
         // denormalized cache), so it is written first and its failure fails the request
         // before any state changes — unlike the add/delete paths, where it is a side-log.
-        if (!logFeedback(uid, articleId, feedback, request.getActorPersonIdentifier().trim(), request.getNote())) {
+        if (!logFeedback(uid, articleId, feedback, actor, request.getNote())) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(errorBody("Failed to record the feedback; nothing was changed. Retry."));
         }
@@ -215,8 +220,7 @@ public class ExternalArticleController {
                 externalArticleService.save(existing);
             }
         }
-        log.info("External article {} for uid {} feedback {} by {}", articleId, uid, feedback,
-                request.getActorPersonIdentifier().trim());
+        log.info("External article {} for uid {} feedback {} by {}", articleId, uid, feedback, actor);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("status", "LOGGED");
