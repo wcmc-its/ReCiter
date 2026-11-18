@@ -105,6 +105,7 @@ import reciter.service.dynamo.IDynamoDbGoldStandardService;
 import reciter.utils.AuthorNameSanitizationUtils;
 import reciter.utils.GenderProbability;
 import reciter.utils.InstitutionSanitizationUtil;
+import reciter.utils.UidCanonicalizer;
 import reciter.xml.retriever.engine.ReCiterRetrievalEngine;
 import reciter.xml.retriever.pubmed.RetrievalEscalationTracker;
 import reciter.xml.retriever.pubmed.RetrievalWindow;
@@ -207,6 +208,7 @@ public class ReCiterController {
     	} else if(goldStandard != null && goldStandard.getUid() == null) {
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The api requires a valid uid to be passed with GoldStandard model");
     	}
+    	goldStandard.setUid(UidCanonicalizer.canonicalize(goldStandard.getUid()));
     	reciter.feedback.EntryPath entryPath = reciter.feedback.EntryPath.fromString(entryPathParam);
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
@@ -242,6 +244,16 @@ public class ReCiterController {
     		@RequestParam(value = "entryPath", required = false) String entryPathParam) {
         StopWatch stopWatch = new StopWatch("Update GoldStandard with List");
         stopWatch.start("Update GoldStandard with List");
+        if (goldStandard == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        // Canonicalize every uid before anything is written; one invalid uid fails the batch with 400.
+        for (GoldStandard gs : goldStandard) {
+            if (gs == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            gs.setUid(UidCanonicalizer.canonicalize(gs.getUid()));
+        }
     	reciter.feedback.EntryPath entryPath = reciter.feedback.EntryPath.fromString(entryPathParam);
     	if(goldStandardUpdateFlag == null ||
     			goldStandardUpdateFlag == GoldStandardUpdateFlag.UPDATE || goldStandardUpdateFlag == GoldStandardUpdateFlag.DELETE) {
@@ -274,6 +286,7 @@ public class ReCiterController {
     public ResponseEntity<GoldStandard> retrieveGoldStandardByUid(@PathVariable String uid) {
         StopWatch stopWatch = new StopWatch("Get the goldStandard by passing an uid");
         stopWatch.start("Get the goldStandard by passing an uid");
+        uid = UidCanonicalizer.canonicalize(uid);
         GoldStandard goldStandard = dynamoDbGoldStandardService.findByUid(uid);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -474,6 +487,7 @@ public class ReCiterController {
     		@RequestParam(required = false) Integer fullSweepMaxAgeDays) {
         StopWatch stopWatch = new StopWatch("Retrieve Articles for an UID");
         stopWatch.start("Retrieve Articles for an UID");
+        uid = UidCanonicalizer.canonicalize(uid);
         RetrievalEscalationTracker.reset();
         List<Identity> identities = new ArrayList<>();
         LocalDate initial = LocalDate.now();
@@ -680,6 +694,7 @@ public class ReCiterController {
         if(uids != null && uids.size() > uidsMaxCount) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The maximum number of uids allowed is " + uidsMaxCount);
         }
+        uids = UidCanonicalizer.canonicalize(uids);
         if(uids == null || uids.isEmpty()) {
             
             try {
@@ -798,6 +813,7 @@ public class ReCiterController {
     		@RequestParam(required = false) Integer fullSweepMaxAgeDays,
     		@RequestParam(value = "includeExternal", required = false, defaultValue = "false") boolean includeExternal) {
 
+    	uid = UidCanonicalizer.canonicalize(uid);
     	StopWatch stopWatch = new StopWatch("Feature generation for UID "+uid);
         stopWatch.start("Feature generation for UID");
         RetrievalEscalationTracker.reset();
@@ -1222,6 +1238,7 @@ public class ReCiterController {
     
     @GetMapping(value = "/reciter/article-retrieval/by/uid", produces = "application/json")
     public ResponseEntity runArticleRetrievalByUid(@RequestParam String uid, @RequestParam(required = false) Double totalStandardizedArticleScore,@RequestParam(required = false) FilterFeedbackType filterByFeedback) {
+    	uid = UidCanonicalizer.canonicalize(uid);
     	StopWatch stopWatch = new StopWatch("Feature generation for UID");
         stopWatch.start("Feature generation for UID");
         

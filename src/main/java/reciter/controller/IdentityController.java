@@ -18,6 +18,7 @@
  *******************************************************************************/
 package reciter.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -46,6 +47,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
+import reciter.utils.UidCanonicalizer;
+import reciter.utils.UidCanonicalizer.InvalidUidException;
 
 
 @RestController
@@ -81,6 +84,8 @@ public class IdentityController {
         {
         	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(iae.getLocalizedMessage());
         }
+        // Store under the canonical uid (trimmed, lowercased); 400 if still invalid.
+        identity.setUid(UidCanonicalizer.canonicalize(identity.getUid()));
         identityService.save(identity);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -110,20 +115,30 @@ public class IdentityController {
         }
         log.info("calling saveIdentities with number of identities=" + identities.size());
      
+        // Items that fail validation are skipped and logged, not saved. Valid
+        // items are stored under their canonical uid (trimmed, lowercased).
+        List<Identity> valid = new ArrayList<>(identities.size());
         for(Identity identity : identities)
         {	
-        	// Validate the mandatory fields
         	try
         	{
         		validateMandatoryFields(identity);
+        		identity.setUid(UidCanonicalizer.canonicalize(identity.getUid()));
+        		valid.add(identity);
         	}
-        	catch(IllegalArgumentException iae)
+        	catch(IllegalArgumentException | InvalidUidException e)
             {
-            	//return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(iae.getLocalizedMessage());
-            	iae.printStackTrace();
+            	log.warn("saveIdentities: skipping identity uid='{}': {}",
+            			identity == null ? null : identity.getUid(), e.getMessage());
             }
-        }	
-        identityService.save(identities);
+        }
+        if (valid.size() < identities.size()) {
+        	log.warn("saveIdentities: skipped {} of {} identities that failed validation",
+        			identities.size() - valid.size(), identities.size());
+        }
+        if (!valid.isEmpty()) {
+        	identityService.save(valid);
+        }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
     }
@@ -142,6 +157,7 @@ public class IdentityController {
     public ResponseEntity<?> findByUid(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
         stopWatch.start("Search the identity table for a given ID");
+        uid = UidCanonicalizer.canonicalize(uid);
         log.info("calling findByUid with size of uids=" + uid);
         Identity identity = identityService.findByUid(uid);
         if(identity == null) {
@@ -168,6 +184,7 @@ public class IdentityController {
     public ResponseEntity<?> findByUids(@RequestParam List<String> uids) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a list of ID supplied");
         stopWatch.start("Search the identity table for a list of ID supplied");
+        uids = UidCanonicalizer.canonicalize(uids);
         log.info("calling findByUid with size of uids=" + uids);
         List<Identity> identities;
         try {
@@ -314,6 +331,7 @@ public class IdentityController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No uids were supplied in the request");
 		}
 
+		uids = UidCanonicalizer.canonicalize(uids);
 		log.info("Finding identity table for{} uid(s) " + uids.size());
 		List<Identity> identities;
 		try {
