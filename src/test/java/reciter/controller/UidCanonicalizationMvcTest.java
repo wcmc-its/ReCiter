@@ -9,7 +9,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,10 +41,14 @@ import reciter.api.parameters.GoldStandardUpdateFlag;
 import reciter.database.dynamodb.model.GoldStandard;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
+import reciter.database.dynamodb.model.ExternalArticle;
+import reciter.database.dynamodb.model.FeedbackLog;
 import reciter.service.AnalysisService;
+import reciter.service.ESearchResultService;
 import reciter.service.ExternalArticleService;
 import reciter.service.FeedbackLogService;
 import reciter.service.IdentityService;
+import reciter.service.dynamo.FeedbackLogQueryService;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
 
 /**
@@ -65,6 +71,10 @@ public class UidCanonicalizationMvcTest {
 	private ExternalArticleService externalArticleService;
 	@Mock
 	private FeedbackLogService feedbackLogService;
+	@Mock
+	private ESearchResultService eSearchResultService;
+	@Mock
+	private FeedbackLogQueryService feedbackLogQueryService;
 
 	@InjectMocks
 	private IdentityController identityController;
@@ -134,7 +144,11 @@ public class UidCanonicalizationMvcTest {
 				identity("HAF9018"));
 
 		mockMvc(identityController).perform(put("/reciter/save/identities/").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(body))).andExpect(status().isOk());
+				.content(objectMapper.writeValueAsString(body))).andExpect(status().isOk())
+				.andExpect(jsonPath("$.received").value(4)).andExpect(jsonPath("$.saved").value(2))
+				.andExpect(jsonPath("$.skipped.length()").value(2))
+				.andExpect(jsonPath("$.skipped[0].uid").value("Mahender Jangari"))
+				.andExpect(jsonPath("$.skipped[1].uid").value("ok1234"));
 
 		ArgumentCaptor<List<Identity>> saved = ArgumentCaptor.forClass(List.class);
 		verify(identityService).save(saved.capture());
@@ -160,13 +174,43 @@ public class UidCanonicalizationMvcTest {
 	}
 
 	@Test
-	public void identityBatchLookupWithInvalidUidIsBadRequest() throws Exception {
+	public void identityBatchLookupDropsInvalidUids() throws Exception {
+		when(identityService.findByUids(Collections.singletonList("abl9002")))
+				.thenReturn(Collections.singletonList(identity("abl9002")));
+
 		mockMvc(identityController)
 				.perform(post("/reciter/find/identities/by/uids/").contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(Arrays.asList("abl9002", "a b"))))
-				.andExpect(status().isBadRequest());
+						.content(objectMapper.writeValueAsString(Arrays.asList("Abl9002", "a b"))))
+				.andExpect(status().isOk()).andExpect(jsonPath("$[0].uid").value("abl9002"));
+	}
 
-		verify(identityService, never()).findByUids(anyList());
+	@Test
+	public void identityBatchGetLookupDropsInvalidUids() throws Exception {
+		when(identityService.findByUids(Collections.singletonList("abl9002")))
+				.thenReturn(Collections.singletonList(identity("abl9002")));
+
+		mockMvc(identityController).perform(get("/reciter/find/identity/by/uids/").param("uids", "Abl9002")
+				.param("uids", "kims7@mskcc.org")).andExpect(status().isOk());
+
+		verify(identityService).findByUids(Collections.singletonList("abl9002"));
+	}
+
+	@Test
+	public void eSearchResultLookupUsesCanonicalUid() throws Exception {
+		mockMvc(reCiterController).perform(get("/reciter/esearchresult/{uid}", "Arn4002"))
+				.andExpect(status().isNotFound());
+
+		verify(eSearchResultService).findByUid("arn4002");
+	}
+
+	@Test
+	public void feedbackLogLookupUsesCanonicalUid() throws Exception {
+		when(feedbackLogQueryService.getAuditHistory("arn4002")).thenReturn(Collections.emptyList());
+
+		mockMvc(reCiterController).perform(get("/reciter/feedback-log/{uid}", "Arn4002"))
+				.andExpect(status().isOk());
+
+		verify(feedbackLogQueryService).getAuditHistory("arn4002");
 	}
 
 	@Test
@@ -245,6 +289,65 @@ public class UidCanonicalizationMvcTest {
 				.andExpect(status().isOk());
 
 		verify(externalArticleService).findByUid("abl9002");
+	}
+
+	@Test
+	public void externalArticleDeleteLogsCanonicalActor() throws Exception {
+		ExternalArticle existing = new ExternalArticle();
+		existing.setUid("abl9002");
+		existing.setArticleId("SCOPUS:1");
+		when(externalArticleService.find("abl9002", "SCOPUS:1")).thenReturn(existing);
+
+		mockMvc(externalArticleController).perform(delete("/reciter/external-article/by/uid").param("uid", "Abl9002")
+				.param("articleId", "SCOPUS:1").param("actorPersonIdentifier", " PAA2013 ")).andExpect(status().isOk());
+
+		ArgumentCaptor<FeedbackLog> logged = ArgumentCaptor.forClass(FeedbackLog.class);
+		verify(feedbackLogService).recordAction(logged.capture());
+		assertEquals("abl9002", logged.getValue().getUid());
+		assertEquals("paa2013", logged.getValue().getActorPersonIdentifier());
+	}
+
+	@Test
+	public void externalArticleDeleteWithoutActorStillWorks() throws Exception {
+		ExternalArticle existing = new ExternalArticle();
+		existing.setUid("abl9002");
+		existing.setArticleId("SCOPUS:1");
+		when(externalArticleService.find("abl9002", "SCOPUS:1")).thenReturn(existing);
+
+		mockMvc(externalArticleController).perform(delete("/reciter/external-article/by/uid").param("uid", "abl9002")
+				.param("articleId", "SCOPUS:1")).andExpect(status().isOk());
+
+		ArgumentCaptor<FeedbackLog> logged = ArgumentCaptor.forClass(FeedbackLog.class);
+		verify(feedbackLogService).recordAction(logged.capture());
+		assertEquals(null, logged.getValue().getActorPersonIdentifier());
+	}
+
+	@Test
+	public void externalArticleFeedbackLogsCanonicalActor() throws Exception {
+		when(identityService.findByUid("dnr4021")).thenReturn(identity("dnr4021"));
+		when(feedbackLogService.recordAction(any(FeedbackLog.class))).thenReturn(true);
+
+		mockMvc(externalArticleController).perform(patch("/reciter/external-article/feedback")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"uid\":\"DNR4021\",\"articleId\":\"SCOPUS:85142207731\",\"action\":\"REJECTED\","
+						+ "\"actorPersonIdentifier\":\"Paa2013 \"}"))
+				.andExpect(status().isOk());
+
+		ArgumentCaptor<FeedbackLog> logged = ArgumentCaptor.forClass(FeedbackLog.class);
+		verify(feedbackLogService).recordAction(logged.capture());
+		assertEquals("dnr4021", logged.getValue().getUid());
+		assertEquals("paa2013", logged.getValue().getActorPersonIdentifier());
+	}
+
+	@Test
+	public void externalArticleFeedbackWithInvalidActorIsBadRequest() throws Exception {
+		mockMvc(externalArticleController).perform(patch("/reciter/external-article/feedback")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"uid\":\"dnr4021\",\"articleId\":\"SCOPUS:85142207731\",\"action\":\"REJECTED\","
+						+ "\"actorPersonIdentifier\":\"paa2013@med.cornell.edu\"}"))
+				.andExpect(status().isBadRequest());
+
+		verify(feedbackLogService, never()).recordAction(any());
 	}
 
 	@Test

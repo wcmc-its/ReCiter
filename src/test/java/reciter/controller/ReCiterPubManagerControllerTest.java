@@ -139,22 +139,20 @@ public class ReCiterPubManagerControllerTest {
     }
     
     @Test
-    public void testCreateUserEmptyCredentials() {
-        // Arrange
-        when(applicationUserService.createUser(any(ApplicationUser.class))).thenReturn(false);
+    public void testCreateUserEmptyUidIsRejected() {
+        // An empty username is not a valid uid: rejected (400 via ApiExceptionHandler), nothing stored.
+        assertThrows(reciter.utils.UidCanonicalizer.InvalidUidException.class,
+            () -> reCiterPubManagerController.createUser("", "", ""));
+        verify(applicationUserService, never()).createUser(any(ApplicationUser.class));
+    }
 
-        // Act
-        boolean result = reCiterPubManagerController.createUser("", "", "");
+    @Test
+    public void testCreateUserStoresCanonicalUid() {
+        when(applicationUserService.createUser(any(ApplicationUser.class))).thenReturn(true);
 
-        // Assert
-        assertFalse(result);
-        
-        // Verify service was called with empty credentials
-        verify(applicationUserService, times(1)).createUser(argThat(user -> 
-            user.getId().equals("") && 
-            user.getUsername().equals("") && 
-            user.getPassword().equals("")
-        ));
+        assertTrue(reCiterPubManagerController.createUser(" Abl9002 ", validUsername, validPassword));
+
+        verify(applicationUserService, times(1)).createUser(argThat(user -> user.getId().equals("abl9002")));
     }
     
     @Test
