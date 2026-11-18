@@ -10,13 +10,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
+import reciter.utils.UidCanonicalizer.InvalidUidException;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 /**
  * Centralized mapping of Bean Validation failures and write-once conditional-put
- * conflicts to RFC 7807 problem bodies. Scoped to these three exception types
- * only; pre-existing conditional writers catch ConditionalCheckFailedException
- * themselves, so their behavior is unchanged.
+ * conflicts to RFC 7807 problem bodies, plus uids that are still invalid after
+ * canonicalizing (400). Scoped to these exception types only; pre-existing
+ * conditional writers catch ConditionalCheckFailedException themselves, so their behavior is unchanged.
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -43,5 +44,11 @@ public class ApiExceptionHandler {
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
 				"A record with this key already exists");
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+	}
+
+	@ExceptionHandler(InvalidUidException.class)
+	public ResponseEntity<ProblemDetail> handleInvalidUid(InvalidUidException ex) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
 	}
 }
