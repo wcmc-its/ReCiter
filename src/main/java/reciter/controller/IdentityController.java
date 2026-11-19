@@ -135,7 +135,8 @@ public class IdentityController {
         	catch(IllegalArgumentException | InvalidUidException e)
             {
             	String rawUid = identity == null ? null : identity.getUid();
-            	log.warn("saveIdentities: skipping identity uid='{}': {}", rawUid, e.getMessage());
+            	log.warn("saveIdentities: skipping identity uid='{}': {}", UidCanonicalizer.sanitizeForLog(rawUid),
+            			UidCanonicalizer.sanitizeForLog(e.getMessage()));
             	Map<String, String> skip = new LinkedHashMap<>();
             	skip.put("uid", rawUid);
             	skip.put("reason", e.getMessage());

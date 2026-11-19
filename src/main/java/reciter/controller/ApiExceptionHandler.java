@@ -46,6 +46,7 @@ public class ApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
 	}
 
+	/** The exception message already carries a log-safe (CR/LF-free) copy of the uid. */
 	@ExceptionHandler(InvalidUidException.class)
 	public ResponseEntity<ProblemDetail> handleInvalidUid(InvalidUidException ex) {
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
