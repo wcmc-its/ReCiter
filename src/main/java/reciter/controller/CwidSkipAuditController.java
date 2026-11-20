@@ -54,6 +54,10 @@ public class CwidSkipAuditController {
 			@ApiResponse(responseCode = "400", description = "The request body failed validation"),
 			@ApiResponse(responseCode = "409", description = "A record with the same cwid and eventTimestamp already exists")
 	})
+	// The cwid is deliberately stored and looked up exactly as the caller sent it,
+	// not canonicalized: this is the audit of what a job run saw and declined,
+	// so a malformed or mixed-case cwid is the evidence, and canonicalizing (or
+	// rejecting it as invalid) would erase the record of the bad input.
 	@PostMapping(value = "", produces = "application/json")
 	public ResponseEntity<CwidSkipAudit> save(@Valid @RequestBody CwidSkipAudit cwidSkipAudit) {
 		cwidSkipAudit.setCreatedTimestamp(Instant.now().toString());

@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import reciter.database.dynamodb.model.ApplicationUser;
 import reciter.service.ApplicationUserService;
+import reciter.utils.UidCanonicalizer;
 
 
 @Tag(name = "ReCiterPubManagerController", description = "Operations on ReCiter publication manager.")
@@ -71,6 +72,9 @@ public class ReCiterPubManagerController {
     public boolean createUser(@RequestParam(value = "username") String uid, @RequestParam(value = "name") String username, @RequestParam(value = "password") String password) {
         StopWatch stopWatch = new StopWatch("Create user for ReCiter publications manager");
         stopWatch.start("Create user for ReCiter publications manager");
+        // Store the login key in canonical form so the typed username's case or
+        // stray whitespace never becomes a second key for the same person.
+        uid = UidCanonicalizer.canonicalize(uid);
         log.info("Creating user with username: " + uid);
         
         ApplicationUser appUser = new ApplicationUser(uid, username, password);

@@ -38,6 +38,7 @@ import reciter.service.FeedbackLogService;
 import reciter.service.IdentityService;
 import reciter.service.dynamo.ExternalArticleDupCheck;
 import reciter.service.dynamo.IDynamoDbGoldStandardService;
+import reciter.utils.UidCanonicalizer;
 
 /**
  * CRUD for publications manually added from non-PubMed sources (Scopus, Web of
@@ -82,7 +83,9 @@ public class ExternalArticleController {
     public ResponseEntity<Object> addExternalArticle(@RequestParam(value = "uid") String uid,
                                                      @RequestParam(value = "force", required = false, defaultValue = "false") boolean force,
                                                      @RequestBody ExternalArticle externalArticle) {
-        externalArticle.setUid(uid.trim());
+        externalArticle.setUid(UidCanonicalizer.canonicalize(uid));
+        // addedBy is the curator's CWID (also the FeedbackLog actor): same canonical form.
+        externalArticle.setAddedBy(UidCanonicalizer.canonicalizeOptional(externalArticle.getAddedBy()));
         String validationError = validate(externalArticle);
         if (validationError != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(validationError));
@@ -128,7 +131,7 @@ public class ExternalArticleController {
             description = "Returns all manually added external articles for the uid, including suppressed rows.")
     @GetMapping(value = "/reciter/external-article/by/uid",  produces = "application/json")
     public ResponseEntity<List<ExternalArticle>> findExternalArticles(@RequestParam(value = "uid") String uid) {
-        return new ResponseEntity<>(externalArticleService.findByUid(uid.trim()), HttpStatus.OK);
+        return new ResponseEntity<>(externalArticleService.findByUid(UidCanonicalizer.canonicalize(uid)), HttpStatus.OK);
     }
 
     @Operation(summary = "Delete an external-source article for a person.",
@@ -137,15 +140,19 @@ public class ExternalArticleController {
     public ResponseEntity<Object> deleteExternalArticle(@RequestParam(value = "uid") String uid,
                                                         @RequestParam(value = "articleId") String articleId,
                                                         @RequestParam(value = "actorPersonIdentifier", required = false) String actorPersonIdentifier) {
-        ExternalArticle existing = externalArticleService.find(uid.trim(), articleId.trim());
+        uid = UidCanonicalizer.canonicalize(uid);
+        // Optional until PM sends it; when present it is a CWID and is canonicalized too.
+        actorPersonIdentifier = UidCanonicalizer.canonicalizeOptional(actorPersonIdentifier);
+        articleId = articleId.strip();
+        ExternalArticle existing = externalArticleService.find(uid, articleId);
         if (existing == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(errorBody("No external article '" + articleId + "' found for uid '" + uid + "'."));
         }
-        externalArticleService.delete(uid.trim(), articleId.trim());
+        externalArticleService.delete(uid, articleId);
         // Delete is the revoke of a prior accept — logged as PENDING (back to no assertion),
         // matching the reopen/undo vocabulary. Actor is optional until PM starts sending it.
-        logFeedback(uid.trim(), articleId.trim(), FeedbackLogService.Feedback.PENDING,
+        logFeedback(uid, articleId, FeedbackLogService.Feedback.PENDING,
                 actorPersonIdentifier, null);
         log.info("External article {} deleted for uid {}", articleId, uid);
         return new ResponseEntity<>(existing, HttpStatus.OK);
@@ -182,7 +189,8 @@ public class ExternalArticleController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(errorBody("action is required and must be one of ACCEPTED, REJECTED, PENDING."));
         }
-        String uid = request.getUid().trim();
+        String uid = UidCanonicalizer.canonicalize(request.getUid());
+        String actor = UidCanonicalizer.canonicalize(request.getActorPersonIdentifier());
         String articleId = request.getArticleId().trim();
         if (identityService.findByUid(uid) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -193,7 +201,7 @@ public class ExternalArticleController {
         // The FeedbackLog row is the authoritative record here (suppressed is only a
         // denormalized cache), so it is written first and its failure fails the request
         // before any state changes — unlike the add/delete paths, where it is a side-log.
-        if (!logFeedback(uid, articleId, feedback, request.getActorPersonIdentifier().trim(), request.getNote())) {
+        if (!logFeedback(uid, articleId, feedback, actor, request.getNote())) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(errorBody("Failed to record the feedback; nothing was changed. Retry."));
         }
@@ -213,8 +221,7 @@ public class ExternalArticleController {
                 externalArticleService.save(existing);
             }
         }
-        log.info("External article {} for uid {} feedback {} by {}", articleId, uid, feedback,
-                request.getActorPersonIdentifier().trim());
+        log.info("External article {} for uid {} feedback {} by {}", articleId, uid, feedback, actor);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("status", "LOGGED");
