@@ -18,7 +18,11 @@
  *******************************************************************************/
 package reciter.controller;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +50,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import reciter.model.identity.AuthorName;
 import reciter.model.identity.Identity;
 import reciter.service.IdentityService;
+import reciter.utils.UidCanonicalizer;
+import reciter.utils.UidCanonicalizer.InvalidUidException;
 
 
 @RestController
@@ -81,6 +87,8 @@ public class IdentityController {
         {
         	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(iae.getLocalizedMessage());
         }
+        // Store under the canonical uid (trimmed, lowercased); 400 if still invalid.
+        identity.setUid(UidCanonicalizer.canonicalize(identity.getUid()));
         identityService.save(identity);
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
@@ -98,7 +106,7 @@ public class IdentityController {
             @ApiResponse(responseCode = "404", description = "The resource you were trying to reach is not found")
     })
     @PutMapping(value = "/reciter/save/identities/", produces = "application/json")
-    public void saveIdentities(@RequestBody List<Identity> identities) {
+    public ResponseEntity<Map<String, Object>> saveIdentities(@RequestBody List<Identity> identities) {
         StopWatch stopWatch = new StopWatch("Add list of identities to Identity table in DynamoDb");
         stopWatch.start("Add list of identities to Identity table in DynamoDb");
         
@@ -106,26 +114,53 @@ public class IdentityController {
             stopWatch.stop();
             log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
             log.info("The request body must contain at least one Identity");
-            return;
+            return ResponseEntity.ok(saveIdentitiesSummary(0, 0, Collections.emptyList()));
         }
         log.info("calling saveIdentities with number of identities=" + identities.size());
      
+        // Items that fail validation are skipped and logged, not saved. Valid
+        // items are stored under their canonical uid (trimmed, lowercased).
+        // Still 200 when items are skipped (the institutional client checks only the
+        // status), but the body names every skipped uid so the caller can see them.
+        List<Identity> valid = new ArrayList<>(identities.size());
+        List<Map<String, String>> skipped = new ArrayList<>();
         for(Identity identity : identities)
         {	
-        	// Validate the mandatory fields
         	try
         	{
         		validateMandatoryFields(identity);
+        		identity.setUid(UidCanonicalizer.canonicalize(identity.getUid()));
+        		valid.add(identity);
         	}
-        	catch(IllegalArgumentException iae)
+        	catch(IllegalArgumentException | InvalidUidException e)
             {
-            	//return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(iae.getLocalizedMessage());
-            	iae.printStackTrace();
+            	String rawUid = identity == null ? null : identity.getUid();
+            	log.warn("saveIdentities: skipping identity uid='{}': {}", UidCanonicalizer.sanitizeForLog(rawUid),
+            			UidCanonicalizer.sanitizeForLog(e.getMessage()));
+            	Map<String, String> skip = new LinkedHashMap<>();
+            	skip.put("uid", rawUid);
+            	skip.put("reason", e.getMessage());
+            	skipped.add(skip);
             }
-        }	
-        identityService.save(identities);
+        }
+        if (valid.size() < identities.size()) {
+        	log.warn("saveIdentities: skipped {} of {} identities that failed validation",
+        			identities.size() - valid.size(), identities.size());
+        }
+        if (!valid.isEmpty()) {
+        	identityService.save(valid);
+        }
         stopWatch.stop();
         log.info(stopWatch.getId() + " took " + stopWatch.getTotalTimeSeconds() + "s");
+        return ResponseEntity.ok(saveIdentitiesSummary(identities.size(), valid.size(), skipped));
+    }
+
+    private static Map<String, Object> saveIdentitiesSummary(int received, int saved, List<Map<String, String>> skipped) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("received", received);
+        body.put("saved", saved);
+        body.put("skipped", skipped);
+        return body;
     }
 
     @Operation(summary  = "Search the identity table for a given ID", description = "This api searches for a given identity in identity table.")
@@ -142,6 +177,7 @@ public class IdentityController {
     public ResponseEntity<?> findByUid(@RequestParam String uid) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a given ID");
         stopWatch.start("Search the identity table for a given ID");
+        uid = UidCanonicalizer.canonicalize(uid);
         log.info("calling findByUid with size of uids=" + uid);
         Identity identity = identityService.findByUid(uid);
         if(identity == null) {
@@ -168,6 +204,7 @@ public class IdentityController {
     public ResponseEntity<?> findByUids(@RequestParam List<String> uids) {
         StopWatch stopWatch = new StopWatch("Search the identity table for a list of ID supplied");
         stopWatch.start("Search the identity table for a list of ID supplied");
+        uids = UidCanonicalizer.canonicalizeDroppingInvalid(uids, "findByUids");
         log.info("calling findByUid with size of uids=" + uids);
         List<Identity> identities;
         try {
@@ -314,6 +351,7 @@ public class IdentityController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No uids were supplied in the request");
 		}
 
+		uids = UidCanonicalizer.canonicalizeDroppingInvalid(uids, "findIdentitiesByUids");
 		log.info("Finding identity table for{} uid(s) " + uids.size());
 		List<Identity> identities;
 		try {
