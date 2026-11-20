@@ -1,4 +1,4 @@
-FROM amazoncorretto:21-alpine
+FROM amazoncorretto:21.0.13-alpine
 
 # Set workdir
 WORKDIR /app
