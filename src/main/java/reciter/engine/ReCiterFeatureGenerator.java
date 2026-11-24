@@ -37,6 +37,9 @@ import lombok.Data;
 public class ReCiterFeatureGenerator {
 
 	private static final Logger log = LoggerFactory.getLogger(ReCiterFeatureGenerator.class);
+
+	// The check character of an ORCID iD is a digit or X.
+	static final Pattern ORCID_PATTERN = Pattern.compile("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]");
 	
     private double precision;
     private double recall;
@@ -337,8 +340,7 @@ public class ReCiterFeatureGenerator {
 
                 // Orcid
                 if(reCiterArticleAuthor.getOrcid() != null && !reCiterArticleAuthor.getOrcid().isBlank()) {
-                    Pattern pattern = Pattern.compile("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}");
-                    Matcher matcher = pattern.matcher(reCiterArticleAuthor.getOrcid());
+                    Matcher matcher = ORCID_PATTERN.matcher(reCiterArticleAuthor.getOrcid());
                     if(matcher.find()) {
                         reCiterArticleAuthorFeature.setOrcid(matcher.group());
                     }
